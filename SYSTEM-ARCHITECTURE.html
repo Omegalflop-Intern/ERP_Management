@@ -1,0 +1,1875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brothers Mobile Shop ERP — System Architecture</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --primary: #991b1b;        /* Maroon/Red */
+      --primary-light: #dc2626;  /* Light Red */
+      --primary-dark: #7f1d1d;   /* Dark Maroon */
+      --secondary: #1e293b;      /* Dark Slate */
+      --accent: #f59e0b;         /* Amber accent */
+      --success: #10b981;        /* Green */
+      --warning: #f59e0b;        /* Amber */
+      --danger: #ef4444;         /* Red */
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      line-height: 1.6;
+    }
+
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 60px 40px;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      padding: 60px 0;
+      border-bottom: 2px solid #1e293b;
+      margin-bottom: 60px;
+    }
+
+    .header h1 {
+      font-size: 42px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6, #06b6d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+    }
+
+    .header .subtitle {
+      font-size: 18px;
+      color: #94a3b8;
+      font-weight: 300;
+    }
+
+    .header .meta {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    .header .meta span {
+      padding: 6px 16px;
+      background: #1e293b;
+      border-radius: 20px;
+      border: 1px solid #334155;
+    }
+
+    /* Section */
+    .section {
+      margin-bottom: 50px;
+    }
+
+    .section-title {
+      font-size: 26px;
+      font-weight: 700;
+      color: #f8fafc;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-title .icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .section-desc {
+      color: #94a3b8;
+      font-size: 14px;
+      margin-bottom: 25px;
+      padding-left: 48px;
+    }
+
+    /* Tech Stack Grid */
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+
+    .tech-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 20px;
+      transition: all 0.3s;
+    }
+
+    .tech-card:hover {
+      border-color: #3b82f6;
+      transform: translateY(-2px);
+    }
+
+    .tech-card .label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #64748b;
+      margin-bottom: 6px;
+    }
+
+    .tech-card .value {
+      font-size: 16px;
+      font-weight: 600;
+      color: #f1f5f9;
+    }
+
+    .tech-card .desc {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+
+    /* Folder Tree */
+    .tree-container {
+      background: #0c1222;
+      border: 1px solid #1e293b;
+      border-radius: 16px;
+      padding: 30px;
+      margin-bottom: 30px;
+      overflow-x: auto;
+    }
+
+    .tree-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #e2e8f0;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .tree-title .badge {
+      font-size: 11px;
+      padding: 3px 10px;
+      background: #1e40af;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+
+    .tree {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.8;
+      color: #94a3b8;
+    }
+
+    .tree .folder {
+      color: #60a5fa;
+      font-weight: 500;
+    }
+
+    .tree .file-js {
+      color: #fbbf24;
+    }
+
+    .tree .file-jsx {
+      color: #34d399;
+    }
+
+    .tree .file-json {
+      color: #f472b6;
+    }
+
+    .tree .file-css {
+      color: #a78bfa;
+    }
+
+    .tree .file-config {
+      color: #fb923c;
+    }
+
+    .tree .file-db {
+      color: #2dd4bf;
+    }
+
+    .tree .comment {
+      color: #475569;
+      font-style: italic;
+    }
+
+    .tree .highlight {
+      color: #f8fafc;
+      font-weight: 600;
+    }
+
+    /* Module Cards */
+    .module-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .module-row {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .module-row:hover {
+      border-color: #3b82f6;
+    }
+
+    .module-name {
+      padding: 16px 20px;
+      background: #0f172a;
+      font-weight: 600;
+      font-size: 14px;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .module-name .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .module-files {
+      padding: 12px 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #94a3b8;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px 16px;
+    }
+
+    .module-files span {
+      white-space: nowrap;
+    }
+
+    /* API Table */
+    .api-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .api-table th {
+      background: #1e293b;
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      color: #e2e8f0;
+      border-bottom: 2px solid #334155;
+    }
+
+    .api-table td {
+      padding: 10px 16px;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .api-table tr:hover td {
+      background: #1e293b40;
+    }
+
+    .method {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      min-width: 55px;
+      text-align: center;
+    }
+
+    .method-get { background: #065f46; color: #34d399; }
+    .method-post { background: #1e40af; color: #60a5fa; }
+    .method-put { background: #92400e; color: #fbbf24; }
+    .method-delete { background: #7f1d1d; color: #f87171; }
+
+    .endpoint {
+      font-family: 'JetBrains Mono', monospace;
+      color: #e2e8f0;
+      font-size: 12px;
+    }
+
+    .desc-cell {
+      color: #94a3b8;
+      font-size: 12px;
+    }
+
+    /* Schema Block */
+    .schema-block {
+      background: #0c1222;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    .schema-header {
+      background: #1e293b;
+      padding: 12px 20px;
+      font-weight: 600;
+      font-size: 14px;
+      color: #e2e8f0;
+      border-bottom: 1px solid #334155;
+    }
+
+    .schema-body {
+      padding: 16px 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      line-height: 1.8;
+      color: #94a3b8;
+    }
+
+    .schema-body .key {
+      color: #60a5fa;
+    }
+
+    .schema-body .type {
+      color: #fbbf24;
+    }
+
+    .schema-body .required {
+      color: #f87171;
+    }
+
+    .schema-body .comment {
+      color: #475569;
+    }
+
+    /* Grid Layouts */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .two-col { grid-template-columns: 1fr; }
+      .module-row { grid-template-columns: 1fr; }
+    }
+
+    /* Divider */
+    .divider {
+      height: 1px;
+      background: linear-gradient(to right, transparent, #334155, transparent);
+      margin: 50px 0;
+    }
+
+    /* Print */
+    @media print {
+      body { background: #fff; color: #1e293b; }
+      .tree-container, .schema-block { background: #f8fafc; border-color: #e2e8f0; }
+      .tech-card { background: #f1f5f9; border-color: #e2e8f0; }
+      .module-row { background: #f1f5f9; border-color: #e2e8f0; }
+      .module-name { background: #e2e8f0; }
+      .api-table th { background: #e2e8f0; }
+      .header h1 { -webkit-text-fill-color: #1e293b; color: #1e293b; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <h1>Brothers Mobile Shop ERP</h1>
+    <div class="subtitle">Full-Stack System Architecture & Folder Structure</div>
+    <div class="meta">
+      <span>Vite + React.js + JavaScript</span>
+      <span>Node.js + Express.js</span>
+      <span>MongoDB + Mongoose</span>
+      <span>Version 1.0</span>
+    </div>
+    <div class="meta" style="margin-top:10px;">
+      <span>Date: July 2026</span>
+      <span>Module-Based Architecture</span>
+      <span>3-Way Login</span>
+      <span style="border-color: #ef4444; color: #ef4444;">Deadline: 25 Days</span>
+    </div>
+  </div>
+
+  <!-- SECTION 1: TECH STACK -->
+  <div class="section">
+    <div class="section-title"><div class="icon">&#9881;</div> Tech Stack</div>
+    <div class="section-desc">Project Tech stack — frontend, backend, database, auth, deployment</div>
+
+    <div class="tech-grid">
+      <div class="tech-card">
+        <div class="label">Frontend</div>
+        <div class="value">Vite + React.js</div>
+        <div class="desc">JavaScript (no TypeScript), SPA, HMR</div>
+      </div>
+      <div class="tech-card">
+        <div class="label">UI Framework</div>
+        <div class="value">Tailwind CSS</div>
+        <div class="desc">Shadcn/UI components, responsive</div>
+      </div>
+      <div class="tech-card">
+        <div class="label">Backend</div>
+        <div class="value">Node.js + Express</div>
+        <div class="desc">REST API, middleware-based</div>
+      </div>
+      <div class="tech-card">
+        <div class="label">Database</div>
+        <div class="value">MongoDB</div>
+        <div class="desc">Mongoose ODM, Atlas or local</div>
+      </div>
+      <div class="tech-card">
+        <div class="label">Authentication</div>
+        <div class="value">JWT</div>
+        <div class="desc">Access + Refresh tokens, 3-way login</div>
+      </div>
+      <div class="tech-card">
+        <div class="label">Real-time</div>
+        <div class="value">Native Events</div>
+        <div class="desc">Browser EventEmitter (no Socket.io)</div>
+      </div>
+      <div class="tech-card">
+        <div class="label">State Mgmt</div>
+        <div class="value">Zustand</div>
+        <div class="desc">Lightweight, no boilerplate</div>
+      </div>
+      <div class="tech-card">
+        <div class="label">Server State</div>
+        <div class="value">TanStack Query</div>
+        <div class="desc">API caching, refetching, mutations</div>
+      </div>
+      <div class="tech-card">
+        <div class="label">Table</div>
+        <div class="value">AG Grid</div>
+        <div class="desc">ERP-grade data tables</div>
+      </div>
+      <div class="tech-card">
+        <div class="label">Toast</div>
+        <div class="value">Sonner</div>
+        <div class="desc">Better than react-toastify</div>
+      </div>
+      <div class="tech-card">
+        <div class="label">Skeleton</div>
+        <div class="value">react-loading-skeleton</div>
+        <div class="desc">Loading states for all pages</div>
+      </div>
+      <div class="tech-card">
+        <div class="label">Offline</div>
+        <div class="value">Service Worker</div>
+        <div class="desc">Offline/online data sync</div>
+      </div>
+      <div class="tech-card">
+        <div class="label">Icons</div>
+        <div class="value">Lucide React</div>
+        <div class="desc">1000+ icons, clean & modern</div>
+      </div>
+      <div class="tech-card">
+        <div class="label">SMS (Future)</div>
+        <div class="value">SMS Gateway</div>
+        <div class="desc">OTP, notifications to mobile</div>
+      </div>
+      <div class="tech-card">
+        <div class="label">Deployment</div>
+        <div class="value">Docker + PM2</div>
+        <div class="desc">Nginx reverse proxy, SSL</div>
+      </div>
+      <div class="tech-card" style="border-left: 4px solid #ef4444;">
+        <div class="label">Deadline</div>
+        <div class="value" style="color: #ef4444;">25 Days</div>
+        <div class="desc">From client confirmation to start</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 1.4: UI/UX & COLOR SCHEME -->
+  <div class="section">
+    <div class="section-title"><div class="icon">&#127912;</div> UI/UX Design & Color Scheme</div>
+    <div class="section-desc">Modern, minimalist design — dark/light mode — maroon/red primary — 3 button colors max</div>
+
+    <div class="tech-grid">
+      <div class="tech-card" style="border-left: 4px solid #991b1b;">
+        <div class="label">Primary Color</div>
+        <div class="value" style="color: #dc2626;">Maroon/Red</div>
+        <div class="desc">#991b1b (dark) / #dc2626 (light) / #7f1d1d (darkest)</div>
+      </div>
+      <div class="tech-card" style="border-left: 4px solid #f59e0b;">
+        <div class="label">Accent Color</div>
+        <div class="value" style="color: #f59e0b;">Amber</div>
+        <div class="desc">#f59e0b — badges, highlights, warnings</div>
+      </div>
+      <div class="tech-card" style="border-left: 4px solid #10b981;">
+        <div class="label">Success Color</div>
+        <div class="value" style="color: #10b981;">Green</div>
+        <div class="desc">#10b981 — success messages, active status</div>
+      </div>
+      <div class="tech-card" style="border-left: 4px solid #ef4444;">
+        <div class="label">Danger Color</div>
+        <div class="value" style="color: #ef4444;">Red</div>
+        <div class="desc">#ef4444 — errors, delete, critical alerts</div>
+      </div>
+      <div class="tech-card" style="border-left: 4px solid #3b82f6;">
+        <div class="label">Info Color</div>
+        <div class="value" style="color: #3b82f6;">Blue</div>
+        <div class="desc">#3b82f6 — info messages, links</div>
+      </div>
+      <div class="tech-card" style="border-left: 4px solid #6b7280;">
+        <div class="label">Neutral Color</div>
+        <div class="value" style="color: #9ca3af;">Gray</div>
+        <div class="desc">#6b7280 — borders, secondary text</div>
+      </div>
+    </div>
+
+    <div class="tree-container">
+      <div class="tree-title">Button Colors (Max 3)</div>
+      <pre class="tree">
+<span class="highlight">Button Types:</span>
+  <span style="color:#dc2626;font-weight:600;">Primary (Maroon/Red)</span>  → Submit, Save, Create, Confirm
+  <span style="color:#10b981;font-weight:600;">Success (Green)</span>       → Approve, Complete, Paid
+  <span style="color:#6b7280;font-weight:600;">Neutral (Gray)</span>        → Cancel, Close, Back
+
+<span class="highlight">Status Badges:</span>
+  <span style="color:#10b981;">●</span> Active / Paid / Completed / Available
+  <span style="color:#f59e0b;">●</span> Pending / Processing / Low Stock
+  <span style="color:#ef4444;">●</span> Cancelled / Overdue / Out of Stock / Defective
+  <span style="color:#3b82f6;">●</span> Transferred / In Transit
+      </pre>
+    </div>
+
+    <div class="tree-container">
+      <div class="tree-title">Dark/Light Mode</div>
+      <pre class="tree">
+<span class="highlight">Dark Mode (Default):</span>
+  Background:     <span style="color:#0f172a;">#0f172a</span> (slate-900)
+  Card/Surface:   <span style="color:#1e293b;">#1e293b</span> (slate-800)
+  Border:         <span style="color:#334155;">#334155</span> (slate-700)
+  Text Primary:   <span style="color:#f8fafc;">#f8fafc</span> (slate-50)
+  Text Secondary: <span style="color:#94a3b8;">#94a3b8</span> (slate-400)
+
+<span class="highlight">Light Mode:</span>
+  Background:     <span style="color:#f8fafc;">#f8fafc</span> (slate-50)
+  Card/Surface:   <span style="color:#ffffff;">#ffffff</span> (white)
+  Border:         <span style="color:#e2e8f0;">#e2e8f0</span> (slate-200)
+  Text Primary:   <span style="color:#0f172a;">#0f172a</span> (slate-900)
+  Text Secondary: <span style="color:#64748b;">#64748b</span> (slate-500)
+
+<span class="highlight">Toggle:</span>
+  - Topbar e theme toggle icon (sun/moon)
+  - localStorage e save thakbe
+  - System preference detect korbe (prefers-color-scheme)
+      </pre>
+    </div>
+
+    <div class="tree-container">
+      <div class="tree-title">UI Style Guide (Modern + Minimalist)</div>
+      <pre class="tree">
+<span class="highlight">Typography:</span>
+  Font Family:    Inter (Google Fonts)
+  Headings:       font-weight 600-700
+  Body:           font-weight 400
+  Monospace:      JetBrains Mono (code, IMEI, invoice numbers)
+
+<span class="highlight">Spacing:</span>
+  Section gap:    24px (gap-6)
+  Card padding:   16px-24px (p-4 to p-6)
+  Table row:      12px-16px (py-3 to py-4)
+  Form gap:       16px (gap-4)
+
+<span class="highlight">Borders & Radius:</span>
+  Cards:          border-radius: 12px (rounded-xl)
+  Buttons:        border-radius: 8px (rounded-lg)
+  Inputs:         border-radius: 8px (rounded-lg)
+  Badges:         border-radius: 9999px (rounded-full)
+  Border:         1px solid (border slate-700/200)
+
+<span class="highlight">Shadows:</span>
+  Cards:          shadow-sm (subtle)
+  Modals:         shadow-xl (elevated)
+  Dropdowns:      shadow-lg
+
+<span class="highlight">Animations:</span>
+  Transitions:    200ms ease (transition-all duration-200)
+  Hover:          scale(1.02) for cards
+  Loading:        Skeleton pulse animation
+  Page transition: Fade in (opacity 0→1)
+      </pre>
+    </div>
+
+    <!-- Auth Pages — Sea Wave Animation -->
+    <div class="tree-container" style="margin-top:20px;">
+      <div class="tree-title">Auth Pages — Sea Wave Animation</div>
+      <pre class="tree">
+<span class="highlight">Layout:</span>
+  Full screen (100vh)
+  Left side:  Sea wave animation (CSS/SVG)
+  Right side: Login/Forgot form card
+  Mobile:     Form full-width, wave at bottom
+
+<span class="highlight">Sea Wave CSS:</span>
+  @keyframes wave {
+    0%   { transform: translateX(0) scaleY(1); }
+    50%  { transform: translateX(-25%) scaleY(0.55); }
+    100% { transform: translateX(-50%) scaleY(1); }
+  }
+
+  .wave { position: absolute; bottom: 0; width: 200%; height: 100%;
+          animation: wave 10s linear infinite; }
+  .wave:nth-child(1) { opacity: 0.7; animation-delay: 0s; }
+  .wave:nth-child(2) { opacity: 0.5; animation-delay: -3s; }
+  .wave:nth-child(3) { opacity: 0.3; animation-delay: -6s; }
+
+<span class="highlight">Form Card:</span>
+  Background:  semi-transparent white/dark
+  Backdrop:    blur(10px)
+  Border:      20px radius
+  Shadow:      0 25px 45px rgba(0,0,0,0.2)
+  Padding:     40px
+
+<span class="highlight">Dark Mode Waves:</span>
+  Wave 1: rgba(153, 27, 27, 0.7)  — maroon
+  Wave 2: rgba(185, 28, 28, 0.5)  — red
+  Wave 3: rgba(220, 38, 38, 0.3)  — light red
+  Form:   rgba(30, 41, 59, 0.8)   — slate-800
+
+<span class="highlight">Light Mode Waves:</span>
+  Wave 1: rgba(153, 27, 27, 0.6)  — maroon
+  Wave 2: rgba(185, 28, 28, 0.4)  — red
+  Wave 3: rgba(220, 38, 38, 0.2)  — light red
+  Form:   rgba(255, 255, 255, 0.85) — white
+      </pre>
+    </div>
+
+    <!-- Password Eye Toggle -->
+    <div class="tree-container" style="margin-top:20px;">
+      <div class="tree-title">Password Field — Eye Toggle</div>
+      <pre class="tree">
+<span class="highlight">Component:</span> PasswordInput.jsx
+
+<span class="highlight">Features:</span>
+  Default:     password type (••••••)
+  Click eye:   text type (visible)
+  Click again: password type (hidden)
+  Smooth transition on icon change
+  Accessible (aria-label, tabIndex)
+
+<span class="highlight">CSS:</span>
+  .password-input { position: relative; }
+  .password-input input { padding-right: 45px; }
+
+  .eye-toggle {
+    position: absolute; right: 12px; top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer; color: #94a3b8;
+    transition: color 200ms ease;
+  }
+  .eye-toggle:hover { color: #dc2626; }
+  .eye-toggle:active svg { transform: scale(0.8); }
+
+<span class="highlight">Implementation:</span>
+  import { Eye, EyeOff } from 'lucide-react';
+  const [show, setShow] = useState(false);
+
+  &lt;div className="password-input"&gt;
+    &lt;input type={show ? 'text' : 'password'} /&gt;
+    &lt;button className="eye-toggle"
+            onClick={() =&gt; setShow(!show)}&gt;
+      {show ? &lt;EyeOff size={20} /&gt; : &lt;Eye size={20} /&gt;}
+    &lt;/button&gt;
+  &lt;/div&gt;
+
+<span class="highlight">Usage:</span>
+  Login page, Forgot Password, User Form
+      </pre>
+    </div>
+
+    <!-- Animated Theme Switcher -->
+    <div class="tree-container" style="margin-top:20px;">
+      <div class="tree-title">Theme Switching — Animated Button</div>
+      <pre class="tree">
+<span class="highlight">Animation:</span> Sun/Moon Rotation (360°)
+
+<span class="highlight">CSS:</span>
+  .theme-toggle {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: transparent; border: none; cursor: pointer;
+    transition: background 300ms ease, transform 300ms ease;
+  }
+  .theme-toggle:hover {
+    background: rgba(220, 38, 38, 0.1);
+    transform: rotate(15deg);
+  }
+  .theme-toggle:active {
+    transform: rotate(360deg) scale(0.9);
+  }
+  .theme-toggle svg {
+    transition: transform 500ms cubic-bezier(0.68, -0.55, 0.265, 1.55),
+                color 300ms ease;
+    color: #f59e0b;  /* amber for sun */
+  }
+  .theme-toggle.dark svg { color: #94a3b8; }  /* gray moon */
+
+<span class="highlight">Implementation:</span>
+  import { Sun, Moon } from 'lucide-react';
+  const { theme, toggleTheme } = useTheme();
+
+  &lt;button className={`theme-toggle ${theme === 'dark' ? 'dark' : ''}`}
+          onClick={toggleTheme}&gt;
+    {theme === 'dark' ? &lt;Moon size={20} /&gt; : &lt;Sun size={20} /&gt;}
+  &lt;/button&gt;
+
+<span class="highlight">Position:</span> Topbar (right) + Auth page (top-right)
+
+<span class="highlight">Global Transition:</span>
+  * { transition: background-color 300ms ease, color 300ms ease; }
+  /* No transition on page load (prevent flash) */
+      </pre>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 1.5: INVOICE SIZES -->
+  <div class="section">
+    <div class="section-title"><div class="icon">&#128196;</div> Invoice Sizes & Format</div>
+    <div class="section-desc">4 invoice sizes — barcode + QR code included in all</div>
+
+    <div class="tech-grid">
+      <div class="tech-card">
+        <div class="label">Size 1</div>
+        <div class="value">A4 Full</div>
+        <div class="desc">210mm × 297mm — full page invoice</div>
+      </div>
+      <div class="tech-card">
+        <div class="label">Size 2</div>
+        <div class="value">A4 Half (2-up)</div>
+        <div class="desc">210mm × 148mm — A4 ke 2ta kore print</div>
+      </div>
+      <div class="tech-card">
+        <div class="label">Size 3</div>
+        <div class="value">1.5" / 2-3" × 1.75"</div>
+        <div class="desc">Receipt size — unlimited height</div>
+      </div>
+      <div class="tech-card">
+        <div class="label">Size 4</div>
+        <div class="value">2" × Unlimited</div>
+        <div class="desc">Thermal receipt — unlimited height</div>
+      </div>
+    </div>
+
+    <div class="tree-container">
+      <div class="tree-title">Invoice Content Layout</div>
+      <pre class="tree">
+<span class="highlight">All Invoice Sizes Include:</span>
+  ┌─────────────────────────────────┐
+  │  COMPANY LOGO + NAME            │
+  │  Address, Phone, Email          │
+  │  Branch Name                    │
+  ├─────────────────────────────────┤
+  │  Invoice #: INV-2026-00001      │
+  │  Date: 2026-07-20               │
+  │  Customer: Name, Phone          │
+  ├─────────────────────────────────┤
+  │  TABLE:                         │
+  │  │ Product │ IMEI │ Qty │ Price ││
+  │  │---------│------│-----│-------││
+  │  │ iPhone  │ 1234 │  1  │ 85000 ││
+  │  │ Charger │ 5678 │  2  │  1500 ││
+  ├─────────────────────────────────┤
+  │  Subtotal:    88,000            │
+  │  VAT (15%):   13,200            │
+  │  Discount:     2,000            │
+  │  GRAND TOTAL: 99,200            │
+  │  Paid:        50,000            │
+  │  Due:         49,200            │
+  ├─────────────────────────────────┤
+  │  Payment Method: bKash/Cash     │
+  │  ▌▌▌▌▌▌▌▌▌▌  (BARCODE)        │
+  │  ▄▄▄▄▄▄▄ (QR CODE)            │
+  │  Thank you!                     │
+  └─────────────────────────────────┘
+
+<span class="highlight">Barcode & QR Code:</span>
+  - Barcode: Invoice number er upore
+  - QR Code: Invoice data encode (invoice#, total, date)
+  - Scan korle invoice detail dekha jabe
+  - Libraries: JsBarcode + qrcode (npm packages)
+      </pre>
+    </div>
+
+    <div class="tree-container">
+      <div class="tree-title">Invoice Size Specifications</div>
+      <pre class="tree">
+<span class="highlight">Size 1: A4 Full (210mm × 297mm)</span>
+  - Full page invoice
+  - Company header + customer info + items table + totals
+  - Barcode at bottom
+  - QR code at bottom-right
+  - Print: standard A4 printer
+
+<span class="highlight">Size 2: A4 Half (210mm × 148mm)</span>
+  - A4 ke 2ta kore print kora
+  - Each half = 1 invoice
+  - Compact layout — smaller fonts
+  - Same content as A4 but condensed
+  - Print: 2 invoices per A4 page
+
+<span class="highlight">Size 3: Receipt (1.5" / 2-3" width × 1.75" height)</span>
+  - Thermal printer receipt
+  - Compact: Company name, invoice#, items, total, due
+  - Barcode at bottom
+  - QR code at bottom
+  - Print: 80mm thermal printer
+
+<span class="highlight">Size 4: Thermal (2" width × Unlimited height)</span>
+  - Standard thermal receipt
+  - Full item list — no height restriction
+  - Barcode + QR code at bottom
+  - Print: 58mm/80mm thermal printer
+      </pre>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 1.6: PERFORMANCE -->
+  <div class="section">
+    <div class="section-title"><div class="icon">&#9889;</div> Performance Requirements (Top Level)</div>
+    <div class="section-desc">Intern hire — company te impress korte hobe — performance must be top-level!</div>
+
+    <div class="tech-grid">
+      <div class="tech-card">
+        <div class="label">Lighthouse Score</div>
+        <div class="value" style="color: #10b981;">90+</div>
+        <div class="desc">Performance, Accessibility, Best Practices, SEO</div>
+      </div>
+      <div class="tech-card">
+        <div class="label">First Contentful Paint</div>
+        <div class="value" style="color: #10b981;">< 1.5s</div>
+        <div class="desc">First content visible on screen</div>
+      </div>
+      <div class="tech-card">
+        <div class="label">Largest Contentful Paint</div>
+        <div class="value" style="color: #10b981;">< 2.5s</div>
+        <div class="desc">Main content loaded</div>
+      </div>
+      <div class="tech-card">
+        <div class="label">Time to Interactive</div>
+        <div class="value" style="color: #10b981;">< 3.5s</div>
+        <div class="desc">Page fully interactive</div>
+      </div>
+      <div class="tech-card">
+        <div class="label">Bundle Size</div>
+        <div class="value" style="color: #f59e0b;">< 200KB</div>
+        <div class="desc">Initial JS bundle (gzipped)</div>
+      </div>
+      <div class="tech-card">
+        <div class="label">API Response</div>
+        <div class="value" style="color: #10b981;">< 200ms</div>
+        <div class="desc">Backend response time</div>
+      </div>
+    </div>
+
+    <div class="tree-container">
+      <div class="tree-title">Performance Optimization Strategies</div>
+      <pre class="tree">
+<span class="highlight">Frontend Performance:</span>
+  1. <span class="file-js">Code Splitting</span>       → React.lazy() + Suspense (route-based)
+  2. <span class="file-js">Tree Shaking</span>         → Vite auto tree-shakes unused code
+  3. <span class="file-js">Image Optimization</span>   → WebP format, lazy loading, responsive images
+  4. <span class="file-js">Font Loading</span>         → font-display: swap, subset fonts
+  5. <span class="file-js">CSS Purging</span>          → Tailwind purge unused CSS
+  6. <span class="file-js">Memoization</span>          → React.memo(), useMemo(), useCallback()
+  7. <span class="file-js">Virtual Scrolling</span>    → AG Grid handles large datasets
+  8. <span class="file-js">Skeleton Loading</span>     → Instant UI feedback while data loads
+  9. <span class="file-js">Prefetching</span>          → TanStack Query staleTime + prefetch on hover
+
+<span class="highlight">Backend Performance:</span>
+  1. <span class="file-js">Indexing</span>             → MongoDB indexes on frequently queried fields
+  2. <span class="file-js">Projection</span>           → select() only needed fields
+  3. <span class="file-js">Pagination</span>           → cursor-based or page-based
+  4. <span class="file-js">Caching</span>              → TanStack Query client-side cache
+  5. <span class="file-js">Compression</span>          → gzip/brotli via Nginx
+  6. <span class="file-js">Connection Pooling</span>   → Mongoose connection pool
+  7. <span class="file-js">Rate Limiting</span>        → Prevent abuse
+  8. <span class="file-js">CDN</span>                  → Static assets via CDN
+
+<span class="highlight">Build Optimization:</span>
+  1. <span class="file-js">Vite Build</span>           → Fast HMR, optimized builds
+  2. <span class="file-js">Minification</span>         → Terser for JS, CSSNano for CSS
+  3. <span class="file-js">Gzip</span>                 → Enable compression
+  4. <span class="file-js">HTTP/2</span>               → Multiplexed connections
+  5. <span class="file-js">Cache Headers</span>        → Static assets: 1 year cache
+      </pre>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 1.7: RESPONSIVE DESIGN -->
+  <div class="section">
+    <div class="section-title"><div class="icon">&#128241;</div> Responsive Design Requirements</div>
+    <div class="section-desc">Mobile-first approach — every page must work on mobile, tablet, and desktop. POS Master REMOVED.</div>
+
+    <div class="tech-grid">
+      <div class="tech-card">
+        <div class="label">Approach</div>
+        <div class="value">Mobile-First</div>
+        <div class="desc">Start with mobile, scale up with Tailwind breakpoints</div>
+      </div>
+      <div class="tech-card">
+        <div class="label">Framework</div>
+        <div class="value">Tailwind CSS</div>
+        <div class="desc">sm:md:lg:xl:2xl breakpoints built-in</div>
+      </div>
+      <div class="tech-card">
+        <div class="label">Sidebar</div>
+        <div class="value">Responsive</div>
+        <div class="desc">Hidden on mobile, collapsed on tablet, full on desktop</div>
+      </div>
+      <div class="tech-card">
+        <div class="label">Tables</div>
+        <div class="value">Card + Table</div>
+        <div class="desc">Card view on mobile, full table on desktop</div>
+      </div>
+    </div>
+
+    <div class="tree-container">
+      <div class="tree-title">Responsive Breakpoints & Behavior</div>
+      <pre class="tree">
+<span class="highlight">Breakpoints (Tailwind CSS):</span>
+  <span class="folder">sm:</span> 640px    → Mobile landscape
+  <span class="folder">md:</span> 768px    → Tablet
+  <span class="folder">lg:</span> 1024px   → Desktop
+  <span class="folder">xl:</span> 1280px   → Large desktop
+  <span class="folder">2xl:</span> 1536px  → Extra large
+
+<span class="highlight">Page Behavior:</span>
+  <span class="file-js">Login</span>          → Centered card, full width on mobile
+  <span class="file-js">Dashboard</span>      → Stats cards stack vertically on mobile
+  <span class="file-js">Product List</span>   → Card view on mobile, table on desktop
+  <span class="file-js">Sales/Invoice</span>  → Scrollable horizontally on mobile
+  <span class="file-js">Reports</span>        → Charts stack vertically, full width
+  <span class="file-js">Settings</span>       → Single column on mobile, multi on desktop
+
+<span class="highlight">Components:</span>
+  <span class="file-js">Sidebar</span>        → Hidden (hamburger) | Collapsed icons | Full expanded
+  <span class="file-js">Topbar</span>         → Hamburger + logo | Full menu | Full menu + user info
+  <span class="file-js">Tables</span>         → Card view (stacked) | Scrollable table | Full table
+  <span class="file-js">Forms</span>          → Single column | 2 columns | 2-3 columns
+  <span class="file-js">Modals</span>         → Full-screen | Centered modal | Centered modal
+  <span class="file-js">Search</span>         → Full-width input | Inline search | Inline + filters
+      </pre>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 2: CLIENT FOLDER STRUCTURE -->
+  <div class="section">
+    <div class="section-title"><div class="icon">&#128187;</div> Client Side Folder Structure</div>
+    <div class="section-desc">Vite + React.js — frontend project er complete folder structure</div>
+
+    <div class="tree-container">
+      <div class="tree-title">client/ <span class="badge">React + Vite</span></div>
+      <pre class="tree">
+<span class="folder">client/</span>
+├── <span class="folder">public/</span>
+│   └── <span class="file-config">favicon.ico</span>
+├── <span class="folder">src/</span>
+│   ├── <span class="folder">assets/</span>                          <span class="comment">// images, logos, static files</span>
+│   │   ├── <span class="file-config">logo.png</span>
+│   │   ├── <span class="folder">images/</span>
+│   │   └── <span class="folder">icons/</span>
+│   │
+│   ├── <span class="folder">components/</span>                      <span class="comment">// reusable UI components</span>
+│   │   ├── <span class="folder">layout/</span>                     <span class="comment">// layout components</span>
+│   │   │   ├── <span class="file-jsx">Sidebar.jsx</span>
+│   │   │   ├── <span class="file-jsx">Topbar.jsx</span>
+│   │   │   ├── <span class="file-jsx">Footer.jsx</span>
+│   │   │   ├── <span class="file-jsx">DashboardLayout.jsx</span>
+│   │   │   └── <span class="file-jsx">AuthLayout.jsx</span>
+│   │   ├── <span class="folder">ui/</span>                          <span class="comment">// generic UI elements</span>
+│   │   │   ├── <span class="file-jsx">Button.jsx</span>
+│   │   │   ├── <span class="file-jsx">Input.jsx</span>
+│   │   │   ├── <span class="file-jsx">Modal.jsx</span>
+│   │   │   ├── <span class="file-jsx">Table.jsx</span>
+│   │   │   ├── <span class="file-jsx">Dropdown.jsx</span>
+│   │   │   ├── <span class="file-jsx">Badge.jsx</span>
+│   │   │   ├── <span class="file-jsx">Card.jsx</span>
+│   │   │   ├── <span class="file-jsx">Spinner.jsx</span>
+│   │   │   ├── <span class="file-jsx">Pagination.jsx</span>
+│   │   │   ├── <span class="file-jsx">SearchInput.jsx</span>
+│   │   │   ├── <span class="file-jsx">ConfirmDialog.jsx</span>
+│   │   │   ├── <span class="file-jsx">EmptyState.jsx</span>
+│   │   │   └── <span class="file-jsx">ThemeToggle.jsx</span>           <span class="comment">// animated sun/moon toggle</span>
+│   │   ├── <span class="folder">forms/</span>                       <span class="comment">// form components</span>
+│   │   │   ├── <span class="file-jsx">ProductForm.jsx</span>
+│   │   │   ├── <span class="file-jsx">SaleForm.jsx</span>
+│   │   │   ├── <span class="file-jsx">PurchaseForm.jsx</span>
+│   │   │   ├── <span class="file-jsx">CustomerForm.jsx</span>
+│   │   │   └── <span class="file-jsx">EmployeeForm.jsx</span>
+│   │   ├── <span class="folder">charts/</span>                      <span class="comment">// chart components</span>
+│   │   │   ├── <span class="file-jsx">SalesChart.jsx</span>
+│   │   │   ├── <span class="file-jsx">InventoryChart.jsx</span>
+│   │   │   └── <span class="file-jsx">RevenueChart.jsx</span>
+│   │   └── <span class="folder">sales/</span>                       <span class="comment">// sales components</span>
+│   │       ├── <span class="file-jsx">SalesCart.jsx</span>
+│   │       ├── <span class="file-jsx">ProductGrid.jsx</span>
+│   │       ├── <span class="file-jsx">IMEISelector.jsx</span>
+│   │       └── <span class="file-jsx">PaymentModal.jsx</span>
+│   │
+│   ├── <span class="folder">pages/</span>                          <span class="comment">// route pages (one file per page)</span>
+│   │   ├── <span class="folder">Auth/</span>
+│   │   │   ├── <span class="file-jsx">Login.jsx</span>
+│   │   │   └── <span class="file-jsx">ForgotPassword.jsx</span>
+│   │   ├── <span class="folder">Dashboard/</span>
+│   │   │   └── <span class="file-jsx">index.jsx</span>              <span class="comment">// main dashboard</span>
+│   │   ├── <span class="folder">Inventory/</span>
+│   │   │   ├── <span class="file-jsx">ProductList.jsx</span>
+│   │   │   ├── <span class="file-jsx">ProductForm.jsx</span>
+│   │   │   ├── <span class="file-jsx">ProductDetail.jsx</span>
+│   │   │   ├── <span class="file-jsx">IMEITracker.jsx</span>
+│   │   │   ├── <span class="file-jsx">StockOverview.jsx</span>
+│   │   │   └── <span class="file-jsx">StockTransfer.jsx</span>
+│   │   ├── <span class="folder">Sales/</span>
+│   │   │   ├── <span class="file-jsx">SalesList.jsx</span>
+│   │   │   ├── <span class="file-jsx">SalesForm.jsx</span>
+│   │   │   ├── <span class="file-jsx">InvoiceDetail.jsx</span>
+│   │   │   └── <span class="file-jsx">Returns.jsx</span>
+│   │   ├── <span class="folder">Purchase/</span>
+│   │   │   ├── <span class="file-jsx">SupplierList.jsx</span>
+│   │   │   ├── <span class="file-jsx">SupplierForm.jsx</span>
+│   │   │   ├── <span class="file-jsx">PurchaseOrders.jsx</span>
+│   │   │   ├── <span class="file-jsx">PurchaseOrderForm.jsx</span>
+│   │   │   └── <span class="file-jsx">GRN.jsx</span>
+│   │   ├── <span class="folder">Accounting/</span>
+│   │   │   ├── <span class="file-jsx">ChartOfAccounts.jsx</span>
+│   │   │   ├── <span class="file-jsx">JournalEntries.jsx</span>
+│   │   │   ├── <span class="file-jsx">BalanceSheet.jsx</span>
+│   │   │   ├── <span class="file-jsx">ProfitLoss.jsx</span>
+│   │   │   └── <span class="file-jsx">TaxReport.jsx</span>
+│   │   ├── <span class="folder">HR/</span>
+│   │   │   ├── <span class="file-jsx">EmployeeList.jsx</span>
+│   │   │   ├── <span class="file-jsx">EmployeeForm.jsx</span>
+│   │   │   ├── <span class="file-jsx">Attendance.jsx</span>
+│   │   │   ├── <span class="file-jsx">LeaveManagement.jsx</span>
+│   │   │   ├── <span class="file-jsx">Payroll.jsx</span>
+│   │   │   └── <span class="file-jsx">Payslip.jsx</span>
+│   │   ├── <span class="folder">CRM/</span>
+│   │   │   ├── <span class="file-jsx">CustomerList.jsx</span>
+│   │   │   ├── <span class="file-jsx">CustomerForm.jsx</span>
+│   │   │   ├── <span class="file-jsx">CustomerDetail.jsx</span>
+│   │   │   └── <span class="file-jsx">DueCollection.jsx</span>
+│   │   ├── <span class="folder">Wholesale/</span>
+│   │   │   ├── <span class="file-jsx">WholesaleOrders.jsx</span>
+│   │   │   ├── <span class="file-jsx">WholesaleOrderForm.jsx</span>
+│   │   │   ├── <span class="file-jsx">WholesalePriceList.jsx</span>
+│   │   │   └── <span class="file-jsx">WholesaleCustomers.jsx</span>
+│   │   ├── <span class="folder">Warranty/</span>
+│   │   │   ├── <span class="file-jsx">WarrantyClaims.jsx</span>
+│   │   │   ├── <span class="file-jsx">WarrantyClaimForm.jsx</span>
+│   │   │   └── <span class="file-jsx">WarrantyReport.jsx</span>
+│   │   ├── <span class="folder">Returns/</span>
+│   │   │   ├── <span class="file-jsx">ReturnList.jsx</span>
+│   │   │   ├── <span class="file-jsx">ReturnForm.jsx</span>
+│   │   │   └── <span class="file-jsx">ReturnReport.jsx</span>
+│   │   ├── <span class="folder">Reports/</span>
+│   │   │   ├── <span class="file-jsx">SalesReport.jsx</span>
+│   │   │   ├── <span class="file-jsx">InventoryReport.jsx</span>
+│   │   │   ├── <span class="file-jsx">BranchReport.jsx</span>
+│   │   │   └── <span class="file-jsx">DailyReport.jsx</span>
+│   │   └── <span class="folder">Settings/</span>
+│   │       ├── <span class="file-jsx">BranchSettings.jsx</span>
+│   │       ├── <span class="file-jsx">UserRoles.jsx</span>
+│   │       └── <span class="file-jsx">CompanySettings.jsx</span>
+│   │
+│   ├── <span class="folder">hooks/</span>                          <span class="comment">// custom React hooks</span>
+│   │   ├── <span class="file-js">useAuth.js</span>
+│   │   ├── <span class="file-js">useApi.js</span>
+│   │   ├── <span class="file-js">usePagination.js</span>
+│   │   ├── <span class="file-js">useDebounce.js</span>
+│   │   └── <span class="file-js">useSocket.js</span>
+│   │
+│   ├── <span class="folder">services/</span>                       <span class="comment">// API calls (Axios)</span>
+│   │   ├── <span class="file-js">api.js</span>                     <span class="comment">// Axios instance + interceptors</span>
+│   │   ├── <span class="file-js">auth.service.js</span>
+│   │   ├── <span class="file-js">user.service.js</span>
+│   │   ├── <span class="file-js">product.service.js</span>
+│   │   ├── <span class="file-js">imei.service.js</span>
+│   │   ├── <span class="file-js">stock.service.js</span>
+│   │   ├── <span class="file-js">sales.service.js</span>
+│   │   ├── <span class="file-js">purchase.service.js</span>
+│   │   ├── <span class="file-js">supplier.service.js</span>
+│   │   ├── <span class="file-js">customer.service.js</span>
+│   │   ├── <span class="file-js">employee.service.js</span>
+│   │   ├── <span class="file-js">payroll.service.js</span>
+│   │   ├── <span class="file-js">accounting.service.js</span>
+│   │   ├── <span class="file-js">report.service.js</span>
+│   │   └── <span class="file-js">notification.service.js</span>
+│   │
+│   ├── <span class="folder">store/</span>                          <span class="comment">// Zustand stores</span>
+│   │   ├── <span class="file-js">authStore.js</span>
+│   │   ├── <span class="file-js">productStore.js</span>
+│   │   ├── <span class="file-js">salesStore.js</span>             <span class="comment">// Sales cart state</span>
+│   │   ├── <span class="file-js">stockStore.js</span>
+│   │   └── <span class="file-js">uiStore.js</span>                 <span class="comment">// sidebar, theme, modals</span>
+│   │
+│   ├── <span class="folder">context/</span>                        <span class="comment">// React Context</span>
+│   │   └── <span class="file-jsx">AuthContext.jsx</span>
+│   │
+│   ├── <span class="folder">utils/</span>                          <span class="comment">// helper functions</span>
+│   │   ├── <span class="file-js">constants.js</span>               <span class="comment">// API URLs, roles, statuses</span>
+│   │   ├── <span class="file-js">formatters.js</span>              <span class="comment">// currency, date, number</span>
+│   │   ├── <span class="file-js">validators.js</span>              <span class="comment">// form validation helpers</span>
+│   │   ├── <span class="file-js">helpers.js</span>                 <span class="comment">// misc utilities</span>
+│   │   └── <span class="file-js">EventEmitter.js</span>            <span class="comment">// browser EventEmitter (real-time)</span>
+│   │
+│   ├── <span class="folder">routes/</span>                         <span class="comment">// route definitions</span>
+│   │   ├── <span class="file-jsx">AppRoutes.jsx</span>              <span class="comment">// all routes</span>
+│   │   ├── <span class="file-jsx">ProtectedRoute.jsx</span>         <span class="comment">// auth guard</span>
+│   │   └── <span class="file-jsx">RoleBasedRoute.jsx</span>        <span class="comment">// role guard</span>
+│   │
+│   ├── <span class="file-jsx">App.jsx</span>                        <span class="comment">// root component</span>
+│   ├── <span class="file-jsx">main.jsx</span>                       <span class="comment">// entry point</span>
+│   └── <span class="file-css">index.css</span>                      <span class="comment">// global styles + Tailwind</span>
+│
+├── <span class="file-config">.env.example</span>
+├── <span class="file-config">.env</span>
+├── <span class="file-config">.eslintrc.cjs</span>
+├── <span class="file-config">index.html</span>
+├── <span class="file-json">package.json</span>
+├── <span class="file-config">postcss.config.js</span>
+├── <span class="file-config">tailwind.config.js</span>
+└── <span class="file-config">vite.config.js</span>
+      </pre>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 3: SERVER FOLDER STRUCTURE (MODULE-BASED) -->
+  <div class="section">
+    <div class="section-title"><div class="icon">&#128421;</div> Server Side Folder Structure</div>
+    <div class="section-desc">Node.js + Express — module-based architecture. User folder e user er shob ache, product folder e product er shob.</div>
+
+    <div class="tree-container">
+      <div class="tree-title">server/ <span class="badge">Node.js + Express + MongoDB</span></div>
+      <pre class="tree">
+<span class="folder">server/</span>
+├── <span class="folder">src/</span>
+│   │
+│   ├── <span class="folder">config/</span>                          <span class="comment">// configuration files</span>
+│   │   ├── <span class="file-config">env.config.js</span>              <span class="comment">// environment variables validation & export</span>
+│   │   ├── <span class="file-db">db.config.js</span>               <span class="comment">// MongoDB connection setup</span>
+│   │   ├── <span class="file-config">cors.config.js</span>             <span class="comment">// CORS options</span>
+│   │   ├── <span class="file-config">jwt.config.js</span>              <span class="comment">// JWT secret, expiry times</span>
+│   │   └── <span class="file-config">email.config.js</span>            <span class="comment">// Nodemailer transporter setup</span>
+│   │
+│   ├── <span class="folder">modules/</span>                         <span class="comment">// ═══════════════════════════════════════</span>
+│   │   │                                       <span class="comment">// MODULE-BASED: each folder = 1 module</span>
+│   │   │                                       <span class="comment">// ═══════════════════════════════════════</span>
+│   │   │
+│   │   ├── <span class="folder">auth/</span>                        <span class="comment">// authentication module</span>
+│   │   │   ├── <span class="file-js">auth.routes.js</span>         <span class="comment">// route definitions</span>
+│   │   │   ├── <span class="file-js">auth.controller.js</span>     <span class="comment">// request handlers</span>
+│   │   │   ├── <span class="file-js">auth.service.js</span>        <span class="comment">// business logic</span>
+│   │   │   └── <span class="file-js">auth.validator.js</span>      <span class="comment">// Joi/Zod validation schemas</span>
+│   │   │
+│   │   ├── <span class="folder">user/</span>                        <span class="comment">// user management module</span>
+│   │   │   ├── <span class="file-db">user.model.js</span>          <span class="comment">// Mongoose schema & model</span>
+│   │   │   ├── <span class="file-js">user.routes.js</span>         <span class="comment">// route definitions</span>
+│   │   │   ├── <span class="file-js">user.controller.js</span>     <span class="comment">// request handlers</span>
+│   │   │   ├── <span class="file-js">user.service.js</span>        <span class="comment">// business logic</span>
+│   │   │   └── <span class="file-js">user.validator.js</span>      <span class="comment">// validation schemas</span>
+│   │   │
+│   │   ├── <span class="folder">branch/</span>                      <span class="comment">// branch management module</span>
+│   │   │   ├── <span class="file-db">branch.model.js</span>
+│   │   │   ├── <span class="file-js">branch.routes.js</span>
+│   │   │   ├── <span class="file-js">branch.controller.js</span>
+│   │   │   ├── <span class="file-js">branch.service.js</span>
+│   │   │   └── <span class="file-js">branch.validator.js</span>
+│   │   │
+│   │   ├── <span class="folder">product/</span>                     <span class="comment">// product management module</span>
+│   │   │   ├── <span class="file-db">product.model.js</span>
+│   │   │   ├── <span class="file-js">product.routes.js</span>
+│   │   │   ├── <span class="file-js">product.controller.js</span>
+│   │   │   ├── <span class="file-js">product.service.js</span>
+│   │   │   └── <span class="file-js">product.validator.js</span>
+│   │   │
+│   │   ├── <span class="folder">imei/</span>                        <span class="comment">// IMEI tracking module</span>
+│   │   │   ├── <span class="file-db">imei.model.js</span>
+│   │   │   ├── <span class="file-js">imei.routes.js</span>
+│   │   │   ├── <span class="file-js">imei.controller.js</span>
+│   │   │   ├── <span class="file-js">imei.service.js</span>
+│   │   │   └── <span class="file-js">imei.validator.js</span>
+│   │   │
+│   │   ├── <span class="folder">stock/</span>                       <span class="comment">// stock management module</span>
+│   │   │   ├── <span class="file-db">stock.model.js</span>
+│   │   │   ├── <span class="file-db">stockTransfer.model.js</span>
+│   │   │   ├── <span class="file-js">stock.routes.js</span>
+│   │   │   ├── <span class="file-js">stock.controller.js</span>
+│   │   │   ├── <span class="file-js">stock.service.js</span>
+│   │   │   └── <span class="file-js">stock.validator.js</span>
+│   │   │
+│   │   ├── <span class="folder">sale/</span>                        <span class="comment">// sales & POS module</span>
+│   │   │   ├── <span class="file-db">sale.model.js</span>
+│   │   │   ├── <span class="file-db">saleItem.model.js</span>
+│   │   │   ├── <span class="file-db">invoice.model.js</span>
+│   │   │   ├── <span class="file-db">payment.model.js</span>
+│   │   │   ├── <span class="file-js">sale.routes.js</span>
+│   │   │   ├── <span class="file-js">sale.controller.js</span>
+│   │   │   ├── <span class="file-js">sale.service.js</span>
+│   │   │   └── <span class="file-js">sale.validator.js</span>
+│   │   │
+│   │   ├── <span class="folder">purchase/</span>                    <span class="comment">// purchase order module</span>
+│   │   │   ├── <span class="file-db">purchaseOrder.model.js</span>
+│   │   │   ├── <span class="file-db">purchaseItem.model.js</span>
+│   │   │   ├── <span class="file-js">purchase.routes.js</span>
+│   │   │   ├── <span class="file-js">purchase.controller.js</span>
+│   │   │   ├── <span class="file-js">purchase.service.js</span>
+│   │   │   └── <span class="file-js">purchase.validator.js</span>
+│   │   │
+│   │   ├── <span class="folder">supplier/</span>                    <span class="comment">// supplier management module</span>
+│   │   │   ├── <span class="file-db">supplier.model.js</span>
+│   │   │   ├── <span class="file-js">supplier.routes.js</span>
+│   │   │   ├── <span class="file-js">supplier.controller.js</span>
+│   │   │   ├── <span class="file-js">supplier.service.js</span>
+│   │   │   └── <span class="file-js">supplier.validator.js</span>
+│   │   │
+│   │   ├── <span class="folder">customer/</span>                    <span class="comment">// customer management module</span>
+│   │   │   ├── <span class="file-db">customer.model.js</span>
+│   │   │   ├── <span class="file-db">customerDue.model.js</span>
+│   │   │   ├── <span class="file-js">customer.routes.js</span>
+│   │   │   ├── <span class="file-js">customer.controller.js</span>
+│   │   │   ├── <span class="file-js">customer.service.js</span>
+│   │   │   └── <span class="file-js">customer.validator.js</span>
+│   │   │
+│   │   ├── <span class="folder">employee/</span>                    <span class="comment">// employee management module</span>
+│   │   │   ├── <span class="file-db">employee.model.js</span>
+│   │   │   ├── <span class="file-js">employee.routes.js</span>
+│   │   │   ├── <span class="file-js">employee.controller.js</span>
+│   │   │   ├── <span class="file-js">employee.service.js</span>
+│   │   │   └── <span class="file-js">employee.validator.js</span>
+│   │   │
+│   │   ├── <span class="folder">attendance/</span>                  <span class="comment">// attendance tracking module</span>
+│   │   │   ├── <span class="file-db">attendance.model.js</span>
+│   │   │   ├── <span class="file-js">attendance.routes.js</span>
+│   │   │   ├── <span class="file-js">attendance.controller.js</span>
+│   │   │   └── <span class="file-js">attendance.service.js</span>
+│   │   │
+│   │   ├── <span class="folder">leave/</span>                       <span class="comment">// leave management module</span>
+│   │   │   ├── <span class="file-db">leave.model.js</span>
+│   │   │   ├── <span class="file-js">leave.routes.js</span>
+│   │   │   ├── <span class="file-js">leave.controller.js</span>
+│   │   │   └── <span class="file-js">leave.service.js</span>
+│   │   │
+│   │   ├── <span class="folder">payroll/</span>                     <span class="comment">// payroll & payslip module</span>
+│   │   │   ├── <span class="file-db">payroll.model.js</span>
+│   │   │   ├── <span class="file-js">payroll.routes.js</span>
+│   │   │   ├── <span class="file-js">payroll.controller.js</span>
+│   │   │   └── <span class="file-js">payroll.service.js</span>
+│   │   │
+│   │   ├── <span class="folder">accounting/</span>                  <span class="comment">// accounting & finance module</span>
+│   │   │   ├── <span class="file-db">account.model.js</span>
+│   │   │   ├── <span class="file-db">journalEntry.model.js</span>
+│   │   │   ├── <span class="file-db">expense.model.js</span>
+│   │   │   ├── <span class="file-js">accounting.routes.js</span>
+│   │   │   ├── <span class="file-js">accounting.controller.js</span>
+│   │   │   ├── <span class="file-js">accounting.service.js</span>
+│   │   │   └── <span class="file-js">accounting.validator.js</span>
+│   │   │
+│   │   ├── <span class="folder">warranty/</span>                    <span class="comment">// warranty tracking module</span>
+│   │   │   ├── <span class="file-db">warranty.model.js</span>
+│   │   │   ├── <span class="file-js">warranty.routes.js</span>
+│   │   │   ├── <span class="file-js">warranty.controller.js</span>
+│   │   │   └── <span class="file-js">warranty.service.js</span>
+│   │   │
+│   │   ├── <span class="folder">wholesale/</span>                   <span class="comment">// wholesale management module</span>
+│   │   │   ├── <span class="file-db">wholesalePrice.model.js</span>
+│   │   │   ├── <span class="file-db">wholesaleOrder.model.js</span>
+│   │   │   ├── <span class="file-js">wholesale.routes.js</span>
+│   │   │   ├── <span class="file-js">wholesale.controller.js</span>
+│   │   │   ├── <span class="file-js">wholesale.service.js</span>
+│   │   │   └── <span class="file-js">wholesale.validator.js</span>
+│   │   │
+│   │   ├── <span class="folder">asset/</span>                       <span class="comment">// asset management module</span>
+│   │   │   ├── <span class="file-db">asset.model.js</span>
+│   │   │   ├── <span class="file-js">asset.routes.js</span>
+│   │   │   ├── <span class="file-js">asset.controller.js</span>
+│   │   │   └── <span class="file-js">asset.service.js</span>
+│   │   │
+│   │   ├── <span class="folder">manufacturing/</span>               <span class="comment">// manufacturing & BOM module</span>
+│   │   │   ├── <span class="file-db">manufacturingOrder.model.js</span>
+│   │   │   ├── <span class="file-db">bom.model.js</span>
+│   │   │   ├── <span class="file-js">manufacturing.routes.js</span>
+│   │   │   ├── <span class="file-js">manufacturing.controller.js</span>
+│   │   │   └── <span class="file-js">manufacturing.service.js</span>
+│   │   │
+│   │   ├── <span class="folder">notification/</span>                <span class="comment">// notification module</span>
+│   │   │   ├── <span class="file-db">notification.model.js</span>
+│   │   │   ├── <span class="file-js">notification.routes.js</span>
+│   │   │   ├── <span class="file-js">notification.controller.js</span>
+│   │   │   └── <span class="file-js">notification.service.js</span>
+│   │   │
+│   │   └── <span class="folder">report/</span>                      <span class="comment">// reporting module</span>
+│   │       ├── <span class="file-js">report.routes.js</span>
+│   │       ├── <span class="file-js">report.controller.js</span>
+│   │       └── <span class="file-js">report.service.js</span>
+│   │
+│   ├── <span class="folder">middleware/</span>                      <span class="comment">// global middleware</span>
+│   │   ├── <span class="file-js">auth.middleware.js</span>         <span class="comment">// JWT verification</span>
+│   │   ├── <span class="file-js">role.middleware.js</span>         <span class="comment">// role-based access control</span>
+│   │   ├── <span class="file-js">validate.middleware.js</span>     <span class="comment">// request validation wrapper</span>
+│   │   ├── <span class="file-js">errorHandler.middleware.js</span> <span class="comment">// global error handler</span>
+│   │   ├── <span class="file-js">upload.middleware.js</span>       <span class="comment">// Multer file upload config</span>
+│   │   └── <span class="file-js">rateLimiter.middleware.js</span>  <span class="comment">// API rate limiting</span>
+│   │
+│   ├── <span class="folder">utils/</span>                          <span class="comment">// shared utility functions</span>
+│   │   ├── <span class="file-js">ApiError.js</span>                <span class="comment">// custom error class</span>
+│   │   ├── <span class="file-js">ApiResponse.js</span>             <span class="comment">// standard success response</span>
+│   │   ├── <span class="file-js">generateToken.js</span>           <span class="comment">// JWT access + refresh token generator</span>
+│   │   ├── <span class="file-js">invoiceGenerator.js</span>       <span class="comment">// PDF invoice generation</span>
+│   │   ├── <span class="file-js">emailSender.js</span>             <span class="comment">// Nodemailer wrapper</span>
+│   │   ├── <span class="file-js">pagination.js</span>              <span class="comment">// pagination helper</span>
+│   │   ├── <span class="file-js">validators.js</span>              <span class="comment">// common validation helpers</span>
+│   │   ├── <span class="file-js">constants.js</span>               <span class="comment">// app constants (roles, statuses)</span>
+│   │   └── <span class="file-js">eventEmitter.js</span>            <span class="comment">// Node.js EventEmitter (real-time)</span>
+│   │
+│   ├── <span class="folder">events/</span>                          <span class="comment">// event handlers (real-time updates)</span>
+│   │   ├── <span class="file-js">stock.events.js</span>            <span class="comment">// stock updated events</span>
+│   │   ├── <span class="file-js">sale.events.js</span>             <span class="comment">// sale completed events</span>
+│   │   └── <span class="file-js">index.js</span>                   <span class="comment">// event registry</span>
+│   │
+│   └── <span class="file-js">app.js</span>                          <span class="comment">// Express app setup (middleware, routes, error handler)</span>
+│
+├── <span class="folder">uploads/</span>                            <span class="comment">// local file uploads (gitignored)</span>
+│   ├── <span class="folder">images/</span>
+│   ├── <span class="folder">invoices/</span>
+│   └── <span class="folder">reports/</span>
+│
+├── <span class="folder">scripts/</span>                            <span class="comment">// utility scripts</span>
+│   ├── <span class="file-js">seed.js</span>                        <span class="comment">// database seed script</span>
+│   └── <span class="file-js">backup.js</span>                      <span class="comment">// backup script</span>
+│
+├── <span class="file-config">.env</span>                                <span class="comment">// environment variables (gitignored)</span>
+├── <span class="file-config">.env.example</span>                        <span class="comment">// env template</span>
+├── <span class="file-config">.gitignore</span>
+├── <span class="file-json">package.json</span>
+└── <span class="file-js">server.js</span>                           <span class="comment">// entry point — starts server</span>
+      </pre>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 4: MODULE DETAIL — USER -->
+  <div class="section">
+    <div class="section-title"><div class="icon">&#128100;</div> Module Example: user/ (Detailed)</div>
+    <div class="section-desc">Ekta module er moddhe ki ki thake — example hisebe user module dekhaoa hocche</div>
+
+    <div class="tree-container">
+      <div class="tree-title">server/src/modules/user/ <span class="badge">5 Files</span></div>
+      <pre class="tree">
+<span class="folder">user/</span>
+├── <span class="file-db">user.model.js</span>          <span class="comment">// Mongoose schema — username, email, phone, password, role, branch</span>
+│   <span class="comment">// Exports: User model</span>
+│   <span class="comment">// Indexes: username (unique), email (unique), phone (unique)</span>
+│   <span class="comment">// Methods: comparePassword(), generateRefreshToken()</span>
+│
+├── <span class="file-js">user.routes.js</span>         <span class="comment">// Express router — all user-related routes</span>
+│   <span class="comment">// GET    /api/v1/users          → list all (with pagination)</span>
+│   <span class="comment">// POST   /api/v1/users          → create new user</span>
+│   <span class="comment">// GET    /api/v1/users/:id      → get single user</span>
+│   <span class="comment">// PUT    /api/v1/users/:id      → update user</span>
+│   <span class="comment">// DELETE /api/v1/users/:id      → delete user</span>
+│   <span class="comment">// All routes use auth middleware + role check</span>
+│
+├── <span class="file-js">user.controller.js</span>     <span class="comment">// Request handlers — req/res handling only</span>
+│   <span class="comment">// getUsers(req, res)</span>
+│   <span class="comment">// getUserById(req, res)</span>
+│   <span class="comment">// createUser(req, res)</span>
+│   <span class="comment">// updateUser(req, res)</span>
+│   <span class="comment">// deleteUser(req, res)</span>
+│   <span class="comment">// Calls user.service.js for business logic</span>
+│
+├── <span class="file-js">user.service.js</span>        <span class="comment">// Business logic — all DB operations & calculations</span>
+│   <span class="comment">// getAllUsers(filters, pagination)</span>
+│   <span class="comment">// getUserById(id)</span>
+│   <span class="comment">// createUser(data)</span>
+│   <span class="comment">// updateUser(id, data)</span>
+│   <span class="comment">// deleteUser(id)</span>
+│   <span class="comment">// findUserByLogin(login) — detects email/phone/username</span>
+│
+└── <span class="file-js">user.validator.js</span>      <span class="comment">// Joi/Zod schemas — input validation</span>
+    <span class="comment">// createUserSchema</span>
+    <span class="comment">// updateUserSchema</span>
+    <span class="comment">// validates: username (min 3, unique), email (valid), phone (11 digits), password (min 6)</span>
+      </pre>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 5: CONFIG FILES DETAIL -->
+  <div class="section">
+    <div class="section-title"><div class="icon">&#9881;</div> Config Files Detail</div>
+    <div class="section-desc">Config folder e ki ki thake — each file er purpose</div>
+
+    <div class="tree-container">
+      <div class="tree-title">server/src/config/ <span class="badge">6 Files</span></div>
+      <pre class="tree">
+<span class="folder">config/</span>
+├── <span class="file-config">env.config.js</span>              <span class="comment">// Environment variables validation & export</span>
+│   <span class="comment">// Validates all required env vars exist</span>
+│   <span class="comment">// Exports: PORT, MONGO_URI, JWT_SECRET, JWT_REFRESH_SECRET, etc.</span>
+│   <span class="comment">// Uses dotenv + Joi for validation</span>
+│
+├── <span class="file-db">db.config.js</span>               <span class="comment">// MongoDB connection</span>
+│   <span class="comment">// connectDB() — connects to MongoDB with Mongoose</span>
+│   <span class="comment">// Handles connection errors, reconnection</span>
+│   <span class="comment">// Logs: "MongoDB Connected: localhost"</span>
+│
+├── <span class="file-config">cors.config.js</span>             <span class="comment">// CORS configuration</span>
+│   <span class="comment">// origin: ["http://localhost:5173"]  (Vite default port)</span>
+│   <span class="comment">// credentials: true</span>
+│   <span class="comment">// methods: ["GET", "POST", "PUT", "DELETE"]</span>
+│
+├── <span class="file-config">jwt.config.js</span>              <span class="comment">// JWT configuration</span>
+│   <span class="comment">// ACCESS_TOKEN_SECRET, ACCESS_TOKEN_EXPIRY: "15m"</span>
+│   <span class="comment">// REFRESH_TOKEN_SECRET, REFRESH_TOKEN_EXPIRY: "7d"</span>
+│
+├── <span class="file-config">email.config.js</span>            <span class="comment">// Email transporter</span>
+│   <span class="comment">// Nodemailer SMTP config (Gmail, custom SMTP, etc.)</span>
+│   <span class="comment">// Used for: password reset, notifications</span>
+│
+└── <span class="file-config">eventEmitter.js</span>            <span class="comment">// Node.js EventEmitter (real-time)</span>
+    <span class="comment">// Used for: stock:updated, sale:completed, notification:new</span>
+    <span class="comment">// No Socket.io — native EventEmitter only</span>
+      </pre>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 6: MIDDLEWARE -->
+  <div class="section">
+    <div class="section-title"><div class="icon">&#128737;</div> Middleware Files</div>
+    <div class="section-desc">Global middleware — authentication, validation, error handling</div>
+
+    <div class="tree-container">
+      <div class="tree-title">server/src/middleware/ <span class="badge">6 Files</span></div>
+      <pre class="tree">
+<span class="folder">middleware/</span>
+├── <span class="file-js">auth.middleware.js</span>         <span class="comment">// JWT verification — extracts user from token</span>
+│   <span class="comment">// Verifies accessToken from Authorization header</span>
+│   <span class="comment">// Attaches user to req.user</span>
+│   <span class="comment">// Returns 401 if invalid/expired</span>
+│
+├── <span class="file-js">role.middleware.js</span>         <span class="comment">// Role-based access control</span>
+│   <span class="comment">// authorize("admin", "manager") — allows only these roles</span>
+│   <span class="comment">// Checks req.user.role against allowed roles</span>
+│
+├── <span class="file-js">validate.middleware.js</span>     <span class="comment">// Request body validation wrapper</span>
+│   <span class="comment">// validate(schema) — runs Joi/Zod validation on req.body</span>
+│   <span class="comment">// Returns 400 with error details if validation fails</span>
+│
+├── <span class="file-js">errorHandler.middleware.js</span> <span class="comment">// Global error handler</span>
+│   <span class="comment">// Catches all errors thrown in controllers</span>
+│   <span class="comment">// Returns standardized { success: false, message, errors }</span>
+│   <span class="comment">// Handles: ApiError, ValidationError, CastError, DuplicateKey</span>
+│
+├── <span class="file-js">upload.middleware.js</span>       <span class="comment">// Multer file upload</span>
+│   <span class="comment">// upload.single("avatar") — single file</span>
+│   <span class="comment">// upload.array("images", 5) — multiple files</span>
+│   <span class="comment">// Storage: disk or memory</span>
+│   <span class="comment">// Filter: images only (jpg, png, webp)</span>
+│
+└── <span class="file-js">rateLimiter.middleware.js</span>  <span class="comment">// API rate limiting</span>
+    <span class="comment">// Limits: 100 requests per 15 min per IP</span>
+    <span class="comment">// Applied globally or per-route</span>
+      </pre>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 7: API ENDPOINTS -->
+  <div class="section">
+    <div class="section-title"><div class="icon">&#128279;</div> API Endpoints</div>
+    <div class="section-desc">Base URL: <code style="color:#60a5fa;background:#1e293b;padding:2px 8px;border-radius:4px;">http://localhost:5000/api/v1</code></div>
+
+    <div style="overflow-x:auto;">
+      <table class="api-table">
+        <thead>
+          <tr>
+            <th>Method</th>
+            <th>Endpoint</th>
+            <th>Description</th>
+            <th>Auth</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- AUTH -->
+          <tr><td colspan="4" style="color:#60a5fa;font-weight:600;padding-top:20px;">Auth</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td class="endpoint">/api/v1/auth/login</td><td class="desc-cell">Login (username/email/phone + password)</td><td class="desc-cell">No</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td class="endpoint">/api/v1/auth/logout</td><td class="desc-cell">Logout (clear refresh token)</td><td class="desc-cell">Yes</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td class="endpoint">/api/v1/auth/refresh-token</td><td class="desc-cell">Get new access token</td><td class="desc-cell">No</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td class="endpoint">/api/v1/auth/forgot-password</td><td class="desc-cell">Send reset email</td><td class="desc-cell">No</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td class="endpoint">/api/v1/auth/reset-password/:token</td><td class="desc-cell">Reset password</td><td class="desc-cell">No</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td class="endpoint">/api/v1/auth/me</td><td class="desc-cell">Get current user profile</td><td class="desc-cell">Yes</td></tr>
+
+          <!-- USERS -->
+          <tr><td colspan="4" style="color:#60a5fa;font-weight:600;padding-top:20px;">Users</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td class="endpoint">/api/v1/users</td><td class="desc-cell">List all users (paginated, filterable)</td><td class="desc-cell">Yes</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td class="endpoint">/api/v1/users</td><td class="desc-cell">Create new user</td><td class="desc-cell">Yes (admin)</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td class="endpoint">/api/v1/users/:id</td><td class="desc-cell">Get user by ID</td><td class="desc-cell">Yes</td></tr>
+          <tr><td><span class="method method-put">PUT</span></td><td class="endpoint">/api/v1/users/:id</td><td class="desc-cell">Update user</td><td class="desc-cell">Yes (admin)</td></tr>
+          <tr><td><span class="method method-delete">DELETE</span></td><td class="endpoint">/api/v1/users/:id</td><td class="desc-cell">Delete user</td><td class="desc-cell">Yes (admin)</td></tr>
+
+          <!-- PRODUCTS -->
+          <tr><td colspan="4" style="color:#60a5fa;font-weight:600;padding-top:20px;">Products</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td class="endpoint">/api/v1/products</td><td class="desc-cell">List products (paginated, filter by category/brand/branch)</td><td class="desc-cell">Yes</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td class="endpoint">/api/v1/products</td><td class="desc-cell">Create product</td><td class="desc-cell">Yes (manager+)</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td class="endpoint">/api/v1/products/:id</td><td class="desc-cell">Get product detail</td><td class="desc-cell">Yes</td></tr>
+          <tr><td><span class="method method-put">PUT</span></td><td class="endpoint">/api/v1/products/:id</td><td class="desc-cell">Update product</td><td class="desc-cell">Yes (manager+)</td></tr>
+          <tr><td><span class="method method-delete">DELETE</span></td><td class="endpoint">/api/v1/products/:id</td><td class="desc-cell">Delete product</td><td class="desc-cell">Yes (admin)</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td class="endpoint">/api/v1/products/:id/imei</td><td class="desc-cell">Get IMEI list for product</td><td class="desc-cell">Yes</td></tr>
+
+          <!-- IMEI -->
+          <tr><td colspan="4" style="color:#60a5fa;font-weight:600;padding-top:20px;">IMEI</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td class="endpoint">/api/v1/imei</td><td class="desc-cell">List IMEI (filter by status/branch/product)</td><td class="desc-cell">Yes</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td class="endpoint">/api/v1/imei</td><td class="desc-cell">Add IMEI</td><td class="desc-cell">Yes (manager+)</td></tr>
+          <tr><td><span class="method method-put">PUT</span></td><td class="endpoint">/api/v1/imei/:id</td><td class="desc-cell">Update IMEI status</td><td class="desc-cell">Yes</td></tr>
+
+          <!-- STOCKS -->
+          <tr><td colspan="4" style="color:#60a5fa;font-weight:600;padding-top:20px;">Stocks</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td class="endpoint">/api/v1/stocks</td><td class="desc-cell">Stock levels (filter by branch/product, lowStock flag)</td><td class="desc-cell">Yes</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td class="endpoint">/api/v1/stocks/transfer</td><td class="desc-cell">Transfer stock between branches</td><td class="desc-cell">Yes (manager+)</td></tr>
+          <tr><td><span class="method method-put">PUT</span></td><td class="endpoint">/api/v1/stocks/transfers/:id/approve</td><td class="desc-cell">Approve transfer</td><td class="desc-cell">Yes (admin)</td></tr>
+
+          <!-- SALES -->
+          <tr><td colspan="4" style="color:#60a5fa;font-weight:600;padding-top:20px;">Sales</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td class="endpoint">/api/v1/sales</td><td class="desc-cell">List sales (filter by branch/date/status)</td><td class="desc-cell">Yes</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td class="endpoint">/api/v1/sales</td><td class="desc-cell">Create sale (full invoice)</td><td class="desc-cell">Yes (operator+)</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td class="endpoint">/api/v1/sales/:id</td><td class="desc-cell">Sale detail</td><td class="desc-cell">Yes</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td class="endpoint">/api/v1/sales/:id/invoice</td><td class="desc-cell">Download PDF invoice</td><td class="desc-cell">Yes</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td class="endpoint">/api/v1/sales/:id/return</td><td class="desc-cell">Return items</td><td class="desc-cell">Yes (manager+)</td></tr>
+
+          <!-- PURCHASES -->
+          <tr><td colspan="4" style="color:#60a5fa;font-weight:600;padding-top:20px;">Purchases</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td class="endpoint">/api/v1/purchases</td><td class="desc-cell">List purchase orders</td><td class="desc-cell">Yes</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td class="endpoint">/api/v1/purchases</td><td class="desc-cell">Create purchase order</td><td class="desc-cell">Yes (manager+)</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td class="endpoint">/api/v1/purchases/:id/receive</td><td class="desc-cell">Receive goods (add IMEI)</td><td class="desc-cell">Yes (manager+)</td></tr>
+
+          <!-- CUSTOMERS -->
+          <tr><td colspan="4" style="color:#60a5fa;font-weight:600;padding-top:20px;">Customers</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td class="endpoint">/api/v1/customers</td><td class="desc-cell">List customers (search, paginated)</td><td class="desc-cell">Yes</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td class="endpoint">/api/v1/customers</td><td class="desc-cell">Create customer</td><td class="desc-cell">Yes (operator+)</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td class="endpoint">/api/v1/customers/:id/collect-due</td><td class="desc-cell">Collect due payment</td><td class="desc-cell">Yes (operator+)</td></tr>
+
+          <!-- EMPLOYEES -->
+          <tr><td colspan="4" style="color:#60a5fa;font-weight:600;padding-top:20px;">Employees</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td class="endpoint">/api/v1/employees</td><td class="desc-cell">List employees</td><td class="desc-cell">Yes</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td class="endpoint">/api/v1/employees</td><td class="desc-cell">Add employee</td><td class="desc-cell">Yes (admin)</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td class="endpoint">/api/v1/attendance/check-in</td><td class="desc-cell">Check in (with location)</td><td class="desc-cell">Yes</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td class="endpoint">/api/v1/attendance/check-out</td><td class="desc-cell">Check out (with location)</td><td class="desc-cell">Yes</td></tr>
+
+          <!-- PAYROLL -->
+          <tr><td colspan="4" style="color:#60a5fa;font-weight:600;padding-top:20px;">Payroll</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td class="endpoint">/api/v1/payroll</td><td class="desc-cell">List payroll records</td><td class="desc-cell">Yes (admin)</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td class="endpoint">/api/v1/payroll/process</td><td class="desc-cell">Process salary</td><td class="desc-cell">Yes (admin)</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td class="endpoint">/api/v1/payroll/:id/payslip</td><td class="desc-cell">Download payslip PDF</td><td class="desc-cell">Yes</td></tr>
+
+          <!-- ACCOUNTING -->
+          <tr><td colspan="4" style="color:#60a5fa;font-weight:600;padding-top:20px;">Accounting</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td class="endpoint">/api/v1/reports/balance-sheet</td><td class="desc-cell">Balance sheet</td><td class="desc-cell">Yes (accountant+)</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td class="endpoint">/api/v1/reports/profit-loss</td><td class="desc-cell">Profit & loss statement</td><td class="desc-cell">Yes (accountant+)</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td class="endpoint">/api/v1/reports/sales-summary</td><td class="desc-cell">Sales summary report</td><td class="desc-cell">Yes</td></tr>
+
+          <!-- WARRANTY -->
+          <tr><td colspan="4" style="color:#60a5fa;font-weight:600;padding-top:20px;">Warranty</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td class="endpoint">/api/v1/warranties</td><td class="desc-cell">List warranty claims (filter by status/expiring)</td><td class="desc-cell">Yes</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td class="endpoint">/api/v1/warranties</td><td class="desc-cell">Create warranty claim</td><td class="desc-cell">Yes (operator+)</td></tr>
+          <tr><td><span class="method method-put">PUT</span></td><td class="endpoint">/api/v1/warranties/:id</td><td class="desc-cell">Update claim status</td><td class="desc-cell">Yes (manager+)</td></tr>
+
+          <!-- WHOLESALE -->
+          <tr><td colspan="4" style="color:#60a5fa;font-weight:600;padding-top:20px;">Wholesale</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td class="endpoint">/api/v1/wholesale/prices</td><td class="desc-cell">List wholesale prices</td><td class="desc-cell">Yes</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td class="endpoint">/api/v1/wholesale/prices</td><td class="desc-cell">Set wholesale price</td><td class="desc-cell">Yes (admin)</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td class="endpoint">/api/v1/wholesale/orders</td><td class="desc-cell">List wholesale orders</td><td class="desc-cell">Yes</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td class="endpoint">/api/v1/wholesale/orders</td><td class="desc-cell">Create wholesale order</td><td class="desc-cell">Yes (operator+)</td></tr>
+
+          <!-- SETTINGS -->
+          <tr><td colspan="4" style="color:#60a5fa;font-weight:600;padding-top:20px;">Settings</td></tr>
+          <tr><td><span class="method method-get">GET</span></td><td class="endpoint">/api/v1/branches</td><td class="desc-cell">List branches</td><td class="desc-cell">Yes</td></tr>
+          <tr><td><span class="method method-post">POST</span></td><td class="endpoint">/api/v1/branches</td><td class="desc-cell">Create branch</td><td class="desc-cell">Yes (admin)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 8: MONGOOSE SCHEMAS -->
+  <div class="section">
+    <div class="section-title"><div class="icon">&#128451;</div> MongoDB Schemas (Key Models)</div>
+    <div class="section-desc">Mongoose schema definitions — database er data structure</div>
+
+    <div class="two-col">
+      <!-- User Model -->
+      <div class="schema-block">
+        <div class="schema-header">user.model.js</div>
+        <div class="schema-body">
+          <span class="key">name</span>: <span class="type">String</span> <span class="required">required</span><br>
+          <span class="key">username</span>: <span class="type">String</span> <span class="required">required unique indexed</span><br>
+          <span class="key">email</span>: <span class="type">String</span> <span class="required">required unique indexed</span><br>
+          <span class="key">phone</span>: <span class="type">String</span> <span class="required">required unique indexed</span><br>
+          <span class="key">password</span>: <span class="type">String</span> <span class="required">required select:false</span><br>
+          <span class="key">role</span>: <span class="type">ObjectId → Role</span> <span class="required">required</span><br>
+          <span class="key">branch</span>: <span class="type">ObjectId → Branch</span><br>
+          <span class="key">avatar</span>: <span class="type">String</span> <span class="comment">default: ""</span><br>
+          <span class="key">isActive</span>: <span class="type">Boolean</span> <span class="comment">default: true</span><br>
+          <span class="key">lastLogin</span>: <span class="type">Date</span><br>
+          <span class="key">refreshToken</span>: <span class="type">String</span> <span class="comment">select:false</span><br>
+          <span class="key">timestamps</span>: <span class="type">true</span>
+        </div>
+      </div>
+
+      <!-- Product Model -->
+      <div class="schema-block">
+        <div class="schema-header">product.model.js</div>
+        <div class="schema-body">
+          <span class="key">name</span>: <span class="type">String</span> <span class="required">required</span><br>
+          <span class="key">sku</span>: <span class="type">String</span> <span class="required">required unique</span><br>
+          <span class="key">barcode</span>: <span class="type">String</span><br>
+          <span class="key">category</span>: <span class="type">ObjectId → Category</span><br>
+          <span class="key">brand</span>: <span class="type">ObjectId → Brand</span><br>
+          <span class="key">model</span>: <span class="type">String</span><br>
+          <span class="key">costPrice</span>: <span class="type">Number</span> <span class="required">required</span><br>
+          <span class="key">sellingPrice</span>: <span class="type">Number</span> <span class="required">required</span><br>
+          <span class="key">vatRate</span>: <span class="type">Number</span> <span class="comment">default: 0</span><br>
+          <span class="key">image</span>: <span class="type">String</span><br>
+          <span class="key">isActive</span>: <span class="type">Boolean</span> <span class="comment">default: true</span><br>
+          <span class="key">timestamps</span>: <span class="type">true</span>
+        </div>
+      </div>
+
+      <!-- IMEI Model -->
+      <div class="schema-block">
+        <div class="schema-header">imei.model.js</div>
+        <div class="schema-body">
+          <span class="key">imeiNumber</span>: <span class="type">String</span> <span class="required">required unique</span><br>
+          <span class="key">product</span>: <span class="type">ObjectId → Product</span> <span class="required">required</span><br>
+          <span class="key">branch</span>: <span class="type">ObjectId → Branch</span> <span class="required">required</span><br>
+          <span class="key">status</span>: <span class="type">Enum</span> <span class="comment">available | sold | returned | defective | transferred</span><br>
+          <span class="key">purchasePrice</span>: <span class="type">Number</span><br>
+          <span class="key">sellingPrice</span>: <span class="type">Number</span><br>
+          <span class="key">supplier</span>: <span class="type">ObjectId → Supplier</span><br>
+          <span class="key">sale</span>: <span class="type">ObjectId → Sale</span><br>
+          <span class="key">warrantyExpiry</span>: <span class="type">Date</span><br>
+          <span class="key">timestamps</span>: <span class="type">true</span>
+        </div>
+      </div>
+
+      <!-- Sale Model -->
+      <div class="schema-block">
+        <div class="schema-header">sale.model.js</div>
+        <div class="schema-body">
+          <span class="key">invoiceNumber</span>: <span class="type">String</span> <span class="required">required unique</span><br>
+          <span class="key">branch</span>: <span class="type">ObjectId → Branch</span> <span class="required">required</span><br>
+          <span class="key">customer</span>: <span class="type">ObjectId → Customer</span><br>
+          <span class="key">items</span>: <span class="type">Array[{product, imei, qty, price, discount, vat, total}]</span><br>
+          <span class="key">subtotal</span>: <span class="type">Number</span><br>
+          <span class="key">totalDiscount</span>: <span class="type">Number</span><br>
+          <span class="key">totalVat</span>: <span class="type">Number</span><br>
+          <span class="key">grandTotal</span>: <span class="type">Number</span><br>
+          <span class="key">paidAmount</span>: <span class="type">Number</span><br>
+          <span class="key">dueAmount</span>: <span class="type">Number</span><br>
+          <span class="key">paymentMethod</span>: <span class="type">Enum</span> <span class="comment">cash | card | bkash | nagad | rocket</span><br>
+          <span class="key">status</span>: <span class="type">Enum</span> <span class="comment">completed | returned | cancelled</span><br>
+          <span class="key">createdBy</span>: <span class="type">ObjectId → User</span><br>
+          <span class="key">timestamps</span>: <span class="type">true</span>
+        </div>
+      </div>
+
+      <!-- Employee Model -->
+      <div class="schema-block">
+        <div class="schema-header">employee.model.js</div>
+        <div class="schema-body">
+          <span class="key">user</span>: <span class="type">ObjectId → User</span> <span class="required">required</span><br>
+          <span class="key">employeeId</span>: <span class="type">String</span> <span class="required">required unique</span><br>
+          <span class="key">designation</span>: <span class="type">String</span><br>
+          <span class="key">department</span>: <span class="type">String</span><br>
+          <span class="key">branch</span>: <span class="type">ObjectId → Branch</span> <span class="required">required</span><br>
+          <span class="key">salary</span>: <span class="type">Number</span><br>
+          <span class="key">joiningDate</span>: <span class="type">Date</span><br>
+          <span class="key">emergencyContact</span>: <span class="type">String</span><br>
+          <span class="key">timestamps</span>: <span class="type">true</span>
+        </div>
+      </div>
+
+      <!-- Role Model -->
+      <div class="schema-block">
+        <div class="schema-header">role.model.js</div>
+        <div class="schema-body">
+          <span class="key">name</span>: <span class="type">String</span> <span class="required">required unique</span><br>
+          <span class="comment">// admin | manager | operator | accountant</span><br>
+          <span class="key">permissions</span>: <span class="type">[String]</span><br>
+          <span class="comment">// products.view, products.create, sales.create,</span><br>
+          <span class="comment">// purchases.approve, employees.manage, etc.</span><br>
+          <span class="key">timestamps</span>: <span class="type">true</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 9: FLOW DIAGRAM -->
+  <div class="section">
+    <div class="section-title"><div class="icon">&#128260;</div> Request Flow</div>
+    <div class="section-desc">Ekta API request kivabe handle hoy — step by step flow</div>
+
+    <div class="tree-container">
+      <pre class="tree" style="text-align:center;">
+<span class="highlight">Client (React)</span>
+       │
+       │  POST /api/v1/auth/login
+       │  { login: "admin@brothers.com", password: "123456" }
+       ▼
+<span class="folder">Express Server (app.js)</span>
+       │
+       ├── 1. <span class="file-config">cors.config.js</span>          → CORS check (origin allowed?)
+       ├── 2. <span class="file-config">rateLimiter</span>              → Rate limit check (too many requests?)
+       ├── 3. <span class="file-js">auth.routes.js</span>          → Route matching (/auth/login)
+       ├── 4. <span class="file-js">auth.validator.js</span>        → Validation (email valid? password min 6?)
+       │
+       ▼
+<span class="highlight">auth.controller.js</span>
+       │
+       │  Calls auth.service.js
+       ▼
+<span class="highlight">auth.service.js</span>
+       │
+       ├── 1. Detect input type (email/phone/username)
+       ├── 2. Query MongoDB: User.findOne({ email: ... })
+       ├── 3. Compare password: bcrypt.compare()
+       ├── 4. Generate JWT tokens
+       ├── 5. Save refresh token to DB
+       │
+       ▼
+<span class="file-db">MongoDB (user collection)</span>
+       │
+       │  Return user document
+       ▼
+<span class="highlight">auth.controller.js</span>
+       │
+       │  Send response
+       ▼
+<span class="highlight">Client (React)</span>
+       │
+       ├── Store accessToken in memory
+       ├── Store refreshToken in httpOnly cookie
+       ├── Redirect to /dashboard
+       └── Axios interceptor attaches token to all future requests
+      </pre>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SECTION 10: ENV FILE -->
+  <div class="section">
+    <div class="section-title"><div class="icon">&#128196;</div> Environment Variables</div>
+    <div class="section-desc">.env.example file — server and client dono er jonno</div>
+
+    <div class="two-col">
+      <div class="tree-container">
+        <div class="tree-title">server/.env.example</div>
+        <pre class="tree">
+<span class="file-config"># Server</span>
+<span class="key">PORT</span>=<span class="type">5000</span>
+<span class="key">NODE_ENV</span>=<span class="type">development</span>
+
+<span class="file-config"># MongoDB</span>
+<span class="key">MONGO_URI</span>=<span class="type">mongodb://localhost:27017/brothers_erp</span>
+
+<span class="file-config"># JWT</span>
+<span class="key">JWT_SECRET</span>=<span class="type">your_access_token_secret_here</span>
+<span class="key">JWT_REFRESH_SECRET</span>=<span class="type">your_refresh_token_secret_here</span>
+<span class="key">JWT_EXPIRE</span>=<span class="type">15m</span>
+<span class="key">JWT_REFRESH_EXPIRE</span>=<span class="type">7d</span>
+
+<span class="file-config"># Email (Nodemailer)</span>
+<span class="key">SMTP_HOST</span>=<span class="type">smtp.gmail.com</span>
+<span class="key">SMTP_PORT</span>=<span class="type">587</span>
+<span class="key">SMTP_USER</span>=<span class="type">your_email@gmail.com</span>
+<span class="key">SMTP_PASS</span>=<span class="type">your_app_password</span>
+
+<span class="file-config"># Cloudinary (optional)</span>
+<span class="key">CLOUDINARY_CLOUD_NAME</span>=<span class="type">xxx</span>
+<span class="key">CLOUDINARY_API_KEY</span>=<span class="type">xxx</span>
+<span class="key">CLOUDINARY_API_SECRET</span>=<span class="type">xxx</span>
+
+<span class="file-config"># Client URL (for CORS)</span>
+<span class="key">CLIENT_URL</span>=<span class="type">http://localhost:5173</span>
+        </pre>
+      </div>
+
+      <div class="tree-container">
+        <div class="tree-title">client/.env.example</div>
+        <pre class="tree">
+<span class="file-config"># API Base URL</span>
+<span class="key">VITE_API_URL</span>=<span class="type">http://localhost:5000/api/v1</span>
+
+<span class="file-config"># App Name</span>
+<span class="key">VITE_APP_NAME</span>=<span class="type">Brothers ERP</span>
+        </pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- FOOTER -->
+  <div style="text-align:center;padding:40px 0;color:#475569;font-size:13px;">
+    <p>Brothers Mobile Shop ERP — System Architecture Document</p>
+    <p style="margin-top:8px;">Stack: Vite + React.js (JS) + Node.js/Express + MongoDB</p>
+    <p style="margin-top:8px;">Module-Based Architecture | 3-Way Login | JWT Auth</p>
+    <p style="margin-top:20px;color:#334155;">Generated: July 2026 | Version 1.0 | Deadline: 25 Days</p>
+  </div>
+
+</div>
+
+</body>
+</html>

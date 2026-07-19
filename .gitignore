@@ -1,0 +1,28 @@
+node_modules/
+dist/
+build/
+.env
+.env.*
+!.env.example
+*.local
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Server
+server/node_modules/
+server/dist/
+server/.env
+server/uploads/
+
+# Client
+client/node_modules/
+client/dist/
+client/.env
+client/.env.local
+client/.env.production
