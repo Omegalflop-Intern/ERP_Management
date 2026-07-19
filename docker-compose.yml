@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: brothers-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: mobile_shop_erp
+
+  server:
+    build: .
+    container_name: brothers-erp-server
+    ports:
+      - "5000:5000"
+    environment:
+      PORT: 5000
+      NODE_ENV: production
+      MONGODB_URI: mongodb://mongodb:27017/mobile_shop_erp
+      JWT_SECRET: 4e0c96aeb7d5d412ac79a511c97ce6336482921538d0992671ce23de4593a033
+      APP_URL: http://localhost:3000
+    depends_on:
+      - mongodb
+    volumes:
+      - uploads:/app/server/uploads
+    restart: unless-stopped
+
+volumes:
+  mongo_data:
+  uploads:
