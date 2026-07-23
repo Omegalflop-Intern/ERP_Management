@@ -1,0 +1,6 @@
+allowBuilds:
+  core-js: true
+  esbuild: true
+minimumReleaseAgeExclude:
+  - '@tanstack/query-devtools@5.101.3'
+  - '@tanstack/react-query-devtools@5.101.3'
