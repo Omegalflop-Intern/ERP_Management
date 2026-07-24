@@ -1,0 +1,638 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { 
+  PanelLeftOpen, LogOut, Smartphone, ShieldCheck, Bell, Wifi, WifiOff, 
+  PanelLeftClose, PanelLeft, ChevronDown, Palette, Sun, Moon, Search, 
+  X, Sparkles, Package, ShoppingCart, Users, Wrench, FileText, Building2, 
+  DollarSign, ArrowRight, RefreshCw, Command, AlertTriangle
+} from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
+import api, { getAssetUrl } from '../../lib/api';
+
+function UserAvatar({ user, size = 'md' }) {
+  const [imgError, setImgError] = useState(false);
+  const sizes = { sm: 'w-8 h-8 text-sm', md: 'w-9 h-9 text-sm', lg: 'w-10 h-10 text-base' };
+  const sz = sizes[size] || sizes.md;
+
+  useEffect(() => {
+    setImgError(false);
+  }, [user?.avatar]);
+
+  if (user?.avatar && !imgError) {
+    return (
+      <div className={`${sz} rounded-full overflow-hidden flex-shrink-0 border border-red-200 dark:border-red-500/30`}>
+        <img
+          src={getAssetUrl(user.avatar)}
+          alt={user.username || 'User'}
+          className="w-full h-full object-cover"
+          onError={() => setImgError(true)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${sz} rounded-full flex-shrink-0 bg-red-600/10 dark:bg-red-600/20 text-red-700 dark:text-red-400 flex items-center justify-center font-bold border border-red-200 dark:border-red-500/30`}>
+      {user?.username?.[0]?.toUpperCase() || '?'}
+    </div>
+  );
+}
+
+function GlobalSearch({ styled }) {
+  const [query, setQuery] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [sales, setSales] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const searchRef = useRef(null);
+  const inputRef = useRef(null);
+  const navigate = useNavigate();
+
+  const pagesList = [
+    { title: 'Dashboard', path: '/dashboard', icon: Sparkles, category: 'Navigation' },
+    { title: 'Sales List', path: '/sales', icon: ShoppingCart, category: 'Sales' },
+    { title: 'New Sale / POS', path: '/sales/new', icon: ShoppingCart, category: 'Sales' },
+    { title: 'Sales Returns', path: '/sales/returns', icon: ShoppingCart, category: 'Sales' },
+    { title: 'Product Catalog', path: '/products', icon: Package, category: 'Inventory' },
+    { title: 'IMEI Tracker', path: '/inventory', icon: Smartphone, category: 'Inventory' },
+    { title: 'Stock Overview', path: '/stock', icon: Package, category: 'Inventory' },
+    { title: 'Stock Transfer', path: '/stock-transfer', icon: Package, category: 'Inventory' },
+    { title: 'Customer List', path: '/customers', icon: Users, category: 'CRM' },
+    { title: 'Due Collection', path: '/customers/due-collection', icon: Users, category: 'CRM' },
+    { title: 'Warranty Claims', path: '/warranties', icon: FileText, category: 'CRM' },
+    { title: 'Repair Services', path: '/repairs', icon: Wrench, category: 'Services' },
+    { title: 'Purchase Orders', path: '/purchases', icon: FileText, category: 'Purchases' },
+    { title: 'Supplier List', path: '/suppliers', icon: Building2, category: 'Purchases' },
+    { title: 'Sales Reports', path: '/reports', icon: FileText, category: 'Reports' },
+    { title: 'Employee List', path: '/hr/employees', icon: Users, category: 'HR' },
+    { title: 'Payroll', path: '/hr/payroll', icon: DollarSign, category: 'HR' },
+    { title: 'Chart of Accounts', path: '/accounting', icon: FileText, category: 'Finance' },
+    { title: 'Profit & Loss', path: '/accounting/profit-loss', icon: FileText, category: 'Finance' },
+    { title: 'System Settings', path: '/settings', icon: Sparkles, category: 'Settings' },
+  ];
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsOpen(true);
+        setTimeout(() => inputRef.current?.focus(), 50);
+      } else if (e.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (!query.trim() || query.length < 2) {
+      setProducts([]);
+      setCustomers([]);
+      setSales([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    const timer = setTimeout(async () => {
+      try {
+        const [prodRes, custRes, saleRes] = await Promise.allSettled([
+          api.get('/products', { params: { search: query, limit: 4 } }),
+          api.get('/customers', { params: { search: query, limit: 4 } }),
+          api.get('/sales', { params: { search: query, limit: 4 } }),
+        ]);
+
+        if (prodRes.status === 'fulfilled') {
+          const data = prodRes.value.data?.data;
+          setProducts(Array.isArray(data) ? data : data?.products || []);
+        }
+        if (custRes.status === 'fulfilled') {
+          const data = custRes.value.data?.data;
+          setCustomers(Array.isArray(data) ? data : data?.customers || []);
+        }
+        if (saleRes.status === 'fulfilled') {
+          const data = saleRes.value.data?.data;
+          setSales(Array.isArray(data) ? data : data?.sales || []);
+        }
+      } catch (err) {
+        console.error('Search error:', err);
+      } finally {
+        setLoading(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  const filteredPages = query.trim()
+    ? pagesList.filter(p => 
+        p.title.toLowerCase().includes(query.toLowerCase()) || 
+        p.category.toLowerCase().includes(query.toLowerCase())
+      )
+    : pagesList.slice(0, 6);
+
+  const handleSelect = (path) => {
+    navigate(path);
+    setIsOpen(false);
+    setQuery('');
+  };
+
+  const hasResults = filteredPages.length > 0 || products.length > 0 || customers.length > 0 || sales.length > 0;
+
+  return (
+    <div className="relative flex-1 max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg mx-2" ref={searchRef}>
+      {/* Search Bar Input */}
+      <div 
+        onClick={() => { setIsOpen(true); inputRef.current?.focus(); }}
+        className={`relative flex items-center w-full px-3 py-1.5 rounded-xl border text-xs cursor-text transition-all ${
+          styled 
+            ? 'neu-card-sm !border-none' 
+            : 'bg-gray-50 dark:bg-gray-900/80 border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
+        } ${isOpen ? 'ring-2 ring-red-500/30 border-red-500/50' : ''}`}
+      >
+        <Search className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
+        <input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onChange={(e) => { setQuery(e.target.value); setIsOpen(true); }}
+          onFocus={() => setIsOpen(true)}
+          placeholder="Search products, customers, IMEIs, sales..."
+          className="w-full bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none text-xs"
+        />
+        {query ? (
+          <button 
+            onClick={(e) => { e.stopPropagation(); setQuery(''); }}
+            className="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        ) : (
+          <div className="hidden md:flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-gray-200/60 dark:bg-gray-800 text-[10px] font-mono text-gray-400 flex-shrink-0 ml-1">
+            <Command className="w-2.5 h-2.5" />
+            <span>K</span>
+          </div>
+        )}
+      </div>
+
+      {/* Global Search Results Dropdown Overlay */}
+      {isOpen && (
+        <div className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl z-50 max-h-[80vh] overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800/60">
+          
+          {/* Section: Pages / Quick Navigation */}
+          {filteredPages.length > 0 && (
+            <div className="p-2">
+              <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Sparkles className="w-3 h-3 text-red-500" /> Navigation & Features
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 mt-1">
+                {filteredPages.map((page, idx) => {
+                  const Icon = page.icon;
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => handleSelect(page.path)}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-left hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors group"
+                    >
+                      <div className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 flex items-center justify-center group-hover:bg-red-600/10 group-hover:text-red-500 transition-colors">
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-semibold text-gray-800 dark:text-gray-200 group-hover:text-red-600 dark:group-hover:text-red-400 truncate">
+                          {page.title}
+                        </div>
+                        <div className="text-[10px] text-gray-400 font-mono">{page.category}</div>
+                      </div>
+                      <ArrowRight className="w-3.5 h-3.5 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Loading Indicator */}
+          {loading && (
+            <div className="p-4 text-center text-xs text-gray-400 flex items-center justify-center gap-2">
+              <RefreshCw className="w-4 h-4 animate-spin text-red-500" /> Searching database...
+            </div>
+          )}
+
+          {/* Section: Products / Inventory */}
+          {!loading && products.length > 0 && (
+            <div className="p-2">
+              <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Package className="w-3 h-3 text-blue-500" /> Products & IMEIs
+              </div>
+              <div className="space-y-1 mt-1">
+                {products.map((p) => (
+                  <button
+                    key={p._id}
+                    onClick={() => handleSelect('/products')}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors group"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center flex-shrink-0">
+                        <Smartphone className="w-4 h-4" />
+                      </div>
+                      <div className="truncate">
+                        <div className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">{p.name}</div>
+                        <div className="text-[10px] text-gray-400 font-mono">{p.brand} | {p.category?.name || 'Device'}</div>
+                      </div>
+                    </div>
+                    <div className="text-right flex-shrink-0 ml-2">
+                      <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 font-mono">৳{p.sellingPrice?.toLocaleString()}</div>
+                      <div className="text-[10px] text-gray-400">Stock: {p.stockQuantity ?? 0}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Section: Customers */}
+          {!loading && customers.length > 0 && (
+            <div className="p-2">
+              <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Users className="w-3 h-3 text-emerald-500" /> Customers
+              </div>
+              <div className="space-y-1 mt-1">
+                {customers.map((c) => (
+                  <button
+                    key={c._id}
+                    onClick={() => handleSelect(`/customers/${c._id}`)}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors group"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center flex-shrink-0 font-bold text-xs">
+                        {c.name?.[0]?.toUpperCase() || 'C'}
+                      </div>
+                      <div className="truncate">
+                        <div className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">{c.name}</div>
+                        <div className="text-[10px] text-gray-400 font-mono">{c.phone || c.email || 'No contact'}</div>
+                      </div>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 font-medium capitalize">
+                      {c.type || 'Retail'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Section: Sales & Invoices */}
+          {!loading && sales.length > 0 && (
+            <div className="p-2">
+              <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                <ShoppingCart className="w-3 h-3 text-purple-500" /> Sales Invoices
+              </div>
+              <div className="space-y-1 mt-1">
+                {sales.map((s) => (
+                  <button
+                    key={s._id}
+                    onClick={() => handleSelect(`/sales/${s._id}`)}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors group"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-7 h-7 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-4 h-4" />
+                      </div>
+                      <div className="truncate">
+                        <div className="text-xs font-semibold text-gray-800 dark:text-gray-200 font-mono">{s.invoiceNo}</div>
+                        <div className="text-[10px] text-gray-400">{s.customer?.name || 'Walk-in Customer'}</div>
+                      </div>
+                    </div>
+                    <div className="text-right flex-shrink-0 ml-2">
+                      <div className="text-xs font-bold text-purple-600 dark:text-purple-400 font-mono">৳{s.grandTotal?.toLocaleString()}</div>
+                      <div className="text-[10px] text-gray-400">{new Date(s.createdAt).toLocaleDateString()}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* No results */}
+          {!loading && query.length >= 2 && !hasResults && (
+            <div className="p-6 text-center text-xs text-gray-400">
+              No products, customers, or invoices match "<span className="font-semibold text-gray-300">{query}</span>"
+            </div>
+          )}
+
+          {/* Footer hint */}
+          <div className="px-4 py-2 bg-gray-50/50 dark:bg-gray-900/40 text-[10px] text-gray-400 flex items-center justify-between">
+            <span>Press <kbd className="px-1 py-0.5 bg-gray-200 dark:bg-gray-800 rounded font-mono">Esc</kbd> to close</span>
+            <span className="text-red-500 font-medium">Brothers ERP Quick Search</span>
+          </div>
+
+        </div>
+      )}
+    </div>
+  );
+}
+
+function getNotificationIcon(type) {
+  switch (type) {
+    case 'LOW_STOCK':
+      return (
+        <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center flex-shrink-0">
+          <AlertTriangle className="w-4 h-4" />
+        </div>
+      );
+    case 'DUE_REMINDER':
+      return (
+        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center flex-shrink-0">
+          <DollarSign className="w-4 h-4" />
+        </div>
+      );
+    case 'SALE_COMPLETED':
+      return (
+        <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center flex-shrink-0">
+          <ShoppingCart className="w-4 h-4" />
+        </div>
+      );
+    case 'WARRANTY_EXPIRING':
+      return (
+        <div className="w-8 h-8 rounded-lg bg-red-500/10 text-red-500 flex items-center justify-center flex-shrink-0">
+          <FileText className="w-4 h-4" />
+        </div>
+      );
+    case 'SYSTEM':
+      return (
+        <div className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center flex-shrink-0">
+          <Sparkles className="w-4 h-4" />
+        </div>
+      );
+    default:
+      return (
+        <div className="w-8 h-8 rounded-lg bg-gray-500/10 text-gray-500 flex items-center justify-center flex-shrink-0">
+          <Bell className="w-4 h-4" />
+        </div>
+      );
+  }
+}
+
+export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed }) {
+  const { user, logout } = useAuth();
+  const { theme, toggleTheme, designMode, cycleDesignMode, styled } = useTheme();
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const [showNotifs, setShowNotifs] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showMobileSettings, setShowMobileSettings] = useState(false);
+  const [online, setOnline] = useState(navigator.onLine);
+  const notifRef = useRef(null);
+  const userMenuRef = useRef(null);
+  const mobileSettingsRef = useRef(null);
+
+  useEffect(() => {
+    const handleOnline = () => setOnline(true);
+    const handleOffline = () => setOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => { window.removeEventListener('online', handleOnline); window.removeEventListener('offline', handleOffline); };
+  }, []);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) setShowNotifs(false);
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) setShowUserMenu(false);
+      if (mobileSettingsRef.current && !mobileSettingsRef.current.contains(e.target)) setShowMobileSettings(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const { data: notifData } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: async () => { const r = await api.get('/notifications', { params: { limit: 15 } }); return r.data?.data; },
+    refetchInterval: 15000,
+    enabled: !!user,
+  });
+
+  const markReadMutation = useMutation({
+    mutationFn: (id) => api.put(`/notifications/${id}/read`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
+  });
+
+  const markAllReadMutation = useMutation({
+    mutationFn: () => api.put('/notifications/read-all'),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['notifications'] }),
+  });
+
+  const handleLogout = () => { logout(); navigate('/login'); };
+
+  const MODE_LABELS = { flat: 'Flat', neumorphism: 'Neumorphism', glassmorphism: 'Glassmorphism', liquidglass: 'Liquid Glass', neobrutalism: 'Neo Brutal', aurora: 'Aurora', glassmorphismpro: 'Glass Pro' };
+
+  return (
+    <header className={`h-14 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111827]/80 backdrop-blur-md px-3 md:px-6 flex items-center justify-between sticky top-0 z-30 ${styled ? 'neu-flat border-none !bg-transparent backdrop-blur-none' : ''}`}>
+      {/* Left: menu + brand */}
+      <div className="flex items-center gap-2">
+        <button onClick={onToggleSidebar} className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors lg:hidden ${styled ? 'neu-btn !p-2' : ''}`}>
+          <PanelLeftOpen className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+        </button>
+        <button onClick={onToggleCollapse} className={`hidden lg:flex p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${styled ? 'neu-btn !p-2' : ''}`}>
+          {collapsed ? <PanelLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" /> : <PanelLeftClose className="w-5 h-5 text-gray-600 dark:text-gray-400" />}
+        </button>
+        <div className="flex items-center gap-2 font-bold text-xl text-red-700 dark:text-red-500">
+          <div className={`w-9 h-9 rounded-xl bg-red-600/10 dark:bg-red-600/20 border border-red-200 dark:border-red-500/30 flex items-center justify-center ${styled ? 'neu-icon !bg-red-600/10 !border-none' : ''}`}>
+            <Smartphone className="w-5 h-5" />
+          </div>
+          <span className="hidden md:inline bg-gradient-to-r from-red-700 to-red-500 dark:from-red-400 dark:to-red-300 bg-clip-text text-transparent">
+            Brothers <span className={`text-xs font-semibold px-2 py-0.5 rounded bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-red-400 ${styled ? '' : 'border border-red-200 dark:border-red-500/20'}`}>ERP</span>
+          </span>
+        </div>
+      </div>
+
+      {/* Middle: Global Search Bar */}
+      <GlobalSearch styled={styled} />
+
+      {/* Right: controls */}
+      <div className="flex items-center gap-1.5 md:gap-2">
+        {/* Online status — hidden on mobile */}
+        <div className={`hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium ${online ? 'bg-green-50 dark:bg-green-900/10 text-green-700 dark:text-green-400' : 'bg-amber-50 dark:bg-amber-900/10 text-amber-700 dark:text-amber-400'}`}>
+          {online ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
+          <span>{online ? 'Online' : 'Offline'}</span>
+        </div>
+
+        {/* Desktop: ThemeToggle inline */}
+        <div className="hidden md:block">
+          <DesktopThemeToggle styled={styled} />
+        </div>
+
+        {/* Mobile: settings gear/dots button → popover */}
+        <div className="relative md:hidden" ref={mobileSettingsRef}>
+          <button
+            onClick={() => { setShowMobileSettings(!showMobileSettings); setShowUserMenu(false); setShowNotifs(false); }}
+            className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${styled ? 'neu-btn !p-2' : ''}`}
+          >
+            <Palette className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          </button>
+          {showMobileSettings && (
+            <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-50 overflow-hidden">
+              <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-800 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Theme</div>
+              <button onClick={() => { toggleTheme(); }} className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 text-sm text-gray-700 dark:text-gray-300">
+                {theme === 'dark' ? <Moon className="w-4 h-4 text-blue-400" /> : <Sun className="w-4 h-4 text-amber-500" />}
+                {theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
+                <span className="ml-auto text-[10px] text-gray-400">{theme === 'dark' ? 'ON' : 'OFF'}</span>
+              </button>
+              <div className="px-3 py-2 border-t border-gray-100 dark:border-gray-800 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Design</div>
+              <button onClick={cycleDesignMode} className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 text-sm text-gray-700 dark:text-gray-300">
+                <Palette className="w-4 h-4 text-purple-500" />
+                {MODE_LABELS[designMode] || 'Flat'}
+                <span className="ml-auto text-[10px] text-gray-400">Tap to cycle</span>
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Notifications */}
+        <div className="relative" ref={notifRef}>
+          <button 
+            onClick={() => { 
+              const nextState = !showNotifs;
+              setShowNotifs(nextState); 
+              setShowUserMenu(false); 
+              setShowMobileSettings(false); 
+              if (nextState) qc.invalidateQueries({ queryKey: ['notifications'] });
+            }} 
+            className={`relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${styled ? 'neu-btn !p-2' : ''}`}
+          >
+            <Bell className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            {notifData?.unreadCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
+                {notifData.unreadCount > 9 ? '9+' : notifData.unreadCount}
+              </span>
+            )}
+          </button>
+          {showNotifs && (
+            <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-50 max-h-96 overflow-y-auto">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="font-semibold text-sm text-gray-900 dark:text-gray-100">Notifications</h3>
+                {notifData?.unreadCount > 0 && (
+                  <button onClick={() => markAllReadMutation.mutate()} className="text-xs text-red-600 hover:underline">Mark all read</button>
+                )}
+              </div>
+              {!notifData?.notifications?.length ? (
+                <div className="px-4 py-8 text-center text-gray-400 text-sm">No notifications</div>
+              ) : (
+                notifData.notifications.map(n => (
+                  <button key={n._id} onClick={() => { markReadMutation.mutate(n._id); if (n.link) navigate(n.link); setShowNotifs(false); }}
+                    className={`w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800 transition-colors ${!n.isRead ? 'bg-red-50/30 dark:bg-red-900/5' : ''}`}>
+                    <div className="flex items-start gap-3">
+                      {getNotificationIcon(n.type)}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1">
+                          <div className="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">{n.title}</div>
+                          {!n.isRead && <span className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">{n.message}</div>
+                        <div className="text-[10px] text-gray-400 mt-1">{new Date(n.createdAt).toLocaleString()}</div>
+                      </div>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* User profile */}
+        {user && (
+          <div className="relative" ref={userMenuRef}>
+            {/* Mobile: just avatar */}
+            <button
+              onClick={() => { setShowUserMenu(!showUserMenu); setShowNotifs(false); setShowMobileSettings(false); }}
+              className={`md:hidden ${styled ? 'neu-icon !rounded-full !border-none !p-0' : ''}`}
+            >
+              <UserAvatar user={user} size="md" />
+            </button>
+
+            {/* Desktop: compact sleek profile button */}
+            <button
+              onClick={() => { setShowUserMenu(!showUserMenu); setShowNotifs(false); setShowMobileSettings(false); }}
+              className={`hidden md:flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-gray-200/80 dark:border-gray-800 transition-all ${
+                styled
+                  ? 'neu-flat !border-none !shadow-none hover:bg-white/10 dark:hover:bg-gray-800/40'
+                  : 'bg-gray-50 dark:bg-gray-900/80 hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
+            >
+              <UserAvatar user={user} size="sm" />
+              <div className="text-left leading-tight min-w-0">
+                <div className="text-xs font-bold text-gray-900 dark:text-gray-100 truncate max-w-[120px]">
+                  {user.fullName || user.username}
+                </div>
+                <div className="text-[10px] text-red-600 dark:text-red-400 font-semibold uppercase tracking-wider truncate max-w-[120px]">
+                  {user.roleDisplayName || user.roleName || user.role}
+                </div>
+              </div>
+              <ChevronDown className="w-3.5 h-3.5 text-gray-400 ml-0.5 flex-shrink-0" />
+            </button>
+
+            {/* Dropdown menu (both mobile and desktop) */}
+            {showUserMenu && (
+              <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-50 overflow-hidden">
+                {/* Mobile only: show user info at top */}
+                <div className="md:hidden px-3 py-3 border-b border-gray-100 dark:border-gray-800">
+                  <div className="flex items-center gap-2.5">
+                    <UserAvatar user={user} size="lg" />
+                    <div>
+                      <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">{user.fullName || user.username}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 font-mono">{user.roleDisplayName || user.roleName || user.role}</div>
+                      {user.phone && <div className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">{user.phone}</div>}
+                    </div>
+                  </div>
+                </div>
+                <button onClick={() => { handleLogout(); }} className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-red-50 dark:hover:bg-red-900/10 text-sm text-red-600 dark:text-red-400 transition-colors">
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </header>
+  );
+}
+
+function DesktopThemeToggle({ styled }) {
+  const { theme, toggleTheme, designMode, cycleDesignMode } = useTheme();
+  const MODE_LABELS = { flat: 'Flat', neumorphism: 'Neumorphism', glassmorphism: 'Glassmorphism', liquidglass: 'Liquid Glass', neobrutalism: 'Neo Brutal', aurora: 'Aurora', glassmorphismpro: 'Glass Pro' };
+  const MODE_ICONS = { flat: '○', neumorphism: '◉', glassmorphism: '◈', liquidglass: '◎', neobrutalism: '▣', aurora: '✧', glassmorphismpro: '◇' };
+
+  return (
+    <div className="flex items-center gap-1">
+      <button
+        onClick={toggleTheme}
+        className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${styled ? 'neu-btn !p-2' : ''}`}
+        title={theme === 'dark' ? 'Switch to Light' : 'Switch to Dark'}
+      >
+        {theme === 'dark' ? <Moon className="w-4 h-4 text-blue-400" /> : <Sun className="w-4 h-4 text-amber-500" />}
+      </button>
+      <button
+        onClick={cycleDesignMode}
+        className={`px-2 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${styled ? 'neu-btn !px-2 !py-1.5' : 'hover:bg-gray-100 dark:hover:bg-gray-800'} ${designMode !== 'flat' ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}
+        title={`Design: ${MODE_LABELS[designMode]}`}
+      >
+        <span className="mr-1">{MODE_ICONS[designMode]}</span>
+        <span className="hidden lg:inline">{MODE_LABELS[designMode]}</span>
+      </button>
+    </div>
+  );
+}
