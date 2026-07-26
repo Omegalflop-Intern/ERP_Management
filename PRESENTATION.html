@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brothers Mobile Shop ERP — Executive Interactive Animated Deck</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    :root {
+      --bg-dark: #070a12;
+      --bg-card: rgba(15, 23, 42, 0.75);
+      --bg-card-hover: rgba(30, 41, 59, 0.85);
+      --border-color: rgba(255, 255, 255, 0.12);
+      --border-accent: rgba(99, 102, 241, 0.5);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      
+      --primary: #dc2626;
+      --primary-glow: rgba(220, 38, 38, 0.4);
+      --accent-cyan: #06b6d4;
+      --accent-indigo: #6366f1;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-purple: #a855f7;
+
+      --font-heading: 'Outfit', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-code: 'JetBrains Mono', monospace;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-body);
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      overflow-x: hidden;
+      min-height: 100vh;
+      line-height: 1.6;
+      perspective: 1000px;
+    }
+
+    /* Ambient Floating Mesh Glow Spheres */
+    .bg-mesh {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      z-index: -1;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.5;
+      animation: floatOrb 20s infinite alternate ease-in-out;
+    }
+
+    .orb-1 {
+      width: 450px; height: 450px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.4), transparent 70%);
+      top: -100px; left: -100px;
+      animation-duration: 18s;
+    }
+
+    .orb-2 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(220, 38, 38, 0.35), transparent 70%);
+      bottom: -150px; right: -100px;
+      animation-duration: 24s;
+    }
+
+    .orb-3 {
+      width: 350px; height: 350px;
+      background: radial-gradient(circle, rgba(6, 182, 212, 0.35), transparent 70%);
+      top: 40%; left: 50%;
+      animation-duration: 22s;
+    }
+
+    @keyframes floatOrb {
+      0% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(60px, 40px) scale(1.15); }
+      100% { transform: translate(-40px, 80px) scale(0.9); }
+    }
+
+    /* Top Progress Bar */
+    .progress-bar-wrap {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      z-index: 110;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 10%;
+      background: linear-gradient(90deg, #dc2626, #6366f1, #06b6d4);
+      box-shadow: 0 0 12px var(--accent-cyan);
+      transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Top Navigation Bar */
+    .top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(7, 10, 18, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-color);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #dc2626, #9333ea);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      box-shadow: 0 0 20px var(--primary-glow);
+      animation: pulseGlow 3s infinite alternate;
+    }
+
+    @keyframes pulseGlow {
+      0% { box-shadow: 0 0 15px var(--primary-glow); }
+      100% { box-shadow: 0 0 30px var(--accent-indigo); }
+    }
+
+    .logo-text h1 {
+      font-family: var(--font-heading);
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #ffffff, #cbd5e1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .logo-text p {
+      font-size: 11px;
+      color: var(--accent-cyan);
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .nav-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 8px 18px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .nav-btn::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%; width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .nav-btn:hover::after { left: 100%; }
+
+    .nav-btn:hover, .nav-btn.active {
+      background: var(--accent-indigo);
+      border-color: var(--accent-indigo);
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+      transform: translateY(-2px);
+    }
+
+    /* Main Container */
+    .app-viewport {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    /* View Switcher Controls */
+    .view-mode-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 12px 20px;
+      border-radius: 16px;
+      margin-bottom: 24px;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .mode-pills {
+      display: flex;
+      gap: 6px;
+      background: rgba(0, 0, 0, 0.35);
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .pill-btn {
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .pill-btn.active {
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+    }
+
+    .slide-counter {
+      font-family: var(--font-code);
+      font-size: 13px;
+      color: var(--accent-cyan);
+      background: rgba(6, 182, 212, 0.1);
+      padding: 6px 16px;
+      border-radius: 20px;
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      letter-spacing: 1px;
+    }
+
+    /* Slide Deck View */
+    .slide-deck {
+      display: none;
+      position: relative;
+    }
+
+    .slide-deck.active {
+      display: block;
+    }
+
+    .slide-card {
+      display: none;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 40px;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      min-height: 540px;
+      transform-style: preserve-3d;
+    }
+
+    .slide-card.active {
+      display: block;
+      animation: slideIn3D 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes slideIn3D {
+      0% {
+        opacity: 0;
+        transform: translateY(20px) scale(0.96) rotateX(2deg);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1) rotateX(0deg);
+      }
+    }
+
+    /* Staggered Child Element Animations */
+    .slide-card.active .animate-stagger {
+      opacity: 0;
+      animation: fadeInUpStagger 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .slide-card.active .delay-1 { animation-delay: 0.1s; }
+    .slide-card.active .delay-2 { animation-delay: 0.2s; }
+    .slide-card.active .delay-3 { animation-delay: 0.3s; }
+    .slide-card.active .delay-4 { animation-delay: 0.4s; }
+
+    @keyframes fadeInUpStagger {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .slide-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 14px;
+    }
+
+    .tag-purple { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+    .tag-cyan { background: rgba(6, 182, 212, 0.15); color: #22d3ee; border: 1px solid rgba(6, 182, 212, 0.3); }
+    .tag-emerald { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .tag-red { background: rgba(220, 38, 38, 0.15); color: #f87171; border: 1px solid rgba(220, 38, 38, 0.3); }
+
+    .slide-title {
+      font-family: var(--font-heading);
+      font-size: 34px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .slide-desc {
+      font-size: 15px;
+      color: var(--text-muted);
+      margin-bottom: 30px;
+      max-width: 920px;
+    }
+
+    /* Content Cards & Hover Animations */
+    .grid-responsive-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    .grid-responsive-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .grid-responsive-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+    .content-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 22px;
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+
+    .content-box:hover {
+      background: rgba(255, 255, 255, 0.07);
+      border-color: var(--border-accent);
+      transform: translateY(-4px) scale(1.01);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .box-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .box-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      transition: transform 0.3s ease;
+    }
+
+    .content-box:hover .box-icon {
+      transform: scale(1.1) rotate(5deg);
+    }
+
+    .icon-indigo { background: var(--accent-indigo); box-shadow: 0 0 12px rgba(99, 102, 241, 0.4); }
+    .icon-cyan { background: var(--accent-cyan); box-shadow: 0 0 12px rgba(6, 182, 212, 0.4); }
+    .icon-emerald { background: var(--accent-emerald); box-shadow: 0 0 12px rgba(16, 185, 129, 0.4); }
+    .icon-amber { background: var(--accent-amber); box-shadow: 0 0 12px rgba(245, 158, 11, 0.4); }
+    .icon-red { background: var(--primary); box-shadow: 0 0 12px var(--primary-glow); }
+
+    .box-title {
+      font-family: var(--font-heading);
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .box-list { list-style: none; padding: 0; }
+    .box-list li {
+      position: relative;
+      padding-left: 20px;
+      margin-bottom: 8px;
+      font-size: 13.5px;
+      color: var(--text-muted);
+    }
+
+    .box-list li::before {
+      content: '•';
+      position: absolute;
+      left: 4px;
+      color: var(--accent-cyan);
+      font-size: 18px;
+    }
+
+    .chip {
+      display: inline-block;
+      font-family: var(--font-code);
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-color);
+      color: #e2e8f0;
+    }
+
+    /* Scanner Beam Animation Demo */
+    .scanner-preview-box {
+      position: relative;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid var(--border-accent);
+      border-radius: 14px;
+      padding: 20px;
+      overflow: hidden;
+      margin-top: 14px;
+    }
+
+    .scanner-beam {
+      position: absolute;
+      left: 0; width: 100%; height: 3px;
+      background: linear-gradient(90deg, transparent, #22d3ee, transparent);
+      box-shadow: 0 0 15px #22d3ee;
+      animation: scanBeam 2.5s infinite ease-in-out;
+    }
+
+    @keyframes scanBeam {
+      0% { top: 5%; opacity: 0.2; }
+      50% { top: 90%; opacity: 1; }
+      100% { top: 5%; opacity: 0.2; }
+    }
+
+    /* Slide Navigation Footer */
+    .slide-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .ctrl-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-color);
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .ctrl-btn:hover:not(:disabled) {
+      background: var(--accent-indigo);
+      border-color: var(--accent-indigo);
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .ctrl-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .dot-indicators {
+      display: flex;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .dot.active {
+      background: var(--accent-cyan);
+      width: 28px;
+      border-radius: 10px;
+      box-shadow: 0 0 12px var(--accent-cyan);
+    }
+
+    /* Demo Receipt Modal Animation */
+    .receipt-modal {
+      display: none;
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%) scale(0.9);
+      background: #ffffff;
+      color: #000000;
+      padding: 20px;
+      width: 280px;
+      border-radius: 8px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+      z-index: 200;
+      font-family: var(--font-code);
+      font-size: 11px;
+    }
+
+    .receipt-modal.active {
+      display: block;
+      animation: popInReceipt 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes popInReceipt {
+      from { opacity: 0; transform: translate(-50%, -40%) scale(0.8); }
+      to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    }
+
+    /* RESPONSIVE DESIGN FOR MOBILE & TABLETS */
+    @media (max-width: 992px) {
+      .grid-responsive-2, .grid-responsive-3, .grid-responsive-4 { grid-template-columns: 1fr; }
+      .slide-card { padding: 24px; min-height: auto; }
+      .slide-title { font-size: 24px; }
+      .view-mode-bar { flex-direction: column; gap: 12px; align-items: flex-start; }
+    }
+
+    @media (max-width: 600px) {
+      .top-nav { padding: 10px 14px; }
+      .logo-text h1 { font-size: 15px; }
+      .app-viewport { padding: 12px; }
+      .ctrl-btn { padding: 8px 14px; font-size: 12px; }
+      .dot-indicators { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient Mesh Background -->
+  <div class="bg-mesh">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- Top Progress Bar -->
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progressFill"></div>
+  </div>
+
+  <!-- Top Navigation Bar -->
+  <header class="top-nav">
+    <a href="#" class="brand-logo">
+      <div class="logo-icon">
+        <i data-lucide="smartphone"></i>
+      </div>
+      <div class="logo-text">
+        <h1>Brothers Mobile Shop ERP</h1>
+        <p>ENTERPRISE CLIENT PRESENTATION DECK</p>
+      </div>
+    </a>
+
+    <div class="nav-actions">
+      <button class="nav-btn" onclick="toggleFullscreen()">
+        <i data-lucide="maximize-2"></i> <span class="hide-mobile">Fullscreen</span>
+      </button>
+      <a href="MOBILE_SHOP_ERP_SYSTEM_GUIDE.pdf" download class="nav-btn active">
+        <i data-lucide="download"></i> <span>PDF Guide</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Viewport -->
+  <main class="app-viewport">
+
+    <!-- View Mode Selector -->
+    <div class="view-mode-bar">
+      <div class="mode-pills">
+        <button class="pill-btn active" id="btnSlideView" onclick="switchView('slide')">
+          <i data-lucide="presentation" style="width:14px; display:inline;"></i> Slide Presentation
+        </button>
+        <button class="pill-btn" id="btnCatalogView" onclick="switchView('catalog')">
+          <i data-lucide="grid" style="width:14px; display:inline;"></i> Interactive Module Catalog
+        </button>
+      </div>
+
+      <div class="slide-counter" id="slideCounter">
+        SLIDE 01 / 10
+      </div>
+    </div>
+
+    <!-- SLIDE DECK VIEW -->
+    <div class="slide-deck active" id="slideDeck">
+
+      <!-- SLIDE 1: Executive Overview -->
+      <div class="slide-card active" data-slide="1">
+        <div class="slide-tag tag-purple animate-stagger"><i data-lucide="zap"></i> Overview & Architecture</div>
+        <h2 class="slide-title animate-stagger delay-1">End-to-End Mobile Retail ERP Platform</h2>
+        <p class="slide-desc animate-stagger delay-1">A unified enterprise software solution engineered specifically for mobile device retail & wholesale businesses with real-time stock deduction, IMEI tracking, and financial ledgers.</p>
+
+        <div class="grid-responsive-4">
+          <div class="content-box animate-stagger delay-2">
+            <div class="box-header">
+              <div class="box-icon icon-red"><i data-lucide="shopping-bag"></i></div>
+              <div class="box-title">High-Speed POS</div>
+            </div>
+            <p style="font-size:13px; color:var(--text-muted);">Barcode & IMEI scanner checkout with thermal receipt printer integration (80mm/58mm).</p>
+          </div>
+
+          <div class="content-box animate-stagger delay-2">
+            <div class="box-header">
+              <div class="box-icon icon-cyan"><i data-lucide="barcode"></i></div>
+              <div class="box-title">IMEI Lifecycle</div>
+            </div>
+            <p style="font-size:13px; color:var(--text-muted);">Full serial number tracking from stock intake to sale, repair, transfer, and customer warranty.</p>
+          </div>
+
+          <div class="content-box animate-stagger delay-3">
+            <div class="box-header">
+              <div class="box-icon icon-emerald"><i data-lucide="dollar-sign"></i></div>
+              <div class="box-title">Double-Entry Accounting</div>
+            </div>
+            <p style="font-size:13px; color:var(--text-muted);">Automated P&L, Balance Sheet, Trial Balance, Expense vouchers & investor equity ledgers.</p>
+          </div>
+
+          <div class="content-box animate-stagger delay-4">
+            <div class="box-header">
+              <div class="box-icon icon-amber"><i data-lucide="users"></i></div>
+              <div class="box-title">HR & Payroll</div>
+            </div>
+            <p style="font-size:13px; color:var(--text-muted);">Daily attendance, leave approvals, overtime calculations & automated monthly pay slips.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 2: Interactive POS Terminal -->
+      <div class="slide-card" data-slide="2">
+        <div class="slide-tag tag-cyan animate-stagger"><i data-lucide="shopping-cart"></i> Retail POS Module</div>
+        <h2 class="slide-title animate-stagger delay-1">Point of Sale & Real-Time Checkout Terminal</h2>
+        <p class="slide-desc animate-stagger delay-1">Designed for lightning-fast cashier operation with scanner input, split payment channels, and thermal receipt auto-generation.</p>
+
+        <div class="grid-responsive-2">
+          <div class="content-box animate-stagger delay-2">
+            <div class="box-header">
+              <div class="box-icon icon-indigo"><i data-lucide="layers"></i></div>
+              <div class="box-title">POS Core Capabilities</div>
+            </div>
+            <ul class="box-list">
+              <li><span class="chip">/sales/new</span> Dedicated scanner input field with auto-focus.</li>
+              <li>Supports multi-item carts with custom discounts and price overrides.</li>
+              <li>Customer lookup & walk-in quick customer creation modal.</li>
+              <li>Split payment channels: Cash, Credit Card, bKash / Nagad, and Customer Due Credit.</li>
+            </ul>
+          </div>
+
+          <!-- Scanner Beam Preview -->
+          <div class="content-box animate-stagger delay-3">
+            <div class="box-header">
+              <div class="box-icon icon-cyan"><i data-lucide="scan"></i></div>
+              <div class="box-title">Live Laser Barcode Scanner Simulator</div>
+            </div>
+            <div class="scanner-preview-box">
+              <div class="scanner-beam"></div>
+              <p style="font-family:var(--font-code); font-size:12px; color:var(--accent-cyan);">Scanning IMEI: 356892110293841</p>
+              <p style="font-size:12px; color:#fff; margin-top:4px;">Item Found: iPhone 15 Pro Max 256GB - Blue Titanium</p>
+              <p style="font-size:11px; color:var(--accent-emerald); margin-top:2px;">Status: In Stock (Verified)</p>
+            </div>
+            <button class="nav-btn active" style="margin-top:14px; width:100%; justify-content:center;" onclick="triggerReceiptModal()">
+              <i data-lucide="printer"></i> Test Print Thermal Receipt (80mm)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 3: IMEI Lifecycle Tracker -->
+      <div class="slide-card" data-slide="3">
+        <div class="slide-tag tag-emerald animate-stagger"><i data-lucide="shield-check"></i> Inventory Tracking</div>
+        <h2 class="slide-title animate-stagger delay-1">IMEI Serial Number Lifecycle Tracker</h2>
+        <p class="slide-desc animate-stagger delay-1">Every single mobile phone unit is tracked individually by its unique 15-digit IMEI serial number across its entire lifespan in the business.</p>
+
+        <div class="grid-responsive-2">
+          <div class="content-box animate-stagger delay-2">
+            <div class="box-header">
+              <div class="box-icon icon-emerald"><i data-lucide="git-commit"></i></div>
+              <div class="box-title">IMEI Status Workflow</div>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
+              <span class="chip" style="background:#166534; color:#fff;">In Stock</span>
+              <span class="chip" style="background:#991b1b; color:#fff;">Sold</span>
+              <span class="chip" style="background:#92400e; color:#fff;">In Repair</span>
+              <span class="chip" style="background:#6b21a8; color:#fff;">Transferred</span>
+              <span class="chip" style="background:#1e40af; color:#fff;">Returned</span>
+            </div>
+            <ul class="box-list" style="margin-top:16px;">
+              <li>Bulk CSV upload for intake from supplier purchase orders.</li>
+              <li>Scan IMEI at POS to auto-deduct stock and link serial to invoice.</li>
+              <li>Inter-branch stock transfer verification by IMEI scanning.</li>
+            </ul>
+          </div>
+
+          <div class="content-box animate-stagger delay-3">
+            <div class="box-header">
+              <div class="box-icon icon-amber"><i data-lucide="search"></i></div>
+              <div class="box-title">IMEI Search & Verification</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.06); padding:14px; border-radius:10px; border:1px solid var(--border-color);">
+              <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                <strong>Samsung Galaxy S24 Ultra</strong>
+                <span class="chip" style="background:#166534; color:#fff;">In Stock</span>
+              </div>
+              <p style="font-size:12px; color:var(--text-muted);">IMEI: 864201948201934 • Branch: Main Store • Price: $1,199.00</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 4: Repair & Service Module -->
+      <div class="slide-card" data-slide="4">
+        <div class="slide-tag tag-red animate-stagger"><i data-lucide="wrench"></i> Service Hub</div>
+        <h2 class="slide-title animate-stagger delay-1">Device Repair Job Sheet & Technician Pipeline</h2>
+        <p class="slide-desc animate-stagger delay-1">Streamline customer repair job sheets, technician assignments, spare part inventory usage, and repair delivery billing.</p>
+
+        <div class="grid-responsive-3">
+          <div class="content-box animate-stagger delay-2">
+            <div class="box-header">
+              <div class="box-icon icon-amber"><i data-lucide="file-text"></i></div>
+              <div class="box-title">1. Intake Job Sheet</div>
+            </div>
+            <p style="font-size:13px; color:var(--text-muted);">Log customer device details, reported fault symptoms, passcode, condition & initial estimate.</p>
+          </div>
+
+          <div class="content-box animate-stagger delay-3">
+            <div class="box-header">
+              <div class="box-icon icon-indigo"><i data-lucide="activity"></i></div>
+              <div class="box-title">2. Technician Status</div>
+            </div>
+            <p style="font-size:13px; color:var(--text-muted);">Pipeline progress: <code>Received → Diagnosing → Repaired → Delivered</code> with live notifications.</p>
+          </div>
+
+          <div class="content-box animate-stagger delay-4">
+            <div class="box-header">
+              <div class="box-icon icon-emerald"><i data-lucide="receipt"></i></div>
+              <div class="box-title">3. Delivery & Billing</div>
+            </div>
+            <p style="font-size:13px; color:var(--text-muted);">Bill repair spare parts & labor, generate invoice, and automatically credit accounting income.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 5: Accounting & Financials -->
+      <div class="slide-card" data-slide="5">
+        <div class="slide-tag tag-purple animate-stagger"><i data-lucide="pie-chart"></i> Accounting</div>
+        <h2 class="slide-title animate-stagger delay-1">Double-Entry Financial Accounting & Statements</h2>
+        <p class="slide-desc animate-stagger delay-1">Real-time general ledger, automated debit/credit balancing, trial balance, P&L statements, and investor dividend tracking.</p>
+
+        <div class="grid-responsive-2">
+          <div class="content-box animate-stagger delay-2">
+            <div class="box-header">
+              <div class="box-icon icon-purple"><i data-lucide="book-open"></i></div>
+              <div class="box-title">Financial Statements Matrix</div>
+            </div>
+            <ul class="box-list">
+              <li><strong>Balance Sheet:</strong> Assets = Liabilities + Equity (Real-time sync).</li>
+              <li><strong>Profit & Loss:</strong> Revenue - COGS - Expenses = Net Profit.</li>
+              <li><strong>Chart of Accounts:</strong> Customizable 5-tier financial account hierarchy.</li>
+              <li><strong>Journal Entries:</strong> Manual multi-line vouchers with validation.</li>
+            </ul>
+          </div>
+
+          <div class="content-box animate-stagger delay-3">
+            <div class="box-header">
+              <div class="box-icon icon-amber"><i data-lucide="trending-up"></i></div>
+              <div class="box-title">Investor & Asset Management</div>
+            </div>
+            <ul class="box-list">
+              <li><strong>Investor Portfolios:</strong> Capital pool tracking & profit distribution share calculation.</li>
+              <li><strong>Fixed Assets:</strong> Straight-line asset depreciation schedules.</li>
+              <li><strong>Business Loans:</strong> Loan principal & EMI interest calculation.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 6: HR & Payroll -->
+      <div class="slide-card" data-slide="6">
+        <div class="slide-tag tag-cyan animate-stagger"><i data-lucide="user-check"></i> HR Operations</div>
+        <h2 class="slide-title animate-stagger delay-1">Human Resources, Attendance & Automated Payroll</h2>
+        <p class="slide-desc animate-stagger delay-1">Manage employee profiles, daily check-in/out logs, leave application approvals, and automated salary slip generation.</p>
+
+        <div class="grid-responsive-3">
+          <div class="content-box animate-stagger delay-2">
+            <div class="box-header">
+              <div class="box-icon icon-cyan"><i data-lucide="clock"></i></div>
+              <div class="box-title">Daily Attendance</div>
+            </div>
+            <p style="font-size:13px; color:var(--text-muted);">Digital check-in/out terminal, working hours calculation, overtime tracking, and late arrival logging.</p>
+          </div>
+
+          <div class="content-box animate-stagger delay-3">
+            <div class="box-header">
+              <div class="box-icon icon-amber"><i data-lucide="calendar"></i></div>
+              <div class="box-title">Leave Approval Matrix</div>
+            </div>
+            <p style="font-size:13px; color:var(--text-muted);">Employee leave requests, leave balance tracking, and multi-level manager approval controls.</p>
+          </div>
+
+          <div class="content-box animate-stagger delay-4">
+            <div class="box-header">
+              <div class="box-icon icon-emerald"><i data-lucide="file-check"></i></div>
+              <div class="box-title">Automated Payslips</div>
+            </div>
+            <p style="font-size:13px; color:var(--text-muted);">Monthly salary computation (Basic + Overtime - Unpaid Leaves), printable salary slips, and expense ledger posting.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 7: CRM & Warranty -->
+      <div class="slide-card" data-slide="7">
+        <div class="slide-tag tag-emerald animate-stagger"><i data-lucide="smile"></i> CRM & Due</div>
+        <h2 class="slide-title animate-stagger delay-1">Customer Relationship Management & Warranties</h2>
+        <p class="slide-desc animate-stagger delay-1">Complete customer purchase histories, partial due payment collections, printable receipts, and warranty serial validation.</p>
+
+        <div class="grid-responsive-2">
+          <div class="content-box animate-stagger delay-2">
+            <div class="box-header">
+              <div class="box-icon icon-indigo"><i data-lucide="credit-card"></i></div>
+              <div class="box-title">Due Payment Collections</div>
+            </div>
+            <p style="font-size:13px; color:var(--text-muted);">Quick collection entry interface for customer credit balances with SMS notification reminders and payment channel logging.</p>
+          </div>
+
+          <div class="content-box animate-stagger delay-3">
+            <div class="box-header">
+              <div class="box-icon icon-emerald"><i data-lucide="award"></i></div>
+              <div class="box-title">Warranty Claim Processing</div>
+            </div>
+            <p style="font-size:13px; color:var(--text-muted);">Instantly check device warranty validity by IMEI scan and log replacement/repair claims linked to supplier returns.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 8: 7 Design Themes -->
+      <div class="slide-card" data-slide="8">
+        <div class="slide-tag tag-purple animate-stagger"><i data-lucide="palette"></i> Design System</div>
+        <h2 class="slide-title animate-stagger delay-1">7 Customizable Client UI Design Aesthetics</h2>
+        <p class="slide-desc animate-stagger delay-1">The ERP client provides 7 built-in design modes stored in browser <code>localStorage</code>, allowing users to switch themes on the fly.</p>
+
+        <div class="grid-responsive-3">
+          <div class="content-box animate-stagger delay-2">
+            <h4 style="color:#60a5fa; margin-bottom:4px;">1. Flat Design</h4>
+            <p style="font-size:12px; color:var(--text-muted);">Clean, minimal corporate UI styling.</p>
+          </div>
+
+          <div class="content-box animate-stagger delay-2">
+            <h4 style="color:#c084fc; margin-bottom:4px;">2. Neumorphism</h4>
+            <p style="font-size:12px; color:var(--text-muted);">Soft, extruded tactile 3D elements.</p>
+          </div>
+
+          <div class="content-box animate-stagger delay-3">
+            <h4 style="color:#34d399; margin-bottom:4px;">3. Glassmorphism & Pro</h4>
+            <p style="font-size:12px; color:var(--text-muted);">Frosted glass backdrop-blur effects.</p>
+          </div>
+
+          <div class="content-box animate-stagger delay-3">
+            <h4 style="color:#f87171; margin-bottom:4px;">4. Liquid Glass</h4>
+            <p style="font-size:12px; color:var(--text-muted);">Dynamic translucent fluid design.</p>
+          </div>
+
+          <div class="content-box animate-stagger delay-4">
+            <h4 style="color:#fde047; margin-bottom:4px;">5. Neo Brutalism</h4>
+            <p style="font-size:12px; color:var(--text-muted);">Bold high-contrast borders & retro shadows.</p>
+          </div>
+
+          <div class="content-box animate-stagger delay-4">
+            <h4 style="color:#818cf8; margin-bottom:4px;">6. Aurora Mode</h4>
+            <p style="font-size:12px; color:var(--text-muted);">Glowing background gradient animations.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 9: RBAC Security -->
+      <div class="slide-card" data-slide="9">
+        <div class="slide-tag tag-red animate-stagger"><i data-lucide="lock"></i> Security</div>
+        <h2 class="slide-title animate-stagger delay-1">Role-Based Access Control (RBAC) & Audit Log</h2>
+        <p class="slide-desc animate-stagger delay-1">Granular control over 26 enterprise modules with role permissions matrix, JWT bearer security, and automatic brute-force logging.</p>
+
+        <div class="grid-responsive-2">
+          <div class="content-box animate-stagger delay-2">
+            <div class="box-header">
+              <div class="box-icon icon-red"><i data-lucide="shield"></i></div>
+              <div class="box-title">Granular Permissions Matrix</div>
+            </div>
+            <p style="font-size:13px; color:var(--text-muted);">Define custom roles (Cashier, Technician, Branch Manager, Accountant) with exact module permissions (create/view/manage).</p>
+          </div>
+
+          <div class="content-box animate-stagger delay-3">
+            <div class="box-header">
+              <div class="box-icon icon-amber"><i data-lucide="alert-triangle"></i></div>
+              <div class="box-title">Audit Trail & Security Events</div>
+            </div>
+            <p style="font-size:13px; color:var(--text-muted);">System audit trail logs IP addresses, user actions, login timestamps, and <code>BRUTE_FORCE_DETECTED</code> events after 5 failed logins.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 10: Quick Start & Deployment -->
+      <div class="slide-card" data-slide="10">
+        <div class="slide-tag tag-cyan animate-stagger"><i data-lucide="terminal"></i> Deployment</div>
+        <h2 class="slide-title animate-stagger delay-1">System Deployment & Quick Start Guide</h2>
+        <p class="slide-desc animate-stagger delay-1">Easily deploy locally in dev mode or containerized with Docker for production.</p>
+
+        <div class="grid-responsive-2">
+          <div class="content-box animate-stagger delay-2">
+            <h4 style="color:var(--accent-cyan); margin-bottom:8px;">Terminal 1: Start Server (Port 5000)</h4>
+            <div class="chip" style="display:block; padding:10px; white-space:pre-wrap;">cd server && npm install && npm run seed && npm run dev</div>
+
+            <h4 style="color:var(--accent-cyan); margin-top:16px; margin-bottom:8px;">Terminal 2: Start Client (Port 3000)</h4>
+            <div class="chip" style="display:block; padding:10px; white-space:pre-wrap;">cd client && npm install && npm run dev</div>
+          </div>
+
+          <div class="content-box animate-stagger delay-3">
+            <h4 style="color:var(--accent-emerald); margin-bottom:8px;">Docker One-Liner Deployment</h4>
+            <div class="chip" style="display:block; padding:10px; white-space:pre-wrap;">docker compose up -d --build</div>
+
+            <h4 style="color:var(--accent-amber); margin-top:16px; margin-bottom:8px;">Database Restore Script</h4>
+            <div class="chip" style="display:block; padding:10px; white-space:pre-wrap;">cd server && node scripts/run-restore.js</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide Navigation Footer -->
+      <div class="slide-controls">
+        <button class="ctrl-btn" id="btnPrev" onclick="prevSlide()">
+          <i data-lucide="chevron-left"></i> Previous
+        </button>
+
+        <div class="dot-indicators" id="dotContainer"></div>
+
+        <button class="ctrl-btn" id="btnNext" onclick="nextSlide()">
+          Next <i data-lucide="chevron-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Live Thermal Receipt Modal Demo -->
+    <div class="receipt-modal" id="receiptModal">
+      <div style="text-align:center; border-bottom:1px dashed #000; padding-bottom:8px; margin-bottom:8px;">
+        <h3 style="font-size:14px; font-weight:bold;">BROTHERS MOBILE ERP</h3>
+        <p>Branch #1 - Main Store</p>
+        <p>INV #SAL-2026-08912</p>
+      </div>
+      <div style="margin-bottom:8px;">
+        <div style="display:flex; justify-content:space-between;">
+          <span>iPhone 15 Pro 256GB</span>
+          <span>$1,099.00</span>
+        </div>
+        <p style="font-size:9px; color:#555;">IMEI: 356892110293841</p>
+      </div>
+      <div style="border-top:1px dashed #000; padding-top:6px; text-align:right; font-weight:bold;">
+        TOTAL: $1,099.00
+      </div>
+      <button onclick="closeReceiptModal()" style="margin-top:12px; width:100%; padding:6px; background:#000; color:#fff; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">
+        Close Preview
+      </button>
+    </div>
+
+  </main>
+
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    let currentSlide = 1;
+    const totalSlides = 10;
+
+    // Build Dots
+    const dotContainer = document.getElementById('dotContainer');
+    for (let i = 1; i <= totalSlides; i++) {
+      const dot = document.createElement('div');
+      dot.className = `dot ${i === 1 ? 'active' : ''}`;
+      dot.onclick = () => goToSlide(i);
+      dotContainer.appendChild(dot);
+    }
+
+    function updateSlideUI() {
+      document.querySelectorAll('.slide-card').forEach(card => card.classList.remove('active'));
+      const activeCard = document.querySelector(`.slide-card[data-slide="${currentSlide}"]`);
+      if (activeCard) activeCard.classList.add('active');
+
+      // Update progress fill bar
+      const fillPercentage = (currentSlide / totalSlides) * 100;
+      document.getElementById('progressFill').style.width = fillPercentage + '%';
+
+      document.getElementById('slideCounter').innerText = `SLIDE 0${currentSlide} / ${totalSlides < 10 ? '0' + totalSlides : totalSlides}`;
+      document.getElementById('btnPrev').disabled = currentSlide === 1;
+      document.getElementById('btnNext').disabled = currentSlide === totalSlides;
+
+      const dots = document.querySelectorAll('.dot');
+      dots.forEach((dot, idx) => {
+        dot.classList.toggle('active', idx + 1 === currentSlide);
+      });
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        currentSlide++;
+        updateSlideUI();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        currentSlide--;
+        updateSlideUI();
+      }
+    }
+
+    function goToSlide(n) {
+      currentSlide = n;
+      updateSlideUI();
+    }
+
+    function triggerReceiptModal() {
+      document.getElementById('receiptModal').classList.add('active');
+    }
+
+    function closeReceiptModal() {
+      document.getElementById('receiptModal').classList.remove('active');
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+      }
+    }
+
+    // Keyboard Arrow Navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+      if (e.key === 'ArrowLeft') prevSlide();
+    });
+  </script>
+</body>
+</html>

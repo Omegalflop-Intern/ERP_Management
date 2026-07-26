@@ -3,74 +3,80 @@
 ## Commands
 
 ```bash
-# Server (port 5000)
+# Server (port 5000) — ESM ("type": "module")
 cd server
 npm install
 npm run dev       # node --watch server.js
-npm run seed       # seed default roles + settings
-npm start          # production
+npm run seed      # seed default roles + settings
+npm start         # production
 
-# Client (port 3000)
+# Client (port 3000) — Vite dev server proxies /api and /uploads to :5000
 cd client
 npm install
-npm run dev        # vite dev server, proxies /api and /uploads to :5000
-npm run build      # vite build
-npm run lint       # eslint . --ext js,jsx
-npm run preview    # vite preview
+npm run dev       # vite
+npm run build     # vite build
+npm run lint      # biome lint ./src
+npm run format    # biome format --write ./src
+npm run check     # biome check ./src (lint + format)
+npm run preview   # vite preview
 ```
 
 No root-level scripts. Run client/server from their own directories.
 
 ## Architecture
 
-- **Server**: Node.js + Express (ESM). Entry: `server/server.js` -> `server/app.js`.
+- **Server**: Node.js + Express (ESM). Entry: `server/server.js` → `server/app.js`.
 - **Client**: Vite 5 + React 18. Entry: `client/src/main.jsx`. `@` alias resolves to `client/src`.
 - **Module pattern**: Each backend feature lives in `server/modules/<name>/` with `{name}.routes.js`, `{name}.controller.js`, `{name}.service.js`, `{name}.validator.js`, `{name}.model.js`.
+- **Stray top-level dirs**: `server/models/` (AuditLog.js, RepairTicket.js) and `server/services/` (pdf.service.js) exist outside the module pattern — legacy or shared.
 - **Validation**: Zod schemas in `*.validator.js`, enforced by `server/middleware/validate.middleware.js`.
-- **Auth**: Bearer JWT. `authenticate` sets `req.user`. `authorize(...roles)` checks role names. `requirePermission(...perms)` checks role.permissions array.
-- **Real-time**: Node.js `EventEmitter` (server) + browser `EventEmitter` (client). No Socket.io. Events defined in `server/events/index.js` and `client/src/utils/EventEmitter.js`.
-- **Responses**: Standard shape `{ success, message, data, pagination? }`. Use `ApiResponse` helper and `ApiError` class.
-- **API docs**: Swagger at `/api/docs` via `swagger-jsdoc` + `swagger-ui-express`. Config in `server/config/swagger.config.js`.
+- **Auth**: Bearer JWT (or httpOnly cookies). `authenticate` sets `req.user`. `authorize(...roles)` checks role name strings. `requirePermission(...perms)` checks role.permissions array. MFA (TOTP) is implemented.
+- **Real-time**: Node.js `EventEmitter` (server) + SSE via `server/modules/sse/` (not Socket.io). Browser-side EventEmitter in `client/src/utils/EventEmitter.js`. Events defined in `server/events/index.js`.
+- **Responses**: Standard shape `{ success, message, data, pagination? }`. Use `ApiResponse` helper and `ApiError` class (both in `server/utils/http/`).
+- **API docs**: Swagger UI at **`/api-docs`** (not `/api/docs`). Config in `server/config/swagger.config.js`. The root `/api` route redirects browsers to `/api/docs` which is a dead link — use `/api-docs` directly.
 
 ## Environment
 
-- **Server env**: `server/.env` (dotenv loaded in `server/config/env.config.js`). Required: `JWT_SECRET`. Optional SMTP for OTP emails (falls back to Ethereal in dev).
+- **Server env**: `server/.env` (loaded via `server/config/env.config.js`, validated with Zod). Required: `JWT_SECRET` (min 10 chars). Optional: SMTP vars for OTP emails.
 - **Client env**: `client/.env` with `VITE_API_URL` (default `http://localhost:5000/api/v1`). Vite exposes only `VITE_*` vars.
 - **MongoDB**: `MONGODB_URI` in server env. Defaults to `mongodb://127.0.0.1:27017/mobile_shop_erp`. Docker compose uses service name `mongodb`.
-- **CORS**: Allows `APP_URL`, `CLIENT_URL`, `localhost:3000`, `localhost:5173`. Permissive in non-production.
+- **CORS**: Allows `APP_URL`, `CLIENT_URL`, `ALLOWED_ORIGIN`, `localhost:3000`, `localhost:5173`. Permissive in dev; strict in production.
 
 ## Frontend Conventions
 
-- **State**: React Context for auth/theme. TanStack Query for server state.
-- **Routing**: React Router v7. All pages lazy-loaded inside `DashboardLayout`. Routes protected by `ProtectedRoute` and `RoleBasedRoute`.
-- **UI**: shadcn/ui (Radix primitives) + Tailwind v3. Dark mode via `.dark` class. Custom design modes: `flat`, `neumorphism`, `glassmorphism`, `liquidglass`, `neobrutalism` (stored in `localStorage` as `designMode`).
+- **State**: Zustand for theme/design-mode (`client/src/store/themeStore.js`) and auth. React Context compatibility shim in `client/src/context/`. TanStack Query for server state.
+- **Routing**: React Router v7. All dashboard pages lazy-loaded in `client/src/App.jsx`. Routes protected by `ProtectedRoute` and `RoleBasedRoute` (permission-based, e.g. `sales:view`).
+- **UI**: shadcn/ui (Radix primitives) + Tailwind v3. Dark mode via `.dark` class on `<html>`. Design modes set via `data-mode` attribute: `flat`, `neumorphism`, `glassmorphism`, `liquidglass`, `neobrutalism`, `aurora`, `glassmorphismpro` (7 modes, stored in Zustand persist as `theme-storage`).
+- **Linting/Formatting**: Biome (not ESLint). Config: `client/biome.json`. Indent: 2 spaces, single quotes, semicolons always, 100-char line width.
 - **Icons**: Lucide React primary.
 - **Offline**: `client/src/utils/offlineSync.js` + `offlineDB.js` using `idb` and `workbox-window`.
-- **API client**: `client/src/lib/api.js` (Axios instance with Bearer interceptor + 401 refresh-token flow). Asset URLs resolved via `getAssetUrl()`.
+- **API client**: `client/src/lib/api.js` (Axios with Bearer interceptor + automatic 401 refresh-token flow via httpOnly cookies). Asset URLs resolved via `getAssetUrl()`.
 
 ## Gotchas
 
-- Server is flat in `server/` (not `server/src/` as older docs or deployment configs suggest).
-- **Dockerfile bug**: `CMD` references `server/src/app.js` but the file is `server/app.js` — no `server/src/` directory exists. Same issue in `ecosystem.config.js` (PM2). Both need `server/app.js` to work.
-- Frontend login uses `/auth/login-direct` (bypasses dev OTP). OTP flow exists on backend but frontend currently skips it.
+- Server is flat in `server/` (not `server/src/` as PROJECT-SPEC.md or older deployment configs suggest).
+- **`ecosystem.config.js` is wrong**: References `server/src/app.js` but the file is `server/server.js`. Dockerfile is correct (`CMD ["node", "server/server.js"]`).
+- **Swagger docs path**: Mounts at `/api-docs`, not `/api/docs`. The README and root route reference `/api/docs` but that path 404s.
+- Frontend login uses `/auth/login-direct` (bypasses OTP). OTP flow exists on backend (`/auth/login` + `/auth/verify-otp`) but frontend currently skips it.
 - MongoDB connect warns about "memory DB fallback" but does not implement one — it just returns `false`.
-- User model stores password in `passwordHash`; some legacy middleware still references `+password`. Be careful when editing auth paths.
-- No tests, CI, or pre-commit hooks exist.
-- Lockfiles: client has `package-lock.json`, `pnpm-lock.yaml`, and `pnpm-workspace.yaml`. Use npm unless pnpm is explicitly needed.
+- User model stores password in `passwordHash` (with `select: false`); you must explicitly `.select('+passwordHash')` when needed.
+- **No tests, CI, or pre-commit hooks exist.** Run `npm run lint` and `npm run build` manually to verify.
+- Lockfiles: client has both `package-lock.json` and `pnpm-lock.yaml`. Use npm unless pnpm is explicitly needed.
+- `docker-compose.yml` contains a hardcoded `JWT_SECRET` — replace with env var for real deployments.
 
-## Server Modules (26 total)
+## Server Modules (27)
 
-`accounting`, `attendance`, `auth`, `branch`, `catalog`, `customer`, `employee`, `expense`, `imei`, `investor`, `leave`, `loan`, `notification`, `payroll`, `product`, `purchase`, `repair`, `report`, `role`, `sale`, `settings`, `stock`, `supplier`, `user`, `warranty`, `wholesale`
+`accounting`, `attendance`, `auth`, `branch`, `catalog`, `customer`, `employee`, `expense`, `imei`, `investor`, `leave`, `loan`, `notification`, `payroll`, `product`, `purchase`, `repair`, `report`, `role`, `sale`, `settings`, `sse`, `stock`, `supplier`, `user`, `warranty`, `wholesale`
 
 ## Security Notes
 
-- JWT secret is required via `JWT_SECRET` env var; no fallback exists in `server/utils/generateToken.js`.
-- Password reset tokens are never returned in API responses; they are sent via email only.
+- JWT secret is required via `JWT_SECRET` env var; no fallback — server exits on missing value.
+- Auth supports both Bearer header and httpOnly cookies (`accessToken` + `refreshToken`). Client uses both for backward compat.
+- Password reset tokens are never returned in API responses; sent via email only.
 - File uploads validate both MIME type and file magic numbers using `file-type` package.
 - CORS requires explicit origin configuration via `CLIENT_URL`, `APP_URL`, or `ALLOWED_ORIGIN` env vars.
-- Helmet is configured with CSP, HSTS, and strict referrer policy.
+- Helmet configured with CSP, HSTS, and strict referrer policy.
 - Seed passwords must be provided via `SEED_PASSWORD_<ROLE>` env vars in production.
 - `server/.env` and `server/uploads/` are gitignored; never commit secrets.
-- npm audit shows 1 high vulnerability in `xlsx` (no fix available) and 1 moderate in `esbuild` (requires breaking change). These are accepted risks.
-- Failed login attempts are tracked per IP+identifier. 5 failures in 15 minutes triggers a `BRUTE_FORCE_DETECTED` security event logged to `AuditLog`.
-- All auth failures (invalid credentials, deactivated accounts) log `LOGIN_FAILED` security events with IP, user-agent, and attempt count.
+- Failed login attempts tracked per IP+identifier via `server/middleware/security.middleware.js`.
+- All auth failures log `LOGIN_FAILED` security events with IP, user-agent, and attempt count.

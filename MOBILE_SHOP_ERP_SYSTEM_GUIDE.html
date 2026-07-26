@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Brothers Mobile Shop ERP — Enterprise System Architecture & Client Guide</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+    @page {
+      size: A4;
+      margin: 15mm 12mm 15mm 12mm;
+      @bottom-right {
+        content: counter(page);
+      }
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: #ffffff;
+      color: #0f172a;
+      line-height: 1.5;
+      font-size: 12.5px;
+    }
+
+    /* Page Break Utility */
+    .page-break {
+      page-break-before: always;
+    }
+
+    /* Header Banner */
+    .header-banner {
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #31102f 100%);
+      color: #ffffff;
+      padding: 30px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .header-banner h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+      background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-banner .subtitle {
+      font-size: 13.5px;
+      color: #cbd5e1;
+      margin-bottom: 16px;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      font-size: 11px;
+    }
+
+    .meta-label { text-transform: uppercase; font-size: 9px; font-weight: 700; color: #94a3b8; letter-spacing: 0.5px; }
+    .meta-val { font-weight: 600; color: #f8fafc; margin-top: 2px; }
+
+    /* Section Headings */
+    .section {
+      margin-bottom: 24px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 8px;
+      margin-bottom: 14px;
+    }
+
+    .section-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      background: #2563eb;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    .section-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .section-desc {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: -8px;
+      margin-bottom: 14px;
+    }
+
+    /* Cards & Containers */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+
+    .card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 12px;
+      page-break-inside: avoid;
+    }
+
+    .card-title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      color: #1e293b;
+      margin-bottom: 8px;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10.5px;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .badge-blue { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+    .badge-green { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .badge-purple { background: #f3e8ff; color: #6b21a8; border: 1px solid #e9d5ff; }
+    .badge-red { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      margin-bottom: 14px;
+      font-size: 11.5px;
+    }
+
+    th, td {
+      padding: 7px 10px;
+      text-align: left;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    th {
+      background: #f1f5f9;
+      color: #334155;
+      font-weight: 700;
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    tr:nth-child(even) { background: #fafafa; }
+
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      background: #f1f5f9;
+      color: #0f172a;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 11px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .code-block {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      line-height: 1.4;
+      margin: 6px 0 10px 0;
+      white-space: pre-wrap;
+    }
+
+    .workflow-step {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 8px;
+      align-items: flex-start;
+    }
+
+    .step-num {
+      width: 20px;
+      height: 20px;
+      background: #2563eb;
+      color: #ffffff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10.5px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .route-header {
+      background: #eff6ff;
+      border-left: 4px solid #2563eb;
+      padding: 6px 10px;
+      margin-top: 10px;
+      margin-bottom: 6px;
+      border-radius: 0 4px 4px 0;
+    }
+
+    .route-title {
+      font-weight: 700;
+      color: #1e3a8a;
+      font-size: 12.5px;
+    }
+
+    .feature-list {
+      margin-left: 16px;
+      margin-top: 4px;
+      margin-bottom: 8px;
+    }
+
+    .feature-list li {
+      margin-bottom: 3px;
+      color: #334155;
+    }
+
+    .footer {
+      text-align: center;
+      padding-top: 14px;
+      margin-top: 24px;
+      border-top: 1px solid #e2e8f0;
+      font-size: 10.5px;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Cover Header -->
+  <div class="header-banner">
+    <h1>Brothers Mobile Shop ERP</h1>
+    <div class="subtitle">Complete System Architecture, REST API Reference & Comprehensive Client-Side Manual</div>
+    <div class="meta-grid">
+      <div>
+        <div class="meta-label">Repository</div>
+        <div class="meta-val">Omegalflop-Intern / ERP_Management</div>
+      </div>
+      <div>
+        <div class="meta-label">Architecture</div>
+        <div class="meta-val">Node 20 + React 18 Vite + MongoDB 7</div>
+      </div>
+      <div>
+        <div class="meta-label">Enterprise Modules</div>
+        <div class="meta-val">26 Full Stack Modules</div>
+      </div>
+      <div>
+        <div class="meta-label">Author & Date</div>
+        <div class="meta-val">Salah Uddin Kader • July 2026</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 1: EXECUTIVE SYSTEM OVERVIEW -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">1</div>
+      <div class="section-title">Executive System Overview</div>
+    </div>
+    <p style="margin-bottom: 12px; color: #334155;">
+      <strong>Brothers Mobile Shop ERP</strong> is an enterprise platform engineered specifically for retail and wholesale mobile phone businesses. It unifies Point of Sale (POS), real-time IMEI serial tracking, multi-branch stock transfers, double-entry financial accounting, HR payroll, warranty management, and technician device repairs into an integrated system with live Server-Sent Events (SSE).
+    </p>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">System Access & Infrastructure URLs</div>
+        <ul style="list-style: none; padding: 0;">
+          <li style="margin-bottom: 4px;"><strong>Client Web App:</strong> <code>http://localhost:3000</code> (React 18 + Vite)</li>
+          <li style="margin-bottom: 4px;"><strong>Backend REST API:</strong> <code>http://localhost:5000/api/v1</code> (Node Express)</li>
+          <li style="margin-bottom: 4px;"><strong>Interactive Swagger API:</strong> <code>http://localhost:5000/api/docs</code></li>
+          <li><strong>MongoDB Connection:</strong> <code>mongodb://127.0.0.1:27017/mobile_shop_erp</code></li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">Default Access Credentials</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Role</th>
+              <th>Username</th>
+              <th>Password Setup</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>System Administrator</strong></td>
+              <td><code>admin</code></td>
+              <td><code>SEED_PASSWORD_ADMIN</code> in server/.env</td>
+            </tr>
+            <tr>
+              <td><strong>Branch Manager</strong></td>
+              <td><code>manager</code></td>
+              <td><code>SEED_PASSWORD_MANAGER</code> in server/.env</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: SYSTEM DEPLOYMENT -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">2</div>
+      <div class="section-title">How to Run & Access the System</div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Development Mode (Separate Terminals)</div>
+        <p style="font-size: 11px; color: #64748b;">Terminal 1: Start Backend API Server (Port 5000)</p>
+        <div class="code-block">cd server && npm install && npm run seed && npm run dev</div>
+        <p style="font-size: 11px; color: #64748b;">Terminal 2: Start Frontend Client (Port 3000)</p>
+        <div class="code-block">cd client && npm install && npm run dev</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Docker & Production Deployment</div>
+        <p style="font-size: 11px; color: #64748b;">Automated multi-container launch (MongoDB + Server + Client):</p>
+        <div class="code-block">docker compose up -d --build</div>
+        <p style="font-size: 11px; color: #64748b;">Production PM2 Server Launch:</p>
+        <div class="code-block">cd server && npm start</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 3: CORE WORKFLOWS -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">3</div>
+      <div class="section-title">Core Business Workflows & Data Flow</div>
+    </div>
+
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-title">Workflow A: Sales & IMEI Stock Deduction</div>
+        <div class="workflow-step">
+          <div class="step-num">1</div>
+          <div>Cashier opens POS at <code>/sales/new</code> & scans IMEI/barcode.</div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-num">2</div>
+          <div>Client verifies item status is <code>In Stock</code> in local cache.</div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-num">3</div>
+          <div>Order processes; generates invoice, updates IMEI to <code>Sold</code>, posts ledger.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Workflow B: Device Repair Management</div>
+        <div class="workflow-step">
+          <div class="step-num">1</div>
+          <div>Technician logs incoming device on <code>/repairs</code> with issue diagnosis.</div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-num">2</div>
+          <div>Pipeline updates: <code>Received → In Progress → Repaired → Delivered</code>.</div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-num">3</div>
+          <div>Upon delivery, repair invoice generates & links to double-entry revenue.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Workflow C: HR Attendance & Payroll</div>
+        <div class="workflow-step">
+          <div class="step-num">1</div>
+          <div>Staff logs daily check-in / check-out on <code>/hr/attendance</code>.</div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-num">2</div>
+          <div>System computes overtime hours & unpaid leave deductions.</div>
+        </div>
+        <div class="workflow-step">
+          <div class="step-num">3</div>
+          <div>Payroll generates salary sheet, printable payslips & posts expense.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- SECTION 4: CLIENT-SIDE WEB APPLICATION & MODULE MAP -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">4</div>
+      <div class="section-title">Complete Client-Side Web Application Architecture & Module Map</div>
+    </div>
+    <div class="section-desc">Comprehensive page-by-page operational map documenting all client-side page components, routes, user actions, forms, modals, state management, and RBAC permissions.</div>
+
+    <!-- 1. Auth -->
+    <div class="card">
+      <div class="card-title">1. Authentication & Onboarding Modules</div>
+      <div class="route-header">
+        <div class="route-title"><code>/login</code> — Login Page <span class="badge badge-blue">Public Route</span></div>
+      </div>
+      <ul class="feature-list">
+        <li><strong>Capabilities:</strong> Supports direct credential login (<code>/auth/login-direct</code>) for development speed, OTP email verification flow toggle, and password visibility toggle.</li>
+        <li><strong>UI Controls:</strong> Identifier input, Password input, Remember Me checkbox, Design Theme selector widget, Login submit button with loading spinner state.</li>
+        <li><strong>State Management:</strong> Uses <code>useAuth()</code> context to set JWT token, user profile, role permissions, and persist token to <code>localStorage</code>.</li>
+      </ul>
+
+      <div class="route-header">
+        <div class="route-title"><code>/forgot-password</code> & <code>/verify-email</code> <span class="badge badge-blue">Public Route</span></div>
+      </div>
+      <ul class="feature-list">
+        <li><strong>Capabilities:</strong> Email password recovery request form, OTP code entry input, email verification link handler, and instant toast notifications.</li>
+      </ul>
+    </div>
+
+    <!-- 2. Dashboard -->
+    <div class="card">
+      <div class="card-title">2. Executive Dashboard (`/dashboard`)</div>
+      <div class="route-header">
+        <div class="route-title"><code>/dashboard</code> — Operations Command Center <span class="badge badge-green">Protected Route</span></div>
+      </div>
+      <ul class="feature-list">
+        <li><strong>KPI Metrics Cards:</strong> 4 live metric cards displaying Today's Total Sales Amount, Low Stock Alert Count, Active Device Repairs, and Pending Customer Dues with percentage trend indicators.</li>
+        <li><strong>Analytics Charts:</strong> Interactive sales revenue line chart (7-day / 30-day view) and product category revenue breakdown donut chart built with Recharts.</li>
+        <li><strong>Recent Activity Feed:</strong> Live transaction stream table showing recent sales, purchases, and repair status changes updated in real-time via Server-Sent Events (SSE).</li>
+        <li><strong>Quick Action Hub:</strong> One-click launch buttons for New POS Sale, Add Product, Register Repair Job Sheet, and Log Operational Expense.</li>
+      </ul>
+    </div>
+
+    <!-- 3. POS -->
+    <div class="card">
+      <div class="card-title">3. Point of Sale (POS) & Sales Management</div>
+      <div class="route-header">
+        <div class="route-title"><code>/sales/new</code> — POS Checkout Terminal <span class="badge badge-purple">Permission: sales:create</span></div>
+      </div>
+      <ul class="feature-list">
+        <li><strong>High-Speed Scanner Input:</strong> Dedicated barcode / IMEI serial number scanner input field with auto-focus and instant product lookup.</li>
+        <li><strong>Sales Cart Manager:</strong> Cart table displaying items, unit prices, custom discounts, IMEI selector modal for serial-tracked items, and quantity modifiers.</li>
+        <li><strong>Customer Selector & Quick Add:</strong> Instant customer search by phone/name, quick creation modal for walk-in customers, and due balance display.</li>
+        <li><strong>Multi-Channel Payment Modal:</strong> Split payment handling supporting Cash, Credit Card, Mobile Banking (bKash/Nagad), and Customer Credit (Due), with automatic change calculation.</li>
+        <li><strong>Thermal Receipt Engine:</strong> Generates instant printable receipts optimized for <code>80mm</code> thermal printers, complete with store header, item barcode, and QR invoice verification code.</li>
+      </ul>
+
+      <div class="route-header">
+        <div class="route-title"><code>/sales</code> — Sales History & Invoices <span class="badge badge-purple">Permission: sales:view</span></div>
+      </div>
+      <ul class="feature-list">
+        <li><strong>Filterable Datatable:</strong> Comprehensive invoice table with filters for Date Range, Branch, Payment Status (Paid, Partial, Due), and Search by Invoice Number/Customer.</li>
+        <li><strong>Actions:</strong> View Detailed Invoice, Reprint Thermal Receipt, Download Invoice PDF, and Initiate Sales Return.</li>
+      </ul>
+
+      <div class="route-header">
+        <div class="route-title"><code>/sales/returns</code> — Sales Returns & Refunds <span class="badge badge-purple">Permission: sales:create</span></div>
+      </div>
+      <ul class="feature-list">
+        <li><strong>Return Workflow:</strong> Look up original invoice, select return items/IMEIs, verify restock condition, calculate refund/credit adjustment, and update accounting ledger automatically.</li>
+      </ul>
+    </div>
+
+    <!-- 4. Inventory -->
+    <div class="card">
+      <div class="card-title">4. Inventory, Stock & IMEI Tracking Modules</div>
+
+      <div class="route-header">
+        <div class="route-title"><code>/products</code> — Master Product Catalog <span class="badge badge-purple">Permission: products:view</span></div>
+      </div>
+      <ul class="feature-list">
+        <li><strong>Master Product Grid & Table:</strong> View items with thumbnail image, SKU, Brand, Category, Purchase Price, Selling Price, Cost Margin %, and current total stock badge.</li>
+        <li><strong>Product Form Modal:</strong> Add/Edit product modal supporting image upload, barcode assignment, low-stock threshold alert setting, and IMEI serial tracking toggle.</li>
+      </ul>
+
+      <div class="route-header">
+        <div class="route-title"><code>/inventory</code> — IMEI Serial Number Tracker <span class="badge badge-purple">Permission: inventory:view</span></div>
+      </div>
+      <ul class="feature-list">
+        <li><strong>Serial Lifecycle Tracker:</strong> Search any IMEI number to view its status badge (<code>In Stock</code>, <code>Sold</code>, <code>In Repair</code>, <code>Transferred</code>, <code>Returned</code>), branch location, purchase invoice link, and sales invoice link.</li>
+      </ul>
+
+      <div class="route-header">
+        <div class="route-title"><code>/stock</code> & <code>/stock-transfer</code> — Stock Operations <span class="badge badge-purple">Permission: stock:view, stock:transfer</span></div>
+      </div>
+      <ul class="feature-list">
+        <li><strong>Branch Stock Matrix:</strong> Overview of inventory across all store branches with stock valuation totals.</li>
+        <li><strong>Inter-Branch Stock Transfer:</strong> Transfer request creation, branch selection, IMEI selection, transfer approval workflow, and destination barcode scan intake.</li>
+      </ul>
+    </div>
+
+    <!-- 5. Repairs -->
+    <div class="card">
+      <div class="card-title">5. Device Repair & Service Operations</div>
+      <div class="route-header">
+        <div class="route-title"><code>/repairs</code> — Device Repair Hub <span class="badge badge-purple">Permission: repairs:view, repairs:manage</span></div>
+      </div>
+      <ul class="feature-list">
+        <li><strong>Service Job Sheet Generator:</strong> Intake modal recording customer device details (Brand, Model, IMEI/Serial, Passcode, Condition), reported faults, initial cost estimate, and assigned technician.</li>
+        <li><strong>Kanban / Pipeline View:</strong> Visual drag-and-drop or dropdown status tracking: <code>Received → Diagnosing → In Progress → Repaired → Delivered</code>.</li>
+        <li><strong>Parts & Labor Billing:</strong> Add repair spare parts used from inventory and technician labor charges to repair job sheet.</li>
+        <li><strong>Repair Delivery & Billing:</strong> Generates repair invoice upon delivery, updates customer account, and posts service revenue to double-entry accounting.</li>
+      </ul>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- 6. CRM -->
+    <div class="card">
+      <div class="card-title">6. Customer Relationship Management (CRM) & Warranties</div>
+      <div class="route-header">
+        <div class="route-title"><code>/customers</code> & <code>/customers/:id</code> — Customer Directory <span class="badge badge-purple">Permission: customers:view</span></div>
+      </div>
+      <ul class="feature-list">
+        <li><strong>Customer Directory:</strong> List of retail and wholesale customers showing total purchases, outstanding due balance, and phone/email contacts.</li>
+        <li><strong>Customer Profile View:</strong> Complete history of purchases, payment receipts, due ledger, and active warranty claims.</li>
+      </ul>
+
+      <div class="route-header">
+        <div class="route-title"><code>/customers/due-collection</code> — Due Payment Collection <span class="badge badge-purple">Permission: customers:view</span></div>
+      </div>
+      <ul class="feature-list">
+        <li><strong>Due Settlement Interface:</strong> Quick collection input for customer outstanding balances, partial payment support, receipt printing, and payment channel logging.</li>
+      </ul>
+
+      <div class="route-header">
+        <div class="route-title"><code>/warranties</code> & <code>/warranties/report</code> — Warranty Claims <span class="badge badge-purple">Permission: warranties:view</span></div>
+      </div>
+      <ul class="feature-list">
+        <li><strong>Warranty Serial Check:</strong> Instantly check warranty validity by scanning IMEI number. Log replacement/repair claim with supplier return tracking.</li>
+      </ul>
+    </div>
+
+    <!-- 7. Purchases & Suppliers -->
+    <div class="card">
+      <div class="card-title">7. Purchases & Supplier Management</div>
+      <div class="route-header">
+        <div class="route-title"><code>/suppliers</code> & <code>/purchases</code> — Supplier & Purchase Intake <span class="badge badge-purple">Permission: purchases:view, suppliers:view</span></div>
+      </div>
+      <ul class="feature-list">
+        <li><strong>Supplier Directory:</strong> Vendor master list, contact info, total orders placed, and payable supplier dues balance.</li>
+        <li><strong>Goods Received Note (GRN) & Purchase Form:</strong> Log incoming stock shipments, cost prices, bulk IMEI serial upload via CSV/text, auto-update stock quantities, and generate purchase invoice.</li>
+      </ul>
+    </div>
+
+    <!-- 8. Accounting -->
+    <div class="card">
+      <div class="card-title">8. Double-Entry Financial Accounting Modules</div>
+      <div class="route-header">
+        <div class="route-title">Chart of Accounts & Journal Entries <span class="badge badge-purple">Permission: accounting:view</span></div>
+      </div>
+      <ul class="feature-list">
+        <li><code>/accounting</code> — Interactive tree view of Assets, Liabilities, Equity, Revenue, and Expense accounts. Add custom sub-accounts.</li>
+        <li><code>/accounting/journal-entries</code> — Manual multi-line Debit/Credit journal voucher creation with mandatory balance verification.</li>
+      </ul>
+
+      <div class="route-header">
+        <div class="route-title">Financial Statements & Accounting Pages <span class="badge badge-purple">Permission: accounting:view</span></div>
+      </div>
+      <ul class="feature-list">
+        <li><code>/accounting/balance-sheet</code> — Real-time Balance Sheet statement (Assets = Liabilities + Equity).</li>
+        <li><code>/accounting/profit-loss</code> — Income statement breakdown of Gross Revenue, COGS, Operating Expenses, and Net Profit.</li>
+        <li><code>/accounting/trial-balance</code> — Trial balance report verifying debit/credit ledger parity.</li>
+        <li><code>/accounting/expenses</code> — Operational expense logging with category classification and voucher attachment upload.</li>
+        <li><code>/accounting/investors</code> — Investor capital tracking, profit-sharing distribution calculation, and dividend payout history.</li>
+        <li><code>/accounting/assets</code> & <code>/accounting/loans</code> — Fixed asset depreciation schedules and business loan repayment trackers.</li>
+      </ul>
+    </div>
+
+    <!-- 9. HR -->
+    <div class="card">
+      <div class="card-title">9. HR, Attendance & Payroll Modules</div>
+      <div class="route-header">
+        <div class="route-title">Staff Management, Attendance & Leaves <span class="badge badge-purple">Permission: employees:view, attendance:view</span></div>
+      </div>
+      <ul class="feature-list">
+        <li><code>/hr/employees</code> — Staff profiles, designations, basic salary configuration, join date, and document attachments.</li>
+        <li><code>/hr/attendance</code> — Daily check-in/out terminal, working hours computation, late check-in tracking, and monthly attendance summary.</li>
+        <li><code>/hr/leaves</code> — Leave application form, leave balance tracker, and multi-level manager approval/rejection controls.</li>
+      </ul>
+
+      <div class="route-header">
+        <div class="route-title">Automated Payroll Sheet <code>/hr/payroll</code> <span class="badge badge-purple">Permission: payroll:view</span></div>
+      </div>
+      <ul class="feature-list">
+        <li><strong>Monthly Salary Calculation:</strong> Automated calculation of gross salary (Basic Salary + Overtime Hours - Unpaid Leave Deductions - Penalties).</li>
+        <li><strong>Salary Slips:</strong> One-click generation of printable salary slips and automatic salary expense posting to accounting.</li>
+      </ul>
+    </div>
+
+    <!-- 10. Admin & Security -->
+    <div class="card">
+      <div class="card-title">10. Administration, Security & System Settings</div>
+      <div class="route-header">
+        <div class="route-title">User Accounts, RBAC Roles & Audit Trail <span class="badge badge-red">Permission: users:manage, roles:manage</span></div>
+      </div>
+      <ul class="feature-list">
+        <li><code>/users</code> — System user management table, branch restriction assignment, activate/deactivate account toggle, password reset modal.</li>
+        <li><code>/roles</code> — Role-Based Access Control (RBAC) permission grid allowing granular toggling of 26 module permissions.</li>
+        <li><code>/settings/activity-logs</code> — System audit log table tracking user actions, IP addresses, login timestamps, and security alert events (e.g. <code>BRUTE_FORCE_DETECTED</code>).</li>
+      </ul>
+
+      <div class="route-header">
+        <div class="route-title">Enterprise System Settings <code>/settings</code> <span class="badge badge-red">Permission: settings:manage</span></div>
+      </div>
+      <ul class="feature-list">
+        <li><strong>Company Profile:</strong> Business name, logo upload, phone, tax ID, and address configuration for invoices.</li>
+        <li><strong>Thermal Receipt Setup:</strong> Printer paper selection (80mm vs 58mm), header text, footer return policy text, and logo toggle.</li>
+        <li><strong>SMTP & System Backup:</strong> Email server testing setup and manual database backup trigger button.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- SECTION 5: COMPLETE BACKEND REST API ENDPOINTS CATALOG -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">5</div>
+      <div class="section-title">Complete REST API Endpoints Catalog (26 Modules)</div>
+    </div>
+    <p style="margin-bottom: 6px; color: #64748b;">API Base Route: <code>http://localhost:5000/api/v1</code></p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Module</th>
+          <th>Base Route</th>
+          <th>Key REST Operations & Capability Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Auth</strong></td><td><code>/auth</code></td><td>Login (/login-direct), dev bypass, OTP email verification, Password reset, Logout.</td></tr>
+        <tr><td><strong>User & Roles</strong></td><td><code>/users</code>, <code>/roles</code></td><td>User CRUD, branch assignment, RBAC permission matrix management.</td></tr>
+        <tr><td><strong>Catalog</strong></td><td><code>/catalog</code></td><td>Categories, Brands, Models, Unit of Measurements (UOM) management.</td></tr>
+        <tr><td><strong>Product</strong></td><td><code>/products</code></td><td>Master product catalog, pricing structures, cost margin analysis, image uploads.</td></tr>
+        <tr><td><strong>IMEI Tracker</strong></td><td><code>/imei</code></td><td>Serial number lifecycle tracking (In Stock, Sold, Repaired, Transferred), full history.</td></tr>
+        <tr><td><strong>Stock & Inventory</strong></td><td><code>/stock</code></td><td>Stock quantities, low-stock threshold alerts, inter-branch stock transfers.</td></tr>
+        <tr><td><strong>Supplier</strong></td><td><code>/suppliers</code></td><td>Supplier profiles, purchase ledgers, outstanding dues, payment processing.</td></tr>
+        <tr><td><strong>Purchase</strong></td><td><code>/purchases</code></td><td>Purchase orders, incoming GRN intake, CSV bulk IMEI registration, purchase invoices.</td></tr>
+        <tr><td><strong>Sale (POS)</strong></td><td><code>/sales</code></td><td>Retail POS checkout, invoice PDF generation, thermal print receipts, customer returns.</td></tr>
+        <tr><td><strong>Wholesale</strong></td><td><code>/wholesale</code></td><td>Bulk B2B orders, volume pricing tiers, credit limit validation, wholesale invoices.</td></tr>
+        <tr><td><strong>Customer (CRM)</strong></td><td><code>/customers</code></td><td>Customer profiles, transaction ledger, due collection entries, purchase history.</td></tr>
+        <tr><td><strong>Warranty</strong></td><td><code>/warranties</code></td><td>IMEI warranty claims processing, policy check, replacement issue tracking.</td></tr>
+        <tr><td><strong>Repair Service</strong></td><td><code>/repairs</code></td><td>Repair job sheets, technician assignment, status pipeline, service invoices.</td></tr>
+        <tr><td><strong>Accounting</strong></td><td><code>/accounting</code></td><td>Chart of Accounts, journal vouchers, Balance Sheet, Profit & Loss, Trial Balance.</td></tr>
+        <tr><td><strong>Expense</strong></td><td><code>/expenses</code></td><td>Operational expense logging, expense categories, receipt attachment vouchers.</td></tr>
+        <tr><td><strong>Investor</strong></td><td><code>/investors</code></td><td>Investor capital tracking, profit-sharing distribution share calculation.</td></tr>
+        <tr><td><strong>Loan</strong></td><td><code>/loans</code></td><td>Business loan records, interest rate computation, EMI repayment schedule.</td></tr>
+        <tr><td><strong>Employee</strong></td><td><code>/employees</code></td><td>Staff profiles, designations, basic salary structures, document management.</td></tr>
+        <tr><td><strong>Attendance</strong></td><td><code>/attendance</code></td><td>Daily check-in/check-out logs, working hours computation, late arrival marks.</td></tr>
+        <tr><td><strong>Leave</strong></td><td><code>/leaves</code></td><td>Leave application submission, approval workflows, leave balance tracker.</td></tr>
+        <tr><td><strong>Payroll</strong></td><td><code>/payroll</code></td><td>Monthly salary sheet generation, overtime/bonus additions, printable pay slips.</td></tr>
+        <tr><td><strong>Branch</strong></td><td><code>/branches</code></td><td>Multi-branch location setup, manager assignment, branch sales analytics.</td></tr>
+        <tr><td><strong>Settings</strong></td><td><code>/settings</code></td><td>Company profile, thermal print templates, design themes, SMTP email setup.</td></tr>
+        <tr><td><strong>Notification</strong></td><td><code>/notifications</code></td><td>Real-time alerts, low-stock warnings, system audit security events.</td></tr>
+        <tr><td><strong>Real-time SSE</strong></td><td><code>/sse</code></td><td>Server-Sent Events live stream for instant POS notifications & inventory sync.</td></tr>
+        <tr><td><strong>Report Analytics</strong></td><td><code>/reports</code></td><td>Revenue charts, sales analytics, top selling models, HR financial summaries.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- SECTION 6: BACKUP & DISASTER RECOVERY -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">6</div>
+      <div class="section-title">Backup, Security & Disaster Recovery</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Database Restoration & Backup Trigger</div>
+      <p style="font-size: 11.5px; color: #475569;">To execute automated or manual system restoration from backend backup files:</p>
+      <div class="code-block">cd server && node scripts/run-restore.js</div>
+      <p style="font-size: 11px; color: #64748b; margin-top: 6px;">
+        <strong>Security Architecture:</strong> Automatic brute-force IP rate-limiting (5 failures in 15 mins triggers <code>BRUTE_FORCE_DETECTED</code> audit log), JWT bearer authentication, Helmet HTTP security headers, strict MIME type & file magic number verification on uploads.
+      </p>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    Brothers Mobile Shop ERP © 2026 Omegalflop-Intern (Salah Uddin Kader). All Rights Reserved. • Complete System Blueprint v2.0
+  </div>
+
+</body>
+</html>
