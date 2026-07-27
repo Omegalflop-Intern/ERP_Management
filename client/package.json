@@ -40,13 +40,13 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-loading-skeleton": "^3.5.0",
-    "react-router-dom": "^7.18.1",
+    "react-router-dom": "^7.1.5",
     "react-to-print": "^3.3.0",
     "recharts": "^2.12.7",
     "sonner": "^1.5.0",
     "tailwind-merge": "^2.4.0",
     "workbox-window": "^7.4.1",
-    "xlsx": "^0.18.5",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
     "zustand": "^5.0.14"
   },
   "devDependencies": {

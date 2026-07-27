@@ -14,6 +14,11 @@ const envSchema = z.object({
   SMTP_PORT: z.string().optional(),
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
+  ADMIN_EMAIL: z.string().optional(),
+  ADMIN_PHONE: z.string().optional(),
+  SMS_API_URL: z.string().optional(),
+  SMS_API_KEY: z.string().optional(),
+  SMS_SENDER_ID: z.string().optional(),
   APP_NAME: z.string().default('Brothers Mobile Shop ERP'),
   APP_URL: z.string().default('http://localhost:3000'),
 });

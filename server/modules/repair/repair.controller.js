@@ -1,6 +1,8 @@
 import * as repairService from './repair.service.js';
 import { ApiResponse } from '../../utils/http/ApiResponse.js';
 import { logAction } from '../../utils/auth/auditLog.js';
+import { sendAdminNotificationEmail, sendCustomerRepairEmail } from '../../config/mailer.js';
+import { sendAdminSMSNotification, sendCustomerRepairSMS } from '../../config/sms.js';
 
 export const getAllRepairs = async (req, res, next) => {
   try {
@@ -21,6 +23,22 @@ export const createRepair = async (req, res, next) => {
   try {
     const ticket = await repairService.createRepair(req.body);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'CREATE', module: 'repair', entityId: ticket._id, entityType: 'RepairTicket', details: { ticketNumber: ticket.ticketNumber }, req });
+
+    // Send notifications (Admin + Customer Email & SMS)
+    if (ticket.customerEmail) {
+      sendCustomerRepairEmail(ticket.customerEmail, ticket.customerName, ticket).catch(e => console.error('[Customer Repair Mail Error]:', e.message));
+    }
+    if (ticket.customerPhone) {
+      sendCustomerRepairSMS(ticket.customerPhone, ticket.customerName, ticket.ticketNumber, ticket.status, ticket.deviceModel).catch(e => console.error('[Customer Repair SMS Error]:', e.message));
+    }
+    sendAdminNotificationEmail(
+      `New Device Repair Sheet #${ticket.ticketNumber}`,
+      `New Repair Ticket (${ticket.ticketNumber})`,
+      `<p>New repair ticket created for device <strong>${ticket.deviceModel || 'Device'}</strong> (Customer: ${ticket.customerName || 'N/A'}). Status: <strong>${ticket.status}</strong></p>`
+    ).catch(e => console.error('[Admin Repair Mail Error]:', e.message));
+
+    sendAdminSMSNotification(`New Repair Ticket #${ticket.ticketNumber} created for ${ticket.deviceModel || 'Device'}`).catch(e => console.error('[Admin Repair SMS Error]:', e.message));
+
     return ApiResponse.created(res, ticket, 'Repair ticket created');
   } catch (error) { next(error); }
 };
@@ -29,6 +47,22 @@ export const updateRepairStatus = async (req, res, next) => {
   try {
     const ticket = await repairService.updateRepairStatus(req.params.id, req.body.status);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'UPDATE_STATUS', module: 'repair', entityId: ticket._id, entityType: 'RepairTicket', details: { status: ticket.status }, req });
+
+    // Send status update notifications (Email & SMS)
+    if (ticket.customerEmail) {
+      sendCustomerRepairEmail(ticket.customerEmail, ticket.customerName, ticket).catch(e => console.error('[Customer Repair Mail Error]:', e.message));
+    }
+    if (ticket.customerPhone) {
+      sendCustomerRepairSMS(ticket.customerPhone, ticket.customerName, ticket.ticketNumber, ticket.status, ticket.deviceModel).catch(e => console.error('[Customer Repair SMS Error]:', e.message));
+    }
+    sendAdminNotificationEmail(
+      `Repair Status Changed #${ticket.ticketNumber} (${ticket.status})`,
+      `Repair Ticket Status Updated`,
+      `<p>Ticket <strong>#${ticket.ticketNumber}</strong> status changed to <strong style="color:#2563eb;">${ticket.status}</strong>.</p>`
+    ).catch(e => console.error('[Admin Repair Mail Error]:', e.message));
+
+    sendAdminSMSNotification(`Repair #${ticket.ticketNumber} status updated to ${ticket.status}`).catch(e => console.error('[Admin Repair SMS Error]:', e.message));
+
     return ApiResponse.success(res, ticket, `Status updated to ${ticket.status}`);
   } catch (error) { next(error); }
 };

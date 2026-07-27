@@ -160,7 +160,10 @@ function UserFormModal({ user, onClose, onSuccess }) {
       if (user) { const { password, ...rest } = data; return api.put(`/users/${user._id}`, rest); }
       return api.post('/users', data);
     },
-    onSuccess: () => { toast.success(user ? 'User updated' : 'User created'); onSuccess(); },
+    onSuccess: () => {
+      toast.success(user ? 'User updated' : 'User created! Verification OTP sent to email.');
+      onSuccess();
+    },
     onError: (e) => toast.error(e.response?.data?.message || 'Failed'),
   });
 
