@@ -8,6 +8,8 @@ router.use(authenticate);
 
 router.get('/', investorController.getAllInvestors);
 router.get('/transactions', investorController.getAllTransactions);
+router.get('/profit-loss/calculate', investorController.calculateProfitLoss);
+router.post('/profit-loss/distribute', authorize('ADMIN', 'MANAGER'), investorController.distributeProfitLoss);
 router.get('/:id', investorController.getInvestorById);
 router.post('/', authorize('ADMIN', 'MANAGER'), investorController.createInvestor);
 router.put('/:id', authorize('ADMIN', 'MANAGER'), investorController.updateInvestor);

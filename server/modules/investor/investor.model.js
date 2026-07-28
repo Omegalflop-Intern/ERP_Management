@@ -10,6 +10,7 @@ const investorSchema = new mongoose.Schema(
     totalInvested: { type: Number, default: 0 },
     totalWithdrawn: { type: Number, default: 0 },
     totalProfitPaid: { type: Number, default: 0 },
+    profilePhoto: { type: String, trim: true },
     status: { type: String, enum: ['Active', 'Inactive'], default: 'Active' },
     notes: { type: String },
     isDeleted: { type: Boolean, default: false },
@@ -20,7 +21,7 @@ const investorSchema = new mongoose.Schema(
 const investorTransactionSchema = new mongoose.Schema(
   {
     investorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Investor', required: true },
-    type: { type: String, enum: ['DEPOSIT', 'WITHDRAWAL', 'PROFIT_SHARE'], required: true },
+    type: { type: String, enum: ['DEPOSIT', 'WITHDRAWAL', 'PROFIT_SHARE', 'PROFIT_PAYOUT', 'PROFIT_REINVESTMENT'], required: true },
     amount: { type: Number, required: true, min: 0.01 },
     paymentMethod: { type: String, enum: ['cash', 'bkash', 'nagad', 'rocket', 'bank'], default: 'cash' },
     reference: { type: String },

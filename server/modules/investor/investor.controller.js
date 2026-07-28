@@ -56,3 +56,22 @@ export const getAllTransactions = async (req, res, next) => {
     return ApiResponse.success(res, txs);
   } catch (error) { next(error); }
 };
+
+export const calculateProfitLoss = async (req, res, next) => {
+  try {
+    const { startDate, endDate } = req.query;
+    const { calculateProfitDistribution } = await import('./profitDistribution.service.js');
+    const result = await calculateProfitDistribution(startDate, endDate);
+    return ApiResponse.success(res, result);
+  } catch (error) { next(error); }
+};
+
+export const distributeProfitLoss = async (req, res, next) => {
+  try {
+    const username = req.user?.username || 'system';
+    const { executeShareDistribution } = await import('./profitDistribution.service.js');
+    const result = await executeShareDistribution(req.body, username);
+    logAction({ userId: req.user?.userId, username: req.user?.username, action: 'DISTRIBUTION', module: 'investor', entityId: result.investor._id, entityType: 'Investor', details: { actionType: req.body.actionType, amount: req.body.amount }, req });
+    return ApiResponse.success(res, result, `Profit share distribution (${req.body.actionType}) processed successfully`);
+  } catch (error) { next(error); }
+};

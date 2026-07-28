@@ -247,8 +247,9 @@ export const getBalanceSheet = async (asOf = '') => {
 };
 
 export const getProfitLoss = async (from = '', to = '') => {
-  const toDate = to ? new Date(to + 'T23:59:59.999Z') : new Date();
-  const fromDate = from ? new Date(from) : new Date(new Date().setDate(1));
+  const isValidDate = (d) => d && !isNaN(new Date(d).getTime());
+  const toDate = isValidDate(to) ? new Date(to) : new Date();
+  const fromDate = isValidDate(from) ? new Date(from) : new Date(new Date().setDate(1));
 
   const { Transaction } = await import('../sale/sale.model.js');
   const { Expense } = await import('../expense/expense.model.js');
