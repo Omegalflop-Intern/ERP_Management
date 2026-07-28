@@ -38,8 +38,18 @@ export default function DatePicker({
   const month = viewDate.getMonth();
 
   const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
 
   const dayNames = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
@@ -83,13 +93,15 @@ export default function DatePicker({
   };
 
   // Format display date: MM/DD/YYYY or Placeholder
-  const formattedDisplay = value ? (() => {
-    const d = new Date(value + 'T00:00:00');
-    if (isNaN(d.getTime())) return value;
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${m}/${day}/${d.getFullYear()}`;
-  })() : '';
+  const formattedDisplay = value
+    ? (() => {
+        const d = new Date(value + 'T00:00:00');
+        if (isNaN(d.getTime())) return value;
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${m}/${day}/${d.getFullYear()}`;
+      })()
+    : '';
 
   const popoverCardClass = styled
     ? 'neu-card shadow-xl rounded-2xl'
@@ -170,9 +182,7 @@ export default function DatePicker({
               const isToday = (() => {
                 const now = new Date();
                 return (
-                  now.getFullYear() === year &&
-                  now.getMonth() === month &&
-                  now.getDate() === dayNum
+                  now.getFullYear() === year && now.getMonth() === month && now.getDate() === dayNum
                 );
               })();
 
@@ -185,8 +195,8 @@ export default function DatePicker({
                     isSelected
                       ? 'bg-red-600 text-white shadow-md'
                       : isToday
-                      ? 'border border-red-500 text-red-600 dark:text-red-400 font-bold'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                        ? 'border border-red-500 text-red-600 dark:text-red-400 font-bold'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
                   }`}
                 >
                   {dayNum}
