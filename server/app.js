@@ -43,6 +43,11 @@ import investorRoutes from './modules/investor/investor.routes.js';
 import expenseRoutes from './modules/expense/expense.routes.js';
 import loanRoutes from './modules/loan/loan.routes.js';
 import sseRoutes from './modules/sse/sse.routes.js';
+import documentVaultRoutes from './modules/documentVault/documentVault.routes.js';
+import { startLoanReminderJob } from './jobs/loanReminderCron.js';
+import { auditDiffInterceptor } from './middleware/auditInterceptor.middleware.js';
+import { Investor } from './modules/investor/investor.model.js';
+import { Loan } from './modules/loan/loan.model.js';
 import { seedDefaultRoles } from './modules/role/role.service.js';
 import { Settings } from './modules/settings/settings.model.js';
 import { getAuditLogs } from './utils/auth/auditLog.js';
@@ -175,6 +180,14 @@ app.get('/api/v1/audit-logs', authenticate, authorize('ADMIN', 'MANAGER'), async
   } catch (error) { next(error); }
 });
 
+// Explicit Hard-Delete Prohibition Guard for AuditLog API
+app.delete('/api/v1/audit-logs*', authenticate, (req, res) => {
+  return res.status(403).json({
+    success: false,
+    message: 'Hard deletion of entries in the AuditLog collection is strictly prohibited at both the API and database levels.',
+  });
+});
+
 // System Analytics endpoint
 app.get('/api/v1/system/analytics', authenticate, authorize('ADMIN'), async (req, res, next) => {
   try {
@@ -281,6 +294,9 @@ app.get('/api/v1/system/analytics', authenticate, authorize('ADMIN'), async (req
   } catch (error) { next(error); }
 });
 
+// Initialize background cron jobs
+startLoanReminderJob();
+
 app.use('/api/v1/auth', authLimiter, authRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/roles', roleRoutes);
@@ -304,9 +320,10 @@ app.use('/api/v1/branches', branchRoutes);
 app.use('/api/v1/wholesale', wholesaleRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/settings', settingsRoutes);
-app.use('/api/v1/investors', investorRoutes);
+app.use('/api/v1/documents', documentVaultRoutes);
+app.use('/api/v1/investors', auditDiffInterceptor('Investor', () => Investor), investorRoutes);
 app.use('/api/v1/expenses', expenseRoutes);
-app.use('/api/v1/loans', loanRoutes);
+app.use('/api/v1/loans', auditDiffInterceptor('Loan', () => Loan), loanRoutes);
 app.use('/api/v1/sse', sseRoutes);
 // 404 Fallback Handler for unmatched routes
 app.use((req, res) => {

@@ -22,4 +22,15 @@ auditLogSchema.index({ createdAt: -1 });
 auditLogSchema.index({ userId: 1 });
 auditLogSchema.index({ module: 1 });
 
+const prohibitDeletion = function (next) {
+  const err = new Error('Hard deletion of entries in the AuditLog collection is strictly prohibited.');
+  next(err);
+};
+
+auditLogSchema.pre('deleteOne', prohibitDeletion);
+auditLogSchema.pre('deleteMany', prohibitDeletion);
+auditLogSchema.pre('findOneAndDelete', prohibitDeletion);
+auditLogSchema.pre('findOneAndRemove', prohibitDeletion);
+auditLogSchema.pre('remove', prohibitDeletion);
+
 export const AuditLog = mongoose.model('AuditLog', auditLogSchema);
