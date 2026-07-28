@@ -83,6 +83,7 @@ app.use(helmet({
 app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
+morgan.token('url', (req) => (req.originalUrl || req.url).replace(/([?&]token=)[^&]+/g, '$1[REDACTED]'));
 app.use(morgan('dev'));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', (req, res, next) => {

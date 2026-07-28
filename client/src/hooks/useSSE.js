@@ -17,8 +17,6 @@ export function useSSE() {
   const esRef = useRef(null);
 
   useEffect(() => {
-    if (!user) return;
-
     const token = localStorage.getItem('accessToken');
     const sseUrl = token
       ? `${API_URL}/sse/connect?token=${encodeURIComponent(token)}`
