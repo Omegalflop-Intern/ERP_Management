@@ -6,9 +6,10 @@ export default function AnimatedNumber({ value, prefix = '', suffix = '', durati
   const startRef = useRef(null);
   const fromRef = useRef(0);
 
-  const numericValue = typeof value === 'string'
-    ? parseFloat(value.replace(/[^0-9.-]/g, '')) || 0
-    : Number(value) || 0;
+  const numericValue =
+    typeof value === 'string'
+      ? parseFloat(value.replace(/[^0-9.-]/g, '')) || 0
+      : Number(value) || 0;
 
   const isString = typeof value === 'string' && value.includes('৳');
 
@@ -28,13 +29,27 @@ export default function AnimatedNumber({ value, prefix = '', suffix = '', durati
     };
 
     rafRef.current = requestAnimationFrame(animate);
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
   }, [numericValue, duration]);
 
   if (isString) {
     const formatted = Math.round(display).toLocaleString();
-    return <span>{prefix}{formatted}{suffix}</span>;
+    return (
+      <span>
+        {prefix}
+        {formatted}
+        {suffix}
+      </span>
+    );
   }
 
-  return <span>{prefix}{Math.round(display).toLocaleString()}{suffix}</span>;
+  return (
+    <span>
+      {prefix}
+      {Math.round(display).toLocaleString()}
+      {suffix}
+    </span>
+  );
 }

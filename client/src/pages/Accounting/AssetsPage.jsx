@@ -1,6 +1,15 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Building, Plus, TrendingDown, RefreshCw, Calendar, DollarSign, PackageCheck, AlertCircle } from 'lucide-react';
+import {
+  Building,
+  Plus,
+  TrendingDown,
+  RefreshCw,
+  Calendar,
+  DollarSign,
+  PackageCheck,
+  AlertCircle,
+} from 'lucide-react';
 import api from '../../lib/api';
 import { toast } from 'sonner';
 import { useTheme } from '../../context/ThemeContext';
@@ -48,14 +57,17 @@ export default function AssetsPage() {
   const currentBookValue = assets.reduce((sum, a) => sum + (a.currentBookValue || 0), 0);
   const totalDepreciation = totalAssetValue - currentBookValue;
 
-  const cardCls = styled ? 'neu-card p-4 space-y-1' : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-4 space-y-1';
+  const cardCls = styled
+    ? 'neu-card p-4 space-y-1'
+    : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-4 space-y-1';
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-            <Building className="w-7 h-7 text-indigo-600 dark:text-indigo-400" /> Shop Assets &amp; Depreciation Schedule
+            <Building className="w-7 h-7 text-indigo-600 dark:text-indigo-400" /> Shop Assets &amp;
+            Depreciation Schedule
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Track shop furniture, electronics, equipment value and calculate monthly depreciation
@@ -106,9 +118,13 @@ export default function AssetsPage() {
       </div>
 
       {/* Assets Table */}
-      <div className={`overflow-hidden ${styled ? 'neu-card p-0' : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800'}`}>
+      <div
+        className={`overflow-hidden ${styled ? 'neu-card p-0' : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800'}`}
+      >
         <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
-          <h3 className="font-bold text-base text-gray-900 dark:text-gray-100">Registered Shop Assets ({assets.length})</h3>
+          <h3 className="font-bold text-base text-gray-900 dark:text-gray-100">
+            Registered Shop Assets ({assets.length})
+          </h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
@@ -117,17 +133,26 @@ export default function AssetsPage() {
                 <th className="px-4 py-3.5 font-bold uppercase text-xs">Asset Name</th>
                 <th className="px-4 py-3.5 font-bold uppercase text-xs">Category</th>
                 <th className="px-4 py-3.5 font-bold uppercase text-xs">Purchase Date</th>
-                <th className="px-4 py-3.5 font-bold uppercase text-xs text-right">Purchase Cost</th>
+                <th className="px-4 py-3.5 font-bold uppercase text-xs text-right">
+                  Purchase Cost
+                </th>
                 <th className="px-4 py-3.5 font-bold uppercase text-xs text-right">Useful Life</th>
-                <th className="px-4 py-3.5 font-bold uppercase text-xs text-right">Current Value</th>
+                <th className="px-4 py-3.5 font-bold uppercase text-xs text-right">
+                  Current Value
+                </th>
                 <th className="px-4 py-3.5 font-bold uppercase text-xs text-right">Monthly Loss</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
               {assets.map((asset) => {
-                const monthlyLoss = Math.round((asset.purchaseCost - asset.salvageValue) / (asset.usefulLifeMonths || 36));
+                const monthlyLoss = Math.round(
+                  (asset.purchaseCost - asset.salvageValue) / (asset.usefulLifeMonths || 36)
+                );
                 return (
-                  <tr key={asset._id} className="hover:bg-gray-50/70 dark:hover:bg-gray-800/40 transition-colors">
+                  <tr
+                    key={asset._id}
+                    className="hover:bg-gray-50/70 dark:hover:bg-gray-800/40 transition-colors"
+                  >
                     <td className="px-4 py-3.5 font-bold text-gray-900 dark:text-gray-100">
                       {asset.assetName}
                     </td>
@@ -187,7 +212,8 @@ function AddAssetModal({ onClose, onSuccess }) {
     e.preventDefault();
     setLoading(true);
     try {
-      const finalCategory = form.category === 'OTHER' ? (form.customCategory || 'OTHER') : form.category;
+      const finalCategory =
+        form.category === 'OTHER' ? form.customCategory || 'OTHER' : form.category;
       await api.post('/accounting/assets', {
         ...form,
         category: finalCategory,
@@ -209,12 +235,16 @@ function AddAssetModal({ onClose, onSuccess }) {
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
         <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 pb-3">
           <h3 className="font-bold text-lg text-gray-900 dark:text-white">Register Shop Asset</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            ✕
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3 text-sm">
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Asset Name *</label>
+            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+              Asset Name *
+            </label>
             <input
               required
               placeholder="e.g. Glass Counter Rack, AC 1.5 Ton"
@@ -226,7 +256,9 @@ function AddAssetModal({ onClose, onSuccess }) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Category</label>
+              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+                Category
+              </label>
               <select
                 value={form.category}
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
@@ -240,7 +272,9 @@ function AddAssetModal({ onClose, onSuccess }) {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Purchase Date</label>
+              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+                Purchase Date
+              </label>
               <input
                 type="date"
                 required
@@ -253,7 +287,9 @@ function AddAssetModal({ onClose, onSuccess }) {
 
           {form.category === 'OTHER' && (
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Custom Category Name *</label>
+              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+                Custom Category Name *
+              </label>
               <input
                 type="text"
                 required
@@ -267,7 +303,9 @@ function AddAssetModal({ onClose, onSuccess }) {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Purchase Cost (৳) *</label>
+              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+                Purchase Cost (৳) *
+              </label>
               <input
                 type="number"
                 required
@@ -278,7 +316,9 @@ function AddAssetModal({ onClose, onSuccess }) {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Useful Life (Months)</label>
+              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+                Useful Life (Months)
+              </label>
               <input
                 type="number"
                 required

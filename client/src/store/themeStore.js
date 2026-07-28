@@ -1,7 +1,15 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-const MODES = ['flat', 'neumorphism', 'glassmorphism', 'liquidglass', 'neobrutalism', 'aurora', 'glassmorphismpro'];
+const MODES = [
+  'flat',
+  'neumorphism',
+  'glassmorphism',
+  'liquidglass',
+  'neobrutalism',
+  'aurora',
+  'glassmorphismpro',
+];
 
 const MODE_ICONS = {
   flat: 'Flat',
@@ -19,8 +27,7 @@ export const useThemeStore = create(
       theme: 'light',
       designMode: 'flat',
 
-      toggleTheme: () =>
-        set((s) => ({ theme: s.theme === 'dark' ? 'light' : 'dark' })),
+      toggleTheme: () => set((s) => ({ theme: s.theme === 'dark' ? 'light' : 'dark' })),
 
       setDesignMode: (mode) => set({ designMode: mode }),
 

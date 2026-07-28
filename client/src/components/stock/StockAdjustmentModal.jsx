@@ -54,8 +54,12 @@ export const StockAdjustmentModal = ({ isOpen, onClose, onSuccess }) => {
             <PackageX className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Physical Stock Audit & Log</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Log damaged, stolen, missing, or found stock</p>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+              Physical Stock Audit & Log
+            </h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Log damaged, stolen, missing, or found stock
+            </p>
           </div>
         </div>
 

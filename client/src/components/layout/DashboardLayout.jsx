@@ -32,12 +32,11 @@ export default function DashboardLayout() {
         collapsed={collapsed}
       />
       <div className="flex flex-1 min-h-0">
-        <Sidebar
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-          collapsed={collapsed}
-        />
-        <main id="main-content" className="flex-1 p-4 md:p-6 overflow-y-auto overscroll-contain flex flex-col justify-between">
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} collapsed={collapsed} />
+        <main
+          id="main-content"
+          className="flex-1 p-4 md:p-6 overflow-y-auto overscroll-contain flex flex-col justify-between"
+        >
           <div className="flex-1">
             <Outlet />
           </div>

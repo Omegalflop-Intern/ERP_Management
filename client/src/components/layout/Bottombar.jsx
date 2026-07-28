@@ -6,12 +6,14 @@ export default function Bottombar() {
   const { styled } = useTheme();
 
   return (
-    <footer className={`
+    <footer
+      className={`
       mt-8 pt-3 pb-2 px-4 border-t border-gray-200 dark:border-gray-800/80
       flex flex-col sm:flex-row items-center justify-between gap-3 text-xs
       text-gray-500 dark:text-gray-400 font-medium transition-all
       ${styled ? 'neu-card-sm !border-none !rounded-xl my-2' : 'bg-white/40 dark:bg-gray-900/30 backdrop-blur-xs rounded-xl'}
-    `}>
+    `}
+    >
       {/* ERP Info */}
       <div className="flex items-center gap-2">
         <div className="w-6 h-6 rounded-lg bg-red-600/10 text-red-600 flex items-center justify-center font-bold">
@@ -22,13 +24,16 @@ export default function Bottombar() {
           v1.0.0
         </span>
         <span className="hidden sm:inline text-gray-300 dark:text-gray-700">•</span>
-        <span className="hidden sm:inline text-gray-500 dark:text-gray-400 font-mono text-[11px]">Enterprise Edition</span>
+        <span className="hidden sm:inline text-gray-500 dark:text-gray-400 font-mono text-[11px]">
+          Enterprise Edition
+        </span>
       </div>
 
       {/* Connection & Status */}
       <div className="flex items-center gap-3 text-[11px]">
         <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-50 dark:bg-emerald-900/20 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-500/20">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> DB Connected & Active
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> DB Connected &
+          Active
         </span>
       </div>
 

@@ -1,7 +1,22 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Edit, Trash2, Users, DollarSign, ShoppingBag, Eye, RefreshCw, Phone, Building2, Tag, Gift, Check } from 'lucide-react';
+import {
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  Users,
+  DollarSign,
+  ShoppingBag,
+  Eye,
+  RefreshCw,
+  Phone,
+  Building2,
+  Tag,
+  Gift,
+  Check,
+} from 'lucide-react';
 import api from '../../lib/api';
 import { toast } from 'sonner';
 import { confirmDelete } from '../../lib/confirm';
@@ -35,7 +50,11 @@ export default function CustomerList() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id) => api.delete(`/customers/${id}`),
-    onSuccess: () => { toast.success('Customer deleted'); queryClient.invalidateQueries(['customers']); queryClient.invalidateQueries(['customer-stats']); },
+    onSuccess: () => {
+      toast.success('Customer deleted');
+      queryClient.invalidateQueries(['customers']);
+      queryClient.invalidateQueries(['customer-stats']);
+    },
     onError: (e) => toast.error(e.response?.data?.message || 'Failed to delete'),
   });
 
@@ -47,33 +66,71 @@ export default function CustomerList() {
   });
 
   const stats = statsData || { total: 0, withDue: 0, totalDue: 0, totalPurchases: 0 };
-  const cardClass = styled ? 'neu-card p-4' : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-4';
+  const cardClass = styled
+    ? 'neu-card p-4'
+    : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-4';
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Customers</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Manage individual retail and B2B wholesale customer accounts</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Manage individual retail and B2B wholesale customer accounts
+          </p>
         </div>
-        <button onClick={() => { setEditCust(null); setShowForm(true); }} className="flex items-center gap-2 px-4 py-2 bg-red-700 hover:bg-red-600 text-white font-medium rounded-lg text-sm transition-all">
+        <button
+          onClick={() => {
+            setEditCust(null);
+            setShowForm(true);
+          }}
+          className="flex items-center gap-2 px-4 py-2 bg-red-700 hover:bg-red-600 text-white font-medium rounded-lg text-sm transition-all"
+        >
           <Plus className="w-4 h-4" /> Add Customer
         </button>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: 'Total Customers', value: stats.total, icon: Users, color: 'text-blue-600 dark:text-blue-400' },
-          { label: 'With Due', value: stats.withDue, icon: DollarSign, color: 'text-red-600 dark:text-red-400' },
-          { label: 'Total Due', value: `৳${stats.totalDue.toLocaleString()}`, icon: DollarSign, color: 'text-amber-600 dark:text-amber-400' },
-          { label: 'Total Purchases', value: `৳${stats.totalPurchases.toLocaleString()}`, icon: ShoppingBag, color: 'text-green-600 dark:text-green-400' },
+          {
+            label: 'Total Customers',
+            value: stats.total,
+            icon: Users,
+            color: 'text-blue-600 dark:text-blue-400',
+          },
+          {
+            label: 'With Due',
+            value: stats.withDue,
+            icon: DollarSign,
+            color: 'text-red-600 dark:text-red-400',
+          },
+          {
+            label: 'Total Due',
+            value: `৳${stats.totalDue.toLocaleString()}`,
+            icon: DollarSign,
+            color: 'text-amber-600 dark:text-amber-400',
+          },
+          {
+            label: 'Total Purchases',
+            value: `৳${stats.totalPurchases.toLocaleString()}`,
+            icon: ShoppingBag,
+            color: 'text-green-600 dark:text-green-400',
+          },
         ].map((s) => (
           <div key={s.label} className={cardClass}>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{s.label}</span>
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                {s.label}
+              </span>
               <s.icon className={`w-4 h-4 ${s.color}`} />
             </div>
-            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{isLoading ? <div className="h-7 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" /> : s.value}</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              {isLoading ? (
+                <div className="h-7 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+              ) : (
+                s.value
+              )}
+            </div>
           </div>
         ))}
       </div>
@@ -82,8 +139,13 @@ export default function CustomerList() {
         <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex flex-col sm:flex-row gap-3 items-center justify-between">
           <div className="relative w-full sm:w-80">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by name, phone, or company..."
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-red-500" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, phone, or company..."
+              className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-red-500"
+            />
           </div>
 
           <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-full sm:w-auto">
@@ -111,31 +173,56 @@ export default function CustomerList() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-800 text-left">
-                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Customer</th>
+                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">
+                  Customer
+                </th>
                 <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Type</th>
-                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 hidden md:table-cell">Phone</th>
-                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 hidden lg:table-cell">Email</th>
-                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Purchases</th>
+                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 hidden md:table-cell">
+                  Phone
+                </th>
+                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 hidden lg:table-cell">
+                  Email
+                </th>
+                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">
+                  Purchases
+                </th>
                 <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Due</th>
-                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 text-right">Actions</th>
+                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 text-right">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan="7" className="px-4 py-12 text-center text-gray-400"><RefreshCw className="w-6 h-6 animate-spin mx-auto" /></td></tr>
+                <tr>
+                  <td colSpan="7" className="px-4 py-12 text-center text-gray-400">
+                    <RefreshCw className="w-6 h-6 animate-spin mx-auto" />
+                  </td>
+                </tr>
               ) : customers.length === 0 ? (
-                <tr><td colSpan="7" className="px-4 py-12 text-center text-gray-400">No customers found</td></tr>
+                <tr>
+                  <td colSpan="7" className="px-4 py-12 text-center text-gray-400">
+                    No customers found
+                  </td>
+                </tr>
               ) : (
                 customers.map((c) => (
-                  <tr key={c._id} className="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/20 transition-colors">
+                  <tr
+                    key={c._id}
+                    className="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/20 transition-colors"
+                  >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 flex items-center justify-center font-bold text-sm flex-shrink-0">
                           {c.name?.[0]?.toUpperCase()}
                         </div>
                         <div>
-                          <div className="font-medium text-gray-900 dark:text-gray-100">{c.name}</div>
-                          {c.companyName && <div className="text-xs text-gray-500">{c.companyName}</div>}
+                          <div className="font-medium text-gray-900 dark:text-gray-100">
+                            {c.name}
+                          </div>
+                          {c.companyName && (
+                            <div className="text-xs text-gray-500">{c.companyName}</div>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -150,22 +237,61 @@ export default function CustomerList() {
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden md:table-cell">{c.phone}</td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden lg:table-cell">{c.email || '-'}</td>
-                    <td className="px-4 py-3 font-semibold text-gray-900 dark:text-gray-100">৳{c.totalPurchases?.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden md:table-cell">
+                      {c.phone}
+                    </td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden lg:table-cell">
+                      {c.email || '-'}
+                    </td>
+                    <td className="px-4 py-3 font-semibold text-gray-900 dark:text-gray-100">
+                      ৳{c.totalPurchases?.toLocaleString()}
+                    </td>
                     <td className="px-4 py-3">
                       {c.dueBalance > 0 ? (
-                        <span className="text-sm font-bold text-red-600 dark:text-red-400">৳{c.dueBalance.toLocaleString()}</span>
+                        <span className="text-sm font-bold text-red-600 dark:text-red-400">
+                          ৳{c.dueBalance.toLocaleString()}
+                        </span>
                       ) : (
                         <span className="text-sm text-green-600 dark:text-green-400">Clear</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <button onClick={() => setCouponCust(c)} className="p-1.5 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/30 text-amber-500 hover:text-amber-600 transition-colors" title="Issue Targeted Coupon"><Tag className="w-4 h-4" /></button>
-                        <button onClick={() => navigate(`/customers/${c._id}`)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-blue-500 transition-colors" title="View"><Eye className="w-4 h-4" /></button>
-                        <button onClick={() => { setEditCust(c); setShowForm(true); }} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-blue-500 transition-colors" title="Edit"><Edit className="w-4 h-4" /></button>
-                        <button onClick={() => confirmDelete(`Delete customer "${c.name}"?`, () => deleteMutation.mutate(c._id))} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-red-500 transition-colors" title="Delete"><Trash2 className="w-4 h-4" /></button>
+                        <button
+                          onClick={() => setCouponCust(c)}
+                          className="p-1.5 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/30 text-amber-500 hover:text-amber-600 transition-colors"
+                          title="Issue Targeted Coupon"
+                        >
+                          <Tag className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => navigate(`/customers/${c._id}`)}
+                          className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-blue-500 transition-colors"
+                          title="View"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditCust(c);
+                            setShowForm(true);
+                          }}
+                          className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-blue-500 transition-colors"
+                          title="Edit"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() =>
+                            confirmDelete(`Delete customer "${c.name}"?`, () =>
+                              deleteMutation.mutate(c._id)
+                            )
+                          }
+                          className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-red-500 transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -176,8 +302,18 @@ export default function CustomerList() {
         </div>
       </div>
 
-      {showForm && <CustomerModal editCust={editCust} onClose={() => { setShowForm(false); setEditCust(null); }} />}
-      {couponCust && <CustomerCouponModal customer={couponCust} onClose={() => setCouponCust(null)} />}
+      {showForm && (
+        <CustomerModal
+          editCust={editCust}
+          onClose={() => {
+            setShowForm(false);
+            setEditCust(null);
+          }}
+        />
+      )}
+      {couponCust && (
+        <CustomerCouponModal customer={couponCust} onClose={() => setCouponCust(null)} />
+      )}
     </div>
   );
 }
@@ -200,19 +336,40 @@ function CustomerModal({ editCust, onClose }) {
       if (editCust) return api.put(`/customers/${editCust._id}`, data);
       return api.post('/customers', data);
     },
-    onSuccess: () => { toast.success(editCust ? 'Customer updated' : 'Customer created'); queryClient.invalidateQueries(['customers']); queryClient.invalidateQueries(['customer-stats']); onClose(); },
+    onSuccess: () => {
+      toast.success(editCust ? 'Customer updated' : 'Customer created');
+      queryClient.invalidateQueries(['customers']);
+      queryClient.invalidateQueries(['customer-stats']);
+      onClose();
+    },
     onError: (e) => toast.error(e.response?.data?.message || 'Operation failed'),
   });
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 w-full max-w-md max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 w-full max-w-md max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{editCust ? 'Edit Customer' : 'Add Customer'}</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+            {editCust ? 'Edit Customer' : 'Add Customer'}
+          </h2>
         </div>
-        <form onSubmit={(e) => { e.preventDefault(); mutation.mutate(form); }} className="p-6 space-y-4">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            mutation.mutate(form);
+          }}
+          className="p-6 space-y-4"
+        >
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Customer Type</label>
+            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+              Customer Type
+            </label>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -240,42 +397,105 @@ function CustomerModal({ editCust, onClose }) {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Full Name / Contact Person *</label>
-            <input type="text" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-red-500" />
+            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+              Full Name / Contact Person *
+            </label>
+            <input
+              type="text"
+              required
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-red-500"
+            />
           </div>
 
           {form.customerType === 'B2B' && (
             <>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Company / Shop Name</label>
-                <input type="text" value={form.companyName} onChange={(e) => setForm({ ...form, companyName: e.target.value })} placeholder="e.g. M/S Rahat Telecom" className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-red-500" />
+                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+                  Company / Shop Name
+                </label>
+                <input
+                  type="text"
+                  value={form.companyName}
+                  onChange={(e) => setForm({ ...form, companyName: e.target.value })}
+                  placeholder="e.g. M/S Rahat Telecom"
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-red-500"
+                />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Trade License / BIN / Tax ID</label>
-                <input type="text" value={form.binOrTaxId} onChange={(e) => setForm({ ...form, binOrTaxId: e.target.value })} placeholder="e.g. BIN-0098483-2" className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-red-500" />
+                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+                  Trade License / BIN / Tax ID
+                </label>
+                <input
+                  type="text"
+                  value={form.binOrTaxId}
+                  onChange={(e) => setForm({ ...form, binOrTaxId: e.target.value })}
+                  placeholder="e.g. BIN-0098483-2"
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-red-500"
+                />
               </div>
             </>
           )}
 
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Phone *</label>
-            <input type="text" required value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-red-500" />
+            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+              Phone *
+            </label>
+            <input
+              type="text"
+              required
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-red-500"
+            />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Email</label>
-            <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-red-500" />
+            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+              Email
+            </label>
+            <input
+              type="email"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-red-500"
+            />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Address</label>
-            <textarea rows={2} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-red-500" />
+            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+              Address
+            </label>
+            <textarea
+              rows={2}
+              value={form.address}
+              onChange={(e) => setForm({ ...form, address: e.target.value })}
+              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-red-500"
+            />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Notes</label>
-            <textarea rows={2} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-red-500" />
+            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+              Notes
+            </label>
+            <textarea
+              rows={2}
+              value={form.notes}
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-red-500"
+            />
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">Cancel</button>
-            <button type="submit" disabled={mutation.isPending} className="px-4 py-2 bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white font-medium rounded-lg text-sm transition-all flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={mutation.isPending}
+              className="px-4 py-2 bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white font-medium rounded-lg text-sm transition-all flex items-center gap-2"
+            >
               {mutation.isPending && <RefreshCw className="w-4 h-4 animate-spin" />}
               {editCust ? 'Update' : 'Create'}
             </button>
@@ -287,7 +507,12 @@ function CustomerModal({ editCust, onClose }) {
 }
 
 function CustomerCouponModal({ customer, onClose }) {
-  const defaultCode = `VIP-${customer.name?.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 5) || 'CUST'}-500`;
+  const defaultCode = `VIP-${
+    customer.name
+      ?.toUpperCase()
+      .replace(/[^A-Z]/g, '')
+      .slice(0, 5) || 'CUST'
+  }-500`;
   const [couponCode, setCouponCode] = useState(defaultCode);
   const [discountAmount, setDiscountAmount] = useState('500');
   const [issued, setIssued] = useState(false);
@@ -305,22 +530,41 @@ function CustomerCouponModal({ customer, onClose }) {
           <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100 flex items-center gap-2">
             <Tag className="w-5 h-5 text-amber-500" /> Targeted Coupon for {customer.name}
           </h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-200">✕</button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-200">
+            ✕
+          </button>
         </div>
 
         {issued ? (
           <div className="text-center py-6 space-y-3">
-            <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center mx-auto font-bold text-xl">✓</div>
-            <h4 className="font-bold text-emerald-600 dark:text-emerald-400 text-lg">Coupon Successfully Issued!</h4>
+            <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center mx-auto font-bold text-xl">
+              ✓
+            </div>
+            <h4 className="font-bold text-emerald-600 dark:text-emerald-400 text-lg">
+              Coupon Successfully Issued!
+            </h4>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Customer <span className="font-bold text-gray-800 dark:text-gray-200">{customer.name}</span> ({customer.phone}) can now use code <code className="bg-amber-500/10 text-amber-600 font-bold font-mono px-2 py-0.5 rounded">{couponCode}</code> at POS checkout for ৳{discountAmount} discount!
+              Customer{' '}
+              <span className="font-bold text-gray-800 dark:text-gray-200">{customer.name}</span> (
+              {customer.phone}) can now use code{' '}
+              <code className="bg-amber-500/10 text-amber-600 font-bold font-mono px-2 py-0.5 rounded">
+                {couponCode}
+              </code>{' '}
+              at POS checkout for ৳{discountAmount} discount!
             </p>
-            <button onClick={onClose} className="w-full py-2.5 bg-gray-800 hover:bg-gray-700 text-white rounded-xl text-sm font-medium">Done</button>
+            <button
+              onClick={onClose}
+              className="w-full py-2.5 bg-gray-800 hover:bg-gray-700 text-white rounded-xl text-sm font-medium"
+            >
+              Done
+            </button>
           </div>
         ) : (
           <form onSubmit={handleIssue} className="space-y-3 text-sm">
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Target Customer:</label>
+              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+                Target Customer:
+              </label>
               <div className="p-2.5 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 font-medium text-gray-900 dark:text-gray-100 flex justify-between">
                 <span>{customer.name}</span>
                 <span className="font-mono text-xs text-gray-500">{customer.phone}</span>
@@ -328,7 +572,9 @@ function CustomerCouponModal({ customer, onClose }) {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Generated Coupon Code:</label>
+              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+                Generated Coupon Code:
+              </label>
               <input
                 type="text"
                 required
@@ -339,7 +585,9 @@ function CustomerCouponModal({ customer, onClose }) {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Discount Amount (৳):</label>
+              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+                Discount Amount (৳):
+              </label>
               <input
                 type="number"
                 required
@@ -350,8 +598,19 @@ function CustomerCouponModal({ customer, onClose }) {
             </div>
 
             <div className="flex gap-3 pt-2">
-              <button type="button" onClick={onClose} className="flex-1 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium rounded-xl text-sm">Cancel</button>
-              <button type="submit" className="flex-1 py-2 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-xl text-sm">Issue Coupon</button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium rounded-xl text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="flex-1 py-2 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-xl text-sm"
+              >
+                Issue Coupon
+              </button>
             </div>
           </form>
         )}

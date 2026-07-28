@@ -64,7 +64,8 @@ api.interceptors.response.use(
 // Helper function to resolve media asset URLs dynamically
 export function getAssetUrl(path) {
   if (!path) return '';
-  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) return path;
+  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:'))
+    return path;
 
   // Ensure path starts with a single forward slash
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
@@ -74,7 +75,9 @@ export function getAssetUrl(path) {
   }
 
   // Fallback for dev environment
-  const isDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  const isDev =
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
   if (isDev) {
     return `http://localhost:5000${cleanPath}`;
   }

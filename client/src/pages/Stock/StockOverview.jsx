@@ -1,6 +1,17 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Package, Search, Smartphone, Layers, ShieldCheck, CheckCircle2, XCircle, Tag, DollarSign, PackageX } from 'lucide-react';
+import {
+  Package,
+  Search,
+  Smartphone,
+  Layers,
+  ShieldCheck,
+  CheckCircle2,
+  XCircle,
+  Tag,
+  DollarSign,
+  PackageX,
+} from 'lucide-react';
 import api from '../../lib/api';
 import { useTheme } from '../../context/ThemeContext';
 import { StockAdjustmentModal } from '../../components/stock/StockAdjustmentModal';
@@ -24,10 +35,10 @@ export default function StockOverview() {
     queryFn: async () => {
       const { data } = await api.get('/catalog', { params: { type: 'CATEGORY' } });
       return data.data || [];
-    }
+    },
   });
 
-  const CATEGORIES = ['ALL', ...(catList || []).map(c => c.name)];
+  const CATEGORIES = ['ALL', ...(catList || []).map((c) => c.name)];
 
   const { data: inventoryRes, isLoading: loadingInventory } = useQuery({
     queryKey: ['stock-overview-inventory'],
@@ -51,13 +62,15 @@ export default function StockOverview() {
   const isLoading = loadingInventory || loadingProducts;
 
   // Filter items
-  const imeiProductIds = new Set(inventoryUnits.map(u => u.productId?._id || u.productId).filter(Boolean));
+  const imeiProductIds = new Set(
+    inventoryUnits.map((u) => u.productId?._id || u.productId).filter(Boolean)
+  );
 
   // Build unified stock item list
   const unifiedItems = [];
 
   // 1. IMEI Units
-  inventoryUnits.forEach(u => {
+  inventoryUnits.forEach((u) => {
     const prod = u.productId && typeof u.productId === 'object' ? u.productId : {};
     unifiedItems.push({
       id: `imei-${u._id}`,
@@ -77,7 +90,7 @@ export default function StockOverview() {
   });
 
   // 2. Bulk / non-IMEI Products
-  products.forEach(p => {
+  products.forEach((p) => {
     if (!imeiProductIds.has(p._id)) {
       unifiedItems.push({
         id: `bulk-${p._id}`,
@@ -98,18 +111,19 @@ export default function StockOverview() {
   });
 
   // Calculate high-level summary KPIs
-  const availableItems = unifiedItems.filter(i => i.status === 'Available');
-  const soldOutItems = unifiedItems.filter(i => i.status === 'Sold Out');
+  const availableItems = unifiedItems.filter((i) => i.status === 'Available');
+  const soldOutItems = unifiedItems.filter((i) => i.status === 'Sold Out');
   const totalAvailablePcs = availableItems.reduce((acc, i) => acc + i.qty, 0);
   const totalSoldPcs = soldOutItems.reduce((acc, i) => acc + (i.isBulk ? 0 : 1), 0);
-  const totalStockValue = availableItems.reduce((acc, i) => acc + (i.costPrice * i.qty), 0);
-  const imeiCount = availableItems.filter(i => !i.isBulk).length;
-  const bulkCount = availableItems.filter(i => i.isBulk).reduce((a, b) => a + b.qty, 0);
+  const totalStockValue = availableItems.reduce((acc, i) => acc + i.costPrice * i.qty, 0);
+  const imeiCount = availableItems.filter((i) => !i.isBulk).length;
+  const bulkCount = availableItems.filter((i) => i.isBulk).reduce((a, b) => a + b.qty, 0);
 
   // Apply Search & Filters
-  const filteredItems = unifiedItems.filter(item => {
+  const filteredItems = unifiedItems.filter((item) => {
     const query = search.toLowerCase().trim();
-    const matchSearch = !query || 
+    const matchSearch =
+      !query ||
       item.name.toLowerCase().includes(query) ||
       item.brand.toLowerCase().includes(query) ||
       item.sku.toLowerCase().includes(query) ||
@@ -139,10 +153,12 @@ export default function StockOverview() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-            <Package className="w-7 h-7 text-red-600 dark:text-red-400" /> Stock Overview &amp; Inventory Breakdown
+            <Package className="w-7 h-7 text-red-600 dark:text-red-400" /> Stock Overview &amp;
+            Inventory Breakdown
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Real-time tracking for available stock, sold out items, IMEI devices &amp; bulk non-IMEI inventory
+            Real-time tracking for available stock, sold out items, IMEI devices &amp; bulk non-IMEI
+            inventory
           </p>
         </div>
         <button
@@ -162,7 +178,11 @@ export default function StockOverview() {
             <CheckCircle2 className="w-4 h-4 text-emerald-500" />
           </div>
           <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-            {isLoading ? <div className="h-7 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" /> : `${totalAvailablePcs} pcs`}
+            {isLoading ? (
+              <div className="h-7 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+            ) : (
+              `${totalAvailablePcs} pcs`
+            )}
           </div>
           <div className="text-[11px] text-gray-400 font-mono">
             {imeiCount} IMEI units • {bulkCount} bulk pcs
@@ -175,11 +195,13 @@ export default function StockOverview() {
             <XCircle className="w-4 h-4 text-red-500" />
           </div>
           <div className="text-2xl font-bold text-red-600 dark:text-red-400">
-            {isLoading ? <div className="h-7 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" /> : `${soldOutItems.length} items`}
+            {isLoading ? (
+              <div className="h-7 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+            ) : (
+              `${soldOutItems.length} items`
+            )}
           </div>
-          <div className="text-[11px] text-gray-400 font-mono">
-            Tracked in sales ledger
-          </div>
+          <div className="text-[11px] text-gray-400 font-mono">Tracked in sales ledger</div>
         </div>
 
         <div className={cardCls}>
@@ -188,11 +210,13 @@ export default function StockOverview() {
             <DollarSign className="w-4 h-4 text-blue-500" />
           </div>
           <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 font-mono">
-            {isLoading ? <div className="h-7 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" /> : `৳${totalStockValue.toLocaleString()}`}
+            {isLoading ? (
+              <div className="h-7 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+            ) : (
+              `৳${totalStockValue.toLocaleString()}`
+            )}
           </div>
-          <div className="text-[11px] text-gray-400 font-mono">
-            Based on unit cost price
-          </div>
+          <div className="text-[11px] text-gray-400 font-mono">Based on unit cost price</div>
         </div>
 
         <div className={cardCls}>
@@ -201,7 +225,11 @@ export default function StockOverview() {
             <Layers className="w-4 h-4 text-purple-500" />
           </div>
           <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-            {isLoading ? <div className="h-7 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" /> : `${products.length} Products`}
+            {isLoading ? (
+              <div className="h-7 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+            ) : (
+              `${products.length} Products`
+            )}
           </div>
           <div className="text-[11px] text-gray-400 font-mono">
             {(catList || []).length} Catalog categories
@@ -229,7 +257,7 @@ export default function StockOverview() {
 
         {/* Filter Pills */}
         <div className="flex flex-wrap items-center gap-2">
-          {STATUS_FILTERS.map(f => (
+          {STATUS_FILTERS.map((f) => (
             <button
               key={f.id}
               onClick={() => setActiveFilter(f.id)}
@@ -237,8 +265,8 @@ export default function StockOverview() {
                 activeFilter === f.id
                   ? 'bg-red-600 text-white shadow-md'
                   : styled
-                  ? 'neu-btn-sm'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    ? 'neu-btn-sm'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
             >
               {f.label}
@@ -253,7 +281,7 @@ export default function StockOverview() {
                 : 'bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-gray-100'
             }`}
           >
-            {CATEGORIES.map(c => (
+            {CATEGORIES.map((c) => (
               <option key={c} value={c}>
                 {c === 'ALL' ? 'All Categories' : c}
               </option>
@@ -263,18 +291,34 @@ export default function StockOverview() {
       </div>
 
       {/* Stock Table */}
-      <div className={`overflow-hidden ${styled ? 'neu-card p-0' : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800'}`}>
+      <div
+        className={`overflow-hidden ${styled ? 'neu-card p-0' : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800'}`}
+      >
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
-                <th className="px-4 py-3.5 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Product &amp; Brand</th>
-                <th className="px-4 py-3.5 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">IMEI / Serial</th>
-                <th className="px-4 py-3.5 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Type &amp; Warranty</th>
-                <th className="px-4 py-3.5 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">Status &amp; Stock</th>
-                <th className="px-4 py-3.5 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase text-right">Cost Price</th>
-                <th className="px-4 py-3.5 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase text-right">Selling Price</th>
-                <th className="px-4 py-3.5 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase text-right">Est. Profit</th>
+                <th className="px-4 py-3.5 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">
+                  Product &amp; Brand
+                </th>
+                <th className="px-4 py-3.5 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">
+                  IMEI / Serial
+                </th>
+                <th className="px-4 py-3.5 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">
+                  Type &amp; Warranty
+                </th>
+                <th className="px-4 py-3.5 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">
+                  Status &amp; Stock
+                </th>
+                <th className="px-4 py-3.5 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase text-right">
+                  Cost Price
+                </th>
+                <th className="px-4 py-3.5 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase text-right">
+                  Selling Price
+                </th>
+                <th className="px-4 py-3.5 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase text-right">
+                  Est. Profit
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
@@ -282,7 +326,9 @@ export default function StockOverview() {
                 Array.from({ length: 6 }).map((_, i) => (
                   <tr key={i}>
                     {Array.from({ length: 7 }).map((__, j) => (
-                      <td key={j} className="px-4 py-3.5"><div className="h-4 w-20 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" /></td>
+                      <td key={j} className="px-4 py-3.5">
+                        <div className="h-4 w-20 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+                      </td>
                     ))}
                   </tr>
                 ))
@@ -299,9 +345,14 @@ export default function StockOverview() {
                   const isAvailable = item.status === 'Available';
 
                   return (
-                    <tr key={item.id} className="hover:bg-gray-50/70 dark:hover:bg-gray-800/40 transition-colors">
+                    <tr
+                      key={item.id}
+                      className="hover:bg-gray-50/70 dark:hover:bg-gray-800/40 transition-colors"
+                    >
                       <td className="px-4 py-3.5">
-                        <div className="font-bold text-sm text-gray-900 dark:text-gray-100">{item.name}</div>
+                        <div className="font-bold text-sm text-gray-900 dark:text-gray-100">
+                          {item.name}
+                        </div>
                         <div className="text-xs text-gray-500 flex items-center gap-1.5">
                           <span>{item.brand}</span>
                           <span>•</span>
@@ -321,29 +372,37 @@ export default function StockOverview() {
                       </td>
                       <td className="px-4 py-3.5">
                         <div className="flex flex-col gap-1">
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase w-max ${
-                            item.isBulk
-                              ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
-                              : 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                          }`}>
+                          <span
+                            className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase w-max ${
+                              item.isBulk
+                                ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                                : 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                            }`}
+                          >
                             {item.isBulk ? 'Bulk Stock' : 'IMEI Unit'}
                           </span>
-                          <span className={`text-[10px] font-semibold ${
-                            item.warrantyMonths > 0
-                              ? 'text-purple-600 dark:text-purple-400'
-                              : 'text-gray-400 dark:text-gray-500'
-                          }`}>
-                            {item.warrantyMonths > 0 ? `🛡️ ${item.warrantyMonths}m Warranty` : 'No Warranty (N/A)'}
+                          <span
+                            className={`text-[10px] font-semibold ${
+                              item.warrantyMonths > 0
+                                ? 'text-purple-600 dark:text-purple-400'
+                                : 'text-gray-400 dark:text-gray-500'
+                            }`}
+                          >
+                            {item.warrantyMonths > 0
+                              ? `🛡️ ${item.warrantyMonths}m Warranty`
+                              : 'No Warranty (N/A)'}
                           </span>
                         </div>
                       </td>
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-2">
-                          <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
-                            isAvailable
-                              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800'
-                              : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800'
-                          }`}>
+                          <span
+                            className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                              isAvailable
+                                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800'
+                                : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800'
+                            }`}
+                          >
                             {item.status}
                           </span>
                           <span className="text-xs font-bold font-mono text-gray-700 dark:text-gray-300">

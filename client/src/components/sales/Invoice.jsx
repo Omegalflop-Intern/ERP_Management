@@ -10,8 +10,30 @@ export function numberToWordsBD(num) {
   if (num === 0) return 'Taka Zero Only';
 
   const single = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
-  const double = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
-  const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+  const double = [
+    'Ten',
+    'Eleven',
+    'Twelve',
+    'Thirteen',
+    'Fourteen',
+    'Fifteen',
+    'Sixteen',
+    'Seventeen',
+    'Eighteen',
+    'Nineteen',
+  ];
+  const tens = [
+    '',
+    '',
+    'Twenty',
+    'Thirty',
+    'Forty',
+    'Fifty',
+    'Sixty',
+    'Seventy',
+    'Eighty',
+    'Ninety',
+  ];
 
   const convertTwoDigits = (n) => {
     if (n < 10) return single[n];
@@ -141,28 +163,39 @@ export function useCompanyInfo() {
 
 function getPaymentText(sale) {
   const methods = [];
-  if (sale.paymentBreakdown?.cash > 0) methods.push(`Cash (৳${sale.paymentBreakdown.cash.toLocaleString()})`);
-  if (sale.paymentBreakdown?.bkash > 0) methods.push(`bKash (৳${sale.paymentBreakdown.bkash.toLocaleString()})`);
-  if (sale.paymentBreakdown?.rocket > 0) methods.push(`Rocket (৳${sale.paymentBreakdown.rocket.toLocaleString()})`);
-  if (sale.paymentBreakdown?.nagad > 0) methods.push(`Nagad (৳${sale.paymentBreakdown.nagad.toLocaleString()})`);
-  if (sale.paymentBreakdown?.bank > 0) methods.push(`Bank (৳${sale.paymentBreakdown.bank.toLocaleString()})`);
+  if (sale.paymentBreakdown?.cash > 0)
+    methods.push(`Cash (৳${sale.paymentBreakdown.cash.toLocaleString()})`);
+  if (sale.paymentBreakdown?.bkash > 0)
+    methods.push(`bKash (৳${sale.paymentBreakdown.bkash.toLocaleString()})`);
+  if (sale.paymentBreakdown?.rocket > 0)
+    methods.push(`Rocket (৳${sale.paymentBreakdown.rocket.toLocaleString()})`);
+  if (sale.paymentBreakdown?.nagad > 0)
+    methods.push(`Nagad (৳${sale.paymentBreakdown.nagad.toLocaleString()})`);
+  if (sale.paymentBreakdown?.bank > 0)
+    methods.push(`Bank (৳${sale.paymentBreakdown.bank.toLocaleString()})`);
   return methods.length > 0 ? methods.join(', ') : 'Cash';
 }
 
 function getTotalPaid(sale) {
-  return (sale.paymentBreakdown?.cash || 0) + 
-         (sale.paymentBreakdown?.bkash || 0) + 
-         (sale.paymentBreakdown?.rocket || 0) + 
-         (sale.paymentBreakdown?.nagad || 0) + 
-         (sale.paymentBreakdown?.bank || 0);
+  return (
+    (sale.paymentBreakdown?.cash || 0) +
+    (sale.paymentBreakdown?.bkash || 0) +
+    (sale.paymentBreakdown?.rocket || 0) +
+    (sale.paymentBreakdown?.nagad || 0) +
+    (sale.paymentBreakdown?.bank || 0)
+  );
 }
 
 function getStatusStamp(sale) {
   const due = sale.paymentBreakdown?.dueAmount || 0;
-  if (sale.status === 'RETURNED') return { label: 'RETURNED', color: 'border-red-600 text-red-600 bg-red-50' };
-  if (sale.status === 'PARTIALLY_RETURNED') return { label: 'PARTIAL RETURN', color: 'border-amber-600 text-amber-600 bg-amber-50' };
-  if (due <= 0) return { label: 'PAID', color: 'border-emerald-600 text-emerald-600 bg-emerald-50' };
-  if (getTotalPaid(sale) > 0) return { label: 'PARTIAL PAID', color: 'border-blue-600 text-blue-600 bg-blue-50' };
+  if (sale.status === 'RETURNED')
+    return { label: 'RETURNED', color: 'border-red-600 text-red-600 bg-red-50' };
+  if (sale.status === 'PARTIALLY_RETURNED')
+    return { label: 'PARTIAL RETURN', color: 'border-amber-600 text-amber-600 bg-amber-50' };
+  if (due <= 0)
+    return { label: 'PAID', color: 'border-emerald-600 text-emerald-600 bg-emerald-50' };
+  if (getTotalPaid(sale) > 0)
+    return { label: 'PARTIAL PAID', color: 'border-blue-600 text-blue-600 bg-blue-50' };
   return { label: 'UNPAID', color: 'border-red-600 text-red-600 bg-red-50' };
 }
 
@@ -193,41 +226,97 @@ export function InvoiceA4Full({ sale }) {
   const cashierDisplayName = getServedByText(sale);
 
   return (
-    <div className="bg-white text-slate-900 p-8 max-w-[210mm] min-h-[270mm] mx-auto flex flex-col justify-between shadow-lg border border-slate-200 print:shadow-none print:border-none print:p-4 print:max-w-none print:w-full print:min-h-[265mm] print:h-auto" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <div
+      className="bg-white text-slate-900 p-8 max-w-[210mm] min-h-[270mm] mx-auto flex flex-col justify-between shadow-lg border border-slate-200 print:shadow-none print:border-none print:p-4 print:max-w-none print:w-full print:min-h-[265mm] print:h-auto"
+      style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
+    >
       <div>
         {/* TOP BRANDING & INVOICE META */}
         <div className="flex justify-between items-start mb-3 print:break-inside-avoid">
           <div className="space-y-0.5">
             <div className="flex items-center gap-2.5">
               {companyInfo.logo && (
-                <img src={getAssetUrl(companyInfo.logo)} alt="Logo" className="h-8 w-auto max-w-[80px] object-contain flex-shrink-0" />
+                <img
+                  src={getAssetUrl(companyInfo.logo)}
+                  alt="Logo"
+                  className="h-8 w-auto max-w-[80px] object-contain flex-shrink-0"
+                />
               )}
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-black tracking-tight text-slate-900">{companyInfo.name}</h1>
-                <span className="bg-slate-900 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded">Retail ERP</span>
+                <h1 className="text-2xl font-black tracking-tight text-slate-900">
+                  {companyInfo.name}
+                </h1>
+                <span className="bg-slate-900 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded">
+                  Retail ERP
+                </span>
               </div>
             </div>
-            {companyInfo.slogan && <p className="text-xs font-medium text-slate-600">{companyInfo.slogan}</p>}
-            {companyInfo.address && <p className="text-xs text-slate-500 max-w-sm leading-relaxed">{companyInfo.address}</p>}
+            {companyInfo.slogan && (
+              <p className="text-xs font-medium text-slate-600">{companyInfo.slogan}</p>
+            )}
+            {companyInfo.address && (
+              <p className="text-xs text-slate-500 max-w-sm leading-relaxed">
+                {companyInfo.address}
+              </p>
+            )}
             <div className="text-xs text-slate-500 flex flex-wrap gap-x-2 gap-y-0.5 pt-0.5">
-              {companyInfo.phone && <span><strong>Phone:</strong> {companyInfo.phone}</span>}
-              {companyInfo.email && <><span>•</span><span><strong>Email:</strong> {companyInfo.email}</span></>}
-              {companyInfo.binVat && <><span>•</span><span><strong>{companyInfo.binVat}</strong></span></>}
+              {companyInfo.phone && (
+                <span>
+                  <strong>Phone:</strong> {companyInfo.phone}
+                </span>
+              )}
+              {companyInfo.email && (
+                <>
+                  <span>•</span>
+                  <span>
+                    <strong>Email:</strong> {companyInfo.email}
+                  </span>
+                </>
+              )}
+              {companyInfo.binVat && (
+                <>
+                  <span>•</span>
+                  <span>
+                    <strong>{companyInfo.binVat}</strong>
+                  </span>
+                </>
+              )}
             </div>
           </div>
 
           <div className="text-right flex flex-col items-end space-y-1">
-            <div className={`inline-block text-white font-extrabold px-3 py-1 text-xs tracking-wider uppercase rounded-md shadow-sm ${sale.saleType === 'WHOLESALE' ? 'bg-amber-600' : 'bg-slate-900'}`}>
+            <div
+              className={`inline-block text-white font-extrabold px-3 py-1 text-xs tracking-wider uppercase rounded-md shadow-sm ${sale.saleType === 'WHOLESALE' ? 'bg-amber-600' : 'bg-slate-900'}`}
+            >
               {sale.saleType === 'WHOLESALE' ? 'WHOLESALE (B2B) INVOICE' : 'RETAIL (B2C) INVOICE'}
             </div>
             <div className="pt-0.5">
-              <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Invoice No</p>
-              <p className="text-lg font-mono font-bold text-slate-900 tracking-tight">{sale.invoiceNumber}</p>
+              <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">
+                Invoice No
+              </p>
+              <p className="text-lg font-mono font-bold text-slate-900 tracking-tight">
+                {sale.invoiceNumber}
+              </p>
             </div>
             <div className="text-xs text-slate-600 leading-tight space-y-0.5">
-              <p><strong>Date:</strong> {new Date(sale.createdAt).toLocaleDateString('en-BD', { month: 'short', day: '2-digit', year: 'numeric' })}</p>
-              <p><strong>Time:</strong> {new Date(sale.createdAt).toLocaleTimeString('en-BD', { hour: '2-digit', minute: '2-digit' })}</p>
-              <p className="text-xs font-semibold text-slate-700">Served By: {cashierDisplayName}</p>
+              <p>
+                <strong>Date:</strong>{' '}
+                {new Date(sale.createdAt).toLocaleDateString('en-BD', {
+                  month: 'short',
+                  day: '2-digit',
+                  year: 'numeric',
+                })}
+              </p>
+              <p>
+                <strong>Time:</strong>{' '}
+                {new Date(sale.createdAt).toLocaleTimeString('en-BD', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </p>
+              <p className="text-xs font-semibold text-slate-700">
+                Served By: {cashierDisplayName}
+              </p>
             </div>
           </div>
         </div>
@@ -240,20 +329,34 @@ export function InvoiceA4Full({ sale }) {
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block mb-0.5">
               Bill To / Customer Details
             </span>
-            <p className="font-extrabold text-slate-900 text-sm">{sale.customerName || sale.customerId?.name || 'Walk-in Customer'}</p>
-            <p className="text-xs text-slate-600 font-mono">Phone: {sale.customerPhone || sale.customerId?.phone || 'N/A'}</p>
+            <p className="font-extrabold text-slate-900 text-sm">
+              {sale.customerName || sale.customerId?.name || 'Walk-in Customer'}
+            </p>
+            <p className="text-xs text-slate-600 font-mono">
+              Phone: {sale.customerPhone || sale.customerId?.phone || 'N/A'}
+            </p>
             {(sale.customerEmail || sale.customerId?.email) && (
-              <p className="text-xs text-slate-500">Email: {sale.customerEmail || sale.customerId?.email}</p>
+              <p className="text-xs text-slate-500">
+                Email: {sale.customerEmail || sale.customerId?.email}
+              </p>
             )}
             {(sale.customerAddress || sale.customerId?.address) && (
-              <p className="text-xs text-slate-500">Address: {sale.customerAddress || sale.customerId?.address}</p>
+              <p className="text-xs text-slate-500">
+                Address: {sale.customerAddress || sale.customerId?.address}
+              </p>
             )}
           </div>
 
           <div className="col-span-4 flex items-center justify-end">
-            <div className={`border-2 ${statusStamp.color} font-black text-sm px-4 py-1.5 rounded uppercase tracking-wider text-center`}>
+            <div
+              className={`border-2 ${statusStamp.color} font-black text-sm px-4 py-1.5 rounded uppercase tracking-wider text-center`}
+            >
               {statusStamp.label}
-              {dueAmount > 0 && <span className="block text-[9px] tracking-normal font-bold">Due: ৳{dueAmount.toLocaleString()}</span>}
+              {dueAmount > 0 && (
+                <span className="block text-[9px] tracking-normal font-bold">
+                  Due: ৳{dueAmount.toLocaleString()}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -276,16 +379,26 @@ export function InvoiceA4Full({ sale }) {
               {sale.lineItems?.map((item, index) => {
                 const p = item.productId || {};
                 const brandModelStr = [p.brand, p.model].filter(Boolean).join(' ');
-                const specsStr = [p.ram && `${p.ram} RAM`, p.storage && `${p.storage} Storage`, p.color].filter(Boolean).join(' • ');
+                const specsStr = [
+                  p.ram && `${p.ram} RAM`,
+                  p.storage && `${p.storage} Storage`,
+                  p.color,
+                ]
+                  .filter(Boolean)
+                  .join(' • ');
 
                 return (
                   <tr key={index} className="hover:bg-slate-50/50 print:break-inside-avoid">
                     <td className="py-2 px-2 text-center font-bold text-slate-400">{index + 1}</td>
                     <td className="py-2 px-2">
-                      <div className="font-bold text-slate-900 text-xs">{item.description || p.name || 'Mobile Phone Item'}</div>
+                      <div className="font-bold text-slate-900 text-xs">
+                        {item.description || p.name || 'Mobile Phone Item'}
+                      </div>
                       {(brandModelStr || specsStr) && (
                         <div className="text-[10px] text-slate-600 mt-0.5">
-                          {brandModelStr && <span className="font-semibold text-slate-700">{brandModelStr}</span>}
+                          {brandModelStr && (
+                            <span className="font-semibold text-slate-700">{brandModelStr}</span>
+                          )}
                           {brandModelStr && specsStr && <span className="mx-1">•</span>}
                           {specsStr && <span>{specsStr}</span>}
                         </div>
@@ -295,15 +408,23 @@ export function InvoiceA4Full({ sale }) {
                       {item.imeiOrSerial ? (
                         <span className="font-semibold text-slate-800">{item.imeiOrSerial}</span>
                       ) : (
-                        <span className="text-slate-400 font-sans italic text-[10px]">Bulk Product</span>
+                        <span className="text-slate-400 font-sans italic text-[10px]">
+                          Bulk Product
+                        </span>
                       )}
                     </td>
                     <td className="py-2 px-2 text-center font-medium text-slate-600 text-[11px]">
-                      {p.defaultWarrantyMonths ? `${p.defaultWarrantyMonths} Months` : '1 Year Official'}
+                      {p.defaultWarrantyMonths
+                        ? `${p.defaultWarrantyMonths} Months`
+                        : '1 Year Official'}
                     </td>
                     <td className="py-2 px-2 text-center font-bold text-slate-800">{item.qty}</td>
-                    <td className="py-2 px-2 text-right font-medium text-slate-800">৳{item.unitPrice?.toLocaleString()}</td>
-                    <td className="py-2 px-2 text-right font-bold text-slate-900">৳{item.totalPrice?.toLocaleString()}</td>
+                    <td className="py-2 px-2 text-right font-medium text-slate-800">
+                      ৳{item.unitPrice?.toLocaleString()}
+                    </td>
+                    <td className="py-2 px-2 text-right font-bold text-slate-900">
+                      ৳{item.totalPrice?.toLocaleString()}
+                    </td>
                   </tr>
                 );
               })}
@@ -315,13 +436,19 @@ export function InvoiceA4Full({ sale }) {
         <div className="grid grid-cols-12 gap-6 mb-4 pt-2 border-t border-slate-200 print:break-inside-avoid">
           <div className="col-span-7 space-y-3">
             <div>
-              <span className="font-extrabold uppercase text-slate-400 text-[9px] block mb-0.5">Payment Method / Received Via</span>
+              <span className="font-extrabold uppercase text-slate-400 text-[9px] block mb-0.5">
+                Payment Method / Received Via
+              </span>
               <p className="font-semibold text-slate-800 text-xs">{getPaymentText(sale)}</p>
             </div>
 
             <div>
-              <span className="font-extrabold uppercase text-slate-400 text-[9px] block mb-0.5">Amount In Words</span>
-              <p className="font-bold text-slate-900 italic text-xs leading-snug">{numberToWordsBD(sale.netTotal)}</p>
+              <span className="font-extrabold uppercase text-slate-400 text-[9px] block mb-0.5">
+                Amount In Words
+              </span>
+              <p className="font-bold text-slate-900 italic text-xs leading-snug">
+                {numberToWordsBD(sale.netTotal)}
+              </p>
             </div>
           </div>
 
@@ -354,7 +481,9 @@ export function InvoiceA4Full({ sale }) {
                 </div>
                 <div className="flex justify-between items-center text-sm font-black text-red-700 py-1 border-b-2 border-red-700 my-1">
                   <span>NET PAYABLE / ADJUSTED TOTAL:</span>
-                  <span>৳{((sale.netTotal || 0) - (sale.returnedAmount || 0)).toLocaleString()}</span>
+                  <span>
+                    ৳{((sale.netTotal || 0) - (sale.returnedAmount || 0)).toLocaleString()}
+                  </span>
                 </div>
               </>
             )}
@@ -373,11 +502,13 @@ export function InvoiceA4Full({ sale }) {
 
         {/* TERMS AND CONDITIONS (MINIMAL FOOTNOTE) */}
         <div className="pt-2 border-t border-slate-200 text-[10px] text-slate-500 mb-4 leading-relaxed print:break-inside-avoid">
-          <h4 className="font-bold text-slate-700 uppercase tracking-wider text-[10px] mb-0.5">Warranty & Return Terms</h4>
+          <h4 className="font-bold text-slate-700 uppercase tracking-wider text-[10px] mb-0.5">
+            Warranty & Return Terms
+          </h4>
           <p className="leading-snug">
-            1. Original receipt & intact IMEI sticker required for warranty claims. &nbsp;
-            2. Warranty covers hardware manufacturing defects only. Software, liquid or physical damage excluded. &nbsp;
-            3. Goods non-refundable after 7 days.
+            1. Original receipt & intact IMEI sticker required for warranty claims. &nbsp; 2.
+            Warranty covers hardware manufacturing defects only. Software, liquid or physical damage
+            excluded. &nbsp; 3. Goods non-refundable after 7 days.
           </p>
         </div>
       </div>
@@ -429,30 +560,51 @@ export function InvoiceA4Half({ sale }) {
   const statusStamp = getStatusStamp(sale);
 
   return (
-    <div className="bg-white text-slate-900 p-5 max-w-[210mm] mx-auto flex flex-col justify-between shadow-lg border border-slate-200 print:shadow-none print:border-none print:p-3 print:max-w-none print:w-full print:min-h-0 print:h-auto print:break-inside-avoid print:page-break-inside-avoid" style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: '10px' }}>
+    <div
+      className="bg-white text-slate-900 p-5 max-w-[210mm] mx-auto flex flex-col justify-between shadow-lg border border-slate-200 print:shadow-none print:border-none print:p-3 print:max-w-none print:w-full print:min-h-0 print:h-auto print:break-inside-avoid print:page-break-inside-avoid"
+      style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: '10px' }}
+    >
       <div>
         {/* HEADER BRANDING */}
         <div className="flex justify-between items-start mb-2">
           <div>
             <div className="flex items-center gap-2">
               {companyInfo.logo && (
-                <img src={getAssetUrl(companyInfo.logo)} alt="Logo" className="h-7 w-auto max-w-[100px] object-contain" />
+                <img
+                  src={getAssetUrl(companyInfo.logo)}
+                  alt="Logo"
+                  className="h-7 w-auto max-w-[100px] object-contain"
+                />
               )}
               <div className="flex items-center gap-1.5">
-                <h1 className="text-base font-black tracking-tight text-slate-900">{companyInfo.name}</h1>
-                <span className="bg-slate-900 text-white text-[8px] uppercase font-bold px-1.5 py-0.5 rounded">ERP</span>
+                <h1 className="text-base font-black tracking-tight text-slate-900">
+                  {companyInfo.name}
+                </h1>
+                <span className="bg-slate-900 text-white text-[8px] uppercase font-bold px-1.5 py-0.5 rounded">
+                  ERP
+                </span>
               </div>
             </div>
-            {companyInfo.address && <p className="text-[9px] text-slate-600">{companyInfo.address}</p>}
-            <p className="text-[9px] text-slate-500">Phone: {companyInfo.phone} {companyInfo.binVat && `| ${companyInfo.binVat}`}</p>
+            {companyInfo.address && (
+              <p className="text-[9px] text-slate-600">{companyInfo.address}</p>
+            )}
+            <p className="text-[9px] text-slate-500">
+              Phone: {companyInfo.phone} {companyInfo.binVat && `| ${companyInfo.binVat}`}
+            </p>
           </div>
           <div className="text-right">
-            <span className={`text-white font-extrabold px-2 py-0.5 text-[9px] uppercase rounded ${sale.saleType === 'WHOLESALE' ? 'bg-amber-600' : 'bg-slate-900'}`}>
+            <span
+              className={`text-white font-extrabold px-2 py-0.5 text-[9px] uppercase rounded ${sale.saleType === 'WHOLESALE' ? 'bg-amber-600' : 'bg-slate-900'}`}
+            >
               {sale.saleType === 'WHOLESALE' ? 'WHOLESALE (B2B)' : 'RETAIL INVOICE'}
             </span>
             <p className="text-xs font-mono font-bold text-slate-900 mt-1">{sale.invoiceNumber}</p>
-            <p className="text-[9px] text-slate-500">{new Date(sale.createdAt).toLocaleDateString('en-BD')}</p>
-            <p className="text-[9px] font-semibold text-slate-700">Served By: {getServedByText(sale)}</p>
+            <p className="text-[9px] text-slate-500">
+              {new Date(sale.createdAt).toLocaleDateString('en-BD')}
+            </p>
+            <p className="text-[9px] font-semibold text-slate-700">
+              Served By: {getServedByText(sale)}
+            </p>
           </div>
         </div>
 
@@ -461,12 +613,20 @@ export function InvoiceA4Half({ sale }) {
         {/* CUSTOMER & STATUS */}
         <div className="grid grid-cols-12 gap-3 mb-2.5 text-[10px]">
           <div className="col-span-8 bg-slate-50 p-2 rounded border border-slate-200">
-            <span className="font-bold text-slate-500 uppercase text-[8px] block border-b border-slate-200 pb-0.5 mb-1">Customer / Bill To</span>
-            <p className="font-bold text-slate-900 text-xs">{sale.customerName || 'Walk-in Customer'}</p>
-            <p className="text-slate-600 font-mono text-[9px]">Phone: {sale.customerPhone || 'N/A'}</p>
+            <span className="font-bold text-slate-500 uppercase text-[8px] block border-b border-slate-200 pb-0.5 mb-1">
+              Customer / Bill To
+            </span>
+            <p className="font-bold text-slate-900 text-xs">
+              {sale.customerName || 'Walk-in Customer'}
+            </p>
+            <p className="text-slate-600 font-mono text-[9px]">
+              Phone: {sale.customerPhone || 'N/A'}
+            </p>
           </div>
           <div className="col-span-4 flex items-center justify-center">
-            <div className={`border-2 ${statusStamp.color} font-black text-xs px-2.5 py-0.5 rounded uppercase tracking-wider`}>
+            <div
+              className={`border-2 ${statusStamp.color} font-black text-xs px-2.5 py-0.5 rounded uppercase tracking-wider`}
+            >
               {statusStamp.label}
             </div>
           </div>
@@ -488,7 +648,9 @@ export function InvoiceA4Half({ sale }) {
             <tbody className="divide-y divide-slate-200">
               {sale.lineItems?.map((item, index) => (
                 <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
-                  <td className="py-1 px-1.5 text-center font-bold text-slate-500 border-r border-slate-200">{index + 1}</td>
+                  <td className="py-1 px-1.5 text-center font-bold text-slate-500 border-r border-slate-200">
+                    {index + 1}
+                  </td>
                   <td className="py-1 px-1.5 border-r border-slate-200">
                     <div className="font-bold text-slate-900">{item.description}</div>
                   </td>
@@ -501,9 +663,15 @@ export function InvoiceA4Half({ sale }) {
                       <span className="text-slate-400 italic font-sans">Bulk</span>
                     )}
                   </td>
-                  <td className="py-1 px-1.5 text-center font-bold border-r border-slate-200">{item.qty}</td>
-                  <td className="py-1 px-1.5 text-right border-r border-slate-200">৳{item.unitPrice?.toLocaleString()}</td>
-                  <td className="py-1 px-1.5 text-right font-bold text-slate-900">৳{item.totalPrice?.toLocaleString()}</td>
+                  <td className="py-1 px-1.5 text-center font-bold border-r border-slate-200">
+                    {item.qty}
+                  </td>
+                  <td className="py-1 px-1.5 text-right border-r border-slate-200">
+                    ৳{item.unitPrice?.toLocaleString()}
+                  </td>
+                  <td className="py-1 px-1.5 text-right font-bold text-slate-900">
+                    ৳{item.totalPrice?.toLocaleString()}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -514,35 +682,64 @@ export function InvoiceA4Half({ sale }) {
         <div className="grid grid-cols-12 gap-2.5 mb-2.5">
           <div className="col-span-7 text-[9px] space-y-1">
             <div className="bg-slate-50 p-1.5 rounded border border-slate-200">
-              <span className="font-bold uppercase text-[8px] text-slate-500 block">Payment Method</span>
+              <span className="font-bold uppercase text-[8px] text-slate-500 block">
+                Payment Method
+              </span>
               <p className="font-semibold text-slate-800">{getPaymentText(sale)}</p>
             </div>
             <div className="bg-slate-100 p-1.5 rounded border border-slate-200">
-              <span className="font-bold uppercase text-[8px] text-slate-500 block">Amount in Words</span>
-              <p className="font-bold text-slate-900 italic text-[9px]">{numberToWordsBD(sale.netTotal)}</p>
+              <span className="font-bold uppercase text-[8px] text-slate-500 block">
+                Amount in Words
+              </span>
+              <p className="font-bold text-slate-900 italic text-[9px]">
+                {numberToWordsBD(sale.netTotal)}
+              </p>
             </div>
           </div>
 
           <div className="col-span-5 border border-slate-300 rounded p-1.5 pb-2 text-[9px] space-y-1 bg-slate-50">
-            <div className="flex justify-between"><span>Subtotal:</span><span>৳{sale.subTotal?.toLocaleString()}</span></div>
-            {sale.discount > 0 && <div className="flex justify-between text-red-600"><span>Discount:</span><span>-৳{sale.discount?.toLocaleString()}</span></div>}
+            <div className="flex justify-between">
+              <span>Subtotal:</span>
+              <span>৳{sale.subTotal?.toLocaleString()}</span>
+            </div>
+            {sale.discount > 0 && (
+              <div className="flex justify-between text-red-600">
+                <span>Discount:</span>
+                <span>-৳{sale.discount?.toLocaleString()}</span>
+              </div>
+            )}
             <div className="flex justify-between font-black text-white bg-slate-900 p-1 rounded text-[9px]">
-              <span>GRAND TOTAL:</span><span>৳{sale.netTotal?.toLocaleString()}</span>
+              <span>GRAND TOTAL:</span>
+              <span>৳{sale.netTotal?.toLocaleString()}</span>
             </div>
             {sale.returnedAmount > 0 && (
               <>
                 <div className="flex justify-between font-bold text-red-600">
-                  <span>Less Item Refund:</span><span>-৳{sale.returnedAmount?.toLocaleString()}</span>
+                  <span>Less Item Refund:</span>
+                  <span>-৳{sale.returnedAmount?.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between font-black text-red-700 bg-red-50 p-1 rounded text-[9px] border border-red-200">
-                  <span>NET REVISED TOTAL:</span><span>৳{Math.max(0, (sale.netTotal || 0) - (sale.returnedAmount || 0)).toLocaleString()}</span>
+                  <span>NET REVISED TOTAL:</span>
+                  <span>
+                    ৳
+                    {Math.max(
+                      0,
+                      (sale.netTotal || 0) - (sale.returnedAmount || 0)
+                    ).toLocaleString()}
+                  </span>
                 </div>
               </>
             )}
             <div className="flex justify-between text-emerald-700 font-bold">
-              <span>Net Paid:</span><span>৳{Math.max(0, totalPaid - (sale.returnedAmount || 0)).toLocaleString()}</span>
+              <span>Net Paid:</span>
+              <span>৳{Math.max(0, totalPaid - (sale.returnedAmount || 0)).toLocaleString()}</span>
             </div>
-            {dueAmount > 0 && <div className="flex justify-between text-red-600 font-bold"><span>Balance Due:</span><span>৳{dueAmount.toLocaleString()}</span></div>}
+            {dueAmount > 0 && (
+              <div className="flex justify-between text-red-600 font-bold">
+                <span>Balance Due:</span>
+                <span>৳{dueAmount.toLocaleString()}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -551,14 +748,18 @@ export function InvoiceA4Half({ sale }) {
       <div className="border-t border-slate-300 pt-2 mt-auto">
         <div className="flex justify-between items-end mb-1">
           <div className="text-center">
-            <div className="border-t border-dashed border-slate-800 w-24 pt-0.5 text-[8px] font-bold">Customer Signature</div>
+            <div className="border-t border-dashed border-slate-800 w-24 pt-0.5 text-[8px] font-bold">
+              Customer Signature
+            </div>
           </div>
           <div className="flex items-center gap-1.5">
             <BarcodeCanvas value={sale.invoiceNumber} width={1.0} height={20} />
             <QRCodeCanvas value={qrData} size={48} />
           </div>
           <div className="text-center">
-            <div className="border-t border-dashed border-slate-800 w-24 pt-0.5 text-[8px] font-bold">Authorized Seal</div>
+            <div className="border-t border-dashed border-slate-800 w-24 pt-0.5 text-[8px] font-bold">
+              Authorized Seal
+            </div>
           </div>
         </div>
         <p className="text-center text-[8px] text-slate-500">{companyInfo.invoiceFooter}</p>
@@ -589,16 +790,22 @@ export function InvoiceReceipt({ sale }) {
         <p>Date: {new Date(sale.createdAt).toLocaleDateString('en-BD')}</p>
         <p>Customer: {sale.customerName || 'Walk-in'}</p>
         {sale.customerPhone && <p>Phone: {sale.customerPhone}</p>}
-        <p className="text-[10px] text-slate-700 font-semibold">Served By: {getServedByText(sale)}</p>
+        <p className="text-[10px] text-slate-700 font-semibold">
+          Served By: {getServedByText(sale)}
+        </p>
       </div>
 
       <div className="border-b border-dashed border-slate-400 pb-2 mb-2 space-y-1">
         {sale.lineItems?.map((item, i) => (
           <div key={i} className="text-[11px]">
             <div className="font-bold truncate">{item.description}</div>
-            {item.imeiOrSerial && <div className="text-[9px] text-slate-600">IMEI: {item.imeiOrSerial}</div>}
+            {item.imeiOrSerial && (
+              <div className="text-[9px] text-slate-600">IMEI: {item.imeiOrSerial}</div>
+            )}
             <div className="flex justify-between text-[10px] text-slate-700">
-              <span>{item.qty} x ৳{item.unitPrice?.toLocaleString()}</span>
+              <span>
+                {item.qty} x ৳{item.unitPrice?.toLocaleString()}
+              </span>
               <span className="font-bold text-slate-900">৳{item.totalPrice?.toLocaleString()}</span>
             </div>
           </div>
@@ -606,11 +813,30 @@ export function InvoiceReceipt({ sale }) {
       </div>
 
       <div className="border-b border-dashed border-slate-400 pb-2 mb-2 space-y-0.5 text-[11px]">
-        <div className="flex justify-between"><span>Subtotal:</span><span>৳{sale.subTotal?.toLocaleString()}</span></div>
-        {sale.discount > 0 && <div className="flex justify-between text-red-600"><span>Discount:</span><span>-৳{sale.discount?.toLocaleString()}</span></div>}
-        <div className="flex justify-between font-bold text-sm border-t border-slate-800 pt-0.5"><span>NET TOTAL:</span><span>৳{sale.netTotal?.toLocaleString()}</span></div>
-        <div className="flex justify-between"><span>Paid:</span><span>৳{totalPaid.toLocaleString()}</span></div>
-        {dueAmount > 0 && <div className="flex justify-between font-bold text-red-600"><span>DUE:</span><span>৳{dueAmount.toLocaleString()}</span></div>}
+        <div className="flex justify-between">
+          <span>Subtotal:</span>
+          <span>৳{sale.subTotal?.toLocaleString()}</span>
+        </div>
+        {sale.discount > 0 && (
+          <div className="flex justify-between text-red-600">
+            <span>Discount:</span>
+            <span>-৳{sale.discount?.toLocaleString()}</span>
+          </div>
+        )}
+        <div className="flex justify-between font-bold text-sm border-t border-slate-800 pt-0.5">
+          <span>NET TOTAL:</span>
+          <span>৳{sale.netTotal?.toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Paid:</span>
+          <span>৳{totalPaid.toLocaleString()}</span>
+        </div>
+        {dueAmount > 0 && (
+          <div className="flex justify-between font-bold text-red-600">
+            <span>DUE:</span>
+            <span>৳{dueAmount.toLocaleString()}</span>
+          </div>
+        )}
       </div>
 
       <div className="text-center pt-1 space-y-1">
@@ -653,7 +879,9 @@ export function InvoiceThermal({ sale }) {
             <div className="font-bold truncate">{item.description}</div>
             {item.imeiOrSerial && <div className="text-[7px]">S/N: {item.imeiOrSerial}</div>}
             <div className="flex justify-between text-[8px]">
-              <span>{item.qty}x@৳{item.unitPrice}</span>
+              <span>
+                {item.qty}x@৳{item.unitPrice}
+              </span>
               <span className="font-bold">৳{item.totalPrice}</span>
             </div>
           </div>
@@ -661,11 +889,30 @@ export function InvoiceThermal({ sale }) {
       </div>
 
       <div className="border-b border-slate-400 pb-1 mb-1 text-[9px] space-y-0.5">
-        <div className="flex justify-between"><span>Sub:</span><span>৳{sale.subTotal}</span></div>
-        {sale.discount > 0 && <div className="flex justify-between text-red-600"><span>Disc:</span><span>-৳{sale.discount}</span></div>}
-        <div className="flex justify-between font-bold text-xs border-t border-black pt-0.5"><span>TOTAL:</span><span>৳{sale.netTotal}</span></div>
-        <div className="flex justify-between"><span>Paid:</span><span>৳{totalPaid}</span></div>
-        {dueAmount > 0 && <div className="flex justify-between font-bold text-red-600"><span>DUE:</span><span>৳{dueAmount}</span></div>}
+        <div className="flex justify-between">
+          <span>Sub:</span>
+          <span>৳{sale.subTotal}</span>
+        </div>
+        {sale.discount > 0 && (
+          <div className="flex justify-between text-red-600">
+            <span>Disc:</span>
+            <span>-৳{sale.discount}</span>
+          </div>
+        )}
+        <div className="flex justify-between font-bold text-xs border-t border-black pt-0.5">
+          <span>TOTAL:</span>
+          <span>৳{sale.netTotal}</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Paid:</span>
+          <span>৳{totalPaid}</span>
+        </div>
+        {dueAmount > 0 && (
+          <div className="flex justify-between font-bold text-red-600">
+            <span>DUE:</span>
+            <span>৳{dueAmount}</span>
+          </div>
+        )}
       </div>
 
       <div className="text-center pt-1 space-y-0.5">

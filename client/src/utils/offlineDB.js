@@ -19,13 +19,20 @@ function getDB() {
   if (!dbPromise) {
     dbPromise = openDB(DB_NAME, DB_VERSION, {
       upgrade(db) {
-        if (!db.objectStoreNames.contains(STORES.PRODUCTS)) db.createObjectStore(STORES.PRODUCTS, { keyPath: '_id' });
-        if (!db.objectStoreNames.contains(STORES.STOCK)) db.createObjectStore(STORES.STOCK, { keyPath: '_id' });
-        if (!db.objectStoreNames.contains(STORES.CUSTOMERS)) db.createObjectStore(STORES.CUSTOMERS, { keyPath: '_id' });
-        if (!db.objectStoreNames.contains(STORES.PENDING_SALES)) db.createObjectStore(STORES.PENDING_SALES, { keyPath: 'id', autoIncrement: true });
-        if (!db.objectStoreNames.contains(STORES.PENDING_ATTENDANCE)) db.createObjectStore(STORES.PENDING_ATTENDANCE, { keyPath: 'id', autoIncrement: true });
-        if (!db.objectStoreNames.contains(STORES.PENDING_IMEI_CHECKS)) db.createObjectStore(STORES.PENDING_IMEI_CHECKS, { keyPath: 'id', autoIncrement: true });
-        if (!db.objectStoreNames.contains(STORES.CACHE)) db.createObjectStore(STORES.CACHE, { keyPath: 'key' });
+        if (!db.objectStoreNames.contains(STORES.PRODUCTS))
+          db.createObjectStore(STORES.PRODUCTS, { keyPath: '_id' });
+        if (!db.objectStoreNames.contains(STORES.STOCK))
+          db.createObjectStore(STORES.STOCK, { keyPath: '_id' });
+        if (!db.objectStoreNames.contains(STORES.CUSTOMERS))
+          db.createObjectStore(STORES.CUSTOMERS, { keyPath: '_id' });
+        if (!db.objectStoreNames.contains(STORES.PENDING_SALES))
+          db.createObjectStore(STORES.PENDING_SALES, { keyPath: 'id', autoIncrement: true });
+        if (!db.objectStoreNames.contains(STORES.PENDING_ATTENDANCE))
+          db.createObjectStore(STORES.PENDING_ATTENDANCE, { keyPath: 'id', autoIncrement: true });
+        if (!db.objectStoreNames.contains(STORES.PENDING_IMEI_CHECKS))
+          db.createObjectStore(STORES.PENDING_IMEI_CHECKS, { keyPath: 'id', autoIncrement: true });
+        if (!db.objectStoreNames.contains(STORES.CACHE))
+          db.createObjectStore(STORES.CACHE, { keyPath: 'key' });
       },
     });
   }
@@ -104,13 +111,17 @@ export async function syncPendingItems(api) {
     try {
       await api.post('/sales', sale);
       await removePendingItem(STORES.PENDING_SALES, sale.id);
-    } catch (e) { console.error('Sync sale failed:', e); }
+    } catch (e) {
+      console.error('Sync sale failed:', e);
+    }
   }
   const attendance = await getPendingAttendance();
   for (const att of attendance) {
     try {
       await api.post('/attendance/check-in', att);
       await removePendingItem(STORES.PENDING_ATTENDANCE, att.id);
-    } catch (e) { console.error('Sync attendance failed:', e); }
+    } catch (e) {
+      console.error('Sync attendance failed:', e);
+    }
   }
 }

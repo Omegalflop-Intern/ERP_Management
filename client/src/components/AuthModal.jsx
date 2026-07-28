@@ -37,7 +37,9 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
       const json = res.data.data;
       setLoading(false);
 
-      toast.success('2-Step Verification Successful!', { description: `Welcome back, ${json.user.username}` });
+      toast.success('2-Step Verification Successful!', {
+        description: `Welcome back, ${json.user.username}`,
+      });
       onLoginSuccess(json.user, json.token);
       onClose();
     } catch (err) {
@@ -59,7 +61,10 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
               {step === 1 ? 'ERP Staff Login' : '2-Step Verification'}
             </h3>
           </div>
-          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-200 rounded-lg hover:bg-gray-800">
+          <button
+            onClick={onClose}
+            className="p-1 text-gray-400 hover:text-gray-200 rounded-lg hover:bg-gray-800"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -69,7 +74,9 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
           {step === 1 ? (
             <form onSubmit={handleLoginSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase mb-1">Username</label>
+                <label className="block text-xs font-semibold text-gray-400 uppercase mb-1">
+                  Username
+                </label>
                 <input
                   type="text"
                   required
@@ -79,7 +86,9 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase mb-1">Password</label>
+                <label className="block text-xs font-semibold text-gray-400 uppercase mb-1">
+                  Password
+                </label>
                 <input
                   type="password"
                   required
@@ -89,14 +98,18 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
                 />
               </div>
 
-
-
               <button
                 type="submit"
                 disabled={loading}
                 className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20"
               >
-                {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <>Send OTP Code <ArrowRight className="w-4 h-4" /></>}
+                {loading ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    Send OTP Code <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
               </button>
             </form>
           ) : (
@@ -106,8 +119,6 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
                 <p className="text-xs text-gray-400">Enter the 6-digit OTP code sent to</p>
                 <p className="text-sm font-semibold text-gray-200">{targetEmail}</p>
               </div>
-
-
 
               <div>
                 <input

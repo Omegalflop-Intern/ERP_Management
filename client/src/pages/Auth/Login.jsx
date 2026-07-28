@@ -61,9 +61,15 @@ function ParticleCanvas() {
     };
 
     draw();
-    const onResize = () => { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; };
+    const onResize = () => {
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
+    };
     window.addEventListener('resize', onResize);
-    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', onResize); };
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', onResize);
+    };
   }, []);
 
   return <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none z-0" />;
@@ -214,14 +220,22 @@ export default function Login() {
       <div className="absolute inset-0 login-bg z-0" style={{ background: wc.bg }} />
 
       {/* Floating orbs — mode-aware colors */}
-      <div className="absolute w-[600px] h-[600px] -top-48 -left-48 rounded-full blur-[120px] animate-drift pointer-events-none"
-        style={{ background: wc.glow }} />
-      <div className="absolute w-[500px] h-[500px] -bottom-40 -right-40 rounded-full blur-[110px] animate-drift pointer-events-none"
-        style={{ background: wc.accent, animationDelay: '4s' }} />
-      <div className="absolute w-[350px] h-[350px] top-1/4 left-1/3 rounded-full blur-[90px] animate-float pointer-events-none"
-        style={{ background: wc.mid, animationDelay: '2s' }} />
-      <div className="absolute w-[250px] h-[250px] bottom-1/3 right-1/4 rounded-full blur-[70px] animate-float-delayed pointer-events-none"
-        style={{ background: wc.light }} />
+      <div
+        className="absolute w-[600px] h-[600px] -top-48 -left-48 rounded-full blur-[120px] animate-drift pointer-events-none"
+        style={{ background: wc.glow }}
+      />
+      <div
+        className="absolute w-[500px] h-[500px] -bottom-40 -right-40 rounded-full blur-[110px] animate-drift pointer-events-none"
+        style={{ background: wc.accent, animationDelay: '4s' }}
+      />
+      <div
+        className="absolute w-[350px] h-[350px] top-1/4 left-1/3 rounded-full blur-[90px] animate-float pointer-events-none"
+        style={{ background: wc.mid, animationDelay: '2s' }}
+      />
+      <div
+        className="absolute w-[250px] h-[250px] bottom-1/3 right-1/4 rounded-full blur-[70px] animate-float-delayed pointer-events-none"
+        style={{ background: wc.light }}
+      />
 
       {/* Bubbles rising */}
       {BUBBLES.map((b) => (
@@ -258,48 +272,93 @@ export default function Login() {
       ))}
 
       {/* 7-layer sea waves at bottom */}
-      <div className="absolute bottom-0 left-0 w-full pointer-events-none z-[1]" style={{ height: '35%' }}>
+      <div
+        className="absolute bottom-0 left-0 w-full pointer-events-none z-[1]"
+        style={{ height: '35%' }}
+      >
         {/* Layer 1 — deepest, slowest */}
-        <svg className="absolute bottom-0 w-[200%] h-full" viewBox="0 0 1440 320" preserveAspectRatio="none"
-          style={{ animation: 'wave 18s linear infinite' }}>
-          <path fill={wc.deep}
-            d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,218.7C672,235,768,245,864,234.7C960,224,1056,192,1152,181.3C1248,171,1344,181,1392,186.7L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" />
+        <svg
+          className="absolute bottom-0 w-[200%] h-full"
+          viewBox="0 0 1440 320"
+          preserveAspectRatio="none"
+          style={{ animation: 'wave 18s linear infinite' }}
+        >
+          <path
+            fill={wc.deep}
+            d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,218.7C672,235,768,245,864,234.7C960,224,1056,192,1152,181.3C1248,171,1344,181,1392,186.7L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+          />
         </svg>
         {/* Layer 2 */}
-        <svg className="absolute bottom-0 w-[200%] h-full" viewBox="0 0 1440 320" preserveAspectRatio="none"
-          style={{ animation: 'wave 14s linear -3s infinite' }}>
-          <path fill={wc.mid}
-            d="M0,256L48,245.3C96,235,192,213,288,208C384,203,480,213,576,229.3C672,245,768,267,864,261.3C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" />
+        <svg
+          className="absolute bottom-0 w-[200%] h-full"
+          viewBox="0 0 1440 320"
+          preserveAspectRatio="none"
+          style={{ animation: 'wave 14s linear -3s infinite' }}
+        >
+          <path
+            fill={wc.mid}
+            d="M0,256L48,245.3C96,235,192,213,288,208C384,203,480,213,576,229.3C672,245,768,267,864,261.3C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+          />
         </svg>
         {/* Layer 3 */}
-        <svg className="absolute bottom-0 w-[200%] h-full" viewBox="0 0 1440 320" preserveAspectRatio="none"
-          style={{ animation: 'wave 10s linear -1s infinite' }}>
-          <path fill={wc.light}
-            d="M0,288L48,277.3C96,267,192,245,288,234.7C384,224,480,224,576,234.7C672,245,768,267,864,261.3C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" />
+        <svg
+          className="absolute bottom-0 w-[200%] h-full"
+          viewBox="0 0 1440 320"
+          preserveAspectRatio="none"
+          style={{ animation: 'wave 10s linear -1s infinite' }}
+        >
+          <path
+            fill={wc.light}
+            d="M0,288L48,277.3C96,267,192,245,288,234.7C384,224,480,224,576,234.7C672,245,768,267,864,261.3C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+          />
         </svg>
         {/* Layer 4 — foam line */}
-        <svg className="absolute bottom-0 w-[200%] h-[70%]" viewBox="0 0 1440 320" preserveAspectRatio="none"
-          style={{ animation: 'wave 8s linear -2s infinite' }}>
-          <path fill={wc.foam}
-            d="M0,288L60,282.7C120,277,240,267,360,261.3C480,256,600,256,720,266.7C840,277,960,299,1080,293.3C1200,288,1320,256,1380,240L1440,224L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z" />
+        <svg
+          className="absolute bottom-0 w-[200%] h-[70%]"
+          viewBox="0 0 1440 320"
+          preserveAspectRatio="none"
+          style={{ animation: 'wave 8s linear -2s infinite' }}
+        >
+          <path
+            fill={wc.foam}
+            d="M0,288L60,282.7C120,277,240,267,360,261.3C480,256,600,256,720,266.7C840,277,960,299,1080,293.3C1200,288,1320,256,1380,240L1440,224L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z"
+          />
         </svg>
         {/* Layer 5 — accent shimmer */}
-        <svg className="absolute bottom-0 w-[200%] h-[55%]" viewBox="0 0 1440 320" preserveAspectRatio="none"
-          style={{ animation: 'wave 12s linear -4s infinite', opacity: 0.7 }}>
-          <path fill={wc.accent}
-            d="M0,298L48,293.3C96,288,192,277,288,272C384,267,480,267,576,277.3C672,288,768,309,864,304C960,299,1056,267,1152,256C1248,245,1344,256,1392,261.3L1440,267L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" />
+        <svg
+          className="absolute bottom-0 w-[200%] h-[55%]"
+          viewBox="0 0 1440 320"
+          preserveAspectRatio="none"
+          style={{ animation: 'wave 12s linear -4s infinite', opacity: 0.7 }}
+        >
+          <path
+            fill={wc.accent}
+            d="M0,298L48,293.3C96,288,192,277,288,272C384,267,480,267,576,277.3C672,288,768,309,864,304C960,299,1056,267,1152,256C1248,245,1344,256,1392,261.3L1440,267L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+          />
         </svg>
         {/* Layer 6 — near-surface glow */}
-        <svg className="absolute bottom-0 w-[200%] h-[40%]" viewBox="0 0 1440 320" preserveAspectRatio="none"
-          style={{ animation: 'wave 16s linear -6s infinite', opacity: 0.5 }}>
-          <path fill={wc.glow}
-            d="M0,304L60,298.7C120,293,240,283,360,277.3C480,272,600,272,720,282.7C840,293,960,315,1080,309.3C1200,304,1320,272,1380,256L1440,240L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z" />
+        <svg
+          className="absolute bottom-0 w-[200%] h-[40%]"
+          viewBox="0 0 1440 320"
+          preserveAspectRatio="none"
+          style={{ animation: 'wave 16s linear -6s infinite', opacity: 0.5 }}
+        >
+          <path
+            fill={wc.glow}
+            d="M0,304L60,298.7C120,293,240,283,360,277.3C480,272,600,272,720,282.7C840,293,960,315,1080,309.3C1200,304,1320,272,1380,256L1440,240L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z"
+          />
         </svg>
         {/* Layer 7 — surface sparkle */}
-        <svg className="absolute bottom-0 w-[200%] h-[25%]" viewBox="0 0 1440 320" preserveAspectRatio="none"
-          style={{ animation: 'wave 9s linear -1s infinite', opacity: 0.35 }}>
-          <path fill={wc.foam}
-            d="M0,312L48,309.3C96,307,192,301,288,296C384,291,480,288,576,293.3C672,299,768,315,864,314.7C960,315,1056,299,1152,293.3C1248,288,1344,293,1392,296L1440,299L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" />
+        <svg
+          className="absolute bottom-0 w-[200%] h-[25%]"
+          viewBox="0 0 1440 320"
+          preserveAspectRatio="none"
+          style={{ animation: 'wave 9s linear -1s infinite', opacity: 0.35 }}
+        >
+          <path
+            fill={wc.foam}
+            d="M0,312L48,309.3C96,307,192,301,288,296C384,291,480,288,576,293.3C672,299,768,315,864,314.7C960,315,1056,299,1152,293.3C1248,288,1344,293,1392,296L1440,299L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+          />
         </svg>
       </div>
 
@@ -312,7 +371,9 @@ export default function Login() {
       <div className="relative z-10 w-full max-w-md mx-4">
         {/* Brand icon */}
         <div className="flex justify-center mb-6">
-          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center ${styled ? 'neu-icon !bg-red-600/10 !border-none' : 'bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/20 dark:border-white/10'}`}>
+          <div
+            className={`w-16 h-16 rounded-2xl flex items-center justify-center ${styled ? 'neu-icon !bg-red-600/10 !border-none' : 'bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/20 dark:border-white/10'}`}
+          >
             <Smartphone className="w-8 h-8 text-red-500" />
           </div>
         </div>
@@ -373,7 +434,10 @@ export default function Login() {
                 onChange={(e) => setRememberMe(e.target.checked)}
                 className="w-4 h-4"
               />
-              <label htmlFor="rememberMe" className="text-sm text-gray-600 dark:text-gray-400 cursor-pointer select-none">
+              <label
+                htmlFor="rememberMe"
+                className="text-sm text-gray-600 dark:text-gray-400 cursor-pointer select-none"
+              >
                 Remember me
               </label>
             </div>
@@ -383,7 +447,9 @@ export default function Login() {
                 type="submit"
                 disabled={loading}
                 className={`relative w-full py-3 rounded-xl font-semibold text-sm text-white overflow-hidden transition-all duration-300 ${
-                  loading ? 'opacity-80 cursor-wait' : 'hover:shadow-lg hover:shadow-red-700/30 hover:-translate-y-0.5 active:translate-y-0'
+                  loading
+                    ? 'opacity-80 cursor-wait'
+                    : 'hover:shadow-lg hover:shadow-red-700/30 hover:-translate-y-0.5 active:translate-y-0'
                 } ${styled ? 'neu-btn !bg-red-700 !text-white' : 'bg-gradient-to-r from-red-700 via-red-600 to-red-700'}`}
               >
                 <span className="relative z-10 flex items-center justify-center gap-2">
@@ -403,7 +469,6 @@ export default function Login() {
             </div>
           </div>
         </form>
-
 
         <p className="text-center text-[11px] text-gray-400 dark:text-gray-600 mt-6">
           &copy; {new Date().getFullYear()} Brothers Mobile. All rights reserved.

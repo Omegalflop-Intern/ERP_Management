@@ -68,7 +68,10 @@ const PageSkeletonLoader = () => (
     {/* Metric Cards Skeleton */}
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="bg-white dark:bg-[#111827] rounded-2xl border border-gray-200 dark:border-gray-800 p-5 space-y-3">
+        <div
+          key={i}
+          className="bg-white dark:bg-[#111827] rounded-2xl border border-gray-200 dark:border-gray-800 p-5 space-y-3"
+        >
           <div className="flex justify-between items-center">
             <div className="h-3 w-20 bg-gray-200 dark:bg-gray-800 rounded" />
             <div className="h-8 w-8 bg-gray-100 dark:bg-gray-800 rounded-xl" />
@@ -86,7 +89,10 @@ const PageSkeletonLoader = () => (
       </div>
       <div className="space-y-3">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800/40 last:border-0">
+          <div
+            key={i}
+            className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-800/40 last:border-0"
+          >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gray-200 dark:bg-gray-800 rounded-xl" />
               <div className="space-y-1.5">
@@ -112,156 +118,361 @@ export default function App() {
   return (
     <Suspense fallback={<PageSkeletonLoader />}>
       <Routes>
-        <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />} />
+        <Route
+          path="/login"
+          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />}
+        />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
 
-        <Route path="/" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
 
           {/* Sales — accessible with sales:view permission */}
-          <Route path="sales" element={
-            <RoleBasedRoute permissions={['sales:view']}><SalesList /></RoleBasedRoute>
-          } />
-          <Route path="sales/new" element={
-            <RoleBasedRoute permissions={['sales:create']}><SalesForm /></RoleBasedRoute>
-          } />
-          <Route path="sales/:id" element={
-            <RoleBasedRoute permissions={['sales:view']}><InvoiceDetail /></RoleBasedRoute>
-          } />
-          <Route path="sales/returns" element={
-            <RoleBasedRoute permissions={['sales:view', 'sales:create']}><Returns /></RoleBasedRoute>
-          } />
+          <Route
+            path="sales"
+            element={
+              <RoleBasedRoute permissions={['sales:view']}>
+                <SalesList />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="sales/new"
+            element={
+              <RoleBasedRoute permissions={['sales:create']}>
+                <SalesForm />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="sales/:id"
+            element={
+              <RoleBasedRoute permissions={['sales:view']}>
+                <InvoiceDetail />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="sales/returns"
+            element={
+              <RoleBasedRoute permissions={['sales:view', 'sales:create']}>
+                <Returns />
+              </RoleBasedRoute>
+            }
+          />
 
           {/* Inventory */}
-          <Route path="products" element={
-            <RoleBasedRoute permissions={['products:view']}><ProductList /></RoleBasedRoute>
-          } />
-          <Route path="products/categories" element={
-            <RoleBasedRoute permissions={['categories:manage']}><Categories /></RoleBasedRoute>
-          } />
-          <Route path="inventory" element={
-            <RoleBasedRoute permissions={['inventory:view']}><IMEITracker /></RoleBasedRoute>
-          } />
-          <Route path="stock" element={
-            <RoleBasedRoute permissions={['stock:view']}><StockOverview /></RoleBasedRoute>
-          } />
-          <Route path="stock-transfer" element={
-            <RoleBasedRoute permissions={['stock:transfer']}><StockTransfer /></RoleBasedRoute>
-          } />
+          <Route
+            path="products"
+            element={
+              <RoleBasedRoute permissions={['products:view']}>
+                <ProductList />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="products/categories"
+            element={
+              <RoleBasedRoute permissions={['categories:manage']}>
+                <Categories />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="inventory"
+            element={
+              <RoleBasedRoute permissions={['inventory:view']}>
+                <IMEITracker />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="stock"
+            element={
+              <RoleBasedRoute permissions={['stock:view']}>
+                <StockOverview />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="stock-transfer"
+            element={
+              <RoleBasedRoute permissions={['stock:transfer']}>
+                <StockTransfer />
+              </RoleBasedRoute>
+            }
+          />
 
           {/* CRM */}
-          <Route path="customers" element={
-            <RoleBasedRoute permissions={['customers:view']}><CustomerList /></RoleBasedRoute>
-          } />
-          <Route path="customers/:id" element={
-            <RoleBasedRoute permissions={['customers:view']}><CustomerDetail /></RoleBasedRoute>
-          } />
-          <Route path="customers/due-collection" element={
-            <RoleBasedRoute permissions={['customers:view', 'sales:view']}><DueCollection /></RoleBasedRoute>
-          } />
-          <Route path="warranties" element={
-            <RoleBasedRoute permissions={['warranties:view']}><WarrantyClaims /></RoleBasedRoute>
-          } />
-          <Route path="warranties/report" element={
-            <RoleBasedRoute permissions={['warranties:view']}><WarrantyReport /></RoleBasedRoute>
-          } />
+          <Route
+            path="customers"
+            element={
+              <RoleBasedRoute permissions={['customers:view']}>
+                <CustomerList />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="customers/:id"
+            element={
+              <RoleBasedRoute permissions={['customers:view']}>
+                <CustomerDetail />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="customers/due-collection"
+            element={
+              <RoleBasedRoute permissions={['customers:view', 'sales:view']}>
+                <DueCollection />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="warranties"
+            element={
+              <RoleBasedRoute permissions={['warranties:view']}>
+                <WarrantyClaims />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="warranties/report"
+            element={
+              <RoleBasedRoute permissions={['warranties:view']}>
+                <WarrantyReport />
+              </RoleBasedRoute>
+            }
+          />
 
           {/* Reports */}
-          <Route path="reports" element={
-            <RoleBasedRoute permissions={['reports:view']}><SalesReport /></RoleBasedRoute>
-          } />
+          <Route
+            path="reports"
+            element={
+              <RoleBasedRoute permissions={['reports:view']}>
+                <SalesReport />
+              </RoleBasedRoute>
+            }
+          />
 
           {/* Admin — users/roles management */}
-          <Route path="users" element={
-            <RoleBasedRoute permissions={['users:view', 'users:manage']}><UserList /></RoleBasedRoute>
-          } />
-          <Route path="roles" element={
-            <RoleBasedRoute permissions={['roles:view', 'roles:manage']}><RoleManagement /></RoleBasedRoute>
-          } />
+          <Route
+            path="users"
+            element={
+              <RoleBasedRoute permissions={['users:view', 'users:manage']}>
+                <UserList />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="roles"
+            element={
+              <RoleBasedRoute permissions={['roles:view', 'roles:manage']}>
+                <RoleManagement />
+              </RoleBasedRoute>
+            }
+          />
 
           {/* Purchases & Suppliers */}
-          <Route path="purchases" element={
-            <RoleBasedRoute permissions={['purchases:view', 'purchases:manage']}><PurchaseOrders /></RoleBasedRoute>
-          } />
-          <Route path="suppliers" element={
-            <RoleBasedRoute permissions={['suppliers:view', 'suppliers:manage']}><SupplierList /></RoleBasedRoute>
-          } />
+          <Route
+            path="purchases"
+            element={
+              <RoleBasedRoute permissions={['purchases:view', 'purchases:manage']}>
+                <PurchaseOrders />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="suppliers"
+            element={
+              <RoleBasedRoute permissions={['suppliers:view', 'suppliers:manage']}>
+                <SupplierList />
+              </RoleBasedRoute>
+            }
+          />
 
           {/* Repairs */}
-          <Route path="repairs" element={
-            <RoleBasedRoute permissions={['repairs:view', 'repairs:manage']}><RepairsView /></RoleBasedRoute>
-          } />
+          <Route
+            path="repairs"
+            element={
+              <RoleBasedRoute permissions={['repairs:view', 'repairs:manage']}>
+                <RepairsView />
+              </RoleBasedRoute>
+            }
+          />
 
           {/* Branches */}
-          <Route path="branches" element={
-            <RoleBasedRoute permissions={['branches:view', 'branches:manage']}><BranchManagement /></RoleBasedRoute>
-          } />
+          <Route
+            path="branches"
+            element={
+              <RoleBasedRoute permissions={['branches:view', 'branches:manage']}>
+                <BranchManagement />
+              </RoleBasedRoute>
+            }
+          />
 
           {/* Wholesale */}
-          <Route path="wholesale" element={
-            <RoleBasedRoute permissions={['wholesale:view', 'wholesale:manage']}><WholesaleOrders /></RoleBasedRoute>
-          } />
-          <Route path="wholesale/orders" element={
-            <RoleBasedRoute permissions={['wholesale:view', 'wholesale:manage']}><WholesaleOrders /></RoleBasedRoute>
-          } />
+          <Route
+            path="wholesale"
+            element={
+              <RoleBasedRoute permissions={['wholesale:view', 'wholesale:manage']}>
+                <WholesaleOrders />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="wholesale/orders"
+            element={
+              <RoleBasedRoute permissions={['wholesale:view', 'wholesale:manage']}>
+                <WholesaleOrders />
+              </RoleBasedRoute>
+            }
+          />
 
           {/* Accounting */}
-          <Route path="accounting" element={
-            <RoleBasedRoute permissions={['accounting:view', 'accounting:manage']}><ChartOfAccounts /></RoleBasedRoute>
-          } />
-          <Route path="accounting/investors" element={
-            <RoleBasedRoute permissions={['accounting:view', 'accounting:manage']}><InvestorsPage /></RoleBasedRoute>
-          } />
-          <Route path="accounting/expenses" element={
-            <RoleBasedRoute permissions={['accounting:view', 'accounting:manage']}><ExpensesPage /></RoleBasedRoute>
-          } />
-          <Route path="accounting/assets" element={
-            <RoleBasedRoute permissions={['accounting:view', 'accounting:manage']}><AssetsPage /></RoleBasedRoute>
-          } />
-          <Route path="accounting/loans" element={
-            <RoleBasedRoute permissions={['accounting:view', 'accounting:manage']}><LoansPage /></RoleBasedRoute>
-          } />
-          <Route path="accounting/journal-entries" element={
-            <RoleBasedRoute permissions={['accounting:view', 'accounting:manage']}><JournalEntries /></RoleBasedRoute>
-          } />
-          <Route path="accounting/balance-sheet" element={
-            <RoleBasedRoute permissions={['accounting:view']}><BalanceSheetPage /></RoleBasedRoute>
-          } />
-          <Route path="accounting/profit-loss" element={
-            <RoleBasedRoute permissions={['accounting:view']}><ProfitLossPage /></RoleBasedRoute>
-          } />
-          <Route path="accounting/trial-balance" element={
-            <RoleBasedRoute permissions={['accounting:view']}><TrialBalancePage /></RoleBasedRoute>
-          } />
+          <Route
+            path="accounting"
+            element={
+              <RoleBasedRoute permissions={['accounting:view', 'accounting:manage']}>
+                <ChartOfAccounts />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="accounting/investors"
+            element={
+              <RoleBasedRoute permissions={['accounting:view', 'accounting:manage']}>
+                <InvestorsPage />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="accounting/expenses"
+            element={
+              <RoleBasedRoute permissions={['accounting:view', 'accounting:manage']}>
+                <ExpensesPage />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="accounting/assets"
+            element={
+              <RoleBasedRoute permissions={['accounting:view', 'accounting:manage']}>
+                <AssetsPage />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="accounting/loans"
+            element={
+              <RoleBasedRoute permissions={['accounting:view', 'accounting:manage']}>
+                <LoansPage />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="accounting/journal-entries"
+            element={
+              <RoleBasedRoute permissions={['accounting:view', 'accounting:manage']}>
+                <JournalEntries />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="accounting/balance-sheet"
+            element={
+              <RoleBasedRoute permissions={['accounting:view']}>
+                <BalanceSheetPage />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="accounting/profit-loss"
+            element={
+              <RoleBasedRoute permissions={['accounting:view']}>
+                <ProfitLossPage />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="accounting/trial-balance"
+            element={
+              <RoleBasedRoute permissions={['accounting:view']}>
+                <TrialBalancePage />
+              </RoleBasedRoute>
+            }
+          />
 
           {/* HR & Payroll */}
-          <Route path="hr/employees" element={
-            <RoleBasedRoute permissions={['employees:view', 'employees:manage']}><EmployeeList /></RoleBasedRoute>
-          } />
-          <Route path="hr/attendance" element={
-            <RoleBasedRoute permissions={['attendance:view', 'attendance:manage']}><Attendance /></RoleBasedRoute>
-          } />
-          <Route path="hr/leaves" element={
-            <RoleBasedRoute permissions={['leaves:view', 'leaves:manage']}><LeaveManagement /></RoleBasedRoute>
-          } />
-          <Route path="hr/payroll" element={
-            <RoleBasedRoute permissions={['payroll:view', 'payroll:manage']}><Payroll /></RoleBasedRoute>
-          } />
+          <Route
+            path="hr/employees"
+            element={
+              <RoleBasedRoute permissions={['employees:view', 'employees:manage']}>
+                <EmployeeList />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="hr/attendance"
+            element={
+              <RoleBasedRoute permissions={['attendance:view', 'attendance:manage']}>
+                <Attendance />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="hr/leaves"
+            element={
+              <RoleBasedRoute permissions={['leaves:view', 'leaves:manage']}>
+                <LeaveManagement />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="hr/payroll"
+            element={
+              <RoleBasedRoute permissions={['payroll:view', 'payroll:manage']}>
+                <Payroll />
+              </RoleBasedRoute>
+            }
+          />
           <Route path="hr" element={<Navigate to="/hr/employees" replace />} />
 
           {/* Settings & Logs */}
           <Route path="profile" element={<MyProfile />} />
-          <Route path="settings" element={
-            <RoleBasedRoute permissions={['settings:view', 'settings:manage']}><SettingsPage /></RoleBasedRoute>
-          } />
-          <Route path="activity-logs" element={
-            <RoleBasedRoute permissions={['users:view']}><ActivityLogs /></RoleBasedRoute>
-          } />
-          <Route path="system-analytics" element={
-            <RoleBasedRoute permissions={['settings:view']}><SystemAnalytics /></RoleBasedRoute>
-          } />
+          <Route
+            path="settings"
+            element={
+              <RoleBasedRoute permissions={['settings:view', 'settings:manage']}>
+                <SettingsPage />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="activity-logs"
+            element={
+              <RoleBasedRoute permissions={['users:view']}>
+                <ActivityLogs />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="system-analytics"
+            element={
+              <RoleBasedRoute permissions={['settings:view']}>
+                <SystemAnalytics />
+              </RoleBasedRoute>
+            }
+          />
         </Route>
 
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

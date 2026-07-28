@@ -2,11 +2,34 @@ import React, { useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useReactToPrint } from 'react-to-print';
-import { ArrowLeft, Printer, Maximize, Minimize, Smartphone, FileText, Download, RotateCcw, CheckCircle2, AlertCircle } from 'lucide-react';
+import {
+  ArrowLeft,
+  Printer,
+  Maximize,
+  Minimize,
+  Smartphone,
+  FileText,
+  Download,
+  RotateCcw,
+  CheckCircle2,
+  AlertCircle,
+} from 'lucide-react';
 import api from '../../lib/api';
 import { toast } from 'sonner';
-import { InvoiceA4Full, InvoiceA4Half, InvoiceReceipt, InvoiceThermal } from '../../components/sales/Invoice';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../components/ui/dialog';
+import {
+  InvoiceA4Full,
+  InvoiceA4Half,
+  InvoiceReceipt,
+  InvoiceThermal,
+} from '../../components/sales/Invoice';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '../../components/ui/dialog';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Input } from '../../components/ui/input';
@@ -92,27 +115,44 @@ export default function InvoiceDetail() {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500 dark:text-gray-400">Sale not found</p>
-        <button onClick={() => navigate('/sales')} className="mt-4 text-red-600 hover:underline text-sm">Back to Sales</button>
+        <button
+          onClick={() => navigate('/sales')}
+          className="mt-4 text-red-600 hover:underline text-sm"
+        >
+          Back to Sales
+        </button>
       </div>
     );
   }
 
-  const paid = (sale.paymentBreakdown?.cash || 0) + (sale.paymentBreakdown?.bkash || 0) + (sale.paymentBreakdown?.rocket || 0) + (sale.paymentBreakdown?.nagad || 0) + (sale.paymentBreakdown?.bank || 0);
+  const paid =
+    (sale.paymentBreakdown?.cash || 0) +
+    (sale.paymentBreakdown?.bkash || 0) +
+    (sale.paymentBreakdown?.rocket || 0) +
+    (sale.paymentBreakdown?.nagad || 0) +
+    (sale.paymentBreakdown?.bank || 0);
 
   const renderInvoice = () => {
     switch (printSize) {
-      case 'a4half': return <InvoiceA4Half sale={sale} />;
-      case 'receipt': return <InvoiceReceipt sale={sale} />;
-      case 'thermal': return <InvoiceThermal sale={sale} />;
-      default: return <InvoiceA4Full sale={sale} />;
+      case 'a4half':
+        return <InvoiceA4Half sale={sale} />;
+      case 'receipt':
+        return <InvoiceReceipt sale={sale} />;
+      case 'thermal':
+        return <InvoiceThermal sale={sale} />;
+      default:
+        return <InvoiceA4Full sale={sale} />;
     }
   };
 
   const getWidth = () => {
     switch (printSize) {
-      case 'receipt': return 'max-w-[80mm]';
-      case 'thermal': return 'max-w-[58mm]';
-      default: return 'max-w-[210mm]';
+      case 'receipt':
+        return 'max-w-[80mm]';
+      case 'thermal':
+        return 'max-w-[58mm]';
+      default:
+        return 'max-w-[210mm]';
     }
   };
 
@@ -155,11 +195,14 @@ export default function InvoiceDetail() {
   };
 
   const calculateReturnTotal = () => {
-    return Object.values(returnSelection).reduce((sum, item) => sum + (item.unitPrice * (Number(item.quantity) || 0)), 0);
+    return Object.values(returnSelection).reduce(
+      (sum, item) => sum + item.unitPrice * (Number(item.quantity) || 0),
+      0
+    );
   };
 
   const handleSubmitReturn = () => {
-    const items = Object.values(returnSelection).map(item => ({
+    const items = Object.values(returnSelection).map((item) => ({
       lineItemId: item.lineItemId,
       productId: item.productId,
       imeiOrSerial: item.imeiOrSerial,
@@ -178,9 +221,12 @@ export default function InvoiceDetail() {
 
   const getStatusBadge = (status) => {
     switch (status) {
-      case 'RETURNED': return <Badge variant="destructive">Fully Returned</Badge>;
-      case 'PARTIALLY_RETURNED': return <Badge variant="warning">Partially Returned</Badge>;
-      default: return <Badge variant="success">Completed</Badge>;
+      case 'RETURNED':
+        return <Badge variant="destructive">Fully Returned</Badge>;
+      case 'PARTIALLY_RETURNED':
+        return <Badge variant="warning">Partially Returned</Badge>;
+      default:
+        return <Badge variant="success">Completed</Badge>;
     }
   };
 
@@ -189,22 +235,32 @@ export default function InvoiceDetail() {
       {/* Top Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/sales')} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500">
+          <button
+            onClick={() => navigate('/sales')}
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500"
+          >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Invoice {sale.invoiceNumber}</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                Invoice {sale.invoiceNumber}
+              </h1>
               {getStatusBadge(sale.status)}
             </div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{new Date(sale.createdAt).toLocaleString('en-BD')}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {new Date(sale.createdAt).toLocaleString('en-BD')}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
-            {INVOICE_SIZES.map(size => (
-              <button key={size.key} onClick={() => setPrintSize(size.key)}
-                className={`px-2 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1 ${printSize === size.key ? 'bg-white dark:bg-gray-700 shadow text-gray-900 dark:text-gray-100' : 'text-gray-500'}`}>
+            {INVOICE_SIZES.map((size) => (
+              <button
+                key={size.key}
+                onClick={() => setPrintSize(size.key)}
+                className={`px-2 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1 ${printSize === size.key ? 'bg-white dark:bg-gray-700 shadow text-gray-900 dark:text-gray-100' : 'text-gray-500'}`}
+              >
                 <size.icon className="w-3 h-3" />
                 <span className="hidden sm:inline">{size.label}</span>
               </button>
@@ -212,7 +268,12 @@ export default function InvoiceDetail() {
           </div>
 
           {sale.status !== 'RETURNED' && (
-            <Button variant="outline" size="sm" onClick={() => setShowReturnModal(true)} className="gap-1.5 text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/10">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowReturnModal(true)}
+              className="gap-1.5 text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/10"
+            >
               <RotateCcw className="w-4 h-4" /> Return Items
             </Button>
           )}
@@ -220,7 +281,11 @@ export default function InvoiceDetail() {
           <Button
             onClick={async () => {
               const { executeClientPrint } = await import('../../utils/invoiceGenerator');
-              executeClientPrint(printRef.current, `Invoice-${sale?.invoiceNumber || ''}`, printSize);
+              executeClientPrint(
+                printRef.current,
+                `Invoice-${sale?.invoiceNumber || ''}`,
+                printSize
+              );
             }}
             className="bg-red-700 hover:bg-red-600 text-white gap-2"
             size="sm"
@@ -242,14 +307,50 @@ export default function InvoiceDetail() {
                 <div className="fixed inset-0 z-40" onClick={() => setShowDownload(false)} />
                 <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg py-1 min-w-[180px]">
                   {[
-                    { label: '⚡ Backend Vector PDF', fn: async () => { const mod = await import('../../utils/invoiceGenerator'); mod.downloadBackendInvoicePdf(sale._id, sale.invoiceNumber); } },
-                    { label: 'A4 Full Size', fn: async () => { const mod = await import('../../utils/invoiceGenerator'); mod.generateA4Invoice(sale, printRef.current); } },
-                    { label: 'A4 Half Size', fn: async () => { const mod = await import('../../utils/invoiceGenerator'); mod.generateA4HalfInvoice(sale, printRef.current); } },
-                    { label: 'Receipt (80mm)', fn: async () => { const mod = await import('../../utils/invoiceGenerator'); mod.generateReceipt80(sale, printRef.current); } },
-                    { label: 'Thermal (58mm)', fn: async () => { const mod = await import('../../utils/invoiceGenerator'); mod.generateReceipt58(sale, printRef.current); } },
-                  ].map(opt => (
-                    <button key={opt.label} onClick={() => { opt.fn(); setShowDownload(false); }}
-                      className="w-full text-left px-4 py-2 text-xs font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700">
+                    {
+                      label: '⚡ Backend Vector PDF',
+                      fn: async () => {
+                        const mod = await import('../../utils/invoiceGenerator');
+                        mod.downloadBackendInvoicePdf(sale._id, sale.invoiceNumber);
+                      },
+                    },
+                    {
+                      label: 'A4 Full Size',
+                      fn: async () => {
+                        const mod = await import('../../utils/invoiceGenerator');
+                        mod.generateA4Invoice(sale, printRef.current);
+                      },
+                    },
+                    {
+                      label: 'A4 Half Size',
+                      fn: async () => {
+                        const mod = await import('../../utils/invoiceGenerator');
+                        mod.generateA4HalfInvoice(sale, printRef.current);
+                      },
+                    },
+                    {
+                      label: 'Receipt (80mm)',
+                      fn: async () => {
+                        const mod = await import('../../utils/invoiceGenerator');
+                        mod.generateReceipt80(sale, printRef.current);
+                      },
+                    },
+                    {
+                      label: 'Thermal (58mm)',
+                      fn: async () => {
+                        const mod = await import('../../utils/invoiceGenerator');
+                        mod.generateReceipt58(sale, printRef.current);
+                      },
+                    },
+                  ].map((opt) => (
+                    <button
+                      key={opt.label}
+                      onClick={() => {
+                        opt.fn();
+                        setShowDownload(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-xs font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
+                    >
                       {opt.label}
                     </button>
                   ))}
@@ -264,30 +365,47 @@ export default function InvoiceDetail() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-4">
           <div className="text-xs text-gray-500 dark:text-gray-400 uppercase">Grand Total</div>
-          <div className="text-xl font-bold text-gray-900 dark:text-gray-100">৳{sale.netTotal?.toLocaleString()}</div>
-          {sale.returnedAmount > 0 && <div className="text-xs text-amber-600 font-medium mt-1">Returned: -৳{sale.returnedAmount.toLocaleString()}</div>}
+          <div className="text-xl font-bold text-gray-900 dark:text-gray-100">
+            ৳{sale.netTotal?.toLocaleString()}
+          </div>
+          {sale.returnedAmount > 0 && (
+            <div className="text-xs text-amber-600 font-medium mt-1">
+              Returned: -৳{sale.returnedAmount.toLocaleString()}
+            </div>
+          )}
         </div>
         <div className="bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-4">
-          <div className="text-xs text-gray-500 dark:text-gray-400 uppercase">Net Paid / Retained</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400 uppercase">
+            Net Paid / Retained
+          </div>
           <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
             ৳{Math.max(0, paid - (sale.returnedAmount || 0)).toLocaleString()}
           </div>
           {sale.returnedAmount > 0 && (
             <div className="text-[10px] text-gray-400 mt-1">
-              Initially Rec'd: ৳{paid.toLocaleString()} (-৳{sale.returnedAmount.toLocaleString()} ref.)
+              Initially Rec'd: ৳{paid.toLocaleString()} (-৳{sale.returnedAmount.toLocaleString()}{' '}
+              ref.)
             </div>
           )}
         </div>
         <div className="bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-4">
           <div className="text-xs text-gray-500 dark:text-gray-400 uppercase">Due</div>
-          <div className={`text-xl font-bold ${sale.paymentBreakdown?.dueAmount > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-400'}`}>৳{sale.paymentBreakdown?.dueAmount?.toLocaleString() || 0}</div>
+          <div
+            className={`text-xl font-bold ${sale.paymentBreakdown?.dueAmount > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-400'}`}
+          >
+            ৳{sale.paymentBreakdown?.dueAmount?.toLocaleString() || 0}
+          </div>
         </div>
         <div className="bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-4">
           <div className="text-xs text-gray-500 dark:text-gray-400 uppercase">Customer</div>
-          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{sale.customerName}</div>
+          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+            {sale.customerName}
+          </div>
           <div className="text-xs text-gray-500">{sale.customerPhone}</div>
           {sale.customerEmail && <div className="text-xs text-gray-400">{sale.customerEmail}</div>}
-          {sale.customerAddress && <div className="text-xs text-gray-400">{sale.customerAddress}</div>}
+          {sale.customerAddress && (
+            <div className="text-xs text-gray-400">{sale.customerAddress}</div>
+          )}
         </div>
       </div>
 
@@ -301,7 +419,8 @@ export default function InvoiceDetail() {
             </div>
             <div className="flex items-center gap-3">
               <div className="text-xs font-mono font-bold text-red-600 dark:text-red-400">
-                Total Refunded: ৳{(sale.returnedAmount || 0).toLocaleString()} ({sale.returnLogs?.reduce((acc, l) => acc + (l.qty || 1), 0) || 0} pcs returned)
+                Total Refunded: ৳{(sale.returnedAmount || 0).toLocaleString()} (
+                {sale.returnLogs?.reduce((acc, l) => acc + (l.qty || 1), 0) || 0} pcs returned)
               </div>
               <Button
                 size="sm"
@@ -315,7 +434,10 @@ export default function InvoiceDetail() {
           </div>
           <div className="divide-y divide-amber-200/50 dark:divide-amber-900/40 border border-amber-200 dark:border-amber-900/40 rounded-lg overflow-hidden bg-white/60 dark:bg-gray-900/40">
             {sale.returnLogs?.map((log, idx) => (
-              <div key={idx} className="p-2.5 flex items-center justify-between text-xs text-amber-900 dark:text-amber-200">
+              <div
+                key={idx}
+                className="p-2.5 flex items-center justify-between text-xs text-amber-900 dark:text-amber-200"
+              >
                 <div className="space-y-0.5">
                   <div className="font-bold flex items-center gap-2">
                     {log.returnInvoiceNumber && (
@@ -335,11 +457,21 @@ export default function InvoiceDetail() {
                     </span>
                   </div>
                   <div className="text-[11px] text-gray-500 flex items-center gap-2">
-                    <span>Returned Qty: <strong>{log.qty} pc(s)</strong></span>
+                    <span>
+                      Returned Qty: <strong>{log.qty} pc(s)</strong>
+                    </span>
                     <span>•</span>
-                    <span>Effective Unit Refund: ৳{(log.effectiveUnitPrice || (log.qty > 0 ? Math.round(log.refundAmount / log.qty) : log.refundAmount))?.toLocaleString()}</span>
+                    <span>
+                      Effective Unit Refund: ৳
+                      {(
+                        log.effectiveUnitPrice ||
+                        (log.qty > 0 ? Math.round(log.refundAmount / log.qty) : log.refundAmount)
+                      )?.toLocaleString()}
+                    </span>
                     <span>•</span>
-                    <span>Date: {new Date(log.returnedAt || sale.updatedAt).toLocaleString('en-BD')}</span>
+                    <span>
+                      Date: {new Date(log.returnedAt || sale.updatedAt).toLocaleString('en-BD')}
+                    </span>
                     {log.notes && <span>• Notes: {log.notes}</span>}
                   </div>
                 </div>
@@ -367,7 +499,9 @@ export default function InvoiceDetail() {
               <RotateCcw className="w-5 h-5" /> Process Sales Return & Refund
             </DialogTitle>
             <DialogDescription>
-              Select items from Invoice <span className="font-mono font-bold">{sale.invoiceNumber}</span> to return back to inventory stock.
+              Select items from Invoice{' '}
+              <span className="font-mono font-bold">{sale.invoiceNumber}</span> to return back to
+              inventory stock.
             </DialogDescription>
           </DialogHeader>
 
@@ -379,7 +513,10 @@ export default function InvoiceDetail() {
                 const isFullyReturned = availableToReturn <= 0;
 
                 return (
-                  <div key={item._id} className={`p-3 rounded-lg border transition-all ${isFullyReturned ? 'bg-gray-100 dark:bg-gray-900/40 border-gray-200 dark:border-gray-800 opacity-60' : isSelected ? 'bg-red-500/10 border-red-500/40' : 'bg-background border-border'}`}>
+                  <div
+                    key={item._id}
+                    className={`p-3 rounded-lg border transition-all ${isFullyReturned ? 'bg-gray-100 dark:bg-gray-900/40 border-gray-200 dark:border-gray-800 opacity-60' : isSelected ? 'bg-red-500/10 border-red-500/40' : 'bg-background border-border'}`}
+                  >
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         <input
@@ -390,9 +527,12 @@ export default function InvoiceDetail() {
                           className="w-4 h-4 text-red-600 rounded cursor-pointer"
                         />
                         <div className="min-w-0">
-                          <div className="font-medium text-sm text-foreground truncate">{item.description}</div>
+                          <div className="font-medium text-sm text-foreground truncate">
+                            {item.description}
+                          </div>
                           <div className="text-xs text-muted-foreground font-mono">
-                            {item.imeiOrSerial ? `IMEI: ${item.imeiOrSerial}` : 'Bulk Product'} | Unit: ৳{item.unitPrice?.toLocaleString()}
+                            {item.imeiOrSerial ? `IMEI: ${item.imeiOrSerial}` : 'Bulk Product'} |
+                            Unit: ৳{item.unitPrice?.toLocaleString()}
                           </div>
                         </div>
                       </div>
@@ -402,7 +542,10 @@ export default function InvoiceDetail() {
                           <Badge variant="destructive">Returned</Badge>
                         ) : (
                           <div className="text-xs text-muted-foreground font-mono">
-                            Sold: {item.qty} {item.returnedQty > 0 && <span className="text-amber-500">(Ret: {item.returnedQty})</span>}
+                            Sold: {item.qty}{' '}
+                            {item.returnedQty > 0 && (
+                              <span className="text-amber-500">(Ret: {item.returnedQty})</span>
+                            )}
                           </div>
                         )}
                       </div>
@@ -411,14 +554,22 @@ export default function InvoiceDetail() {
                     {isSelected && (
                       <div className="mt-3 pt-3 border-t border-red-500/20 grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div>
-                          <Label className="text-[11px]">Return Qty (Max {availableToReturn})</Label>
+                          <Label className="text-[11px]">
+                            Return Qty (Max {availableToReturn})
+                          </Label>
                           <Input
                             type="number"
                             min="1"
                             max={availableToReturn}
                             value={returnSelection[item._id]?.quantity}
                             onFocus={(e) => e.target.select()}
-                            onChange={(e) => updateReturnField(item._id, 'quantity', Math.min(availableToReturn, Math.max(1, Number(e.target.value))))}
+                            onChange={(e) =>
+                              updateReturnField(
+                                item._id,
+                                'quantity',
+                                Math.min(availableToReturn, Math.max(1, Number(e.target.value)))
+                              )
+                            }
                             className="h-8 text-xs"
                           />
                         </div>
@@ -454,10 +605,15 @@ export default function InvoiceDetail() {
 
           <DialogFooter className="flex-row items-center justify-between sm:justify-between border-t pt-3">
             <div className="text-sm font-semibold">
-              Total Refund: <span className="text-red-600 font-mono">৳{calculateReturnTotal().toLocaleString()}</span>
+              Total Refund:{' '}
+              <span className="text-red-600 font-mono">
+                ৳{calculateReturnTotal().toLocaleString()}
+              </span>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => setShowReturnModal(false)}>Cancel</Button>
+              <Button variant="outline" size="sm" onClick={() => setShowReturnModal(false)}>
+                Cancel
+              </Button>
               <Button
                 variant="destructive"
                 size="sm"
@@ -486,7 +642,13 @@ export default function InvoiceDetail() {
               </div>
               <Button
                 size="sm"
-                onClick={() => executeClientPrint(creditNoteRef.current, `Credit-Note-${sale.invoiceNumber}`, 'a4')}
+                onClick={() =>
+                  executeClientPrint(
+                    creditNoteRef.current,
+                    `Credit-Note-${sale.invoiceNumber}`,
+                    'a4'
+                  )
+                }
                 className="bg-red-700 hover:bg-red-600 text-white font-bold gap-2 text-xs"
               >
                 <Printer className="w-4 h-4" /> Print Return Credit Note
@@ -510,4 +672,3 @@ export default function InvoiceDetail() {
     </div>
   );
 }
-

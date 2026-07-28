@@ -1,6 +1,16 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Edit, Trash2, Landmark, RefreshCw, Database, Filter, Smartphone } from 'lucide-react';
+import {
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  Landmark,
+  RefreshCw,
+  Database,
+  Filter,
+  Smartphone,
+} from 'lucide-react';
 import api from '../../lib/api';
 import { toast } from 'sonner';
 import { confirmDelete } from '../../lib/confirm';
@@ -26,28 +36,44 @@ export default function ChartOfAccounts() {
   const { data, isLoading } = useQuery({
     queryKey: ['accounts', search, typeFilter],
     queryFn: async () => {
-      const res = await api.get('/accounting/accounts', { params: { search, type: typeFilter, limit: 200 } });
+      const res = await api.get('/accounting/accounts', {
+        params: { search, type: typeFilter, limit: 200 },
+      });
       return res.data;
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (id) => api.delete(`/accounting/accounts/${id}`),
-    onSuccess: () => { toast.success('Account deleted'); queryClient.invalidateQueries(['accounts']); },
+    onSuccess: () => {
+      toast.success('Account deleted');
+      queryClient.invalidateQueries(['accounts']);
+    },
     onError: (e) => toast.error(e.response?.data?.message || 'Failed'),
   });
 
   const seedMutation = useMutation({
     mutationFn: async () => api.post('/accounting/accounts/seed'),
-    onSuccess: (res) => { toast.success(res.data?.message || 'Seeded'); queryClient.invalidateQueries(['accounts']); },
+    onSuccess: (res) => {
+      toast.success(res.data?.message || 'Seeded');
+      queryClient.invalidateQueries(['accounts']);
+    },
     onError: (e) => toast.error(e.response?.data?.message || 'Failed'),
   });
 
   const accounts = data?.data || [];
-  const cardClass = styled ? 'neu-card p-5' : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-4';
-  const innerCardClass = styled ? 'neu-card-sm p-4' : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-4';
-  const inputClass = styled ? 'neu-input w-full pl-10 pr-4 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none' : 'w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-red-500';
-  const btnClass = styled ? 'neu-btn px-4 py-2 text-white font-medium rounded-lg text-sm transition-all flex items-center gap-2 !bg-red-700 hover:!bg-red-600' : 'flex items-center gap-2 px-4 py-2 bg-red-700 hover:bg-red-600 text-white font-medium rounded-lg text-sm transition-all';
+  const cardClass = styled
+    ? 'neu-card p-5'
+    : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-4';
+  const innerCardClass = styled
+    ? 'neu-card-sm p-4'
+    : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-4';
+  const inputClass = styled
+    ? 'neu-input w-full pl-10 pr-4 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none'
+    : 'w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-red-500';
+  const btnClass = styled
+    ? 'neu-btn px-4 py-2 text-white font-medium rounded-lg text-sm transition-all flex items-center gap-2 !bg-red-700 hover:!bg-red-600'
+    : 'flex items-center gap-2 px-4 py-2 bg-red-700 hover:bg-red-600 text-white font-medium rounded-lg text-sm transition-all';
 
   const { data: salesRes } = useQuery({
     queryKey: ['sales-channel-balances'],
@@ -59,8 +85,13 @@ export default function ChartOfAccounts() {
 
   const channelBalances = React.useMemo(() => {
     const salesList = salesRes || [];
-    let cash = 0, bkash = 0, nagad = 0, rocket = 0, bank = 0, refunds = 0;
-    salesList.forEach(s => {
+    let cash = 0,
+      bkash = 0,
+      nagad = 0,
+      rocket = 0,
+      bank = 0,
+      refunds = 0;
+    salesList.forEach((s) => {
       cash += s.paymentBreakdown?.cash || 0;
       bkash += s.paymentBreakdown?.bkash || 0;
       nagad += s.paymentBreakdown?.nagad || 0;
@@ -70,25 +101,54 @@ export default function ChartOfAccounts() {
     });
 
     const netCash = Math.max(0, cash - refunds);
-    return { cash: netCash, bkash, nagad, rocket, bank, refunds, totalLiquid: netCash + bkash + nagad + rocket + bank };
+    return {
+      cash: netCash,
+      bkash,
+      nagad,
+      rocket,
+      bank,
+      refunds,
+      totalLiquid: netCash + bkash + nagad + rocket + bank,
+    };
   }, [salesRes]);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Chart of Accounts &amp; Ledger</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Track liquid cash, bank balances, mobile banking, and account balances</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            Chart of Accounts &amp; Ledger
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Track liquid cash, bank balances, mobile banking, and account balances
+          </p>
         </div>
         <div className="flex gap-2">
           {accounts.length === 0 && (
-            <button onClick={() => seedMutation.mutate()} disabled={seedMutation.isPending}
-              className={styled ? 'neu-btn px-4 py-2 text-blue-700 dark:text-blue-400 font-medium rounded-lg text-sm flex items-center gap-2' : 'flex items-center gap-2 px-4 py-2 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 font-medium rounded-lg text-sm hover:bg-blue-200 transition-colors'}>
-              {seedMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
+            <button
+              onClick={() => seedMutation.mutate()}
+              disabled={seedMutation.isPending}
+              className={
+                styled
+                  ? 'neu-btn px-4 py-2 text-blue-700 dark:text-blue-400 font-medium rounded-lg text-sm flex items-center gap-2'
+                  : 'flex items-center gap-2 px-4 py-2 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 font-medium rounded-lg text-sm hover:bg-blue-200 transition-colors'
+              }
+            >
+              {seedMutation.isPending ? (
+                <RefreshCw className="w-4 h-4 animate-spin" />
+              ) : (
+                <Database className="w-4 h-4" />
+              )}
               Seed Defaults
             </button>
           )}
-          <button onClick={() => { setEditAccount(null); setShowForm(true); }} className={btnClass}>
+          <button
+            onClick={() => {
+              setEditAccount(null);
+              setShowForm(true);
+            }}
+            className={btnClass}
+          >
             <Plus className="w-4 h-4" /> Add Account
           </button>
         </div>
@@ -99,9 +159,12 @@ export default function ChartOfAccounts() {
         <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3 mb-3">
           <div>
             <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100 flex items-center gap-2">
-              <Landmark className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Liquid Cash &amp; Payment Method Channel Balances
+              <Landmark className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Liquid Cash
+              &amp; Payment Method Channel Balances
             </h3>
-            <p className="text-xs text-gray-400">Real-time incoming sales revenue minus returns across all payment methods</p>
+            <p className="text-xs text-gray-400">
+              Real-time incoming sales revenue minus returns across all payment methods
+            </p>
           </div>
           <div className="text-right">
             <span className="text-xs text-gray-400">Total Liquid Assets:</span>
@@ -120,7 +183,9 @@ export default function ChartOfAccounts() {
               ৳{channelBalances.cash.toLocaleString()}
             </div>
             {channelBalances.refunds > 0 && (
-              <span className="text-[9px] text-red-500 font-semibold block mt-0.5">(-৳{channelBalances.refunds.toLocaleString()} refunded)</span>
+              <span className="text-[9px] text-red-500 font-semibold block mt-0.5">
+                (-৳{channelBalances.refunds.toLocaleString()} refunded)
+              </span>
             )}
           </div>
 
@@ -163,15 +228,23 @@ export default function ChartOfAccounts() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
-        {ACCOUNT_TYPES.filter(t => t !== 'ALL').map((t) => {
+        {ACCOUNT_TYPES.filter((t) => t !== 'ALL').map((t) => {
           const total = accounts.filter((a) => a.type === t).reduce((s, a) => s + a.balance, 0);
           return (
             <div key={t} className={cardClass}>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{t}</span>
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${TYPE_COLORS[t]}`}>{accounts.filter(a => a.type === t).length}</span>
+                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                  {t}
+                </span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${TYPE_COLORS[t]}`}
+                >
+                  {accounts.filter((a) => a.type === t).length}
+                </span>
               </div>
-              <div className="text-lg font-bold text-gray-900 dark:text-gray-100">৳{total.toLocaleString()}</div>
+              <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                ৳{total.toLocaleString()}
+              </div>
             </div>
           );
         })}
@@ -180,12 +253,21 @@ export default function ChartOfAccounts() {
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1 max-w-md">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input type="text" placeholder="Search by name or code..." value={search} onChange={(e) => setSearch(e.target.value)} className={inputClass} />
+          <input
+            type="text"
+            placeholder="Search by name or code..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className={inputClass}
+          />
         </div>
         <div className="flex gap-1 flex-wrap">
           {ACCOUNT_TYPES.map((t) => (
-            <button key={t} onClick={() => setTypeFilter(t)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${typeFilter === t ? 'bg-red-700 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'}`}>
+            <button
+              key={t}
+              onClick={() => setTypeFilter(t)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${typeFilter === t ? 'bg-red-700 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+            >
               {t === 'ALL' ? 'All' : t}
             </button>
           ))}
@@ -197,11 +279,21 @@ export default function ChartOfAccounts() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-800">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Code</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Account Name</th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Type</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Balance</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Actions</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
+                  Code
+                </th>
+                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
+                  Account Name
+                </th>
+                <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
+                  Type
+                </th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
+                  Balance
+                </th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -209,39 +301,72 @@ export default function ChartOfAccounts() {
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="border-b border-gray-100 dark:border-gray-800/50">
                     {Array.from({ length: 5 }).map((__, j) => (
-                      <td key={j} className="px-4 py-3"><div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" /></td>
+                      <td key={j} className="px-4 py-3">
+                        <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                      </td>
                     ))}
                   </tr>
                 ))
               ) : accounts.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-gray-500 dark:text-gray-400">
+                  <td
+                    colSpan={5}
+                    className="px-4 py-12 text-center text-gray-500 dark:text-gray-400"
+                  >
                     <Landmark className="w-12 h-12 mx-auto mb-3 opacity-50" />
                     <p>No accounts found. Click "Seed Defaults" to set up basic accounts.</p>
                   </td>
                 </tr>
               ) : (
                 accounts.map((a) => (
-                  <tr key={a._id} className="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30">
-                    <td className="px-4 py-3"><span className="text-sm font-mono font-bold text-gray-900 dark:text-gray-100">{a.code}</span></td>
+                  <tr
+                    key={a._id}
+                    className="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30"
+                  >
                     <td className="px-4 py-3">
-                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{a.name}</div>
-                      {a.description && <div className="text-xs text-gray-500">{a.description}</div>}
+                      <span className="text-sm font-mono font-bold text-gray-900 dark:text-gray-100">
+                        {a.code}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {a.name}
+                      </div>
+                      {a.description && (
+                        <div className="text-xs text-gray-500">{a.description}</div>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${TYPE_COLORS[a.type]}`}>{a.type}</span>
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${TYPE_COLORS[a.type]}`}
+                      >
+                        {a.type}
+                      </span>
                     </td>
-                    <td className={`px-4 py-3 text-right text-sm font-semibold ${(a.type === 'ASSET' || a.type === 'EXPENSE') ? (a.balance >= 0 ? 'text-gray-900 dark:text-gray-100' : 'text-red-600 dark:text-red-400') : (a.balance >= 0 ? 'text-gray-900 dark:text-gray-100' : 'text-red-600 dark:text-red-400')}`}>
+                    <td
+                      className={`px-4 py-3 text-right text-sm font-semibold ${a.type === 'ASSET' || a.type === 'EXPENSE' ? (a.balance >= 0 ? 'text-gray-900 dark:text-gray-100' : 'text-red-600 dark:text-red-400') : a.balance >= 0 ? 'text-gray-900 dark:text-gray-100' : 'text-red-600 dark:text-red-400'}`}
+                    >
                       ৳{a.balance.toLocaleString()}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => { setEditAccount(a); setShowForm(true); }}
-                          className="p-1.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
+                        <button
+                          onClick={() => {
+                            setEditAccount(a);
+                            setShowForm(true);
+                          }}
+                          className="p-1.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                        >
                           <Edit className="w-4 h-4" />
                         </button>
-                        <button onClick={() => confirmDelete(`Delete account "${a.name}"?`, () => deleteMutation.mutate(a._id))}
-                          className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                        <button
+                          onClick={() =>
+                            confirmDelete(`Delete account "${a.name}"?`, () =>
+                              deleteMutation.mutate(a._id)
+                            )
+                          }
+                          className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                        >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
@@ -254,7 +379,20 @@ export default function ChartOfAccounts() {
         </div>
       </div>
 
-      {showForm && <AccountForm account={editAccount} onClose={() => { setShowForm(false); setEditAccount(null); }} onSuccess={() => { setShowForm(false); setEditAccount(null); queryClient.invalidateQueries(['accounts']); }} />}
+      {showForm && (
+        <AccountForm
+          account={editAccount}
+          onClose={() => {
+            setShowForm(false);
+            setEditAccount(null);
+          }}
+          onSuccess={() => {
+            setShowForm(false);
+            setEditAccount(null);
+            queryClient.invalidateQueries(['accounts']);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -279,64 +417,141 @@ function AccountForm({ account, onClose, onSuccess }) {
 
   const mutation = useMutation({
     mutationFn: async () => {
-      if (account) return api.put(`/accounting/accounts/${account._id}`, { name: form.name, description: form.description });
+      if (account)
+        return api.put(`/accounting/accounts/${account._id}`, {
+          name: form.name,
+          description: form.description,
+        });
       return api.post('/accounting/accounts', form);
     },
-    onSuccess: () => { toast.success(account ? 'Account updated' : 'Account created'); onSuccess(); },
+    onSuccess: () => {
+      toast.success(account ? 'Account updated' : 'Account created');
+      onSuccess();
+    },
     onError: (e) => toast.error(e.response?.data?.message || 'Failed'),
   });
 
-  const inputClass = styled ? 'neu-input w-full px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none' : 'w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-red-500';
-  const selectClass = styled ? 'neu-input w-full px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none' : 'w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-red-500';
-  const btnPrimary = styled ? 'flex-1 py-2 bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white font-medium rounded-lg text-sm transition-colors flex items-center justify-center gap-2' : 'flex-1 py-2 bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white font-medium rounded-lg text-sm transition-colors flex items-center justify-center gap-2';
-  const btnSecondary = styled ? 'flex-1 py-2 neu-btn text-gray-700 dark:text-gray-300 font-medium rounded-lg text-sm transition-colors' : 'flex-1 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-lg text-sm transition-colors';
+  const inputClass = styled
+    ? 'neu-input w-full px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none'
+    : 'w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-red-500';
+  const selectClass = styled
+    ? 'neu-input w-full px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none'
+    : 'w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-red-500';
+  const btnPrimary = styled
+    ? 'flex-1 py-2 bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white font-medium rounded-lg text-sm transition-colors flex items-center justify-center gap-2'
+    : 'flex-1 py-2 bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white font-medium rounded-lg text-sm transition-colors flex items-center justify-center gap-2';
+  const btnSecondary = styled
+    ? 'flex-1 py-2 neu-btn text-gray-700 dark:text-gray-300 font-medium rounded-lg text-sm transition-colors'
+    : 'flex-1 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-lg text-sm transition-colors';
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className={`w-full max-w-md ${styled ? 'neu-card p-0' : 'bg-white dark:bg-[#111827] rounded-2xl border border-gray-200 dark:border-gray-800 shadow-xl'} max-h-[90vh] overflow-y-auto`}>
+      <div
+        className={`w-full max-w-md ${styled ? 'neu-card p-0' : 'bg-white dark:bg-[#111827] rounded-2xl border border-gray-200 dark:border-gray-800 shadow-xl'} max-h-[90vh] overflow-y-auto`}
+      >
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
-          <h3 className="font-bold text-gray-900 dark:text-gray-100">{account ? 'Edit Account' : 'Add Account'}</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl">✕</button>
+          <h3 className="font-bold text-gray-900 dark:text-gray-100">
+            {account ? 'Edit Account' : 'Add Account'}
+          </h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl"
+          >
+            ✕
+          </button>
         </div>
         <div className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Code *</label>
-              <input type="text" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} disabled={!!account}
-                className={`${inputClass} ${account ? 'opacity-50' : ''}`} placeholder="e.g. 1000" />
+              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
+                Code *
+              </label>
+              <input
+                type="text"
+                value={form.code}
+                onChange={(e) => setForm({ ...form, code: e.target.value })}
+                disabled={!!account}
+                className={`${inputClass} ${account ? 'opacity-50' : ''}`}
+                placeholder="e.g. 1000"
+              />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Name *</label>
-              <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className={inputClass} placeholder="Account name" />
+              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
+                Name *
+              </label>
+              <input
+                type="text"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                className={inputClass}
+                placeholder="Account name"
+              />
             </div>
           </div>
           {!account && (
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Type *</label>
-                <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value, subType: SUBTYPES[e.target.value][0] })}
-                  className={selectClass}>
-                  {['ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE'].map((t) => <option key={t} value={t}>{t}</option>)}
+                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
+                  Type *
+                </label>
+                <select
+                  value={form.type}
+                  onChange={(e) =>
+                    setForm({ ...form, type: e.target.value, subType: SUBTYPES[e.target.value][0] })
+                  }
+                  className={selectClass}
+                >
+                  {['ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE'].map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Sub Type *</label>
-                <select value={form.subType} onChange={(e) => setForm({ ...form, subType: e.target.value })} className={selectClass}>
-                  {(SUBTYPES[form.type] || []).map((st) => <option key={st} value={st}>{st.replace(/_/g, ' ')}</option>)}
+                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
+                  Sub Type *
+                </label>
+                <select
+                  value={form.subType}
+                  onChange={(e) => setForm({ ...form, subType: e.target.value })}
+                  className={selectClass}
+                >
+                  {(SUBTYPES[form.type] || []).map((st) => (
+                    <option key={st} value={st}>
+                      {st.replace(/_/g, ' ')}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
           )}
           <div>
-            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">Description</label>
-            <input type="text" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
-              className={inputClass} placeholder="Optional description" />
+            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
+              Description
+            </label>
+            <input
+              type="text"
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              className={inputClass}
+              placeholder="Optional description"
+            />
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className={btnSecondary}>Cancel</button>
-            <button onClick={() => mutation.mutate()} disabled={mutation.isPending || !form.code || !form.name} className={btnPrimary}>
-              {mutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+            <button type="button" onClick={onClose} className={btnSecondary}>
+              Cancel
+            </button>
+            <button
+              onClick={() => mutation.mutate()}
+              disabled={mutation.isPending || !form.code || !form.name}
+              className={btnPrimary}
+            >
+              {mutation.isPending ? (
+                <RefreshCw className="w-4 h-4 animate-spin" />
+              ) : (
+                <Plus className="w-4 h-4" />
+              )}
               {account ? 'Update' : 'Create'}
             </button>
           </div>

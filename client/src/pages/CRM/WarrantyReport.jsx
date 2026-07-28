@@ -1,13 +1,39 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ShieldCheck, AlertTriangle, Clock, RefreshCw, Calendar, Package, Search, User, FileText, CheckCircle2 } from 'lucide-react';
+import {
+  ShieldCheck,
+  AlertTriangle,
+  Clock,
+  RefreshCw,
+  Calendar,
+  Package,
+  Search,
+  User,
+  FileText,
+  CheckCircle2,
+} from 'lucide-react';
 import api from '../../lib/api';
 import { useTheme } from '../../context/ThemeContext';
 
 const REPORT_TYPES = [
-  { key: 'active', label: 'Active Warranties', icon: ShieldCheck, color: 'text-green-600 dark:text-green-400' },
-  { key: 'expiring', label: 'Expiring Soon (30 days)', icon: Clock, color: 'text-amber-600 dark:text-amber-400' },
-  { key: 'expired', label: 'Expired', icon: AlertTriangle, color: 'text-red-600 dark:text-red-400' },
+  {
+    key: 'active',
+    label: 'Active Warranties',
+    icon: ShieldCheck,
+    color: 'text-green-600 dark:text-green-400',
+  },
+  {
+    key: 'expiring',
+    label: 'Expiring Soon (30 days)',
+    icon: Clock,
+    color: 'text-amber-600 dark:text-amber-400',
+  },
+  {
+    key: 'expired',
+    label: 'Expired',
+    icon: AlertTriangle,
+    color: 'text-red-600 dark:text-red-400',
+  },
   { key: 'all', label: 'All Warranties', icon: Package, color: 'text-blue-600 dark:text-blue-400' },
 ];
 
@@ -29,14 +55,18 @@ export default function WarrantyReport() {
 
   const units = data?.units || [];
   const summary = data?.summary || {};
-  const cardClass = styled ? 'neu-card p-4' : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-4';
+  const cardClass = styled
+    ? 'neu-card p-4'
+    : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-4';
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Warranty Report</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Track IMEI warranty status and remaining days for sold products</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Track IMEI warranty status and remaining days for sold products
+          </p>
         </div>
         <button
           onClick={() => refetch()}
@@ -50,18 +80,44 @@ export default function WarrantyReport() {
       {/* Summary KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: 'Total Sold Units', value: summary.totalSoldUnits || 0, color: 'text-blue-600 dark:text-blue-400', icon: Package },
-          { label: 'Active Warranties', value: summary.totalActiveSold || 0, color: 'text-green-600 dark:text-green-400', icon: ShieldCheck },
-          { label: 'Expiring Soon (30d)', value: summary.totalExpiringSoon || 0, color: 'text-amber-600 dark:text-amber-400', icon: Clock },
-          { label: 'Expired Warranties', value: summary.totalExpiredSold || 0, color: 'text-red-600 dark:text-red-400', icon: AlertTriangle },
+          {
+            label: 'Total Sold Units',
+            value: summary.totalSoldUnits || 0,
+            color: 'text-blue-600 dark:text-blue-400',
+            icon: Package,
+          },
+          {
+            label: 'Active Warranties',
+            value: summary.totalActiveSold || 0,
+            color: 'text-green-600 dark:text-green-400',
+            icon: ShieldCheck,
+          },
+          {
+            label: 'Expiring Soon (30d)',
+            value: summary.totalExpiringSoon || 0,
+            color: 'text-amber-600 dark:text-amber-400',
+            icon: Clock,
+          },
+          {
+            label: 'Expired Warranties',
+            value: summary.totalExpiredSold || 0,
+            color: 'text-red-600 dark:text-red-400',
+            icon: AlertTriangle,
+          },
         ].map((s) => (
           <div key={s.label} className={cardClass}>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{s.label}</span>
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                {s.label}
+              </span>
               <s.icon className={`w-4 h-4 ${s.color}`} />
             </div>
             <div className={`text-2xl font-bold ${s.color}`}>
-              {isLoading ? <div className="h-7 w-12 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" /> : s.value}
+              {isLoading ? (
+                <div className="h-7 w-12 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+              ) : (
+                s.value
+              )}
             </div>
           </div>
         ))}
@@ -124,13 +180,27 @@ export default function WarrantyReport() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-800 text-left bg-gray-50/50 dark:bg-gray-900/50">
-                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Product</th>
-                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">IMEI / Serial</th>
-                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Customer & Contact</th>
-                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 hidden lg:table-cell">Invoice #</th>
-                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 hidden md:table-cell">Sale Date</th>
-                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Warranty Expiry</th>
-                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Remaining & Status</th>
+                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">
+                  Product
+                </th>
+                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">
+                  IMEI / Serial
+                </th>
+                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">
+                  Customer & Contact
+                </th>
+                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 hidden lg:table-cell">
+                  Invoice #
+                </th>
+                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 hidden md:table-cell">
+                  Sale Date
+                </th>
+                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">
+                  Warranty Expiry
+                </th>
+                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">
+                  Remaining & Status
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -153,13 +223,25 @@ export default function WarrantyReport() {
                   const soldDate = u.soldAt ? new Date(u.soldAt) : null;
                   const now = new Date();
                   const isExpired = expiry && expiry < now;
-                  const daysLeft = u.daysLeft !== undefined && u.daysLeft !== null ? u.daysLeft : (expiry ? Math.ceil((expiry - now) / 86400000) : null);
+                  const daysLeft =
+                    u.daysLeft !== undefined && u.daysLeft !== null
+                      ? u.daysLeft
+                      : expiry
+                        ? Math.ceil((expiry - now) / 86400000)
+                        : null;
 
                   return (
-                    <tr key={u._id} className="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
+                    <tr
+                      key={u._id}
+                      className="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors"
+                    >
                       <td className="px-4 py-3">
-                        <div className="font-medium text-gray-900 dark:text-gray-100">{u.productId?.name || 'Unknown Product'}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">{u.productId?.brand || 'N/A'} {u.ram && `• ${u.ram}/${u.storage}`}</div>
+                        <div className="font-medium text-gray-900 dark:text-gray-100">
+                          {u.productId?.name || 'Unknown Product'}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {u.productId?.brand || 'N/A'} {u.ram && `• ${u.ram}/${u.storage}`}
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <span className="font-mono text-xs font-semibold px-2 py-1 rounded bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700">
@@ -169,10 +251,14 @@ export default function WarrantyReport() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1.5">
                           <User className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
-                          <span className="font-medium text-gray-900 dark:text-gray-100">{u.customerName}</span>
+                          <span className="font-medium text-gray-900 dark:text-gray-100">
+                            {u.customerName}
+                          </span>
                         </div>
                         {u.customerPhone && u.customerPhone !== 'N/A' && (
-                          <div className="text-xs text-gray-500 dark:text-gray-400 pl-5">{u.customerPhone}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 pl-5">
+                            {u.customerPhone}
+                          </div>
                         )}
                       </td>
                       <td className="px-4 py-3 hidden lg:table-cell">
@@ -186,14 +272,24 @@ export default function WarrantyReport() {
                         )}
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400 hidden md:table-cell">
-                        {soldDate ? soldDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}
+                        {soldDate
+                          ? soldDate.toLocaleDateString('en-GB', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric',
+                            })
+                          : '-'}
                       </td>
                       <td className="px-4 py-3">
                         {expiry ? (
                           <div>
                             <div className="flex items-center gap-1 text-xs font-medium text-gray-900 dark:text-gray-100">
                               <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                              {expiry.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              {expiry.toLocaleDateString('en-GB', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric',
+                              })}
                             </div>
                             <div className="text-[11px] text-gray-500 dark:text-gray-400 pl-4.5">
                               ({u.warrantyMonths || 12} months warranty)

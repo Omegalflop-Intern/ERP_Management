@@ -19,7 +19,10 @@ export default function ReceiptModal({ invoice, onClose }) {
             <CheckCircle className="w-5 h-5 text-emerald-400" />
             <h3 className="font-bold text-gray-100">Sale Receipt #{invoice.invoiceNumber}</h3>
           </div>
-          <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-200 rounded-lg hover:bg-gray-800">
+          <button
+            onClick={onClose}
+            className="p-1.5 text-gray-400 hover:text-gray-200 rounded-lg hover:bg-gray-800"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -33,7 +36,9 @@ export default function ReceiptModal({ invoice, onClose }) {
           >
             {/* Header */}
             <div className="text-center border-b border-gray-200 pb-3">
-              <h2 className="font-extrabold text-xl tracking-tight text-gray-900">MOBILE SHOP ERP</h2>
+              <h2 className="font-extrabold text-xl tracking-tight text-gray-900">
+                MOBILE SHOP ERP
+              </h2>
               <p className="text-xs text-gray-600">Level 3, Multiplan Center, Dhaka</p>
               <p className="text-xs text-gray-600">Phone: +880 1700-000000</p>
               <div className="mt-2 text-xs font-mono font-semibold bg-gray-100 py-1 rounded">
@@ -76,11 +81,15 @@ export default function ReceiptModal({ invoice, onClose }) {
                     <td className="py-1.5">
                       <div className="font-semibold text-gray-800">{item.productName}</div>
                       {item.imeiOrSerial && (
-                        <div className="text-[10px] text-gray-500 font-mono">IMEI: {item.imeiOrSerial}</div>
+                        <div className="text-[10px] text-gray-500 font-mono">
+                          IMEI: {item.imeiOrSerial}
+                        </div>
                       )}
                     </td>
                     <td className="py-1.5 text-center font-mono">{item.qty}</td>
-                    <td className="py-1.5 text-right font-mono font-semibold">৳{item.unitPrice?.toLocaleString()}</td>
+                    <td className="py-1.5 text-right font-mono font-semibold">
+                      ৳{item.unitPrice?.toLocaleString()}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -108,19 +117,25 @@ export default function ReceiptModal({ invoice, onClose }) {
                 {invoice.paymentBreakdown?.cash > 0 && (
                   <div className="flex justify-between">
                     <span>Cash Paid:</span>
-                    <span className="font-mono font-semibold">৳{invoice.paymentBreakdown.cash.toLocaleString()}</span>
+                    <span className="font-mono font-semibold">
+                      ৳{invoice.paymentBreakdown.cash.toLocaleString()}
+                    </span>
                   </div>
                 )}
                 {invoice.paymentBreakdown?.bkash > 0 && (
                   <div className="flex justify-between text-pink-700">
                     <span>Bkash Paid:</span>
-                    <span className="font-mono font-semibold">৳{invoice.paymentBreakdown.bkash.toLocaleString()}</span>
+                    <span className="font-mono font-semibold">
+                      ৳{invoice.paymentBreakdown.bkash.toLocaleString()}
+                    </span>
                   </div>
                 )}
                 {invoice.paymentBreakdown?.dueAmount > 0 && (
                   <div className="flex justify-between text-amber-700 font-semibold">
                     <span>Customer Due:</span>
-                    <span className="font-mono">৳{invoice.paymentBreakdown.dueAmount.toLocaleString()}</span>
+                    <span className="font-mono">
+                      ৳{invoice.paymentBreakdown.dueAmount.toLocaleString()}
+                    </span>
                   </div>
                 )}
               </div>

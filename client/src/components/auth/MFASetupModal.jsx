@@ -63,8 +63,12 @@ export const MFASetupModal = ({ isOpen, onClose }) => {
             <ShieldCheck className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Two-Factor Authentication (2FA)</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Secure your shop account with TOTP</p>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+              Two-Factor Authentication (2FA)
+            </h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Secure your shop account with TOTP
+            </p>
           </div>
         </div>
 
@@ -78,7 +82,8 @@ export const MFASetupModal = ({ isOpen, onClose }) => {
         {step === 'INIT' && (
           <div className="space-y-4 text-center py-4">
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              Enhance security by requiring an authenticator app (Google Authenticator, Authy) when logging in.
+              Enhance security by requiring an authenticator app (Google Authenticator, Authy) when
+              logging in.
             </p>
             <button
               onClick={handleStartSetup}
@@ -93,7 +98,9 @@ export const MFASetupModal = ({ isOpen, onClose }) => {
         {step === 'VERIFY' && mfaData && (
           <form onSubmit={handleVerify} className="space-y-4">
             <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl text-center space-y-3">
-              <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">1. Secret Key (Enter in Authenticator App):</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                1. Secret Key (Enter in Authenticator App):
+              </p>
               <code className="text-sm font-mono tracking-wider font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-3 py-1.5 rounded-lg select-all inline-block">
                 {mfaData.secret}
               </code>
@@ -117,7 +124,9 @@ export const MFASetupModal = ({ isOpen, onClose }) => {
             {mfaData.backupCodes && (
               <div className="p-3 bg-gray-50 dark:bg-gray-800/40 rounded-xl border border-gray-200 dark:border-gray-700/60">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">Backup Codes:</span>
+                  <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                    Backup Codes:
+                  </span>
                   <button
                     type="button"
                     onClick={copyBackupCodes}
@@ -148,7 +157,9 @@ export const MFASetupModal = ({ isOpen, onClose }) => {
         {step === 'SUCCESS' && (
           <div className="text-center py-6 space-y-4">
             <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto" />
-            <h4 className="text-lg font-bold text-gray-900 dark:text-white">2FA Enabled Successfully!</h4>
+            <h4 className="text-lg font-bold text-gray-900 dark:text-white">
+              2FA Enabled Successfully!
+            </h4>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               Your account is now protected with 2-Step Verification.
             </p>

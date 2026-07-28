@@ -1,6 +1,18 @@
 import React, { useState, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { User, Camera, Save, Lock, Mail, Phone, AtSign, ShieldCheck, Loader2, Eye, EyeOff } from 'lucide-react';
+import {
+  User,
+  Camera,
+  Save,
+  Lock,
+  Mail,
+  Phone,
+  AtSign,
+  ShieldCheck,
+  Loader2,
+  Eye,
+  EyeOff,
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import api, { getAssetUrl } from '../../lib/api';
@@ -11,8 +23,18 @@ function PasswordInput({ value, onChange, placeholder, inputCls }) {
   const [show, setShow] = useState(false);
   return (
     <div className="relative">
-      <input type={show ? 'text' : 'password'} value={value} onChange={onChange} className={`${inputCls} !pr-10`} placeholder={placeholder} />
-      <button type="button" onClick={() => setShow(!show)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+      <input
+        type={show ? 'text' : 'password'}
+        value={value}
+        onChange={onChange}
+        className={`${inputCls} !pr-10`}
+        placeholder={placeholder}
+      />
+      <button
+        type="button"
+        onClick={() => setShow(!show)}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+      >
         {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
       </button>
     </div>
@@ -27,7 +49,10 @@ export default function MyProfile() {
 
   const { data: profileData } = useQuery({
     queryKey: ['my-profile'],
-    queryFn: async () => { const r = await api.get('/users/me'); return r.data?.data; },
+    queryFn: async () => {
+      const r = await api.get('/users/me');
+      return r.data?.data;
+    },
     enabled: !!authUser,
   });
 
@@ -44,7 +69,11 @@ export default function MyProfile() {
   const [avatarFile, setAvatarFile] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showMfaModal, setShowMfaModal] = useState(false);
-  const [pwForm, setPwForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [pwForm, setPwForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
 
   React.useEffect(() => {
     if (user && !formLoaded) {
@@ -66,15 +95,24 @@ export default function MyProfile() {
       fd.append('phone', form.phone);
       fd.append('username', form.username);
       if (avatarFile) fd.append('avatar', avatarFile);
-      const r = await api.put('/users/me', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      const r = await api.put('/users/me', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
       return r.data;
     },
     onSuccess: (data) => {
       toast.success('Profile updated successfully');
       if (data?.data) {
         const updated = data.data;
-        setUser(prev => {
-          const merged = { ...prev, fullName: updated.fullName, email: updated.email, phone: updated.phone, username: updated.username, avatar: updated.avatar };
+        setUser((prev) => {
+          const merged = {
+            ...prev,
+            fullName: updated.fullName,
+            email: updated.email,
+            phone: updated.phone,
+            username: updated.username,
+            avatar: updated.avatar,
+          };
           localStorage.setItem('user', JSON.stringify(merged));
           return merged;
         });
@@ -100,20 +138,30 @@ export default function MyProfile() {
       setPwForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
       setShowPassword(false);
     },
-    onError: (err) => toast.error(err.response?.data?.message || err.message || 'Password change failed'),
+    onError: (err) =>
+      toast.error(err.response?.data?.message || err.message || 'Password change failed'),
   });
 
   const handleAvatarChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 15 * 1024 * 1024) { toast.error('Max 15MB allowed'); return; }
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error('Max 15MB allowed');
+      return;
+    }
     setAvatarFile(file);
     setAvatarPreview(URL.createObjectURL(file));
   };
 
-  const cardCls = styled ? 'neu-card' : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800';
-  const inputCls = styled ? 'neu-input w-full px-4 py-3 rounded-xl text-sm' : 'w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-red-500 outline-none';
-  const btnPrimary = styled ? 'neu-btn px-6 py-3 bg-red-600 text-white rounded-xl text-sm font-semibold flex items-center gap-2' : 'px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-semibold flex items-center gap-2 transition-colors';
+  const cardCls = styled
+    ? 'neu-card'
+    : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800';
+  const inputCls = styled
+    ? 'neu-input w-full px-4 py-3 rounded-xl text-sm'
+    : 'w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-red-500 outline-none';
+  const btnPrimary = styled
+    ? 'neu-btn px-6 py-3 bg-red-600 text-white rounded-xl text-sm font-semibold flex items-center gap-2'
+    : 'px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-semibold flex items-center gap-2 transition-colors';
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -130,7 +178,11 @@ export default function MyProfile() {
           <div className="relative group cursor-pointer" onClick={() => fileRef.current?.click()}>
             <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-gray-200 dark:border-gray-700">
               {avatarPreview || user?.avatar ? (
-                <img src={avatarPreview || getAssetUrl(user?.avatar)} alt="Avatar" className="w-full h-full object-cover" />
+                <img
+                  src={avatarPreview || getAssetUrl(user?.avatar)}
+                  alt="Avatar"
+                  className="w-full h-full object-cover"
+                />
               ) : (
                 <div className="w-full h-full bg-red-600/10 dark:bg-red-600/20 text-red-700 dark:text-red-400 flex items-center justify-center text-3xl font-bold">
                   {user?.username?.[0]?.toUpperCase() || '?'}
@@ -141,11 +193,23 @@ export default function MyProfile() {
               <Camera className="w-6 h-6 text-white" />
             </div>
           </div>
-          <input ref={fileRef} type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            onChange={handleAvatarChange}
+            className="hidden"
+          />
           <div>
-            <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">{user?.fullName || user?.username}</div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">{user?.roleDisplayName || user?.roleName}</div>
-            <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">Click avatar to change photo (max 15MB)</div>
+            <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              {user?.fullName || user?.username}
+            </div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              {user?.roleDisplayName || user?.roleName}
+            </div>
+            <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+              Click avatar to change photo (max 15MB)
+            </div>
           </div>
         </div>
       </div>
@@ -157,31 +221,63 @@ export default function MyProfile() {
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Full Name</label>
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+              Full Name
+            </label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input type="text" value={form.fullName} onChange={e => setForm({ ...form, fullName: e.target.value })} className={`${inputCls} pl-10`} placeholder="Your full name" />
+              <input
+                type="text"
+                value={form.fullName}
+                onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+                className={`${inputCls} pl-10`}
+                placeholder="Your full name"
+              />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Username</label>
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+              Username
+            </label>
             <div className="relative">
               <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input type="text" value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} className={`${inputCls} pl-10`} placeholder="Username" />
+              <input
+                type="text"
+                value={form.username}
+                onChange={(e) => setForm({ ...form, username: e.target.value })}
+                className={`${inputCls} pl-10`}
+                placeholder="Username"
+              />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Email</label>
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+              Email
+            </label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className={`${inputCls} pl-10`} placeholder="Email address" />
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                className={`${inputCls} pl-10`}
+                placeholder="Email address"
+              />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Phone</label>
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+              Phone
+            </label>
             <div className="relative">
               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input type="text" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} className={`${inputCls} pl-10`} placeholder="Phone number" />
+              <input
+                type="text"
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                className={`${inputCls} pl-10`}
+                placeholder="Phone number"
+              />
             </div>
           </div>
         </div>
@@ -191,8 +287,16 @@ export default function MyProfile() {
           </span>
         </div>
         <div className="flex justify-end">
-          <button onClick={() => updateMutation.mutate()} disabled={updateMutation.isPending} className={btnPrimary}>
-            {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          <button
+            onClick={() => updateMutation.mutate()}
+            disabled={updateMutation.isPending}
+            className={btnPrimary}
+          >
+            {updateMutation.isPending ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4" />
+            )}
             {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
@@ -205,36 +309,71 @@ export default function MyProfile() {
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Current Password</label>
-            <PasswordInput value={pwForm.currentPassword} onChange={e => setPwForm({ ...pwForm, currentPassword: e.target.value })} inputCls={inputCls} placeholder="Current password" />
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+              Current Password
+            </label>
+            <PasswordInput
+              value={pwForm.currentPassword}
+              onChange={(e) => setPwForm({ ...pwForm, currentPassword: e.target.value })}
+              inputCls={inputCls}
+              placeholder="Current password"
+            />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">New Password</label>
-            <PasswordInput value={pwForm.newPassword} onChange={e => setPwForm({ ...pwForm, newPassword: e.target.value })} inputCls={inputCls} placeholder="New password" />
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+              New Password
+            </label>
+            <PasswordInput
+              value={pwForm.newPassword}
+              onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })}
+              inputCls={inputCls}
+              placeholder="New password"
+            />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">Confirm Password</label>
-            <PasswordInput value={pwForm.confirmPassword} onChange={e => setPwForm({ ...pwForm, confirmPassword: e.target.value })} inputCls={inputCls} placeholder="Confirm new password" />
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+              Confirm Password
+            </label>
+            <PasswordInput
+              value={pwForm.confirmPassword}
+              onChange={(e) => setPwForm({ ...pwForm, confirmPassword: e.target.value })}
+              inputCls={inputCls}
+              placeholder="Confirm new password"
+            />
           </div>
         </div>
         <div className="flex justify-end">
-          <button onClick={() => passwordMutation.mutate()} disabled={passwordMutation.isPending || !pwForm.currentPassword || !pwForm.newPassword} className={`${btnPrimary} !bg-amber-600 hover:!bg-amber-700`}>
-            {passwordMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
+          <button
+            onClick={() => passwordMutation.mutate()}
+            disabled={passwordMutation.isPending || !pwForm.currentPassword || !pwForm.newPassword}
+            className={`${btnPrimary} !bg-amber-600 hover:!bg-amber-700`}
+          >
+            {passwordMutation.isPending ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Lock className="w-4 h-4" />
+            )}
             {passwordMutation.isPending ? 'Changing...' : 'Change Password'}
           </button>
         </div>
       </div>
 
       {/* Two-Factor Authentication (2FA) Security Section */}
-      <div className={`${cardCls} p-6 flex flex-col sm:flex-row items-center justify-between gap-4`}>
+      <div
+        className={`${cardCls} p-6 flex flex-col sm:flex-row items-center justify-between gap-4`}
+      >
         <div className="flex items-center gap-3">
           <div className="p-3 bg-indigo-500/10 text-indigo-500 rounded-xl">
             <ShieldCheck className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-gray-900 dark:text-white">Two-Factor Authentication (2FA)</h3>
+            <h3 className="text-base font-bold text-gray-900 dark:text-white">
+              Two-Factor Authentication (2FA)
+            </h3>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {user?.isMfaEnabled ? '2FA is active on your account.' : 'Add an extra layer of security using Authenticator app.'}
+              {user?.isMfaEnabled
+                ? '2FA is active on your account.'
+                : 'Add an extra layer of security using Authenticator app.'}
             </p>
           </div>
         </div>

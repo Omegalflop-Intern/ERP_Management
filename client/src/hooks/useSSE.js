@@ -20,7 +20,7 @@ export function useSSE() {
     if (!user) return;
 
     const token = localStorage.getItem('accessToken');
-    const sseUrl = token 
+    const sseUrl = token
       ? `${API_URL}/sse/connect?token=${encodeURIComponent(token)}`
       : `${API_URL}/sse/connect`;
 

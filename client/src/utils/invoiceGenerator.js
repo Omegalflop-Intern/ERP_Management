@@ -57,18 +57,24 @@ const generateBarcode = (text) => {
 
 const generateQR = async (text) => {
   try {
-    return await QRCode.toDataURL(text, { width: 80, margin: 1, color: { dark: '#0F172A', light: '#FFFFFF' } });
+    return await QRCode.toDataURL(text, {
+      width: 80,
+      margin: 1,
+      color: { dark: '#0F172A', light: '#FFFFFF' },
+    });
   } catch {
     return null;
   }
 };
 
 const getTotalPaid = (sale) => {
-  return (sale.paymentBreakdown?.cash || 0) +
-         (sale.paymentBreakdown?.bkash || 0) +
-         (sale.paymentBreakdown?.rocket || 0) +
-         (sale.paymentBreakdown?.nagad || 0) +
-         (sale.paymentBreakdown?.bank || 0);
+  return (
+    (sale.paymentBreakdown?.cash || 0) +
+    (sale.paymentBreakdown?.bkash || 0) +
+    (sale.paymentBreakdown?.rocket || 0) +
+    (sale.paymentBreakdown?.nagad || 0) +
+    (sale.paymentBreakdown?.bank || 0)
+  );
 };
 
 // Helper for capturing DOM element directly to PDF for 100% exact visual parity with oklch color fallback
@@ -92,7 +98,12 @@ const captureElementToPDF = async (element, pdfFormat, filename) => {
           const el = allElems[i];
           ['color', 'backgroundColor', 'borderColor'].forEach((prop) => {
             if (el.style[prop] && el.style[prop].includes('oklch')) {
-              el.style[prop] = prop === 'backgroundColor' ? '#ffffff' : (prop === 'borderColor' ? '#cbd5e1' : '#0f172a');
+              el.style[prop] =
+                prop === 'backgroundColor'
+                  ? '#ffffff'
+                  : prop === 'borderColor'
+                    ? '#cbd5e1'
+                    : '#0f172a';
             }
           });
         }
@@ -144,7 +155,11 @@ export const generateA4Invoice = async (sale, element = null) => {
   doc.setTextColor(100, 116, 139);
   doc.text(companyInfo.slogan, 14, 25);
   doc.text(companyInfo.address, 14, 29);
-  doc.text(`Phone: ${companyInfo.phone}  |  Email: ${companyInfo.email}  |  ${companyInfo.binVat}`, 14, 33);
+  doc.text(
+    `Phone: ${companyInfo.phone}  |  Email: ${companyInfo.email}  |  ${companyInfo.binVat}`,
+    14,
+    33
+  );
 
   doc.setFillColor(15, 23, 42);
   doc.roundedRect(pageWidth - 64, 15, 50, 7, 1, 1, 'F');
@@ -159,7 +174,9 @@ export const generateA4Invoice = async (sale, element = null) => {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(100, 116, 139);
-  doc.text(`Date: ${new Date(sale.createdAt).toLocaleDateString('en-BD')}`, pageWidth - 14, 33, { align: 'right' });
+  doc.text(`Date: ${new Date(sale.createdAt).toLocaleDateString('en-BD')}`, pageWidth - 14, 33, {
+    align: 'right',
+  });
   if (sale.cashierUsername) {
     doc.text(`Served By: ${sale.cashierUsername}`, pageWidth - 14, 37, { align: 'right' });
   }
@@ -190,7 +207,7 @@ export const generateA4Invoice = async (sale, element = null) => {
   if (sale.customerAddress) doc.text(`Address: ${sale.customerAddress}`, 70, 60);
 
   const due = sale.paymentBreakdown?.dueAmount || 0;
-  const statusLabel = due <= 0 ? 'PAID' : (getTotalPaid(sale) > 0 ? 'PARTIAL' : 'UNPAID');
+  const statusLabel = due <= 0 ? 'PAID' : getTotalPaid(sale) > 0 ? 'PARTIAL' : 'UNPAID';
 
   doc.setLineWidth(1);
   if (due <= 0) {
@@ -229,10 +246,26 @@ export const generateA4Invoice = async (sale, element = null) => {
 
   autoTable(doc, {
     startY: 70,
-    head: [['#', 'Product & Specification', 'IMEI / Serial Number', 'Warranty', 'Qty', 'Unit Price', 'Total']],
+    head: [
+      [
+        '#',
+        'Product & Specification',
+        'IMEI / Serial Number',
+        'Warranty',
+        'Qty',
+        'Unit Price',
+        'Total',
+      ],
+    ],
     body: tableData,
     theme: 'grid',
-    headStyles: { fillColor: [15, 23, 42], textColor: 255, fontSize: 8, fontStyle: 'bold', halign: 'left' },
+    headStyles: {
+      fillColor: [15, 23, 42],
+      textColor: 255,
+      fontSize: 8,
+      fontStyle: 'bold',
+      halign: 'left',
+    },
     bodyStyles: { fontSize: 8, textColor: [30, 41, 59] },
     columnStyles: {
       0: { halign: 'center', cellWidth: 10 },
@@ -258,7 +291,11 @@ export const generateA4Invoice = async (sale, element = null) => {
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(15, 23, 42);
-  doc.text(`Cash: Tk ${(sale.paymentBreakdown?.cash || 0).toLocaleString()}, bKash: Tk ${(sale.paymentBreakdown?.bkash || 0).toLocaleString()}`, 18, finalY + 14);
+  doc.text(
+    `Cash: Tk ${(sale.paymentBreakdown?.cash || 0).toLocaleString()}, bKash: Tk ${(sale.paymentBreakdown?.bkash || 0).toLocaleString()}`,
+    18,
+    finalY + 14
+  );
 
   doc.setFillColor(241, 245, 249);
   doc.roundedRect(14, finalY + 20, 110, 14, 1, 1, 'FD');
@@ -326,7 +363,11 @@ export const generateA4Invoice = async (sale, element = null) => {
   doc.text('WARRANTY & RETURN TERMS:', 14, termsY + 4);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(148, 163, 184);
-  doc.text('1. Original receipt & intact IMEI sticker required for warranty claims.  2. Software, liquid or physical damage excluded.', 14, termsY + 8);
+  doc.text(
+    '1. Original receipt & intact IMEI sticker required for warranty claims.  2. Software, liquid or physical damage excluded.',
+    14,
+    termsY + 8
+  );
 
   const barcodeY = pageHeight - 32;
   const barcodeImg = await generateBarcode(sale.invoiceNumber);
@@ -349,7 +390,11 @@ export const generateA4Invoice = async (sale, element = null) => {
 
   doc.setFontSize(6);
   doc.setTextColor(148, 163, 184);
-  doc.text(`Printed on: ${new Date().toLocaleString('en-BD')} | Mobile Shop ERP System`, 14, pageHeight - 6);
+  doc.text(
+    `Printed on: ${new Date().toLocaleString('en-BD')} | Mobile Shop ERP System`,
+    14,
+    pageHeight - 6
+  );
 
   doc.save(`${sale.invoiceNumber}-A4.pdf`);
 };
@@ -359,7 +404,11 @@ export const generateA4Invoice = async (sale, element = null) => {
 // ----------------------------------------------------------------------
 export const generateA4HalfInvoice = async (sale, element = null) => {
   if (element) {
-    const success = await captureElementToPDF(element, [148, 210], `${sale.invoiceNumber}-A5-Half.pdf`);
+    const success = await captureElementToPDF(
+      element,
+      [148, 210],
+      `${sale.invoiceNumber}-A5-Half.pdf`
+    );
     if (success) return;
   }
 
@@ -385,7 +434,9 @@ export const generateA4HalfInvoice = async (sale, element = null) => {
   doc.text(`INVOICE: ${sale.invoiceNumber}`, pageWidth - 10, 14, { align: 'right' });
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
-  doc.text(`Date: ${new Date(sale.createdAt).toLocaleDateString('en-BD')}`, pageWidth - 10, 18, { align: 'right' });
+  doc.text(`Date: ${new Date(sale.createdAt).toLocaleDateString('en-BD')}`, pageWidth - 10, 18, {
+    align: 'right',
+  });
 
   doc.setFillColor(248, 250, 252);
   doc.roundedRect(10, 22, pageWidth - 20, 12, 1, 1, 'FD');
@@ -473,7 +524,9 @@ export const generateA4HalfInvoice = async (sale, element = null) => {
 
   doc.setFontSize(6);
   doc.setTextColor(148, 163, 184);
-  doc.text(`Thank you for shopping at ${companyInfo.name}!`, pageWidth / 2, pageHeight - 5, { align: 'center' });
+  doc.text(`Thank you for shopping at ${companyInfo.name}!`, pageWidth / 2, pageHeight - 5, {
+    align: 'center',
+  });
 
   doc.save(`${sale.invoiceNumber}-A5-Half.pdf`);
 };
@@ -504,12 +557,18 @@ export const generateReceipt80 = async (sale, element = null) => {
   y += 5;
 
   doc.setFontSize(7);
-  doc.text(`Inv: ${sale.invoiceNumber}`, 4, y); y += 4;
-  doc.text(`Date: ${new Date(sale.createdAt).toLocaleDateString('en-BD')}`, 4, y); y += 4;
-  if (sale.customerName) { doc.text(`Cust: ${sale.customerName}`, 4, y); y += 4; }
+  doc.text(`Inv: ${sale.invoiceNumber}`, 4, y);
+  y += 4;
+  doc.text(`Date: ${new Date(sale.createdAt).toLocaleDateString('en-BD')}`, 4, y);
+  y += 4;
+  if (sale.customerName) {
+    doc.text(`Cust: ${sale.customerName}`, 4, y);
+    y += 4;
+  }
 
   doc.setDrawColor(180);
-  doc.line(4, y, w - 4, y); y += 4;
+  doc.line(4, y, w - 4, y);
+  y += 4;
 
   (sale.lineItems || []).forEach((item) => {
     doc.setFont('helvetica', 'bold');
@@ -525,17 +584,21 @@ export const generateReceipt80 = async (sale, element = null) => {
     y += 8;
   });
 
-  doc.line(4, y, w - 4, y); y += 5;
+  doc.line(4, y, w - 4, y);
+  y += 5;
 
   doc.setFontSize(8);
   doc.setFont('helvetica', 'bold');
-  doc.text(`NET TOTAL: ${BDT(sale.netTotal)}`, 4, y); y += 5;
-  doc.text(`Paid: ${BDT(getTotalPaid(sale))}`, 4, y); y += 4;
+  doc.text(`NET TOTAL: ${BDT(sale.netTotal)}`, 4, y);
+  y += 5;
+  doc.text(`Paid: ${BDT(getTotalPaid(sale))}`, 4, y);
+  y += 4;
 
   const due = sale.paymentBreakdown?.dueAmount || 0;
   if (due > 0) {
     doc.setTextColor(225, 29, 72);
-    doc.text(`DUE: ${BDT(due)}`, 4, y); y += 5;
+    doc.text(`DUE: ${BDT(due)}`, 4, y);
+    y += 5;
   }
 
   doc.save(`${sale.invoiceNumber}-80mm.pdf`);
@@ -556,12 +619,15 @@ export const generateReceipt58 = async (sale, element = null) => {
 
   doc.setFontSize(9);
   doc.setFont('helvetica', 'bold');
-  doc.text(companyInfo.name, w / 2, y, { align: 'center' }); y += 4;
+  doc.text(companyInfo.name, w / 2, y, { align: 'center' });
+  y += 4;
 
   doc.setFontSize(6);
   doc.setFont('helvetica', 'normal');
-  doc.text(`Inv: ${sale.invoiceNumber}`, 3, y); y += 3;
-  doc.text(`Date: ${new Date(sale.createdAt).toLocaleDateString('en-BD')}`, 3, y); y += 3;
+  doc.text(`Inv: ${sale.invoiceNumber}`, 3, y);
+  y += 3;
+  doc.text(`Date: ${new Date(sale.createdAt).toLocaleDateString('en-BD')}`, 3, y);
+  y += 3;
 
   (sale.lineItems || []).forEach((item) => {
     doc.setFont('helvetica', 'bold');

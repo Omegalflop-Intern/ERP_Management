@@ -1,5 +1,14 @@
 import React from 'react';
-import { X, History, Tag, ShieldAlert, CheckCircle2, User, DollarSign, Smartphone } from 'lucide-react';
+import {
+  X,
+  History,
+  Tag,
+  ShieldAlert,
+  CheckCircle2,
+  User,
+  DollarSign,
+  Smartphone,
+} from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../lib/api';
 
@@ -26,12 +35,18 @@ export default function IMEIPassportModal({ imei, onClose }) {
             </div>
             <div>
               <h3 className="font-bold text-lg text-gray-100 flex items-center gap-2">
-                IMEI Passport <span className="text-xs px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono">Life Timeline</span>
+                IMEI Passport{' '}
+                <span className="text-xs px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono">
+                  Life Timeline
+                </span>
               </h3>
               <p className="text-xs text-gray-400 font-mono">IMEI: {imei}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-200 rounded-lg hover:bg-gray-800">
+          <button
+            onClick={onClose}
+            className="p-2 text-gray-400 hover:text-gray-200 rounded-lg hover:bg-gray-800"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -46,7 +61,8 @@ export default function IMEIPassportModal({ imei, onClose }) {
 
           {isError && (
             <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm text-center">
-              No registered history or product passport found for IMEI: <span className="font-mono">{imei}</span>
+              No registered history or product passport found for IMEI:{' '}
+              <span className="font-mono">{imei}</span>
             </div>
           )}
 
@@ -60,23 +76,31 @@ export default function IMEIPassportModal({ imei, onClose }) {
                 </div>
                 <div>
                   <div className="text-xs text-gray-400">Brand & Specs</div>
-                  <div className="font-semibold text-gray-300">{data.brand} ({data.ram}/{data.storage})</div>
+                  <div className="font-semibold text-gray-300">
+                    {data.brand} ({data.ram}/{data.storage})
+                  </div>
                 </div>
                 <div>
                   <div className="text-xs text-gray-400">Current Status</div>
                   <div className="mt-0.5">
-                    <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
-                      data.status === 'Available' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
-                      data.status === 'Sold' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
-                      'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                    }`}>
+                    <span
+                      className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                        data.status === 'Available'
+                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                          : data.status === 'Sold'
+                            ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                            : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                      }`}
+                    >
                       {data.status}
                     </span>
                   </div>
                 </div>
                 <div>
                   <div className="text-xs text-gray-400">Current Selling Price</div>
-                  <div className="font-bold text-emerald-400 font-mono">৳{data.sellingPrice?.toLocaleString()}</div>
+                  <div className="font-bold text-emerald-400 font-mono">
+                    ৳{data.sellingPrice?.toLocaleString()}
+                  </div>
                 </div>
               </div>
 
@@ -96,13 +120,22 @@ export default function IMEIPassportModal({ imei, onClose }) {
 
                       <div className="bg-gray-900/40 p-3.5 rounded-xl border border-gray-800/80">
                         <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
-                          <span className="font-semibold text-indigo-300 font-mono uppercase">{event.event}</span>
+                          <span className="font-semibold text-indigo-300 font-mono uppercase">
+                            {event.event}
+                          </span>
                           <span>{new Date(event.timestamp).toLocaleString()}</span>
                         </div>
                         <p className="text-sm text-gray-200 font-medium">{event.details}</p>
                         <div className="mt-2 flex items-center justify-between text-xs text-gray-400 pt-2 border-t border-gray-800/60">
-                          <span>Logged by: <strong className="text-gray-300">{event.performedBy}</strong></span>
-                          {event.amount && <span className="font-mono text-emerald-400">৳{event.amount.toLocaleString()}</span>}
+                          <span>
+                            Logged by:{' '}
+                            <strong className="text-gray-300">{event.performedBy}</strong>
+                          </span>
+                          {event.amount && (
+                            <span className="font-mono text-emerald-400">
+                              ৳{event.amount.toLocaleString()}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>

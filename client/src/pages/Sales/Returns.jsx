@@ -1,7 +1,18 @@
 import React, { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Search, ArrowLeft, RefreshCw, RotateCcw, Receipt, Smartphone, User, CheckCircle2, Printer, X } from 'lucide-react';
+import {
+  Search,
+  ArrowLeft,
+  RefreshCw,
+  RotateCcw,
+  Receipt,
+  Smartphone,
+  User,
+  CheckCircle2,
+  Printer,
+  X,
+} from 'lucide-react';
 import api from '../../lib/api';
 import { toast } from 'sonner';
 import { useTheme } from '../../context/ThemeContext';
@@ -48,9 +59,11 @@ export default function Returns() {
       toast.success(res.data.message || 'Return processed successfully');
       const updatedSale = res.data?.data?.sale || selectedSale;
       const returnInvoiceNumber = res.data?.data?.returnInvoiceNumber;
-      
+
       // Filter recent return logs belonging to this return
-      const currentLogs = (updatedSale?.returnLogs || []).filter(l => l.returnInvoiceNumber === returnInvoiceNumber || true);
+      const currentLogs = (updatedSale?.returnLogs || []).filter(
+        (l) => l.returnInvoiceNumber === returnInvoiceNumber || true
+      );
 
       setCompletedReturnModal({
         sale: updatedSale,
@@ -69,14 +82,16 @@ export default function Returns() {
 
   const onSelectSale = (sale) => {
     setSelectedSale(sale);
-    setReturnItems(sale.lineItems.map(item => ({
-      lineItemId: item._id,
-      imeiOrSerial: item.imeiOrSerial || '',
-      quantity: item.qty,
-      reason: 'defective',
-      notes: '',
-      selected: false,
-    })));
+    setReturnItems(
+      sale.lineItems.map((item) => ({
+        lineItemId: item._id,
+        imeiOrSerial: item.imeiOrSerial || '',
+        quantity: item.qty,
+        reason: 'defective',
+        notes: '',
+        selected: false,
+      }))
+    );
   };
 
   const toggleItem = (index) => {
@@ -98,18 +113,20 @@ export default function Returns() {
   };
 
   const handleReturn = () => {
-    const items = returnItems.filter(i => i.selected).map(i => ({
-      lineItemId: i.lineItemId,
-      imeiOrSerial: i.imeiOrSerial,
-      quantity: i.quantity,
-      reason: i.reason,
-      notes: i.notes,
-    }));
+    const items = returnItems
+      .filter((i) => i.selected)
+      .map((i) => ({
+        lineItemId: i.lineItemId,
+        imeiOrSerial: i.imeiOrSerial,
+        quantity: i.quantity,
+        reason: i.reason,
+        notes: i.notes,
+      }));
     if (items.length === 0) return toast.error('Select at least one item to return');
     returnMutation.mutate({ saleId: selectedSale._id, items });
   };
 
-  const selectedCount = returnItems.filter(i => i.selected).length;
+  const selectedCount = returnItems.filter((i) => i.selected).length;
 
   const cardCls = styled
     ? 'neu-card p-4 space-y-4'
@@ -119,7 +136,10 @@ export default function Returns() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <button onClick={() => navigate('/sales')} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500">
+        <button
+          onClick={() => navigate('/sales')}
+          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500"
+        >
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div>
@@ -155,11 +175,17 @@ export default function Returns() {
             />
           </div>
           <button
-            onClick={() => { if (invoiceSearch.trim()) searchMutation.mutate(invoiceSearch.trim()); }}
+            onClick={() => {
+              if (invoiceSearch.trim()) searchMutation.mutate(invoiceSearch.trim());
+            }}
             disabled={!invoiceSearch.trim() || searchMutation.isPending}
             className="px-5 py-2.5 bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2"
           >
-            {searchMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+            {searchMutation.isPending ? (
+              <RefreshCw className="w-4 h-4 animate-spin" />
+            ) : (
+              <Search className="w-4 h-4" />
+            )}
             Find Sale
           </button>
         </div>
@@ -168,7 +194,11 @@ export default function Returns() {
         {!selectedSale && (
           <div className="pt-2 border-t border-gray-100 dark:border-gray-800">
             <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
-              <span>{invoiceSearch.trim() ? `Search Matches for "${invoiceSearch}"` : 'Recent Completed Sales (Click to select for Return)'}</span>
+              <span>
+                {invoiceSearch.trim()
+                  ? `Search Matches for "${invoiceSearch}"`
+                  : 'Recent Completed Sales (Click to select for Return)'}
+              </span>
               {loadingRecent && <RefreshCw className="w-3 h-3 animate-spin text-gray-400" />}
             </div>
 
@@ -179,8 +209,14 @@ export default function Returns() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {recentSales.map((sale) => {
-                  const paid = (sale.paymentBreakdown?.cash || 0) + (sale.paymentBreakdown?.bkash || 0) + (sale.paymentBreakdown?.rocket || 0) + (sale.paymentBreakdown?.nagad || 0) + (sale.paymentBreakdown?.bank || 0);
-                  const isWholesale = sale.saleType === 'WHOLESALE' || sale.customerId?.customerType === 'B2B';
+                  const paid =
+                    (sale.paymentBreakdown?.cash || 0) +
+                    (sale.paymentBreakdown?.bkash || 0) +
+                    (sale.paymentBreakdown?.rocket || 0) +
+                    (sale.paymentBreakdown?.nagad || 0) +
+                    (sale.paymentBreakdown?.bank || 0);
+                  const isWholesale =
+                    sale.saleType === 'WHOLESALE' || sale.customerId?.customerType === 'B2B';
 
                   return (
                     <button
@@ -192,17 +228,21 @@ export default function Returns() {
                         <span className="font-mono font-bold text-xs text-red-600 dark:text-red-400">
                           {sale.invoiceNumber}
                         </span>
-                        <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ${
-                          isWholesale
-                            ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-                            : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-                        }`}>
+                        <span
+                          className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ${
+                            isWholesale
+                              ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                              : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                          }`}
+                        >
                           {isWholesale ? 'Wholesale B2B' : 'Retail B2C'}
                         </span>
                       </div>
 
                       <div className="text-xs font-semibold text-gray-900 dark:text-gray-100 flex items-center justify-between">
-                        <span className="truncate max-w-[180px]">{sale.customerName || 'Walk-in Customer'}</span>
+                        <span className="truncate max-w-[180px]">
+                          {sale.customerName || 'Walk-in Customer'}
+                        </span>
                         <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">
                           ৳{sale.netTotal?.toLocaleString()}
                         </span>
@@ -229,22 +269,31 @@ export default function Returns() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-gray-100 dark:border-gray-800 pb-3">
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="font-bold text-base text-gray-900 dark:text-gray-100 font-mono">{selectedSale.invoiceNumber}</h3>
-                  <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
-                    selectedSale.saleType === 'WHOLESALE' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
-                  }`}>
+                  <h3 className="font-bold text-base text-gray-900 dark:text-gray-100 font-mono">
+                    {selectedSale.invoiceNumber}
+                  </h3>
+                  <span
+                    className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
+                      selectedSale.saleType === 'WHOLESALE'
+                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                        : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
+                    }`}
+                  >
                     {selectedSale.saleType === 'WHOLESALE' ? 'Wholesale B2B' : 'Retail B2C'}
                   </span>
                 </div>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  Customer: <strong>{selectedSale.customerName}</strong> ({selectedSale.customerPhone || 'N/A'})
+                  Customer: <strong>{selectedSale.customerName}</strong> (
+                  {selectedSale.customerPhone || 'N/A'})
                 </p>
                 <p className="text-[11px] text-gray-400">
                   Sold on: {new Date(selectedSale.createdAt).toLocaleString('en-BD')}
                 </p>
               </div>
               <div className="text-right flex items-center sm:flex-col justify-between">
-                <div className="text-lg font-mono font-extrabold text-emerald-600 dark:text-emerald-400">৳{selectedSale.netTotal?.toLocaleString()}</div>
+                <div className="text-lg font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
+                  ৳{selectedSale.netTotal?.toLocaleString()}
+                </div>
                 <button
                   onClick={() => setSelectedSale(null)}
                   className="text-xs text-red-600 hover:underline font-semibold"
@@ -264,7 +313,10 @@ export default function Returns() {
                   const lineItem = selectedSale.lineItems[i];
 
                   return (
-                    <div key={i} className={`p-3 flex flex-col sm:flex-row sm:items-center gap-3 transition-colors ${item.selected ? 'bg-red-50/70 dark:bg-red-900/10' : 'bg-white dark:bg-gray-900'}`}>
+                    <div
+                      key={i}
+                      className={`p-3 flex flex-col sm:flex-row sm:items-center gap-3 transition-colors ${item.selected ? 'bg-red-50/70 dark:bg-red-900/10' : 'bg-white dark:bg-gray-900'}`}
+                    >
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         <input
                           type="checkbox"
@@ -286,14 +338,18 @@ export default function Returns() {
                               IMEI: {item.imeiOrSerial}
                             </span>
                           ) : (
-                            <span className="text-[11px] text-gray-400">Bulk item ({lineItem?.qty} pcs purchased)</span>
+                            <span className="text-[11px] text-gray-400">
+                              Bulk item ({lineItem?.qty} pcs purchased)
+                            </span>
                           )}
                         </div>
                       </div>
 
                       <div className="flex items-center gap-3 justify-between sm:justify-end">
                         <div className="w-20">
-                          <label className="block text-[9px] font-bold text-gray-400 uppercase">Return Qty</label>
+                          <label className="block text-[9px] font-bold text-gray-400 uppercase">
+                            Return Qty
+                          </label>
                           <input
                             type="number"
                             value={item.quantity}
@@ -305,7 +361,9 @@ export default function Returns() {
                         </div>
 
                         <div className="w-32">
-                          <label className="block text-[9px] font-bold text-gray-400 uppercase">Reason</label>
+                          <label className="block text-[9px] font-bold text-gray-400 uppercase">
+                            Reason
+                          </label>
                           <select
                             value={item.reason}
                             onChange={(e) => updateReason(i, e.target.value)}
@@ -319,7 +377,9 @@ export default function Returns() {
                         </div>
 
                         <div className="text-right min-w-[70px]">
-                          <label className="block text-[9px] font-bold text-gray-400 uppercase">Refund</label>
+                          <label className="block text-[9px] font-bold text-gray-400 uppercase">
+                            Refund
+                          </label>
                           <span className="text-sm font-mono font-bold text-red-600 dark:text-red-400">
                             ৳{((lineItem?.unitPrice || 0) * item.quantity).toLocaleString()}
                           </span>
@@ -340,7 +400,17 @@ export default function Returns() {
                 <div className="text-right">
                   <div className="text-xs text-gray-400">Total Refund</div>
                   <div className="text-xl font-mono font-extrabold text-red-600 dark:text-red-400">
-                    ৳{returnItems.filter(i => i.selected).reduce((sum, item) => sum + (selectedSale.lineItems[returnItems.indexOf(item)]?.unitPrice || 0) * item.quantity, 0).toLocaleString()}
+                    ৳
+                    {returnItems
+                      .filter((i) => i.selected)
+                      .reduce(
+                        (sum, item) =>
+                          sum +
+                          (selectedSale.lineItems[returnItems.indexOf(item)]?.unitPrice || 0) *
+                            item.quantity,
+                        0
+                      )
+                      .toLocaleString()}
                   </div>
                 </div>
                 <button
@@ -348,7 +418,11 @@ export default function Returns() {
                   disabled={selectedCount === 0 || returnMutation.isPending}
                   className="px-6 py-2.5 bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-md"
                 >
-                  {returnMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
+                  {returnMutation.isPending ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <RotateCcw className="w-4 h-4" />
+                  )}
                   Confirm Return
                 </button>
               </div>
@@ -364,15 +438,25 @@ export default function Returns() {
             <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
               <div>
                 <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                  <CheckCircle2 className="w-6 h-6 text-emerald-500" /> Return Completed Successfully
+                  <CheckCircle2 className="w-6 h-6 text-emerald-500" /> Return Completed
+                  Successfully
                 </h2>
                 <p className="text-xs text-gray-500">
-                  Credit Note Voucher: <strong className="font-mono text-red-600 dark:text-red-400">{completedReturnModal.returnInvoiceNumber || 'RET-INV'}</strong>
+                  Credit Note Voucher:{' '}
+                  <strong className="font-mono text-red-600 dark:text-red-400">
+                    {completedReturnModal.returnInvoiceNumber || 'RET-INV'}
+                  </strong>
                 </p>
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => executeClientPrint(creditNoteRef.current, completedReturnModal.returnInvoiceNumber || 'Return-Credit-Note', 'a4')}
+                  onClick={() =>
+                    executeClientPrint(
+                      creditNoteRef.current,
+                      completedReturnModal.returnInvoiceNumber || 'Return-Credit-Note',
+                      'a4'
+                    )
+                  }
                   className="px-4 py-2 bg-red-700 hover:bg-red-600 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow"
                 >
                   <Printer className="w-4 h-4" /> Print Return Invoice (Credit Note)
@@ -389,7 +473,10 @@ export default function Returns() {
             {/* Printable Credit Note Preview */}
             <div className="p-2 bg-gray-100 dark:bg-gray-950 rounded-xl overflow-x-auto">
               <div ref={creditNoteRef}>
-                <ReturnCreditNote sale={completedReturnModal.sale} returnLogsGroup={completedReturnModal.logs} />
+                <ReturnCreditNote
+                  sale={completedReturnModal.sale}
+                  returnLogsGroup={completedReturnModal.logs}
+                />
               </div>
             </div>
 
