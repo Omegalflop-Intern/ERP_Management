@@ -56,17 +56,43 @@ export const uploadProductImage = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
 }).single('image');
 
+const documentStorage = multer.diskStorage({
+  destination: (req, file, cb) => { const dir = 'uploads/documents'; ensureDir(dir); cb(null, dir); },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    const ext = path.extname(file.originalname);
+    cb(null, `doc-${uniqueSuffix}${ext}`);
+  },
+});
+
+const allowedDocMimeTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+const allowedDocExtensions = ['.pdf', '.jpg', '.jpeg', '.png'];
+
+const docFileFilter = (req, file, cb) => {
+  if (allowedDocMimeTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(ApiError.badRequest('Only PDF, JPG, and PNG files under 5MB are allowed'), false);
+  }
+};
+
 export const uploadCompanyLogo = multer({
   storage: logoStorage,
   fileFilter,
   limits: { fileSize: 5 * 1024 * 1024 },
 }).single('logo');
 
+export const uploadDocument = multer({
+  storage: documentStorage,
+  fileFilter: docFileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 }, // Enforce 5MB limit
+}).single('file');
+
 export const validateUploadedFile = async (req) => {
   if (!req.file) return;
   
   const ext = path.extname(req.file.originalname).toLowerCase();
-  if (!allowedExtensions.includes(ext)) {
+  if (!allowedExtensions.includes(ext) && !allowedDocExtensions.includes(ext)) {
     fs.unlinkSync(req.file.path);
     throw ApiError.badRequest('Invalid file extension');
   }
@@ -75,9 +101,10 @@ export const validateUploadedFile = async (req) => {
     const buffer = fs.readFileSync(req.file.path);
     const type = await fileTypeFromBuffer(buffer);
     
-    if (!type || !allowedMimeTypes.includes(type.mime)) {
+    const validMimes = [...allowedMimeTypes, ...allowedDocMimeTypes];
+    if (!type || !validMimes.includes(type.mime)) {
       fs.unlinkSync(req.file.path);
-      throw ApiError.badRequest('Invalid file type - file content does not match image format');
+      throw ApiError.badRequest('Invalid file type - file content does not match allowed PDF/Image format');
     }
   } catch (error) {
     if (fs.existsSync(req.file.path)) {
