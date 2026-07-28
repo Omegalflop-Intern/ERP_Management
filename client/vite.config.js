@@ -15,6 +15,7 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    host: true, // Listen on all interfaces (0.0.0.0) — allows LAN access
     proxy: {
       '/api': {
         target: 'http://localhost:5000',
