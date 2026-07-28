@@ -9,21 +9,33 @@ const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
  * useSSE — Connects to the server's SSE endpoint and invalidates
  * TanStack Query caches in response to real-time server events.
  *
+ * Reads token from Zustand (persisted) so it always has the latest
+ * valid token even after a silent refresh via api.js.
+ *
  * Usage: Call once at the root App level (inside authenticated routes).
  */
 export function useSSE() {
-  const { user } = useAuthStore();
+  const { user, token } = useAuthStore();
   const qc = useQueryClient();
   const esRef = useRef(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    const sseUrl = token
-      ? `${API_URL}/sse/connect?token=${encodeURIComponent(token)}`
-      : `${API_URL}/sse/connect`;
+    // Only connect when a user is authenticated AND we have a token
+    if (!user || !token) {
+      esRef.current?.close();
+      esRef.current = null;
+      return;
+    }
+
+    const sseUrl = `${API_URL}/sse/connect?token=${encodeURIComponent(token)}`;
 
     const connect = () => {
-      const es = new EventSource(sseUrl, { withCredentials: true });
+      // Double-check token is still valid before connecting
+      const currentToken = useAuthStore.getState().token;
+      if (!currentToken) return;
+
+      const url = `${API_URL}/sse/connect?token=${encodeURIComponent(currentToken)}`;
+      const es = new EventSource(url, { withCredentials: true });
       esRef.current = es;
 
       es.onopen = () => {
@@ -66,12 +78,14 @@ export function useSSE() {
       };
 
       es.onerror = () => {
-        console.warn('[SSE] Connection lost — reconnecting in 5s...');
         es.close();
         esRef.current = null;
-        setTimeout(() => {
-          if (user) connect();
-        }, 5000);
+        // Only reconnect if still logged in — avoids reconnect loop on logout
+        const { user: currentUser, token: currentTok } = useAuthStore.getState();
+        if (currentUser && currentTok) {
+          console.warn('[SSE] Connection lost — reconnecting in 5s...');
+          setTimeout(connect, 5000);
+        }
       };
     };
 
@@ -81,5 +95,6 @@ export function useSSE() {
       esRef.current?.close();
       esRef.current = null;
     };
-  }, [user, qc]);
+    // Re-run when user or token changes (login, logout, token refresh)
+  }, [user, token, qc]);
 }

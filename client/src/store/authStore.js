@@ -7,6 +7,7 @@ export const useAuthStore = create(
   persist(
     (set, get) => ({
       user: null,
+      token: null,
       loading: false,
 
       login: async (loginField, password) => {
@@ -24,7 +25,7 @@ export const useAuthStore = create(
 
           if (token) localStorage.setItem('accessToken', token);
           localStorage.setItem('user', JSON.stringify(userData));
-          set({ user: userData, loading: false });
+          set({ user: userData, token: token || null, loading: false });
 
           toast.success(`Welcome back, ${userData.username}!`);
           return userData;
@@ -44,11 +45,17 @@ export const useAuthStore = create(
         }
         localStorage.removeItem('accessToken');
         localStorage.removeItem('user');
-        set({ user: null });
+        set({ user: null, token: null });
         toast.info('Logged out successfully');
       },
 
       setUser: (user) => set({ user }),
+
+      // Called by api.js after a successful token refresh
+      setToken: (token) => {
+        if (token) localStorage.setItem('accessToken', token);
+        set({ token });
+      },
 
       hasPermission: (permission) => {
         const { user } = get();
@@ -68,8 +75,8 @@ export const useAuthStore = create(
     }),
     {
       name: 'auth-storage',
-      // Only persist the user object — loading is transient
-      partialize: (state) => ({ user: state.user }),
+      // Persist both user and token so SSE and API calls always have a valid token on reload
+      partialize: (state) => ({ user: state.user, token: state.token }),
     }
   )
 );

@@ -43,10 +43,16 @@ api.interceptors.response.use(
         );
 
         const { token } = res.data.data;
-        // Update localStorage token for Bearer header compat
         if (token) {
           localStorage.setItem('accessToken', token);
           originalRequest.headers.Authorization = `Bearer ${token}`;
+          // Update Zustand store so SSE and other consumers get the new token
+          try {
+            const { useAuthStore } = await import('../store/authStore.js');
+            useAuthStore.getState().setToken(token);
+          } catch {
+            // Ignore if store isn't available
+          }
         }
         return api(originalRequest);
       } catch (refreshError) {
