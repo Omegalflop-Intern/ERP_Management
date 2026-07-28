@@ -96,4 +96,3 @@ export function getAssetUrl(path) {
 
 export { API_URL, SERVER_URL };
 export default api;
-
