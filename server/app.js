@@ -58,16 +58,39 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Trust nginx reverse proxy — required for correct IP detection and secure cookies behind proxy
+app.set('trust proxy', 1);
+
+// In production: redirect HTTP → HTTPS
+if (process.env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    // x-forwarded-proto is set by nginx when proxying
+    if (req.headers['x-forwarded-proto'] === 'http') {
+      return res.redirect(301, `https://${req.headers.host}${req.url}`);
+    }
+    next();
+  });
+}
+
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: 'same-origin' },
+  crossOriginResourcePolicy: { policy: 'cross-origin' }, // Allow assets from same server across ports
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       scriptSrc: ["'self'"],
       imgSrc: ["'self'", "data:", "https:", "http:"],
-      connectSrc: ["'self'", "http://localhost:3000", "http://localhost:5000"],
-      fontSrc: ["'self'", "data:"],
+      connectSrc: [
+        "'self'",
+        "http://localhost:3000",
+        "https://localhost:3000",
+        "http://localhost:5000",
+        "https://localhost:5000",
+        // Production domain — set dynamically from env
+        ...(process.env.APP_URL ? [process.env.APP_URL] : []),
+        ...(process.env.CLIENT_URL ? [process.env.CLIENT_URL] : []),
+      ],
+      fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
       frameSrc: ["'none'"],
@@ -84,8 +107,10 @@ app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
 morgan.token('url', (req) => (req.originalUrl || req.url).replace(/([?&]token=)[^&]+/g, '$1[REDACTED]'));
-app.use(morgan('dev'));
+// Use 'combined' format in production for proper log files, 'dev' in development
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.static(path.join(__dirname, 'public')));
+
 app.use('/uploads', (req, res, next) => {
   if (process.env.NODE_ENV === 'production') {
     const referer = req.headers.referer || req.headers.origin || '';
@@ -93,7 +118,9 @@ app.use('/uploads', (req, res, next) => {
       process.env.CLIENT_URL,
       process.env.APP_URL,
       'http://localhost:3000',
+      'https://localhost:3000',
       'http://localhost:5000',
+      'https://localhost:5000',
     ].filter(Boolean);
     if (referer && !allowedReferers.some(r => referer.startsWith(r))) {
       return res.status(403).json({ success: false, message: 'Forbidden' });
@@ -326,6 +353,20 @@ app.use('/api/v1/investors', auditDiffInterceptor('Investor', () => Investor), i
 app.use('/api/v1/expenses', expenseRoutes);
 app.use('/api/v1/loans', auditDiffInterceptor('Loan', () => Loan), loanRoutes);
 app.use('/api/v1/sse', sseRoutes);
+// ── Production: Serve built React app & SPA fallback ──────────────────────
+if (process.env.NODE_ENV === 'production') {
+  const clientDist = path.join(__dirname, '../client/dist');
+  // Serve static assets (JS, CSS, images)
+  app.use(express.static(clientDist));
+  // SPA catch-all: all non-API routes serve index.html (React Router handles routing)
+  app.get('*', (req, res, next) => {
+    if (req.originalUrl.startsWith('/api') || req.originalUrl.startsWith('/uploads')) {
+      return next();
+    }
+    res.sendFile(path.join(clientDist, 'index.html'));
+  });
+}
+
 // 404 Fallback Handler for unmatched routes
 app.use((req, res) => {
   res.status(404).json({

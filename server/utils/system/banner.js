@@ -46,15 +46,19 @@ ${c.brightCyan} ╚════════════════════�
   console.log('');
 };
 
-export const printServerInfo = (port, env) => {
+export const printServerInfo = (port, env, protocol = 'http') => {
   const nodeVer = process.version;
   const platform = `${os.platform()} (${os.arch()})`;
   const ram = `${(os.freemem() / (1024 ** 3)).toFixed(1)} GB free / ${(os.totalmem() / (1024 ** 3)).toFixed(1)} GB`;
+  const apiUrl = `${protocol}://localhost:${port}/api/v1`;
+  const clientUrl = `${protocol}://localhost:3000`;
+  const apiPad = ' '.repeat(Math.max(0, 57 - apiUrl.length));
+  const clientPad = ' '.repeat(Math.max(0, 51 - clientUrl.length));
 
   console.log(` ${c.gray}┌────────────────────────────────────────────────────────────────────────────────┐${c.reset}`);
   console.log(` ${c.gray}│${c.reset}  ${c.brightCyan}🚀 Server Status${c.reset}   : ${c.brightGreen}ONLINE & READY${c.reset}${' '.repeat(34)}${c.gray}│${c.reset}`);
-  console.log(` ${c.gray}│${c.reset}  ${c.brightCyan}📡 API Endpoint${c.reset}   : ${c.brightYellow}http://localhost:${port}/api/v1${c.reset}${' '.repeat(27)}${c.gray}│${c.reset}`);
-  console.log(` ${c.gray}│${c.reset}  ${c.brightCyan}💻 Client URL${c.reset}     : ${c.brightYellow}http://localhost:3000${c.reset}${' '.repeat(31)}${c.gray}│${c.reset}`);
+  console.log(` ${c.gray}│${c.reset}  ${c.brightCyan}📡 API Endpoint${c.reset}   : ${c.brightYellow}${apiUrl}${c.reset}${apiPad}${c.gray}│${c.reset}`);
+  console.log(` ${c.gray}│${c.reset}  ${c.brightCyan}💻 Client URL${c.reset}     : ${c.brightYellow}${clientUrl}${c.reset}${clientPad}${c.gray}│${c.reset}`);
   console.log(` ${c.gray}│${c.reset}  ${c.brightCyan}🛠  Environment${c.reset}    : ${c.brightMagenta}${env.toUpperCase()}${c.reset}${' '.repeat(44 - env.length)}${c.gray}│${c.reset}`);
   console.log(` ${c.gray}│${c.reset}  ${c.brightCyan}⚡ Node Engine${c.reset}    : ${c.white}${nodeVer}${c.reset} | ${c.white}${platform}${c.reset}${' '.repeat(44 - nodeVer.length - platform.length - 3)}${c.gray}│${c.reset}`);
   console.log(` ${c.gray}│${c.reset}  ${c.brightCyan}🧠 System Memory${c.reset}  : ${c.gray}${ram}${c.reset}${' '.repeat(44 - ram.length)}${c.gray}│${c.reset}`);

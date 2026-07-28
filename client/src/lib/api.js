@@ -68,28 +68,32 @@ api.interceptors.response.use(
 );
 
 // Helper function to resolve media asset URLs dynamically
+// Always returns relative path so requests go through Vite proxy (HTTPS-safe, no mixed content)
 export function getAssetUrl(path) {
   if (!path) return '';
-  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:'))
-    return path;
+  if (path.startsWith('data:')) return path;
 
-  // Ensure path starts with a single forward slash
-  const cleanPath = path.startsWith('/') ? path : `/${path}`;
-
-  if (SERVER_URL) {
-    return `${SERVER_URL}${cleanPath}`;
+  // Already an absolute external URL (CDN, external storage, etc.) — return as-is
+  // But for localhost URLs, strip the origin and return relative so proxy handles it
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    try {
+      const url = new URL(path);
+      const isLocal =
+        url.hostname === 'localhost' ||
+        url.hostname === '127.0.0.1' ||
+        url.hostname.startsWith('192.168.');
+      // Return relative path for local URLs → goes through Vite proxy (HTTPS-safe)
+      if (isLocal) return url.pathname;
+    } catch {
+      // Not a valid URL — fall through
+    }
+    return path; // External URL — return as-is
   }
 
-  // Fallback for dev environment
-  const isDev =
-    typeof window !== 'undefined' &&
-    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-  if (isDev) {
-    return `http://localhost:5000${cleanPath}`;
-  }
-
-  return cleanPath;
+  // Relative or path-only — ensure it starts with /
+  return path.startsWith('/') ? path : `/${path}`;
 }
 
 export { API_URL, SERVER_URL };
 export default api;
+

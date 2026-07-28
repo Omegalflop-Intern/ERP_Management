@@ -32,12 +32,14 @@ export default defineConfig({
     }),
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: hasCerts ? 'https://localhost:5000' : 'http://localhost:5000',
         changeOrigin: true,
+        secure: false, // Allow self-signed mkcert certificate
       },
       '/uploads': {
-        target: 'http://localhost:5000',
+        target: hasCerts ? 'https://localhost:5000' : 'http://localhost:5000',
         changeOrigin: true,
+        secure: false,
       },
     },
   },

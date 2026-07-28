@@ -8,14 +8,32 @@ import { initAutoBackup } from './modules/settings/settings.service.js';
 import emitter, { EVENTS } from './events/index.js';
 import { printAsciiBanner, printServerInfo, logStep } from './utils/system/banner.js';
 import { broadcastAll } from './modules/sse/sse.controller.js';
-
 import { User } from './modules/user/user.model.js';
 import { createBulkNotifications } from './modules/notification/notification.service.js';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { createServer as createHttpServer } from 'http';
+import { createServer as createHttpsServer } from 'https';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = env.PORT || 5000;
 
-app.listen(PORT, async () => {
+// ── Optional HTTPS (mkcert certs from client/certs/) ──
+const certPath = path.resolve(__dirname, '../client/certs/cert.pem');
+const keyPath  = path.resolve(__dirname, '../client/certs/key.pem');
+const hasCerts = fs.existsSync(certPath) && fs.existsSync(keyPath);
+
+const server = hasCerts && env.NODE_ENV === 'development'
+  ? createHttpsServer({ cert: fs.readFileSync(certPath), key: fs.readFileSync(keyPath) }, app)
+  : createHttpServer(app);
+
+const protocol = hasCerts && env.NODE_ENV === 'development' ? 'https' : 'http';
+
+
+server.listen(PORT, async () => {
   global.__serverStartTime = new Date();
+  global.__serverProtocol = protocol;
 
   await printAsciiBanner();
   
@@ -26,7 +44,7 @@ app.listen(PORT, async () => {
   await logStep('Weekly Backup Scheduler', () => initAutoBackup());
 
   console.log('');
-  printServerInfo(PORT, env.NODE_ENV || 'development');
+  printServerInfo(PORT, env.NODE_ENV || 'development', protocol);
 
   // ─── Real-time Event Listeners & Dual Notifications (Email + SMS) ─────
 
