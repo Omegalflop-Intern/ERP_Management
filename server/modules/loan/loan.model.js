@@ -1,13 +1,26 @@
 import mongoose from 'mongoose';
 
+const loanInstallmentSchema = new mongoose.Schema({
+  installmentNo: { type: Number, required: true },
+  dueDate: { type: Date, required: true },
+  amount: { type: Number, required: true },
+  status: { type: String, enum: ['Pending', 'Paid', 'Overdue'], default: 'Pending' },
+  paidDate: { type: Date },
+  paidAmount: { type: Number, default: 0 },
+});
+
 const loanSchema = new mongoose.Schema(
   {
-    providerName: { type: String, required: true, trim: true }, // Bank, Person, Org name
+    type: { type: String, enum: ['LOAN_TAKEN', 'LOAN_GIVEN'], default: 'LOAN_TAKEN' }, // LOAN_TAKEN (Lender) vs LOAN_GIVEN (Borrower)
+    providerName: { type: String, required: true, trim: true }, // Lender Name or Borrower Name
     accountNumber: { type: String, trim: true },
+    phone: { type: String, trim: true },
     loanAmount: { type: Number, required: true, min: 0.01 },
     interestRate: { type: Number, default: 0 },
     borrowedDate: { type: Date, default: Date.now },
     dueDate: { type: Date },
+    installmentCount: { type: Number, default: 1 },
+    installmentSchedule: [loanInstallmentSchema],
     repaidAmount: { type: Number, default: 0 },
     status: { type: String, enum: ['Active', 'Fully Repaid'], default: 'Active' },
     notes: { type: String },

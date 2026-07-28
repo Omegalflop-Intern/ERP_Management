@@ -4,7 +4,8 @@ import { logAction } from '../../utils/auth/auditLog.js';
 
 export const getAllLoans = async (req, res, next) => {
   try {
-    const result = await loanService.getAllLoans();
+    const type = req.query.type || 'LOAN_TAKEN';
+    const result = await loanService.getAllLoans(type);
     return ApiResponse.success(res, result);
   } catch (error) { next(error); }
 };
