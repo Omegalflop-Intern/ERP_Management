@@ -9,7 +9,7 @@ export default function Bottombar() {
     <footer
       className={`
       mt-8 pt-3 pb-2 px-4 border-t border-gray-200 dark:border-gray-800/80
-      flex flex-col sm:flex-row items-center justify-between gap-3 text-xs
+      flex flex-col sm:flex-row items-center gap-2 text-xs
       text-gray-500 dark:text-gray-400 font-medium transition-all
       ${styled ? 'neu-card-sm !border-none !rounded-xl my-2' : 'bg-white/40 dark:bg-gray-900/30 backdrop-blur-xs rounded-xl'}
     `}
@@ -32,16 +32,15 @@ export default function Bottombar() {
       {/* Connection & Status */}
       <div className="flex items-center gap-3 text-[11px]">
         <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-50 dark:bg-emerald-900/20 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-500/20">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> DB Connected &
-          Active
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> DB Active
         </span>
       </div>
 
       {/* Developer Credit */}
       <div className="flex items-center gap-1.5 text-[11px] text-gray-500 dark:text-gray-400">
-        <span>Developed & Maintained with</span>
+        <span className="hidden sm:inline">Developed & Maintained with</span>
         <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500 animate-bounce" />
-        <span>by</span>
+        <span className="hidden sm:inline">by</span>
         <a
           href="https://salahuddin.codes"
           target="_blank"

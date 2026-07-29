@@ -2,6 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { useSSE } from './hooks/useSSE';
+import { useInactivityLogout } from './hooks/useInactivityLogout';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import RoleBasedRoute from './components/auth/RoleBasedRoute';
 import DashboardLayout from './components/layout/DashboardLayout';
@@ -50,6 +51,8 @@ const SettingsPage = lazy(() => import('./pages/Settings/SettingsPage'));
 const ActivityLogs = lazy(() => import('./pages/Settings/ActivityLogs'));
 const MyProfile = lazy(() => import('./pages/Settings/MyProfile'));
 const SystemAnalytics = lazy(() => import('./pages/Settings/SystemAnalytics'));
+const PublicInvoice = lazy(() => import('./pages/Sales/PublicInvoice'));
+const ResetPassword = lazy(() => import('./pages/Auth/ResetPassword'));
 
 const PageSkeletonLoader = () => (
   <div className="p-6 space-y-6 animate-pulse">
@@ -112,8 +115,8 @@ const PageSkeletonLoader = () => (
 export default function App() {
   const { isAuthenticated } = useAuth();
 
-  // Connect to server-sent events for real-time updates
   useSSE();
+  useInactivityLogout();
 
   return (
     <Suspense fallback={<PageSkeletonLoader />}>
@@ -124,6 +127,8 @@ export default function App() {
         />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/invoice/:token" element={<PublicInvoice />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
 
         <Route
           path="/"

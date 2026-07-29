@@ -3,7 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import Bottombar from './Bottombar';
-import useInactivityLogout from '../../hooks/useInactivityLogout';
+import { useInactivityLogout } from '../../hooks/useInactivityLogout';
 
 export default function DashboardLayout() {
   useInactivityLogout();
