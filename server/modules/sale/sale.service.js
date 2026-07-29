@@ -6,6 +6,7 @@ import { ApiError } from '../../utils/http/ApiError.js';
 import { paginate, getPagination } from '../../utils/http/pagination.js';
 import { escapeRegex } from '../../utils/system/helpers.js';
 import { createAutomatedSaleJournal, createAutomatedReturnJournal } from '../accounting/accounting.service.js';
+import crypto from 'crypto';
 
 const generateInvoiceNumber = async () => {
   const count = await Transaction.countDocuments({ txType: 'SALE', isDeleted: false });
@@ -152,6 +153,8 @@ export const createSale = async (data, createdBy = 'system') => {
     cashierUsername: createdBy,
     sellerName: data.sellerName || createdBy,
     sellerId: data.sellerId || null,
+    publicToken: crypto.randomBytes(24).toString('hex'),
+    tokenExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
   });
 
   await createAutomatedSaleJournal(sale).catch(err => console.error('Sale journal failed:', err));
@@ -224,6 +227,25 @@ export const getSaleByInvoice = async (invoiceQuery) => {
 
   if (!sale) {
     throw ApiError.notFound(`No sale found matching "${invoiceQuery}"`);
+  }
+
+  return sale;
+};
+
+export const getSaleByPublicToken = async (token) => {
+  if (!token) throw ApiError.badRequest('Invalid token');
+
+  const sale = await Transaction.findOne({
+    publicToken: token,
+    isDeleted: false,
+    txType: 'SALE',
+  })
+    .populate('customerId')
+    .populate('lineItems.productId');
+
+  if (!sale) throw ApiError.notFound('Invoice not found or link has expired');
+  if (sale.tokenExpiresAt && sale.tokenExpiresAt < new Date()) {
+    throw ApiError.gone('This invoice link has expired (valid for 7 days)');
   }
 
   return sale;

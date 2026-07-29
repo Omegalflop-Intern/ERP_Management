@@ -174,8 +174,16 @@ export const forgotPassword = async (email) => {
   user.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
   await user.save();
 
-  // In production, send email with reset link
-  // For now, return the token (dev mode only)
+  const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+  const resetLink = `${clientUrl}/reset-password/${resetToken}`;
+
+  try {
+    const { sendPasswordResetEmail } = await import('../../config/mailer.js');
+    await sendPasswordResetEmail(user.email, resetLink, user.fullName || user.username);
+  } catch (err) {
+    console.error('[ForgotPassword] Failed to send email:', err.message);
+  }
+
   return { email };
 };
 

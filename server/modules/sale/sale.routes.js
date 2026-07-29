@@ -7,6 +7,9 @@ import { createSaleSchema, returnSaleSchema } from './sale.validator.js';
 
 const router = Router();
 
+// Public route — no auth required (token-based access, 7-day expiry)
+router.get('/public/:token', saleController.getPublicInvoice);
+
 router.use(authenticate);
 
 /**

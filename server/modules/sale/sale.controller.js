@@ -12,6 +12,24 @@ export const createSale = async (req, res, next) => {
       sellerId: req.user?._id || req.user?.id || null,
     };
     const sale = await saleService.createSale(saleData, cashierName);
+
+    // Fire-and-forget SMS + email notifications with public invoice link
+    if (sale.customerPhone || sale.customerEmail) {
+      Promise.all([
+        import('../../config/sms.js').then(({ sendCustomerInvoiceSMS }) =>
+          sendCustomerInvoiceSMS(sale.customerPhone, sale.customerName, sale.invoiceNumber, sale.netTotal, sale.publicToken)
+        ).catch(() => {}),
+        import('../../config/mailer.js').then(({ sendCustomerInvoiceEmail }) =>
+          sendCustomerInvoiceEmail(sale.customerEmail, sale.customerName, {
+            invoiceNo: sale.invoiceNumber,
+            grandTotal: sale.netTotal,
+            paymentStatus: sale.paymentBreakdown?.dueAmount > 0 ? 'Due' : 'Paid',
+            invoiceLink: `${process.env.CLIENT_URL || process.env.APP_URL || ''}/invoice/${sale.publicToken}`,
+          })
+        ).catch(() => {}),
+      ]);
+    }
+
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'CREATE', module: 'sale', entityId: sale._id, entityType: 'Transaction', details: { invoiceNumber: sale.invoiceNumber, total: sale.netTotal }, req });
     return ApiResponse.created(res, sale, 'Sale completed successfully');
   } catch (error) { next(error); }
@@ -71,5 +89,13 @@ export const updateSale = async (req, res, next) => {
     const sale = await saleService.updateSale(req.params.id, req.body);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'UPDATE', module: 'sale', entityId: sale._id, entityType: 'Transaction', details: { invoiceNumber: sale.invoiceNumber }, req });
     return ApiResponse.success(res, sale, 'Sale updated');
+  } catch (error) { next(error); }
+};
+
+export const getPublicInvoice = async (req, res, next) => {
+  try {
+    const { token } = req.params;
+    const sale = await saleService.getSaleByPublicToken(token);
+    return ApiResponse.success(res, sale);
   } catch (error) { next(error); }
 };

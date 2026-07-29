@@ -1,28 +1,17 @@
-// ─── SSE Client Registry ──────────────────────────────────────────────
-// Maps userId (string) → Express response object
-const clients = new Map();
+const clients = new Map(); // userId (string) → Express response
 
-/**
- * SSE connection endpoint handler.
- * GET /api/v1/sse/connect — requires authentication
- */
 export const sseConnect = (req, res) => {
   const userId = req.user.userId.toString();
 
-  // SSE headers
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache, no-transform');
   res.setHeader('Connection', 'keep-alive');
-  res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx buffering
+  res.setHeader('X-Accel-Buffering', 'no');
   res.flushHeaders();
 
-  // Send initial connected event
   res.write(`data: ${JSON.stringify({ type: 'connected', userId })}\n\n`);
-
-  // Register client
   clients.set(userId, res);
 
-  // Heartbeat every 30s to keep connection alive through proxies
   const heartbeat = setInterval(() => {
     if (res.writableEnded) {
       clearInterval(heartbeat);
@@ -31,7 +20,6 @@ export const sseConnect = (req, res) => {
     res.write(': heartbeat\n\n');
   }, 30_000);
 
-  // Cleanup on client disconnect
   req.on('close', () => {
     clearInterval(heartbeat);
     clients.delete(userId);

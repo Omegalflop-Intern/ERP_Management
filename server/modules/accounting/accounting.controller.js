@@ -3,7 +3,6 @@ import { Asset } from './asset.model.js';
 import { ApiResponse } from '../../utils/http/ApiResponse.js';
 import { logAction } from '../../utils/auth/auditLog.js';
 
-// ─── Accounts ──────────────────────────────────────────────────
 
 export const getAllAccounts = async (req, res, next) => {
   try {
@@ -52,7 +51,6 @@ export const seedDefaultAccounts = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
-// ─── Journal Entries ───────────────────────────────────────────
 
 export const getAllJournalEntries = async (req, res, next) => {
   try {
@@ -109,7 +107,6 @@ export const syncHistoricalJournals = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
-// ─── Reports ───────────────────────────────────────────────────
 
 export const getBalanceSheet = async (req, res, next) => {
   try {
@@ -134,7 +131,6 @@ export const getTrialBalance = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
-// ─── Assets ────────────────────────────────────────────────────
 
 export const getAssets = async (req, res, next) => {
   try {

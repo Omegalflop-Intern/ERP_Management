@@ -78,19 +78,18 @@ export const login = async (req, res, next) => {
     }
 
     clearFailedLogin(login, ip);
-    
-    if (process.env.NODE_ENV === 'development') {
+
+    if (!user.isVerified) {
       const otpCode = authService.generateOTP();
       user.otpCode = otpCode;
-      user.otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000);
+      user.otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
       await user.save();
       const mailRes = await authService.sendOTP(user.email, otpCode, user.fullName || user.username);
-      // NOTE: OTP preview only logged to server console — never sent to client
       if (mailRes?.previewUrl) {
         console.log(`[OTP-DEV] Nodemailer preview URL: ${mailRes.previewUrl}`);
       }
       logAction({ userId: user._id, username: user.username, action: 'LOGIN_OTP_SENT', module: 'auth', entityType: 'User', details: { login }, req });
-      return ApiResponse.success(res, { email: user.email }, 'OTP sent to your email');
+      return ApiResponse.success(res, { requiresOtp: true, email: user.email }, 'OTP sent to your email');
     }
 
     const { accessToken, refreshToken } = authService.issueTokens(user);
@@ -157,10 +156,18 @@ export const loginDirect = async (req, res, next) => {
         details: { login, reason: 'Email not verified' },
         severity: 'low',
       });
+      const otpCode = authService.generateOTP();
+      user.otpCode = otpCode;
+      user.otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+      await user.save();
+      const mailRes = await authService.sendOTP(user.email, otpCode, user.fullName || user.username);
+      if (mailRes?.previewUrl) {
+        console.log(`[OTP-DEV] Nodemailer preview URL: ${mailRes.previewUrl}`);
+      }
       return ApiResponse.success(res, {
-        requiresVerification: true,
+        requiresOtp: true,
         email: user.email,
-      }, 'Please verify your email before logging in');
+      }, 'OTP sent to your email. Please verify to continue.');
     }
 
     clearFailedLogin(login, ip);

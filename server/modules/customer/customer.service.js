@@ -2,13 +2,15 @@ import { Customer } from './customer.model.js';
 import { Transaction } from '../sale/sale.model.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { paginate, getPagination } from '../../utils/http/pagination.js';
+import { hashText } from '../../utils/crypto.utils.js';
 
 export const getAllCustomers = async (page = 1, limit = 20, search = '') => {
   const query = { isDeleted: false };
   if (search) {
+    const pHash = hashText(search);
     query.$or = [
       { name: { $regex: search, $options: 'i' } },
-      { phone: { $regex: search, $options: 'i' } },
+      { phoneHash: pHash },
       { email: { $regex: search, $options: 'i' } },
     ];
   }
@@ -26,8 +28,10 @@ export const getCustomerById = async (id) => {
 };
 
 export const createCustomer = async (data) => {
-  const existing = await Customer.findOne({ phone: data.phone, isDeleted: false });
+  const pHash = hashText(data.phone);
+  const existing = await Customer.findOne({ phoneHash: pHash, isDeleted: false });
   if (existing) throw ApiError.conflict('Customer with this phone already exists');
+  data.phoneHash = pHash;
   return Customer.create(data);
 };
 
@@ -36,8 +40,10 @@ export const updateCustomer = async (id, data) => {
   if (!customer) throw ApiError.notFound('Customer not found');
 
   if (data.phone && data.phone !== customer.phone) {
-    const existing = await Customer.findOne({ phone: data.phone, isDeleted: false, _id: { $ne: id } });
+    const pHash = hashText(data.phone);
+    const existing = await Customer.findOne({ phoneHash: pHash, isDeleted: false, _id: { $ne: id } });
     if (existing) throw ApiError.conflict('Customer with this phone already exists');
+    data.phoneHash = pHash;
   }
 
   Object.assign(customer, data);
