@@ -16,9 +16,9 @@ export const useAuthStore = create(
           const res = await api.post('/auth/login-direct', { login: loginField, password });
           const data = res.data.data;
 
-          if (data.requiresVerification) {
+          if (data.requiresOtp) {
             set({ loading: false });
-            return { requiresVerification: true, email: data.email };
+            return { requiresOtp: true, email: data.email };
           }
 
           const { token, user: userData } = data;

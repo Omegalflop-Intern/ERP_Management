@@ -15,9 +15,9 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
-      staleTime: 30_000, // 30s — data fresh window
-      gcTime: 5 * 60_000, // 5min — garbage collect unused cache
-      retry: 1, // retry once on failure
+      staleTime: 30_000,
+      gcTime: 5 * 60_000,
+      retry: 1,
       retryDelay: 1000,
     },
     mutations: {
@@ -26,7 +26,6 @@ const queryClient = new QueryClient({
   },
 });
 
-// Setup offline sync
 setupOfflineSync(api);
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -39,7 +38,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             <Toaster position="top-center" richColors />
           </AuthProvider>
         </ThemeProvider>
-        {/* TanStack Query Devtools — only shown in development */}
         <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-right" />
       </QueryClientProvider>
     </BrowserRouter>

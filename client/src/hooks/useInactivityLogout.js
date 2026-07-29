@@ -1,96 +1,80 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
+import { useAuthStore } from '@/store/authStore';
 
-const INACTIVITY_TIMEOUT = 3 * 60 * 60 * 1000; // 3 hours
-const WARNING_THRESHOLD = 30 * 1000; // warn 30s before logout
+const INACTIVITY_TIMEOUT_MS = 60 * 60 * 1000; // 60 minutes
+const WARNING_BEFORE_MS = 2 * 60 * 1000;       // warn 2 minutes before logout
+const ACTIVITY_EVENTS = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'];
 
-export default function useInactivityLogout() {
-  const { logout, isAuthenticated } = useAuth();
-  const timerRef = useRef(null);
+export function useInactivityLogout() {
+  const logout = useAuthStore((s) => s.logout);
+  const user = useAuthStore((s) => s.user);
+
+  const logoutTimerRef = useRef(null);
   const warningTimerRef = useRef(null);
-  const warnedRef = useRef(false);
+  const warningToastIdRef = useRef(null);
 
   const clearTimers = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
+    if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
+    if (warningTimerRef.current) clearTimeout(warningTimerRef.current);
+  }, []);
+
+  const dismissWarningToast = useCallback(() => {
+    if (warningToastIdRef.current) {
+      toast.dismiss(warningToastIdRef.current);
+      warningToastIdRef.current = null;
     }
-    if (warningTimerRef.current) {
-      clearTimeout(warningTimerRef.current);
-      warningTimerRef.current = null;
-    }
-    warnedRef.current = false;
   }, []);
 
   const handleLogout = useCallback(async () => {
     clearTimers();
-    toast.error('Session expired due to inactivity. Logging out...');
+    dismissWarningToast();
+    toast.warning('You have been logged out due to inactivity.');
     await logout();
     window.location.href = '/login';
-  }, [logout, clearTimers]);
+  }, [logout, clearTimers, dismissWarningToast]);
 
-  const handleWarning = useCallback(() => {
-    warnedRef.current = true;
-    toast.warning('You will be logged out in 30 seconds due to inactivity.', {
-      duration: 10000,
-      action: {
-        label: 'Stay logged in',
-        onClick: () => {
-          resetTimer();
-        },
-      },
-    });
-  }, []);
-
-  const resetTimer = useCallback(() => {
+  const resetTimers = useCallback(() => {
     clearTimers();
+    dismissWarningToast();
 
     warningTimerRef.current = setTimeout(() => {
-      handleWarning();
-    }, INACTIVITY_TIMEOUT - WARNING_THRESHOLD);
+      warningToastIdRef.current = toast.warning(
+        'Your session will expire in 2 minutes due to inactivity.',
+        {
+          id: 'inactivity-warning',
+          duration: WARNING_BEFORE_MS,
+          action: {
+            label: 'Stay logged in',
+            onClick: () => resetTimers(),
+          },
+        }
+      );
+    }, INACTIVITY_TIMEOUT_MS - WARNING_BEFORE_MS);
 
-    timerRef.current = setTimeout(() => {
-      handleLogout();
-    }, INACTIVITY_TIMEOUT);
-  }, [clearTimers, handleWarning, handleLogout]);
+    logoutTimerRef.current = setTimeout(handleLogout, INACTIVITY_TIMEOUT_MS);
+  }, [clearTimers, dismissWarningToast, handleLogout]);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      clearTimers();
-      return;
-    }
+    if (!user) return;
 
-    const events = [
-      'mousedown',
-      'mousemove',
-      'keydown',
-      'scroll',
-      'touchstart',
-      'click',
-      'wheel',
-      'keyup',
-    ];
+    resetTimers();
 
-    const handleActivity = () => {
-      if (warnedRef.current) {
-        toast.dismiss();
-        warnedRef.current = false;
+    let lastActivity = 0;
+    const onActivity = () => {
+      const now = Date.now();
+      if (now - lastActivity > 1000) {
+        lastActivity = now;
+        resetTimers();
       }
-      resetTimer();
     };
 
-    events.forEach((event) => {
-      document.addEventListener(event, handleActivity, { passive: true });
-    });
-
-    resetTimer();
+    ACTIVITY_EVENTS.forEach((event) => window.addEventListener(event, onActivity, { passive: true }));
 
     return () => {
-      events.forEach((event) => {
-        document.removeEventListener(event, handleActivity);
-      });
       clearTimers();
+      dismissWarningToast();
+      ACTIVITY_EVENTS.forEach((event) => window.removeEventListener(event, onActivity));
     };
-  }, [isAuthenticated, resetTimer, clearTimers]);
+  }, [user, resetTimers, clearTimers, dismissWarningToast]);
 }
