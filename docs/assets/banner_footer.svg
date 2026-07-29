@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 130" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="footerBg" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="40%" stop-color="#7f1d1d" />
+      <stop offset="80%" stop-color="#450a0a" />
+      <stop offset="100%" stop-color="#070a12" />
+    </linearGradient>
+
+    <!-- Glowing Accent -->
+    <linearGradient id="lineGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ef4444" stop-opacity="0" />
+      <stop offset="50%" stop-color="#ef4444" stop-opacity="1" />
+      <stop offset="100%" stop-color="#ef4444" stop-opacity="0" />
+    </linearGradient>
+
+    <pattern id="gridDots" width="20" height="20" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1" fill="rgba(255, 255, 255, 0.08)" />
+    </pattern>
+  </defs>
+
+  <!-- Container Box -->
+  <rect width="1000" height="130" rx="12" fill="url(#footerBg)" />
+  <rect width="1000" height="130" rx="12" fill="url(#gridDots)" />
+  <rect width="998" height="128" x="1" y="1" rx="11" fill="none" stroke="rgba(255, 255, 255, 0.12)" stroke-width="1.5" />
+
+  <!-- Top Glowing Dividing Line -->
+  <rect x="100" y="0" width="800" height="2" fill="url(#lineGlow)" />
+
+  <!-- Content Centered -->
+  <g transform="translate(500, 42)" text-anchor="middle">
+    <!-- Heart Icon / Tagline -->
+    <text x="0" y="0" fill="#f8fafc" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="16" font-weight="700" letter-spacing="0.5">
+      Brothers Mobile Shop ERP • Built for Retailers, Wholesalers &amp; Repair Centers
+    </text>
+
+    <!-- Sub Text -->
+    <text x="0" y="24" fill="#94a3b8" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="400">
+      Licensed under AGPL v3 • Full-Stack Enterprise Platform • Production Ready
+    </text>
+
+    <!-- Badges Row -->
+    <g transform="translate(0, 48)">
+      <rect x="-180" y="-14" width="360" height="26" rx="13" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)" stroke-width="1" />
+      <text x="0" y="3" fill="#fef08a" font-family="sans-serif" font-size="11" font-weight="600" letter-spacing="1">
+        REACT 18 • NODE 20 ESM • MONGODB 7 • VITE 5 • AG GRID
+      </text>
+    </g>
+  </g>
+</svg>

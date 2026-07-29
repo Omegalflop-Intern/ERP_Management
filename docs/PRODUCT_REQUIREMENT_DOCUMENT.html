@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Brothers Mobile Shop ERP - Product Requirement Document (PRD)</title>
+<style>
+  @page {
+    size: A4;
+    margin: 20mm 15mm 20mm 15mm;
+    @bottom-right {
+      content: "Page " counter(page) " of " counter(pages);
+      font-size: 8pt;
+      color: #64748b;
+    }
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+    color: #0f172a;
+    background: #ffffff;
+    line-height: 1.5;
+    font-size: 9.5pt;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Cover Page */
+  .cover-page {
+    page-break-after: always;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 40px 20px;
+    background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #450a0a 100%);
+    color: #ffffff;
+    border-radius: 12px;
+    margin-bottom: 30px;
+  }
+
+  .cover-header {
+    margin-top: 40px;
+  }
+
+  .cover-badge {
+    display: inline-block;
+    padding: 6px 16px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    font-size: 10pt;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #fef08a;
+    margin-bottom: 20px;
+  }
+
+  .cover-title {
+    font-size: 32pt;
+    font-weight: 800;
+    line-height: 1.15;
+    margin: 0 0 15px 0;
+    letter-spacing: -0.5px;
+  }
+
+  .cover-subtitle {
+    font-size: 15pt;
+    font-weight: 300;
+    color: #fecaca;
+    margin-bottom: 30px;
+  }
+
+  .cover-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    background: rgba(0, 0, 0, 0.25);
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-top: auto;
+  }
+
+  .meta-item {
+    font-size: 9pt;
+  }
+
+  .meta-item strong {
+    display: block;
+    color: #fef08a;
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 3px;
+  }
+
+  /* Typography */
+  h1 {
+    font-size: 18pt;
+    font-weight: 700;
+    color: #7f1d1d;
+    border-bottom: 2.5px solid #991b1b;
+    padding-bottom: 6px;
+    margin-top: 28px;
+    margin-bottom: 14px;
+    page-break-after: avoid;
+  }
+
+  h2 {
+    font-size: 13pt;
+    font-weight: 700;
+    color: #1e293b;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    border-left: 4px solid #991b1b;
+    padding-left: 8px;
+    page-break-after: avoid;
+  }
+
+  h3 {
+    font-size: 10.5pt;
+    font-weight: 600;
+    color: #334155;
+    margin-top: 14px;
+    margin-bottom: 6px;
+    page-break-after: avoid;
+  }
+
+  p {
+    margin-top: 0;
+    margin-bottom: 10px;
+    text-align: justify;
+  }
+
+  ul, ol {
+    margin-top: 0;
+    margin-bottom: 10px;
+    padding-left: 20px;
+  }
+
+  li {
+    margin-bottom: 4px;
+  }
+
+  /* Callouts & Cards */
+  .callout {
+    background: #fef2f2;
+    border-left: 4px solid #dc2626;
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+    margin: 14px 0;
+    font-size: 9pt;
+  }
+
+  .callout-info {
+    background: #f0f9ff;
+    border-left-color: #0284c7;
+  }
+
+  .callout-title {
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: #991b1b;
+  }
+  .callout-info .callout-title {
+    color: #0369a1;
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin: 14px 0;
+  }
+
+  .card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px;
+    page-break-inside: avoid;
+  }
+
+  .card-title {
+    font-weight: 700;
+    font-size: 10pt;
+    color: #7f1d1d;
+    margin-bottom: 6px;
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 8.5pt;
+    page-break-inside: avoid;
+  }
+
+  th {
+    background: #7f1d1d;
+    color: #ffffff;
+    font-weight: 600;
+    text-align: left;
+    padding: 8px 10px;
+    border: 1px solid #7f1d1d;
+  }
+
+  td {
+    padding: 7px 10px;
+    border: 1px solid #cbd5e1;
+    vertical-align: top;
+  }
+
+  tr:nth-child(even) td {
+    background: #f8fafc;
+  }
+
+  /* Badges */
+  .badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 7.5pt;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .badge-red { background: #fee2e2; color: #991b1b; }
+  .badge-blue { background: #e0f2fe; color: #0369a1; }
+  .badge-green { background: #dcfce7; color: #15803d; }
+  .badge-amber { background: #fef3c7; color: #b45309; }
+
+  /* Code & Diagram Blocks */
+  pre {
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 12px;
+    border-radius: 6px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 8pt;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    page-break-inside: avoid;
+  }
+
+  code {
+    font-family: 'Consolas', 'Courier New', monospace;
+    background: #f1f5f9;
+    color: #991b1b;
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-size: 8.5pt;
+  }
+
+  .toc {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 20px 0;
+  }
+
+  .toc-title {
+    font-size: 12pt;
+    font-weight: 700;
+    color: #7f1d1d;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #cbd5e1;
+    padding-bottom: 5px;
+  }
+
+  .toc-list {
+    list-style: none;
+    padding-left: 0;
+    column-count: 2;
+    column-gap: 20px;
+  }
+
+  .toc-list li {
+    margin-bottom: 6px;
+    font-size: 9pt;
+  }
+
+  .toc-list a {
+    color: #1e293b;
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .toc-list span {
+    color: #991b1b;
+    font-weight: 700;
+    margin-right: 6px;
+  }
+
+  .page-break {
+    page-break-before: always;
+  }
+</style>
+</head>
+<body>
+
+  <!-- COVER PAGE -->
+  <div class="cover-page">
+    <div class="cover-header">
+      <span class="cover-badge">Enterprise Product Requirements Document</span>
+      <h1 class="cover-title">Brothers Mobile Shop ERP System</h1>
+      <div class="cover-subtitle">Complete Multi-Branch Enterprise Resource Planning, POS, Service Repair & Financial Management Platform</div>
+    </div>
+
+    <div class="cover-meta-grid">
+      <div class="meta-item">
+        <strong>Document Version</strong>
+        v1.0.0 (Production Blueprint)
+      </div>
+      <div class="meta-item">
+        <strong>Target Stack</strong>
+        React 18 + Vite 5 + Node.js 20 + MongoDB 7
+      </div>
+      <div class="meta-item">
+        <strong>Architecture</strong>
+        Micro-Module Modular Monolith (28 Modules)
+      </div>
+      <div class="meta-item">
+        <strong>Date & Status</strong>
+        July 2026 | Approved Specification
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLE OF CONTENTS -->
+  <div class="toc">
+    <div class="toc-title">Table of Contents</div>
+    <ul class="toc-list">
+      <li><span>1.</span> <a href="#sec1">Executive Summary & Product Vision</a></li>
+      <li><span>2.</span> <a href="#sec2">User Personas & RBAC Matrix</a></li>
+      <li><span>3.</span> <a href="#sec3">System Architecture & Tech Stack</a></li>
+      <li><span>4.</span> <a href="#sec4">Comprehensive Module Breakdown (28 Modules)</a></li>
+      <li><span>5.</span> <a href="#sec5">Data Models & Entity Schemas</a></li>
+      <li><span>6.</span> <a href="#sec6">UI/UX Design Engine & 7 Themes</a></li>
+      <li><span>7.</span> <a href="#sec7">Integrations & Real-Time Engine</a></li>
+      <li><span>8.</span> <a href="#sec8">Non-Functional Requirements (NFRs)</a></li>
+      <li><span>9.</span> <a href="#sec9">DevOps & Deployment Architecture</a></li>
+      <li><span>10.</span> <a href="#sec10">Release Roadmap & KPIs</a></li>
+    </ul>
+  </div>
+
+  <!-- SECTION 1 -->
+  <h1 id="sec1">1. Executive Summary & Product Vision</h1>
+  <p><strong>Brothers Mobile Shop ERP</strong> is a purpose-built, high-performance Enterprise Resource Planning (ERP) platform designed specifically to meet the complex operational, financial, and inventory demands of mobile retail stores, authorized device repair centers, and mobile device wholesalers.</p>
+
+  <div class="callout">
+    <div class="callout-title">Core Value Proposition</div>
+    Unlike generic retail ERPs, Mobile Shop ERP manages individual device serial numbers (IMEI tracking) through every stage of the product lifecycle: inventory intake, retail sale, wholesale distribution, warranty claim, and diagnostic repair. It combines point-of-sale efficiency with double-entry accounting and HR payroll automation.
+  </div>
+
+  <h2>1.1 Strategic Objectives</h2>
+  <ul>
+    <li><strong>End-to-End Serial/IMEI Tracking:</strong> Eliminate device fraud, inventory shrinkage, and warranty disputes with 15-digit IMEI lifecycle tracking.</li>
+    <li><strong>Multi-Branch Governance:</strong> Seamlessly handle multi-store branch inventory transfers, centralized pricing control, and aggregated financial reports.</li>
+    <li><strong>Integrated Financial Accounting:</strong> Automated posting from POS sales, purchase orders, repair bills, and expense vouchers to double-entry general ledgers.</li>
+    <li><strong>Service & Repair Workflow:</strong> Digital job sheets, diagnostic updates, technician assignments, and cost estimation for customer repairs.</li>
+    <li><strong>Modern Dynamic Design:</strong> Instant switching across 7 custom design themes (including Neumorphism, Glassmorphism, and Neo Brutalism) to match brand preferences.</li>
+  </ul>
+
+  <!-- SECTION 2 -->
+  <h1 id="sec2">2. User Personas & Role-Based Access Control (RBAC)</h1>
+
+  <h2>2.1 User Personas</h2>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">1. Super Admin / Business Owner</div>
+      <p>Full system control, multi-branch revenue monitoring, audit log reviews, global settings, investor management, and financial statements.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">2. Branch Manager</div>
+      <p>Manages store operations, branch inventory counts, staff attendance approvals, local sales oversight, and stock transfer requests.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">3. POS Cashier / Sales Executive</div>
+      <p>Rapid checkout using barcode/IMEI scanner, invoice generation, customer due collection, thermal receipt printing, and sales return intake.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">4. Stock & Inventory Specialist</div>
+      <p>Catalog maintenance, supplier purchase intake, IMEI serial registration, stock transfers dispatch/receive, and low-stock alerts.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">5. Device Repair Technician</div>
+      <p>Repair job sheet diagnosis, labor & parts cost estimation, status updates (Received -> In Progress -> Repaired), and warranty checks.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">6. Accountant & HR Manager</div>
+      <p>Journal entries, trial balance, P&L generation, loan/investor schedules, staff payroll processing, leave approvals, and pay slip printing.</p>
+    </div>
+  </div>
+
+  <h2>2.2 Role-Based Permission Matrix (27 System Permissions)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Permission Scope</th>
+        <th>Super Admin</th>
+        <th>Branch Manager</th>
+        <th>POS Cashier</th>
+        <th>Stock Manager</th>
+        <th>Technician</th>
+        <th>Accountant</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>sales:create</code> / <code>sales:view</code></td>
+        <td><span class="badge badge-green">Yes</span></td>
+        <td><span class="badge badge-green">Yes</span></td>
+        <td><span class="badge badge-green">Yes</span></td>
+        <td><span class="badge badge-red">No</span></td>
+        <td><span class="badge badge-red">No</span></td>
+        <td><span class="badge badge-blue">View</span></td>
+      </tr>
+      <tr>
+        <td><code>sales:refund</code></td>
+        <td><span class="badge badge-green">Yes</span></td>
+        <td><span class="badge badge-green">Yes</span></td>
+        <td><span class="badge badge-amber">Approval</span></td>
+        <td><span class="badge badge-red">No</span></td>
+        <td><span class="badge badge-red">No</span></td>
+        <td><span class="badge badge-red">No</span></td>
+      </tr>
+      <tr>
+        <td><code>products:manage</code> / <code>imei:track</code></td>
+        <td><span class="badge badge-green">Yes</span></td>
+        <td><span class="badge badge-green">Yes</span></td>
+        <td><span class="badge badge-blue">View</span></td>
+        <td><span class="badge badge-green">Yes</span></td>
+        <td><span class="badge badge-blue">View</span></td>
+        <td><span class="badge badge-blue">View</span></td>
+      </tr>
+      <tr>
+        <td><code>repairs:assign</code> / <code>repairs:edit</code></td>
+        <td><span class="badge badge-green">Yes</span></td>
+        <td><span class="badge badge-green">Yes</span></td>
+        <td><span class="badge badge-red">No</span></td>
+        <td><span class="badge badge-red">No</span></td>
+        <td><span class="badge badge-green">Yes</span></td>
+        <td><span class="badge badge-red">No</span></td>
+      </tr>
+      <tr>
+        <td><code>accounting:journal</code> / <code>reports:financial</code></td>
+        <td><span class="badge badge-green">Yes</span></td>
+        <td><span class="badge badge-red">No</span></td>
+        <td><span class="badge badge-red">No</span></td>
+        <td><span class="badge badge-red">No</span></td>
+        <td><span class="badge badge-red">No</span></td>
+        <td><span class="badge badge-green">Yes</span></td>
+      </tr>
+      <tr>
+        <td><code>payroll:process</code> / <code>leaves:approve</code></td>
+        <td><span class="badge badge-green">Yes</span></td>
+        <td><span class="badge badge-amber">Leave Only</span></td>
+        <td><span class="badge badge-red">No</span></td>
+        <td><span class="badge badge-red">No</span></td>
+        <td><span class="badge badge-red">No</span></td>
+        <td><span class="badge badge-green">Yes</span></td>
+      </tr>
+      <tr>
+        <td><code>users:manage</code> / <code>settings:edit</code></td>
+        <td><span class="badge badge-green">Yes</span></td>
+        <td><span class="badge badge-red">No</span></td>
+        <td><span class="badge badge-red">No</span></td>
+        <td><span class="badge badge-red">No</span></td>
+        <td><span class="badge badge-red">No</span></td>
+        <td><span class="badge badge-red">No</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- SECTION 3 -->
+  <h1 id="sec3">3. System Architecture & Tech Stack</h1>
+
+  <h2>3.1 Technological Stack Breakdown</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Layer</th>
+        <th>Technology</th>
+        <th>Architectural Rationale</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Client Framework</strong></td>
+        <td>React 18 + Vite 5 (ESM)</td>
+        <td>Sub-second HMR development, optimal production bundle splitting, SPA speed.</td>
+      </tr>
+      <tr>
+        <td><strong>State Management</strong></td>
+        <td>Zustand + TanStack Query v5</td>
+        <td>Zustand for client theme & auth persistence; TanStack Query for server state caching.</td>
+      </tr>
+      <tr>
+        <td><strong>UI Components</strong></td>
+        <td>shadcn/ui + Tailwind v3 + AG Grid</td>
+        <td>Radix accessibility primitives, ERP-grade AG Grid data tables, dynamic theme engines.</td>
+      </tr>
+      <tr>
+        <td><strong>Backend Server</strong></td>
+        <td>Node.js 20 (ESM) + Express 4</td>
+        <td>Modular monolith pattern (`server/modules/<name>`), native async/await.</td>
+      </tr>
+      <tr>
+        <td><strong>Database Layer</strong></td>
+        <td>MongoDB 7 + Mongoose 8</td>
+        <td>Document schema flex for IMEI attributes, fast indexing, atomic transaction sessions.</td>
+      </tr>
+      <tr>
+        <td><strong>Real-Time Engine</strong></td>
+        <td>Server-Sent Events (SSE) + EventEmitter</td>
+        <td>Lightweight unidirectional live updates for stock alerts & notifications without Socket.io overhead.</td>
+      </tr>
+      <tr>
+        <td><strong>Validation & Auth</strong></td>
+        <td>Zod + JWT (Bearer + HTTP-Only Cookie)</td>
+        <td>Strict runtime API validation, zero-trust token auth, TOTP MFA support.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>3.2 Architectural Pattern: Modular Monolith</h2>
+  <pre>
+Mobile-Shop-ERP Architecture
+├── client/                      --> React 18 SPA (Vite 5)
+│   ├── src/components/ui/       --> Tailwind + Radix Primitives
+│   ├── src/pages/               --> Route Views (Dashboard, Sales, Accounting, etc.)
+│   ├── src/store/               --> Zustand (authStore, themeStore)
+│   └── src/utils/               --> EventEmitter, offlineDB (IndexedDB sync)
+└── server/                      --> Node.js 20 Express (ESM)
+    ├── config/                  --> DB, Env, Security, Swagger
+    ├── middleware/              --> Auth, Security Rate Limit, Zod Validator
+    ├── models/                  --> Shared Models (AuditLog, RepairTicket)
+    └── modules/                 --> 28 Feature Modules (Routes, Controller, Service, Model, Validator)
+        ├── sale/                --> POS Invoicing, Return, Wholesale
+        ├── imei/                --> Serial Tracker, Status Flow
+        ├── repair/              --> Job Sheet, Diagnostic Billing
+        └── accounting/          --> Double-Entry Ledger, P&L, Balance Sheet
+  </pre>
+
+  <!-- SECTION 4 -->
+  <div class="page-break"></div>
+  <h1 id="sec4">4. Comprehensive Module Breakdown (28 System Modules)</h1>
+
+  <h2>4.1 Sales & Point of Sale (POS) [<code>server/modules/sale</code>]</h2>
+  <ul>
+    <li><strong>Fast Checkout POS:</strong> Single-screen POS interface with instant barcode scanner integration and instant 15-digit IMEI lookup.</li>
+    <li><strong>Multi-Payment Splits:</strong> Supports Cash, Credit Card, Mobile Financial Services (MFS: bKash/Nagad), and Customer Credit/Due.</li>
+    <li><strong>Invoice Generation:</strong> Automatic generation of printable PDF invoices with custom store branding and thermal receipt printer support (80mm / 58mm).</li>
+    <li><strong>Sales Return & Refund:</strong> Restocking fee calculation, IMEI status restoration (`Sold` -> `In Stock`), and automated customer credit note issuance.</li>
+  </ul>
+
+  <h2>4.2 Wholesale Management [<code>server/modules/wholesale</code>]</h2>
+  <ul>
+    <li><strong>Volume Pricing Tiers:</strong> Custom volume discount matrices based on order quantity thresholds per product.</li>
+    <li><strong>Credit Limit Validation:</strong> Automated pre-sale checks against customer credit ceiling before wholesale order approval.</li>
+    <li><strong>Bulk Serial Reservation:</strong> One-click bulk selection and validation of IMEI lists for large wholesale dispatches.</li>
+  </ul>
+
+  <h2>4.3 Product Catalog & Inventory Master [<code>server/modules/catalog</code> & <code>product</code>]</h2>
+  <ul>
+    <li><strong>Taxonomy Management:</strong> Category, Brand, Model, and Variant hierarchies with custom attribute fields (RAM, Storage, Color).</li>
+    <li><strong>Pricing & Profit Margins:</strong> Purchase cost tracking, minimum retail selling price enforcement, and margin threshold warnings.</li>
+    <li><strong>Barcode Management:</strong> Internal barcode generation and sticker printing for accessories and non-IMEI inventory.</li>
+  </ul>
+
+  <h2>4.4 IMEI Serial Tracker & Lifecycle Passport [<code>server/modules/imei</code>]</h2>
+  <ul>
+    <li><strong>Unique Serial Control:</strong> Mandatory 15-digit IMEI registration for all mobile phone inventory intake.</li>
+    <li><strong>Lifecycle Status Flow:</strong> Strict state machine transitions: <code>In Stock</code> &rarr; <code>Sold</code> &rarr; <code>In Repair</code> &rarr; <code>Returned</code> &rarr; <code>Scrapped</code>.</li>
+    <li><strong>IMEI History Passport:</strong> Complete timeline audit showing vendor purchase invoice, stock movements, POS invoice, buyer profile, and service repair tickets.</li>
+    <li><strong>Bulk Excel Intake:</strong> High-speed CSV/Excel serial importer with instant checksum duplicate detection.</li>
+  </ul>
+
+  <h2>4.5 Multi-Branch Stock & Transfers [<code>server/modules/stock</code> & <code>branch</code>]</h2>
+  <ul>
+    <li><strong>Branch Stock Isolation:</strong> Real-time inventory visibility per store location.</li>
+    <li><strong>Transfer Order Workflow:</strong> Inter-branch stock transfer request, dispatch confirmation, in-transit status, and receiving verification.</li>
+    <li><strong>Low-Stock Alerts:</strong> Automated notification triggers when product quantity falls below defined safety stock thresholds.</li>
+  </ul>
+
+  <h2>4.6 Device Repair & Job Sheet Management [<code>server/modules/repair</code>]</h2>
+  <ul>
+    <li><strong>Digital Job Sheets:</strong> Ticket generation capturing device condition, passcode/pattern, physical flaws, and customer problem statement.</li>
+    <li><strong>Status Progression:</strong> <code>Received</code> &rarr; <code>Diagnosing</code> &rarr; <code>In Progress</code> &rarr; <code>Repaired</code> &rarr; <code>Delivered</code> &rarr; <code>Cancelled</code>.</li>
+    <li><strong>Billing Integration:</strong> Spare parts consumption from inventory and technician labor fees auto-posted to repair revenue ledgers.</li>
+  </ul>
+
+  <h2>4.7 Double-Entry Accounting & Financial Management [<code>server/modules/accounting</code>]</h2>
+  <ul>
+    <li><strong>Chart of Accounts:</strong> Hierarchical structure (Assets, Liabilities, Equity, Revenue, Expenses).</li>
+    <li><strong>Automated Postings:</strong> Sales invoices, wholesale orders, vendor purchases, repair bills, and payroll runs automatically generate journal entries.</li>
+    <li><strong>Financial Reports:</strong> Real-time General Ledger, Trial Balance, Profit & Loss Statement (P&L), and Balance Sheet generation.</li>
+  </ul>
+
+  <h2>4.8 HR, Attendance & Payroll [<code>server/modules/employee</code>, <code>attendance</code>, <code>leave</code>, <code>payroll</code>]</h2>
+  <ul>
+    <li><strong>Attendance Tracking:</strong> Daily check-in/check-out recording with overtime and late arrival computation.</li>
+    <li><strong>Leave Approval Hierarchy:</strong> Employee submission &rarr; Manager review &rarr; HR final approval with leave balance deduction.</li>
+    <li><strong>Monthly Payroll Processing:</strong> Itemized salary slip generation accounting for basic pay, bonuses, leave deductions, and advance adjustments.</li>
+  </ul>
+
+  <h2>4.9 Additional Enterprise Modules (Summary Matrix)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Module Name</th>
+        <th>Primary Functionality & Key Capabilities</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Supplier Management</strong></td>
+        <td>Vendor profiles, purchase orders, incoming serial intake, payable ledgers.</td>
+      </tr>
+      <tr>
+        <td><strong>Customer CRM</strong></td>
+        <td>Customer credit history, due collections, purchase frequency analytics.</td>
+      </tr>
+      <tr>
+        <td><strong>Warranty Management</strong></td>
+        <td>Warranty registration, duration tracking, claim replacement intake.</td>
+      </tr>
+      <tr>
+        <td><strong>Expense Control</strong></td>
+        <td>Petty cash vouchers, operational expense categories, receipt upload attachments.</td>
+      </tr>
+      <tr>
+        <td><strong>Investor Management</strong></td>
+        <td>Capital investment records, equity share percentages, dividend distribution.</td>
+      </tr>
+      <tr>
+        <td><strong>Loan Management</strong></td>
+        <td>Business loan tracking, interest schedule, repayment installment logs.</td>
+      </tr>
+      <tr>
+        <td><strong>Document Vault</strong></td>
+        <td>Encrypted storage for vendor contracts, employee IDs, and business licenses.</td>
+      </tr>
+      <tr>
+        <td><strong>Real-Time SSE Engine</strong></td>
+        <td>Server-Sent Events streaming live stock alerts, security logs, and repair tickets.</td>
+      </tr>
+      <tr>
+        <td><strong>Audit Logging</strong></td>
+        <td>Immutable security audit trail capturing user ID, IP address, action, and payload diff.</td>
+      </tr>
+      <tr>
+        <td><strong>System Reports</strong></td>
+        <td>Exportable analytics (PDF/Excel) for sales, inventory valuation, and top performers.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- SECTION 5 -->
+  <div class="page-break"></div>
+  <h1 id="sec5">5. Data Models & Entity Schemas</h1>
+
+  <h2>5.1 Core Database Schemas (Mongoose / MongoDB 7)</h2>
+
+  <h3>1. Product Schema (<code>server/modules/product/product.model.js</code>)</h3>
+  <pre>
+const productSchema = new Schema({
+  name: { type: String, required: true, trim: true, index: true },
+  sku: { type: String, required: true, unique: true, uppercase: true },
+  category: { type: Schema.Types.ObjectId, ref: 'Category', required: true },
+  brand: { type: Schema.Types.ObjectId, ref: 'Brand', required: true },
+  model: { type: Schema.Types.ObjectId, ref: 'Model', required: true },
+  hasImei: { type: Boolean, default: true },
+  costPrice: { type: Number, required: true, min: 0 },
+  retailPrice: { type: Number, required: true, min: 0 },
+  wholesalePrice: { type: Number, required: true, min: 0 },
+  minStockLevel: { type: Number, default: 5 },
+  isActive: { type: Boolean, default: true }
+}, { timestamps: true });
+  </pre>
+
+  <h3>2. IMEI Tracker Schema (<code>server/modules/imei/imei.model.js</code>)</h3>
+  <pre>
+const imeiSchema = new Schema({
+  imeiNumber: { type: String, required: true, unique: true, length: 15, index: true },
+  product: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
+  branch: { type: Schema.Types.ObjectId, ref: 'Branch', required: true },
+  status: {
+    type: String,
+    enum: ['IN_STOCK', 'SOLD', 'IN_REPAIR', 'RETURNED', 'SCRAPPED'],
+    default: 'IN_STOCK',
+    index: true
+  },
+  purchaseOrder: { type: Schema.Types.ObjectId, ref: 'Purchase' },
+  saleInvoice: { type: Schema.Types.ObjectId, ref: 'Sale' },
+  warrantyExpiry: { type: Date }
+}, { timestamps: true });
+  </pre>
+
+  <h3>3. Sale Invoice Schema (<code>server/modules/sale/sale.model.js</code>)</h3>
+  <pre>
+const saleSchema = new Schema({
+  invoiceNumber: { type: String, required: true, unique: true, index: true },
+  branch: { type: Schema.Types.ObjectId, ref: 'Branch', required: true },
+  customer: { type: Schema.Types.ObjectId, ref: 'Customer' },
+  soldBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  saleType: { type: String, enum: ['RETAIL', 'WHOLESALE'], default: 'RETAIL' },
+  items: [{
+    product: { type: Schema.Types.ObjectId, ref: 'Product' },
+    imei: { type: Schema.Types.ObjectId, ref: 'IMEI' },
+    quantity: { type: Number, default: 1 },
+    unitPrice: { type: Number, required: true },
+    subtotal: { type: Number, required: true }
+  }],
+  subTotal: { type: Number, required: true },
+  discount: { type: Number, default: 0 },
+  taxAmount: { type: Number, default: 0 },
+  grandTotal: { type: Number, required: true },
+  paidAmount: { type: Number, required: true },
+  dueAmount: { type: Number, default: 0 },
+  paymentMethod: { type: String, enum: ['CASH', 'CARD', 'MFS', 'DUE', 'SPLIT'] }
+}, { timestamps: true });
+  </pre>
+
+  <!-- SECTION 6 -->
+  <h1 id="sec6">6. UI/UX Design Engine & 7 Custom Themes</h1>
+  <p>The client application features a state-of-the-art Design System powered by Zustand (<code>client/src/store/themeStore.js</code>) allowing users to switch between 7 distinct UI modes in real time without reloading:</p>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">1. Flat Mode</div>
+      <p>Clean, minimal corporate UI with crisp borders and subtle shadows for standard ERP usage.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">2. Neumorphism</div>
+      <p>Soft extruded tactile surfaces with dual inset/outset drop shadows creating 3D tactile depth.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">3. Glassmorphism</div>
+      <p>Translucent backdrop blur cards (`backdrop-filter: blur(12px)`) with frosted white borders.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">4. Liquid Glass</div>
+      <p>Fluid glass gradients with vibrant refraction effects and semi-transparent containers.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">5. Neo Brutalism</div>
+      <p>High-contrast, bold 3px black borders, vibrant solid colors, and retro hard offset box shadows.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">6. Aurora</div>
+      <p>Dynamic glowing background mesh gradients with modern dark-mode glowing accents.</p>
+    </div>
+  </div>
+
+  <!-- SECTION 7 -->
+  <h1 id="sec7">7. Integrations & Real-Time Engine</h1>
+  <ul>
+    <li><strong>Server-Sent Events (SSE):</strong> Broadcasts instant notifications from `server/modules/sse` for low-stock alerts, invoice payouts, and repair completion.</li>
+    <li><strong>Browser Event Emitter:</strong> Decoupled client-side architecture using native browser event handling (`client/src/utils/EventEmitter.js`).</li>
+    <li><strong>Client-Side PDF Generator:</strong> High-performance receipt and invoice generation via `jsPDF` and `jspdf-autotable`.</li>
+    <li><strong>Offline Sync Architecture:</strong> Service Worker + IndexedDB wrapper (`offlineDB.js` & `offlineSync.js`) queues offline transactions and syncs automatically when network reconnects.</li>
+  </ul>
+
+  <!-- SECTION 8 -->
+  <h1 id="sec8">8. Non-Functional Requirements (NFRs)</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>NFR Category</th>
+        <th>Specification Requirement</th>
+        <th>Verification Method</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Performance</strong></td>
+        <td>API response time &lt; 100ms for 95% of queries. POS barcode lookup &lt; 50ms.</td>
+        <td>Load testing with k6 / Autocannon.</td>
+      </tr>
+      <tr>
+        <td><strong>Security</strong></td>
+        <td>Bcrypt password hashing (salt=10), JWT token refresh flow, TOTP 2FA, Helmet headers, magic-byte file upload validation.</td>
+        <td>OWASP ZAP security scan & Biome code audit.</td>
+      </tr>
+      <tr>
+        <td><strong>Data Integrity</strong></td>
+        <td>Atomic MongoDB transaction sessions across multi-step POS sale & inventory stock updates.</td>
+        <td>Integration test suite.</td>
+      </tr>
+      <tr>
+        <td><strong>Availability</strong></td>
+        <td>99.9% uptime target. Offline POS sales caching via Service Worker.</td>
+        <td>Health monitoring & offline status checks.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- SECTION 9 -->
+  <h1 id="sec9">9. DevOps & Deployment Architecture</h1>
+  <p>The system is packaged for containerized deployment via Docker and Docker Compose:</p>
+
+  <pre>
+# Production Deployment Architecture
+services:
+  mongodb:
+    image: mongo:7
+    ports: ["27017:27017"]
+    volumes: [mongo_data:/data/db]
+
+  server:
+    build: ./server
+    command: node server/server.js
+    ports: ["5000:5000"]
+    environment:
+      - PORT=5000
+      - MONGODB_URI=mongodb://mongodb:27017/mobile_shop_erp
+      - JWT_SECRET=${JWT_SECRET}
+
+  client:
+    build: ./client
+    ports: ["3000:80"]
+  </pre>
+
+  <!-- SECTION 10 -->
+  <h1 id="sec10">10. Release Roadmap & Key Metrics</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>Phase</th>
+        <th>Target Features</th>
+        <th>Status / Timeline</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Phase 1: Core ERP</strong></td>
+        <td>Auth, Catalog, Product, IMEI Tracker, Stock, POS Sales, Accounting.</td>
+        <td><span class="badge badge-green">Completed</span></td>
+      </tr>
+      <tr>
+        <td><strong>Phase 2: Enterprise Ops</strong></td>
+        <td>Multi-Branch, Repairs, HR/Payroll, Investor, Loan, SSE Stream, 7 Themes.</td>
+        <td><span class="badge badge-green">Completed</span></td>
+      </tr>
+      <tr>
+        <td><strong>Phase 3: Integrations</strong></td>
+        <td>SMS Gateway OTP, Thermal Printer direct USB driver, Advanced BI dashboards.</td>
+        <td><span class="badge badge-amber">Q4 2026 Target</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+</body>
+</html>

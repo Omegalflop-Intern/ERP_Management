@@ -1,155 +1,177 @@
 <div align="center">
 
-# Brothers Mobile Shop ERP
+![Brothers Mobile Shop ERP Banner](docs/assets/banner_header.svg)
 
-### Complete Enterprise Resource Planning System for Mobile Shop Management
-
-![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=white)
-![Node.js](https://img.shields.io/badge/Node.js-20-339933?style=for-the-badge&logo=node.js&logoColor=white)
-![MongoDB](https://img.shields.io/badge/MongoDB-7-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
-![Vite](https://img.shields.io/badge/Vite-5-646CFF?style=for-the-badge&logo=vite&logoColor=white)
-
+[![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=white)](https://react.dev)
+[![Node.js](https://img.shields.io/badge/Node.js-20-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org)
+[![MongoDB](https://img.shields.io/badge/MongoDB-7-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://mongodb.com)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![Vite](https://img.shields.io/badge/Vite-5-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg?style=for-the-badge)](LICENSE)
-[![Security](https://img.shields.io/badge/Security-Policy-red.svg?style=for-the-badge)](SECURITY.md)
-[![Contributing](https://img.shields.io/badge/Contributing-Guide-green.svg?style=for-the-badge)](CONTRIBUTING.md)
-[![Documentation PDF](https://img.shields.io/badge/PDF_Guide-Download-purple.svg?style=for-the-badge)](MOBILE_SHOP_ERP_SYSTEM_GUIDE.pdf)
 
 </div>
 
 ---
 
-## Overview
+## 🚀 Overview
 
-**Brothers Mobile Shop ERP** is a full-stack enterprise resource planning system built specifically for mobile phone retail and wholesale businesses. It covers sales, inventory, IMEI serial tracking, employee management, CRM, double-entry accounting, repair tracking, multi-branch operations, and more — with a modern React UI featuring 7 customizable design modes.
+**Brothers Mobile Shop ERP** is a full-stack, enterprise-grade Resource Planning and Point-of-Sale (POS) system engineered specifically for mobile phone retailers, device service repair shops, and mobile electronics wholesalers.
 
-> 📄 **Complete System PDF Guide:** For offline review, architecture breakdown, and end-to-end API documentation, download **[MOBILE_SHOP_ERP_SYSTEM_GUIDE.pdf](MOBILE_SHOP_ERP_SYSTEM_GUIDE.pdf)**.
+Unlike generic retail software, Mobile Shop ERP manages **individual 15-digit serial numbers (IMEI tracking)** throughout every operational stage: purchase intake, multi-branch stock allocation, retail checkout, wholesale distribution, warranty claim processing, and technician repair job sheets.
+
+> 📄 **Complete System Documentation & PRD:** Access full offline specifications, architecture diagrams, and end-to-end API guides in the [`docs/`](docs/) directory or download **[PRODUCT_REQUIREMENT_DOCUMENT.pdf](docs/PRODUCT_REQUIREMENT_DOCUMENT.pdf)** and **[MOBILE_SHOP_ERP_SYSTEM_GUIDE.pdf](docs/MOBILE_SHOP_ERP_SYSTEM_GUIDE.pdf)**.
 
 ---
 
-## System Access & Default Credentials
+## 📚 Documentation Hub (`docs/`)
 
-| Component | URL / Endpoint | Details |
+All architecture, product requirement documents, system guides, and presentation decks are organized in the [`docs/`](docs/) directory:
+
+| Document | Description | Direct Links |
+|----------|-------------|--------------|
+| 📄 **Product Requirement Document (PRD)** | Complete 28-module PRD, RBAC permissions, Mongoose schemas, NFRs | [PDF](docs/PRODUCT_REQUIREMENT_DOCUMENT.pdf) \| [Markdown](docs/PRODUCT_REQUIREMENT_DOCUMENT.md) \| [HTML](docs/PRODUCT_REQUIREMENT_DOCUMENT.html) |
+| 📘 **Complete System Guide** | End-to-end user manual, API endpoint specs, module walkthrough | [PDF](docs/MOBILE_SHOP_ERP_SYSTEM_GUIDE.pdf) \| [HTML](docs/MOBILE_SHOP_ERP_SYSTEM_GUIDE.html) |
+| 🏗️ **System Architecture** | Technical architectural diagrams & system component specifications | [HTML](docs/SYSTEM-ARCHITECTURE.html) |
+| 📑 **Full Project Specification** | Phase-by-phase development plan & engineering decision matrix | [Markdown](docs/PROJECT-SPEC.md) |
+| 📊 **Interactive Deck** | Executive presentation slides & visual platform overview | [HTML](docs/PRESENTATION.html) |
+
+---
+
+## ✨ Key System Features & Highlights
+
+### 📱 POS & Rapid Checkout
+- **Barcode & IMEI Scanner:** Instant lookup for products and 15-digit IMEI serial numbers.
+- **Multi-Payment Split:** Supports Cash, Card, Mobile Financial Services (bKash/Nagad), and Customer Credit/Due.
+- **Thermal Receipt Printing:** Instant 80mm/58mm thermal receipt rendering and client-side PDF invoice generation.
+- **Sales Return & Restocking:** Restocking fee computation, IMEI status restoration, and customer credit notes.
+
+### 📱 IMEI Serial Lifecycle Passport
+- **Unique Serial Control:** Mandatory 15-digit IMEI validation upon stock receipt.
+- **Strict State Machine:** `IN_STOCK` &rarr; `SOLD` &rarr; `IN_REPAIR` &rarr; `RETURNED` &rarr; `SCRAPPED`.
+- **Complete Timeline Audit:** Instant history tracking from vendor purchase invoice to retail customer POS sale and repair tickets.
+- **Bulk Excel Intake:** High-speed CSV/Excel importer with duplicate checksum detection.
+
+### 🛠️ Device Repair & Job Sheet System
+- **Digital Repair Tickets:** Captures physical flaws, passcode/pattern, problem description, and diagnostic notes.
+- **Status Workflow:** `Received` &rarr; `Diagnosing` &rarr; `In Progress` &rarr; `Repaired` &rarr; `Delivered`.
+- **Repair Billing:** Spare parts consumption from stock and technician labor fees posted directly to accounting revenue ledgers.
+
+### 💰 Double-Entry Financial Accounting
+- **Chart of Accounts:** Hierarchical Asset, Liability, Equity, Revenue, and Expense accounts.
+- **Automated Postings:** POS sales, purchases, repair bills, expenses, and payroll runs automatically generate general ledger journal entries.
+- **Financial Statements:** Live General Ledger, Trial Balance, Profit & Loss (P&L), and Balance Sheet generation.
+
+### 👥 HR, Attendance & Payroll
+- **Staff Directory:** Role-based profile management with base salary specifications.
+- **Attendance & Overtime:** Check-in/out tracking with automatic overtime and late penalty computation.
+- **Multi-Tier Leave Approvals:** Employee submission &rarr; Manager review &rarr; HR approval flow.
+- **Itemized Pay Slips:** Automated monthly payroll calculation with printable pay slips.
+
+### 🏢 Multi-Branch Inventory Governance
+- **Branch Stock Isolation:** Location-specific inventory control across multiple retail outlets.
+- **Inter-Branch Transfer Orders:** Transfer request, dispatch confirmation, in-transit state, and receiving verification.
+- **Low Stock Push Alerts:** Real-time push notifications when inventory drops below safety thresholds.
+
+---
+
+## 🎨 7 Dynamic UI Design Themes
+
+The frontend features 7 customizable design modes powered by Zustand (`client/src/store/themeStore.js`) allowing users to switch themes live without reloading:
+
+| Theme Mode | Visual Characteristic |
+|------------|-----------------------|
+| **Flat** | Minimal corporate UI with crisp borders and clean contrast |
+| **Neumorphism** | Soft extruded tactile 3D surfaces with inset/outset drop shadows |
+| **Glassmorphism** | Translucent backdrop blur (`backdrop-filter: blur(12px)`) with frosted glass borders |
+| **Liquid Glass** | Fluid gradient backdrop overlays with semi-transparent containers |
+| **Neo Brutalism** | High-contrast 3px solid black borders, retro offset shadows, bold retro colors |
+| **Aurora** | Dynamic glowing background mesh gradients with vibrant glowing accents |
+| **Glassmorphism Pro** | Premium frosted glass hierarchy with high-contrast readable typography |
+
+---
+
+## ⚡ System Access & Default Credentials
+
+| Component | Endpoint / URL | Details |
 |-----------|----------------|---------|
 | **Client Frontend Application** | `http://localhost:3000` | React 18 + Vite 5 Dashboard |
 | **Backend REST API** | `http://localhost:5000/api/v1` | Node.js 20 + Express 4 ESM Server |
-| **Interactive Swagger API Docs** | `http://localhost:5000/api/docs` | Live Swagger UI Documentation |
+| **Interactive Swagger API Docs** | `http://localhost:5000/api-docs` | Live Swagger UI Documentation |
 | **Database** | `mongodb://127.0.0.1:27017/mobile_shop_erp` | MongoDB 7 Connection |
 
-### Default Credentials (after seeding)
-- **Admin Username:** `admin` (Password configured via `SEED_PASSWORD_ADMIN` in `server/.env`)
-- **Manager Username:** `manager` (Password configured via `SEED_PASSWORD_MANAGER` in `server/.env`)
+### Seeded Credentials
+- **Admin Username:** `admin` (Password set via `SEED_PASSWORD_ADMIN` in `server/.env`)
+- **Manager Username:** `manager` (Password set via `SEED_PASSWORD_MANAGER` in `server/.env`)
 
 ---
 
-## Core Features Breakdown
+## 🛠️ Complete REST API Modules (28 Modules)
 
-### 📱 Sales & Point of Sale (POS)
-- POS interface with barcode scanner & instant IMEI search
-- Professional invoice generation with PDF export
-- Sales returns and customer refunds management
-- Wholesale order processing with custom volume pricing tiers
-- Thermal receipt printer compatibility
+All API endpoints are prefix-routed under `http://localhost:5000/api/v1`:
 
-### 📦 Inventory & IMEI Tracking
-- Product catalog organized by categories, brands, and models
-- Real-time stock levels with multi-branch stock transfers
-- Automated low-stock alerts and email notifications
-- Unique IMEI serial number tracking per device
-- Device IMEI lifecycle status: `In Stock` &rarr; `Sold` &rarr; `In Repair` &rarr; `Returned`
-- Bulk Excel/CSV import for products and IMEI serials
-
-### 🛠️ Device Repair Management
-- Job sheet creation for customer device repairs
-- Diagnostic issues tracking and estimated cost computation
-- Real-time repair status updates (`Received`, `In Progress`, `Repaired`, `Delivered`)
-- Repair billing linked directly to accounting revenue
-
-### 👥 HR, Attendance & Payroll
-- Employee management with role-based access control (RBAC)
-- Daily attendance check-in / check-out with automatic hours calculation
-- Leave application submission with multi-level approval flow
-- Monthly payroll generation with itemized salary slips
-
-### 💰 Accounting & Finance
-- Double-entry Chart of Accounts
-- General Ledger & Journal entries
-- Trial Balance, Profit & Loss (P&L), and Balance Sheet statements
-- Expense tracking with customized expense categories
-- Loan management and investor profit-sharing calculations
-
-### 📊 Business Analytics & Reports
-- Interactive charts for sales revenue and profit margins
-- Top-selling products and slow-moving inventory reports
-- Employee sales performance metrics
-- System audit activity logs
+| Module | Route Prefix | Primary Description |
+|--------|--------------|---------------------|
+| **Auth** | `/auth` | Direct login (`/login-direct`), OTP verification, refresh token flow, TOTP 2FA |
+| **User & Role** | `/users`, `/roles` | User account management, custom RBAC permissions matrix |
+| **Catalog** | `/catalog` | Product categories, brands, models, and measurement units |
+| **Product** | `/products` | Product master, SKUs, barcode generation, multi-tier pricing |
+| **IMEI Tracker** | `/imei` | 15-digit serial tracking, status flow, IMEI history passport |
+| **Stock** | `/stock` | Stock levels, low stock alerts, inter-branch transfer orders |
+| **Supplier** | `/suppliers` | Supplier profiles, due balances, purchase history |
+| **Purchase** | `/purchases` | Vendor purchase orders, incoming serial intake, AP posting |
+| **Sale (POS)** | `/sales` | POS transactions, thermal receipts, PDF invoices, sales returns |
+| **Wholesale** | `/wholesale` | Volume discount matrices, wholesale orders, credit checks |
+| **Customer (CRM)** | `/customers` | Customer CRM history, receivables ledger, credit limits |
+| **Warranty** | `/warranties` | Warranty registration, claim validation, replacement dispatch |
+| **Repair** | `/repairs` | Device repair job sheets, technician assignments, parts billing |
+| **Accounting** | `/accounting` | Double-entry journal entries, ledger, P&L, balance sheet |
+| **Expense** | `/expenses` | Office expenses, petty cash, voucher attachments |
+| **Investor** | `/investors` | Investor capital recording, equity ratios, profit distribution |
+| **Loan** | `/loans` | Business loans, interest schedules, repayment logs |
+| **Employee** | `/employees` | Staff directory, compensation structure, department specs |
+| **Attendance** | `/attendance` | Daily check-in/out logging, overtime hours computation |
+| **Leave** | `/leaves` | Employee leave requests, multi-tier approval workflow |
+| **Payroll** | `/payroll` | Monthly salary slip calculation, printable pay slips |
+| **Branch** | `/branches` | Multi-branch store configuration & stock allocations |
+| **Document Vault** | `/documentVault` | Document uploads, categorizations, attachment previews |
+| **Settings** | `/settings` | Store configuration, receipt headers/footers, design mode |
+| **Notification** | `/notifications` | Live notification feeds, stock alerts, audit events |
+| **SSE Stream** | `/sse` | Server-Sent Events stream for real-time push updates |
+| **Audit Logs** | `AuditLog` Model | Immutable security audit trail capturing user IP, action, diffs |
+| **Reports** | `/reports` | Analytics, profit margin reports, data exports |
 
 ---
 
-## 🛠️ Complete REST API Modules (26 Modules)
+## 💻 Local Quick Start Guide
 
-All REST endpoints are prefix-routed under `http://localhost:5000/api/v1`:
+### Prerequisites
+- **Node.js**: v20+ LTS
+- **MongoDB**: v7+ (running locally or via Docker)
+- **npm**: v10+
 
-| Module | Base Path | Description |
-|--------|-----------|-------------|
-| **Auth** | `/auth` | Direct login (`/login-direct`), OTP verification, password reset, logout |
-| **User & Role** | `/users`, `/roles` | User accounts, RBAC permissions matrix |
-| **Catalog** | `/catalog` | Categories, brands, models, and measurement units |
-| **Product** | `/products` | Product details, pricing, variants, cost margins |
-| **IMEI Tracker** | `/imei` | Serial tracking, status flow, IMEI history passport |
-| **Stock** | `/stock` | Inventory stock counts, low stock alerts, branch transfers |
-| **Supplier** | `/suppliers` | Supplier profiles, purchases, due balances |
-| **Purchase** | `/purchases` | Purchase orders, incoming inventory intake |
-| **Sale (POS)** | `/sales` | Retail sales, POS transactions, invoice generation |
-| **Wholesale** | `/wholesale` | Bulk orders, customized volume discount tiers |
-| **Customer (CRM)** | `/customers` | Customer history, due collections, CRM logs |
-| **Warranty** | `/warranties` | Warranty claim validation and replacement tracking |
-| **Repair** | `/repairs` | Device repair job sheets, technician assignments |
-| **Accounting** | `/accounting` | Journal entries, ledger, P&L, balance sheet |
-| **Expense** | `/expenses` | Office expenses, category vouchers |
-| **Investor** | `/investors` | Investor capital and profit share distribution |
-| **Loan** | `/loans` | Business loan records, interest, repayment schedules |
-| **Employee** | `/employees` | Staff directory, roles, compensation info |
-| **Attendance** | `/attendance` | Daily check-in/out tracking, overtime hours |
-| **Leave** | `/leaves` | Leave requests, multi-tier approvals |
-| **Payroll** | `/payroll` | Monthly salary calculation, printable pay slips |
-| **Branch** | `/branches` | Multi-branch management and branch stock allocations |
-| **Settings** | `/settings` | Store configuration, receipt templates, design mode |
-| **Notification** | `/notifications` | Live notifications, stock alerts, audit events |
-| **SSE** | `/sse` | Server-Sent Events stream for real-time updates |
-| **Reports** | `/reports` | Analytics, profit reports, export data |
-
----
-
-## Getting Started
-
-### Installation
-
+### 1. Repository Setup
 ```bash
-# Clone repository
 git clone https://github.com/Omegalflop-Intern/ERP_Management.git
 cd ERP_Management
 ```
 
-### Server Setup (Terminal 1)
-
+### 2. Backend Setup (Terminal 1)
 ```bash
 cd server
 npm install
 
-# Create environment config
+# Copy environment configuration
 cp .env.example .env
 
-# Seed default roles, settings & users
+# Seed default roles, system settings & initial users
 npm run seed
 
-# Start server in dev mode (Node --watch)
+# Start backend dev server (Node --watch)
 npm run dev
 ```
 *Backend server runs at `http://localhost:5000`*
 
-### Client Setup (Terminal 2)
-
+### 3. Frontend Setup (Terminal 2)
 ```bash
 cd client
 npm install
@@ -161,33 +183,35 @@ npm run dev
 
 ---
 
-## Docker Deployment
+## 🐳 Docker Deployment
 
-To build and run all services (MongoDB, Server API, and Client) via Docker:
+To launch all services (MongoDB, Server API, and Client Frontend) via Docker Compose:
 
 ```bash
+# Build and run containers in detached mode
 docker compose up -d --build
+
+# View container logs
+docker compose logs -f
 ```
 
 ---
 
-## Design Themes
+## 🛡️ Security Policy & Compliance
 
-The application includes 7 built-in design modes (accessible via the topbar mode switcher):
-
-- **Flat**: Minimal corporate UI
-- **Neumorphism**: Soft extruded tactile surfaces
-- **Glassmorphism & Glassmorphism Pro**: Frosted glass backdrop blur with gradient borders
-- **Liquid Glass**: Translucent fluid glass design
-- **Neo Brutalism**: Bold borders with retro offset box shadows
-- **Aurora**: Dynamic glowing gradient backgrounds
+- **Authentication:** Dual Bearer JWT token header and HTTP-Only cookies (`accessToken` & `refreshToken`).
+- **Data Validation:** Zod runtime schemas on all incoming requests (`server/middleware/validate.middleware.js`).
+- **File Validation:** Magic-byte file validation (`file-type` package) preventing MIME spoofing.
+- **Auditability:** Immutable audit logging tracking user IDs, actions, IP addresses, and payload diffs.
 
 ---
 
-## License
+## 📄 License
 
 Licensed under the [AGPL v3 License](LICENSE).
 
 <div align="center">
-  <b>Built with React 18, Node.js 20, and MongoDB 7</b>
+
+![Brothers Mobile Shop ERP Footer](docs/assets/banner_footer.svg)
+
 </div>
