@@ -21,7 +21,7 @@ const quotationSchema = new mongoose.Schema(
     netTotal: { type: Number, required: true },
     validUntil: { type: Date },
     status: { type: String, enum: ['DRAFT', 'SENT', 'ACCEPTED', 'EXPIRED', 'CONVERTED'], default: 'DRAFT' },
-    createdBY: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   },
   { timestamps: true }
 );

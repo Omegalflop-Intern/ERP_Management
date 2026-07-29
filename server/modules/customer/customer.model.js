@@ -7,10 +7,15 @@ const customerSchema = new mongoose.Schema(
     phone: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
       get: decryptText,
       set: encryptText,
+    },
+    phoneHash: {
+      type: String,
+      unique: true,
+      sparse: true,
+      index: true,
     },
     email: { type: String, trim: true, lowercase: true },
     address: {

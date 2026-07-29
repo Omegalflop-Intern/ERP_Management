@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { encryptText, decryptText } from '../../utils/crypto.utils.js';
 
 const employeeSchema = new mongoose.Schema(
   {
@@ -15,11 +16,20 @@ const employeeSchema = new mongoose.Schema(
     emergencyContact: { type: String, trim: true },
     address: { type: String, trim: true },
     bloodGroup: { type: String, enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', ''], default: '' },
-    nidNumber: { type: String, trim: true },
+    nidNumber: {
+      type: String,
+      trim: true,
+      get: decryptText,
+      set: encryptText,
+    },
     isActive: { type: Boolean, default: true },
     isDeleted: { type: Boolean, default: false },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toObject: { getters: true },
+    toJSON: { getters: true },
+  }
 );
 
 employeeSchema.index({ name: 'text', phone: 'text', designation: 'text', department: 'text' });

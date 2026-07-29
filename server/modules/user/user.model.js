@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { encryptText, decryptText } from '../../utils/crypto.utils.js';
 
 const userSchema = new mongoose.Schema(
   {
@@ -18,7 +19,12 @@ const userSchema = new mongoose.Schema(
     otpExpiresAt: { type: Date, select: false },
     otpAttempts: { type: Number, default: 0, select: false },
     otpLockedUntil: { type: Date, select: false },
-    mfaSecret: { type: String, select: false },
+    mfaSecret: {
+      type: String,
+      select: false,
+      get: decryptText,
+      set: encryptText,
+    },
     isMfaEnabled: { type: Boolean, default: false },
     mfaBackupCodes: [{ type: String, select: false }],
     failedLoginAttempts: { type: Number, default: 0 },
@@ -28,7 +34,11 @@ const userSchema = new mongoose.Schema(
     passwordResetExpires: { type: Date, select: false },
     isDeleted: { type: Boolean, default: false },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toObject: { getters: true },
+    toJSON: { getters: true },
+  }
 );
 
 export const User = mongoose.model('User', userSchema);

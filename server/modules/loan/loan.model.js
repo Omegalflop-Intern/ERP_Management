@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { encryptText, decryptText } from '../../utils/crypto.utils.js';
 
 const loanInstallmentSchema = new mongoose.Schema({
   installmentNo: { type: Number, required: true },
@@ -13,7 +14,12 @@ const loanSchema = new mongoose.Schema(
   {
     type: { type: String, enum: ['LOAN_TAKEN', 'LOAN_GIVEN'], default: 'LOAN_TAKEN' }, // LOAN_TAKEN (Lender) vs LOAN_GIVEN (Borrower)
     providerName: { type: String, required: true, trim: true }, // Lender Name or Borrower Name
-    accountNumber: { type: String, trim: true },
+    accountNumber: {
+      type: String,
+      trim: true,
+      get: decryptText,
+      set: encryptText,
+    },
     phone: { type: String, trim: true },
     loanAmount: { type: Number, required: true, min: 0.01 },
     interestRate: { type: Number, default: 0 },
@@ -26,7 +32,11 @@ const loanSchema = new mongoose.Schema(
     notes: { type: String },
     isDeleted: { type: Boolean, default: false },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toObject: { getters: true },
+    toJSON: { getters: true },
+  }
 );
 
 const loanRepaymentSchema = new mongoose.Schema(

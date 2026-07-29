@@ -52,6 +52,8 @@ const transactionSchema = new mongoose.Schema(
     cashierUsername: { type: String },
     sellerName: { type: String },
     sellerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    publicToken: { type: String, index: true, sparse: true },
+    tokenExpiresAt: { type: Date },
     isDeleted: { type: Boolean, default: false },
   },
   { timestamps: true }
