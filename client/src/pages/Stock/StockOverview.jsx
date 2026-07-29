@@ -61,15 +61,12 @@ export default function StockOverview() {
 
   const isLoading = loadingInventory || loadingProducts;
 
-  // Filter items
   const imeiProductIds = new Set(
     inventoryUnits.map((u) => u.productId?._id || u.productId).filter(Boolean)
   );
 
-  // Build unified stock item list
   const unifiedItems = [];
 
-  // 1. IMEI Units
   inventoryUnits.forEach((u) => {
     const prod = u.productId && typeof u.productId === 'object' ? u.productId : {};
     unifiedItems.push({
@@ -89,7 +86,6 @@ export default function StockOverview() {
     });
   });
 
-  // 2. Bulk / non-IMEI Products
   products.forEach((p) => {
     if (!imeiProductIds.has(p._id)) {
       unifiedItems.push({
@@ -110,7 +106,6 @@ export default function StockOverview() {
     }
   });
 
-  // Calculate high-level summary KPIs
   const availableItems = unifiedItems.filter((i) => i.status === 'Available');
   const soldOutItems = unifiedItems.filter((i) => i.status === 'Sold Out');
   const totalAvailablePcs = availableItems.reduce((acc, i) => acc + i.qty, 0);
@@ -119,7 +114,6 @@ export default function StockOverview() {
   const imeiCount = availableItems.filter((i) => !i.isBulk).length;
   const bulkCount = availableItems.filter((i) => i.isBulk).reduce((a, b) => a + b.qty, 0);
 
-  // Apply Search & Filters
   const filteredItems = unifiedItems.filter((item) => {
     const query = search.toLowerCase().trim();
     const matchSearch =
