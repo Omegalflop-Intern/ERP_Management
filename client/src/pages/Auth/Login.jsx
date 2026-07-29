@@ -194,7 +194,7 @@ export default function Login() {
       } else {
         localStorage.removeItem('rememberedLogin');
       }
-      if (result?.requiresVerification) {
+      if (result?.requiresOtp) {
         navigate('/verify-email', { state: { email: result.email } });
         return;
       }
