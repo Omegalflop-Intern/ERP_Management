@@ -50,8 +50,12 @@ export const printServerInfo = (port, env, protocol = 'http') => {
   const nodeVer = process.version;
   const platform = `${os.platform()} (${os.arch()})`;
   const ram = `${(os.freemem() / (1024 ** 3)).toFixed(1)} GB free / ${(os.totalmem() / (1024 ** 3)).toFixed(1)} GB`;
-  const apiUrl = `${protocol}://localhost:${port}/api/v1`;
-  const clientUrl = `${protocol}://localhost:3000`;
+  const apiUrl = process.env.NODE_ENV === 'production'
+    ? `${process.env.APP_URL || `${protocol}://localhost:${port}`}/api/v1`
+    : `${protocol}://localhost:${port}/api/v1`;
+  const clientUrl = process.env.NODE_ENV === 'production'
+    ? (process.env.CLIENT_URL || process.env.APP_URL || `${protocol}://localhost:3000`)
+    : `${protocol}://localhost:3000`;
   const apiPad = ' '.repeat(Math.max(0, 57 - apiUrl.length));
   const clientPad = ' '.repeat(Math.max(0, 51 - clientUrl.length));
 

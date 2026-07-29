@@ -58,13 +58,10 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Trust nginx reverse proxy — required for correct IP detection and secure cookies behind proxy
 app.set('trust proxy', 1);
 
-// In production: redirect HTTP → HTTPS
 if (process.env.NODE_ENV === 'production') {
   app.use((req, res, next) => {
-    // x-forwarded-proto is set by nginx when proxying
     if (req.headers['x-forwarded-proto'] === 'http') {
       return res.redirect(301, `https://${req.headers.host}${req.url}`);
     }
@@ -72,25 +69,26 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
+const productionOrigins = [process.env.APP_URL, process.env.CLIENT_URL]
+  .filter(Boolean)
+  .map((u) => u.trim().replace(/\/+$/, ''));
+
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: 'cross-origin' }, // Allow assets from same server across ports
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:", "http:"],
+      imgSrc: ["'self'", 'data:', 'https:', 'http:'],
       connectSrc: [
         "'self'",
-        "http://localhost:3000",
-        "https://localhost:3000",
-        "http://localhost:5000",
-        "https://localhost:5000",
-        // Production domain — set dynamically from env
-        ...(process.env.APP_URL ? [process.env.APP_URL] : []),
-        ...(process.env.CLIENT_URL ? [process.env.CLIENT_URL] : []),
+        ...(process.env.NODE_ENV !== 'production'
+          ? ['http://localhost:3000', 'https://localhost:3000', 'http://localhost:5000', 'https://localhost:5000', 'http://localhost:5173']
+          : []),
+        ...productionOrigins,
       ],
-      fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
+      fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
       frameSrc: ["'none'"],
@@ -103,35 +101,32 @@ app.use(helmet({
   },
   referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
 }));
+
 app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
+
 morgan.token('url', (req) => (req.originalUrl || req.url).replace(/([?&]token=)[^&]+/g, '$1[REDACTED]'));
-// Use 'combined' format in production for proper log files, 'dev' in development
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/uploads', (req, res, next) => {
   if (process.env.NODE_ENV === 'production') {
     const referer = req.headers.referer || req.headers.origin || '';
-    const allowedReferers = [
-      process.env.CLIENT_URL,
-      process.env.APP_URL,
-      'http://localhost:3000',
-      'https://localhost:3000',
-      'http://localhost:5000',
-      'https://localhost:5000',
-    ].filter(Boolean);
-    if (referer && !allowedReferers.some(r => referer.startsWith(r))) {
+    const allowedReferers = [process.env.CLIENT_URL, process.env.APP_URL, process.env.ALLOWED_ORIGIN].filter(Boolean);
+    if (allowedReferers.length === 0) {
+      console.warn('[Uploads] No CLIENT_URL/APP_URL set — /uploads requests are unprotected in production.');
+    }
+    if (referer && !allowedReferers.some((r) => referer.startsWith(r))) {
       return res.status(403).json({ success: false, message: 'Forbidden' });
     }
   }
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   next();
 }, express.static(path.join(__dirname, 'uploads')));
+
 app.use('/api', apiLimiter);
 
-// Root Landing Route
 app.get('/', (req, res) => {
   if (req.accepts('html')) {
     return res.send(renderServerLandingPage(env.NODE_ENV || 'development'));
@@ -140,20 +135,19 @@ app.get('/', (req, res) => {
     success: true,
     message: 'Mobile Shop ERP API Server is running',
     version: '1.0.0',
-    documentation: '/api/docs',
+    documentation: '/api-docs',
     health: '/api/v1/health',
   });
 });
 
-// API Root Route - redirect HTML callers to Swagger docs, return JSON otherwise
 app.get(['/api', '/api/v1'], (req, res) => {
   if (req.accepts('html')) {
-    return res.redirect('/api/docs');
+    return res.redirect('/api-docs');
   }
   res.json({
     success: true,
     message: 'Mobile Shop ERP API Base Endpoint',
-    documentation: '/api/docs',
+    documentation: '/api-docs',
     health: '/api/v1/health',
   });
 });
@@ -196,10 +190,8 @@ app.get('/healthz', async (req, res) => {
   });
 });
 
-// API Documentation
 setupSwagger(app);
 
-// Audit logs endpoint
 app.get('/api/v1/audit-logs', authenticate, authorize('ADMIN', 'MANAGER'), async (req, res, next) => {
   try {
     const { page = 1, limit = 50, module, userId, action, from, to } = req.query;
@@ -208,31 +200,25 @@ app.get('/api/v1/audit-logs', authenticate, authorize('ADMIN', 'MANAGER'), async
   } catch (error) { next(error); }
 });
 
-// Explicit Hard-Delete Prohibition Guard for AuditLog API
 app.delete('/api/v1/audit-logs*', authenticate, (req, res) => {
   return res.status(403).json({
     success: false,
-    message: 'Hard deletion of entries in the AuditLog collection is strictly prohibited at both the API and database levels.',
+    message: 'Hard deletion of audit log entries is strictly prohibited.',
   });
 });
 
-// System Analytics endpoint
 app.get('/api/v1/system/analytics', authenticate, authorize('ADMIN'), async (req, res, next) => {
   try {
     const serverStartedAt = global.__serverStartTime || new Date();
     const uptimeSeconds = Math.floor((Date.now() - serverStartedAt.getTime()) / 1000);
 
-    // Memory
     const memTotal = os.totalmem();
     const memFree = os.freemem();
     const memUsed = memTotal - memFree;
     const processMem = process.memoryUsage();
-
-    // CPU
     const cpus = os.cpus();
     const loadAvg = os.loadavg();
 
-    // DB stats
     let dbStats = { collections: 0, documents: 0, storageSize: 0, dataSize: 0 };
     try {
       const admin = mongoose.connection.db.admin();
@@ -247,7 +233,6 @@ app.get('/api/v1/system/analytics', authenticate, authorize('ADMIN'), async (req
       };
     } catch (e) {}
 
-    // Collection breakdown
     let collections = [];
     try {
       const collList = await mongoose.connection.db.listCollections().toArray();
@@ -268,7 +253,6 @@ app.get('/api/v1/system/analytics', authenticate, authorize('ADMIN'), async (req
       collections.sort((a, b) => b.size - a.size);
     } catch (e) {}
 
-    // Uploads size (approximate)
     let uploadsSize = 0;
     try {
       const fs = await import('fs');
@@ -322,8 +306,9 @@ app.get('/api/v1/system/analytics', authenticate, authorize('ADMIN'), async (req
   } catch (error) { next(error); }
 });
 
-// Initialize background cron jobs
-startLoanReminderJob();
+if (process.env.NODE_ENV !== 'test') {
+  startLoanReminderJob();
+}
 
 app.use('/api/v1/auth', authLimiter, authRoutes);
 app.use('/api/v1/users', userRoutes);
@@ -353,12 +338,10 @@ app.use('/api/v1/investors', auditDiffInterceptor('Investor', () => Investor), i
 app.use('/api/v1/expenses', expenseRoutes);
 app.use('/api/v1/loans', auditDiffInterceptor('Loan', () => Loan), loanRoutes);
 app.use('/api/v1/sse', sseRoutes);
-// ── Production: Serve built React app & SPA fallback ──────────────────────
+
 if (process.env.NODE_ENV === 'production') {
   const clientDist = path.join(__dirname, '../client/dist');
-  // Serve static assets (JS, CSS, images)
   app.use(express.static(clientDist));
-  // SPA catch-all: all non-API routes serve index.html (React Router handles routing)
   app.get('*', (req, res, next) => {
     if (req.originalUrl.startsWith('/api') || req.originalUrl.startsWith('/uploads')) {
       return next();
@@ -367,7 +350,6 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-// 404 Fallback Handler for unmatched routes
 app.use((req, res) => {
   res.status(404).json({
     success: false,

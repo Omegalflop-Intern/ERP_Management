@@ -2,7 +2,18 @@ import crypto from 'crypto';
 import { env } from '../config/env.config.js';
 
 const ALGORITHM = 'aes-256-gcm';
-const SECRET_KEY = crypto.scryptSync(env.JWT_SECRET || 'mobile-shop-erp-secret-key-salt-32', 'salt', 32);
+const rawSecret = env.JWT_SECRET || 'mobile-shop-erp-secret-key-salt-32';
+if (env.NODE_ENV === 'production' && !env.JWT_SECRET) {
+  console.error('[CRITICAL SECURITY WARNING]: JWT_SECRET is missing in production environment!');
+}
+
+const SECRET_KEY = crypto.scryptSync(rawSecret, 'salt', 32);
+
+export const hashText = (text) => {
+  if (!text || typeof text !== 'string') return text;
+  const normalized = text.trim().toLowerCase();
+  return crypto.createHmac('sha256', SECRET_KEY).update(normalized).digest('hex');
+};
 
 export const encryptText = (text) => {
   if (!text) return text;
@@ -37,3 +48,4 @@ export const decryptText = (text) => {
     return text;
   }
 };
+

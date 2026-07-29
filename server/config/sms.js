@@ -3,7 +3,7 @@ import { User } from '../modules/user/user.model.js';
 
 const SMS_API_URL = process.env.SMS_API_URL || '';
 const SMS_API_KEY = process.env.SMS_API_KEY || '';
-const SMS_SENDER_ID = process.env.SMS_SENDER_ID || 'BrothersMob';
+const SMS_SENDER_ID = process.env.SMS_SENDER_ID || '';
 const APP_NAME = process.env.APP_NAME || 'Brothers Mobile';
 
 /**
@@ -17,12 +17,15 @@ export const sendSMS = async (toPhone, textMessage) => {
 
   if (SMS_API_URL && SMS_API_KEY) {
     try {
-      const response = await axios.post(SMS_API_URL, {
+      const payload = {
         api_key: SMS_API_KEY,
-        sender_id: SMS_SENDER_ID,
         to: phone,
-        message: textMessage,
-      }, { timeout: 8000 });
+        msg: textMessage,
+      };
+      if (SMS_SENDER_ID) {
+        payload.sender_id = SMS_SENDER_ID;
+      }
+      const response = await axios.post(SMS_API_URL, payload, { timeout: 8000 });
 
       console.log(`[SMS Gateway] SMS successfully sent to ${phone}. Provider Response:`, response.data);
       return { success: true, data: response.data };
@@ -84,11 +87,18 @@ export const sendAdminSMSNotification = async (messageText) => {
 /**
  * Send Purchase Receipt SMS to Customer
  */
-export const sendCustomerInvoiceSMS = async (toPhone, customerName, invoiceNo, grandTotal) => {
+export const sendCustomerInvoiceSMS = async (toPhone, customerName, invoiceNo, grandTotal, publicToken) => {
   if (!toPhone) return;
   const name = customerName || 'Valued Customer';
   const total = grandTotal ? `৳${Number(grandTotal).toLocaleString()}` : '';
-  const msg = `Dear ${name}, thank you for shopping at ${APP_NAME}! Your invoice #${invoiceNo} (${total}) is processed. Receipt: http://localhost:3000/sales`;
+  const baseUrl = process.env.CLIENT_URL || process.env.APP_URL || '';
+  let receiptLink = '';
+  if (baseUrl && publicToken) {
+    receiptLink = ` Invoice: ${baseUrl}/invoice/${publicToken}`;
+  } else if (baseUrl) {
+    receiptLink = ` Receipt: ${baseUrl}/sales`;
+  }
+  const msg = `Dear ${name}, thank you for shopping at ${APP_NAME}! Your invoice #${invoiceNo} (${total}) is processed.${receiptLink}`;
   return sendSMS(toPhone, msg);
 };
 

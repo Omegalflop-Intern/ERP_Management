@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "seed": "node utils/system/seed.js"
+    "seed": "node utils/system/seed.js",
+    "test": "NODE_ENV=test node --test tests/*.test.js"
   },
   "keywords": [],
   "author": "",

@@ -9,7 +9,7 @@ export const connectDB = async () => {
     console.log(`[MongoDB Connected]: ${conn.connection.host}`);
     return true;
   } catch (error) {
-    console.warn(`[MongoDB Warning]: Could not connect to real MongoDB (${error.message}). ERP running with memory DB fallback.`);
+    console.error(`[MongoDB Error]: Could not connect to MongoDB (${error.message}). Please check database configuration.`);
     return false;
   }
 };
