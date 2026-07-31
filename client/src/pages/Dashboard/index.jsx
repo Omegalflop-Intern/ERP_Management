@@ -118,7 +118,7 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-          Welcome back, {user?.username}
+          Welcome back, {user?.fullName || user?.username}
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Here's what's happening at your shop today.

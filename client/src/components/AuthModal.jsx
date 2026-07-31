@@ -38,7 +38,7 @@ export default function AuthModal({ onClose, onLoginSuccess }) {
       setLoading(false);
 
       toast.success('2-Step Verification Successful!', {
-        description: `Welcome back, ${json.user.username}`,
+        description: `Welcome back, ${json.user.fullName || json.user.username}`,
       });
       onLoginSuccess(json.user, json.token);
       onClose();

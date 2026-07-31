@@ -27,7 +27,7 @@ export const useAuthStore = create(
           localStorage.setItem('user', JSON.stringify(userData));
           set({ user: userData, token: token || null, loading: false });
 
-          toast.success(`Welcome back, ${userData.username}!`);
+          toast.success(`Welcome back, ${userData.fullName || userData.username}!`);
           return userData;
         } catch (error) {
           set({ loading: false });
