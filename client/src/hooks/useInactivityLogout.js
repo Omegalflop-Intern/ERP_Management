@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { useAuthStore } from '@/store/authStore';
 
 const INACTIVITY_TIMEOUT_MS = 60 * 60 * 1000; // 60 minutes
-const WARNING_BEFORE_MS = 2 * 60 * 1000;       // warn 2 minutes before logout
+const WARNING_BEFORE_MS = 2 * 60 * 1000; // warn 2 minutes before logout
 const ACTIVITY_EVENTS = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'];
 
 export function useInactivityLogout() {
@@ -69,7 +69,9 @@ export function useInactivityLogout() {
       }
     };
 
-    ACTIVITY_EVENTS.forEach((event) => window.addEventListener(event, onActivity, { passive: true }));
+    ACTIVITY_EVENTS.forEach((event) =>
+      window.addEventListener(event, onActivity, { passive: true })
+    );
 
     return () => {
       clearTimers();

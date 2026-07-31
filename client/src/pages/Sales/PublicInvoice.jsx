@@ -11,7 +11,12 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import axios from 'axios';
-import { InvoiceA4Full, InvoiceA4Half, InvoiceReceipt, InvoiceThermal } from '../../components/sales/Invoice';
+import {
+  InvoiceA4Full,
+  InvoiceA4Half,
+  InvoiceReceipt,
+  InvoiceThermal,
+} from '../../components/sales/Invoice';
 import { Button } from '../../components/ui/button';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
@@ -28,7 +33,11 @@ export default function PublicInvoice() {
   const printRef = useRef(null);
   const [printSize, setPrintSize] = useState('a4');
 
-  const { data: sale, isLoading, error } = useQuery({
+  const {
+    data: sale,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['publicInvoice', token],
     queryFn: async () => {
       const res = await axios.get(`${API_URL}/sales/public/${token}`);

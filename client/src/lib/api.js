@@ -24,7 +24,11 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const res = await axios.post(`${API_URL}/auth/refresh-token`, {}, { withCredentials: true });
+        const res = await axios.post(
+          `${API_URL}/auth/refresh-token`,
+          {},
+          { withCredentials: true }
+        );
         const { token } = res.data.data;
 
         if (token) {
