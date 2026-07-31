@@ -22,11 +22,12 @@ export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { styled } = useTheme();
+  const [period, setPeriod] = React.useState('7d');
 
   const { data: dashboardData, isLoading } = useQuery({
-    queryKey: ['dashboard'],
+    queryKey: ['dashboard', period],
     queryFn: async () => {
-      const res = await api.get('/finance/dashboard');
+      const res = await api.get('/finance/dashboard', { params: { period } });
       return res.data;
     },
     staleTime: 30000,
@@ -156,6 +157,8 @@ export default function Dashboard() {
         salesTrendData={charts.salesTrendData || []}
         dueTrendData={charts.dueTrendData || []}
         brandDistribution={charts.brandDistribution || []}
+        period={period}
+        onPeriodChange={setPeriod}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

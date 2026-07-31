@@ -117,38 +117,130 @@ router.get('/dashboard', async (req, res, next) => {
       totalDueAmount = custDue[0]?.due || 0;
     } catch {}
 
-    // Real sales & due trend (last 7 days)
+    // Real sales & due trend (24h, 7d, 30d, 90d)
     let salesTrendData = [];
     let dueTrendData = [];
     try {
+      const period = req.query.period || '7d';
       const now = new Date();
-      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-      for (let i = 6; i >= 0; i--) {
-        const d = new Date(now);
-        d.setDate(d.getDate() - i);
-        d.setHours(0, 0, 0, 0);
-        const nextD = new Date(d);
-        nextD.setDate(nextD.getDate() + 1);
 
-        const daySales = await Transaction.aggregate([
-          { $match: { isDeleted: false, txType: 'SALE', createdAt: { $gte: d, $lt: nextD } } },
-          { $group: { _id: null, revenue: { $sum: '$netTotal' }, due: { $sum: '$paymentBreakdown.dueAmount' }, count: { $sum: 1 } } },
-        ]);
+      if (period === '24h') {
+        const startTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const transactions = await Transaction.find({
+          isDeleted: false,
+          txType: 'SALE',
+          createdAt: { $gte: startTime },
+        }).select('netTotal paymentBreakdown.dueAmount createdAt');
 
-        const rev = daySales[0]?.revenue || 0;
-        const due = daySales[0]?.due || 0;
+        const slots = [];
+        for (let i = 23; i >= 0; i--) {
+          const slotTime = new Date(now.getTime() - i * 60 * 60 * 1000);
+          const hourLabel = slotTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+          slots.push({
+            year: slotTime.getFullYear(),
+            month: slotTime.getMonth(),
+            date: slotTime.getDate(),
+            hour: slotTime.getHours(),
+            day: hourLabel,
+            revenue: 0,
+            due: 0,
+            sales: 0,
+          });
+        }
 
-        salesTrendData.push({
-          day: days[d.getDay()],
-          revenue: rev,
-          sales: daySales[0]?.count || 0,
+        transactions.forEach((tx) => {
+          const txDate = new Date(tx.createdAt);
+          const y = txDate.getFullYear();
+          const m = txDate.getMonth();
+          const d = txDate.getDate();
+          const h = txDate.getHours();
+
+          const matchingSlot = slots.find(
+            (s) => s.year === y && s.month === m && s.date === d && s.hour === h
+          );
+          if (matchingSlot) {
+            const rev = tx.netTotal || 0;
+            const due = tx.paymentBreakdown?.dueAmount || 0;
+            matchingSlot.revenue += rev;
+            matchingSlot.due += due;
+            matchingSlot.sales += 1;
+          }
         });
 
-        dueTrendData.push({
-          day: days[d.getDay()],
-          dueAmount: due,
-          paidAmount: Math.max(0, rev - due),
+        salesTrendData = slots.map((s) => ({
+          day: s.day,
+          revenue: s.revenue,
+          sales: s.sales,
+        }));
+
+        dueTrendData = slots.map((s) => ({
+          day: s.day,
+          dueAmount: s.due,
+          paidAmount: Math.max(0, s.revenue - s.due),
+        }));
+      } else {
+        const numDays = period === '30d' ? 30 : period === '90d' ? 90 : 7;
+        const startTime = new Date(now);
+        startTime.setDate(startTime.getDate() - (numDays - 1));
+        startTime.setHours(0, 0, 0, 0);
+
+        const transactions = await Transaction.find({
+          isDeleted: false,
+          txType: 'SALE',
+          createdAt: { $gte: startTime },
+        }).select('netTotal paymentBreakdown.dueAmount createdAt');
+
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+        const slots = [];
+        const slotMap = {};
+
+        for (let i = numDays - 1; i >= 0; i--) {
+          const d = new Date(now);
+          d.setDate(d.getDate() - i);
+          d.setHours(0, 0, 0, 0);
+
+          const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+          const label = numDays === 7 
+            ? dayNames[d.getDay()] 
+            : `${d.getDate()} ${monthNames[d.getMonth()]}`;
+
+          const slot = {
+            dateStr: key,
+            day: label,
+            revenue: 0,
+            due: 0,
+            sales: 0,
+          };
+          slots.push(slot);
+          slotMap[key] = slot;
+        }
+
+        transactions.forEach((tx) => {
+          const txDate = new Date(tx.createdAt);
+          const key = `${txDate.getFullYear()}-${txDate.getMonth()}-${txDate.getDate()}`;
+          const matchingSlot = slotMap[key];
+          if (matchingSlot) {
+            const rev = tx.netTotal || 0;
+            const due = tx.paymentBreakdown?.dueAmount || 0;
+            matchingSlot.revenue += rev;
+            matchingSlot.due += due;
+            matchingSlot.sales += 1;
+          }
         });
+
+        salesTrendData = slots.map((s) => ({
+          day: s.day,
+          revenue: s.revenue,
+          sales: s.sales,
+        }));
+
+        dueTrendData = slots.map((s) => ({
+          day: s.day,
+          dueAmount: s.due,
+          paidAmount: Math.max(0, s.revenue - s.due),
+        }));
       }
     } catch {}
 
