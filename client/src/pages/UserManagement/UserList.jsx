@@ -87,7 +87,6 @@ export default function UserList() {
         <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
         <input
           type="text"
-          placeholder="Search users..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className={`w-full pl-10 pr-4 py-2 ${inputCls}`}
@@ -250,17 +249,29 @@ function UserFormModal({ user, onClose, onSuccess }) {
 
   const mutation = useMutation({
     mutationFn: async (data) => {
+      const payload = {
+        ...data,
+        phone: data.phone?.trim() ? data.phone.trim() : undefined,
+        fullName: data.fullName?.trim() ? data.fullName.trim() : undefined,
+      };
       if (user) {
-        const { password, ...rest } = data;
+        const { password, ...rest } = payload;
         return api.put(`/users/${user._id}`, rest);
       }
-      return api.post('/users', data);
+      return api.post('/users', payload);
     },
     onSuccess: () => {
-      toast.success(user ? 'User updated' : 'User created! Verification OTP sent to email.');
+      toast.success(user ? 'User updated' : 'User created successfully!');
       onSuccess();
     },
-    onError: (e) => toast.error(e.response?.data?.message || 'Failed'),
+    onError: (e) => {
+      const errorList = e.response?.data?.errors;
+      if (Array.isArray(errorList) && errorList.length > 0) {
+        toast.error(errorList.map((err) => err.message).join(' | '));
+      } else {
+        toast.error(e.response?.data?.message || 'Failed to save user');
+      }
+    },
   });
 
   const inputCls = styled
@@ -358,13 +369,13 @@ function UserFormModal({ user, onClose, onSuccess }) {
           {!user && (
             <div>
               <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
-                Password *
+                Password * (Min 8 chars, A-Z, a-z, 0-9)
               </label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
-                  minLength={6}
+                  minLength={8}
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                   className={`${inputCls} !pr-10`}

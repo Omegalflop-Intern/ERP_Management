@@ -13,13 +13,20 @@ import {
 import api from '../../lib/api';
 import { toast } from 'sonner';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Attendance() {
+  const { user } = useAuth();
   const [from, setFrom] = useState(new Date(new Date().setDate(1)).toISOString().split('T')[0]);
   const [to, setTo] = useState(new Date().toISOString().split('T')[0]);
   const [selectedEmployee, setSelectedEmployee] = useState('');
   const { styled } = useTheme();
   const queryClient = useQueryClient();
+
+  const isAdminOrManager =
+    user?.roleName === 'ADMIN' ||
+    user?.roleName === 'MANAGER' ||
+    ['ADMIN', 'MANAGER'].includes(user?.role?.name || user?.role);
 
   const { data: empData } = useQuery({
     queryKey: ['employees-list'],
@@ -44,7 +51,7 @@ export default function Attendance() {
       return api.post('/attendance/check-in', { employeeId });
     },
     onSuccess: () => {
-      toast.success('Checked in!');
+      toast.success('Checked in successfully!');
       queryClient.invalidateQueries(['attendance-report']);
     },
     onError: (e) => toast.error(e.response?.data?.message || 'Check-in failed'),
@@ -55,7 +62,7 @@ export default function Attendance() {
       return api.post('/attendance/check-out', { employeeId });
     },
     onSuccess: () => {
-      toast.success('Checked out!');
+      toast.success('Checked out successfully!');
       queryClient.invalidateQueries(['attendance-report']);
     },
     onError: (e) => toast.error(e.response?.data?.message || 'Check-out failed'),
@@ -63,6 +70,8 @@ export default function Attendance() {
 
   const employees = empData || [];
   const records = data?.data || [];
+  const myEmployee = employees.find((e) => e.user === user?._id || e.email === user?.email);
+
   const presentCount = records.filter((r) => r.status === 'present' || r.status === 'late').length;
   const lateCount = records.filter((r) => r.status === 'late').length;
   const absentCount = records.filter((r) => r.status === 'absent').length;
@@ -82,33 +91,63 @@ export default function Attendance() {
         </div>
       </div>
 
-      {/* Quick Check-in/out */}
-      <div className={cardClass}>
-        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-          Quick Check-in / Check-out
-        </h3>
-        <div className="flex flex-wrap gap-2">
-          {employees.slice(0, 10).map((emp) => (
-            <div key={emp._id} className="flex items-center gap-1">
-              <span className="text-xs text-gray-600 dark:text-gray-400">{emp.name}</span>
-              <button
-                onClick={() => checkInMutation.mutate(emp._id)}
-                className="p-1.5 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/40 transition-colors"
-                title="Check In"
-              >
-                <LogIn className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={() => checkOutMutation.mutate(emp._id)}
-                className="p-1.5 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
-                title="Check Out"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          ))}
+      {/* Self Attendance Card */}
+      {myEmployee && (
+        <div className="bg-gradient-to-r from-red-600 to-rose-700 text-white rounded-2xl p-5 shadow-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h3 className="font-bold text-lg">My Attendance Today</h3>
+            <p className="text-xs text-red-100 mt-0.5">
+              Logged in as <span className="font-semibold">{myEmployee.name}</span> ({myEmployee.employeeId})
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => checkInMutation.mutate(myEmployee._id)}
+              disabled={checkInMutation.isPending}
+              className="px-4 py-2 bg-white text-red-700 hover:bg-red-50 font-bold rounded-xl text-sm transition-all flex items-center gap-2 shadow"
+            >
+              <LogIn className="w-4 h-4" /> Check In
+            </button>
+            <button
+              onClick={() => checkOutMutation.mutate(myEmployee._id)}
+              disabled={checkOutMutation.isPending}
+              className="px-4 py-2 bg-red-900/40 hover:bg-red-900/60 text-white font-bold rounded-xl text-sm border border-white/20 transition-all flex items-center gap-2"
+            >
+              <LogOut className="w-4 h-4" /> Check Out
+            </button>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Admin Quick Check-in/out */}
+      {isAdminOrManager && (
+        <div className={cardClass}>
+          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+            Quick Staff Check-in / Check-out
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {employees.slice(0, 10).map((emp) => (
+              <div key={emp._id} className="flex items-center gap-1 bg-gray-50 dark:bg-gray-900 px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-800">
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{emp.name}</span>
+                <button
+                  onClick={() => checkInMutation.mutate(emp._id)}
+                  className="p-1 rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200 transition-colors"
+                  title="Check In"
+                >
+                  <LogIn className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={() => checkOutMutation.mutate(emp._id)}
+                  className="p-1 rounded bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 hover:bg-red-200 transition-colors"
+                  title="Check Out"
+                >
+                  <LogOut className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

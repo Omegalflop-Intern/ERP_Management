@@ -307,7 +307,6 @@ export default function RepairsView() {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Galaxy S22"
                     value={ticketForm.deviceModel}
                     onChange={(e) => handleFormChange('deviceModel', e.target.value)}
                     className={inputCls}

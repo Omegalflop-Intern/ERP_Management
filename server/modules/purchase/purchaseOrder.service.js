@@ -1,6 +1,7 @@
 import { PurchaseOrder } from './purchaseOrder.model.js';
 import { Supplier } from '../supplier/supplier.model.js';
 import { InventoryUnit } from '../imei/imei.model.js';
+import { Product } from '../product/product.model.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { paginate, getPagination } from '../../utils/http/pagination.js';
 
@@ -152,4 +153,42 @@ export const deletePurchaseOrder = async (id) => {
   order.isDeleted = true;
   await order.save();
   return order;
+};
+
+export const returnToSupplier = async (id, imeiOrSerials = [], reason = '', returnedBy = 'system') => {
+  const order = await PurchaseOrder.findOne({ _id: id, isDeleted: false });
+  if (!order) throw ApiError.notFound('Purchase order not found');
+
+  const supplier = await Supplier.findOne({ _id: order.supplierId, isDeleted: false });
+  let totalRefund = 0;
+  const processedItems = [];
+
+  for (const imei of imeiOrSerials) {
+    const item = await InventoryUnit.findOne({ imeiOrSerial: imei, isDeleted: false });
+    if (!item) continue;
+    if (item.status === 'Returned to Supplier') continue;
+
+    item.status = 'Returned to Supplier';
+    item.passportHistory.push({
+      event: 'RETURNED_TO_SUPPLIER',
+      details: `Returned to supplier — Reason: ${reason || 'N/A'} (PO: ${order.poNumber})`,
+      performedBy: returnedBy,
+      amount: item.purchasePrice,
+    });
+    await item.save();
+
+    if (item.productId) {
+      await Product.findByIdAndUpdate(item.productId, { $inc: { stockQuantity: -1 } }).catch(() => {});
+    }
+
+    totalRefund += item.purchasePrice || 0;
+    processedItems.push(imei);
+  }
+
+  if (supplier && totalRefund > 0) {
+    supplier.dueBalance = Math.max(0, (supplier.dueBalance || 0) - totalRefund);
+    await supplier.save();
+  }
+
+  return { returnedCount: processedItems.length, totalRefund, order };
 };

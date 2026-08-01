@@ -4,6 +4,8 @@ import { InventoryUnit } from '../imei/imei.model.js';
 import { RepairTicket } from '../../models/RepairTicket.js';
 import { Product } from '../product/product.model.js';
 import { Customer } from '../customer/customer.model.js';
+import { Expense } from '../expense/expense.model.js';
+import { PurchaseOrder } from '../purchase/purchaseOrder.model.js';
 import { ApiResponse } from '../../utils/http/ApiResponse.js';
 import { authenticate } from '../../middleware/auth.middleware.js';
 import { authorize } from '../../middleware/role.middleware.js';
@@ -17,6 +19,25 @@ router.get('/dashboard', async (req, res, next) => {
     let totalSalesCount = 0, totalRevenue = 0;
     let totalAvailableUnits = 0, totalStockValue = 0;
     let activeRepairsCount = 0, totalCustomers = 0;
+    let totalExpenses = 0, totalPurchasesCost = 0, totalCostAndExpenses = 0;
+
+    try {
+      const expenseAgg = await Expense.aggregate([
+        { $match: { isDeleted: false } },
+        { $group: { _id: null, total: { $sum: '$amount' } } },
+      ]);
+      totalExpenses = expenseAgg[0]?.total || 0;
+
+      const purchaseAgg = await PurchaseOrder.aggregate([
+        { $match: { isDeleted: false, status: { $ne: 'CANCELLED' } } },
+        { $group: { _id: null, total: { $sum: '$netTotal' } } },
+      ]);
+      totalPurchasesCost = purchaseAgg[0]?.total || 0;
+
+      totalCostAndExpenses = totalExpenses + totalPurchasesCost;
+    } catch (err) {
+      console.error('[DASHBOARD] Cost & Expense calc error:', err.message);
+    }
 
     try {
       totalSalesCount = await Transaction.countDocuments({ isDeleted: false });
@@ -269,7 +290,18 @@ router.get('/dashboard', async (req, res, next) => {
     } catch {}
 
     return ApiResponse.success(res, {
-      stats: { totalSalesCount, totalRevenue, totalAvailableUnits, totalStockValue, activeRepairsCount, totalCustomers, totalDueAmount },
+      stats: {
+        totalSalesCount,
+        totalRevenue,
+        totalAvailableUnits,
+        totalStockValue,
+        activeRepairsCount,
+        totalCustomers,
+        totalDueAmount,
+        totalExpenses,
+        totalPurchasesCost,
+        totalCostAndExpenses,
+      },
       charts: { salesTrendData, dueTrendData, brandDistribution },
       lowStockItems,
     });

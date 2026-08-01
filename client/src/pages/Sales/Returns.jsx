@@ -159,7 +159,6 @@ export default function Returns() {
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-              placeholder="Search by Invoice No (e.g. 00001), IMEI number, customer name or phone..."
               value={invoiceSearch}
               onChange={(e) => setInvoiceSearch(e.target.value)}
               onKeyDown={(e) => {

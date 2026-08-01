@@ -20,6 +20,7 @@ import {
   Package,
   ShoppingCart,
   Users,
+  User,
   Wrench,
   FileText,
   Building2,
@@ -572,7 +573,17 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
         <div
           className={`hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium ${online ? 'bg-green-50 dark:bg-green-900/10 text-green-700 dark:text-green-400' : 'bg-amber-50 dark:bg-amber-900/10 text-amber-700 dark:text-amber-400'}`}
         >
-          {online ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
+          {online ? (
+            <>
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              </span>
+              <Wifi className="w-3 h-3" />
+            </>
+          ) : (
+            <WifiOff className="w-3 h-3" />
+          )}
           <span>{online ? 'Online' : 'Offline'}</span>
         </div>
 
@@ -764,6 +775,16 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
                     </div>
                   </div>
                 </div>
+                <button
+                  onClick={() => {
+                    navigate('/profile');
+                    setShowUserMenu(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800/60 text-sm text-gray-700 dark:text-gray-300 transition-colors border-b border-gray-100 dark:border-gray-800/60"
+                >
+                  <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                  My Profile
+                </button>
                 <button
                   onClick={() => {
                     handleLogout();

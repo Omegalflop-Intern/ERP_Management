@@ -11,6 +11,9 @@ import {
   AlertTriangle,
   ArrowRight,
   Building2,
+  Receipt,
+  Plus,
+  Sparkles,
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
@@ -55,6 +58,7 @@ export default function Dashboard() {
       color: 'text-blue-600 dark:text-blue-400',
       bg: 'bg-blue-50 dark:bg-blue-900/20',
       raw: true,
+      hint: 'Orders completed',
     },
     {
       label: 'Revenue',
@@ -65,6 +69,18 @@ export default function Dashboard() {
       color: 'text-green-600 dark:text-green-400',
       bg: 'bg-green-50 dark:bg-green-900/20',
       raw: false,
+      hint: 'Total cash received',
+    },
+    {
+      label: 'Total Cost & Expenses',
+      value: stats.totalCostAndExpenses || 0,
+      prefix: '৳',
+      suffix: '',
+      icon: Receipt,
+      color: 'text-rose-600 dark:text-rose-400',
+      bg: 'bg-rose-50 dark:bg-rose-900/20',
+      raw: false,
+      hint: 'Purchases + expenses',
     },
     {
       label: 'Total Due',
@@ -75,6 +91,7 @@ export default function Dashboard() {
       color: 'text-red-600 dark:text-red-400',
       bg: 'bg-red-50 dark:bg-red-900/20',
       raw: false,
+      hint: 'Pending customer due',
     },
     {
       label: 'Available Stock',
@@ -85,6 +102,7 @@ export default function Dashboard() {
       color: 'text-purple-600 dark:text-purple-400',
       bg: 'bg-purple-50 dark:bg-purple-900/20',
       raw: true,
+      hint: 'Units in shop',
     },
     {
       label: 'Stock Value',
@@ -95,6 +113,7 @@ export default function Dashboard() {
       color: 'text-amber-600 dark:text-amber-400',
       bg: 'bg-amber-50 dark:bg-amber-900/20',
       raw: false,
+      hint: 'Inventory asset value',
     },
     {
       label: 'Active Repairs',
@@ -102,9 +121,10 @@ export default function Dashboard() {
       prefix: '',
       suffix: '',
       icon: Wrench,
-      color: 'text-gray-600 dark:text-gray-400',
-      bg: 'bg-gray-50 dark:bg-gray-800/30',
+      color: 'text-indigo-600 dark:text-indigo-400',
+      bg: 'bg-indigo-50 dark:bg-indigo-900/20',
       raw: true,
+      hint: 'Devices in repair',
     },
   ];
 
@@ -126,29 +146,34 @@ export default function Dashboard() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
         {statCards.map((card) => (
           <div
             key={card.label}
             className={`${cardClass} group hover:scale-[1.02] transition-transform`}
           >
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-tight">
                 {card.label}
               </span>
               <div
-                className={`w-8 h-8 rounded-lg ${card.bg} flex items-center justify-center ${styled ? 'neu-icon !rounded-lg' : ''}`}
+                className={`w-7 h-7 rounded-lg ${card.bg} flex items-center justify-center flex-shrink-0 ${styled ? 'neu-icon !rounded-lg' : ''}`}
               >
-                <card.icon className={`w-4 h-4 ${card.color}`} />
+                <card.icon className={`w-3.5 h-3.5 ${card.color}`} />
               </div>
             </div>
-            <div className="text-xl font-bold text-gray-900 dark:text-gray-100">
+            <div className="text-lg font-extrabold text-gray-900 dark:text-gray-100">
               {isLoading ? (
-                <div className="h-7 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                <div className="h-6 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
               ) : (
                 <AnimatedNumber value={card.value} prefix={card.prefix} suffix={card.suffix} />
               )}
             </div>
+            {card.hint && (
+              <div className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 truncate">
+                {card.hint}
+              </div>
+            )}
           </div>
         ))}
       </div>

@@ -186,7 +186,6 @@ export default function WholesaleOrders() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search order #, customer or dealer..."
             className={`${inputCls} pl-10`}
           />
         </div>
@@ -419,7 +418,6 @@ export default function WholesaleOrders() {
                 <input
                   value={collectForm.reference}
                   onChange={(e) => setCollectForm({ ...collectForm, reference: e.target.value })}
-                  placeholder="e.g. TxID-9948281"
                   className={inputCls}
                 />
               </div>
@@ -560,7 +558,6 @@ export default function WholesaleOrders() {
                 <input
                   value={returnNotes}
                   onChange={(e) => setReturnNotes(e.target.value)}
-                  placeholder="e.g. 5 pcs returned due to packaging damage"
                   className={inputCls}
                 />
               </div>

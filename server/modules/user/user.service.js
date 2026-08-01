@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { User } from './user.model.js';
 import { Role } from '../role/role.model.js';
+import { Employee } from '../employee/employee.model.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { paginate, getPagination } from '../../utils/http/pagination.js';
 import { escapeRegex } from '../../utils/system/helpers.js';
@@ -35,6 +36,10 @@ export const getUserById = async (id) => {
 };
 
 export const createUser = async (data) => {
+  if (data.phone && typeof data.phone === 'string' && !data.phone.trim()) {
+    delete data.phone;
+  }
+
   const existingUser = await User.findOne({
     $or: [{ username: data.username }, { email: data.email }],
     isDeleted: false,
@@ -66,6 +71,27 @@ export const createUser = async (data) => {
     otpExpiresAt,
   });
 
+  // Auto-create corresponding Employee profile if not exists
+  try {
+    const existingEmployee = await Employee.findOne({ user: user._id, isDeleted: false });
+    if (!existingEmployee) {
+      await Employee.create({
+        user: user._id,
+        employeeId: `EMP-${Math.floor(10000 + Math.random() * 90000)}`,
+        name: user.fullName || user.username,
+        phone: user.phone || '0000000000',
+        email: user.email || '',
+        designation: role.displayName || role.name || 'Staff',
+        department: 'General',
+        branch: user.branchId || 'Main',
+        salary: 0,
+        joiningDate: new Date(),
+      });
+    }
+  } catch (empErr) {
+    console.error(`[USER] Auto employee creation failed for user ${user._id}:`, empErr.message);
+  }
+
   // Send verification OTP email (non-blocking)
   sendOTP(user.email, otpCode, user.fullName || user.username).catch((err) => {
     console.error(`[USER] Failed to send verification OTP to ${user.email}:`, err.message);
@@ -79,6 +105,10 @@ export const createUser = async (data) => {
 };
 
 export const updateUser = async (id, data) => {
+  if (data.phone && typeof data.phone === 'string' && !data.phone.trim()) {
+    data.phone = undefined;
+  }
+
   const user = await User.findOne({ _id: id, isDeleted: false });
   if (!user) throw ApiError.notFound('User not found');
 

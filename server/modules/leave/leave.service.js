@@ -3,12 +3,22 @@ import { Employee } from '../employee/employee.model.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { paginate, getPagination } from '../../utils/http/pagination.js';
 
-export const getAllLeaves = async (page = 1, limit = 20, search = '', status = '', employeeId = '') => {
+export const getAllLeaves = async (page = 1, limit = 20, search = '', status = '', employeeId = '', currentUser = null) => {
   const query = {};
   if (status) query.status = status;
-  if (employeeId) query.employee = employeeId;
 
-  if (search) {
+  const isAdminOrManager = currentUser && (currentUser.roleName === 'ADMIN' || currentUser.roleName === 'MANAGER' || ['ADMIN', 'MANAGER'].includes(currentUser.role));
+
+  if (!isAdminOrManager && currentUser?._id) {
+    const emp = await Employee.findOne({ user: currentUser._id, isDeleted: false });
+    if (emp) {
+      query.employee = emp._id;
+    }
+  } else if (employeeId) {
+    query.employee = employeeId;
+  }
+
+  if (search && isAdminOrManager) {
     const employees = await Employee.find({
       isDeleted: false,
       $or: [
@@ -27,12 +37,23 @@ export const getAllLeaves = async (page = 1, limit = 20, search = '', status = '
   return { leaves, pagination: getPagination(total, page, limit) };
 };
 
-export const createLeave = async (data) => {
-  const employee = await Employee.findOne({ _id: data.employee, isDeleted: false });
+export const createLeave = async (data, currentUser = null) => {
+  let empId = data.employee;
+
+  const isAdminOrManager = currentUser && (currentUser.roleName === 'ADMIN' || currentUser.roleName === 'MANAGER' || ['ADMIN', 'MANAGER'].includes(currentUser.role));
+
+  if (!isAdminOrManager || !empId) {
+    const emp = await Employee.findOne({ user: currentUser?._id, isDeleted: false });
+    if (!emp) throw ApiError.badRequest('No employee profile linked to your user account');
+    empId = emp._id;
+  }
+
+  data.employee = empId;
+  const employee = await Employee.findOne({ _id: empId, isDeleted: false });
   if (!employee) throw ApiError.notFound('Employee not found');
 
   const overlapping = await Leave.findOne({
-    employee: data.employee,
+    employee: empId,
     status: { $ne: 'rejected' },
     $or: [
       { fromDate: { $lte: new Date(data.toDate) }, toDate: { $gte: new Date(data.fromDate) } },

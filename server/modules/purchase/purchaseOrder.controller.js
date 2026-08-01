@@ -48,3 +48,12 @@ export const deletePurchaseOrder = async (req, res, next) => {
     return ApiResponse.success(res, null, 'Purchase order deleted');
   } catch (error) { next(error); }
 };
+
+export const returnToSupplier = async (req, res, next) => {
+  try {
+    const { imeiOrSerials, reason } = req.body;
+    const result = await purchaseOrderService.returnToSupplier(req.params.id, imeiOrSerials, reason, req.user?.username || 'system');
+    logAction({ userId: req.user?.userId, username: req.user?.username, action: 'RETURN_TO_SUPPLIER', module: 'purchase', entityId: req.params.id, entityType: 'PurchaseOrder', details: { returnedCount: result.returnedCount, totalRefund: result.totalRefund }, req });
+    return ApiResponse.success(res, result, 'Product(s) returned to supplier successfully');
+  } catch (error) { next(error); }
+};

@@ -14,6 +14,7 @@ router.get('/:id', purchaseOrderController.getPurchaseOrderById);
 router.post('/', authorize('ADMIN', 'MANAGER'), validate(createPurchaseOrderSchema), purchaseOrderController.createPurchaseOrder);
 router.put('/:id', authorize('ADMIN', 'MANAGER'), validate(updatePurchaseOrderSchema), purchaseOrderController.updatePurchaseOrder);
 router.post('/:id/receive', authorize('ADMIN', 'MANAGER'), validate(receiveGoodsSchema), purchaseOrderController.receiveGoods);
+router.post('/:id/return', authorize('ADMIN', 'MANAGER'), purchaseOrderController.returnToSupplier);
 router.delete('/:id', authorize('ADMIN'), purchaseOrderController.deletePurchaseOrder);
 
 export default router;

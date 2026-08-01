@@ -14,6 +14,7 @@ import api from '../../lib/api';
 import { toast } from 'sonner';
 import { confirmDelete } from '../../lib/confirm';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 
 const LEAVE_TYPES = ['sick', 'casual', 'annual', 'maternity', 'paternity', 'unpaid', 'other'];
 const STATUS_COLORS = {
@@ -23,11 +24,17 @@ const STATUS_COLORS = {
 };
 
 export default function LeaveManagement() {
+  const { user } = useAuth();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [showForm, setShowForm] = useState(false);
   const { styled } = useTheme();
   const queryClient = useQueryClient();
+
+  const isAdminOrManager =
+    user?.roleName === 'ADMIN' ||
+    user?.roleName === 'MANAGER' ||
+    ['ADMIN', 'MANAGER'].includes(user?.role?.name || user?.role);
 
   const { data: empData } = useQuery({
     queryKey: ['employees-list'],
@@ -235,7 +242,7 @@ export default function LeaveManagement() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        {l.status === 'pending' && (
+                        {l.status === 'pending' && isAdminOrManager && (
                           <>
                             <button
                               onClick={() => approveMutation.mutate(l._id)}
@@ -257,7 +264,7 @@ export default function LeaveManagement() {
                             </button>
                           </>
                         )}
-                        {l.status !== 'approved' && (
+                        {(l.status !== 'approved' || isAdminOrManager) && (
                           <button
                             onClick={() =>
                               confirmDelete('Delete this leave request?', () =>
@@ -280,12 +287,18 @@ export default function LeaveManagement() {
         </div>
       </div>
 
-      {showForm && <LeaveModal employees={employees} onClose={() => setShowForm(false)} />}
+      {showForm && (
+        <LeaveModal
+          employees={employees}
+          isAdminOrManager={isAdminOrManager}
+          onClose={() => setShowForm(false)}
+        />
+      )}
     </div>
   );
 }
 
-function LeaveModal({ employees, onClose }) {
+function LeaveModal({ employees, isAdminOrManager, onClose }) {
   const queryClient = useQueryClient();
   const [form, setForm] = useState({
     employee: '',
@@ -330,24 +343,26 @@ function LeaveModal({ employees, onClose }) {
           <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Apply for Leave</h2>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
-              Employee *
-            </label>
-            <select
-              required
-              value={form.employee}
-              onChange={(e) => setForm({ ...form, employee: e.target.value })}
-              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-red-500"
-            >
-              <option value="">Select employee</option>
-              {employees.map((emp) => (
-                <option key={emp._id} value={emp._id}>
-                  {emp.name} ({emp.employeeId})
-                </option>
-              ))}
-            </select>
-          </div>
+          {isAdminOrManager && (
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+                Employee *
+              </label>
+              <select
+                required
+                value={form.employee}
+                onChange={(e) => setForm({ ...form, employee: e.target.value })}
+                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-red-500"
+              >
+                <option value="">Select employee</option>
+                {employees.map((emp) => (
+                  <option key={emp._id} value={emp._id}>
+                    {emp.name} ({emp.employeeId})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div>
             <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
               Leave Type *

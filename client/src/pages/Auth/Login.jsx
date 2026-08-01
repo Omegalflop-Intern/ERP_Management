@@ -400,7 +400,6 @@ export default function Login() {
                 required
                 value={loginField}
                 onChange={(e) => setLoginField(e.target.value)}
-                placeholder="Enter your credentials"
                 className={inputClass}
                 autoComplete="username"
               />
@@ -422,7 +421,6 @@ export default function Login() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
               />
             </div>
 

@@ -9,7 +9,10 @@ import { ThemeProvider } from './context/ThemeContext';
 import App from './App.jsx';
 import api from './lib/api';
 import { setupOfflineSync } from './utils/offlineSync.js';
+import { initDevToolsProtection } from './utils/disableDevTools.js';
 import './index.css';
+
+initDevToolsProtection();
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,7 +41,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             <Toaster position="top-center" richColors />
           </AuthProvider>
         </ThemeProvider>
-        <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-right" />
       </QueryClientProvider>
     </BrowserRouter>
   </React.StrictMode>

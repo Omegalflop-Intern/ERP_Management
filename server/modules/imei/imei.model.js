@@ -16,7 +16,7 @@ const inventoryUnitSchema = new mongoose.Schema(
     supplierId: { type: mongoose.Schema.Types.ObjectId, ref: 'Supplier' },
     status: {
       type: String,
-      enum: ['Available', 'Reserved', 'Sold', 'Returned', 'Defective', 'Sent for Repair', 'Display Unit', 'Transferred'],
+      enum: ['Available', 'Reserved', 'Sold', 'Returned', 'Returned to Supplier', 'Defective', 'Sent for Repair', 'Display Unit', 'Transferred'],
       default: 'Available',
       index: true,
     },

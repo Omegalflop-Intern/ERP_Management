@@ -19,7 +19,7 @@ import api, { getAssetUrl } from '../../lib/api';
 import { toast } from 'sonner';
 import { MFASetupModal } from '../../components/auth/MFASetupModal';
 
-function PasswordInput({ value, onChange, placeholder, inputCls }) {
+function PasswordInput({ value, onChange, inputCls }) {
   const [show, setShow] = useState(false);
   return (
     <div className="relative">
@@ -28,7 +28,6 @@ function PasswordInput({ value, onChange, placeholder, inputCls }) {
         value={value}
         onChange={onChange}
         className={`${inputCls} !pr-10`}
-        placeholder={placeholder}
       />
       <button
         type="button"
@@ -231,7 +230,6 @@ export default function MyProfile() {
                 value={form.fullName}
                 onChange={(e) => setForm({ ...form, fullName: e.target.value })}
                 className={`${inputCls} pl-10`}
-                placeholder="Your full name"
               />
             </div>
           </div>
@@ -246,7 +244,6 @@ export default function MyProfile() {
                 value={form.username}
                 onChange={(e) => setForm({ ...form, username: e.target.value })}
                 className={`${inputCls} pl-10`}
-                placeholder="Username"
               />
             </div>
           </div>
@@ -261,7 +258,6 @@ export default function MyProfile() {
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 className={`${inputCls} pl-10`}
-                placeholder="Email address"
               />
             </div>
           </div>
@@ -276,7 +272,6 @@ export default function MyProfile() {
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 className={`${inputCls} pl-10`}
-                placeholder="Phone number"
               />
             </div>
           </div>
@@ -316,7 +311,6 @@ export default function MyProfile() {
               value={pwForm.currentPassword}
               onChange={(e) => setPwForm({ ...pwForm, currentPassword: e.target.value })}
               inputCls={inputCls}
-              placeholder="Current password"
             />
           </div>
           <div>
@@ -327,7 +321,6 @@ export default function MyProfile() {
               value={pwForm.newPassword}
               onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })}
               inputCls={inputCls}
-              placeholder="New password"
             />
           </div>
           <div>
@@ -338,7 +331,6 @@ export default function MyProfile() {
               value={pwForm.confirmPassword}
               onChange={(e) => setPwForm({ ...pwForm, confirmPassword: e.target.value })}
               inputCls={inputCls}
-              placeholder="Confirm new password"
             />
           </div>
         </div>

@@ -5,14 +5,14 @@ import { logAction } from '../../utils/auth/auditLog.js';
 export const getAllLeaves = async (req, res, next) => {
   try {
     const { page = 1, limit = 20, search = '', status = '', employee: employeeId = '' } = req.query;
-    const result = await leaveService.getAllLeaves(Number(page), Number(limit), search, status, employeeId);
+    const result = await leaveService.getAllLeaves(Number(page), Number(limit), search, status, employeeId, req.user);
     return ApiResponse.paginated(res, result.leaves, result.pagination.total, result.pagination.page, result.pagination.limit);
   } catch (error) { next(error); }
 };
 
 export const createLeave = async (req, res, next) => {
   try {
-    const leave = await leaveService.createLeave(req.body);
+    const leave = await leaveService.createLeave(req.body, req.user);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'CREATE', module: 'leave', entityId: leave._id, entityType: 'Leave', details: { employeeId: leave.employeeId, type: leave.type }, req });
     return ApiResponse.created(res, leave, 'Leave request submitted');
   } catch (error) { next(error); }
