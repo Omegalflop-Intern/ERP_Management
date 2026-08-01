@@ -1,10 +1,10 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Smartphone, ArrowRight, RefreshCw } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
+import { ArrowRight, RefreshCw, Smartphone } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import PasswordInput from '../../components/ui/PasswordInput';
 import ThemeToggle from '../../components/ui/ThemeToggle';
+import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 
 function ParticleCanvas() {
   const canvasRef = useRef(null);

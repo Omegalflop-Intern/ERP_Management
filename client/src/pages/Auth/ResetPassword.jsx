@@ -1,11 +1,11 @@
-import React, { useState, useMemo } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Smartphone, ArrowLeft, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
-import ThemeToggle from '../../components/ui/ThemeToggle';
-import PasswordInput from '../../components/ui/PasswordInput';
-import api from '../../lib/api';
+import { AlertCircle, ArrowLeft, CheckCircle, RefreshCw, Smartphone } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import PasswordInput from '../../components/ui/PasswordInput';
+import ThemeToggle from '../../components/ui/ThemeToggle';
 import { useTheme } from '../../context/ThemeContext';
+import api from '../../lib/api';
 
 const BUBBLES = Array.from({ length: 18 }, (_, i) => ({
   id: i,

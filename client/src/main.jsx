@@ -1,15 +1,15 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Toaster } from 'sonner';
+import App from './App.jsx';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
-import App from './App.jsx';
 import api from './lib/api';
-import { setupOfflineSync } from './utils/offlineSync.js';
 import { initDevToolsProtection } from './utils/disableDevTools.js';
+import { setupOfflineSync } from './utils/offlineSync.js';
 import './index.css';
 
 initDevToolsProtection();

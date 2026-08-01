@@ -1,15 +1,15 @@
-import React from 'react';
 import {
-  Sun,
-  Moon,
-  Layers,
-  Sparkles,
   CircleDot,
-  Droplets,
-  Square,
-  Zap,
   Diamond,
+  Droplets,
+  Layers,
+  Moon,
+  Sparkles,
+  Square,
+  Sun,
+  Zap,
 } from 'lucide-react';
+import React from 'react';
 import { useTheme } from '../../context/ThemeContext';
 
 const MODE_CONFIG = {

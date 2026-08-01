@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
-  TrendingUp,
-  TrendingDown,
-  RefreshCw,
+  ArrowRight,
   DollarSign,
   PackageCheck,
-  ShoppingBag,
   Receipt,
-  ArrowRight,
+  RefreshCw,
+  ShoppingBag,
+  TrendingDown,
+  TrendingUp,
 } from 'lucide-react';
-import api from '../../lib/api';
-import { useTheme } from '../../context/ThemeContext';
+import React, { useState } from 'react';
 import DatePicker from '../../components/ui/DatePicker';
+import { useTheme } from '../../context/ThemeContext';
+import api from '../../lib/api';
 
 export default function ProfitLoss() {
   const [from, setFrom] = useState(new Date(new Date().setDate(1)).toISOString().split('T')[0]);

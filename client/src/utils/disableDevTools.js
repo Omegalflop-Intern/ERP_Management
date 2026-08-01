@@ -43,7 +43,7 @@ export function initDevToolsProtection() {
   const detectDevTools = () => {
     const start = performance.now();
     // Execute a debugger statement wrapped in evaluation
-    (function () {}).constructor('debugger')();
+    (() => {}).constructor('debugger')();
     const duration = performance.now() - start;
 
     if (duration > 100) {

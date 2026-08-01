@@ -1,19 +1,19 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Plus,
-  Search,
-  Edit,
-  Trash2,
-  Contact,
-  Phone,
   Building,
-  DollarSign,
+  Contact,
   CreditCard,
+  DollarSign,
+  Edit,
+  Phone,
+  Plus,
   RefreshCw,
+  Search,
+  Trash2,
 } from 'lucide-react';
-import api from '../../lib/api';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
+import api from '../../lib/api';
 import { confirmDelete } from '../../lib/confirm';
 
 const PAYMENT_TERMS = ['CASH', 'NET15', 'NET30', 'NET60'];

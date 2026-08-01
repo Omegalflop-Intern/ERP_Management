@@ -1,6 +1,6 @@
+import { AlertTriangle, Trash2 } from 'lucide-react';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { Trash2, AlertTriangle } from 'lucide-react';
 
 export function confirmDelete(
   title = 'Delete Item?',

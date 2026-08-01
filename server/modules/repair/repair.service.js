@@ -1,4 +1,4 @@
-import { RepairTicket } from '../../models/RepairTicket.js';
+import { RepairTicket } from './repair.model.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { paginate, getPagination } from '../../utils/http/pagination.js';
 

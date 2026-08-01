@@ -1,10 +1,10 @@
+import html2canvas from 'html2canvas';
+import JsBarcode from 'jsbarcode';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import QRCode from 'qrcode';
-import JsBarcode from 'jsbarcode';
-import html2canvas from 'html2canvas';
+import { companyInfo, numberToWordsBD } from '../components/sales/Invoice';
 import api from '../lib/api';
-import { numberToWordsBD, companyInfo } from '../components/sales/Invoice';
 
 const BDT = (n) => `Tk ${Number(n || 0).toLocaleString('en-BD', { minimumFractionDigits: 2 })}`;
 
@@ -279,7 +279,7 @@ export const generateA4Invoice = async (sale, element = null) => {
     margin: { left: 14, right: 14 },
   });
 
-  let finalY = doc.lastAutoTable?.finalY || 120;
+  const finalY = doc.lastAutoTable?.finalY || 120;
 
   doc.setFillColor(248, 250, 252);
   doc.setDrawColor(226, 232, 240);
@@ -473,7 +473,7 @@ export const generateA4HalfInvoice = async (sale, element = null) => {
     margin: { left: 10, right: 10 },
   });
 
-  let finalY = doc.lastAutoTable?.finalY || 80;
+  const finalY = doc.lastAutoTable?.finalY || 80;
 
   doc.setFontSize(7);
   doc.setFont('helvetica', 'bold');

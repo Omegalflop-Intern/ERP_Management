@@ -1,19 +1,19 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  CheckCircle,
+  Eye,
+  Minus,
+  Package,
+  Pencil,
   Plus,
+  RefreshCw,
   Search,
   Truck,
-  Eye,
-  CheckCircle,
   XCircle,
-  Package,
-  RefreshCw,
-  Minus,
-  Pencil,
 } from 'lucide-react';
-import api from '../../lib/api';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
+import api from '../../lib/api';
 
 const STATUSES = [
   'ALL',
@@ -290,9 +290,7 @@ export default function PurchaseOrders() {
 }
 
 function CreatePOModal({ editPO, onClose, onSuccess }) {
-  const [supplierId, setSupplierId] = useState(
-    editPO?.supplierId?._id || editPO?.supplierId || ''
-  );
+  const [supplierId, setSupplierId] = useState(editPO?.supplierId?._id || editPO?.supplierId || '');
   const [paymentMethod, setPaymentMethod] = useState(editPO?.paymentMethod || 'CREDIT');
   const [paidAmount, setPaidAmount] = useState(editPO?.paidAmount || 0);
   const [notes, setNotes] = useState(editPO?.notes || '');
@@ -617,24 +615,67 @@ function QuickSupplierModal({ onClose, onSuccess }) {
       <div className="bg-white dark:bg-[#111827] rounded-2xl w-full max-w-md border border-gray-200 dark:border-gray-800 shadow-2xl p-6 space-y-4">
         <div className="flex items-center justify-between border-b dark:border-gray-800 pb-3">
           <h3 className="font-bold text-gray-900 dark:text-gray-100">Add New Supplier</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">✕</button>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          >
+            ✕
+          </button>
         </div>
-        <form onSubmit={(e) => { e.preventDefault(); mutation.mutate(form); }} className="space-y-3 text-sm">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            mutation.mutate(form);
+          }}
+          className="space-y-3 text-sm"
+        >
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Supplier Name *</label>
-            <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100" />
+            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+              Supplier Name *
+            </label>
+            <input
+              required
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100"
+            />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Phone Number *</label>
-            <input required value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100" />
+            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+              Phone Number *
+            </label>
+            <input
+              required
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100"
+            />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Company</label>
-            <input value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100" />
+            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+              Company
+            </label>
+            <input
+              value={form.company}
+              onChange={(e) => setForm({ ...form, company: e.target.value })}
+              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100"
+            />
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium rounded-lg text-sm">Cancel</button>
-            <button type="submit" disabled={mutation.isPending} className="flex-1 py-2 bg-red-700 hover:bg-red-600 text-white font-bold rounded-lg text-sm">{mutation.isPending ? 'Saving...' : 'Add Supplier'}</button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium rounded-lg text-sm"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={mutation.isPending}
+              className="flex-1 py-2 bg-red-700 hover:bg-red-600 text-white font-bold rounded-lg text-sm"
+            >
+              {mutation.isPending ? 'Saving...' : 'Add Supplier'}
+            </button>
           </div>
         </form>
       </div>
@@ -643,7 +684,13 @@ function QuickSupplierModal({ onClose, onSuccess }) {
 }
 
 function QuickProductModal({ onClose, onSuccess }) {
-  const [form, setForm] = useState({ name: '', brand: '', category: '', costPrice: '', sellingPrice: '' });
+  const [form, setForm] = useState({
+    name: '',
+    brand: '',
+    category: '',
+    costPrice: '',
+    sellingPrice: '',
+  });
   const { data: categories } = useQuery({
     queryKey: ['catalog-categories'],
     queryFn: async () => {
@@ -675,48 +722,109 @@ function QuickProductModal({ onClose, onSuccess }) {
       <div className="bg-white dark:bg-[#111827] rounded-2xl w-full max-w-md border border-gray-200 dark:border-gray-800 shadow-2xl p-6 space-y-4">
         <div className="flex items-center justify-between border-b dark:border-gray-800 pb-3">
           <h3 className="font-bold text-gray-900 dark:text-gray-100">Add New Purchased Product</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">✕</button>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          >
+            ✕
+          </button>
         </div>
-        <form onSubmit={(e) => { e.preventDefault(); mutation.mutate(form); }} className="space-y-3 text-sm">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            mutation.mutate(form);
+          }}
+          className="space-y-3 text-sm"
+        >
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Product Name *</label>
-            <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100" />
+            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+              Product Name *
+            </label>
+            <input
+              required
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100"
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Brand</label>
-              <input value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100" />
+              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+                Brand
+              </label>
+              <input
+                value={form.brand}
+                onChange={(e) => setForm({ ...form, brand: e.target.value })}
+                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100"
+              />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Category</label>
-              <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100">
+              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+                Category
+              </label>
+              <select
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100"
+              >
                 <option value="">Select Category</option>
                 {(categories || []).map((c) => (
-                  <option key={c._id} value={c._id}>{c.name}</option>
+                  <option key={c._id} value={c._id}>
+                    {c.name}
+                  </option>
                 ))}
               </select>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Cost Price (৳) *</label>
-              <input type="number" min="0" required value={form.costPrice} onChange={(e) => setForm({ ...form, costPrice: e.target.value })} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100" />
+              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+                Cost Price (৳) *
+              </label>
+              <input
+                type="number"
+                min="0"
+                required
+                value={form.costPrice}
+                onChange={(e) => setForm({ ...form, costPrice: e.target.value })}
+                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100"
+              />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Selling Price (৳) (Optional)</label>
-              <input type="number" min="0" value={form.sellingPrice} onChange={(e) => setForm({ ...form, sellingPrice: e.target.value })} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100" placeholder="Defaults to cost" />
+              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+                Selling Price (৳) (Optional)
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={form.sellingPrice}
+                onChange={(e) => setForm({ ...form, sellingPrice: e.target.value })}
+                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100"
+                placeholder="Defaults to cost"
+              />
             </div>
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium rounded-lg text-sm">Cancel</button>
-            <button type="submit" disabled={mutation.isPending} className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-sm">{mutation.isPending ? 'Creating...' : 'Create & Add'}</button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium rounded-lg text-sm"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={mutation.isPending}
+              className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-sm"
+            >
+              {mutation.isPending ? 'Creating...' : 'Create & Add'}
+            </button>
           </div>
         </form>
       </div>
     </div>
   );
 }
-
 
 function PODetailModal({ order, onClose }) {
   if (!order) return null;
@@ -1012,9 +1120,16 @@ function SupplierReturnModal({ order, onClose, onSuccess }) {
         <div className="flex items-center justify-between border-b dark:border-gray-800 pb-3">
           <div>
             <h3 className="font-bold text-gray-900 dark:text-gray-100">Return to Supplier</h3>
-            <p className="text-xs text-gray-500">{order.poNumber} &middot; {order.supplierId?.name || 'Supplier'}</p>
+            <p className="text-xs text-gray-500">
+              {order.poNumber} &middot; {order.supplierId?.name || 'Supplier'}
+            </p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">✕</button>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          >
+            ✕
+          </button>
         </div>
 
         <div className="space-y-3">
@@ -1023,7 +1138,9 @@ function SupplierReturnModal({ order, onClose, onSuccess }) {
               Select Items / IMEIs to Return ({selectedImeis.length} selected)
             </label>
             {grnItems.length === 0 ? (
-              <p className="text-xs text-gray-400 py-2">No received items available for this order.</p>
+              <p className="text-xs text-gray-400 py-2">
+                No received items available for this order.
+              </p>
             ) : (
               <div className="max-h-48 overflow-y-auto space-y-2 border border-gray-200 dark:border-gray-800 rounded-xl p-3 bg-gray-50 dark:bg-gray-900">
                 {grnItems.map((entry, idx) => {
@@ -1041,8 +1158,12 @@ function SupplierReturnModal({ order, onClose, onSuccess }) {
                           className="rounded text-red-600 focus:ring-red-500"
                         />
                         <div>
-                          <div className="text-xs font-mono font-bold text-gray-900 dark:text-gray-100">{entry.imeiOrSerial}</div>
-                          <div className="text-[10px] text-gray-500">Cost: ৳{entry.purchasePrice}</div>
+                          <div className="text-xs font-mono font-bold text-gray-900 dark:text-gray-100">
+                            {entry.imeiOrSerial}
+                          </div>
+                          <div className="text-[10px] text-gray-500">
+                            Cost: ৳{entry.purchasePrice}
+                          </div>
                         </div>
                       </div>
                     </label>
@@ -1053,7 +1174,9 @@ function SupplierReturnModal({ order, onClose, onSuccess }) {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Return Reason *</label>
+            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+              Return Reason *
+            </label>
             <input
               type="text"
               required
@@ -1065,7 +1188,13 @@ function SupplierReturnModal({ order, onClose, onSuccess }) {
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium rounded-lg text-sm">Cancel</button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium rounded-lg text-sm"
+            >
+              Cancel
+            </button>
             <button
               type="button"
               disabled={mutation.isPending || selectedImeis.length === 0 || !reason}

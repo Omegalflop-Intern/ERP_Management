@@ -1,5 +1,5 @@
+import { Code, Cpu, Heart, ShieldCheck, Smartphone } from 'lucide-react';
 import React from 'react';
-import { Smartphone, Code, Heart, ShieldCheck, Cpu } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
 export default function Bottombar() {

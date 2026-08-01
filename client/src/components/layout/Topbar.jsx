@@ -1,36 +1,36 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  PanelLeftOpen,
-  LogOut,
-  Smartphone,
-  ShieldCheck,
+  AlertTriangle,
+  ArrowRight,
   Bell,
+  Building2,
+  ChevronDown,
+  Command,
+  DollarSign,
+  FileText,
+  LogOut,
+  Moon,
+  Package,
+  Palette,
+  PanelLeft,
+  PanelLeftClose,
+  PanelLeftOpen,
+  RefreshCw,
+  Search,
+  ShieldCheck,
+  ShoppingCart,
+  Smartphone,
+  Sparkles,
+  Sun,
+  User,
+  Users,
   Wifi,
   WifiOff,
-  PanelLeftClose,
-  PanelLeft,
-  ChevronDown,
-  Palette,
-  Sun,
-  Moon,
-  Search,
-  X,
-  Sparkles,
-  Package,
-  ShoppingCart,
-  Users,
-  User,
   Wrench,
-  FileText,
-  Building2,
-  DollarSign,
-  ArrowRight,
-  RefreshCw,
-  Command,
-  AlertTriangle,
+  X,
 } from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import api, { getAssetUrl } from '../../lib/api';

@@ -1,11 +1,11 @@
-import React, { Suspense, lazy } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from './context/AuthContext';
-import { useSSE } from './hooks/useSSE';
-import { useInactivityLogout } from './hooks/useInactivityLogout';
+import React, { lazy, Suspense } from 'react';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import RoleBasedRoute from './components/auth/RoleBasedRoute';
 import DashboardLayout from './components/layout/DashboardLayout';
+import { useAuth } from './context/AuthContext';
+import { useInactivityLogout } from './hooks/useInactivityLogout';
+import { useSSE } from './hooks/useSSE';
 
 // Lazy-loaded pages
 const Login = lazy(() => import('./pages/Auth/Login'));

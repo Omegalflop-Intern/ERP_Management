@@ -158,7 +158,7 @@ export const renderServerLandingPage = (envName = 'development') => {
     <p class="subtitle">Enterprise Grade Multi-Branch Point of Sale & Management Backend System</p>
     
     <div class="links-grid">
-      <a href="/api/docs" class="link-card">
+      <a href="/api-docs" class="link-card">
         <div class="link-title">Swagger OpenAPI <span>↗</span></div>
         <div class="link-desc">Explore live interactive API documentation</div>
       </a>

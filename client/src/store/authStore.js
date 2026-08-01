@@ -1,7 +1,7 @@
+import { toast } from 'sonner';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import api from '../lib/api';
-import { toast } from 'sonner';
 
 export const useAuthStore = create(
   persist(

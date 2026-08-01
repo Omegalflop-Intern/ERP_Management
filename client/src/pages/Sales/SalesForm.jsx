@@ -1,26 +1,26 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Search,
-  Trash2,
-  ShoppingCart,
-  CreditCard,
-  Smartphone,
   Banknote,
-  RefreshCw,
-  Percent,
-  UserPlus,
-  Plus,
-  X,
-  Package,
-  Wand2,
+  CreditCard,
   Gift,
+  Package,
+  Percent,
+  Plus,
+  RefreshCw,
+  Search,
+  ShoppingCart,
+  Smartphone,
   Tag,
+  Trash2,
+  UserPlus,
+  Wand2,
+  X,
 } from 'lucide-react';
-import api from '../../lib/api';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useTheme } from '../../context/ThemeContext';
+import api from '../../lib/api';
 
 export default function SalesForm() {
   const navigate = useNavigate();

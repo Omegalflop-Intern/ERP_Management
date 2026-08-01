@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarcodeCanvas, QRCodeCanvas, numberToWordsBD, useCompanyInfo } from './Invoice';
+import { BarcodeCanvas, numberToWordsBD, QRCodeCanvas, useCompanyInfo } from './Invoice';
 
 export default function ReturnCreditNote({ sale, returnLog, returnLogsGroup }) {
   const companyInfo = useCompanyInfo();

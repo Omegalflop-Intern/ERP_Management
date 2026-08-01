@@ -1,10 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import { ArrowLeft, CheckCircle, Mail, RefreshCw, Smartphone } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Smartphone, Mail, ArrowLeft, RefreshCw, CheckCircle } from 'lucide-react';
-import ThemeToggle from '../../components/ui/ThemeToggle';
-import api from '../../lib/api';
 import { toast } from 'sonner';
+import ThemeToggle from '../../components/ui/ThemeToggle';
 import { useTheme } from '../../context/ThemeContext';
+import api from '../../lib/api';
 
 const BUBBLES = Array.from({ length: 18 }, (_, i) => ({
   id: i,

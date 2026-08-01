@@ -20,7 +20,7 @@ export default function AnimatedNumber({ value, prefix = '', suffix = '', durati
     const animate = (timestamp) => {
       if (!startRef.current) startRef.current = timestamp;
       const progress = Math.min((timestamp - startRef.current) / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
+      const eased = 1 - (1 - progress) ** 3;
       const current = fromRef.current + (numericValue - fromRef.current) * eased;
       setDisplay(current);
       if (progress < 1) {

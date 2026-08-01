@@ -1,5 +1,5 @@
+import { CheckCircle, Download, Printer, X } from 'lucide-react';
 import React, { useRef } from 'react';
-import { X, Printer, Download, CheckCircle } from 'lucide-react';
 
 export default function ReceiptModal({ invoice, onClose }) {
   const receiptRef = useRef(null);

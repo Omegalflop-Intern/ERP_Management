@@ -1,24 +1,24 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Plus,
-  Search,
-  Edit,
-  Trash2,
-  Users,
-  UserCheck,
-  UserX,
-  DollarSign,
-  Phone,
-  Mail,
   Building,
   Calendar,
+  DollarSign,
+  Edit,
+  Mail,
+  Phone,
+  Plus,
   RefreshCw,
+  Search,
+  Trash2,
+  UserCheck,
+  Users,
+  UserX,
 } from 'lucide-react';
-import api from '../../lib/api';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { confirmDelete } from '../../lib/confirm';
 import { useTheme } from '../../context/ThemeContext';
+import api from '../../lib/api';
+import { confirmDelete } from '../../lib/confirm';
 
 const DEPARTMENTS = ['Sales', 'Accounts', 'Inventory', 'Management', 'Service', 'Other'];
 const DESIGNATIONS = [

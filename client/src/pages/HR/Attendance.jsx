@@ -1,19 +1,19 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  LogIn,
-  LogOut,
-  Clock,
-  Users,
   AlertTriangle,
   Calendar,
-  RefreshCw,
+  Clock,
+  LogIn,
+  LogOut,
   MapPin,
+  RefreshCw,
+  Users,
 } from 'lucide-react';
-import api from '../../lib/api';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
+import api from '../../lib/api';
 
 export default function Attendance() {
   const { user } = useAuth();
@@ -97,7 +97,8 @@ export default function Attendance() {
           <div>
             <h3 className="font-bold text-lg">My Attendance Today</h3>
             <p className="text-xs text-red-100 mt-0.5">
-              Logged in as <span className="font-semibold">{myEmployee.name}</span> ({myEmployee.employeeId})
+              Logged in as <span className="font-semibold">{myEmployee.name}</span> (
+              {myEmployee.employeeId})
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -127,8 +128,13 @@ export default function Attendance() {
           </h3>
           <div className="flex flex-wrap gap-2">
             {employees.slice(0, 10).map((emp) => (
-              <div key={emp._id} className="flex items-center gap-1 bg-gray-50 dark:bg-gray-900 px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-800">
-                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{emp.name}</span>
+              <div
+                key={emp._id}
+                className="flex items-center gap-1 bg-gray-50 dark:bg-gray-900 px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-800"
+              >
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                  {emp.name}
+                </span>
                 <button
                   onClick={() => checkInMutation.mutate(emp._id)}
                   className="p-1 rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200 transition-colors"

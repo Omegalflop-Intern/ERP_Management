@@ -16,10 +16,10 @@ const getEnvPassword = (role, defaultPassword) => {
 };
 
 const seedUsers = [
-  { username: 'admin', email: 'admin@brothers-erp.com', phone: '01700000000', roleName: 'ADMIN' },
-  { username: 'mamun', email: 'mamun@brothers-erp.com', phone: '01711111111', roleName: 'CASHIER' },
-  { username: 'manager', email: 'manager@brothers-erp.com', phone: '01722222222', roleName: 'MANAGER' },
-  { username: 'technician', email: 'tech@brothers-erp.com', phone: '01733333333', roleName: 'TECHNICIAN' },
+  { username: 'admin', email: 'admin@brothers-erp.com', phone: '01700000000', roleName: 'ADMIN', isVerified: true },
+  { username: 'mamun', email: 'mamun@brothers-erp.com', phone: '01711111111', roleName: 'CASHIER', isVerified: true },
+  { username: 'manager', email: 'manager@brothers-erp.com', phone: '01722222222', roleName: 'MANAGER', isVerified: true },
+  { username: 'technician', email: 'tech@brothers-erp.com', phone: '01733333333', roleName: 'TECHNICIAN', isVerified: true },
 ];
 
 const seed = async () => {
@@ -29,7 +29,13 @@ const seed = async () => {
     for (const userData of seedUsers) {
       const existing = await User.findOne({ username: userData.username });
       if (existing) {
-        console.log(`User '${userData.username}' already exists, skipping...`);
+        if (!existing.isVerified) {
+          existing.isVerified = true;
+          await existing.save();
+          console.log(`Updated user '${userData.username}' to isVerified: true`);
+        } else {
+          console.log(`User '${userData.username}' already exists and is verified, skipping...`);
+        }
         continue;
       }
 
@@ -49,15 +55,19 @@ const seed = async () => {
         passwordHash,
         role: role._id,
         roleName: role.name,
+        isVerified: true,
       });
-      console.log(`Created user: ${userData.username} (${role.name})`);
+      console.log(`Created user: ${userData.username} (${role.name}) [isVerified: true]`);
     }
 
-    console.log('Seed completed!');
-    process.exit(0);
+    console.log('Seed completed successfully!');
   } catch (error) {
     console.error('Seed failed:', error);
-    process.exit(1);
+    process.exitCode = 1;
+  } finally {
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.connection.close();
+    }
   }
 };
 

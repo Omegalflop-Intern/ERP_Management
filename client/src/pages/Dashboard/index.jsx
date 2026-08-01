@@ -1,25 +1,25 @@
-import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
 import {
-  Package,
-  ShoppingCart,
-  Wrench,
-  TrendingUp,
-  DollarSign,
-  Users,
   AlertTriangle,
   ArrowRight,
   Building2,
-  Receipt,
+  DollarSign,
+  Package,
   Plus,
+  Receipt,
+  ShoppingCart,
   Sparkles,
+  TrendingUp,
+  Users,
+  Wrench,
 } from 'lucide-react';
-import api from '../../lib/api';
-import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import DashboardCharts from '../../components/charts/DashboardCharts';
 import AnimatedNumber from '../../components/ui/AnimatedNumber';
+import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
+import api from '../../lib/api';
 
 export default function Dashboard() {
   const { user } = useAuth();

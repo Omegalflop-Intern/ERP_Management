@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import { useInactivityLogout } from '../../hooks/useInactivityLogout';
+import Bottombar from './Bottombar';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
-import Bottombar from './Bottombar';
-import { useInactivityLogout } from '../../hooks/useInactivityLogout';
 
 export default function DashboardLayout() {
   useInactivityLogout();
@@ -40,7 +40,11 @@ export default function DashboardLayout() {
           collapsed={collapsed}
         />
         <div className="flex flex-1 min-h-0">
-          <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} collapsed={collapsed} />
+          <Sidebar
+            isOpen={sidebarOpen}
+            onClose={() => setSidebarOpen(false)}
+            collapsed={collapsed}
+          />
           <main
             id="main-content"
             className="flex-1 p-4 md:p-6 overflow-y-auto overscroll-contain flex flex-col justify-between"

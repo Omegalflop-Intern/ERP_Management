@@ -1,4 +1,4 @@
-import { cacheProducts, cacheStock, cacheCustomers, syncPendingItems } from './offlineDB.js';
+import { cacheCustomers, cacheProducts, cacheStock, syncPendingItems } from './offlineDB.js';
 
 export async function setupOfflineSync(api) {
   // Only fetch and cache initial data if an access token exists (user is authenticated)

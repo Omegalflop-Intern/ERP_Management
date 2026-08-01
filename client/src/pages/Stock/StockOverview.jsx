@@ -1,20 +1,20 @@
-import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Package,
-  Search,
-  Smartphone,
-  Layers,
-  ShieldCheck,
   CheckCircle2,
-  XCircle,
-  Tag,
   DollarSign,
+  Layers,
+  Package,
   PackageX,
+  Search,
+  ShieldCheck,
+  Smartphone,
+  Tag,
+  XCircle,
 } from 'lucide-react';
-import api from '../../lib/api';
-import { useTheme } from '../../context/ThemeContext';
+import React, { useState } from 'react';
 import { StockAdjustmentModal } from '../../components/stock/StockAdjustmentModal';
+import { useTheme } from '../../context/ThemeContext';
+import api from '../../lib/api';
 
 const STATUS_FILTERS = [
   { id: 'ALL', label: 'All Items' },

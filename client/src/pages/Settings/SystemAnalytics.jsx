@@ -1,25 +1,25 @@
-import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
-  Server,
-  Cpu,
-  HardDrive,
-  Database,
-  MemoryStick,
-  Clock,
-  Upload,
   Activity,
+  Clock,
+  Cpu,
+  Database,
+  HardDrive,
+  MemoryStick,
   RefreshCw,
+  Server,
+  Upload,
 } from 'lucide-react';
-import api from '../../lib/api';
+import React from 'react';
 import { useTheme } from '../../context/ThemeContext';
+import api from '../../lib/api';
 
 function formatBytes(bytes) {
   if (!bytes || bytes === 0) return '0 B';
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  return parseFloat((bytes / k ** i).toFixed(2)) + ' ' + sizes[i];
 }
 
 function formatUptime(seconds) {

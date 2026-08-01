@@ -1,5 +1,5 @@
+import { AlertCircle, CheckCircle, PackageX, X } from 'lucide-react';
 import React, { useState } from 'react';
-import { PackageX, AlertCircle, CheckCircle, X } from 'lucide-react';
 import { api } from '../../lib/api';
 
 export const StockAdjustmentModal = ({ isOpen, onClose, onSuccess }) => {

@@ -1,20 +1,19 @@
-import React, { useRef, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useReactToPrint } from 'react-to-print';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  AlertCircle,
   ArrowLeft,
-  Printer,
+  CheckCircle2,
+  Download,
+  FileText,
   Maximize,
   Minimize,
-  Smartphone,
-  FileText,
-  Download,
+  Printer,
   RotateCcw,
-  CheckCircle2,
-  AlertCircle,
+  Smartphone,
 } from 'lucide-react';
-import api from '../../lib/api';
+import React, { useRef, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useReactToPrint } from 'react-to-print';
 import { toast } from 'sonner';
 import {
   InvoiceA4Full,
@@ -22,19 +21,20 @@ import {
   InvoiceReceipt,
   InvoiceThermal,
 } from '../../components/sales/Invoice';
+import ReturnCreditNote from '../../components/sales/ReturnCreditNote';
+import { Badge } from '../../components/ui/badge';
+import { Button } from '../../components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from '../../components/ui/dialog';
-import { Button } from '../../components/ui/button';
-import { Badge } from '../../components/ui/badge';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
-import ReturnCreditNote from '../../components/sales/ReturnCreditNote';
+import api from '../../lib/api';
 import { executeClientPrint } from '../../utils/invoiceGenerator';
 
 const INVOICE_SIZES = [

@@ -1,5 +1,5 @@
+import { ArrowRight, KeyRound, Mail, RefreshCw, ShieldCheck, X } from 'lucide-react';
 import React, { useState } from 'react';
-import { X, KeyRound, Mail, ShieldCheck, ArrowRight, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../lib/api';
 

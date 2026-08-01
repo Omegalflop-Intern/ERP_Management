@@ -1,7 +1,7 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { AlertCircle, Download, FileText, ShieldCheck, Trash2, Upload, X } from 'lucide-react';
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { FileText, Upload, Trash2, X, Download, ShieldCheck, AlertCircle } from 'lucide-react';
 import api, { getAssetUrl } from '../lib/api';
 
 export default function DocumentVaultModal({ entityType, entityId, entityName, onClose }) {

@@ -1,3 +1,3 @@
-import api, { getAssetUrl, API_URL, SERVER_URL } from './api';
+import api, { API_URL, getAssetUrl, SERVER_URL } from './api';
 
-export { api as default, api, getAssetUrl, API_URL, SERVER_URL };
+export { API_URL, api as default, api, getAssetUrl, SERVER_URL };

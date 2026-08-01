@@ -1,10 +1,10 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Calendar, Eye, Filter, Plus, Receipt, Search, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Eye, Filter, Calendar, Receipt, Trash2 } from 'lucide-react';
-import api from '../../lib/api';
 import { toast } from 'sonner';
 import DatePicker from '../../components/ui/DatePicker';
+import api from '../../lib/api';
 
 export default function SalesList() {
   const navigate = useNavigate();

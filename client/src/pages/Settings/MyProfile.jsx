@@ -1,23 +1,23 @@
-import React, { useState, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  User,
+  AtSign,
   Camera,
-  Save,
+  Eye,
+  EyeOff,
+  Loader2,
   Lock,
   Mail,
   Phone,
-  AtSign,
+  Save,
   ShieldCheck,
-  Loader2,
-  Eye,
-  EyeOff,
+  User,
 } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { toast } from 'sonner';
+import { MFASetupModal } from '../../components/auth/MFASetupModal';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import api, { getAssetUrl } from '../../lib/api';
-import { toast } from 'sonner';
-import { MFASetupModal } from '../../components/auth/MFASetupModal';
 
 function PasswordInput({ value, onChange, inputCls }) {
   const [show, setShow] = useState(false);

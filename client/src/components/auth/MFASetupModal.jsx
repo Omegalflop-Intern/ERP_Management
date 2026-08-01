@@ -1,5 +1,5 @@
+import { AlertCircle, CheckCircle, Copy, ShieldCheck, X } from 'lucide-react';
 import React, { useState } from 'react';
-import { ShieldCheck, Copy, CheckCircle, AlertCircle, X } from 'lucide-react';
 import { api } from '../../lib/api';
 
 export const MFASetupModal = ({ isOpen, onClose }) => {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
+import { useAuth } from '../../context/AuthContext';
 
 export default function RoleBasedRoute({ children, roles = [], permissions = [] }) {
   const { user, isAuthenticated, hasPermission, hasAnyPermission } = useAuth();

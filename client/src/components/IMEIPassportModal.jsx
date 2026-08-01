@@ -1,15 +1,15 @@
-import React from 'react';
-import {
-  X,
-  History,
-  Tag,
-  ShieldAlert,
-  CheckCircle2,
-  User,
-  DollarSign,
-  Smartphone,
-} from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import {
+  CheckCircle2,
+  DollarSign,
+  History,
+  ShieldAlert,
+  Smartphone,
+  Tag,
+  User,
+  X,
+} from 'lucide-react';
+import React from 'react';
 import api from '../lib/api';
 
 export default function IMEIPassportModal({ imei, onClose }) {

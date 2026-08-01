@@ -1,27 +1,27 @@
-import React, { useState, useRef } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  Plus,
-  Search,
-  Edit,
-  Trash2,
-  Package,
-  Filter,
-  Download,
-  Upload,
-  Smartphone,
-  Wand2,
-  FileText,
-  X,
   AlertTriangle,
   ChevronDown,
   ChevronRight,
+  Download,
+  Edit,
+  FileText,
+  Filter,
   Info,
+  Package,
+  Plus,
+  Search,
+  Smartphone,
+  Trash2,
+  Upload,
+  Wand2,
+  X,
 } from 'lucide-react';
-import api from '../../lib/api';
+import React, { useRef, useState } from 'react';
 import { toast } from 'sonner';
-import { confirmDelete } from '../../lib/confirm';
 import { useTheme } from '../../context/ThemeContext';
+import api from '../../lib/api';
+import { confirmDelete } from '../../lib/confirm';
 
 const PHONE_CATEGORIES = [
   'smartphones',
