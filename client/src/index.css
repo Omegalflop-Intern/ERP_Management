@@ -120,33 +120,82 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ANIMATED AMBIENT MESH FLOATING ORBS & GLASS SHEEN
+   ANIMATED AMBIENT GLOBAL BACKGROUND KEYFRAMES (60 FPS GPU Accelerated)
    ═══════════════════════════════════════════════════════════════ */
-@keyframes glassFloat1 {
+@keyframes bgBreathe {
+  0%, 100% { opacity: 0.97; filter: brightness(1); }
+  50% { opacity: 1; filter: brightness(1.02); }
+}
+
+@keyframes ambientGlow1 {
   0%, 100% { transform: translate(0px, 0px) scale(1); }
-  50% { transform: translate(45px, -50px) scale(1.12); }
+  50% { transform: translate(40px, 35px) scale(1.08); }
 }
 
-@keyframes glassFloat2 {
+@keyframes ambientGlow2 {
   0%, 100% { transform: translate(0px, 0px) scale(1); }
-  50% { transform: translate(-50px, 45px) scale(1.18); }
+  50% { transform: translate(-35px, 45px) scale(1.10); }
 }
 
-@keyframes glassFloat3 {
+@keyframes ambientGlow3 {
   0%, 100% { transform: translate(0px, 0px) scale(1); }
-  50% { transform: translate(35px, 40px) scale(1.10); }
+  50% { transform: translate(30px, -40px) scale(1.05); }
 }
 
-.animate-glass-float-1 {
-  animation: glassFloat1 20s ease-in-out infinite;
+@keyframes ambientGlow4 {
+  0%, 100% { transform: translate(0px, 0px) scale(1); }
+  50% { transform: translate(-45px, -30px) scale(1.12); }
 }
 
-.animate-glass-float-2 {
-  animation: glassFloat2 24s ease-in-out infinite;
+@keyframes blobFloat1 {
+  0%, 100% { transform: translate(0px, 0px) rotate(0deg) scale(1); }
+  50% { transform: translate(50px, -40px) rotate(15deg) scale(1.12); }
 }
 
-.animate-glass-float-3 {
-  animation: glassFloat3 28s ease-in-out infinite;
+@keyframes blobFloat2 {
+  0%, 100% { transform: translate(0px, 0px) rotate(0deg) scale(1); }
+  50% { transform: translate(-40px, 50px) rotate(-12deg) scale(1.15); }
+}
+
+.animate-bg-breathe {
+  animation: bgBreathe 18s ease-in-out infinite;
+}
+
+.animate-ambient-glow-1 {
+  animation: ambientGlow1 45s ease-in-out infinite;
+}
+
+.animate-ambient-glow-2 {
+  animation: ambientGlow2 50s ease-in-out infinite;
+}
+
+.animate-ambient-glow-3 {
+  animation: ambientGlow3 55s ease-in-out infinite;
+}
+
+.animate-ambient-glow-4 {
+  animation: ambientGlow4 60s ease-in-out infinite;
+}
+
+.animate-blob-float-1 {
+  animation: blobFloat1 50s ease-in-out infinite alternate;
+}
+
+.animate-blob-float-2 {
+  animation: blobFloat2 65s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-bg-breathe,
+  .animate-ambient-glow-1,
+  .animate-ambient-glow-2,
+  .animate-ambient-glow-3,
+  .animate-ambient-glow-4,
+  .animate-blob-float-1,
+  .animate-blob-float-2 {
+    animation: none !important;
+    transform: none !important;
+  }
 }
 
 
@@ -463,20 +512,41 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   LIGHT MODE BUTTON & ICON VISIBILITY FIX
+   PRIMARY & COLORED BUTTON WHITE TEXT ENFORCEMENT
    ═══════════════════════════════════════════════════════════════ */
+button[class*="bg-[#2563EB]"],
+button[class*="bg-blue-600"],
+button[class*="bg-blue-700"],
+button[class*="bg-blue-500"],
+button[class*="bg-red-"],
+button[class*="bg-emerald-"],
+button[class*="bg-[#DC2626]"] {
+  color: #ffffff !important;
+}
+
+button[class*="bg-[#2563EB]"] svg,
+button[class*="bg-blue-600"] svg,
+button[class*="bg-blue-700"] svg,
+button[class*="bg-blue-500"] svg,
+button[class*="bg-red-"] svg,
+button[class*="bg-emerald-"] svg,
+button[class*="bg-[#DC2626]"] svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
 html:not(.dark) button[class*="border"],
 html:not(.dark) .btn-outline,
 html:not(.dark)
-  button:not([class*="bg-red"]):not([class*="bg-blue"]):not([class*="bg-green"]):not(
+  button:not([class*="bg-red"]):not([class*="bg-blue"]):not([class*="bg-[#2563EB]"]):not([class*="bg-green"]):not(
     [class*="bg-black"]
   ):not([class*="bg-emerald"]):not([class*="bg-amber"]):not([class*="bg-indigo"]):not(
     [class*="bg-purple"]
-  ):not([class*="bg-slate-900"]) {
+  ):not([class*="bg-slate-900"]):not([class*="text-white"]) {
   color: #1e293b;
 }
 
-html:not(.dark) button svg:not([class*="text-white"]) {
+html:not(.dark) button:not([class*="bg-red"]):not([class*="bg-blue"]):not([class*="bg-[#2563EB]"]) svg:not([class*="text-white"]) {
   stroke: currentColor;
 }
 

@@ -777,6 +777,7 @@ function BulkImportModal({ onClose, onSuccess }) {
 }
 
 function ProductFormModal({ product, onClose, onSuccess }) {
+  const [activeTab, setActiveTab] = useState('basic');
   const [form, setForm] = useState({
     name: product?.name || '',
     brand: product?.brand || '',
@@ -799,7 +800,6 @@ function ProductFormModal({ product, onClose, onSuccess }) {
     isActive: product?.isActive !== false,
     description: product?.description || '',
   });
-  const { styled } = useTheme();
 
   const { data: catList } = useQuery({
     queryKey: ['catalog', 'CATEGORY'],
@@ -808,6 +808,7 @@ function ProductFormModal({ product, onClose, onSuccess }) {
       return data.data || [];
     },
   });
+
   const { data: brandList } = useQuery({
     queryKey: ['catalog', 'BRAND'],
     queryFn: async () => {
@@ -818,9 +819,21 @@ function ProductFormModal({ product, onClose, onSuccess }) {
 
   const isPhone = isPhoneCat(form.category);
 
-  const inputCls = styled
-    ? 'neu-input w-full px-3 py-2 rounded-lg text-sm'
-    : 'w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-red-500';
+  // Auto calculate IMEI line count for stock quantity
+  const imeiLinesCount = form.imeiOrSerial
+    ? form.imeiOrSerial
+        .split('\n')
+        .map((l) => l.trim())
+        .filter(Boolean).length
+    : 0;
+
+  const cost = Number(form.costPrice) || 0;
+  const sell = Number(form.sellingPrice) || 0;
+  const profit = sell - cost;
+  const marginPct = sell > 0 ? ((profit / sell) * 100).toFixed(1) : 0;
+
+  const inputCls =
+    'w-full px-3.5 py-2 bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-all';
 
   const mutation = useMutation({
     mutationFn: async (data) => {
@@ -829,7 +842,7 @@ function ProductFormModal({ product, onClose, onSuccess }) {
         costPrice: Number(data.costPrice),
         sellingPrice: Number(data.sellingPrice),
         wholesalePrice: Number(data.wholesalePrice) || undefined,
-        stockQuantity: Number(data.stockQuantity) || 0,
+        stockQuantity: isPhone && imeiLinesCount > 0 ? imeiLinesCount : Number(data.stockQuantity) || 0,
         warrantyMonths: Number(data.warrantyMonths) || 0,
         vatRate: Number(data.vatRate) || 0,
         minStockAlert: Number(data.minStockAlert),
@@ -839,10 +852,10 @@ function ProductFormModal({ product, onClose, onSuccess }) {
       return api.post('/products', payload);
     },
     onSuccess: () => {
-      toast.success(product ? 'Product updated' : 'Product created');
+      toast.success(product ? 'Product updated successfully' : 'Product created successfully');
       onSuccess();
     },
-    onError: (e) => toast.error(e.response?.data?.message || 'Failed'),
+    onError: (e) => toast.error(e.response?.data?.message || 'Failed to save product'),
   });
 
   const handleAutoSKU = () => {
@@ -873,315 +886,401 @@ function ProductFormModal({ product, onClose, onSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-[#111827] rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-800 shadow-xl">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between sticky top-0 bg-white dark:bg-[#111827] z-10">
-          <h3 className="font-bold text-gray-900 dark:text-gray-100">
-            {product ? 'Edit Product' : 'Add Product'}
-          </h3>
+    <div className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-md flex items-center justify-center p-4">
+      <div className="glass-primary w-full max-w-lg rounded-[24px] shadow-2xl overflow-hidden max-h-[85vh] flex flex-col">
+        {/* Header */}
+        <div className="px-5 py-3.5 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between shrink-0">
+          <div>
+            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+              {product ? 'Edit Product Catalog' : 'Add New Product'}
+            </h3>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              Enter product details, pricing, variants, and IMEIs
+            </p>
+          </div>
           <button
+            type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl leading-none"
+            className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
           >
-            &times;
+            <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Full Width Segmented Control Tab Navigation */}
+        <div className="px-5 py-2.5 shrink-0 border-b border-slate-200/80 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/60">
+          <div className="grid grid-cols-3 gap-1 p-1 bg-slate-200/60 dark:bg-slate-800/60 rounded-xl">
+            {[
+              { id: 'basic', label: '1. Basic Info' },
+              { id: 'imei', label: `2. IMEIs ${isPhone ? '*' : ''}` },
+              { id: 'pricing', label: '3. Pricing & Stock' },
+            ].map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setActiveTab(t.id)}
+                className={`py-1.5 text-xs font-semibold rounded-lg transition-all text-center ${
+                  activeTab === t.id
+                    ? 'bg-white dark:bg-slate-900 text-[#2563EB] dark:text-blue-400 shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Form Body */}
         <form
           onSubmit={(e) => {
             e.preventDefault();
             mutation.mutate(form);
           }}
-          className="p-6 space-y-4"
+          className="p-5 space-y-3.5 overflow-y-auto flex-1"
         >
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
-                Name
-              </label>
-              <input
-                required
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className={inputCls}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
-                Brand
-              </label>
-              <input
-                required
-                value={form.brand}
-                onChange={(e) => handleBrandChange(e.target.value)}
-                list="brand-list"
-                placeholder="Type or select"
-                className={inputCls}
-              />
-              <datalist id="brand-list">
-                {(brandList || []).map((b) => (
-                  <option key={b._id} value={b.name} />
-                ))}
-              </datalist>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
-                Category
-              </label>
-              <input
-                required
-                value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
-                list="category-list"
-                placeholder="Type or select custom category"
-                className={inputCls}
-              />
-              <datalist id="category-list">
-                {[
-                  'SMARTPHONE',
-                  'FEATURE_PHONE',
-                  'CHARGER',
-                  'HEADPHONE',
-                  'BACK_COVER',
-                  'SCREEN_PROTECTOR',
-                  'POWER_BANK',
-                  'SMARTWATCH',
-                  'EARBUDS',
-                  'REPAIR_PART',
-                  'ACCESSORIES',
-                  'OTHER',
-                  ...(catList || []).map((c) => c.name),
-                ].map((catName, idx) => (
-                  <option key={idx} value={catName} />
-                ))}
-              </datalist>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
-                Model
-              </label>
-              <input
-                value={form.model}
-                onChange={(e) => setForm({ ...form, model: e.target.value })}
-                placeholder="e.g. Galaxy S24"
-                className={inputCls}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
-                  SKU
-                </label>
-                <button
-                  type="button"
-                  onClick={handleAutoSKU}
-                  className="text-[10px] text-red-500 hover:underline flex items-center gap-0.5 font-bold"
-                >
-                  <Wand2 className="w-2.5 h-2.5" /> Auto
-                </button>
+          {/* Tab 1: Basic Info */}
+          {activeTab === 'basic' && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Product Name *
+                  </label>
+                  <input
+                    required
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    placeholder="e.g. iPhone 15 Pro Max"
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Brand *
+                  </label>
+                  <input
+                    required
+                    value={form.brand}
+                    onChange={(e) => handleBrandChange(e.target.value)}
+                    list="brand-list"
+                    placeholder="Apple, Samsung, etc."
+                    className={inputCls}
+                  />
+                  <datalist id="brand-list">
+                    {(brandList || []).map((b) => (
+                      <option key={b._id} value={b.name} />
+                    ))}
+                  </datalist>
+                </div>
               </div>
-              <input
-                value={form.sku}
-                onChange={(e) => setForm({ ...form, sku: e.target.value.toUpperCase() })}
-                placeholder="Auto if empty"
-                className={`${inputCls} font-mono`}
-              />
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Category *
+                  </label>
+                  <input
+                    required
+                    value={form.category}
+                    onChange={(e) => setForm({ ...form, category: e.target.value })}
+                    list="category-list"
+                    placeholder="Select category"
+                    className={inputCls}
+                  />
+                  <datalist id="category-list">
+                    {[
+                      'SMARTPHONE',
+                      'FEATURE_PHONE',
+                      'CHARGER',
+                      'HEADPHONE',
+                      'BACK_COVER',
+                      'SCREEN_PROTECTOR',
+                      'POWER_BANK',
+                      'SMARTWATCH',
+                      'EARBUDS',
+                      'ACCESSORIES',
+                      'OTHER',
+                      ...(catList || []).map((c) => c.name),
+                    ].map((catName, idx) => (
+                      <option key={idx} value={catName} />
+                    ))}
+                  </datalist>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Model
+                  </label>
+                  <input
+                    value={form.model}
+                    onChange={(e) => setForm({ ...form, model: e.target.value })}
+                    placeholder="e.g. A3106 / 256GB"
+                    className={inputCls}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                      SKU Code
+                    </label>
+                    <button
+                      type="button"
+                      onClick={handleAutoSKU}
+                      className="text-[11px] text-[#2563EB] dark:text-blue-400 hover:underline flex items-center gap-1 font-bold"
+                    >
+                      <Wand2 className="w-3 h-3" /> Auto
+                    </button>
+                  </div>
+                  <input
+                    value={form.sku}
+                    onChange={(e) => setForm({ ...form, sku: e.target.value.toUpperCase() })}
+                    placeholder="e.g. APPLE-849201"
+                    className={`${inputCls} font-mono`}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Barcode
+                  </label>
+                  <input
+                    value={form.barcode}
+                    onChange={(e) => setForm({ ...form, barcode: e.target.value })}
+                    placeholder="Scan or type barcode"
+                    className={`${inputCls} font-mono`}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                  Unit Measurement
+                </label>
+                <select
+                  value={form.unit}
+                  onChange={(e) => setForm({ ...form, unit: e.target.value })}
+                  className={inputCls}
+                >
+                  <option value="piece">Piece (Pcs)</option>
+                  <option value="set">Set / Pack</option>
+                  <option value="box">Box</option>
+                </select>
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
-                Barcode
-              </label>
-              <input
-                value={form.barcode}
-                onChange={(e) => setForm({ ...form, barcode: e.target.value })}
-                className={`${inputCls} font-mono`}
-              />
+          )}
+
+          {/* Tab 2: IMEIs & Variants */}
+          {activeTab === 'imei' && (
+            <div className="space-y-3">
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label
+                    className={`block text-xs font-bold uppercase tracking-wider ${
+                      isPhone ? 'text-[#2563EB] dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'
+                    }`}
+                  >
+                    {isPhone ? 'IMEI List * (15 Digits Per Line)' : 'IMEI / Serial Numbers (Optional)'}
+                  </label>
+                  {imeiLinesCount > 0 && (
+                    <span className="px-2 py-0.5 rounded-full bg-blue-50 text-[#2563EB] dark:bg-blue-950/40 dark:text-blue-400 text-xs font-mono font-bold">
+                      {imeiLinesCount} units detected
+                    </span>
+                  )}
+                </div>
+                <textarea
+                  rows={4}
+                  value={form.imeiOrSerial}
+                  onChange={(e) => setForm({ ...form, imeiOrSerial: e.target.value })}
+                  placeholder={
+                    isPhone
+                      ? 'Format: 15-Digit-IMEI:Color:RAM/Storage\nExample:\n358910481029410:Midnight Black:8GB/256GB\n358910481029411:Natural Titanium:8GB/256GB'
+                      : 'Optional serial numbers, one per line\nExample: SN104920194'
+                  }
+                  className={`${inputCls} font-mono text-xs`}
+                />
+                <p className="text-[11px] text-slate-400 mt-1">
+                  For phone categories, each line represents one inventory unit. Stock quantity will automatically update.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Default RAM
+                  </label>
+                  <input
+                    value={form.ram}
+                    onChange={(e) => setForm({ ...form, ram: e.target.value })}
+                    placeholder="e.g. 8GB"
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Default Storage
+                  </label>
+                  <input
+                    value={form.storage}
+                    onChange={(e) => setForm({ ...form, storage: e.target.value })}
+                    placeholder="e.g. 256GB"
+                    className={inputCls}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Default Color
+                  </label>
+                  <input
+                    value={form.color}
+                    onChange={(e) => setForm({ ...form, color: e.target.value })}
+                    placeholder="e.g. Black"
+                    className={inputCls}
+                  />
+                </div>
+              </div>
             </div>
-          </div>
-          <div>
-            <label
-              className={`block text-xs font-semibold uppercase mb-1 ${isPhone ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}
-            >
-              {isPhone ? 'IMEI * (required)' : 'IMEI / Serial'} &mdash; Batch Entry
-            </label>
-            <textarea
-              rows={3}
-              value={form.imeiOrSerial}
-              onChange={(e) => setForm({ ...form, imeiOrSerial: e.target.value })}
-              placeholder={
-                isPhone
-                  ? 'Required \u2014 one per line\nFormat: IMEI:Color:RAM/Storage\nExample: 358910481029410:Midnight Black:8GB/256GB'
-                  : 'Optional \u2014 serial numbers, one per line\nFormat: IMEI:Color:RAM/Storage'
-              }
-              className={`${inputCls} font-mono text-xs ${isPhone ? 'border-red-400 dark:border-red-600 focus:border-red-500' : ''}`}
-            />
-            {isPhone ? (
-              <p className="text-[10px] text-red-500 mt-1 font-medium">
-                Phone stock requires IMEIs. Each IMEI can have its own Color and RAM/Storage
-                variant. Stock qty is auto-calculated from IMEI count.
-              </p>
-            ) : (
-              <p className="text-[10px] text-gray-400 mt-1">
-                Color and specs per unit are optional
-              </p>
-            )}
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
-                RAM
-              </label>
-              <input
-                value={form.ram}
-                onChange={(e) => setForm({ ...form, ram: e.target.value })}
-                placeholder="8GB"
-                className={inputCls}
-              />
+          )}
+
+          {/* Tab 3: Pricing & Stock */}
+          {activeTab === 'pricing' && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Cost Price (৳) *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    value={form.costPrice}
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => setForm({ ...form, costPrice: e.target.value })}
+                    placeholder="0.00"
+                    className={`${inputCls} font-mono`}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Selling Price (৳) *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    value={form.sellingPrice}
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => setForm({ ...form, sellingPrice: e.target.value })}
+                    placeholder="0.00"
+                    className={`${inputCls} font-mono`}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Wholesale (৳)
+                  </label>
+                  <input
+                    type="number"
+                    value={form.wholesalePrice}
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => setForm({ ...form, wholesalePrice: e.target.value })}
+                    placeholder="0.00"
+                    className={`${inputCls} font-mono`}
+                  />
+                </div>
+              </div>
+
+              {/* Live Profit Margin Calculator Indicator */}
+              {cost > 0 && sell > 0 && (
+                <div className="p-2.5 rounded-xl bg-blue-50/80 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-800/40 flex items-center justify-between text-xs">
+                  <span className="text-slate-600 dark:text-slate-400">Estimated Unit Profit:</span>
+                  <div className="flex items-center gap-3 font-mono font-bold">
+                    <span className="text-emerald-600 dark:text-emerald-400">৳{profit.toLocaleString()}</span>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
+                      {marginPct}% Margin
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Stock Qty {isPhone ? '(auto)' : '*'}
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    disabled={isPhone && imeiLinesCount > 0}
+                    value={isPhone && imeiLinesCount > 0 ? imeiLinesCount : form.stockQuantity}
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => setForm({ ...form, stockQuantity: e.target.value })}
+                    className={`${inputCls} font-bold font-mono`}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Warranty (Months)
+                  </label>
+                  <select
+                    value={form.warrantyMonths}
+                    onChange={(e) => setForm({ ...form, warrantyMonths: Number(e.target.value) })}
+                    className={inputCls}
+                  >
+                    <option value={0}>No Warranty</option>
+                    <option value={1}>1 Month</option>
+                    <option value={3}>3 Months</option>
+                    <option value={6}>6 Months</option>
+                    <option value={12}>12 Months (1 Year)</option>
+                    <option value={24}>24 Months (2 Years)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                    Min Stock Alert
+                  </label>
+                  <input
+                    type="number"
+                    value={form.minStockAlert}
+                    onChange={(e) => setForm({ ...form, minStockAlert: e.target.value })}
+                    min={1}
+                    className={`${inputCls} font-mono`}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-1">
+                <label className="flex items-center gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.isActive}
+                    onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+                    className="w-4 h-4 rounded border-slate-300 text-[#2563EB] focus:ring-[#2563EB]"
+                  />
+                  <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                    Active in Product Catalog
+                  </span>
+                </label>
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
-                Storage
-              </label>
-              <input
-                value={form.storage}
-                onChange={(e) => setForm({ ...form, storage: e.target.value })}
-                placeholder="256GB"
-                className={inputCls}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
-                Color (default)
-              </label>
-              <input
-                value={form.color}
-                onChange={(e) => setForm({ ...form, color: e.target.value })}
-                className={inputCls}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
-                Cost Price (&#2547;)
-              </label>
-              <input
-                type="number"
-                required
-                value={form.costPrice}
-                onFocus={(e) => e.target.select()}
-                onChange={(e) => setForm({ ...form, costPrice: e.target.value })}
-                className={inputCls}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
-                Selling Price (&#2547;)
-              </label>
-              <input
-                type="number"
-                required
-                value={form.sellingPrice}
-                onFocus={(e) => e.target.select()}
-                onChange={(e) => setForm({ ...form, sellingPrice: e.target.value })}
-                className={inputCls}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
-                Wholesale (&#2547;)
-              </label>
-              <input
-                type="number"
-                value={form.wholesalePrice}
-                onFocus={(e) => e.target.select()}
-                onChange={(e) => setForm({ ...form, wholesalePrice: e.target.value })}
-                className={inputCls}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <label
-                className={`block text-xs font-bold uppercase mb-1 ${isPhone ? 'text-gray-400 dark:text-gray-600' : 'text-red-600 dark:text-red-400'}`}
-              >
-                Stock Qty {isPhone ? '(auto)' : '*'}
-              </label>
-              <input
-                type="number"
-                min="0"
-                required
-                disabled={isPhone}
-                value={form.stockQuantity}
-                onFocus={(e) => e.target.select()}
-                onChange={(e) => setForm({ ...form, stockQuantity: e.target.value })}
-                className={`${inputCls} font-bold ${isPhone ? 'opacity-50 cursor-not-allowed' : ''}`}
-              />
-              {isPhone && <p className="text-[10px] text-gray-400 mt-0.5">Driven by IMEI count</p>}
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
-                Warranty
-              </label>
-              <select
-                value={form.warrantyMonths}
-                onChange={(e) => setForm({ ...form, warrantyMonths: Number(e.target.value) })}
-                className={inputCls}
-              >
-                <option value={0}>No Warranty (N/A)</option>
-                <option value={1}>1 Month</option>
-                <option value={3}>3 Months</option>
-                <option value={6}>6 Months</option>
-                <option value={12}>12 Months (1 Year)</option>
-                <option value={24}>24 Months (2 Years)</option>
-                <option value={36}>36 Months (3 Years)</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
-                VAT %
-              </label>
-              <input
-                type="number"
-                value={form.vatRate}
-                onFocus={(e) => e.target.select()}
-                onChange={(e) => setForm({ ...form, vatRate: e.target.value })}
-                min={0}
-                max={100}
-                className={inputCls}
-              />
-            </div>
-          </div>
-          <div className="flex items-center justify-between pt-1">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={form.isActive}
-                onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
-                className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
-              />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Active Product
-              </span>
-            </label>
-          </div>
-          <div className="flex gap-3 pt-2">
+          )}
+
+          {/* Footer Actions */}
+          <div className="flex items-center gap-3 pt-3 border-t border-slate-200/80 dark:border-slate-800">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-lg text-sm transition-colors"
+              className="flex-1 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold rounded-xl text-xs transition-all"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={mutation.isPending}
-              className="flex-1 py-2 bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white font-medium rounded-lg text-sm transition-colors"
+              className="flex-1 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white font-semibold rounded-xl text-xs transition-all shadow-xs"
             >
-              {mutation.isPending ? 'Saving...' : product ? 'Update' : 'Create'}
+              {mutation.isPending ? 'Saving Product...' : product ? 'Update Product' : 'Create Product'}
             </button>
           </div>
         </form>
