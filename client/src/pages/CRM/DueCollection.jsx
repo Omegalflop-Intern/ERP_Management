@@ -14,6 +14,9 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import api from '../../lib/api';
 
+import PageHeader from '../../components/layout/PageHeader';
+import EmptyState from '../../components/ui/EmptyState';
+
 export default function DueCollection() {
   const [search, setSearch] = useState('');
   const [collectModal, setCollectModal] = useState(null);
@@ -62,14 +65,12 @@ export default function DueCollection() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Due Collection</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Track and collect pending payments from customers
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Due Collection"
+        subtitle="Track outstanding customer balances, record payments, and send due reminders."
+        icon={DollarSign}
+        breadcrumbs={['Customers & Dues', 'Due Collection']}
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {summaryCards.map((card) => (

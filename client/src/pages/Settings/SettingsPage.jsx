@@ -72,6 +72,8 @@ const fieldLabels = {
   dateFormat: 'Date Format',
 };
 
+import PageHeader from '../../components/layout/PageHeader';
+
 export default function SettingsPage() {
   const { styled } = useTheme();
   const qc = useQueryClient();
@@ -198,14 +200,12 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-          <SettingsIcon className="w-6 h-6 text-red-600" /> Settings
-        </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Manage your ERP configuration and database backups
-        </p>
-      </div>
+      <PageHeader
+        title="System & Shop Settings"
+        subtitle="Configure company details, receipt logo, VAT rates, currency formats, and database backup controls."
+        icon={SettingsIcon}
+        breadcrumbs={['System Administration', 'Settings']}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Sidebar */}

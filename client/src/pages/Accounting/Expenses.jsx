@@ -33,6 +33,9 @@ const DEFAULT_CATEGORIES = [
   'Miscellaneous',
 ];
 
+import PageHeader from '../../components/layout/PageHeader';
+import EmptyState from '../../components/ui/EmptyState';
+
 export default function Expenses() {
   const { styled } = useTheme();
   const qc = useQueryClient();
@@ -113,28 +116,24 @@ export default function Expenses() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-            <Receipt className="w-6 h-6 text-red-600" /> Shop Costing & Expenses
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Track shop operating costs, rent, utilities, food, custom categories & maintenance
-            expenses
-          </p>
-        </div>
-        <button
-          onClick={() => {
-            setCategoryChoice(categories[0] || 'Shop Rent');
-            setCustomCategoryInput('');
-            setShowAddModal(true);
-          }}
-          className="flex items-center gap-2 px-4 py-2 bg-red-700 hover:bg-red-600 text-white font-medium rounded-lg text-sm transition-all shadow-xs"
-        >
-          <Plus className="w-4 h-4" /> Record New Expense
-        </button>
-      </div>
+      <PageHeader
+        title="Shop Costing & Expenses"
+        subtitle="Track shop operating costs, rent, utilities, food, marketing, salaries, and custom maintenance expenses."
+        icon={Receipt}
+        breadcrumbs={['Finance & Accounts', 'Shop Costing & Expenses']}
+        actions={
+          <button
+            onClick={() => {
+              setCategoryChoice(categories[0] || 'Shop Rent');
+              setCustomCategoryInput('');
+              setShowAddModal(true);
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl text-xs transition-all shadow-xs"
+          >
+            <Plus className="w-4 h-4" /> Record New Expense
+          </button>
+        }
+      />
 
       {/* Summary Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

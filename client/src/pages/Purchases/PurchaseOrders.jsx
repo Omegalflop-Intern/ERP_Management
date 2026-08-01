@@ -33,6 +33,9 @@ const STATUS_COLORS = {
   CANCELLED: 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400',
 };
 
+import PageHeader from '../../components/layout/PageHeader';
+import EmptyState from '../../components/ui/EmptyState';
+
 export default function PurchaseOrders() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -66,20 +69,20 @@ export default function PurchaseOrders() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Purchase Orders</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Create and manage purchase orders with suppliers
-          </p>
-        </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-red-700 hover:bg-red-600 text-white font-medium rounded-lg text-sm transition-all"
-        >
-          <Plus className="w-4 h-4" /> New Purchase Order
-        </button>
-      </div>
+      <PageHeader
+        title="Purchase Orders"
+        subtitle="Manage inventory restock orders, supplier invoices, received goods (GRN), and returns."
+        icon={Truck}
+        breadcrumbs={['Purchases & Suppliers', 'Purchase Orders']}
+        actions={
+          <button
+            onClick={() => setShowCreate(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl text-xs transition-all shadow-xs"
+          >
+            <Plus className="w-4 h-4" /> New Purchase Order
+          </button>
+        }
+      />
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1 max-w-md">

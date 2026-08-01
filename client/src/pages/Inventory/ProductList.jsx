@@ -44,6 +44,9 @@ const UNIT_COLORS = [
 ];
 const getUnitColorClass = (idx) => UNIT_COLORS[idx % UNIT_COLORS.length];
 
+import PageHeader from '../../components/layout/PageHeader';
+import EmptyState from '../../components/ui/EmptyState';
+
 export default function ProductList() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('ALL');
@@ -124,51 +127,51 @@ export default function ProductList() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Products</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Manage your product catalog &amp; inventory units
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleExport}
-            className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-lg text-sm transition-all"
-          >
-            <Download className="w-4 h-4" /> Export
-          </button>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={importMutation.isPending}
-            className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-lg text-sm transition-all disabled:opacity-50"
-          >
-            <Upload className="w-4 h-4" /> {importMutation.isPending ? 'Importing...' : 'Import'}
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".xlsx,.xls,.csv"
-            className="hidden"
-            onChange={handleImport}
-          />
-          <button
-            onClick={() => setShowBulkImport(true)}
-            className="flex items-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg text-sm transition-all"
-          >
-            <FileText className="w-4 h-4" /> Bulk IMEI
-          </button>
-          <button
-            onClick={() => {
-              setEditProduct(null);
-              setShowForm(true);
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-red-700 hover:bg-red-600 text-white font-medium rounded-lg text-sm transition-all"
-          >
-            <Plus className="w-4 h-4" /> Add Product
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title="Products & Inventory"
+        subtitle="Manage your store's smartphones, accessories, IMEI serials, stock prices, and category catalog."
+        icon={Package}
+        breadcrumbs={['Products & Stock', 'Products Catalog']}
+        actions={
+          <>
+            <button
+              onClick={handleExport}
+              className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium rounded-xl text-xs transition-all border border-slate-200 dark:border-slate-700 shadow-xs"
+            >
+              <Download className="w-4 h-4" /> Export
+            </button>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={importMutation.isPending}
+              className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium rounded-xl text-xs transition-all border border-slate-200 dark:border-slate-700 shadow-xs disabled:opacity-50"
+            >
+              <Upload className="w-4 h-4" /> {importMutation.isPending ? 'Importing...' : 'Import'}
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              className="hidden"
+              onChange={handleImport}
+            />
+            <button
+              onClick={() => setShowBulkImport(true)}
+              className="flex items-center gap-2 px-3.5 py-2 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl text-xs transition-all shadow-xs"
+            >
+              <FileText className="w-4 h-4" /> Bulk IMEI
+            </button>
+            <button
+              onClick={() => {
+                setEditProduct(null);
+                setShowForm(true);
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl text-xs transition-all shadow-xs"
+            >
+              <Plus className="w-4 h-4" /> Add Product
+            </button>
+          </>
+        }
+      />
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1 max-w-md">

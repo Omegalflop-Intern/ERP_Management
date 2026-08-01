@@ -22,6 +22,9 @@ import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
 import { confirmDelete } from '../../lib/confirm';
 
+import PageHeader from '../../components/layout/PageHeader';
+import EmptyState from '../../components/ui/EmptyState';
+
 export default function CustomerList() {
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('ALL');
@@ -72,23 +75,23 @@ export default function CustomerList() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Customers</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Manage individual retail and B2B wholesale customer accounts
-          </p>
-        </div>
-        <button
-          onClick={() => {
-            setEditCust(null);
-            setShowForm(true);
-          }}
-          className="flex items-center gap-2 px-4 py-2 bg-red-700 hover:bg-red-600 text-white font-medium rounded-lg text-sm transition-all"
-        >
-          <Plus className="w-4 h-4" /> Add Customer
-        </button>
-      </div>
+      <PageHeader
+        title="Customer Management"
+        subtitle="Manage retail buyers, wholesale clients, contact numbers, loyalty points, and outstanding due balances."
+        icon={Users}
+        breadcrumbs={['Customers & Dues', 'Customer Directory']}
+        actions={
+          <button
+            onClick={() => {
+              setEditCust(null);
+              setShowForm(true);
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl text-xs transition-all shadow-xs"
+          >
+            <Plus className="w-4 h-4" /> Add Customer
+          </button>
+        }
+      />
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[

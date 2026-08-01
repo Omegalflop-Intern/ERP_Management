@@ -32,6 +32,9 @@ const statusConfig = {
   },
 };
 
+import PageHeader from '../components/layout/PageHeader';
+import EmptyState from '../components/ui/EmptyState';
+
 export default function RepairsView() {
   const queryClient = useQueryClient();
   const { styled } = useTheme();
@@ -103,25 +106,20 @@ export default function RepairsView() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div
-        className={`flex items-center justify-between p-5 rounded-2xl ${styled ? 'neu-card' : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800'}`}
-      >
-        <div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-            <Wrench className="w-6 h-6 text-amber-500" /> Service & Repair Department
-          </h2>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-            Track device repair tickets, technician assignments, and spare parts
-          </p>
-        </div>
-        <button
-          onClick={() => setShowNewTicketModal(true)}
-          className="px-4 py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl text-sm transition-all flex items-center gap-2 shadow-lg shadow-amber-600/20"
-        >
-          <Plus className="w-4 h-4" /> Create Repair Ticket
-        </button>
-      </div>
+      <PageHeader
+        title="Repair & Service Management"
+        subtitle="Log mobile repair tickets, track technician service progress, and issue repair invoices."
+        icon={Wrench}
+        breadcrumbs={['Purchases & Repairs', 'Repairs & Services']}
+        actions={
+          <button
+            onClick={() => setShowNewTicketModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl text-xs transition-all shadow-xs"
+          >
+            <Plus className="w-4 h-4" /> Log Repair Ticket
+          </button>
+        }
+      />
 
       {/* Loading */}
       {isLoading && (

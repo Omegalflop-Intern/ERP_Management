@@ -31,6 +31,9 @@ const DESIGNATIONS = [
   'Intern',
 ];
 
+import PageHeader from '../../components/layout/PageHeader';
+import EmptyState from '../../components/ui/EmptyState';
+
 export default function EmployeeList() {
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -79,23 +82,23 @@ export default function EmployeeList() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Employees</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Manage staff, designations and payroll info
-          </p>
-        </div>
-        <button
-          onClick={() => {
-            setEditEmp(null);
-            setShowForm(true);
-          }}
-          className="flex items-center gap-2 px-4 py-2 bg-red-700 hover:bg-red-600 text-white font-medium rounded-lg text-sm transition-all"
-        >
-          <Plus className="w-4 h-4" /> Add Employee
-        </button>
-      </div>
+      <PageHeader
+        title="Employee Directory"
+        subtitle="Manage shop staff accounts, job designations, monthly salaries, and employment statuses."
+        icon={Users}
+        breadcrumbs={['Staff & HR', 'Employees']}
+        actions={
+          <button
+            onClick={() => {
+              setEditEmp(null);
+              setShowForm(true);
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl text-xs transition-all shadow-xs"
+          >
+            <Plus className="w-4 h-4" /> Add Employee
+          </button>
+        }
+      />
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[

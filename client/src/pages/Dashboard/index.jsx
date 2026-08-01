@@ -21,6 +21,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
 
+import PageHeader from '../../components/layout/PageHeader';
+
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -131,56 +133,38 @@ export default function Dashboard() {
     },
   ];
 
-  const cardClass = styled
-    ? 'neu-card p-5'
-    : 'bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4';
-  const btnClass = styled
-    ? 'neu-btn p-3 flex items-center gap-3 text-left'
-    : 'flex items-center gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-red-300 dark:hover:border-red-500/30 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all text-left';
-
   return (
     <div className="space-y-6 w-full pb-6">
-      {/* Shop Owner Welcome Banner & Quick Action Header */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
-              Welcome, {user?.fullName || user?.username}! 👋
-            </h1>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40 flex items-center gap-1.5">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              Live Overview
-            </span>
-          </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Here is your shop's performance summary and key business metrics at a glance.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            onClick={() => navigate('/products')}
-            className="px-3.5 py-2 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold rounded-xl text-xs transition-all flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 shadow-xs"
-          >
-            <Package className="w-4 h-4 text-blue-500" />+ Add Stock
-          </button>
-          <button
-            onClick={() => navigate('/customers/due-collection')}
-            className="px-3.5 py-2 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold rounded-xl text-xs transition-all flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 shadow-xs"
-          >
-            <DollarSign className="w-4 h-4 text-emerald-500" />
-            Collect Dues
-          </button>
-          <button
-            onClick={() => navigate('/expenses')}
-            className="px-3.5 py-2 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold rounded-xl text-xs transition-all flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 shadow-xs"
-          >
-            <Receipt className="w-4 h-4 text-amber-500" />+ Costing & Expenses
-          </button>
-        </div>
-      </div>
+      {/* Standard Page Header */}
+      <PageHeader
+        title={`Welcome back, ${user?.fullName || user?.username || 'Owner'}!`}
+        subtitle="Here is your shop's performance summary, stock value, and key sales metrics at a glance."
+        icon={Sparkles}
+        badge="Live Shop Overview"
+        badgeVariant="success"
+        actions={
+          <>
+            <button
+              onClick={() => navigate('/sales/new')}
+              className="px-4 py-2.5 bg-primary text-white font-semibold rounded-xl text-xs transition-all shadow-xs hover:bg-primary/90 flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" /> New Sale (POS)
+            </button>
+            <button
+              onClick={() => navigate('/products')}
+              className="px-3.5 py-2.5 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold rounded-xl text-xs transition-all flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-700"
+            >
+              <Package className="w-4 h-4 text-blue-500" /> Stock Items
+            </button>
+            <button
+              onClick={() => navigate('/customers/due-collection')}
+              className="px-3.5 py-2.5 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold rounded-xl text-xs transition-all flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-700"
+            >
+              <DollarSign className="w-4 h-4 text-emerald-500" /> Collect Dues
+            </button>
+          </>
+        }
+      />
 
       {/* Primary Key Metrics Grid — 4 Cards Per Row on Desktop */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
