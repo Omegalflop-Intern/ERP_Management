@@ -144,7 +144,7 @@ export default function Returns() {
         </button>
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-            <RotateCcw className="w-6 h-6 text-red-600 dark:text-red-400" /> Sales Return Processing
+            <RotateCcw className="w-6 h-6 text-[#2563EB] dark:text-blue-400" /> Sales Return Processing
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Search sale by invoice number, IMEI / Serial, customer name, or phone number
@@ -169,7 +169,7 @@ export default function Returns() {
               className={`w-full pl-10 pr-4 py-2.5 text-sm ${
                 styled
                   ? 'neu-input'
-                  : 'bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-gray-100 focus:outline-none focus:border-red-500 font-mono'
+                  : 'bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB] font-mono'
               }`}
             />
           </div>
@@ -178,7 +178,7 @@ export default function Returns() {
               if (invoiceSearch.trim()) searchMutation.mutate(invoiceSearch.trim());
             }}
             disabled={!invoiceSearch.trim() || searchMutation.isPending}
-            className="px-5 py-2.5 bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2"
+            className="px-5 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-xs"
           >
             {searchMutation.isPending ? (
               <RefreshCw className="w-4 h-4 animate-spin" />
@@ -415,7 +415,7 @@ export default function Returns() {
                 <button
                   onClick={handleReturn}
                   disabled={selectedCount === 0 || returnMutation.isPending}
-                  className="px-6 py-2.5 bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white font-bold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-md"
+                  className="px-6 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-xs"
                 >
                   {returnMutation.isPending ? (
                     <RefreshCw className="w-4 h-4 animate-spin" />
@@ -456,7 +456,7 @@ export default function Returns() {
                       'a4'
                     )
                   }
-                  className="px-4 py-2 bg-red-700 hover:bg-red-600 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow"
+                  className="px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold rounded-xl text-xs flex items-center gap-2 shadow-xs"
                 >
                   <Printer className="w-4 h-4" /> Print Return Invoice (Credit Note)
                 </button>

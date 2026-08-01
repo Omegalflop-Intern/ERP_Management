@@ -91,7 +91,7 @@ export default function PurchaseOrders() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-red-500"
+            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]"
           />
         </div>
         <div className="flex gap-1 flex-wrap">
@@ -99,7 +99,7 @@ export default function PurchaseOrders() {
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${statusFilter === s ? 'bg-red-700 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${statusFilter === s ? 'bg-[#2563EB] text-white shadow-xs' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
             >
               {s === 'ALL' ? 'All' : s.replace(/_/g, ' ')}
             </button>
@@ -403,7 +403,7 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
                 <button
                   type="button"
                   onClick={() => setShowAddSupplierModal(true)}
-                  className="px-3 py-2 bg-red-700 hover:bg-red-600 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1 flex-shrink-0"
+                  className="px-3 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1 flex-shrink-0"
                   title="Add new supplier"
                 >
                   <Plus className="w-3.5 h-3.5" /> Supplier
@@ -417,7 +417,7 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-red-500"
+                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]"
               >
                 <option value="CASH">Cash</option>
                 <option value="BANK">Bank</option>
@@ -443,7 +443,7 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
                 <button
                   type="button"
                   onClick={addLineItem}
-                  className="flex items-center gap-1 text-xs font-medium text-red-600 dark:text-red-400 hover:underline"
+                  className="flex items-center gap-1 text-xs font-medium text-[#2563EB] dark:text-blue-400 hover:underline"
                 >
                   <Plus className="w-3 h-3" /> Add Item
                 </button>
@@ -458,7 +458,7 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
                   <select
                     value={item.productId}
                     onChange={(e) => updateLineItem(idx, 'productId', e.target.value)}
-                    className="w-full px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-red-500"
+                    className="w-full px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]"
                   >
                     <option value="">Select Product</option>
                     {products.map((p) => (
@@ -474,7 +474,7 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
                     value={item.qty}
                     onChange={(e) => updateLineItem(idx, 'qty', Number(e.target.value))}
                     min={1}
-                    className="w-full px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-red-500"
+                    className="w-full px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]"
                     placeholder="Qty"
                   />
                 </div>
@@ -484,7 +484,7 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
                     value={item.unitCost}
                     onChange={(e) => updateLineItem(idx, 'unitCost', Number(e.target.value))}
                     min={0}
-                    className="w-full px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-red-500"
+                    className="w-full px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]"
                     placeholder="Unit Cost"
                   />
                 </div>
@@ -526,7 +526,7 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
                 value={paidAmount}
                 onChange={(e) => setPaidAmount(e.target.value)}
                 min={0}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-red-500"
+                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]"
               />
             </div>
             <div>
@@ -537,7 +537,7 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
                 type="text"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-red-500"
+                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]"
                 placeholder="Optional notes"
               />
             </div>
@@ -554,7 +554,7 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
             <button
               onClick={() => mutation.mutate()}
               disabled={mutation.isPending || !supplierId || lineItems.some((i) => !i.productId)}
-              className="flex-1 py-2 bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white font-medium rounded-lg text-sm transition-colors flex items-center justify-center gap-2"
+              className="flex-1 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white font-semibold rounded-lg text-sm transition-colors flex items-center justify-center gap-2"
             >
               {mutation.isPending ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
@@ -675,7 +675,7 @@ function QuickSupplierModal({ onClose, onSuccess }) {
             <button
               type="submit"
               disabled={mutation.isPending}
-              className="flex-1 py-2 bg-red-700 hover:bg-red-600 text-white font-bold rounded-lg text-sm"
+              className="flex-1 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold rounded-lg text-sm"
             >
               {mutation.isPending ? 'Saving...' : 'Add Supplier'}
             </button>
@@ -1027,7 +1027,7 @@ function GRNModal({ order, onClose, onSuccess }) {
                 {entry.items.length < entry.remainingQty && (
                   <button
                     onClick={() => addEntry(idx)}
-                    className="flex items-center gap-1 text-xs font-medium text-red-600 dark:text-red-400 hover:underline"
+                    className="flex items-center gap-1 text-xs font-medium text-[#2563EB] dark:text-blue-400 hover:underline"
                   >
                     <Plus className="w-3 h-3" /> Add IMEI
                   </button>

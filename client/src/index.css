@@ -494,22 +494,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   color: #f8fafc !important;
 }
 
-/* --- Neobrutalism Date Picker --- */
-[data-mode="neobrutalism"] input[type="date"] {
-  background: #ffffff !important;
-  border: 2px solid #000000 !important;
-  box-shadow: 3px 3px 0px #000000 !important;
-  border-radius: 6px !important;
-  font-weight: 700 !important;
-  color: #000000 !important;
-}
-.dark [data-mode="neobrutalism"] input[type="date"] {
-  background: #18181b !important;
-  border: 2px solid #ffffff !important;
-  box-shadow: 3px 3px 0px #ffffff !important;
-  font-weight: 700 !important;
-  color: #ffffff !important;
-}
+
 
 /* ═══════════════════════════════════════════════════════════════
    PRIMARY & COLORED BUTTON WHITE TEXT ENFORCEMENT
@@ -518,8 +503,12 @@ button[class*="bg-[#2563EB]"],
 button[class*="bg-blue-600"],
 button[class*="bg-blue-700"],
 button[class*="bg-blue-500"],
-button[class*="bg-red-"],
-button[class*="bg-emerald-"],
+button[class*="bg-red-500"],
+button[class*="bg-red-600"],
+button[class*="bg-red-700"],
+button[class*="bg-red-800"],
+button[class*="bg-emerald-500"],
+button[class*="bg-emerald-600"],
 button[class*="bg-[#DC2626]"] {
   color: #ffffff !important;
 }
@@ -528,8 +517,12 @@ button[class*="bg-[#2563EB]"] svg,
 button[class*="bg-blue-600"] svg,
 button[class*="bg-blue-700"] svg,
 button[class*="bg-blue-500"] svg,
-button[class*="bg-red-"] svg,
-button[class*="bg-emerald-"] svg,
+button[class*="bg-red-500"] svg,
+button[class*="bg-red-600"] svg,
+button[class*="bg-red-700"] svg,
+button[class*="bg-red-800"] svg,
+button[class*="bg-emerald-500"] svg,
+button[class*="bg-emerald-600"] svg,
 button[class*="bg-[#DC2626]"] svg {
   color: #ffffff !important;
   stroke: #ffffff !important;
@@ -1100,274 +1093,7 @@ html:not(.dark) button:not([class*="bg-red"]):not([class*="bg-blue"]):not([class
     inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   NEO BRUTALISM — Multi-color pink brutalist, thick borders, hard shadows
-   ═══════════════════════════════════════════════════════════════ */
 
-/* --- Light mode neo brutalism — harmonized warm palette --- */
-[data-mode="neobrutalism"] .neu-card {
-  background: #fffef9 !important;
-  border: 2.5px solid #292524 !important;
-  box-shadow: 5px 5px 0 #eab308 !important;
-  border-radius: 0px !important;
-}
-[data-mode="neobrutalism"] .neu-card-sm {
-  background: #fffef9 !important;
-  border: 2px solid #292524 !important;
-  box-shadow: 4px 4px 0 #f59e0b !important;
-  border-radius: 0px !important;
-}
-[data-mode="neobrutalism"] .neu-pressed {
-  background: #fafaf9 !important;
-  border: 2px solid #292524 !important;
-  box-shadow: inset 3px 3px 0 #a8a29e !important;
-  border-radius: 0px !important;
-}
-[data-mode="neobrutalism"] .neu-btn {
-  background: #fffef9 !important;
-  border: 2.5px solid #292524 !important;
-  box-shadow: 4px 4px 0 #e11d48 !important;
-  border-radius: 0px !important;
-  transition: all 0.1s ease !important;
-  font-weight: 700 !important;
-}
-[data-mode="neobrutalism"] .neu-btn:hover {
-  box-shadow: 2px 2px 0 #e11d48 !important;
-  transform: translate(2px, 2px) !important;
-}
-[data-mode="neobrutalism"] .neu-btn:active,
-[data-mode="neobrutalism"] .neu-btn-active {
-  box-shadow: 0px 0px 0 #e11d48 !important;
-  transform: translate(4px, 4px) !important;
-}
-[data-mode="neobrutalism"] .neu-flat {
-  background: #fffef9 !important;
-  border: 2px solid #292524 !important;
-  box-shadow: none !important;
-}
-[data-mode="neobrutalism"] .neu-input {
-  background: #fffef9 !important;
-  border: 2.5px solid #292524 !important;
-  box-shadow: 3px 3px 0 #2563eb !important;
-  border-radius: 0px !important;
-}
-[data-mode="neobrutalism"] .neu-input:focus {
-  box-shadow: 3px 3px 0 #e11d48 !important;
-  border-color: #e11d48 !important;
-}
-[data-mode="neobrutalism"] .neu-icon {
-  background: #fffef9 !important;
-  border: 2px solid #292524 !important;
-  box-shadow: 3px 3px 0 #7c3aed !important;
-  border-radius: 0px !important;
-}
-[data-mode="neobrutalism"] .neu-sidebar {
-  background: #fefce8 !important;
-  border-right: 3px solid #292524 !important;
-  box-shadow: 4px 0 0 #eab308 !important;
-}
-[data-mode="neobrutalism"] .neu-nav-active {
-  background: #fef9c3 !important;
-  border: 2px solid #e11d48 !important;
-  box-shadow: 3px 3px 0 #e11d48 !important;
-}
-
-/* Light mode: colored buttons — unified shadow style */
-[data-mode="neobrutalism"] button[class*="bg-red"],
-[data-mode="neobrutalism"] .bg-red-600,
-[data-mode="neobrutalism"] .bg-red-500 {
-  box-shadow: 4px 4px 0 #292524 !important;
-  border: 2px solid #292524 !important;
-}
-[data-mode="neobrutalism"] button[class*="bg-green"],
-[data-mode="neobrutalism"] .bg-green-600,
-[data-mode="neobrutalism"] .bg-green-500 {
-  box-shadow: 4px 4px 0 #292524 !important;
-  border: 2px solid #292524 !important;
-}
-[data-mode="neobrutalism"] button[class*="bg-blue"],
-[data-mode="neobrutalism"] .bg-blue-600,
-[data-mode="neobrutalism"] .bg-blue-500 {
-  box-shadow: 4px 4px 0 #292524 !important;
-  border: 2px solid #292524 !important;
-}
-[data-mode="neobrutalism"] button[class*="bg-amber"],
-[data-mode="neobrutalism"] .bg-amber-500 {
-  box-shadow: 4px 4px 0 #292524 !important;
-  border: 2px solid #292524 !important;
-}
-[data-mode="neobrutalism"] button[class*="bg-purple"],
-[data-mode="neobrutalism"] .bg-purple-600 {
-  box-shadow: 4px 4px 0 #292524 !important;
-  border: 2px solid #292524 !important;
-}
-
-/* Status badges — consistent stone borders */
-[data-mode="neobrutalism"] [class*="bg-green-50"],
-[data-mode="neobrutalism"] [class*="text-green"] {
-  border: 1.5px solid #16a34a !important;
-  box-shadow: 2px 2px 0 #16a34a !important;
-}
-[data-mode="neobrutalism"] [class*="bg-red-50"],
-[data-mode="neobrutalism"] [class*="text-red-600"] {
-  border: 1.5px solid #dc2626 !important;
-  box-shadow: 2px 2px 0 #dc2626 !important;
-}
-[data-mode="neobrutalism"] [class*="bg-amber-50"],
-[data-mode="neobrutalism"] [class*="text-amber"] {
-  border: 1.5px solid #d97706 !important;
-  box-shadow: 2px 2px 0 #d97706 !important;
-}
-[data-mode="neobrutalism"] [class*="bg-blue-50"],
-[data-mode="neobrutalism"] [class*="text-blue"] {
-  border: 1.5px solid #2563eb !important;
-  box-shadow: 2px 2px 0 #2563eb !important;
-}
-[data-mode="neobrutalism"] [class*="bg-purple-50"],
-[data-mode="neobrutalism"] [class*="text-purple"] {
-  border: 1.5px solid #7c3aed !important;
-  box-shadow: 2px 2px 0 #7c3aed !important;
-}
-[data-mode="neobrutalism"] [class*="bg-cyan-50"],
-[data-mode="neobrutalism"] [class*="text-cyan"] {
-  border: 1.5px solid #0891b2 !important;
-  box-shadow: 2px 2px 0 #0891b2 !important;
-}
-[data-mode="neobrutalism"] [class*="bg-pink-50"],
-[data-mode="neobrutalism"] [class*="text-pink"] {
-  border: 1.5px solid #db2777 !important;
-  box-shadow: 2px 2px 0 #db2777 !important;
-}
-
-/* Tables — clean brutalist borders */
-[data-mode="neobrutalism"] table th {
-  border-bottom: 2.5px solid #292524 !important;
-  background: #fefce8 !important;
-}
-[data-mode="neobrutalism"] table td {
-  border-bottom: 1.5px solid #d6d3d1 !important;
-}
-[data-mode="neobrutalism"] table tr:hover td {
-  background: #fef9c3 !important;
-}
-
-/* --- Dark mode neo brutalism — harmonized warm palette --- */
-[data-mode="neobrutalism"][data-theme="dark"] .neu-card {
-  background: #1c1917 !important;
-  border: 2.5px solid #eab308 !important;
-  box-shadow: 5px 5px 0 #854d0e !important;
-}
-[data-mode="neobrutalism"][data-theme="dark"] .neu-card-sm {
-  background: #1c1917 !important;
-  border: 2px solid #f59e0b !important;
-  box-shadow: 4px 4px 0 #92400e !important;
-}
-[data-mode="neobrutalism"][data-theme="dark"] .neu-pressed {
-  background: #0c0a09 !important;
-  border: 2px solid #78716c !important;
-  box-shadow: inset 3px 3px 0 #44403c !important;
-}
-[data-mode="neobrutalism"][data-theme="dark"] .neu-btn {
-  background: #1c1917 !important;
-  border: 2.5px solid #fbbf24 !important;
-  box-shadow: 4px 4px 0 #e11d48 !important;
-  color: #fef3c7 !important;
-}
-[data-mode="neobrutalism"][data-theme="dark"] .neu-btn:hover {
-  box-shadow: 2px 2px 0 #e11d48 !important;
-  transform: translate(2px, 2px) !important;
-}
-[data-mode="neobrutalism"][data-theme="dark"] .neu-btn:active,
-[data-mode="neobrutalism"][data-theme="dark"] .neu-btn-active {
-  box-shadow: 0px 0px 0 #e11d48 !important;
-  transform: translate(4px, 4px) !important;
-}
-[data-mode="neobrutalism"][data-theme="dark"] .neu-flat {
-  background: #1c1917 !important;
-  border: 2px solid #eab308 !important;
-  box-shadow: none !important;
-}
-[data-mode="neobrutalism"][data-theme="dark"] .neu-input {
-  background: #0c0a09 !important;
-  border: 2.5px solid #60a5fa !important;
-  box-shadow: 3px 3px 0 #2563eb !important;
-  color: #fef3c7 !important;
-}
-[data-mode="neobrutalism"][data-theme="dark"] .neu-input:focus {
-  box-shadow: 3px 3px 0 #e11d48 !important;
-  border-color: #e11d48 !important;
-}
-[data-mode="neobrutalism"][data-theme="dark"] .neu-icon {
-  background: #1c1917 !important;
-  border: 2px solid #a78bfa !important;
-  box-shadow: 3px 3px 0 #7c3aed !important;
-}
-[data-mode="neobrutalism"][data-theme="dark"] .neu-sidebar {
-  background: #1c1917 !important;
-  border-right: 3px solid #eab308 !important;
-  box-shadow: 4px 0 0 #854d0e !important;
-}
-[data-mode="neobrutalism"][data-theme="dark"] .neu-nav-active {
-  background: rgba(234, 179, 8, 0.1) !important;
-  border: 2px solid #eab308 !important;
-  box-shadow: 3px 3px 0 #eab308 !important;
-}
-
-/* Dark mode: colored buttons — consistent style */
-[data-mode="neobrutalism"][data-theme="dark"] button[class*="bg-red"],
-[data-mode="neobrutalism"][data-theme="dark"] .bg-red-600 {
-  box-shadow: 4px 4px 0 #292524 !important;
-  border: 2px solid #292524 !important;
-}
-[data-mode="neobrutalism"][data-theme="dark"] button[class*="bg-green"],
-[data-mode="neobrutalism"][data-theme="dark"] .bg-green-600 {
-  box-shadow: 4px 4px 0 #292524 !important;
-  border: 2px solid #292524 !important;
-}
-[data-mode="neobrutalism"][data-theme="dark"] button[class*="bg-blue"],
-[data-mode="neobrutalism"][data-theme="dark"] .bg-blue-600 {
-  box-shadow: 4px 4px 0 #292524 !important;
-  border: 2px solid #292524 !important;
-}
-
-/* Dark mode: colored status badges — matching light */
-[data-mode="neobrutalism"][data-theme="dark"] [class*="bg-green-50"],
-[data-mode="neobrutalism"][data-theme="dark"] [class*="text-green"] {
-  border: 1.5px solid #22c55e !important;
-  box-shadow: 2px 2px 0 #16a34a !important;
-}
-[data-mode="neobrutalism"][data-theme="dark"] [class*="bg-red-50"],
-[data-mode="neobrutalism"][data-theme="dark"] [class*="text-red-600"] {
-  border: 1.5px solid #f87171 !important;
-  box-shadow: 2px 2px 0 #dc2626 !important;
-}
-[data-mode="neobrutalism"][data-theme="dark"] [class*="bg-amber-50"],
-[data-mode="neobrutalism"][data-theme="dark"] [class*="text-amber"] {
-  border: 1.5px solid #fbbf24 !important;
-  box-shadow: 2px 2px 0 #d97706 !important;
-}
-[data-mode="neobrutalism"][data-theme="dark"] [class*="bg-blue-50"],
-[data-mode="neobrutalism"][data-theme="dark"] [class*="text-blue"] {
-  border: 1.5px solid #60a5fa !important;
-  box-shadow: 2px 2px 0 #2563eb !important;
-}
-[data-mode="neobrutalism"][data-theme="dark"] [class*="bg-pink-50"],
-[data-mode="neobrutalism"][data-theme="dark"] [class*="text-pink"] {
-  border: 1.5px solid #f472b6 !important;
-  box-shadow: 2px 2px 0 #db2777 !important;
-}
-
-/* Dark mode tables */
-[data-mode="neobrutalism"][data-theme="dark"] table th {
-  border-bottom: 2.5px solid #eab308 !important;
-  background: rgba(234, 179, 8, 0.08) !important;
-}
-[data-mode="neobrutalism"][data-theme="dark"] table td {
-  border-bottom: 1.5px solid rgba(234, 179, 8, 0.12) !important;
-}
-[data-mode="neobrutalism"][data-theme="dark"] table tr:hover td {
-  background: rgba(234, 179, 8, 0.05) !important;
-}
 
 /* ═══════════════════════════════════════════════════════════════
    AURORA — Animated gradient glow, glass-morphic cards

@@ -389,10 +389,10 @@ export default function SalesForm() {
 
   const inputCls = styled
     ? 'neu-input px-3 py-2 text-sm'
-    : 'px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-red-500';
+    : 'px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]';
   const cardCls = styled
     ? 'neu-card rounded-xl'
-    : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800';
+    : 'glass-secondary rounded-xl border border-gray-200 dark:border-gray-800';
 
   return (
     <div className="space-y-4">
@@ -408,11 +408,11 @@ export default function SalesForm() {
         <div className="lg:col-span-2 space-y-4">
           {/* Fast IMEI / Barcode Scanner Input */}
           <div
-            className={`${cardCls} p-3.5 bg-gradient-to-r from-red-50/50 via-slate-50 to-emerald-50/50 dark:from-red-950/20 dark:via-slate-900 dark:to-emerald-950/20 border-red-200/80 dark:border-red-900/40`}
+            className={`${cardCls} p-3.5 bg-gradient-to-r from-blue-50/50 via-slate-50 to-emerald-50/50 dark:from-blue-950/20 dark:via-slate-900 dark:to-emerald-950/20 border-blue-200/80 dark:border-blue-900/40`}
           >
             <form onSubmit={handleFastScanSubmit} className="flex items-center gap-2">
               <div className="relative flex-1">
-                <Smartphone className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-red-500" />
+                <Smartphone className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#2563EB]" />
                 <input
                   type="text"
                   placeholder="⚡ Fast IMEI / Barcode Scanner (Press Enter or scan 15-digit IMEI)..."
@@ -424,12 +424,12 @@ export default function SalesForm() {
                       setTimeout(() => handleFastScanSubmit(), 100);
                     }
                   }}
-                  className={`w-full pl-9 pr-4 py-2 font-mono text-xs ${inputCls} focus:border-red-500 border-red-300 dark:border-red-800`}
+                  className={`w-full pl-9 pr-4 py-2 font-mono text-xs ${inputCls} focus:border-[#2563EB] border-blue-300 dark:border-blue-800`}
                 />
               </div>
               <button
                 type="submit"
-                className="px-4 py-2 bg-red-600 hover:bg-red-500 active:scale-95 text-white font-bold rounded-lg text-xs transition-all shadow-sm flex items-center gap-1.5 flex-shrink-0"
+                className="px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] active:scale-95 text-white font-bold rounded-lg text-xs transition-all shadow-xs flex items-center gap-1.5 flex-shrink-0"
               >
                 <Wand2 className="w-3.5 h-3.5" />
                 Scan Item
@@ -642,7 +642,7 @@ export default function SalesForm() {
           >
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
               <div className="flex items-center gap-2">
-                <ShoppingCart className="w-4 h-4 text-red-600 dark:text-red-400" />
+                <ShoppingCart className="w-4 h-4 text-[#2563EB] dark:text-blue-400" />
                 <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">
                   Live Invoice Preview
                 </h3>

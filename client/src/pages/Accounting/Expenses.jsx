@@ -112,7 +112,7 @@ export default function Expenses() {
     : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-5';
   const inputCls = styled
     ? 'neu-input w-full px-3 py-2 rounded-xl text-sm'
-    : 'w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:border-red-500';
+    : 'w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:border-[#2563EB]';
 
   return (
     <div className="space-y-6">
@@ -296,7 +296,7 @@ export default function Expenses() {
           >
             <div className="flex items-center justify-between mb-4 border-b dark:border-gray-800 pb-3">
               <h3 className="font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                <Receipt className="w-5 h-5 text-red-600" /> Record Shop Expense
+                <Receipt className="w-5 h-5 text-[#2563EB]" /> Record Shop Expense
               </h3>
               <button
                 onClick={() => setShowAddModal(false)}
@@ -426,7 +426,7 @@ export default function Expenses() {
                 <button
                   type="submit"
                   disabled={createExpenseMutation.isPending}
-                  className="flex-1 py-2 bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white font-bold rounded-lg text-sm"
+                  className="flex-1 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white font-semibold rounded-lg text-sm transition-all shadow-xs"
                 >
                   {createExpenseMutation.isPending ? 'Saving...' : 'Record Expense'}
                 </button>

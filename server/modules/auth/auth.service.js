@@ -63,7 +63,8 @@ const MAX_OTP_ATTEMPTS = 5;
 const OTP_LOCKOUT_MINUTES = 15;
 
 export const verifyOTP = async (email, otpCode) => {
-  const user = await User.findOne({ email, isDeleted: false }).select('+otpCode +otpExpiresAt +otpAttempts +otpLockedUntil');
+  const normalizedEmail = (email || '').trim().toLowerCase();
+  const user = await User.findOne({ email: normalizedEmail, isDeleted: false }).select('+otpCode +otpExpiresAt +otpAttempts +otpLockedUntil');
   if (!user) throw ApiError.notFound('User not found');
 
   if (user.otpLockedUntil && user.otpLockedUntil > new Date()) {
@@ -71,7 +72,7 @@ export const verifyOTP = async (email, otpCode) => {
     throw ApiError.badRequest(`Account locked due to too many failed OTP attempts. Try again in ${minutesLeft} minutes`);
   }
 
-  if (user.otpCode !== otpCode || user.otpExpiresAt < new Date()) {
+  if (user.otpCode !== otpCode || !user.otpExpiresAt || user.otpExpiresAt < new Date()) {
     user.otpAttempts = (user.otpAttempts || 0) + 1;
     if (user.otpAttempts >= MAX_OTP_ATTEMPTS) {
       user.otpLockedUntil = new Date(Date.now() + OTP_LOCKOUT_MINUTES * 60 * 1000);
@@ -81,6 +82,7 @@ export const verifyOTP = async (email, otpCode) => {
     throw ApiError.badRequest('Invalid or expired OTP code');
   }
 
+  user.isVerified = true;
   user.otpCode = null;
   user.otpExpiresAt = null;
   user.otpAttempts = 0;
@@ -91,7 +93,8 @@ export const verifyOTP = async (email, otpCode) => {
 };
 
 export const verifyEmail = async (email, otpCode) => {
-  const user = await User.findOne({ email, isDeleted: false })
+  const normalizedEmail = (email || '').trim().toLowerCase();
+  const user = await User.findOne({ email: normalizedEmail, isDeleted: false })
     .select('+otpCode +otpExpiresAt +otpAttempts +otpLockedUntil');
   if (!user) throw ApiError.notFound('User not found');
 
@@ -125,7 +128,8 @@ export const verifyEmail = async (email, otpCode) => {
 };
 
 export const resendVerificationOTP = async (email) => {
-  const user = await User.findOne({ email, isDeleted: false })
+  const normalizedEmail = (email || '').trim().toLowerCase();
+  const user = await User.findOne({ email: normalizedEmail, isDeleted: false })
     .select('+otpCode +otpExpiresAt +otpAttempts +otpLockedUntil');
   if (!user) throw ApiError.notFound('User not found');
   if (user.isVerified) throw ApiError.badRequest('Email is already verified');

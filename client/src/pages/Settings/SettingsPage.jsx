@@ -191,10 +191,10 @@ export default function SettingsPage() {
 
   const cardCls = styled
     ? 'neu-card'
-    : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800';
+    : 'glass-secondary rounded-xl border border-gray-200 dark:border-gray-800';
   const inputCls = styled
     ? 'neu-input w-full px-3 py-2.5 rounded-xl text-sm'
-    : 'w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-red-500 outline-none';
+    : 'w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-[#2563EB]/30 focus:border-[#2563EB] outline-none';
 
   const activeGroupData = settingGroups.find((g) => g.key === activeGroup);
 
@@ -215,9 +215,9 @@ export default function SettingsPage() {
               <button
                 key={group.key}
                 onClick={() => setActiveGroup(group.key)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${activeGroup === group.key ? 'bg-red-50 dark:bg-red-900/10 text-red-700 dark:text-red-400 font-bold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50'}`}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${activeGroup === group.key ? 'bg-blue-50 dark:bg-blue-950/40 text-[#2563EB] dark:text-blue-400 font-bold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50'}`}
               >
-                <group.icon className="w-4 h-4 text-red-600" />
+                <group.icon className={`w-4 h-4 ${activeGroup === group.key ? 'text-[#2563EB] dark:text-blue-400' : 'text-slate-400'}`} />
                 {group.label}
               </button>
             ))}
@@ -395,7 +395,7 @@ export default function SettingsPage() {
               <button
                 onClick={() => mutation.mutate(form)}
                 disabled={mutation.isPending}
-                className="flex items-center gap-2 px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium disabled:opacity-50 transition-colors mt-4"
+                className="flex items-center gap-2 px-6 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl text-sm font-semibold disabled:opacity-50 transition-colors mt-4 shadow-xs"
               >
                 <Save className="w-4 h-4" /> {mutation.isPending ? 'Saving...' : 'Save Changes'}
               </button>

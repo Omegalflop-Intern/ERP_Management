@@ -58,7 +58,7 @@ export default function SupplierList() {
             setEditSupplier(null);
             setShowForm(true);
           }}
-          className="flex items-center gap-2 px-4 py-2 bg-red-700 hover:bg-red-600 text-white font-medium rounded-lg text-sm transition-all"
+          className="flex items-center gap-2 px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold rounded-xl text-sm transition-all shadow-xs"
         >
           <Plus className="w-4 h-4" /> Add Supplier
         </button>
@@ -118,7 +118,7 @@ export default function SupplierList() {
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-red-500"
+          className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]"
         />
       </div>
 
@@ -402,7 +402,7 @@ function SupplierForm({ supplier, onClose, onSuccess }) {
             <button
               onClick={() => mutation.mutate()}
               disabled={mutation.isPending || !form.name || !form.phone}
-              className="flex-1 py-2 bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white font-medium rounded-lg text-sm transition-colors flex items-center justify-center gap-2"
+              className="flex-1 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white font-semibold rounded-lg text-sm transition-colors flex items-center justify-center gap-2 shadow-xs"
             >
               {mutation.isPending ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />

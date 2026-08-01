@@ -92,14 +92,13 @@ export const createUser = async (data) => {
     console.error(`[USER] Auto employee creation failed for user ${user._id}:`, empErr.message);
   }
 
-  // Send verification OTP email (non-blocking)
+  // Send verification OTP email to user's mail (non-blocking)
   sendOTP(user.email, otpCode, user.fullName || user.username).catch((err) => {
     console.error(`[USER] Failed to send verification OTP to ${user.email}:`, err.message);
   });
 
   const userObj = user.toObject();
   delete userObj.passwordHash;
-  delete userObj.otpCode;
   delete userObj.otpExpiresAt;
   return userObj;
 };

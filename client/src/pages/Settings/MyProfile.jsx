@@ -104,13 +104,17 @@ export default function MyProfile() {
       if (data?.data) {
         const updated = data.data;
         setUser((prev) => {
+          const base = prev && typeof prev === 'object' ? prev : {};
           const merged = {
-            ...prev,
-            fullName: updated.fullName,
-            email: updated.email,
-            phone: updated.phone,
-            username: updated.username,
-            avatar: updated.avatar,
+            ...base,
+            fullName: updated.fullName ?? base.fullName,
+            email: updated.email ?? base.email,
+            phone: updated.phone ?? base.phone,
+            username: updated.username ?? base.username,
+            avatar: updated.avatar ?? base.avatar,
+            roleName: updated.roleName || updated.role?.name || base.roleName,
+            roleDisplayName: updated.roleDisplayName || updated.role?.displayName || base.roleDisplayName,
+            permissions: updated.role?.permissions || updated.permissions || base.permissions || [],
           };
           localStorage.setItem('user', JSON.stringify(merged));
           return merged;
@@ -157,16 +161,16 @@ export default function MyProfile() {
     : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800';
   const inputCls = styled
     ? 'neu-input w-full px-4 py-3 rounded-xl text-sm'
-    : 'w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-red-500 outline-none';
+    : 'w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-[#2563EB]/30 focus:border-[#2563EB] outline-none';
   const btnPrimary = styled
-    ? 'neu-btn px-6 py-3 bg-red-600 text-white rounded-xl text-sm font-semibold flex items-center gap-2'
-    : 'px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-semibold flex items-center gap-2 transition-colors';
+    ? 'neu-btn px-6 py-3 bg-[#2563EB] text-white rounded-xl text-sm font-semibold flex items-center gap-2'
+    : 'px-6 py-3 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl text-sm font-semibold flex items-center gap-2 transition-colors shadow-xs';
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-          <User className="w-6 h-6 text-red-600" /> My Profile
+          <User className="w-6 h-6 text-[#2563EB] dark:text-blue-400" /> My Profile
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400">Manage your account settings</p>
       </div>
@@ -183,7 +187,7 @@ export default function MyProfile() {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-red-600/10 dark:bg-red-600/20 text-red-700 dark:text-red-400 flex items-center justify-center text-3xl font-bold">
+                <div className="w-full h-full bg-blue-50 dark:bg-blue-950/40 text-[#2563EB] dark:text-blue-400 flex items-center justify-center text-3xl font-bold">
                   {user?.username?.[0]?.toUpperCase() || '?'}
                 </div>
               )}

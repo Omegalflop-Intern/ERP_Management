@@ -6,7 +6,6 @@ const MODES = [
   'neumorphism',
   'glassmorphism',
   'liquidglass',
-  'neobrutalism',
   'aurora',
   'glassmorphismpro',
 ];
@@ -16,7 +15,6 @@ const MODE_ICONS = {
   neumorphism: 'Neumorphism',
   glassmorphism: 'Glassmorphism',
   liquidglass: 'Liquid Glass',
-  neobrutalism: 'Neo Brutalism',
   aurora: 'Aurora',
   glassmorphismpro: 'Glass Pro',
 };
@@ -43,7 +41,7 @@ export const useThemeStore = create(
       neumorphism: () => get().designMode === 'neumorphism',
       glassmorphism: () => get().designMode === 'glassmorphism',
       liquidglass: () => get().designMode === 'liquidglass',
-      neobrutalism: () => get().designMode === 'neobrutalism',
+      neobrutalism: () => false,
       aurora: () => get().designMode === 'aurora',
       glassmorphismpro: () => get().designMode === 'glassmorphismpro',
       modeLabel: () => MODE_ICONS[get().designMode] || 'Flat',
@@ -52,7 +50,7 @@ export const useThemeStore = create(
       name: 'theme-storage',
       partialize: (state) => ({
         theme: state.theme,
-        designMode: state.designMode,
+        designMode: state.designMode === 'neobrutalism' ? 'flat' : state.designMode,
       }),
     }
   )
@@ -64,21 +62,23 @@ export const useThemeStore = create(
  */
 export const useTheme = () => {
   const { theme, designMode, toggleTheme, cycleDesignMode, setDesignMode } = useThemeStore();
+  const currentMode = designMode === 'neobrutalism' ? 'flat' : designMode;
 
   return {
     theme,
     toggleTheme,
     isDark: theme === 'dark',
-    designMode,
+    designMode: currentMode,
     cycleDesignMode,
     setDesignMode,
-    styled: designMode !== 'flat',
-    neumorphism: designMode === 'neumorphism',
-    glassmorphism: designMode === 'glassmorphism',
-    liquidglass: designMode === 'liquidglass',
-    neobrutalism: designMode === 'neobrutalism',
-    aurora: designMode === 'aurora',
-    glassmorphismpro: designMode === 'glassmorphismpro',
-    modeLabel: MODE_ICONS[designMode] || 'Flat',
+    styled: currentMode !== 'flat',
+    neumorphism: currentMode === 'neumorphism',
+    glassmorphism: currentMode === 'glassmorphism',
+    liquidglass: currentMode === 'liquidglass',
+    neobrutalism: false,
+    aurora: currentMode === 'aurora',
+    glassmorphismpro: currentMode === 'glassmorphismpro',
+    modeLabel: MODE_ICONS[currentMode] || 'Flat',
   };
 };
+

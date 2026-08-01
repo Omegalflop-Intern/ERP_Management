@@ -565,16 +565,16 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
             <PanelLeftClose className="w-5 h-5 text-gray-600 dark:text-gray-400" />
           )}
         </button>
-        <div className="flex items-center gap-2 font-bold text-xl text-red-700 dark:text-red-500">
+        <div className="flex items-center gap-2 font-bold text-xl text-[#2563EB] dark:text-blue-400">
           <div
-            className={`w-9 h-9 rounded-xl bg-red-600/10 dark:bg-red-600/20 border border-red-200 dark:border-red-500/30 flex items-center justify-center ${styled ? 'neu-icon !bg-red-600/10 !border-none' : ''}`}
+            className={`w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/40 flex items-center justify-center text-[#2563EB] dark:text-blue-400 ${styled ? 'neu-icon !bg-blue-50 !border-none' : ''}`}
           >
             <Smartphone className="w-5 h-5" />
           </div>
-          <span className="hidden md:inline bg-gradient-to-r from-red-700 to-red-500 dark:from-red-400 dark:to-red-300 bg-clip-text text-transparent">
+          <span className="hidden md:inline bg-gradient-to-r from-[#2563EB] to-blue-500 dark:from-blue-400 dark:to-blue-300 bg-clip-text text-transparent">
             Brothers{' '}
             <span
-              className={`text-xs font-semibold px-2 py-0.5 rounded bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-red-400 ${styled ? '' : 'border border-red-200 dark:border-red-500/20'}`}
+              className={`text-xs font-semibold px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/40 text-[#2563EB] dark:text-blue-400 ${styled ? '' : 'border border-blue-200 dark:border-blue-800/40'}`}
             >
               ERP
             </span>
@@ -746,7 +746,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
                 <div className="text-xs font-bold text-gray-900 dark:text-gray-100 truncate max-w-[120px]">
                   {user.fullName || user.username}
                 </div>
-                <div className="text-[10px] text-red-600 dark:text-red-400 font-semibold uppercase tracking-wider truncate max-w-[120px]">
+                <div className="text-[10px] text-[#2563EB] dark:text-blue-400 font-bold uppercase tracking-wider truncate max-w-[120px]">
                   {user.roleDisplayName || user.roleName || user.role}
                 </div>
               </div>
@@ -789,9 +789,9 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
                   onClick={() => {
                     handleLogout();
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-red-50 dark:hover:bg-red-900/10 text-sm text-red-600 dark:text-red-400 transition-colors"
+                  className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-sm text-rose-600 dark:text-rose-400 font-semibold transition-colors"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-4 h-4 text-rose-600 dark:text-rose-400" />
                   Logout
                 </button>
               </div>
@@ -810,7 +810,6 @@ function DesktopThemeToggle({ styled }) {
     neumorphism: 'Neumorphism',
     glassmorphism: 'Glassmorphism',
     liquidglass: 'Liquid Glass',
-    neobrutalism: 'Neo Brutal',
     aurora: 'Aurora',
     glassmorphismpro: 'Glass Pro',
   };
@@ -819,7 +818,6 @@ function DesktopThemeToggle({ styled }) {
     neumorphism: '◉',
     glassmorphism: '◈',
     liquidglass: '◎',
-    neobrutalism: '▣',
     aurora: '✧',
     glassmorphismpro: '◇',
   };
@@ -839,7 +837,7 @@ function DesktopThemeToggle({ styled }) {
       </button>
       <button
         onClick={cycleDesignMode}
-        className={`px-2 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${styled ? 'neu-btn !px-2 !py-1.5' : 'hover:bg-gray-100 dark:hover:bg-gray-800'} ${designMode !== 'flat' ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}
+        className={`px-2 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${styled ? 'neu-btn !px-2 !py-1.5' : 'hover:bg-gray-100 dark:hover:bg-gray-800'} ${designMode !== 'flat' ? 'text-[#2563EB] dark:text-blue-400 font-bold' : 'text-gray-500 dark:text-gray-400'}`}
         title={`Design: ${MODE_LABELS[designMode]}`}
       >
         <span className="mr-1">{MODE_ICONS[designMode]}</span>

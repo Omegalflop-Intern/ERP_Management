@@ -224,6 +224,7 @@ router.post('/reset-password', validate(resetPasswordSchema), authController.res
 router.post('/verify-email', validate(verifyOtpSchema), authController.verifyEmail);
 
 router.post('/resend-verification-otp', validate(forgotPasswordSchema), authController.resendVerificationOTP);
+router.post('/resend-otp', validate(forgotPasswordSchema), authController.resendVerificationOTP);
 
 router.post('/logout', authenticate, authController.logout);
 

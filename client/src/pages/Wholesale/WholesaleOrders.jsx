@@ -130,14 +130,14 @@ export default function WholesaleOrders() {
     : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800';
   const inputCls = styled
     ? 'neu-input w-full px-3 py-2 rounded-xl text-sm'
-    : 'w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:border-red-500';
+    : 'w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:border-[#2563EB]';
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-            <ShoppingCart className="w-6 h-6 text-red-600" /> Wholesale Sales & Orders
+            <ShoppingCart className="w-6 h-6 text-[#2563EB] dark:text-blue-400" /> Wholesale Sales & Orders
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Track B2B dealer sales, revenue, paid collections, and outstanding dues
@@ -145,7 +145,7 @@ export default function WholesaleOrders() {
         </div>
         <button
           onClick={() => navigate('/sales/new')}
-          className="flex items-center gap-2 px-4 py-2 bg-red-700 hover:bg-red-600 text-white font-medium rounded-lg text-sm transition-all shadow-sm"
+          className="flex items-center gap-2 px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold rounded-xl text-sm transition-all shadow-xs"
         >
           <Plus className="w-4 h-4" /> New Wholesale Sale
         </button>

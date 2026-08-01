@@ -49,7 +49,18 @@ export const useAuthStore = create(
         toast.info('Logged out successfully');
       },
 
-      setUser: (user) => set({ user }),
+      setUser: (userOrFn) =>
+        set((state) => {
+          const nextUser = typeof userOrFn === 'function' ? userOrFn(state.user) : userOrFn;
+          if (nextUser && typeof nextUser === 'object') {
+            try {
+              localStorage.setItem('user', JSON.stringify(nextUser));
+            } catch {
+              // Ignore storage errors
+            }
+          }
+          return { user: nextUser };
+        }),
 
       // Called by api.js after a successful token refresh
       setToken: (token) => {
@@ -59,19 +70,19 @@ export const useAuthStore = create(
 
       hasPermission: (permission) => {
         const { user } = get();
-        if (!user) return false;
+        if (!user || typeof user !== 'object') return false;
         if (user.roleName === 'ADMIN' || user.permissions?.includes('*')) return true;
         return user.permissions?.includes(permission) ?? false;
       },
 
       hasAnyPermission: (permissions) => {
         const { user } = get();
-        if (!user) return false;
+        if (!user || typeof user !== 'object') return false;
         if (user.roleName === 'ADMIN' || user.permissions?.includes('*')) return true;
         return permissions.some((p) => user.permissions?.includes(p));
       },
 
-      isAuthenticated: () => !!get().user,
+      isAuthenticated: () => !!get().user && typeof get().user === 'object',
     }),
     {
       name: 'auth-storage',
