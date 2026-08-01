@@ -50,70 +50,74 @@ export default function Dashboard() {
 
   const statCards = [
     {
+      label: 'Total Revenue',
+      value: stats.totalRevenue || 0,
+      prefix: '৳',
+      suffix: '',
+      icon: DollarSign,
+      color: 'text-emerald-600 dark:text-emerald-400',
+      bg: 'bg-emerald-50 dark:bg-emerald-950/40',
+      hint: 'Total cash received',
+    },
+    {
       label: 'Total Sales',
       value: stats.totalSalesCount || 0,
       prefix: '',
       suffix: '',
       icon: ShoppingCart,
       color: 'text-blue-600 dark:text-blue-400',
-      bg: 'bg-blue-50 dark:bg-blue-900/20',
-      raw: true,
-      hint: 'Orders completed',
+      bg: 'bg-blue-50 dark:bg-blue-950/40',
+      hint: 'Completed orders',
     },
     {
-      label: 'Revenue',
-      value: stats.totalRevenue || 0,
-      prefix: '৳',
-      suffix: '',
-      icon: DollarSign,
-      color: 'text-green-600 dark:text-green-400',
-      bg: 'bg-green-50 dark:bg-green-900/20',
-      raw: false,
-      hint: 'Total cash received',
-    },
-    {
-      label: 'Total Cost & Expenses',
-      value: stats.totalCostAndExpenses || 0,
-      prefix: '৳',
-      suffix: '',
-      icon: Receipt,
-      color: 'text-rose-600 dark:text-rose-400',
-      bg: 'bg-rose-50 dark:bg-rose-900/20',
-      raw: false,
-      hint: 'Purchases + expenses',
-    },
-    {
-      label: 'Total Due',
+      label: 'Due Amount',
       value: stats.totalDueAmount || 0,
       prefix: '৳',
       suffix: '',
       icon: AlertTriangle,
       color: 'text-red-600 dark:text-red-400',
-      bg: 'bg-red-50 dark:bg-red-900/20',
-      raw: false,
-      hint: 'Pending customer due',
+      bg: 'bg-red-50 dark:bg-red-950/40',
+      hint: 'Pending customer dues',
     },
     {
-      label: 'Available Stock',
-      value: stats.totalAvailableUnits || 0,
-      prefix: '',
+      label: 'Net Profit',
+      value: (stats.totalRevenue || 0) - (stats.totalCostAndExpenses || 0),
+      prefix: '৳',
       suffix: '',
-      icon: Package,
-      color: 'text-purple-600 dark:text-purple-400',
-      bg: 'bg-purple-50 dark:bg-purple-900/20',
-      raw: true,
-      hint: 'Units in shop',
+      icon: TrendingUp,
+      color: 'text-teal-600 dark:text-teal-400',
+      bg: 'bg-teal-50 dark:bg-teal-950/40',
+      hint: 'Revenue minus expenses',
     },
     {
       label: 'Stock Value',
       value: stats.totalStockValue || 0,
       prefix: '৳',
       suffix: '',
-      icon: TrendingUp,
-      color: 'text-amber-600 dark:text-amber-400',
-      bg: 'bg-amber-50 dark:bg-amber-900/20',
-      raw: false,
+      icon: Package,
+      color: 'text-purple-600 dark:text-purple-400',
+      bg: 'bg-purple-50 dark:bg-purple-950/40',
       hint: 'Inventory asset value',
+    },
+    {
+      label: 'Purchase Cost',
+      value: stats.totalCostAndExpenses || 0,
+      prefix: '৳',
+      suffix: '',
+      icon: Receipt,
+      color: 'text-amber-600 dark:text-amber-400',
+      bg: 'bg-amber-50 dark:bg-amber-950/40',
+      hint: 'Stock purchase costs',
+    },
+    {
+      label: 'Shop Expenses',
+      value: stats.totalExpenses || stats.totalCostAndExpenses || 0,
+      prefix: '৳',
+      suffix: '',
+      icon: DollarSign,
+      color: 'text-rose-600 dark:text-rose-400',
+      bg: 'bg-rose-50 dark:bg-rose-950/40',
+      hint: 'Operating expenses',
     },
     {
       label: 'Active Repairs',
@@ -122,55 +126,83 @@ export default function Dashboard() {
       suffix: '',
       icon: Wrench,
       color: 'text-indigo-600 dark:text-indigo-400',
-      bg: 'bg-indigo-50 dark:bg-indigo-900/20',
-      raw: true,
-      hint: 'Devices in repair',
+      bg: 'bg-indigo-50 dark:bg-indigo-950/40',
+      hint: 'Devices in service',
     },
   ];
 
   const cardClass = styled
     ? 'neu-card p-5'
-    : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-4';
+    : 'bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4';
   const btnClass = styled
     ? 'neu-btn p-3 flex items-center gap-3 text-left'
-    : 'flex items-center gap-3 p-3 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-red-300 dark:hover:border-red-500/30 hover:bg-red-50 dark:hover:bg-red-900/5 transition-all text-left';
+    : 'flex items-center gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-red-300 dark:hover:border-red-500/30 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all text-left';
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-          Welcome back, {user?.fullName || user?.username}
-        </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Here's what's happening at your shop today.
-        </p>
+    <div className="space-y-6 max-w-7xl mx-auto pb-6">
+      {/* Shop Owner Welcome Banner & Quick Action Header */}
+      <div className="bg-gradient-to-r from-red-600 to-red-700 dark:from-red-900/80 dark:to-slate-900 rounded-2xl p-6 text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Welcome, {user?.fullName || user?.username}! 👋
+          </h1>
+          <p className="text-red-100 text-sm mt-1">
+            Here is your shop's performance summary. What would you like to do right now?
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => navigate('/products')}
+            className="px-4 py-2.5 bg-white/15 hover:bg-white/25 active:scale-95 text-white font-semibold rounded-xl text-sm transition-all flex items-center gap-2 backdrop-blur-sm"
+          >
+            <Package className="w-4 h-4" />
+            + Add Stock
+          </button>
+          <button
+            onClick={() => navigate('/customers/due-collection')}
+            className="px-4 py-2.5 bg-white/15 hover:bg-white/25 active:scale-95 text-white font-semibold rounded-xl text-sm transition-all flex items-center gap-2 backdrop-blur-sm"
+          >
+            <DollarSign className="w-4 h-4" />
+            Collect Dues
+          </button>
+          <button
+            onClick={() => navigate('/expenses')}
+            className="px-4 py-2.5 bg-white/15 hover:bg-white/25 active:scale-95 text-white font-semibold rounded-xl text-sm transition-all flex items-center gap-2 backdrop-blur-sm"
+          >
+            <Receipt className="w-4 h-4" />
+            + Costing & Expenses
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+      {/* Primary Key Metrics Grid — 4 Cards Per Row on Desktop */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((card) => (
           <div
             key={card.label}
-            className={`${cardClass} group hover:scale-[1.02] transition-transform`}
+            className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 transition-all hover:border-slate-300 dark:hover:border-slate-700 shadow-sm flex flex-col justify-between h-full"
           >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-tight">
-                {card.label}
-              </span>
-              <div
-                className={`w-7 h-7 rounded-lg ${card.bg} flex items-center justify-center flex-shrink-0 ${styled ? 'neu-icon !rounded-lg' : ''}`}
-              >
-                <card.icon className={`w-3.5 h-3.5 ${card.color}`} />
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tight">
+                  {card.label}
+                </span>
+                <div
+                  className={`w-8 h-8 rounded-lg ${card.bg} flex items-center justify-center flex-shrink-0`}
+                >
+                  <card.icon className={`w-4 h-4 ${card.color}`} />
+                </div>
+              </div>
+              <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 font-mono">
+                {isLoading ? (
+                  <div className="h-7 w-24 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+                ) : (
+                  <AnimatedNumber value={card.value} prefix={card.prefix} suffix={card.suffix} />
+                )}
               </div>
             </div>
-            <div className="text-lg font-extrabold text-gray-900 dark:text-gray-100">
-              {isLoading ? (
-                <div className="h-6 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-              ) : (
-                <AnimatedNumber value={card.value} prefix={card.prefix} suffix={card.suffix} />
-              )}
-            </div>
             {card.hint && (
-              <div className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 truncate">
+              <div className="text-xs text-slate-400 dark:text-slate-500 mt-2 truncate pt-2 border-t border-slate-100 dark:border-slate-800/60">
                 {card.hint}
               </div>
             )}
@@ -178,6 +210,7 @@ export default function Dashboard() {
         ))}
       </div>
 
+      {/* Main Performance Charts */}
       <DashboardCharts
         salesTrendData={charts.salesTrendData || []}
         dueTrendData={charts.dueTrendData || []}
@@ -186,59 +219,59 @@ export default function Dashboard() {
         onPeriodChange={setPeriod}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div
-          className={
-            styled
-              ? 'neu-card p-6'
-              : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-6'
-          }
-        >
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            Quick Actions
+      {/* Bottom Operational Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {/* Quick Shortcuts */}
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 mb-4">
+            Frequent Tasks
           </h3>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2.5">
             {[
               {
-                label: 'New Sale',
+                label: 'New Sale (POS)',
                 path: '/sales/new',
                 icon: ShoppingCart,
-                color: 'text-green-600 dark:text-green-400',
+                color: 'text-emerald-600 dark:text-emerald-400',
               },
               {
-                label: 'Stock',
-                path: '/stock',
+                label: 'Stock & Items',
+                path: '/products',
                 icon: Package,
                 color: 'text-purple-600 dark:text-purple-400',
               },
               {
-                label: 'Reports',
-                path: '/reports',
-                icon: TrendingUp,
-                color: 'text-blue-600 dark:text-blue-400',
-              },
-              {
                 label: 'Due Collection',
-                path: '/customers',
+                path: '/customers/due-collection',
                 icon: DollarSign,
                 color: 'text-amber-600 dark:text-amber-400',
               },
               {
-                label: 'Branches',
-                path: '/branches',
-                icon: Building2,
-                color: 'text-gray-600 dark:text-gray-400',
-              },
-              {
-                label: 'Repairs',
+                label: 'Repairs Service',
                 path: '/repairs',
                 icon: Wrench,
+                color: 'text-rose-600 dark:text-rose-400',
+              },
+              {
+                label: 'Costing & Expenses',
+                path: '/accounting/expenses',
+                icon: Receipt,
                 color: 'text-red-600 dark:text-red-400',
               },
+              {
+                label: 'Financial Reports',
+                path: '/reports',
+                icon: TrendingUp,
+                color: 'text-blue-600 dark:text-blue-400',
+              },
             ].map((action) => (
-              <button key={action.label} onClick={() => navigate(action.path)} className={btnClass}>
-                <action.icon className={`w-5 h-5 ${action.color}`} />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <button
+                key={action.label}
+                onClick={() => navigate(action.path)}
+                className="flex items-center gap-2.5 p-3 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-red-300 dark:hover:border-red-500/30 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all text-left group"
+              >
+                <action.icon className={`w-4 h-4 ${action.color} flex-shrink-0`} />
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 group-hover:text-red-600 dark:group-hover:text-red-400">
                   {action.label}
                 </span>
               </button>
@@ -246,47 +279,42 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div
-          className={
-            styled
-              ? 'neu-card p-6'
-              : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-6'
-          }
-        >
+        {/* Low Stock Alert */}
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-amber-500" /> Low Stock
+            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-amber-500" /> Low Stock Items
             </h3>
             <button
               onClick={() => navigate('/stock')}
-              className="text-xs text-red-600 dark:text-red-400 hover:underline flex items-center gap-1"
+              className="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline flex items-center gap-1"
             >
               View All <ArrowRight className="w-3 h-3" />
             </button>
           </div>
           {!lowStockData || lowStockData.length === 0 ? (
-            <div className="text-center py-8 text-gray-400">
-              <Package className="w-10 h-10 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">All stock levels OK</p>
+            <div className="text-center py-8 text-slate-400">
+              <Package className="w-8 h-8 mx-auto mb-2 opacity-40" />
+              <p className="text-xs">All product stocks look healthy!</p>
             </div>
           ) : (
             <div className="space-y-2">
               {lowStockData.map((item, i) => (
                 <div
                   key={i}
-                  className={`flex items-center justify-between p-2 rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-500/20 ${styled ? 'neu-pressed !bg-transparent !border-amber-300/50 dark:!border-amber-500/30' : ''}`}
+                  className="flex items-center justify-between p-2.5 rounded-lg bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/30"
                 >
                   <div>
-                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    <div className="text-xs font-bold text-slate-900 dark:text-slate-100">
                       {item.name}
                     </div>
-                    <div className="text-xs text-gray-500">{item.brand}</div>
+                    <div className="text-[10px] text-slate-500">{item.brand}</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-bold text-amber-600 dark:text-amber-400">
-                      <AnimatedNumber value={item.count} />
+                    <div className="text-xs font-extrabold text-amber-600 dark:text-amber-400 font-mono">
+                      <AnimatedNumber value={item.count} /> in stock
                     </div>
-                    <div className="text-[10px] text-gray-500">min: {item.minAlert}</div>
+                    <div className="text-[10px] text-slate-400">Min limit: {item.minAlert}</div>
                   </div>
                 </div>
               ))}
@@ -294,26 +322,21 @@ export default function Dashboard() {
           )}
         </div>
 
-        <div
-          className={
-            styled
-              ? 'neu-card p-6'
-              : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-6'
-          }
-        >
+        {/* Recent Sales History */}
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Recent Sales</h3>
+            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Recent Sales</h3>
             <button
               onClick={() => navigate('/sales')}
-              className="text-xs text-red-600 dark:text-red-400 hover:underline flex items-center gap-1"
+              className="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline flex items-center gap-1"
             >
-              View All <ArrowRight className="w-3 h-3" />
+              View History <ArrowRight className="w-3 h-3" />
             </button>
           </div>
           {!recentSales || recentSales.length === 0 ? (
-            <div className="text-center py-8 text-gray-400">
-              <ShoppingCart className="w-10 h-10 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No sales yet</p>
+            <div className="text-center py-8 text-slate-400">
+              <ShoppingCart className="w-8 h-8 mx-auto mb-2 opacity-40" />
+              <p className="text-xs">No recent sales recorded yet</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -321,20 +344,20 @@ export default function Dashboard() {
                 <button
                   key={s._id}
                   onClick={() => navigate(`/sales/${s._id}`)}
-                  className={`w-full flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors text-left ${styled ? 'neu-btn-sm' : ''}`}
+                  className="w-full flex items-center justify-between p-2.5 rounded-lg border border-slate-100 dark:border-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors text-left"
                 >
                   <div>
-                    <div className="text-sm font-mono font-medium text-gray-900 dark:text-gray-100">
+                    <div className="text-xs font-mono font-bold text-slate-900 dark:text-slate-100">
                       {s.invoiceNumber}
                     </div>
-                    <div className="text-xs text-gray-500">{s.customerName}</div>
+                    <div className="text-[11px] text-slate-500">{s.customerName}</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                    <div className="text-xs font-extrabold text-slate-900 dark:text-slate-100 font-mono">
                       ৳{s.netTotal?.toLocaleString()}
                     </div>
                     {s.paymentBreakdown?.dueAmount > 0 && (
-                      <div className="text-[10px] text-red-500">
+                      <div className="text-[10px] font-bold text-red-500">
                         Due: ৳{s.paymentBreakdown.dueAmount?.toLocaleString()}
                       </div>
                     )}

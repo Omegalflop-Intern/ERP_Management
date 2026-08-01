@@ -53,22 +53,28 @@ const menuItems = [
     ],
   },
   {
-    section: 'Sales',
+    section: 'Sales & Orders',
     items: [
-      { path: '/sales', label: 'Sales History', icon: Receipt, permissions: ['sales:view'] },
       {
         path: '/sales/new',
         label: 'New Sale (POS)',
         icon: ShoppingCart,
         permissions: ['sales:create'],
       },
+      { path: '/sales', label: 'Sales History', icon: Receipt, permissions: ['sales:view'] },
       { path: '/sales/returns', label: 'Returns', icon: RotateCcw, permissions: ['sales:view'] },
+      {
+        path: '/wholesale/orders',
+        label: 'Wholesale Orders',
+        icon: ShoppingCart,
+        permissions: ['wholesale:view'],
+      },
     ],
   },
   {
-    section: 'Inventory',
+    section: 'Products & Stock',
     items: [
-      { path: '/products', label: 'Products', icon: Package, permissions: ['products:view'] },
+      { path: '/products', label: 'Products & Stock', icon: Package, permissions: ['products:view'] },
       {
         path: '/products/categories',
         label: 'Categories',
@@ -91,7 +97,7 @@ const menuItems = [
     ],
   },
   {
-    section: 'CRM',
+    section: 'Customers & Dues',
     items: [
       { path: '/customers', label: 'Customers', icon: Users, permissions: ['customers:view'] },
       {
@@ -115,47 +121,41 @@ const menuItems = [
     ],
   },
   {
-    section: 'Management',
+    section: 'Purchases & Repairs',
     items: [
       { path: '/purchases', label: 'Purchases', icon: Truck, permissions: ['purchases:view'] },
       { path: '/suppliers', label: 'Suppliers', icon: Contact, permissions: ['suppliers:view'] },
-      { path: '/repairs', label: 'Repairs', icon: Wrench, permissions: ['repairs:view'] },
-      {
-        path: '/wholesale/orders',
-        label: 'Wholesale Orders',
-        icon: ShoppingCart,
-        permissions: ['wholesale:view'],
-      },
+      { path: '/repairs', label: 'Repairs & Services', icon: Wrench, permissions: ['repairs:view'] },
     ],
   },
   {
-    section: 'Finance & Capital',
+    section: 'Costing & Investments',
     items: [
       {
-        label: 'Capital & Investment',
+        label: 'Costing & Capital',
         icon: HandCoins,
         permissions: ['accounting:view'],
         children: [
           {
-            path: '/accounting/investors',
-            label: 'Investors & Partners',
-            icon: Wallet,
-            permissions: ['accounting:view'],
-          },
-          {
-            path: '/accounting/expenses',
+            path: '/expenses',
             label: 'Shop Costing & Expenses',
             icon: Receipt,
             permissions: ['accounting:view'],
           },
           {
-            path: '/accounting/assets',
-            label: 'Shop Assets & Depreciation',
+            path: '/investors',
+            label: 'Investors & Partners',
+            icon: Wallet,
+            permissions: ['accounting:view'],
+          },
+          {
+            path: '/assets',
+            label: 'Shop Assets & Equipment',
             icon: Building,
             permissions: ['accounting:view'],
           },
           {
-            path: '/accounting/loans',
+            path: '/loans',
             label: 'Loans & Liabilities',
             icon: Landmark,
             permissions: ['accounting:view'],
@@ -186,19 +186,19 @@ const menuItems = [
             permissions: ['accounting:view'],
           },
           {
-            path: '/accounting/balance-sheet',
+            path: '/reports/balance-sheet',
             label: 'Balance Sheet',
             icon: Scale,
             permissions: ['accounting:view'],
           },
           {
-            path: '/accounting/profit-loss',
+            path: '/reports/profit-loss',
             label: 'Profit & Loss',
             icon: FileText,
             permissions: ['accounting:view'],
           },
           {
-            path: '/accounting/trial-balance',
+            path: '/reports/trial-balance',
             label: 'Trial Balance',
             icon: Receipt,
             permissions: ['accounting:view'],
@@ -208,7 +208,7 @@ const menuItems = [
     ],
   },
   {
-    section: 'HR',
+    section: 'HR & Payroll',
     items: [
       { path: '/hr/employees', label: 'Employees', icon: Users, permissions: ['employees:view'] },
       {
@@ -227,7 +227,7 @@ const menuItems = [
     ],
   },
   {
-    section: 'Administration',
+    section: 'System Administration',
     items: [
       { path: '/profile', label: 'My Profile', icon: User, permissions: [] },
       { path: '/users', label: 'Users', icon: UserCog, permissions: ['users:view'] },
@@ -256,7 +256,7 @@ const menuItems = [
 ];
 
 export default function Sidebar({ isOpen, onClose, collapsed = false }) {
-  const { user, hasAnyPermission } = useAuth();
+  const { user, hasPermission, hasAnyPermission } = useAuth();
   const { styled } = useTheme();
   const location = useLocation();
 

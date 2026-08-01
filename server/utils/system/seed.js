@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { User } from '../../modules/user/user.model.js';
 import { Role } from '../../modules/role/role.model.js';
+import { seedDefaultRoles } from '../../modules/role/role.service.js';
 import { connectDB } from '../../config/db.js';
 
 const getEnvPassword = (role, defaultPassword) => {
@@ -25,6 +26,19 @@ const seedUsers = [
 const seed = async () => {
   try {
     await connectDB();
+
+    const shouldClear = process.argv.includes('--clear') || process.env.CLEAR_DB === 'true';
+    if (shouldClear) {
+      console.log('[CLEAR] Dropping database / clearing all collections...');
+      const collections = await mongoose.connection.db.collections();
+      for (const collection of collections) {
+        await collection.deleteMany({});
+      }
+      console.log('[CLEAR] All collections cleared successfully!');
+    }
+
+    console.log('[SEED] Seeding default system roles...');
+    await seedDefaultRoles();
 
     for (const userData of seedUsers) {
       const existing = await User.findOne({ username: userData.username });
@@ -51,7 +65,7 @@ const seed = async () => {
         username: userData.username,
         email: userData.email,
         phone: userData.phone,
-        fullName: userData.fullName,
+        fullName: userData.fullName || userData.username.toUpperCase(),
         passwordHash,
         role: role._id,
         roleName: role.name,

@@ -944,7 +944,10 @@ function GRNModal({ order, onClose, onSuccess }) {
 
   const addEntry = (idx) => {
     const updated = [...entries];
-    updated[idx].items.push({
+    const target = updated[idx];
+    const pid = typeof target.productId === 'object' ? target.productId?._id : target.productId;
+    target.items.push({
+      productId: String(pid || ''),
       imeiOrSerial: '',
       purchasePrice: order.lineItems[idx]?.unitCost || 0,
       sellingPrice: 0,
@@ -963,13 +966,25 @@ function GRNModal({ order, onClose, onSuccess }) {
     setEntries(updated);
   };
 
-  const allItems = entries.flatMap((e) => e.items.filter((i) => i.imeiOrSerial));
+  const allItems = entries.flatMap((e) => {
+    const pid = typeof e.productId === 'object' ? e.productId?._id : e.productId;
+    return e.items
+      .filter((i) => i.imeiOrSerial && i.imeiOrSerial.trim() !== '')
+      .map((i) => ({
+        ...i,
+        productId: String(i.productId || pid || ''),
+        purchasePrice: Number(i.purchasePrice || 0),
+        sellingPrice: Number(i.sellingPrice || 0),
+        warrantyMonths: Number(i.warrantyMonths || 12),
+      }));
+  });
 
   const mutation = useMutation({
     mutationFn: async () =>
       api.post(`/purchase-orders/${order._id}/receive`, { grnEntries: allItems }),
     onSuccess: () => {
       toast.success('Goods received successfully');
+      queryClient.invalidateQueries(['purchase-orders']);
       onSuccess();
     },
     onError: (e) => toast.error(e.response?.data?.message || 'Failed'),
@@ -1088,6 +1103,16 @@ function SupplierReturnModal({ order, onClose, onSuccess }) {
   const queryClient = useQueryClient();
 
   const grnItems = order?.grnEntries || [];
+  const allImeis = grnItems.map((e) => e.imeiOrSerial).filter(Boolean);
+  const isAllSelected = allImeis.length > 0 && selectedImeis.length === allImeis.length;
+
+  const toggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedImeis([]);
+    } else {
+      setSelectedImeis(allImeis);
+    }
+  };
 
   const toggleImei = (imei) => {
     if (selectedImeis.includes(imei)) {
@@ -1096,6 +1121,10 @@ function SupplierReturnModal({ order, onClose, onSuccess }) {
       setSelectedImeis([...selectedImeis, imei]);
     }
   };
+
+  const estimatedRefund = grnItems
+    .filter((e) => selectedImeis.includes(e.imeiOrSerial))
+    .reduce((acc, curr) => acc + (Number(curr.purchasePrice) || 0), 0);
 
   const mutation = useMutation({
     mutationFn: async () =>
@@ -1106,7 +1135,7 @@ function SupplierReturnModal({ order, onClose, onSuccess }) {
     onSuccess: (res) => {
       const data = res.data?.data;
       toast.success(
-        `Returned ${data?.returnedCount || selectedImeis.length} item(s) to supplier! Refunded ৳${(data?.totalRefund || 0).toLocaleString()}`
+        `Returned ${data?.returnedCount || selectedImeis.length} item(s) to supplier! Refunded ৳${(data?.totalRefund || estimatedRefund).toLocaleString()}`
       );
       queryClient.invalidateQueries(['purchase-orders']);
       onSuccess();
@@ -1119,7 +1148,7 @@ function SupplierReturnModal({ order, onClose, onSuccess }) {
       <div className="bg-white dark:bg-[#111827] rounded-2xl w-full max-w-lg border border-gray-200 dark:border-gray-800 shadow-2xl p-6 space-y-4">
         <div className="flex items-center justify-between border-b dark:border-gray-800 pb-3">
           <div>
-            <h3 className="font-bold text-gray-900 dark:text-gray-100">Return to Supplier</h3>
+            <h3 className="font-bold text-gray-900 dark:text-gray-100">Bulk Return to Supplier</h3>
             <p className="text-xs text-gray-500">
               {order.poNumber} &middot; {order.supplierId?.name || 'Supplier'}
             </p>
@@ -1134,9 +1163,20 @@ function SupplierReturnModal({ order, onClose, onSuccess }) {
 
         <div className="space-y-3">
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
-              Select Items / IMEIs to Return ({selectedImeis.length} selected)
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-gray-500 uppercase">
+                Select Items / IMEIs ({selectedImeis.length}/{allImeis.length})
+              </label>
+              {allImeis.length > 0 && (
+                <button
+                  type="button"
+                  onClick={toggleSelectAll}
+                  className="text-xs font-bold text-red-600 dark:text-red-400 hover:underline"
+                >
+                  {isAllSelected ? 'Deselect All' : `Select All (${allImeis.length})`}
+                </button>
+              )}
+            </div>
             {grnItems.length === 0 ? (
               <p className="text-xs text-gray-400 py-2">
                 No received items available for this order.
@@ -1148,30 +1188,48 @@ function SupplierReturnModal({ order, onClose, onSuccess }) {
                   return (
                     <label
                       key={idx}
-                      className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 cursor-pointer hover:border-red-400"
+                      className={`flex items-center justify-between p-2.5 rounded-lg border cursor-pointer transition-all ${
+                        isChecked
+                          ? 'bg-red-50/50 dark:bg-red-950/20 border-red-300 dark:border-red-800'
+                          : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+                      }`}
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2.5">
                         <input
                           type="checkbox"
                           checked={isChecked}
                           onChange={() => toggleImei(entry.imeiOrSerial)}
-                          className="rounded text-red-600 focus:ring-red-500"
+                          className="rounded text-red-600 focus:ring-red-500 w-4 h-4"
                         />
                         <div>
                           <div className="text-xs font-mono font-bold text-gray-900 dark:text-gray-100">
                             {entry.imeiOrSerial}
                           </div>
                           <div className="text-[10px] text-gray-500">
-                            Cost: ৳{entry.purchasePrice}
+                            Purchase Cost: ৳{entry.purchasePrice?.toLocaleString()}
                           </div>
                         </div>
                       </div>
+                      <span className="text-xs font-mono font-semibold text-gray-700 dark:text-gray-300">
+                        ৳{entry.purchasePrice?.toLocaleString()}
+                      </span>
                     </label>
                   );
                 })}
               </div>
             )}
           </div>
+
+          {selectedImeis.length > 0 && (
+            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 rounded-xl flex items-center justify-between text-xs">
+              <span className="font-semibold text-emerald-800 dark:text-emerald-300">
+                Total Refund Credit:
+              </span>
+              <span className="font-bold font-mono text-emerald-600 dark:text-emerald-400 text-sm">
+                ৳{estimatedRefund.toLocaleString()}
+              </span>
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
@@ -1182,7 +1240,7 @@ function SupplierReturnModal({ order, onClose, onSuccess }) {
               required
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="e.g. Defective camera, wrong model, damaged box"
+              placeholder="e.g. Defective camera, wrong model, bulk inventory return"
               className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-red-500"
             />
           </div>
@@ -1202,7 +1260,7 @@ function SupplierReturnModal({ order, onClose, onSuccess }) {
               className="flex-1 py-2 bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white font-bold rounded-lg text-sm flex items-center justify-center gap-2"
             >
               {mutation.isPending && <RefreshCw className="w-4 h-4 animate-spin" />}
-              Confirm Return ({selectedImeis.length})
+              Confirm Bulk Return ({selectedImeis.length})
             </button>
           </div>
         </div>

@@ -259,12 +259,70 @@ export default function App() {
             }
           />
 
-          {/* Reports */}
+          {/* Reports & Financial Statements */}
           <Route
             path="reports"
             element={
               <RoleBasedRoute permissions={['reports:view']}>
                 <SalesReport />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="reports/trial-balance"
+            element={
+              <RoleBasedRoute permissions={['accounting:view']}>
+                <TrialBalancePage />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="reports/balance-sheet"
+            element={
+              <RoleBasedRoute permissions={['accounting:view']}>
+                <BalanceSheetPage />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="reports/profit-loss"
+            element={
+              <RoleBasedRoute permissions={['accounting:view']}>
+                <ProfitLossPage />
+              </RoleBasedRoute>
+            }
+          />
+
+          {/* Clean Financial Routes */}
+          <Route
+            path="expenses"
+            element={
+              <RoleBasedRoute permissions={['accounting:view', 'accounting:manage']}>
+                <ExpensesPage />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="investors"
+            element={
+              <RoleBasedRoute permissions={['accounting:view', 'accounting:manage']}>
+                <InvestorsPage />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="loans"
+            element={
+              <RoleBasedRoute permissions={['accounting:view', 'accounting:manage']}>
+                <LoansPage />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="assets"
+            element={
+              <RoleBasedRoute permissions={['accounting:view', 'accounting:manage']}>
+                <AssetsPage />
               </RoleBasedRoute>
             }
           />

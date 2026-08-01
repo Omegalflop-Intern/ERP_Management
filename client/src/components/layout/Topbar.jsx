@@ -35,7 +35,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import api, { getAssetUrl } from '../../lib/api';
 
-function UserAvatar({ user, size = 'md' }) {
+function UserAvatar({ user, size = 'md', online = true }) {
   const [imgError, setImgError] = useState(false);
   const sizes = { sm: 'w-8 h-8 text-sm', md: 'w-9 h-9 text-sm', lg: 'w-10 h-10 text-base' };
   const sz = sizes[size] || sizes.md;
@@ -44,26 +44,39 @@ function UserAvatar({ user, size = 'md' }) {
     setImgError(false);
   }, [user?.avatar]);
 
-  if (user?.avatar && !imgError) {
-    return (
-      <div
-        className={`${sz} rounded-full overflow-hidden flex-shrink-0 border border-red-200 dark:border-red-500/30`}
-      >
-        <img
-          src={getAssetUrl(user.avatar)}
-          alt={user.username || 'User'}
-          className="w-full h-full object-cover"
-          onError={() => setImgError(true)}
-        />
-      </div>
-    );
-  }
+  const dotSize = size === 'sm' ? 'w-2.5 h-2.5' : 'w-3 h-3';
 
   return (
-    <div
-      className={`${sz} rounded-full flex-shrink-0 bg-red-600/10 dark:bg-red-600/20 text-red-700 dark:text-red-400 flex items-center justify-center font-bold border border-red-200 dark:border-red-500/30`}
-    >
-      {user?.username?.[0]?.toUpperCase() || '?'}
+    <div className="relative inline-block flex-shrink-0">
+      <div
+        className={`${sz} rounded-full overflow-hidden flex items-center justify-center font-bold border border-red-200 dark:border-red-500/30 ${
+          user?.avatar && !imgError
+            ? ''
+            : 'bg-red-600/10 dark:bg-red-600/20 text-red-700 dark:text-red-400'
+        }`}
+      >
+        {user?.avatar && !imgError ? (
+          <img
+            src={getAssetUrl(user.avatar)}
+            alt={user.username || 'User'}
+            className="w-full h-full object-cover"
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          user?.username?.[0]?.toUpperCase() || '?'
+        )}
+      </div>
+      {/* Online/Offline Status Indicator Dot */}
+      <span className={`absolute bottom-0 right-0 ${dotSize} rounded-full ring-2 ring-white dark:ring-slate-900 flex items-center justify-center`}>
+        {online ? (
+          <span className="relative flex h-full w-full">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-full w-full bg-emerald-500"></span>
+          </span>
+        ) : (
+          <span className="inline-flex rounded-full h-full w-full bg-amber-500"></span>
+        )}
+      </span>
     </div>
   );
 }
@@ -80,9 +93,9 @@ function GlobalSearch({ styled }) {
   const navigate = useNavigate();
 
   const pagesList = [
-    { title: 'Dashboard', path: '/dashboard', icon: Sparkles, category: 'Navigation' },
-    { title: 'Sales List', path: '/sales', icon: ShoppingCart, category: 'Sales' },
-    { title: 'New Sale / POS', path: '/sales/new', icon: ShoppingCart, category: 'Sales' },
+    { title: 'Dashboard Overview', path: '/dashboard', icon: Sparkles, category: 'Navigation' },
+    { title: 'New Sale (POS)', path: '/sales/new', icon: ShoppingCart, category: 'Sales' },
+    { title: 'Sales Invoices', path: '/sales', icon: ShoppingCart, category: 'Sales' },
     { title: 'Sales Returns', path: '/sales/returns', icon: ShoppingCart, category: 'Sales' },
     { title: 'Product Catalog', path: '/products', icon: Package, category: 'Inventory' },
     { title: 'IMEI Tracker', path: '/inventory', icon: Smartphone, category: 'Inventory' },
@@ -90,21 +103,14 @@ function GlobalSearch({ styled }) {
     { title: 'Stock Transfer', path: '/stock-transfer', icon: Package, category: 'Inventory' },
     { title: 'Customer List', path: '/customers', icon: Users, category: 'CRM' },
     { title: 'Due Collection', path: '/customers/due-collection', icon: Users, category: 'CRM' },
-    { title: 'Warranty Claims', path: '/warranties', icon: FileText, category: 'CRM' },
+    { title: 'Warranty Claims', path: '/warranties', icon: FileText, category: 'Services' },
     { title: 'Repair Services', path: '/repairs', icon: Wrench, category: 'Services' },
-    { title: 'Purchase Orders', path: '/purchases', icon: FileText, category: 'Purchases' },
-    { title: 'Supplier List', path: '/suppliers', icon: Building2, category: 'Purchases' },
-    { title: 'Sales Reports', path: '/reports', icon: FileText, category: 'Reports' },
-    { title: 'Employee List', path: '/hr/employees', icon: Users, category: 'HR' },
-    { title: 'Payroll', path: '/hr/payroll', icon: DollarSign, category: 'HR' },
-    { title: 'Chart of Accounts', path: '/accounting', icon: FileText, category: 'Finance' },
-    {
-      title: 'Profit & Loss',
-      path: '/accounting/profit-loss',
-      icon: FileText,
-      category: 'Finance',
-    },
-    { title: 'System Settings', path: '/settings', icon: Sparkles, category: 'Settings' },
+    { title: 'Shop Costing & Expenses', path: '/expenses', icon: DollarSign, category: 'Costing' },
+    { title: 'Investors & Partners', path: '/investors', icon: Users, category: 'Costing' },
+    { title: 'Loans & Liabilities', path: '/loans', icon: DollarSign, category: 'Costing' },
+    { title: 'Profit & Loss Statement', path: '/reports/profit-loss', icon: FileText, category: 'Reports' },
+    { title: 'Balance Sheet', path: '/reports/balance-sheet', icon: FileText, category: 'Reports' },
+    { title: 'Trial Balance Report', path: '/reports/trial-balance', icon: FileText, category: 'Reports' },
   ];
 
   useEffect(() => {
@@ -166,7 +172,7 @@ function GlobalSearch({ styled }) {
       } finally {
         setLoading(false);
       }
-    }, 300);
+    }, 250);
 
     return () => clearTimeout(timer);
   }, [query]);
@@ -193,19 +199,19 @@ function GlobalSearch({ styled }) {
       className="relative flex-1 max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg mx-2"
       ref={searchRef}
     >
-      {/* Search Bar Input */}
+      {/* Search Bar Input Container */}
       <div
         onClick={() => {
           setIsOpen(true);
           inputRef.current?.focus();
         }}
-        className={`relative flex items-center w-full px-3 py-1.5 rounded-xl border text-xs cursor-text transition-all ${
+        className={`relative flex items-center w-full px-3 py-2 rounded-xl border text-xs cursor-text transition-all shadow-sm ${
           styled
             ? 'neu-card-sm !border-none'
-            : 'bg-gray-50 dark:bg-gray-900/80 border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
-        } ${isOpen ? 'ring-2 ring-red-500/30 border-red-500/50' : ''}`}
+            : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+        } ${isOpen ? 'ring-2 ring-red-500/30 border-red-500/50 dark:border-red-500/50 bg-white dark:bg-slate-900' : ''}`}
       >
-        <Search className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
+        <Search className="w-4 h-4 text-slate-400 mr-2 flex-shrink-0" />
         <input
           ref={inputRef}
           type="text"
@@ -215,8 +221,8 @@ function GlobalSearch({ styled }) {
             setIsOpen(true);
           }}
           onFocus={() => setIsOpen(true)}
-          placeholder="Search products, customers, IMEIs, sales..."
-          className="w-full bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none text-xs"
+          placeholder="Search products, customers, IMEIs, sales... (Ctrl+K)"
+          className="w-full bg-transparent text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none text-xs font-medium"
         />
         {query ? (
           <button
@@ -224,12 +230,12 @@ function GlobalSearch({ styled }) {
               e.stopPropagation();
               setQuery('');
             }}
-            className="p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            className="p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
           >
             <X className="w-3.5 h-3.5" />
           </button>
         ) : (
-          <div className="hidden md:flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-gray-200/60 dark:bg-gray-800 text-[10px] font-mono text-gray-400 flex-shrink-0 ml-1">
+          <div className="hidden md:flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-slate-200/70 dark:bg-slate-800 text-[10px] font-mono text-slate-500 dark:text-slate-400 flex-shrink-0 ml-1 border border-slate-300/40 dark:border-slate-700/40">
             <Command className="w-2.5 h-2.5" />
             <span>K</span>
           </div>
@@ -569,23 +575,6 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
 
       {/* Right: controls */}
       <div className="flex items-center gap-1.5 md:gap-2">
-        {/* Online status — hidden on mobile */}
-        <div
-          className={`hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium ${online ? 'bg-green-50 dark:bg-green-900/10 text-green-700 dark:text-green-400' : 'bg-amber-50 dark:bg-amber-900/10 text-amber-700 dark:text-amber-400'}`}
-        >
-          {online ? (
-            <>
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-              </span>
-              <Wifi className="w-3 h-3" />
-            </>
-          ) : (
-            <WifiOff className="w-3 h-3" />
-          )}
-          <span>{online ? 'Online' : 'Offline'}</span>
-        </div>
 
         {/* Desktop: ThemeToggle inline */}
         <div className="hidden md:block">
@@ -725,7 +714,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
               }}
               className={`md:hidden ${styled ? 'neu-icon !rounded-full !border-none !p-0' : ''}`}
             >
-              <UserAvatar user={user} size="md" />
+              <UserAvatar user={user} size="md" online={online} />
             </button>
 
             {/* Desktop: compact sleek profile button */}
@@ -741,7 +730,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
                   : 'bg-gray-50 dark:bg-gray-900/80 hover:bg-gray-100 dark:hover:bg-gray-800'
               }`}
             >
-              <UserAvatar user={user} size="sm" />
+              <UserAvatar user={user} size="sm" online={online} />
               <div className="text-left leading-tight min-w-0">
                 <div className="text-xs font-bold text-gray-900 dark:text-gray-100 truncate max-w-[120px]">
                   {user.fullName || user.username}
@@ -759,7 +748,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
                 {/* Mobile only: show user info at top */}
                 <div className="md:hidden px-3 py-3 border-b border-gray-100 dark:border-gray-800">
                   <div className="flex items-center gap-2.5">
-                    <UserAvatar user={user} size="lg" />
+                    <UserAvatar user={user} size="lg" online={online} />
                     <div>
                       <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                         {user.fullName || user.username}

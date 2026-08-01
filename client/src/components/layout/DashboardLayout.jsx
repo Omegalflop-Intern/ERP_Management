@@ -25,13 +25,7 @@ export default function DashboardLayout() {
   }, [collapsed]);
 
   return (
-    <div className="relative h-screen bg-slate-50 dark:bg-[#080d1a] flex flex-col overflow-hidden">
-      {/* Liquid Glass Background Ambient Glow Orbs */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden z-0 opacity-70 dark:opacity-50">
-        <div className="absolute -top-40 -left-40 w-96 h-96 bg-red-500/20 dark:bg-red-600/30 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute top-1/3 -right-40 w-96 h-96 bg-blue-500/20 dark:bg-indigo-600/30 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 left-1/3 w-[30rem] h-[30rem] bg-purple-500/15 dark:bg-purple-600/25 rounded-full blur-3xl" />
-      </div>
+    <div className="relative h-screen bg-slate-50 dark:bg-slate-950 flex flex-col overflow-hidden text-slate-900 dark:text-slate-100 font-sans">
 
       <div className="relative z-10 flex flex-col h-full">
         <Topbar

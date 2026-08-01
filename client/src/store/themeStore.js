@@ -25,7 +25,7 @@ export const useThemeStore = create(
   persist(
     (set, get) => ({
       theme: 'light',
-      designMode: 'liquidglass',
+      designMode: 'flat',
 
       toggleTheme: () => set((s) => ({ theme: s.theme === 'dark' ? 'light' : 'dark' })),
 

@@ -15,13 +15,48 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
+    // Do not attempt refresh for auth endpoints
+    if (
+      originalRequest?.url?.includes('/auth/login') ||
+      originalRequest?.url?.includes('/auth/refresh-token') ||
+      originalRequest?.url?.includes('/auth/logout')
+    ) {
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return api(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
       originalRequest._retry = true;
+      isRefreshing = true;
 
       try {
         const res = await axios.post(
@@ -29,7 +64,7 @@ api.interceptors.response.use(
           {},
           { withCredentials: true }
         );
-        const { token } = res.data.data;
+        const token = res.data?.data?.token;
 
         if (token) {
           localStorage.setItem('accessToken', token);
@@ -40,14 +75,28 @@ api.interceptors.response.use(
           } catch {
             // store not available
           }
+          processQueue(null, token);
+          return api(originalRequest);
         }
 
-        return api(originalRequest);
+        throw new Error('No token returned');
       } catch (refreshError) {
+        processQueue(refreshError, null);
         localStorage.removeItem('accessToken');
         localStorage.removeItem('user');
-        window.location.href = '/login';
+        localStorage.removeItem('auth-storage');
+        try {
+          const { useAuthStore } = await import('../store/authStore.js');
+          useAuthStore.setState({ user: null, token: null });
+        } catch {
+          // ignore
+        }
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
         return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
 
