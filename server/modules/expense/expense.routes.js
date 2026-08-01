@@ -9,6 +9,7 @@ router.use(authenticate);
 router.get('/', expenseController.getAllExpenses);
 router.get('/categories', expenseController.getExpenseCategories);
 router.post('/', authorize('ADMIN', 'MANAGER'), expenseController.createExpense);
+router.put('/:id', authorize('ADMIN', 'MANAGER'), expenseController.updateExpense);
 router.delete('/:id', authorize('ADMIN'), expenseController.deleteExpense);
 
 export default router;

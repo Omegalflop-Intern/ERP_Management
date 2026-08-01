@@ -60,14 +60,14 @@ export const useAuthStore = create(
       hasPermission: (permission) => {
         const { user } = get();
         if (!user) return false;
-        if (user.roleName === 'ADMIN') return true;
+        if (user.roleName === 'ADMIN' || user.permissions?.includes('*')) return true;
         return user.permissions?.includes(permission) ?? false;
       },
 
       hasAnyPermission: (permissions) => {
         const { user } = get();
         if (!user) return false;
-        if (user.roleName === 'ADMIN') return true;
+        if (user.roleName === 'ADMIN' || user.permissions?.includes('*')) return true;
         return permissions.some((p) => user.permissions?.includes(p));
       },
 

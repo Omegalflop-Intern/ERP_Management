@@ -139,38 +139,45 @@ export default function Dashboard() {
     : 'flex items-center gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-red-300 dark:hover:border-red-500/30 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all text-left';
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-6">
+    <div className="space-y-6 w-full pb-6">
       {/* Shop Owner Welcome Banner & Quick Action Header */}
-      <div className="bg-gradient-to-r from-red-600 to-red-700 dark:from-red-900/80 dark:to-slate-900 rounded-2xl p-6 text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Welcome, {user?.fullName || user?.username}! 👋
-          </h1>
-          <p className="text-red-100 text-sm mt-1">
-            Here is your shop's performance summary. What would you like to do right now?
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+              Welcome, {user?.fullName || user?.username}! 👋
+            </h1>
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40 flex items-center gap-1.5">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              Live Overview
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Here is your shop's performance summary and key business metrics at a glance.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => navigate('/products')}
-            className="px-4 py-2.5 bg-white/15 hover:bg-white/25 active:scale-95 text-white font-semibold rounded-xl text-sm transition-all flex items-center gap-2 backdrop-blur-sm"
+            className="px-3.5 py-2 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold rounded-xl text-xs transition-all flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 shadow-xs"
           >
-            <Package className="w-4 h-4" />
-            + Add Stock
+            <Package className="w-4 h-4 text-blue-500" />+ Add Stock
           </button>
           <button
             onClick={() => navigate('/customers/due-collection')}
-            className="px-4 py-2.5 bg-white/15 hover:bg-white/25 active:scale-95 text-white font-semibold rounded-xl text-sm transition-all flex items-center gap-2 backdrop-blur-sm"
+            className="px-3.5 py-2 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold rounded-xl text-xs transition-all flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 shadow-xs"
           >
-            <DollarSign className="w-4 h-4" />
+            <DollarSign className="w-4 h-4 text-emerald-500" />
             Collect Dues
           </button>
           <button
             onClick={() => navigate('/expenses')}
-            className="px-4 py-2.5 bg-white/15 hover:bg-white/25 active:scale-95 text-white font-semibold rounded-xl text-sm transition-all flex items-center gap-2 backdrop-blur-sm"
+            className="px-3.5 py-2 bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold rounded-xl text-xs transition-all flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 shadow-xs"
           >
-            <Receipt className="w-4 h-4" />
-            + Costing & Expenses
+            <Receipt className="w-4 h-4 text-amber-500" />+ Costing & Expenses
           </button>
         </div>
       </div>
@@ -180,7 +187,7 @@ export default function Dashboard() {
         {statCards.map((card) => (
           <div
             key={card.label}
-            className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 transition-all hover:border-slate-300 dark:hover:border-slate-700 shadow-sm flex flex-col justify-between h-full"
+            className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 transition-all hover:border-slate-300 dark:hover:border-slate-700 shadow-xs flex flex-col justify-between h-full"
           >
             <div>
               <div className="flex items-center justify-between mb-2">

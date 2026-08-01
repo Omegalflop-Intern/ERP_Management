@@ -25,8 +25,7 @@ export default function DashboardLayout() {
   }, [collapsed]);
 
   return (
-    <div className="relative h-screen bg-slate-50 dark:bg-slate-950 flex flex-col overflow-hidden text-slate-900 dark:text-slate-100 font-sans">
-
+    <div className="relative h-screen bg-white dark:bg-[#0b0f17] flex flex-col overflow-hidden text-slate-900 dark:text-slate-100 font-sans">
       <div className="relative z-10 flex flex-col h-full">
         <Topbar
           onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
@@ -41,7 +40,7 @@ export default function DashboardLayout() {
           />
           <main
             id="main-content"
-            className="flex-1 p-4 md:p-6 overflow-y-auto overscroll-contain flex flex-col justify-between"
+            className="flex-1 p-4 md:p-6 lg:p-7 w-full overflow-y-auto overscroll-contain flex flex-col justify-between"
           >
             <div className="flex-1">
               <Outlet />

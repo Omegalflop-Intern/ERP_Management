@@ -67,7 +67,9 @@ function UserAvatar({ user, size = 'md', online = true }) {
         )}
       </div>
       {/* Online/Offline Status Indicator Dot */}
-      <span className={`absolute bottom-0 right-0 ${dotSize} rounded-full ring-2 ring-white dark:ring-slate-900 flex items-center justify-center`}>
+      <span
+        className={`absolute bottom-0 right-0 ${dotSize} rounded-full ring-2 ring-white dark:ring-slate-900 flex items-center justify-center`}
+      >
         {online ? (
           <span className="relative flex h-full w-full">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -108,9 +110,19 @@ function GlobalSearch({ styled }) {
     { title: 'Shop Costing & Expenses', path: '/expenses', icon: DollarSign, category: 'Costing' },
     { title: 'Investors & Partners', path: '/investors', icon: Users, category: 'Costing' },
     { title: 'Loans & Liabilities', path: '/loans', icon: DollarSign, category: 'Costing' },
-    { title: 'Profit & Loss Statement', path: '/reports/profit-loss', icon: FileText, category: 'Reports' },
+    {
+      title: 'Profit & Loss Statement',
+      path: '/reports/profit-loss',
+      icon: FileText,
+      category: 'Reports',
+    },
     { title: 'Balance Sheet', path: '/reports/balance-sheet', icon: FileText, category: 'Reports' },
-    { title: 'Trial Balance Report', path: '/reports/trial-balance', icon: FileText, category: 'Reports' },
+    {
+      title: 'Trial Balance Report',
+      path: '/reports/trial-balance',
+      icon: FileText,
+      category: 'Reports',
+    },
   ];
 
   useEffect(() => {
@@ -205,11 +217,11 @@ function GlobalSearch({ styled }) {
           setIsOpen(true);
           inputRef.current?.focus();
         }}
-        className={`relative flex items-center w-full px-3 py-2 rounded-xl border text-xs cursor-text transition-all shadow-sm ${
-          styled
-            ? 'neu-card-sm !border-none'
-            : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
-        } ${isOpen ? 'ring-2 ring-red-500/30 border-red-500/50 dark:border-red-500/50 bg-white dark:bg-slate-900' : ''}`}
+        className={`relative flex items-center w-full px-3.5 py-2 rounded-xl border text-xs cursor-text transition-all bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm ${
+          isOpen
+            ? 'ring-2 ring-red-500/30 border-red-500/50 dark:border-red-500/50 bg-white dark:bg-slate-900'
+            : ''
+        }`}
       >
         <Search className="w-4 h-4 text-slate-400 mr-2 flex-shrink-0" />
         <input
@@ -575,7 +587,6 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
 
       {/* Right: controls */}
       <div className="flex items-center gap-1.5 md:gap-2">
-
         {/* Desktop: ThemeToggle inline */}
         <div className="hidden md:block">
           <DesktopThemeToggle styled={styled} />

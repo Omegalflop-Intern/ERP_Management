@@ -21,7 +21,7 @@ export default function Bottombar() {
         </div>
         <span className="font-bold text-gray-900 dark:text-gray-200">Mobile Shop ERP</span>
         <span className="px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 font-mono font-bold text-[10px] border border-red-200 dark:border-red-500/20">
-          v1.0.0
+          v2.4.5
         </span>
         <span className="hidden sm:inline text-gray-300 dark:text-gray-700">•</span>
         <span className="hidden sm:inline text-gray-500 dark:text-gray-400 font-mono text-[11px]">

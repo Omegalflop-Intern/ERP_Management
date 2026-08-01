@@ -58,6 +58,24 @@ export const createExpense = async (data, username) => {
   return expense;
 };
 
+export const updateExpense = async (id, data) => {
+  const expense = await Expense.findOne({ _id: id, isDeleted: false });
+  if (!expense) throw ApiError.notFound('Expense entry not found');
+
+  if (data.amount !== undefined) {
+    if (Number(data.amount) <= 0) throw ApiError.badRequest('Expense amount must be greater than 0');
+    expense.amount = Number(data.amount);
+  }
+
+  const allowedFields = ['title', 'category', 'notes', 'paymentMethod', 'vendor', 'date', 'voucherNumber'];
+  allowedFields.forEach((field) => {
+    if (data[field] !== undefined) expense[field] = data[field];
+  });
+
+  await expense.save();
+  return expense;
+};
+
 export const deleteExpense = async (id) => {
   const expense = await Expense.findOneAndUpdate(
     { _id: id, isDeleted: false },

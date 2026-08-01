@@ -4,6 +4,7 @@ import {
   Calendar,
   DollarSign,
   Filter,
+  Pencil,
   PieChart,
   Plus,
   Receipt,
@@ -40,6 +41,7 @@ export default function Expenses() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingExpense, setEditingExpense] = useState(null);
   const [categoryChoice, setCategoryChoice] = useState('Shop Rent');
   const [customCategoryInput, setCustomCategoryInput] = useState('');
 
@@ -79,6 +81,17 @@ export default function Expenses() {
       qc.invalidateQueries({ queryKey: ['expense-categories'] });
     },
     onError: (e) => toast.error(e.response?.data?.message || 'Failed to record expense'),
+  });
+
+  const updateExpenseMutation = useMutation({
+    mutationFn: async ({ id, data }) => api.put(`/expenses/${id}`, data),
+    onSuccess: () => {
+      toast.success('Expense entry updated successfully');
+      setEditingExpense(null);
+      qc.invalidateQueries({ queryKey: ['expenses'] });
+      qc.invalidateQueries({ queryKey: ['expense-categories'] });
+    },
+    onError: (e) => toast.error(e.response?.data?.message || 'Failed to update expense'),
   });
 
   const deleteExpenseMutation = useMutation({
@@ -245,7 +258,14 @@ export default function Expenses() {
                   <td className="px-4 py-3 text-xs text-gray-500">
                     {e.voucherNumber ? `Voucher: ${e.voucherNumber}` : e.notes || 'N/A'}
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-3 text-right flex items-center justify-end gap-1">
+                    <button
+                      onClick={() => setEditingExpense(e)}
+                      className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-blue-500 transition-colors"
+                      title="Edit Expense"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
                     <button
                       onClick={() =>
                         confirmDelete(`Delete expense "${e.title}"?`, () =>
@@ -323,23 +343,6 @@ export default function Expenses() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
-                    Category *
-                  </label>
-                  <select
-                    value={categoryChoice}
-                    onChange={(e) => setCategoryChoice(e.target.value)}
-                    className={inputCls}
-                  >
-                    {categories.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
-                    ))}
-                    <option value="CUSTOM">+ Add Custom Category...</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
                     Amount (৳) *
                   </label>
                   <input
@@ -347,28 +350,42 @@ export default function Expenses() {
                     required
                     min="1"
                     name="amount"
-                    placeholder="e.g. 15000"
+                    placeholder="0"
                     className={inputCls}
                   />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+                    Category *
+                  </label>
+                  <select
+                    value={categoryChoice}
+                    onChange={(e) => setCategoryChoice(e.target.value)}
+                    className={inputCls}
+                  >
+                    {categories.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                    <option value="CUSTOM">+ Custom Category...</option>
+                  </select>
                 </div>
               </div>
 
               {/* Custom Category Input (shown when CUSTOM selected) */}
               {categoryChoice === 'CUSTOM' && (
-                <div className="p-3 bg-red-50/50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 rounded-xl space-y-1">
-                  <label className="block text-xs font-semibold text-red-600 dark:text-red-400 uppercase">
-                    New Custom Category Name *
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+                    Custom Category Name *
                   </label>
                   <input
                     required
                     value={customCategoryInput}
                     onChange={(e) => setCustomCategoryInput(e.target.value)}
-                    placeholder="e.g. AC Repairing / Trade License / Generator"
+                    placeholder="e.g. Shop Cleaning / Generator Fuel"
                     className={inputCls}
                   />
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400">
-                    This custom category will be saved and available for future expense entries.
-                  </p>
                 </div>
               )}
 
@@ -377,12 +394,13 @@ export default function Expenses() {
                   <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
                     Payment Method
                   </label>
-                  <select name="paymentMethod" className={inputCls}>
-                    <option value="cash">Cash</option>
-                    <option value="bkash">bKash</option>
-                    <option value="nagad">Nagad</option>
-                    <option value="rocket">Rocket</option>
-                    <option value="bank">Bank Transfer</option>
+                  <select name="paymentMethod" defaultValue="Cash" className={inputCls}>
+                    <option value="Cash">Cash</option>
+                    <option value="bKash">bKash</option>
+                    <option value="Nagad">Nagad</option>
+                    <option value="Rocket">Rocket</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="Card">Card</option>
                   </select>
                 </div>
                 <div>
@@ -418,6 +436,165 @@ export default function Expenses() {
           </div>
         </div>
       )}
+
+      {/* Edit Expense Modal */}
+      {editingExpense && (
+        <EditExpenseModal
+          expense={editingExpense}
+          categories={categories}
+          onClose={() => setEditingExpense(null)}
+          onUpdate={(data) => updateExpenseMutation.mutate({ id: editingExpense._id, data })}
+          isPending={updateExpenseMutation.isPending}
+          cardCls={cardCls}
+          inputCls={inputCls}
+        />
+      )}
+    </div>
+  );
+}
+
+function EditExpenseModal({
+  expense,
+  categories,
+  onClose,
+  onUpdate,
+  isPending,
+  cardCls,
+  inputCls,
+}) {
+  const [title, setTitle] = useState(expense.title || '');
+  const [amount, setAmount] = useState(expense.amount || '');
+  const [category, setCategory] = useState(expense.category || categories[0] || 'Shop Rent');
+  const [paymentMethod, setPaymentMethod] = useState(expense.paymentMethod || 'Cash');
+  const [voucherNumber, setVoucherNumber] = useState(expense.voucherNumber || '');
+  const [notes, setNotes] = useState(expense.notes || '');
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className={`${cardCls} w-full max-w-md p-6 shadow-2xl`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-4 border-b dark:border-gray-800 pb-3">
+          <h3 className="font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <Pencil className="w-5 h-5 text-blue-500" /> Edit Shop Expense
+          </h3>
+          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <form
+          onSubmit={(ev) => {
+            ev.preventDefault();
+            onUpdate({
+              title,
+              amount: Number(amount),
+              category,
+              paymentMethod,
+              voucherNumber,
+              notes,
+            });
+          }}
+          className="space-y-3.5 text-sm"
+        >
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+              Expense Title / Purpose *
+            </label>
+            <input
+              required
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className={inputCls}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+                Amount (৳) *
+              </label>
+              <input
+                type="number"
+                required
+                min="1"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+                Category *
+              </label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className={inputCls}
+              >
+                {categories.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+                Payment Method
+              </label>
+              <select
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                className={inputCls}
+              >
+                <option value="Cash">Cash</option>
+                <option value="bKash">bKash</option>
+                <option value="Nagad">Nagad</option>
+                <option value="Rocket">Rocket</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="Card">Card</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+                Voucher # (Optional)
+              </label>
+              <input
+                value={voucherNumber}
+                onChange={(e) => setVoucherNumber(e.target.value)}
+                className={inputCls}
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+              Notes / Description
+            </label>
+            <input value={notes} onChange={(e) => setNotes(e.target.value)} className={inputCls} />
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium rounded-lg text-sm"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isPending}
+              className="flex-1 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold rounded-lg text-sm"
+            >
+              {isPending ? 'Updating...' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

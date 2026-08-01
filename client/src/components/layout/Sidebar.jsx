@@ -74,7 +74,12 @@ const menuItems = [
   {
     section: 'Products & Stock',
     items: [
-      { path: '/products', label: 'Products & Stock', icon: Package, permissions: ['products:view'] },
+      {
+        path: '/products',
+        label: 'Products & Stock',
+        icon: Package,
+        permissions: ['products:view'],
+      },
       {
         path: '/products/categories',
         label: 'Categories',
@@ -125,7 +130,12 @@ const menuItems = [
     items: [
       { path: '/purchases', label: 'Purchases', icon: Truck, permissions: ['purchases:view'] },
       { path: '/suppliers', label: 'Suppliers', icon: Contact, permissions: ['suppliers:view'] },
-      { path: '/repairs', label: 'Repairs & Services', icon: Wrench, permissions: ['repairs:view'] },
+      {
+        path: '/repairs',
+        label: 'Repairs & Services',
+        icon: Wrench,
+        permissions: ['repairs:view'],
+      },
     ],
   },
   {

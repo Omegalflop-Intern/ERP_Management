@@ -8,10 +8,22 @@ export const authorize = (...roles) => {
         return next(ApiError.unauthorized('Authentication required'));
       }
 
-      // Legacy: check if role is a string (old system) or ObjectId (new system)
       let userRoleName = req.user.roleName || req.user.role;
 
+      // ADMIN role always has full system access
+      if (userRoleName === 'ADMIN') {
+        return next();
+      }
+
       if (roles.length > 0 && !roles.includes(userRoleName)) {
+        // Check if custom role exists and has assigned permissions
+        const roleId = req.user.role;
+        if (roleId) {
+          const role = await Role.findOne({ _id: roleId, isDeleted: false });
+          if (role && (role.permissions.includes('*') || role.permissions.length > 0)) {
+            return next();
+          }
+        }
         return next(ApiError.forbidden(`Role '${userRoleName}' is not authorized for this action`));
       }
 
@@ -29,6 +41,11 @@ export const requirePermission = (...permissions) => {
         return next(ApiError.unauthorized('Authentication required'));
       }
 
+      let userRoleName = req.user.roleName || req.user.role;
+      if (userRoleName === 'ADMIN') {
+        return next();
+      }
+
       const roleId = req.user.role;
       if (!roleId) {
         return next(ApiError.forbidden('No role assigned'));
@@ -39,7 +56,11 @@ export const requirePermission = (...permissions) => {
         return next(ApiError.forbidden('Role not found'));
       }
 
-      const hasPermission = permissions.every(p => role.permissions.includes(p));
+      if (role.permissions.includes('*')) {
+        return next();
+      }
+
+      const hasPermission = permissions.every((p) => role.permissions.includes(p));
       if (!hasPermission) {
         return next(ApiError.forbidden('You do not have permission for this action'));
       }

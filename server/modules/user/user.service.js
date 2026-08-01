@@ -136,6 +136,27 @@ export const updateUser = async (id, data) => {
   const allowed = ['fullName', 'email', 'phone', 'username', 'role', 'roleName', 'isActive', 'branchId', 'commissionRate'];
   allowed.forEach(key => { if (data[key] !== undefined) user[key] = data[key]; });
   await user.save();
+
+  // Sync corresponding Employee profile
+  try {
+    const roleObj = data.role ? await Role.findOne({ _id: data.role, isDeleted: false }) : null;
+    await Employee.findOneAndUpdate(
+      { user: user._id, isDeleted: false },
+      {
+        $set: {
+          name: user.fullName || user.username,
+          phone: user.phone || '0000000000',
+          email: user.email || '',
+          ...(roleObj ? { designation: roleObj.displayName || roleObj.name } : {}),
+          ...(data.branchId ? { branch: data.branchId } : {}),
+        },
+      },
+      { upsert: false }
+    );
+  } catch (empErr) {
+    console.error(`[USER] Employee sync failed for user ${user._id}:`, empErr.message);
+  }
+
   return user;
 };
 

@@ -19,6 +19,14 @@ export const createExpense = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
+export const updateExpense = async (req, res, next) => {
+  try {
+    const expense = await expenseService.updateExpense(req.params.id, req.body);
+    logAction({ userId: req.user?.userId, username: req.user?.username, action: 'UPDATE', module: 'expense', entityId: expense._id, entityType: 'Expense', details: { title: expense.title, amount: expense.amount }, req });
+    return ApiResponse.success(res, expense, 'Expense updated successfully');
+  } catch (error) { next(error); }
+};
+
 export const deleteExpense = async (req, res, next) => {
   try {
     await expenseService.deleteExpense(req.params.id);
