@@ -166,34 +166,34 @@ export default function Dashboard() {
         }
       />
 
-      {/* Primary Key Metrics Grid — 4 Cards Per Row on Desktop */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Primary Key Metrics Grid — 4 Cards Per Row on Desktop, 2 on Tablet, 1 on Mobile */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {statCards.map((card) => (
           <div
             key={card.label}
-            className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 transition-all hover:border-slate-300 dark:hover:border-slate-700 shadow-xs flex flex-col justify-between h-full"
+            className="glass-secondary rounded-[20px] p-5 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg shadow-slate-900/5 flex flex-col justify-between h-full"
           >
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tight">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   {card.label}
                 </span>
                 <div
-                  className={`w-8 h-8 rounded-lg ${card.bg} flex items-center justify-center flex-shrink-0`}
+                  className={`w-9 h-9 rounded-xl ${card.bg} flex items-center justify-center flex-shrink-0 shadow-xs`}
                 >
-                  <card.icon className={`w-4 h-4 ${card.color}`} />
+                  <card.icon className={`w-4.5 h-4.5 ${card.color}`} />
                 </div>
               </div>
-              <div className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 font-mono">
+              <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 font-mono tracking-tight">
                 {isLoading ? (
-                  <div className="h-7 w-24 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+                  <div className="h-7 w-28 bg-slate-200/60 dark:bg-slate-800/60 rounded-lg animate-pulse" />
                 ) : (
                   <AnimatedNumber value={card.value} prefix={card.prefix} suffix={card.suffix} />
                 )}
               </div>
             </div>
             {card.hint && (
-              <div className="text-xs text-slate-400 dark:text-slate-500 mt-2 truncate pt-2 border-t border-slate-100 dark:border-slate-800/60">
+              <div className="text-xs text-slate-400 dark:text-slate-500 mt-3 truncate pt-2.5 border-t border-slate-200/50 dark:border-slate-800/50">
                 {card.hint}
               </div>
             )}
@@ -213,7 +213,7 @@ export default function Dashboard() {
       {/* Bottom Operational Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {/* Quick Shortcuts */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+        <div className="glass-secondary rounded-[20px] p-5">
           <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 mb-4">
             Frequent Tasks
           </h3>
@@ -259,10 +259,10 @@ export default function Dashboard() {
               <button
                 key={action.label}
                 onClick={() => navigate(action.path)}
-                className="flex items-center gap-2.5 p-3 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-red-300 dark:hover:border-red-500/30 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all text-left group"
+                className="flex items-center gap-2.5 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800/60 hover:border-[#2563EB]/40 bg-white/60 dark:bg-slate-900/60 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-all text-left group btn-hover-lift"
               >
                 <action.icon className={`w-4 h-4 ${action.color} flex-shrink-0`} />
-                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 group-hover:text-red-600 dark:group-hover:text-red-400">
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 group-hover:text-[#2563EB] dark:group-hover:text-blue-400">
                   {action.label}
                 </span>
               </button>
@@ -271,14 +271,14 @@ export default function Dashboard() {
         </div>
 
         {/* Low Stock Alert */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+        <div className="glass-secondary rounded-[20px] p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-amber-500" /> Low Stock Items
             </h3>
             <button
               onClick={() => navigate('/stock')}
-              className="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline flex items-center gap-1"
+              className="text-xs font-semibold text-[#2563EB] dark:text-blue-400 hover:underline flex items-center gap-1"
             >
               View All <ArrowRight className="w-3 h-3" />
             </button>
@@ -293,7 +293,7 @@ export default function Dashboard() {
               {lowStockData.map((item, i) => (
                 <div
                   key={i}
-                  className="flex items-center justify-between p-2.5 rounded-lg bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/30"
+                  className="flex items-center justify-between p-2.5 rounded-xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/30"
                 >
                   <div>
                     <div className="text-xs font-bold text-slate-900 dark:text-slate-100">
@@ -314,12 +314,12 @@ export default function Dashboard() {
         </div>
 
         {/* Recent Sales History */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+        <div className="glass-secondary rounded-[20px] p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Recent Sales</h3>
             <button
               onClick={() => navigate('/sales')}
-              className="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline flex items-center gap-1"
+              className="text-xs font-semibold text-[#2563EB] dark:text-blue-400 hover:underline flex items-center gap-1"
             >
               View History <ArrowRight className="w-3 h-3" />
             </button>
@@ -335,7 +335,7 @@ export default function Dashboard() {
                 <button
                   key={s._id}
                   onClick={() => navigate(`/sales/${s._id}`)}
-                  className="w-full flex items-center justify-between p-2.5 rounded-lg border border-slate-100 dark:border-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors text-left"
+                  className="w-full flex items-center justify-between p-2.5 rounded-xl border border-slate-100 dark:border-slate-800/80 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors text-left"
                 >
                   <div>
                     <div className="text-xs font-mono font-bold text-slate-900 dark:text-slate-100">

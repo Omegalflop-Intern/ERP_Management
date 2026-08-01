@@ -300,12 +300,11 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
       <aside
         className={`
         fixed lg:static inset-y-0 left-0 z-50
-        h-full bg-white dark:bg-[#111827] border-r border-gray-200 dark:border-gray-800
+        h-[calc(100vh-1rem)] lg:h-auto my-2 ml-2 lg:my-0 lg:ml-0 glass-primary rounded-[24px]
         flex flex-col justify-between py-4
-        transform transition-all duration-200 ease-in-out
+        transform transition-all duration-250 ease-in-out
         ${collapsed ? 'lg:w-[68px]' : 'lg:w-64'}
         ${isOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full lg:translate-x-0'}
-        ${styled ? 'neu-sidebar border-none' : ''}
       `}
       >
         <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 overscroll-contain sidebar-scrollbar">
@@ -379,36 +378,36 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
                             ${collapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5'}
                             ${
                               hasActiveChild
-                                ? 'bg-red-50/50 dark:bg-red-900/10 text-red-700 dark:text-red-400 font-bold'
-                                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                                ? 'bg-blue-50/80 dark:bg-blue-900/20 text-[#2563EB] dark:text-blue-400 font-semibold'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-slate-800/40'
                             }
                           `}
                         >
                           <div className="flex items-center gap-3">
-                            <item.icon className="w-4 h-4 shrink-0 text-red-600 dark:text-red-400" />
+                            <item.icon className="w-4 h-4 shrink-0 text-[#2563EB] dark:text-blue-400" />
                             {!collapsed && <span className="truncate">{item.label}</span>}
                           </div>
                           {!collapsed &&
                             (isOpenMenu ? (
-                              <ChevronDown className="w-4 h-4 text-gray-400" />
+                              <ChevronDown className="w-4 h-4 text-slate-400" />
                             ) : (
-                              <ChevronRight className="w-4 h-4 text-gray-400" />
+                              <ChevronRight className="w-4 h-4 text-slate-400" />
                             ))}
                         </button>
 
                         {/* Dropdown Children Submenu */}
                         {!collapsed && isOpenMenu && (
-                          <div className="pl-4 mt-1 space-y-0.5 border-l-2 border-red-500/20 ml-5">
+                          <div className="pl-4 mt-1 space-y-0.5 border-l-2 border-[#2563EB]/20 ml-5">
                             {item.children.map((child) => (
                               <NavLink
                                 key={child.path}
                                 to={child.path}
                                 className={({ isActive }) => `
-                                  w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-medium text-xs transition-all
+                                  w-full flex items-center gap-2.5 px-3 py-2 rounded-xl font-medium text-xs transition-all
                                   ${
                                     isActive
-                                      ? 'bg-red-700 text-white font-bold shadow-xs'
-                                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
+                                      ? 'bg-[#2563EB] text-white font-bold shadow-xs'
+                                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-slate-800/50'
                                   }
                                 `}
                               >
@@ -428,14 +427,12 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
                       to={item.path}
                       title={collapsed ? item.label : undefined}
                       className={({ isActive }) => `
-                        w-full flex items-center gap-3 rounded-lg font-medium text-sm transition-all mb-0.5
+                        w-full flex items-center gap-3 rounded-xl font-medium text-sm transition-all mb-0.5
                         ${collapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5'}
                         ${
                           isActive
-                            ? styled
-                              ? 'neu-nav-active bg-red-50/80 dark:bg-red-900/10 text-red-700 dark:text-red-400'
-                              : 'bg-red-50 dark:bg-red-900/10 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-500/20'
-                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                            ? 'bg-blue-50/80 dark:bg-blue-900/20 text-[#2563EB] dark:text-blue-400 font-semibold border border-blue-200/60 dark:border-blue-800/40 shadow-xs'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-slate-800/40'
                         }
                       `}
                     >

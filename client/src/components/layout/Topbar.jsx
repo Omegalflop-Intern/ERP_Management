@@ -545,7 +545,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
 
   return (
     <header
-      className={`h-14 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#111827]/80 backdrop-blur-md px-3 md:px-6 flex items-center justify-between sticky top-0 z-30 ${styled ? 'neu-flat border-none !bg-transparent backdrop-blur-none' : ''}`}
+      className="h-14 glass-primary rounded-[20px] m-2 px-3 md:px-6 flex items-center justify-between sticky top-2 z-30 shadow-sm"
     >
       {/* Left: menu + brand */}
       <div className="flex items-center gap-2">

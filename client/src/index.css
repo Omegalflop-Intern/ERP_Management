@@ -8,30 +8,30 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap");
 
 /* ═══════════════════════════════════════════════════════════════
-   SHADCN UI — CSS Variable Tokens (Light Mode)
+   SHADCN UI & Modern Glass Enterprise CSS Variables
    ═══════════════════════════════════════════════════════════════ */
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
+    --background: 210 40% 98%; /* #F8FAFC */
+    --foreground: 222 47% 11%; /* #0F172A */
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 0 72% 51%; /* Brand red #dc2626 */
+    --primary: 221 83% 53%; /* Enterprise Blue #2563EB */
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96%;
+    --secondary: 210 40% 96%; /* #F1F5F9 */
     --secondary-foreground: 222 47% 11%;
     --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted-foreground: 215 16% 47%; /* #64748B */
     --accent: 210 40% 96%;
     --accent-foreground: 222 47% 11%;
-    --destructive: 0 84% 60%;
+    --destructive: 0 84% 60%; /* #DC2626 */
     --destructive-foreground: 0 0% 100%;
-    --border: 214 32% 91%;
+    --border: 214 32% 91%; /* #E2E8F0 */
     --input: 214 32% 91%;
-    --ring: 0 72% 51%;
-    --radius: 0.625rem;
+    --ring: 221 83% 53%;
+    --radius: 0.75rem;
   }
 
   .dark {
@@ -41,7 +41,7 @@
     --card-foreground: 213 31% 91%;
     --popover: 224 71% 10%;
     --popover-foreground: 213 31% 91%;
-    --primary: 0 72% 51%;
+    --primary: 221 83% 53%; /* Enterprise Blue #2563EB */
     --primary-foreground: 0 0% 100%;
     --secondary: 222 47% 15%;
     --secondary-foreground: 213 31% 91%;
@@ -49,13 +49,107 @@
     --muted-foreground: 215 20% 65%;
     --accent: 222 47% 15%;
     --accent-foreground: 213 31% 91%;
-    --destructive: 0 63% 44%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     --border: 222 47% 18%;
     --input: 222 47% 15%;
-    --ring: 0 72% 51%;
+    --ring: 221 83% 53%;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   3-TIER GLASS ENTERPRISE UTILITY CLASSES
+   ═══════════════════════════════════════════════════════════════ */
+.glass-primary {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 20px 30px -10px rgba(15, 23, 42, 0.05), 0 8px 16px -8px rgba(15, 23, 42, 0.03);
+}
+
+.dark .glass-primary {
+  background: rgba(17, 24, 39, 0.80);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.4);
+}
+
+.glass-secondary {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(226, 232, 240, 0.7);
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.04), 0 4px 10px -4px rgba(15, 23, 42, 0.02);
+}
+
+.dark .glass-secondary {
+  background: rgba(17, 24, 39, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(30, 41, 59, 0.7);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+.glass-light {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+.dark .glass-light {
+  background: rgba(17, 24, 39, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(30, 41, 59, 0.9);
+}
+
+.btn-hover-lift {
+  transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px -4px rgba(37, 99, 235, 0.25);
+}
+
+.btn-hover-lift:active {
+  transform: translateY(0);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ANIMATED AMBIENT MESH FLOATING ORBS & GLASS SHEEN
+   ═══════════════════════════════════════════════════════════════ */
+@keyframes glassFloat1 {
+  0%, 100% { transform: translate(0px, 0px) scale(1); }
+  50% { transform: translate(45px, -50px) scale(1.12); }
+}
+
+@keyframes glassFloat2 {
+  0%, 100% { transform: translate(0px, 0px) scale(1); }
+  50% { transform: translate(-50px, 45px) scale(1.18); }
+}
+
+@keyframes glassFloat3 {
+  0%, 100% { transform: translate(0px, 0px) scale(1); }
+  50% { transform: translate(35px, 40px) scale(1.10); }
+}
+
+.animate-glass-float-1 {
+  animation: glassFloat1 20s ease-in-out infinite;
+}
+
+.animate-glass-float-2 {
+  animation: glassFloat2 24s ease-in-out infinite;
+}
+
+.animate-glass-float-3 {
+  animation: glassFloat3 28s ease-in-out infinite;
+}
+
+
 
 html {
   font-size: 14px;

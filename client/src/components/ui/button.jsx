@@ -4,18 +4,18 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold transition-all duration-150 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary/40 active:scale-[0.98]",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium transition-all duration-150 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]/40 active:translate-y-0 active:scale-[0.99]",
   {
     variants: {
       variant: {
-        default: 'bg-primary text-white shadow-xs hover:bg-primary/90 active:bg-primary/95',
+        default: 'bg-[#2563EB] text-white shadow-xs hover:bg-[#1D4ED8] hover:-translate-y-0.5 hover:shadow-md hover:shadow-blue-500/20',
         destructive:
-          'bg-rose-600 text-white shadow-xs hover:bg-rose-700 dark:bg-rose-600 dark:hover:bg-rose-700',
+          'bg-[#DC2626] text-white shadow-xs hover:bg-red-700 hover:-translate-y-0.5 hover:shadow-md hover:shadow-red-500/20',
         outline:
-          'border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800/60',
-        secondary: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200/80 dark:hover:bg-slate-700/80',
-        ghost: 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800',
-        link: 'text-primary underline-offset-4 hover:underline font-normal',
+          'border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 text-slate-800 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:-translate-y-0.5',
+        secondary: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200/80 dark:hover:bg-slate-700/80 hover:-translate-y-0.5',
+        ghost: 'text-slate-700 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-800/80',
+        link: 'text-[#2563EB] underline-offset-4 hover:underline font-normal',
       },
       size: {
         default: 'h-10 px-4 py-2 has-[>svg]:px-3.5',
