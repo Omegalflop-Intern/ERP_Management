@@ -1,9 +1,11 @@
 import mongoose from 'mongoose';
 import { Loan, LoanRepayment } from './loan.model.js';
 import { ApiError } from '../../utils/http/ApiError.js';
+import { withTenant } from '../../utils/tenant.js';
+import { createAutomatedLoanJournal } from '../accounting/accounting.service.js';
 
-export const getAllLoans = async (type = 'LOAN_TAKEN') => {
-  const query = { isDeleted: false };
+export const getAllLoans = async (type = 'LOAN_TAKEN', tenantId = null) => {
+  const query = withTenant({ isDeleted: false }, tenantId);
   if (type) query.type = type;
 
   const loans = await Loan.find(query).sort({ createdAt: -1 }).lean();
@@ -19,7 +21,7 @@ export const getAllLoans = async (type = 'LOAN_TAKEN') => {
   const processedLoans = loans.map(l => {
     const remainingDue = Math.max(0, (l.loanAmount || 0) - (l.repaidAmount || 0));
 
-    let alertStatus = 'NONE'; // 'NONE' | 'UPCOMING' (YELLOW) | 'OVERDUE' (RED)
+    let alertStatus = 'NONE';
     if (remainingDue > 0 && l.dueDate) {
       const due = new Date(l.dueDate);
       if (due < now) {
@@ -47,7 +49,7 @@ export const getAllLoans = async (type = 'LOAN_TAKEN') => {
   };
 };
 
-export const createLoan = async (data, username) => {
+export const createLoan = async (data, username, tenantId = null) => {
   if (!data.loanAmount || Number(data.loanAmount) <= 0) {
     throw ApiError.badRequest('Loan amount must be greater than 0');
   }
@@ -57,7 +59,6 @@ export const createLoan = async (data, username) => {
   const totalWithInterest = loanAmount + (loanAmount * interestRate) / 100;
   const installmentCount = Math.max(1, Number(data.installmentCount) || 1);
 
-  // Generate Installment Schedule
   const schedule = [];
   const perInstallmentAmount = Number((totalWithInterest / installmentCount).toFixed(2));
   const startDate = data.dueDate ? new Date(data.dueDate) : new Date();
@@ -87,12 +88,12 @@ export const createLoan = async (data, username) => {
           interestRate,
           installmentCount,
           installmentSchedule: schedule,
+          tenantId: tenantId || null,
         },
       ],
       { session }
     );
 
-    // Atomic LedgerEntry for double-entry bookkeeping
     const { LedgerEntry } = await import('../accounting/ledgerEntry.model.js');
     await LedgerEntry.create(
       [
@@ -108,6 +109,8 @@ export const createLoan = async (data, username) => {
       { session }
     );
 
+    await createAutomatedLoanJournal(loan, loan.type, totalWithInterest, tenantId).catch(err => console.error('Loan journal failed:', err));
+
     await session.commitTransaction();
     session.endSession();
     return loan;
@@ -118,12 +121,12 @@ export const createLoan = async (data, username) => {
   }
 };
 
-export const repayLoanInstalment = async (loanId, data, username) => {
+export const repayLoanInstalment = async (loanId, data, username, tenantId = null) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const loan = await Loan.findOne({ _id: loanId, isDeleted: false }).session(session);
+    const loan = await Loan.findOne(withTenant({ _id: loanId, isDeleted: false }, tenantId)).session(session);
     if (!loan) throw ApiError.notFound('Loan record not found');
 
     const amount = Number(data.amount);
@@ -139,7 +142,6 @@ export const repayLoanInstalment = async (loanId, data, username) => {
       loan.status = 'Fully Repaid';
     }
 
-    // Update Installment Schedule Statuses
     let remainingPayment = amount;
     if (loan.installmentSchedule && loan.installmentSchedule.length > 0) {
       for (const inst of loan.installmentSchedule) {
@@ -171,12 +173,12 @@ export const repayLoanInstalment = async (loanId, data, username) => {
           notes: data.notes || '',
           date: data.date || new Date(),
           recordedBy: username,
+          tenantId: tenantId || null,
         },
       ],
       { session }
     );
 
-    // Atomic LedgerEntry for double-entry bookkeeping
     const { LedgerEntry } = await import('../accounting/ledgerEntry.model.js');
     await LedgerEntry.create(
       [
@@ -192,6 +194,8 @@ export const repayLoanInstalment = async (loanId, data, username) => {
       { session }
     );
 
+    await createAutomatedLoanJournal(loan, loan.type === 'LOAN_GIVEN' ? 'LOAN_GIVEN' : 'LOAN_TAKEN', amount, tenantId).catch(err => console.error('Loan repayment journal failed:', err));
+
     await session.commitTransaction();
     session.endSession();
 
@@ -203,11 +207,11 @@ export const repayLoanInstalment = async (loanId, data, username) => {
   }
 };
 
-export const getLoanById = async (id) => {
-  const loan = await Loan.findOne({ _id: id, isDeleted: false }).lean();
+export const getLoanById = async (id, tenantId = null) => {
+  const loan = await Loan.findOne(withTenant({ _id: id, isDeleted: false }, tenantId)).lean();
   if (!loan) throw ApiError.notFound('Loan record not found');
 
-  const repayments = await LoanRepayment.find({ loanId: id, isDeleted: false }).sort({ createdAt: -1 }).lean();
+  const repayments = await LoanRepayment.find(withTenant({ loanId: id, isDeleted: false }, tenantId)).sort({ createdAt: -1 }).lean();
 
   return {
     ...loan,
@@ -216,9 +220,9 @@ export const getLoanById = async (id) => {
   };
 };
 
-export const deleteLoan = async (id) => {
+export const deleteLoan = async (id, tenantId = null) => {
   const loan = await Loan.findOneAndUpdate(
-    { _id: id, isDeleted: false },
+    withTenant({ _id: id, isDeleted: false }, tenantId),
     { $set: { isDeleted: true } },
     { new: true }
   );

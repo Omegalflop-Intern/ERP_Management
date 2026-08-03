@@ -1,10 +1,11 @@
 import { Expense } from './expense.model.js';
 import { ApiError } from '../../utils/http/ApiError.js';
-import { createAutomatedExpenseJournal } from '../accounting/accounting.service.js';
+import { createAutomatedExpenseJournal, voidJournalEntry } from '../accounting/accounting.service.js';
+import { withTenant } from '../../utils/tenant.js';
 
-export const getAllExpenses = async (params = {}) => {
+export const getAllExpenses = async (params = {}, tenantId = null) => {
   const { category, from, to, search } = params;
-  const query = { isDeleted: false };
+  const query = withTenant({ isDeleted: false }, tenantId);
 
   if (category && category !== 'ALL') {
     query.category = category;
@@ -42,7 +43,7 @@ export const getAllExpenses = async (params = {}) => {
   };
 };
 
-export const createExpense = async (data, username) => {
+export const createExpense = async (data, recordedBy, tenantId = null) => {
   if (!data.amount || Number(data.amount) <= 0) {
     throw ApiError.badRequest('Expense amount must be greater than 0');
   }
@@ -50,7 +51,8 @@ export const createExpense = async (data, username) => {
   const expense = await Expense.create({
     ...data,
     amount: Number(data.amount),
-    recordedBy: username,
+    recordedBy,
+    tenantId: tenantId || data.tenantId || null,
   });
 
   await createAutomatedExpenseJournal(expense).catch(err => console.error('Expense journal failed:', err));
@@ -58,9 +60,12 @@ export const createExpense = async (data, username) => {
   return expense;
 };
 
-export const updateExpense = async (id, data) => {
-  const expense = await Expense.findOne({ _id: id, isDeleted: false });
+export const updateExpense = async (id, data, tenantId = null) => {
+  const expense = await Expense.findOne(withTenant({ _id: id, isDeleted: false }, tenantId));
   if (!expense) throw ApiError.notFound('Expense entry not found');
+
+  const oldAmount = expense.amount;
+  const oldTitle = expense.title;
 
   if (data.amount !== undefined) {
     if (Number(data.amount) <= 0) throw ApiError.badRequest('Expense amount must be greater than 0');
@@ -73,16 +78,43 @@ export const updateExpense = async (id, data) => {
   });
 
   await expense.save();
+
+  if (data.amount !== undefined || data.title !== undefined) {
+    const { JournalEntry } = await import('../accounting/journalEntry.model.js');
+    const refKey = expense.voucherNumber || expense._id.toString();
+    const oldEntry = await JournalEntry.findOne({
+      reference: refKey,
+      isDeleted: false,
+      ...withTenant({}, tenantId),
+    });
+    if (oldEntry && oldEntry.status === 'POSTED') {
+      await voidJournalEntry(oldEntry._id, 'system', tenantId);
+    }
+    await createAutomatedExpenseJournal(expense).catch(err => console.error('Expense journal update failed:', err));
+  }
+
   return expense;
 };
 
-export const deleteExpense = async (id) => {
+export const deleteExpense = async (id, tenantId = null) => {
   const expense = await Expense.findOneAndUpdate(
-    { _id: id, isDeleted: false },
+    withTenant({ _id: id, isDeleted: false }, tenantId),
     { $set: { isDeleted: true } },
     { new: true }
   );
   if (!expense) throw ApiError.notFound('Expense entry not found');
+
+  const { JournalEntry } = await import('../accounting/journalEntry.model.js');
+  const refKey = expense.voucherNumber || expense._id.toString();
+  const oldEntry = await JournalEntry.findOne({
+    reference: refKey,
+    isDeleted: false,
+    ...withTenant({}, tenantId),
+  });
+  if (oldEntry && oldEntry.status === 'POSTED') {
+    await voidJournalEntry(oldEntry._id, 'system', tenantId);
+  }
+
   return expense;
 };
 
@@ -99,8 +131,8 @@ export const DEFAULT_EXPENSE_CATEGORIES = [
   'Miscellaneous',
 ];
 
-export const getExpenseCategories = async () => {
-  const dbCategories = await Expense.distinct('category', { isDeleted: false });
+export const getExpenseCategories = async (tenantId = null) => {
+  const dbCategories = await Expense.distinct('category', withTenant({ isDeleted: false }, tenantId));
   const allCategories = Array.from(new Set([...DEFAULT_EXPENSE_CATEGORIES, ...dbCategories])).filter(Boolean);
   return allCategories;
 };

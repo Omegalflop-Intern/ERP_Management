@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const ledgerEntrySchema = new mongoose.Schema(
   {
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', index: true },
     transactionId: { type: mongoose.Schema.Types.ObjectId, required: true },
     transactionType: {
       type: String,
@@ -21,5 +22,6 @@ const ledgerEntrySchema = new mongoose.Schema(
 
 ledgerEntrySchema.index({ accountId: 1, createdAt: -1 });
 ledgerEntrySchema.index({ transactionId: 1 });
+ledgerEntrySchema.index({ tenantId: 1, createdAt: -1 });
 
 export const LedgerEntry = mongoose.model('LedgerEntry', ledgerEntrySchema);

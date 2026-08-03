@@ -2,11 +2,13 @@ import { Router } from 'express';
 import * as wholesaleController from './wholesale.controller.js';
 import { validate } from '../../middleware/validate.middleware.js';
 import { authenticate } from '../../middleware/auth.middleware.js';
+import { checkTenantStatus } from '../../middleware/tenant.middleware.js';
 import { authorize } from '../../middleware/role.middleware.js';
 import { createWholesalePriceSchema, updateWholesalePriceSchema, createWholesaleOrderSchema, updateWholesaleOrderSchema } from './wholesale.validator.js';
 
 const router = Router();
 router.use(authenticate);
+router.use(checkTenantStatus);
 
 // Prices
 router.get('/prices', wholesaleController.getAllPrices);

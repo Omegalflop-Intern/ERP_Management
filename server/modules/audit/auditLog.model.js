@@ -7,6 +7,7 @@ const auditLogSchema = new mongoose.Schema(
     fullName: { type: String },
     roleName: { type: String },
     phone: { type: String },
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', index: true },
     action: { type: String, required: true },
     module: { type: String },
     entityId: { type: mongoose.Schema.Types.ObjectId },

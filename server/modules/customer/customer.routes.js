@@ -2,12 +2,14 @@ import { Router } from 'express';
 import * as customerController from './customer.controller.js';
 import { validate } from '../../middleware/validate.middleware.js';
 import { authenticate } from '../../middleware/auth.middleware.js';
+import { checkTenantStatus } from '../../middleware/tenant.middleware.js';
 import { authorize } from '../../middleware/role.middleware.js';
 import { createCustomerSchema, updateCustomerSchema, collectDueSchema } from './customer.validator.js';
 
 const router = Router();
 
 router.use(authenticate);
+router.use(checkTenantStatus);
 
 router.get('/stats', customerController.getCustomerStats);
 router.get('/', customerController.getAllCustomers);

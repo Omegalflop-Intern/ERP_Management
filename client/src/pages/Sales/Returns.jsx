@@ -321,7 +321,7 @@ export default function Returns() {
                           type="checkbox"
                           checked={item.selected}
                           onChange={() => toggleItem(i)}
-                          className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500 cursor-pointer"
+                          className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-[#2563EB] cursor-pointer"
                         />
                         <div className="min-w-0 flex-1">
                           <div className="text-sm font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">

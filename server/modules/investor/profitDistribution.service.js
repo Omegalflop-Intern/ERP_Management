@@ -1,8 +1,8 @@
-import mongoose from 'mongoose';
 import { Investor, InvestorTransaction } from './investor.model.js';
 import { getProfitLoss } from '../accounting/accounting.service.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { runInTransaction } from '../../utils/db/transactionHelper.js';
+import { withTenant } from '../../utils/tenant.js';
 
 const parseValidDate = (val, fallback) => {
   if (!val || val === 'undefined' || val === 'null') return fallback;
@@ -10,14 +10,14 @@ const parseValidDate = (val, fallback) => {
   return isNaN(d.getTime()) ? fallback : d;
 };
 
-export const calculateProfitDistribution = async (startDate, endDate) => {
+export const calculateProfitDistribution = async (startDate, endDate, tenantId = null) => {
   const fromDate = parseValidDate(startDate, new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const toDate = parseValidDate(endDate, new Date());
 
   const plData = await getProfitLoss(fromDate.toISOString(), toDate.toISOString());
   const netProfit = plData.netIncome || 0;
 
-  const investors = await Investor.find({ isDeleted: false, status: 'Active' }).lean();
+  const investors = await Investor.find(withTenant({ isDeleted: false, status: 'Active' }, tenantId)).lean();
 
   const totalPercentageAllocated = investors.reduce((sum, inv) => sum + (inv.sharePercentage || 0), 0);
 
@@ -44,7 +44,7 @@ export const calculateProfitDistribution = async (startDate, endDate) => {
   };
 };
 
-export const executeShareDistribution = async (distributionData, username) => {
+export const executeShareDistribution = async (distributionData, username, tenantId = null) => {
   const { investorId, actionType, amount, paymentMethod, reference, notes } = distributionData;
 
   if (!investorId || !actionType || !amount || Number(amount) <= 0) {
@@ -58,7 +58,7 @@ export const executeShareDistribution = async (distributionData, username) => {
   const numericAmount = Number(amount);
 
   return runInTransaction(async (session) => {
-    const investorQuery = Investor.findOne({ _id: investorId, isDeleted: false });
+    const investorQuery = Investor.findOne(withTenant({ _id: investorId, isDeleted: false }, tenantId));
     const investor = session ? await investorQuery.session(session) : await investorQuery;
 
     if (!investor) {
@@ -93,6 +93,7 @@ export const executeShareDistribution = async (distributionData, username) => {
         notes: notes || `Profit share distribution (${actionType})`,
         date: new Date(),
         recordedBy: username,
+        tenantId: tenantId || null,
       },
     ];
 
@@ -102,7 +103,6 @@ export const executeShareDistribution = async (distributionData, username) => {
 
     const transaction = transactions[0];
 
-    // Atomic LedgerEntry for double-entry bookkeeping
     const { LedgerEntry } = await import('../accounting/ledgerEntry.model.js');
     const ledgerPayload = [
       {
@@ -120,6 +120,8 @@ export const executeShareDistribution = async (distributionData, username) => {
     } else {
       await LedgerEntry.create(ledgerPayload);
     }
+
+    await createAutomatedInvestorJournal(investor, txType, numericAmount, tenantId).catch(err => console.error('Investor distribution journal failed:', err));
 
     return { investor, transaction };
   });

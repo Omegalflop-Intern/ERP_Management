@@ -2,11 +2,13 @@ import { Router } from 'express';
 import * as catalogController from './catalog.controller.js';
 import { validate } from '../../middleware/validate.middleware.js';
 import { authenticate } from '../../middleware/auth.middleware.js';
+import { checkTenantStatus } from '../../middleware/tenant.middleware.js';
 import { createCatalogItemSchema, updateCatalogItemSchema, bulkCreateCatalogSchema } from './catalog.validator.js';
 
 const router = Router();
 
 router.use(authenticate);
+router.use(checkTenantStatus);
 
 router.get('/stats', catalogController.getCatalogStats);
 router.get('/', catalogController.getAllCatalogItems);

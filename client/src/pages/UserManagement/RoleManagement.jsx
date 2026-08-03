@@ -74,7 +74,7 @@ export default function RoleManagement() {
             setEditRole(null);
             setShowForm(true);
           }}
-          className="flex items-center gap-2 px-4 py-2.5 bg-red-700 hover:bg-red-600 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-red-700/20"
+          className="flex items-center gap-2 px-4 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-[#2563EB]/20"
         >
           <Plus className="w-4 h-4" /> New Role
         </button>
@@ -306,7 +306,7 @@ function RoleFormModal({ role, onClose, onSuccess }) {
                         <button
                           type="button"
                           onClick={() => toggleGroup(perms)}
-                          className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${allSelected ? 'bg-red-600 border-red-600' : someSelected ? 'bg-red-600/30 border-red-600' : 'border-gray-300 dark:border-gray-600'}`}
+                          className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${allSelected ? 'bg-[#2563EB] border-[#2563EB]' : someSelected ? 'bg-[#2563EB]/30 border-[#2563EB]' : 'border-gray-300 dark:border-gray-600'}`}
                         >
                           {(allSelected || someSelected) && (
                             <Check className="w-3 h-3 text-white" />
@@ -329,7 +329,7 @@ function RoleFormModal({ role, onClose, onSuccess }) {
                             key={p}
                             type="button"
                             onClick={() => togglePermission(p)}
-                            className={`text-[11px] px-2 py-1 rounded-lg font-medium transition-all ${selected ? 'bg-red-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600'}`}
+                            className={`text-[11px] px-2 py-1 rounded-lg font-medium transition-all ${selected ? 'bg-[#2563EB] text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600'}`}
                           >
                             {action}
                           </button>

@@ -2,15 +2,16 @@ import { Leave } from './leave.model.js';
 import { Employee } from '../employee/employee.model.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { paginate, getPagination } from '../../utils/http/pagination.js';
+import { withTenant } from '../../utils/tenant.js';
 
-export const getAllLeaves = async (page = 1, limit = 20, search = '', status = '', employeeId = '', currentUser = null) => {
-  const query = {};
+export const getAllLeaves = async (page = 1, limit = 20, search = '', status = '', employeeId = '', currentUser = null, tenantId = null) => {
+  const query = withTenant({}, tenantId);
   if (status) query.status = status;
 
   const isAdminOrManager = currentUser && (currentUser.roleName === 'ADMIN' || currentUser.roleName === 'MANAGER' || ['ADMIN', 'MANAGER'].includes(currentUser.role));
 
   if (!isAdminOrManager && currentUser?._id) {
-    const emp = await Employee.findOne({ user: currentUser._id, isDeleted: false });
+    const emp = await Employee.findOne(withTenant({ user: currentUser._id, isDeleted: false }, tenantId));
     if (emp) {
       query.employee = emp._id;
     }
@@ -19,13 +20,15 @@ export const getAllLeaves = async (page = 1, limit = 20, search = '', status = '
   }
 
   if (search && isAdminOrManager) {
-    const employees = await Employee.find({
-      isDeleted: false,
-      $or: [
-        { name: { $regex: search, $options: 'i' } },
-        { employeeId: { $regex: search, $options: 'i' } },
-      ],
-    }).select('_id');
+    const employees = await Employee.find(
+      withTenant({
+        isDeleted: false,
+        $or: [
+          { name: { $regex: search, $options: 'i' } },
+          { employeeId: { $regex: search, $options: 'i' } },
+        ],
+      }, tenantId)
+    ).select('_id');
     query.employee = { $in: employees.map((e) => e._id) };
   }
 
@@ -37,35 +40,34 @@ export const getAllLeaves = async (page = 1, limit = 20, search = '', status = '
   return { leaves, pagination: getPagination(total, page, limit) };
 };
 
-export const createLeave = async (data, currentUser = null) => {
+export const createLeave = async (data, currentUser = null, tenantId = null) => {
   let empId = data.employee;
 
   const isAdminOrManager = currentUser && (currentUser.roleName === 'ADMIN' || currentUser.roleName === 'MANAGER' || ['ADMIN', 'MANAGER'].includes(currentUser.role));
 
   if (!isAdminOrManager || !empId) {
-    const emp = await Employee.findOne({ user: currentUser?._id, isDeleted: false });
+    const emp = await Employee.findOne(withTenant({ user: currentUser?._id, isDeleted: false }, tenantId));
     if (!emp) throw ApiError.badRequest('No employee profile linked to your user account');
     empId = emp._id;
   }
 
   data.employee = empId;
-  const employee = await Employee.findOne({ _id: empId, isDeleted: false });
+  const employee = await Employee.findOne(withTenant({ _id: empId, isDeleted: false }, tenantId));
   if (!employee) throw ApiError.notFound('Employee not found');
 
   const overlapping = await Leave.findOne({
-    employee: empId,
-    status: { $ne: 'rejected' },
+    ...withTenant({ employee: empId, status: { $ne: 'rejected' } }, tenantId),
     $or: [
       { fromDate: { $lte: new Date(data.toDate) }, toDate: { $gte: new Date(data.fromDate) } },
     ],
   });
   if (overlapping) throw ApiError.badRequest('Leave already exists for this period');
 
-  return Leave.create(data);
+  return Leave.create({ ...data, tenantId: tenantId || null });
 };
 
-export const updateLeaveStatus = async (id, status, approvedBy, rejectionReason) => {
-  const leave = await Leave.findById(id);
+export const updateLeaveStatus = async (id, status, approvedBy, rejectionReason, tenantId = null) => {
+  const leave = await Leave.findOne(withTenant({ _id: id, isDeleted: false }, tenantId));
   if (!leave) throw ApiError.notFound('Leave not found');
   if (leave.status !== 'pending') throw ApiError.badRequest('Only pending leaves can be updated');
 
@@ -77,8 +79,8 @@ export const updateLeaveStatus = async (id, status, approvedBy, rejectionReason)
   return leave;
 };
 
-export const getEmployeeLeaves = async (employeeId, year) => {
-  const query = { employee: employeeId };
+export const getEmployeeLeaves = async (employeeId, year, tenantId = null) => {
+  const query = withTenant({ employee: employeeId }, tenantId);
   if (year) {
     const start = new Date(year, 0, 1);
     const end = new Date(year, 11, 31, 23, 59, 59, 999);
@@ -98,10 +100,10 @@ export const getEmployeeLeaves = async (employeeId, year) => {
   return { leaves, summary };
 };
 
-export const deleteLeave = async (id) => {
-  const leave = await Leave.findById(id);
+export const deleteLeave = async (id, tenantId = null) => {
+  const leave = await Leave.findOne(withTenant({ _id: id, isDeleted: false }, tenantId));
   if (!leave) throw ApiError.notFound('Leave not found');
   if (leave.status === 'approved') throw ApiError.badRequest('Cannot delete approved leave');
-  await Leave.findByIdAndDelete(id);
+  await Leave.findOneAndDelete(withTenant({ _id: id, isDeleted: false }, tenantId));
   return leave;
 };

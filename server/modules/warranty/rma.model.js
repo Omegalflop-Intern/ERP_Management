@@ -2,7 +2,8 @@ import mongoose from 'mongoose';
 
 const rmaSchema = new mongoose.Schema(
   {
-    rmaNumber: { type: String, required: true, unique: true },
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', index: true },
+    rmaNumber: { type: String, required: true },
     supplierId: { type: mongoose.Schema.Types.ObjectId, ref: 'Supplier', required: true },
     branchId: { type: mongoose.Schema.Types.ObjectId, ref: 'Branch' },
     items: [
@@ -19,5 +20,7 @@ const rmaSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+rmaSchema.index({ tenantId: 1, rmaNumber: 1 }, { unique: true, sparse: true });
 
 export const RMA = mongoose.model('RMA', rmaSchema);

@@ -1,12 +1,14 @@
-import mongoose from 'mongoose';
 import { Investor, InvestorTransaction } from './investor.model.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { Account } from '../accounting/account.model.js';
 import { JournalEntry } from '../accounting/journalEntry.model.js';
 import { runInTransaction } from '../../utils/db/transactionHelper.js';
+import { withTenant } from '../../utils/tenant.js';
+import { createAutomatedInvestorJournal } from '../accounting/accounting.service.js';
 
-export const getAllInvestors = async () => {
-  const investors = await Investor.find({ isDeleted: false }).sort({ createdAt: -1 }).lean();
+export const getAllInvestors = async (tenantId = null) => {
+  const query = withTenant({ isDeleted: false }, tenantId);
+  const investors = await Investor.find(query).sort({ createdAt: -1 }).lean();
 
   const totalInvested = investors.reduce((sum, i) => sum + (i.totalInvested || 0), 0);
   const totalWithdrawn = investors.reduce((sum, i) => sum + (i.totalWithdrawn || 0), 0);
@@ -29,9 +31,9 @@ export const getAllInvestors = async () => {
   };
 };
 
-export const createInvestor = async (data, username) => {
+export const createInvestor = async (data, username, tenantId = null) => {
   return runInTransaction(async (session) => {
-    const investors = session ? await Investor.create([data], { session }) : await Investor.create([data]);
+    const investors = session ? await Investor.create([{ ...data, tenantId: tenantId || null }], { session }) : await Investor.create([{ ...data, tenantId: tenantId || null }]);
     const investor = investors[0];
 
     if (data.initialCapital && Number(data.initialCapital) > 0) {
@@ -49,6 +51,7 @@ export const createInvestor = async (data, username) => {
           reference: 'Initial Investment Deposit',
           notes: 'Initial capital investment on creation',
           recordedBy: username,
+          tenantId: tenantId || null,
         },
       ];
 
@@ -60,11 +63,11 @@ export const createInvestor = async (data, username) => {
   });
 };
 
-export const getInvestorById = async (id) => {
-  const investor = await Investor.findOne({ _id: id, isDeleted: false }).lean();
+export const getInvestorById = async (id, tenantId = null) => {
+  const investor = await Investor.findOne(withTenant({ _id: id, isDeleted: false }, tenantId)).lean();
   if (!investor) throw ApiError.notFound('Investor not found');
 
-  const transactions = await InvestorTransaction.find({ investorId: id, isDeleted: false })
+  const transactions = await InvestorTransaction.find(withTenant({ investorId: id, isDeleted: false }, tenantId))
     .sort({ createdAt: -1 })
     .lean();
 
@@ -75,9 +78,9 @@ export const getInvestorById = async (id) => {
   };
 };
 
-export const addInvestorTransaction = async (investorId, txData, username) => {
+export const addInvestorTransaction = async (investorId, txData, username, tenantId = null) => {
   return runInTransaction(async (session) => {
-    const investorQuery = Investor.findOne({ _id: investorId, isDeleted: false });
+    const investorQuery = Investor.findOne(withTenant({ _id: investorId, isDeleted: false }, tenantId));
     const investor = session ? await investorQuery.session(session) : await investorQuery;
     if (!investor) throw ApiError.notFound('Investor not found');
 
@@ -114,6 +117,7 @@ export const addInvestorTransaction = async (investorId, txData, username) => {
         notes: txData.notes || '',
         date: txData.date || new Date(),
         recordedBy: username,
+        tenantId: tenantId || null,
       },
     ];
 
@@ -122,7 +126,6 @@ export const addInvestorTransaction = async (investorId, txData, username) => {
       : await InvestorTransaction.create(txPayload);
     const tx = txs[0];
 
-    // Create Atomic LedgerEntry for double-entry bookkeeping
     const { LedgerEntry } = await import('../accounting/ledgerEntry.model.js');
     const ledgerPayload = [
       {
@@ -138,13 +141,15 @@ export const addInvestorTransaction = async (investorId, txData, username) => {
     if (session) await LedgerEntry.create(ledgerPayload, { session });
     else await LedgerEntry.create(ledgerPayload);
 
+    await createAutomatedInvestorJournal(investor, type, amount, tenantId).catch(err => console.error('Investor journal failed:', err));
+
     return { investor, transaction: tx };
   });
 };
 
-export const updateInvestor = async (id, data) => {
+export const updateInvestor = async (id, data, tenantId = null) => {
   const investor = await Investor.findOneAndUpdate(
-    { _id: id, isDeleted: false },
+    withTenant({ _id: id, isDeleted: false }, tenantId),
     { $set: data },
     { new: true }
   );
@@ -152,9 +157,9 @@ export const updateInvestor = async (id, data) => {
   return investor;
 };
 
-export const deleteInvestor = async (id) => {
+export const deleteInvestor = async (id, tenantId = null) => {
   const investor = await Investor.findOneAndUpdate(
-    { _id: id, isDeleted: false },
+    withTenant({ _id: id, isDeleted: false }, tenantId),
     { $set: { isDeleted: true } },
     { new: true }
   );
@@ -162,8 +167,8 @@ export const deleteInvestor = async (id) => {
   return investor;
 };
 
-export const getAllTransactions = async () => {
-  const txs = await InvestorTransaction.find({ isDeleted: false })
+export const getAllTransactions = async (tenantId = null) => {
+  const txs = await InvestorTransaction.find(withTenant({ isDeleted: false }, tenantId))
     .populate('investorId', 'name phone sharePercentage')
     .sort({ createdAt: -1 })
     .lean();

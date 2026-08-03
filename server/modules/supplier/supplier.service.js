@@ -1,9 +1,10 @@
 import { Supplier } from './supplier.model.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { paginate, getPagination } from '../../utils/http/pagination.js';
+import { withTenant } from '../../utils/tenant.js';
 
-export const getAllSuppliers = async (page = 1, limit = 20, search = '') => {
-  const query = { isDeleted: false };
+export const getAllSuppliers = async (page = 1, limit = 20, search = '', tenantId = null) => {
+  const query = withTenant({ isDeleted: false }, tenantId);
 
   if (search) {
     query.$or = [
@@ -19,24 +20,24 @@ export const getAllSuppliers = async (page = 1, limit = 20, search = '') => {
   return { suppliers, pagination: getPagination(total, page, limit) };
 };
 
-export const getSupplierById = async (id) => {
-  const supplier = await Supplier.findOne({ _id: id, isDeleted: false });
+export const getSupplierById = async (id, tenantId = null) => {
+  const supplier = await Supplier.findOne(withTenant({ _id: id, isDeleted: false }, tenantId));
   if (!supplier) throw ApiError.notFound('Supplier not found');
   return supplier;
 };
 
-export const createSupplier = async (data) => {
-  const existing = await Supplier.findOne({ phone: data.phone, isDeleted: false });
+export const createSupplier = async (data, tenantId = null) => {
+  const existing = await Supplier.findOne(withTenant({ phone: data.phone, isDeleted: false }, tenantId));
   if (existing) throw ApiError.conflict('Supplier with this phone already exists');
-  return Supplier.create(data);
+  return Supplier.create({ ...data, tenantId: tenantId || null });
 };
 
-export const updateSupplier = async (id, data) => {
-  const supplier = await Supplier.findOne({ _id: id, isDeleted: false });
+export const updateSupplier = async (id, data, tenantId = null) => {
+  const supplier = await Supplier.findOne(withTenant({ _id: id, isDeleted: false }, tenantId));
   if (!supplier) throw ApiError.notFound('Supplier not found');
 
   if (data.phone && data.phone !== supplier.phone) {
-    const existing = await Supplier.findOne({ phone: data.phone, isDeleted: false, _id: { $ne: id } });
+    const existing = await Supplier.findOne(withTenant({ phone: data.phone, isDeleted: false, _id: { $ne: id } }, tenantId));
     if (existing) throw ApiError.conflict('Supplier with this phone already exists');
   }
 
@@ -45,16 +46,16 @@ export const updateSupplier = async (id, data) => {
   return supplier;
 };
 
-export const deleteSupplier = async (id) => {
-  const supplier = await Supplier.findOne({ _id: id, isDeleted: false });
+export const deleteSupplier = async (id, tenantId = null) => {
+  const supplier = await Supplier.findOne(withTenant({ _id: id, isDeleted: false }, tenantId));
   if (!supplier) throw ApiError.notFound('Supplier not found');
   supplier.isDeleted = true;
   await supplier.save();
   return supplier;
 };
 
-export const getSupplierStats = async (id) => {
-  const supplier = await Supplier.findOne({ _id: id, isDeleted: false });
+export const getSupplierStats = async (id, tenantId = null) => {
+  const supplier = await Supplier.findOne(withTenant({ _id: id, isDeleted: false }, tenantId));
   if (!supplier) throw ApiError.notFound('Supplier not found');
   return {
     supplier,

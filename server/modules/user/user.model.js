@@ -14,6 +14,7 @@ const userSchema = new mongoose.Schema(
     isActive: { type: Boolean, default: true },
     isVerified: { type: Boolean, default: false },
     branchId: { type: mongoose.Schema.Types.ObjectId, ref: 'Branch' },
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', index: true },
     commissionRate: { type: Number, default: 0 },
     otpCode: { type: String, select: false },
     otpExpiresAt: { type: Date, select: false },

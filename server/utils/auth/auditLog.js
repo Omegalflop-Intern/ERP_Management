@@ -10,6 +10,7 @@ export const logAction = async ({ userId, username, fullName, roleName, phone, a
       fullName: fullName || u?.fullName,
       roleName: roleName || u?.roleName,
       phone: phone || u?.phone,
+      tenantId: u?.tenantId || null,
       action,
       module,
       entityId,
@@ -23,8 +24,9 @@ export const logAction = async ({ userId, username, fullName, roleName, phone, a
   }
 };
 
-export const getAuditLogs = async (page = 1, limit = 50, filters = {}) => {
+export const getAuditLogs = async (page = 1, limit = 50, filters = {}, tenantId = null) => {
   const query = {};
+  if (tenantId) query.tenantId = tenantId;
   if (filters.module) query.module = filters.module;
   if (filters.userId) query.userId = filters.userId;
   if (filters.action) query.action = { $regex: filters.action, $options: 'i' };

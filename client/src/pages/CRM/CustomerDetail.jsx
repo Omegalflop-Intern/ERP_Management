@@ -291,7 +291,7 @@ export default function CustomerDetail() {
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder={`Max: ${c.dueBalance}`}
                   max={c.dueBalance}
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-red-500"
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-[#2563EB]"
                 />
                 <p className="text-xs text-gray-400 mt-1">Leave empty to collect full amount</p>
               </div>
@@ -305,7 +305,7 @@ export default function CustomerDetail() {
                       key={m}
                       type="button"
                       onClick={() => setMethod(m)}
-                      className={`px-2 py-2 rounded-lg text-xs font-medium capitalize transition-all ${method === m ? 'bg-red-700 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200'}`}
+                      className={`px-2 py-2 rounded-lg text-xs font-medium capitalize transition-all ${method === m ? 'bg-[#2563EB] text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200'}`}
                     >
                       {m}
                     </button>

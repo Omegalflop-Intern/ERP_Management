@@ -4,8 +4,10 @@ import { RepairTicket } from '../../models/RepairTicket.js';
 import { WarrantyClaim } from '../warranty/warranty.model.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 
-export const getImeiPassport = async (imei) => {
-  const unit = await InventoryUnit.findOne({ imeiOrSerial: imei })
+export const getImeiPassport = async (imei, tenantId = null) => {
+  const unitQuery = { imeiOrSerial: imei };
+  if (tenantId) unitQuery.tenantId = tenantId;
+  const unit = await InventoryUnit.findOne(unitQuery)
     .populate('productId', 'name brand model category price costPrice')
     .populate('supplierId', 'name phone companyName')
     .populate('branchId', 'name code');
@@ -15,15 +17,21 @@ export const getImeiPassport = async (imei) => {
   }
 
   // Gather sales history
-  const sales = await Transaction.find({ 'items.imeiOrSerial': imei })
+  const saleQuery = { 'items.imeiOrSerial': imei };
+  if (tenantId) saleQuery.tenantId = tenantId;
+  const sales = await Transaction.find(saleQuery)
     .populate('customerId', 'name phone email customerType')
     .populate('soldBy', 'username fullName');
 
   // Gather repair history
-  const repairs = await RepairTicket.find({ imeiOrSerial: imei });
+  const repairQuery = { imeiOrSerial: imei };
+  if (tenantId) repairQuery.tenantId = tenantId;
+  const repairs = await RepairTicket.find(repairQuery);
 
   // Gather warranty claim history
-  const warrantyClaims = await WarrantyClaim.find({ imeiOrSerial: imei });
+  const warrantyQuery = { imeiOrSerial: imei };
+  if (tenantId) warrantyQuery.tenantId = tenantId;
+  const warrantyClaims = await WarrantyClaim.find(warrantyQuery);
 
   // Build sequential timeline events
   const timeline = [];

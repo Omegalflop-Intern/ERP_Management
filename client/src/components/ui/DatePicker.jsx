@@ -113,7 +113,7 @@ export default function DatePicker({
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-2 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg hover:border-red-500 focus:outline-none focus:border-red-500 transition-all ${
+        className={`flex items-center gap-2 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg hover:border-red-500 focus:outline-none focus:border-[#2563EB] transition-all ${
           disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
         } ${className}`}
       >
@@ -193,7 +193,7 @@ export default function DatePicker({
                   onClick={() => handleSelectDay(dayNum)}
                   className={`py-1.5 rounded-lg text-xs font-semibold transition-all ${
                     isSelected
-                      ? 'bg-red-600 text-white shadow-md'
+                      ? 'bg-[#2563EB] text-white shadow-md'
                       : isToday
                         ? 'border border-red-500 text-red-600 dark:text-red-400 font-bold'
                         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'

@@ -16,11 +16,11 @@ export default function Bottombar() {
     >
       {/* ERP Info */}
       <div className="flex items-center gap-2">
-        <div className="w-6 h-6 rounded-lg bg-red-600/10 text-red-600 flex items-center justify-center font-bold">
+        <div className="w-6 h-6 rounded-lg bg-[#2563EB]/10 text-[#2563EB] flex items-center justify-center font-bold">
           <Smartphone className="w-3.5 h-3.5" />
         </div>
         <span className="font-bold text-gray-900 dark:text-gray-200">Mobile Shop ERP</span>
-        <span className="px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 font-mono font-bold text-[10px] border border-red-200 dark:border-red-500/20">
+        <span className="px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-[#2563EB] dark:text-blue-400 font-mono font-bold text-[10px] border border-blue-200 dark:border-blue-500/20">
           v2.4.5
         </span>
         <span className="hidden sm:inline text-gray-300 dark:text-gray-700">•</span>
@@ -39,15 +39,15 @@ export default function Bottombar() {
       {/* Developer Credit */}
       <div className="flex items-center gap-1.5 text-[11px] text-gray-500 dark:text-gray-400">
         <span className="hidden sm:inline">Developed & Maintained with</span>
-        <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500 animate-bounce" />
+        <Heart className="w-3.5 h-3.5 text-[#2563EB] fill-[#2563EB] animate-bounce" />
         <span className="hidden sm:inline">by</span>
         <a
           href="https://salahuddin.codes"
           target="_blank"
           rel="noopener noreferrer"
-          className="font-bold text-red-700 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors flex items-center gap-1 bg-red-50 dark:bg-red-900/30 px-2.5 py-0.5 rounded-lg border border-red-200 dark:border-red-500/20 shadow-2xs"
+          className="font-bold text-[#2563EB] dark:text-blue-400 hover:text-[#1D4ED8] dark:hover:text-blue-300 transition-colors flex items-center gap-1 bg-blue-50 dark:bg-blue-900/30 px-2.5 py-0.5 rounded-lg border border-blue-200 dark:border-blue-500/20 shadow-2xs"
         >
-          <Code className="w-3.5 h-3.5 text-red-600 dark:text-red-400" /> Salah Uddin Kader
+          <Code className="w-3.5 h-3.5 text-[#2563EB] dark:text-blue-400" /> Salah Uddin Kader
         </a>
       </div>
     </footer>

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import * as productController from './product.controller.js';
 import { validate } from '../../middleware/validate.middleware.js';
 import { authenticate } from '../../middleware/auth.middleware.js';
+import { checkTenantStatus } from '../../middleware/tenant.middleware.js';
 import { authorize } from '../../middleware/role.middleware.js';
 import { createProductSchema, updateProductSchema } from './product.validator.js';
 import { uploadProductImage } from '../../config/upload.js';
@@ -28,6 +29,7 @@ const upload = multer({
 const router = Router();
 
 router.use(authenticate);
+router.use(checkTenantStatus);
 
 /**
  * @swagger

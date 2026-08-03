@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const warrantyClaimSchema = new mongoose.Schema(
   {
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', index: true },
     imei: { type: mongoose.Schema.Types.ObjectId, ref: 'InventoryUnit', required: true },
     customer: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true },
     invoiceRef: { type: mongoose.Schema.Types.ObjectId, ref: 'Transaction' },

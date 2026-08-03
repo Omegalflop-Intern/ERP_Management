@@ -134,7 +134,7 @@ export default function WarrantyReport() {
                 onClick={() => setReportType(rt.key)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                   reportType === rt.key
-                    ? 'bg-red-700 text-white shadow-sm'
+                    ? 'bg-[#2563EB] text-white shadow-sm'
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                 }`}
               >
@@ -153,13 +153,13 @@ export default function WarrantyReport() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search IMEI, customer, invoice..."
-                className="w-full pl-9 pr-3 py-1.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-xs focus:outline-none focus:border-red-500 text-gray-900 dark:text-gray-100"
+                className="w-full pl-9 pr-3 py-1.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-xs focus:outline-none focus:border-[#2563EB] text-gray-900 dark:text-gray-100"
               />
             </div>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-1.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-xs focus:outline-none focus:border-red-500 text-gray-900 dark:text-gray-100 font-medium"
+              className="px-3 py-1.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-xs focus:outline-none focus:border-[#2563EB] text-gray-900 dark:text-gray-100 font-medium"
             >
               <option value="Sold">Sold Products Only</option>
               <option value="Available">Available Inventory</option>

@@ -2,13 +2,16 @@ import mongoose from 'mongoose';
 
 const settingsSchema = new mongoose.Schema(
   {
-    key: { type: String, required: true, unique: true },
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', index: true },
+    key: { type: String, required: true },
     value: { type: mongoose.Schema.Types.Mixed, required: true },
     category: { type: String, default: 'general' },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   },
   { timestamps: true }
 );
+
+settingsSchema.index({ tenantId: 1, key: 1 }, { unique: true, sparse: true });
 
 const defaultSettings = [
   { key: 'companyName', value: 'Brothers Mobile', category: 'company' },
@@ -41,6 +44,21 @@ const defaultSettings = [
 settingsSchema.statics.seedDefaults = async function () {
   for (const s of defaultSettings) {
     await this.findOneAndUpdate({ key: s.key }, { $setOnInsert: s }, { upsert: true });
+  }
+};
+
+// Seed per-tenant settings when a new shop is created.
+// Copies all default settings but scoped to the given tenantId so each shop
+// has its own isolated configuration (company name, receipt footer, etc.).
+settingsSchema.statics.seedDefaultsForTenant = async function (tenantId, shopName) {
+  if (!tenantId) return;
+  for (const s of defaultSettings) {
+    const value = s.key === 'companyName' && shopName ? shopName : s.value;
+    await this.findOneAndUpdate(
+      { key: s.key, tenantId },
+      { $setOnInsert: { ...s, value, tenantId } },
+      { upsert: true }
+    );
   }
 };
 

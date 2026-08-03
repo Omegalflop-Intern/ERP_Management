@@ -1,35 +1,77 @@
 import { Settings } from './settings.model.js';
 
-export const getAllSettings = async (category) => {
+export const getAllSettings = async (category, tenantId = null) => {
   const query = {};
   if (category) query.category = category;
-  const settings = await Settings.find(query).sort({ key: 1 });
+
+  if (tenantId) {
+    // Fetch both global (no tenantId) and tenant-specific settings.
+    // Tenant-specific values override global ones when the same key exists for both.
+    const globalQuery = { ...query, tenantId: { $exists: false } };
+    const tenantQuery = { ...query, tenantId };
+
+    const [globalSettings, tenantSettings] = await Promise.all([
+      Settings.find(globalQuery).sort({ key: 1 }),
+      Settings.find(tenantQuery).sort({ key: 1 }),
+    ]);
+
+    // Build merged map: global first, then tenant overrides
+    const result = {};
+    globalSettings.forEach(s => { result[s.key] = s.value; });
+    tenantSettings.forEach(s => { result[s.key] = s.value; }); // tenant overrides global
+    return result;
+  }
+
+  // Super admin (no tenantId) — return only global settings
+  const settings = await Settings.find({ ...query, tenantId: { $exists: false } }).sort({ key: 1 });
   const result = {};
   settings.forEach(s => { result[s.key] = s.value; });
   return result;
 };
 
-export const getSettingsArray = async (category) => {
+export const getSettingsArray = async (category, tenantId = null) => {
   const query = {};
   if (category) query.category = category;
-  return Settings.find(query).sort({ key: 1 });
+  if (tenantId) {
+    // Return tenant-specific rows; caller merges with global if needed
+    return Settings.find({ ...query, tenantId }).sort({ key: 1 });
+  }
+  return Settings.find({ ...query, tenantId: { $exists: false } }).sort({ key: 1 });
 };
 
-export const updateSettings = async (updates, userId) => {
+export const updateSettings = async (updates, userId, tenantId = null) => {
   const results = [];
   for (const [key, value] of Object.entries(updates)) {
-    const setting = await Settings.findOneAndUpdate(
-      { key },
-      { $set: { value, updatedBy: userId } },
-      { upsert: true, new: true }
-    );
-    results.push(setting);
+    if (tenantId) {
+      // Always upsert a tenant-scoped row — never touch the global default
+      const setting = await Settings.findOneAndUpdate(
+        { key, tenantId },
+        { $set: { value, updatedBy: userId, tenantId } },
+        { upsert: true, new: true }
+      );
+      results.push(setting);
+    } else {
+      // Super admin updating global defaults (no tenantId)
+      const setting = await Settings.findOneAndUpdate(
+        { key, tenantId: { $exists: false } },
+        { $set: { value, updatedBy: userId } },
+        { upsert: true, new: true }
+      );
+      results.push(setting);
+    }
   }
   return results;
 };
 
-export const getSetting = async (key) => {
-  const s = await Settings.findOne({ key });
+export const getSetting = async (key, tenantId = null) => {
+  if (tenantId) {
+    // Prefer tenant-specific, fall back to global
+    const tenantSetting = await Settings.findOne({ key, tenantId });
+    if (tenantSetting) return tenantSetting.value;
+    const globalSetting = await Settings.findOne({ key, tenantId: { $exists: false } });
+    return globalSetting?.value;
+  }
+  const s = await Settings.findOne({ key, tenantId: { $exists: false } });
   return s?.value;
 };
 

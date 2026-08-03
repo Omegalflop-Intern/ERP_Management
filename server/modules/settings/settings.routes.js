@@ -1,12 +1,14 @@
 import { Router } from 'express';
 import * as settingsController from './settings.controller.js';
 import { authenticate } from '../../middleware/auth.middleware.js';
+import { checkTenantStatus } from '../../middleware/tenant.middleware.js';
 import { authorize } from '../../middleware/role.middleware.js';
 
 import { uploadCompanyLogo } from '../../config/upload.js';
 
 const router = Router();
 router.use(authenticate);
+router.use(checkTenantStatus);
 router.use(authorize('ADMIN'));
 
 router.get('/', settingsController.getAllSettings);

@@ -2,9 +2,11 @@ import { Payroll } from './payroll.model.js';
 import { Employee } from '../employee/employee.model.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { paginate, getPagination } from '../../utils/http/pagination.js';
+import { withTenant } from '../../utils/tenant.js';
+import { createAutomatedPayrollJournal } from '../accounting/accounting.service.js';
 
-export const getAllPayroll = async (page = 1, limit = 20, branch = '', month = '', year = '', status = '') => {
-  const query = {};
+export const getAllPayroll = async (page = 1, limit = 20, branch = '', month = '', year = '', status = '', tenantId = null) => {
+  const query = withTenant({}, tenantId);
   if (status) query.status = status;
   if (month) query.month = Number(month);
   if (year) query.year = Number(year);
@@ -22,18 +24,18 @@ export const getAllPayroll = async (page = 1, limit = 20, branch = '', month = '
   return { records, pagination: getPagination(total, page, limit) };
 };
 
-export const processPayroll = async (employeeIds, month, year, allowances = {}, deductions = {}) => {
+export const processPayroll = async (employeeIds, month, year, allowances = {}, deductions = {}, tenantId = null) => {
   const results = [];
   const skipped = [];
 
   for (const empId of employeeIds) {
-    const existing = await Payroll.findOne({ employee: empId, month, year });
+    const existing = await Payroll.findOne(withTenant({ employee: empId, month, year }, tenantId));
     if (existing) {
       skipped.push(empId);
       continue;
     }
 
-    const employee = await Employee.findOne({ _id: empId, isDeleted: false });
+    const employee = await Employee.findOne(withTenant({ _id: empId, isDeleted: false }, tenantId));
     if (!employee) {
       skipped.push(empId);
       continue;
@@ -53,7 +55,10 @@ export const processPayroll = async (employeeIds, month, year, allowances = {}, 
       totalAllowances,
       totalDeductions,
       netSalary: Math.max(0, netSalary),
+      tenantId: tenantId || null,
     });
+
+    await createAutomatedPayrollJournal(payroll, tenantId).catch(err => console.error('Payroll journal failed:', err));
 
     results.push(payroll);
   }
@@ -61,8 +66,8 @@ export const processPayroll = async (employeeIds, month, year, allowances = {}, 
   return { processed: results, skipped };
 };
 
-export const markAsPaid = async (id, paidBy) => {
-  const payroll = await Payroll.findById(id);
+export const markAsPaid = async (id, paidBy, tenantId = null) => {
+  const payroll = await Payroll.findOne(withTenant({ _id: id, isDeleted: false }, tenantId));
   if (!payroll) throw ApiError.notFound('Payroll record not found');
   if (payroll.status === 'paid') throw ApiError.badRequest('Already paid');
 
@@ -74,8 +79,8 @@ export const markAsPaid = async (id, paidBy) => {
   return payroll;
 };
 
-export const getPayrollSummary = async (month, year) => {
-  const query = { month, year };
+export const getPayrollSummary = async (month, year, tenantId = null) => {
+  const query = withTenant({ month, year }, tenantId);
   const records = await Payroll.find(query).populate('employee', 'name employeeId department');
 
   const totalPaid = records.filter((r) => r.status === 'paid').reduce((s, r) => s + r.netSalary, 0);
@@ -95,18 +100,18 @@ export const getPayrollSummary = async (month, year) => {
   };
 };
 
-export const getPayslip = async (id) => {
-  const payroll = await Payroll.findById(id)
+export const getPayslip = async (id, tenantId = null) => {
+  const payroll = await Payroll.findOne(withTenant({ _id: id, isDeleted: false }, tenantId))
     .populate('employee', 'name employeeId department designation phone address joiningDate')
     .populate('paidBy', 'username');
   if (!payroll) throw ApiError.notFound('Payroll record not found');
   return payroll;
 };
 
-export const deletePayroll = async (id) => {
-  const payroll = await Payroll.findById(id);
+export const deletePayroll = async (id, tenantId = null) => {
+  const payroll = await Payroll.findOne(withTenant({ _id: id, isDeleted: false }, tenantId));
   if (!payroll) throw ApiError.notFound('Payroll record not found');
   if (payroll.status === 'paid') throw ApiError.badRequest('Cannot delete paid payroll');
-  await Payroll.findByIdAndDelete(id);
+  await Payroll.findOneAndDelete(withTenant({ _id: id, isDeleted: false }, tenantId));
   return payroll;
 };

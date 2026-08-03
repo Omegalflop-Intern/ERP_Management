@@ -9,7 +9,8 @@ const journalLineSchema = new mongoose.Schema({
 
 const journalEntrySchema = new mongoose.Schema(
   {
-    entryNumber: { type: String, required: true, unique: true },
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', index: true },
+    entryNumber: { type: String, required: true },
     date: { type: Date, required: true, default: Date.now },
     description: { type: String, required: true },
     reference: { type: String },
@@ -36,6 +37,7 @@ const journalEntrySchema = new mongoose.Schema(
 );
 
 journalEntrySchema.index({ date: 1, status: 1 });
+journalEntrySchema.index({ tenantId: 1, entryNumber: 1 }, { unique: true, sparse: true });
 journalEntrySchema.index({ 'lines.accountId': 1 });
 
 export const JournalEntry = mongoose.model('JournalEntry', journalEntrySchema);

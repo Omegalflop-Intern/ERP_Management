@@ -11,8 +11,11 @@ export function generateSKU(brandName) {
   return `${prefix}-${random6}`;
 }
 
-export const getAllProducts = async (page = 1, limit = 50, search = '', category = '') => {
+export const getAllProducts = async (page = 1, limit = 50, search = '', category = '', tenantId = null) => {
   const query = { isDeleted: false };
+  if (tenantId) {
+    query.tenantId = tenantId;
+  }
 
   if (search) {
     const safeSearch = escapeRegex(search);
@@ -133,6 +136,7 @@ export const createProduct = async (data) => {
       const existingImei = await InventoryUnit.findOne({ imeiOrSerial: imeiVal, isDeleted: false });
       if (!existingImei) {
         await InventoryUnit.create({
+          tenantId: data.tenantId || undefined,
           productId: product._id,
           imeiOrSerial: imeiVal,
           color: unitColor,
@@ -203,6 +207,7 @@ export const updateProduct = async (id, data) => {
       const existingImei = await InventoryUnit.findOne({ imeiOrSerial: imeiVal, isDeleted: false });
       if (!existingImei) {
         await InventoryUnit.create({
+          tenantId: product.tenantId || undefined,
           productId: product._id,
           imeiOrSerial: imeiVal,
           purchasePrice: data.costPrice || product.costPrice || 0,
@@ -235,7 +240,7 @@ export const deleteProduct = async (id) => {
   await product.save();
 };
 
-export const bulkImportProducts = async (rows) => {
+export const bulkImportProducts = async (rows, tenantId = null) => {
   if (!Array.isArray(rows) || rows.length === 0) {
     throw ApiError.badRequest('No products or rows provided for bulk import');
   }
@@ -246,15 +251,19 @@ export const bulkImportProducts = async (rows) => {
   for (const row of rows) {
     if (!row.name || !row.brand || !row.sellingPrice) continue;
 
-    let product = await Product.findOne({
+    const productQuery = {
       name: { $regex: `^${row.name.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}$`, $options: 'i' },
       brand: { $regex: `^${row.brand.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}$`, $options: 'i' },
       isDeleted: false,
-    });
+    };
+    if (tenantId) productQuery.tenantId = tenantId;
+
+    let product = await Product.findOne(productQuery);
 
     if (!product) {
       const sku = generateSKU(row.brand);
       product = await Product.create({
+        tenantId: tenantId || undefined,
         name: row.name.trim(),
         brand: row.brand.trim(),
         category: row.category?.trim() || 'Smartphones',
@@ -272,9 +281,12 @@ export const bulkImportProducts = async (rows) => {
 
     if (row.imei && row.imei.trim()) {
       const imeiVal = row.imei.trim();
-      const existingImei = await InventoryUnit.findOne({ imeiOrSerial: imeiVal, isDeleted: false });
+      const imeiQuery = { imeiOrSerial: imeiVal, isDeleted: false };
+      if (tenantId) imeiQuery.tenantId = tenantId;
+      const existingImei = await InventoryUnit.findOne(imeiQuery);
       if (!existingImei) {
         await InventoryUnit.create({
+          tenantId: tenantId || undefined,
           productId: product._id,
           imeiOrSerial: imeiVal,
           color: row.color?.trim() || product.color || '',

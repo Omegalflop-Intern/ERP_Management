@@ -2,12 +2,14 @@ import { Router } from 'express';
 import * as roleController from './role.controller.js';
 import { validate } from '../../middleware/validate.middleware.js';
 import { authenticate } from '../../middleware/auth.middleware.js';
+import { checkTenantStatus } from '../../middleware/tenant.middleware.js';
 import { authorize } from '../../middleware/role.middleware.js';
 import { createRoleSchema, updateRoleSchema } from './role.validator.js';
 
 const router = Router();
 
 router.use(authenticate);
+router.use(checkTenantStatus);
 
 router.get('/permissions', roleController.getPermissions);
 router.get('/flat', roleController.getAllRolesFlat);

@@ -938,7 +938,7 @@ export default function SalesForm() {
                   onClick={() => setDiscountType('FIXED')}
                   className={`px-2 py-0.5 text-[11px] font-bold rounded-md transition-all ${
                     discountType === 'FIXED'
-                      ? 'bg-red-600 text-white shadow-sm'
+                      ? 'bg-[#2563EB] text-white shadow-sm'
                       : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                   }`}
                 >
@@ -949,7 +949,7 @@ export default function SalesForm() {
                   onClick={() => setDiscountType('PERCENT')}
                   className={`px-2 py-0.5 text-[11px] font-bold rounded-md transition-all ${
                     discountType === 'PERCENT'
-                      ? 'bg-red-600 text-white shadow-sm'
+                      ? 'bg-[#2563EB] text-white shadow-sm'
                       : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                   }`}
                 >
@@ -1115,7 +1115,7 @@ export default function SalesForm() {
           <button
             onClick={handleCheckout}
             disabled={checkoutMutation.isPending || cart.length === 0}
-            className="w-full py-3 bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white font-bold rounded-lg text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-700/20"
+            className="w-full py-3 bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white font-bold rounded-lg text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#2563EB]/20"
           >
             {checkoutMutation.isPending ? (
               <RefreshCw className="w-4 h-4 animate-spin" />

@@ -7,14 +7,19 @@ const lineItemSchema = new mongoose.Schema({
   qty: { type: Number, default: 1 },
   returnedQty: { type: Number, default: 0 },
   unitPrice: { type: Number, required: true },
+  unitCost: { type: Number, default: 0 },
   totalPrice: { type: Number, required: true },
 });
 
 const returnLogSchema = new mongoose.Schema({
+  returnInvoiceNumber: { type: String },
   lineItemId: { type: mongoose.Schema.Types.ObjectId },
   productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+  description: { type: String },
   imeiOrSerial: { type: String },
   qty: { type: Number, default: 1 },
+  originalUnitPrice: { type: Number, default: 0 },
+  effectiveUnitPrice: { type: Number, default: 0 },
   refundAmount: { type: Number, default: 0 },
   reason: { type: String },
   notes: { type: String },
@@ -24,7 +29,8 @@ const returnLogSchema = new mongoose.Schema({
 
 const transactionSchema = new mongoose.Schema(
   {
-    invoiceNumber: { type: String, required: true, unique: true },
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', index: true },
+    invoiceNumber: { type: String, required: true },
     txType: { type: String, enum: ['SALE', 'PURCHASE', 'RETURN', 'REPAIR_PAYMENT', 'EXPENSE', 'TRANSFER'], required: true },
     saleType: { type: String, enum: ['RETAIL', 'WHOLESALE'], default: 'RETAIL' },
     status: { type: String, enum: ['COMPLETED', 'PARTIALLY_RETURNED', 'RETURNED', 'CANCELLED'], default: 'COMPLETED' },
@@ -58,5 +64,7 @@ const transactionSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+transactionSchema.index({ tenantId: 1, invoiceNumber: 1 }, { unique: true, sparse: true });
 
 export const Transaction = mongoose.model('Transaction', transactionSchema);

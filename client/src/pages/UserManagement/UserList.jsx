@@ -184,10 +184,10 @@ export default function UserList() {
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={async () => {
-                            if (await confirmDelete(`Delete user "${u.username}"?`)) {
+                          onClick={() => {
+                            confirmDelete(`Delete user "${u.username}"?`, () => {
                               deleteMutation.mutate(u._id);
-                            }
+                            });
                           }}
                           className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-all"
                           title="Delete User"

@@ -5,21 +5,24 @@ import { logAction } from '../../utils/auth/auditLog.js';
 export const getAllSuppliers = async (req, res, next) => {
   try {
     const { page = 1, limit = 20, search = '' } = req.query;
-    const result = await supplierService.getAllSuppliers(Number(page), Number(limit), search);
+    const tenantId = req.user?.tenantId || null;
+    const result = await supplierService.getAllSuppliers(Number(page), Number(limit), search, tenantId);
     return ApiResponse.paginated(res, result.suppliers, result.pagination.total, result.pagination.page, result.pagination.limit);
   } catch (error) { next(error); }
 };
 
 export const getSupplierById = async (req, res, next) => {
   try {
-    const supplier = await supplierService.getSupplierById(req.params.id);
+    const tenantId = req.user?.tenantId || null;
+    const supplier = await supplierService.getSupplierById(req.params.id, tenantId);
     return ApiResponse.success(res, supplier);
   } catch (error) { next(error); }
 };
 
 export const createSupplier = async (req, res, next) => {
   try {
-    const supplier = await supplierService.createSupplier(req.body);
+    const tenantId = req.user?.tenantId || null;
+    const supplier = await supplierService.createSupplier(req.body, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'CREATE', module: 'supplier', entityId: supplier._id, entityType: 'Supplier', details: { name: supplier.name }, req });
     return ApiResponse.created(res, supplier, 'Supplier created');
   } catch (error) { next(error); }
@@ -27,7 +30,8 @@ export const createSupplier = async (req, res, next) => {
 
 export const updateSupplier = async (req, res, next) => {
   try {
-    const supplier = await supplierService.updateSupplier(req.params.id, req.body);
+    const tenantId = req.user?.tenantId || null;
+    const supplier = await supplierService.updateSupplier(req.params.id, req.body, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'UPDATE', module: 'supplier', entityId: supplier._id, entityType: 'Supplier', details: { name: supplier.name }, req });
     return ApiResponse.success(res, supplier, 'Supplier updated');
   } catch (error) { next(error); }
@@ -35,7 +39,8 @@ export const updateSupplier = async (req, res, next) => {
 
 export const deleteSupplier = async (req, res, next) => {
   try {
-    await supplierService.deleteSupplier(req.params.id);
+    const tenantId = req.user?.tenantId || null;
+    await supplierService.deleteSupplier(req.params.id, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'DELETE', module: 'supplier', entityId: req.params.id, entityType: 'Supplier', req });
     return ApiResponse.success(res, null, 'Supplier deleted');
   } catch (error) { next(error); }
@@ -43,7 +48,8 @@ export const deleteSupplier = async (req, res, next) => {
 
 export const getSupplierStats = async (req, res, next) => {
   try {
-    const stats = await supplierService.getSupplierStats(req.params.id);
+    const tenantId = req.user?.tenantId || null;
+    const stats = await supplierService.getSupplierStats(req.params.id, tenantId);
     return ApiResponse.success(res, stats);
   } catch (error) { next(error); }
 };

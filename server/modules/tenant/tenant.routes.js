@@ -1,0 +1,83 @@
+import express from 'express';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import * as tenantController from './tenant.controller.js';
+import { authenticate } from '../../middleware/auth.middleware.js';
+import { requireSuperAdmin } from '../../middleware/tenant.middleware.js';
+import { validate } from '../../middleware/validate.middleware.js';
+import { createTenantSchema, updateTenantStatusSchema, verifyKycSchema } from './tenant.validator.js';
+
+const uploadDir = 'uploads/tenants/kyc';
+const logoDir = 'uploads/tenants/logos';
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+if (!fs.existsSync(logoDir)) {
+  fs.mkdirSync(logoDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `kyc-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
+  },
+});
+
+const logoStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, logoDir),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `logo-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
+  },
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 15 * 1024 * 1024 },
+});
+
+const uploadLogo = multer({
+  storage: logoStorage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = /jpeg|jpg|png|gif|webp|svg/;
+    const ext = allowed.test(path.extname(file.originalname).toLowerCase());
+    const mime = allowed.test(file.mimetype);
+    if (ext && mime) return cb(null, true);
+    cb(new Error('Only image files allowed'));
+  },
+});
+
+const router = express.Router();
+
+// Public: shop self-registration (also used by super admin from SaaS panel)
+router.post('/', validate(createTenantSchema), tenantController.createTenant);
+
+// Super admin only: list, inspect, change status, approve KYC
+router.get('/', authenticate, requireSuperAdmin, tenantController.getTenants);
+router.get('/:id', authenticate, requireSuperAdmin, tenantController.getTenant);
+router.patch('/:id/status', authenticate, requireSuperAdmin, validate(updateTenantStatusSchema), tenantController.updateStatus);
+router.patch('/:id/verify-kyc', authenticate, requireSuperAdmin, validate(verifyKycSchema), tenantController.handleVerifyKyc);
+
+// Public: KYC document upload right after registration
+router.post(
+  '/:id/kyc-upload',
+  upload.fields([
+    { name: 'nidFront', maxCount: 1 },
+    { name: 'nidBack', maxCount: 1 },
+    { name: 'tradeLicenseFile', maxCount: 1 },
+    { name: 'tinCertificate', maxCount: 1 },
+  ]),
+  tenantController.uploadKyc
+);
+
+// Public: Shop logo upload during registration
+router.post(
+  '/:id/logo-upload',
+  uploadLogo.single('logo'),
+  tenantController.uploadLogo
+);
+
+export default router;

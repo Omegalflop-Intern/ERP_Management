@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const expenseSchema = new mongoose.Schema(
   {
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', index: true },
     title: { type: String, required: true, trim: true },
     category: {
       type: String,

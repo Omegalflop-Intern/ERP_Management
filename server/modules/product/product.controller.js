@@ -10,7 +10,8 @@ import { validateUploadedFile } from '../../config/upload.js';
 export const getAllProducts = async (req, res, next) => {
   try {
     const { page = 1, limit = 20, search = '', category = '' } = req.query;
-    const result = await productService.getAllProducts(Number(page), Number(limit), search, category);
+    const tenantId = req.user?.tenantId || null;
+    const result = await productService.getAllProducts(Number(page), Number(limit), search, category, tenantId);
     return ApiResponse.paginated(res, result.products, result.pagination.total, result.pagination.page, result.pagination.limit);
   } catch (error) { next(error); }
 };
@@ -24,13 +25,18 @@ export const getProductById = async (req, res, next) => {
 
 export const createProduct = async (req, res, next) => {
   try {
-    const product = await productService.createProduct(req.body);
+    const productData = {
+      ...req.body,
+      tenantId: req.user?.tenantId || null,
+    };
+    const product = await productService.createProduct(productData);
 
     // If IMEI / Serial number is provided in product creation, create Available InventoryUnit
     if (req.body.imeiOrSerial || req.body.imei) {
       const imei = (req.body.imeiOrSerial || req.body.imei).toString().trim();
       if (imei) {
         await InventoryUnit.create({
+          tenantId: req.user?.tenantId || undefined,
           imeiOrSerial: imei,
           productId: product._id,
           purchasePrice: product.costPrice || 0,
@@ -114,6 +120,7 @@ export const exportProducts = async (req, res, next) => {
 export const importProducts = async (req, res, next) => {
   try {
     if (!req.file) throw ApiError.badRequest('No file uploaded');
+    const tenantId = req.user?.tenantId || null;
     const wb = XLSX.read(req.file.buffer, { type: 'buffer' });
     const ws = wb.Sheets[wb.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(ws);
@@ -121,9 +128,12 @@ export const importProducts = async (req, res, next) => {
     for (const row of rows) {
       try {
         if (!row.Name || !row.SKU) { skipped++; continue; }
-        const exists = await Product.findOne({ sku: row.SKU, isDeleted: false });
+        const query = { sku: row.SKU, isDeleted: false };
+        if (tenantId) query.tenantId = tenantId;
+        const exists = await Product.findOne(query);
         if (exists) { skipped++; continue; }
         await Product.create({
+          tenantId: tenantId || undefined,
           name: row.Name,
           brand: row.Brand || '',
           model: row.Model || '',
@@ -153,7 +163,8 @@ export const importProducts = async (req, res, next) => {
 export const bulkImportJSON = async (req, res, next) => {
   try {
     const { rows } = req.body;
-    const result = await productService.bulkImportProducts(rows);
+    const tenantId = req.user?.tenantId || null;
+    const result = await productService.bulkImportProducts(rows, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'BULK_IMPORT', module: 'product', entityType: 'Product', details: result, req });
     return ApiResponse.success(res, result, `Bulk import completed: ${result.createdProductsCount} products and ${result.createdImeisCount} IMEIs added.`);
   } catch (error) { next(error); }

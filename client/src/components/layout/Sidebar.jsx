@@ -37,8 +37,10 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import api from '../../lib/api';
 
 const menuItems = [
   {
@@ -260,6 +262,12 @@ const menuItems = [
         icon: Activity,
         permissions: ['settings:view'],
       },
+      {
+        path: '/saas/tenants',
+        label: 'Shop Tenants (SaaS)',
+        icon: Building2,
+        permissions: ['saas:manage'],
+      },
       { path: '/settings', label: 'Settings', icon: Settings, permissions: ['settings:view'] },
     ],
   },
@@ -269,6 +277,18 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
   const { user, hasPermission, hasAnyPermission } = useAuth();
   const { styled } = useTheme();
   const location = useLocation();
+
+  // Fetch settings for company logo
+  const { data: settings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: async () => {
+      const res = await api.get('/settings');
+      return res.data?.data || res.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const companyLogo = settings?.companyLogo;
 
   // Manage open state of collapsible submenus
   const [openSubmenus, setOpenSubmenus] = useState({});
@@ -312,7 +332,15 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
           <div className="flex items-center justify-between px-3 mb-4 lg:hidden">
             {!collapsed && (
               <div className="flex items-center gap-2">
-                <Smartphone className="w-5 h-5 text-red-600" />
+                {companyLogo ? (
+                  <img
+                    src={companyLogo}
+                    alt="Shop Logo"
+                    className="w-5 h-5 rounded object-cover"
+                  />
+                ) : (
+                  <Smartphone className="w-5 h-5 text-[#2563EB]" />
+                )}
                 <span className="font-bold text-gray-900 dark:text-gray-100">Menu</span>
               </div>
             )}
@@ -327,16 +355,28 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
           {/* Desktop collapsed logo */}
           {collapsed && (
             <div className="hidden lg:flex justify-center mb-4">
-              <div
-                className={`w-10 h-10 rounded-xl flex items-center justify-center ${styled ? 'neu-icon !rounded-xl' : 'bg-red-50 dark:bg-red-900/20'}`}
-              >
-                <Smartphone className="w-5 h-5 text-red-600 dark:text-red-400" />
-              </div>
+              {companyLogo ? (
+                <img
+                  src={companyLogo}
+                  alt="Shop Logo"
+                  className="w-10 h-10 rounded-xl object-cover"
+                />
+              ) : (
+                <div
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center ${styled ? 'neu-icon !rounded-xl' : 'bg-blue-50 dark:bg-blue-900/20'}`}
+                >
+                  <Smartphone className="w-5 h-5 text-[#2563EB] dark:text-blue-400" />
+                </div>
+              )}
             </div>
           )}
 
           {menuItems.map((group) => {
             const visibleItems = group.items.filter((item) => {
+              // Hide SaaS Tenants control panel from Shop Owners & Staff
+              if (item.path === '/saas/tenants' && user?.tenantId) {
+                return false;
+              }
               if (item.children) {
                 return item.children.some(
                   (child) =>

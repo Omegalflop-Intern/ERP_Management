@@ -2,6 +2,7 @@ import { Router } from 'express';
 import * as userController from './user.controller.js';
 import { validate } from '../../middleware/validate.middleware.js';
 import { authenticate } from '../../middleware/auth.middleware.js';
+import { checkTenantStatus } from '../../middleware/tenant.middleware.js';
 import { authorize } from '../../middleware/role.middleware.js';
 import { uploadAvatar } from '../../config/upload.js';
 import { createUserSchema, updateUserSchema, changePasswordSchema } from './user.validator.js';
@@ -9,6 +10,7 @@ import { createUserSchema, updateUserSchema, changePasswordSchema } from './user
 const router = Router();
 
 router.use(authenticate);
+router.use(checkTenantStatus);
 
 /**
  * @swagger

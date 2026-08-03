@@ -210,7 +210,7 @@ export default function Login() {
 
   const inputClass = styled
     ? 'neu-input w-full px-4 py-3 text-sm focus:outline-none transition-all'
-    : 'w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all duration-300 bg-white dark:bg-gray-900/80 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-red-500 focus:ring-2 focus:ring-red-500/20';
+    : 'w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all duration-300 bg-white dark:bg-gray-900/80 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20';
 
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gray-50 dark:bg-[#0b0f19]">
@@ -372,7 +372,7 @@ export default function Login() {
         {/* Brand icon */}
         <div className="flex justify-center mb-6">
           <div
-            className={`w-16 h-16 rounded-2xl flex items-center justify-center ${styled ? 'neu-icon !bg-red-600/10 !border-none' : 'bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/20 dark:border-white/10'}`}
+            className={`w-16 h-16 rounded-2xl flex items-center justify-center ${styled ? 'neu-icon !bg-[#2563EB]/10 !border-none' : 'bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/20 dark:border-white/10'}`}
           >
             <Smartphone className="w-8 h-8 text-red-500" />
           </div>
@@ -447,8 +447,8 @@ export default function Login() {
                 className={`relative w-full py-3 rounded-xl font-semibold text-sm text-white overflow-hidden transition-all duration-300 ${
                   loading
                     ? 'opacity-80 cursor-wait'
-                    : 'hover:shadow-lg hover:shadow-red-700/30 hover:-translate-y-0.5 active:translate-y-0'
-                } ${styled ? 'neu-btn !bg-red-700 !text-white' : 'bg-gradient-to-r from-red-700 via-red-600 to-red-700'}`}
+                    : 'hover:shadow-lg hover:shadow-[#2563EB]/30 hover:-translate-y-0.5 active:translate-y-0'
+                } ${styled ? 'neu-btn !bg-[#2563EB] !text-white' : 'bg-gradient-to-r from-[#2563EB] via-[#1D4ED8] to-[#2563EB]'}`}
               >
                 <span className="relative z-10 flex items-center justify-center gap-2">
                   {loading ? (

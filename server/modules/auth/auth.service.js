@@ -27,14 +27,24 @@ export const issueTokens = (user) => {
     username: user.username,
     role: user.role?._id || user.role,
     roleName: user.roleName || user.role?.name || user.role,
+    tenantId: user.tenantId || null,
   };
   const accessToken = generateAccessToken(payload);
   const refreshToken = generateRefreshToken(payload);
   return { accessToken, refreshToken };
 };
 
-export const sanitizeUser = (user) => {
+export const sanitizeUser = async (user) => {
   const roleData = user.role;
+  let tenant = null;
+  if (user.tenantId) {
+    try {
+      const { Tenant } = await import('../tenant/tenant.model.js');
+      tenant = await Tenant.findById(user.tenantId).select('shopName plan status').lean();
+    } catch (e) {
+      tenant = null;
+    }
+  }
   return {
     _id: user._id,
     username: user.username,
@@ -45,6 +55,9 @@ export const sanitizeUser = (user) => {
     isActive: user.isActive,
     isVerified: user.isVerified,
     branchId: user.branchId,
+    tenantId: user.tenantId || null,
+    shopName: tenant?.shopName || user.shopName || null,
+    tenant: tenant ? { _id: tenant._id, shopName: tenant.shopName, plan: tenant.plan, status: tenant.status } : null,
     roleName: user.roleName || roleData?.name,
     roleDisplayName: roleData?.displayName,
     permissions: roleData?.permissions || [],
@@ -88,6 +101,11 @@ export const verifyOTP = async (email, otpCode) => {
   user.otpAttempts = 0;
   user.otpLockedUntil = null;
   await user.save();
+
+  if (user.tenantId) {
+    const { Tenant } = await import('../tenant/tenant.model.js');
+    await Tenant.findByIdAndUpdate(user.tenantId, { status: 'ACTIVE' });
+  }
 
   return user;
 };
@@ -161,6 +179,7 @@ export const refreshAccessToken = async (refreshToken) => {
     username: user.username,
     role: user.role?._id || decoded.role,
     roleName: user.roleName || user.role?.name,
+    tenantId: user.tenantId || null,
   };
   const accessToken = generateAccessToken(payload);
   const newRefreshToken = generateRefreshToken(payload);

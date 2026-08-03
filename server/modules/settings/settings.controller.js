@@ -4,21 +4,24 @@ import { logAction } from '../../utils/auth/auditLog.js';
 
 export const getAllSettings = async (req, res, next) => {
   try {
-    const settings = await settingsService.getAllSettings(req.query.category);
+    const tenantId = req.user?.tenantId || null;
+    const settings = await settingsService.getAllSettings(req.query.category, tenantId);
     return ApiResponse.success(res, settings);
   } catch (error) { next(error); }
 };
 
 export const getSettingsArray = async (req, res, next) => {
   try {
-    const settings = await settingsService.getSettingsArray(req.query.category);
+    const tenantId = req.user?.tenantId || null;
+    const settings = await settingsService.getSettingsArray(req.query.category, tenantId);
     return ApiResponse.success(res, settings);
   } catch (error) { next(error); }
 };
 
 export const updateSettings = async (req, res, next) => {
   try {
-    const result = await settingsService.updateSettings(req.body, req.user.userId);
+    const tenantId = req.user?.tenantId || null;
+    const result = await settingsService.updateSettings(req.body, req.user.userId, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'UPDATE_SETTINGS', module: 'settings', entityType: 'Settings', details: { keys: Object.keys(req.body) }, req });
     return ApiResponse.success(res, result, 'Settings updated');
   } catch (error) { next(error); }
@@ -30,7 +33,8 @@ export const uploadLogo = async (req, res, next) => {
       return ApiResponse.badRequest(res, 'No logo file uploaded');
     }
     const logoUrl = `/uploads/logos/${req.file.filename}`;
-    await settingsService.updateSettings({ companyLogo: logoUrl }, req.user?.userId);
+    const tenantId = req.user?.tenantId || null;
+    await settingsService.updateSettings({ companyLogo: logoUrl }, req.user?.userId, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'UPLOAD_LOGO', module: 'settings', entityType: 'Settings', details: { logoUrl }, req });
     return ApiResponse.success(res, { companyLogo: logoUrl }, 'Company logo uploaded successfully');
   } catch (error) { next(error); }

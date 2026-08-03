@@ -31,6 +31,7 @@ export const authenticate = async (req, res, next) => {
       roleName: user.roleName || user.role?.name,
       role: user.role?._id || user.role,
       permissions: user.role?.permissions || [],
+      tenantId: user.tenantId || null,
     };
 
     next();

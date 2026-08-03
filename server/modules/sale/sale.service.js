@@ -5,60 +5,59 @@ import { Product } from '../product/product.model.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { paginate, getPagination } from '../../utils/http/pagination.js';
 import { escapeRegex } from '../../utils/system/helpers.js';
-import { createAutomatedSaleJournal, createAutomatedReturnJournal } from '../accounting/accounting.service.js';
+import { hashText } from '../../utils/crypto.utils.js';
+import {
+  createAutomatedSaleJournal,
+  createAutomatedReturnJournal,
+  createAutomatedDueCollectionJournal,
+} from '../accounting/accounting.service.js';
 import crypto from 'crypto';
 
-const generateInvoiceNumber = async () => {
-  const count = await Transaction.countDocuments({ txType: 'SALE', isDeleted: false });
+const generateInvoiceNumber = async (tenantId = null) => {
+  // Count ALL sales (including soft-deleted) so numbers are never reused after a delete
+  const query = { txType: 'SALE' };
+  if (tenantId) query.tenantId = tenantId;
+  const count = await Transaction.countDocuments(query);
   const num = (count + 1).toString().padStart(5, '0');
   return `INV-${new Date().getFullYear()}-${num}`;
 };
 
+const withTenant = (query, tenantId) => {
+  if (tenantId) query.tenantId = tenantId;
+  return query;
+};
+
 export const createSale = async (data, createdBy = 'system') => {
-  const invoiceNumber = await generateInvoiceNumber();
+  const tenantId = data.tenantId || null;
 
   let subTotal = 0;
   const lineItems = [];
+  const soldImeis = [];
+  const productWarrantyMonths = {};
 
+  // Pass 1 — validate products and compute line items WITHOUT side effects.
+  // This guarantees no inventory mutation happens for a request that fails validation.
   for (const item of data.items) {
-    const product = await Product.findOne({ _id: item.productId, isDeleted: false });
+    const productQuery = { _id: item.productId, isDeleted: false };
+    withTenant(productQuery, tenantId);
+    const product = await Product.findOne(productQuery);
     if (!product) throw ApiError.notFound(`Product not found: ${item.productId}`);
+    productWarrantyMonths[item.productId] = product.warrantyMonths || 0;
+
+    let unitCost = product.costPrice || 0;
 
     if (item.imeiOrSerial) {
-      const unit = await InventoryUnit.findOne({ imeiOrSerial: item.imeiOrSerial, isDeleted: false });
-      if (!unit) throw ApiError.notFound(`IMEI not found: ${item.imeiOrSerial}`);
-      if (unit.status !== 'Available') throw ApiError.badRequest(`IMEI ${item.imeiOrSerial} is ${unit.status}`);
-
-      const soldDate = new Date();
-      unit.status = 'Sold';
-      unit.soldInvoiceNumber = invoiceNumber;
-      unit.soldAt = soldDate;
-      if (unit.warrantyMonths) {
-        const expiry = new Date(soldDate);
-        expiry.setMonth(expiry.getMonth() + unit.warrantyMonths);
-        unit.warrantyExpiry = expiry;
-      }
-      unit.passportHistory.push({
-        event: 'SOLD',
-        details: `Sold on ${invoiceNumber} to ${data.customerName || 'Walk-in'}`,
-        amount: item.unitPrice,
-        performedBy: createdBy,
-      });
-      await unit.save();
-
-      // Sync stockQuantity for IMEI-tracked products from actual available count
-      const availCount = await InventoryUnit.countDocuments({ productId: item.productId, status: 'Available', isDeleted: false });
-      await Product.updateOne({ _id: item.productId }, { stockQuantity: availCount }).catch(() => {});
+      const unit = await InventoryUnit.findOne(
+        withTenant({ imeiOrSerial: item.imeiOrSerial, isDeleted: false, status: 'Available' }, tenantId)
+      );
+      if (!unit) throw ApiError.badRequest(`IMEI ${item.imeiOrSerial} is not available for sale`);
+      unitCost = unit.purchasePrice || product.costPrice || 0;
     } else {
       // Bulk product (stockQuantity-based) — verify sufficient stock
       const requestedQty = Math.abs(item.qty || 1);
       if (product.stockQuantity < requestedQty) {
         throw ApiError.badRequest(`Insufficient stock for "${product.name}". Available: ${product.stockQuantity} pcs, Requested: ${requestedQty} pcs`);
       }
-      await Product.updateOne(
-        { _id: item.productId },
-        { $inc: { stockQuantity: -requestedQty } }
-      ).catch(() => {});
     }
 
     const itemTotal = (item.unitPrice * item.qty) - (item.discount || 0);
@@ -69,6 +68,7 @@ export const createSale = async (data, createdBy = 'system') => {
       description: item.description,
       qty: item.qty,
       unitPrice: item.unitPrice,
+      unitCost,
       totalPrice: itemTotal,
     });
   }
@@ -79,24 +79,34 @@ export const createSale = async (data, createdBy = 'system') => {
     (data.paymentBreakdown?.rocket || 0) +
     (data.paymentBreakdown?.nagad || 0) +
     (data.paymentBreakdown?.bank || 0);
+
+  // Overpayment guard — never store a negative dueAmount / unbalanced journal
+  if (paidAmount > netTotal + 0.01) {
+    throw ApiError.badRequest(`Paid amount (৳${paidAmount.toLocaleString()}) exceeds sale total (৳${netTotal.toLocaleString()})`);
+  }
   const dueAmount = netTotal - paidAmount;
 
   if (dueAmount > 0 && !data.customerPhone) {
     throw ApiError.badRequest('Customer phone is required for due amount');
   }
 
+  // Resolve customer (create if needed) — but DON'T touch balances yet;
+  // those only move once the sale record actually persists.
   let customerId = data.customerId;
   let customerObj = null;
 
   if (customerId) {
-    customerObj = await Customer.findOne({ _id: customerId, isDeleted: false });
+    customerObj = await Customer.findOne(withTenant({ _id: customerId, isDeleted: false }, tenantId));
+    if (!customerObj) throw ApiError.badRequest('Customer not found');
   } else if (data.customerPhone && data.customerPhone.trim()) {
     const phoneVal = data.customerPhone.trim();
-    customerObj = await Customer.findOne({ phone: phoneVal, isDeleted: false });
+    customerObj = await Customer.findOne(withTenant({ phoneHash: hashText(phoneVal), isDeleted: false }, tenantId));
     if (!customerObj) {
       customerObj = await Customer.create({
+        tenantId,
         name: data.customerName || 'Walk-in Customer',
         phone: phoneVal,
+        phoneHash: hashText(phoneVal),
         email: data.customerEmail || '',
         address: data.customerAddress || '',
       });
@@ -104,6 +114,140 @@ export const createSale = async (data, createdBy = 'system') => {
     customerId = customerObj._id;
   }
 
+  const finalCustomerName = data.customerName || customerObj?.name || 'Walk-in Customer';
+  const finalCustomerPhone = data.customerPhone || customerObj?.phone || 'N/A';
+  const finalCustomerEmail = data.customerEmail || customerObj?.email || '';
+  const finalCustomerAddress = data.customerAddress || customerObj?.address || '';
+
+  // Pass 2 — persist with retry. Each attempt flips inventory atomically and is
+  // fully compensated (IMEI restored, stock added back) before retrying or throwing.
+  let sale = null;
+  let lastError = null;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const invoiceNumber = await generateInvoiceNumber(tenantId);
+    const attemptedImeis = [];
+    try {
+      const soldDate = new Date();
+      for (const item of data.items) {
+        if (item.imeiOrSerial) {
+          // Atomic sell: only flips if still Available (prevents double-sale race)
+          const unitUpdate = {
+            status: 'Sold',
+            soldInvoiceNumber: invoiceNumber,
+            soldAt: soldDate,
+            $push: {
+              passportHistory: {
+                event: 'SOLD',
+                details: `Sold on ${invoiceNumber} to ${finalCustomerName}`,
+                amount: item.unitPrice,
+                performedBy: createdBy,
+              },
+            },
+          };
+          const warrantyMonths = productWarrantyMonths[item.productId] || 0;
+          if (warrantyMonths) {
+            const expiry = new Date(soldDate);
+            expiry.setMonth(expiry.getMonth() + warrantyMonths);
+            unitUpdate.warrantyExpiry = expiry;
+          }
+          const unit = await InventoryUnit.findOneAndUpdate(
+            withTenant({ imeiOrSerial: item.imeiOrSerial, isDeleted: false, status: 'Available' }, tenantId),
+            unitUpdate,
+            { new: true }
+          );
+          if (!unit) {
+            throw ApiError.badRequest(`IMEI ${item.imeiOrSerial} is not available for sale`);
+          }
+          attemptedImeis.push(unit.imeiOrSerial);
+
+          const availCount = await InventoryUnit.countDocuments(
+            withTenant({ productId: item.productId, status: 'Available', isDeleted: false }, tenantId)
+          );
+          await Product.updateOne({ _id: item.productId }, { stockQuantity: availCount }).catch(() => {});
+        } else {
+          // Bulk product — deduct stock (re-validated already in pass 1)
+          const requestedQty = Math.abs(item.qty || 1);
+          await Product.updateOne(
+            { _id: item.productId },
+            { $inc: { stockQuantity: -requestedQty } }
+          ).catch(() => {});
+        }
+      }
+
+      if (attemptedImeis.length > 0 && customerId) {
+        await InventoryUnit.updateMany(
+          withTenant({ imeiOrSerial: { $in: attemptedImeis } }, tenantId),
+          { soldToCustomerId: customerId }
+        ).catch(() => {});
+      }
+
+      sale = await Transaction.create({
+        tenantId,
+        invoiceNumber,
+        txType: 'SALE',
+        saleType: data.saleType || (customerObj?.customerType === 'B2B' ? 'WHOLESALE' : 'RETAIL'),
+        customerId: customerId || null,
+        customerName: finalCustomerName,
+        customerPhone: finalCustomerPhone,
+        customerEmail: finalCustomerEmail,
+        customerAddress: finalCustomerAddress,
+        lineItems,
+        subTotal,
+        discount: data.discount || 0,
+        tax: data.tax || 0,
+        netTotal,
+        paymentBreakdown: {
+          cash: data.paymentBreakdown?.cash || 0,
+          bkash: data.paymentBreakdown?.bkash || 0,
+          rocket: data.paymentBreakdown?.rocket || 0,
+          nagad: data.paymentBreakdown?.nagad || 0,
+          bank: data.paymentBreakdown?.bank || 0,
+          dueAmount,
+        },
+        cashierUsername: createdBy,
+        sellerName: data.sellerName || createdBy,
+        sellerId: data.sellerId || null,
+        publicToken: crypto.randomBytes(24).toString('hex'),
+        tokenExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      });
+      break;
+    } catch (err) {
+      // Compensate ALL inventory side-effects from this attempt
+      if (attemptedImeis.length > 0) {
+        await InventoryUnit.updateMany(
+          withTenant({ imeiOrSerial: { $in: attemptedImeis }, isDeleted: false, status: 'Sold' }, tenantId),
+          {
+            $set: { status: 'Available', soldInvoiceNumber: null, soldAt: null, soldToCustomerId: null },
+            $pull: { passportHistory: { event: 'SOLD', details: { $regex: `Sold on ${invoiceNumber}` } } },
+          }
+        ).catch(() => {});
+        for (const imei of attemptedImeis) {
+          const availCount = await InventoryUnit.countDocuments(
+            withTenant({ productId: lineItems.find((li) => li.imeiOrSerial === imei)?.productId, status: 'Available', isDeleted: false }, tenantId)
+          );
+          await Product.updateOne({ _id: lineItems.find((li) => li.imeiOrSerial === imei)?.productId }, { stockQuantity: availCount }).catch(() => {});
+        }
+      }
+      for (const item of data.items) {
+        if (!item.imeiOrSerial) {
+          const q = Math.abs(item.qty || 1);
+          await Product.updateOne({ _id: item.productId }, { $inc: { stockQuantity: q } }).catch(() => {});
+        }
+      }
+      if (err?.code === 11000) {
+        lastError = err;
+        continue; // invoice collision — retry with a fresh number
+      }
+      throw err;
+    }
+  }
+
+  if (!sale) {
+    if (lastError) throw lastError;
+    throw ApiError.badRequest('Could not create sale due to invoice number collision');
+  }
+
+  // Now that the sale exists, move customer balances
   if (customerObj) {
     customerObj.totalPurchases = (customerObj.totalPurchases || 0) + netTotal;
     customerObj.dueBalance = (customerObj.dueBalance || 0) + dueAmount;
@@ -115,55 +259,18 @@ export const createSale = async (data, createdBy = 'system') => {
     await customerObj.save();
   }
 
-  const soldImeis = lineItems.map(i => i.imeiOrSerial).filter(Boolean);
-  if (soldImeis.length > 0 && customerId) {
-    await InventoryUnit.updateMany(
-      { imeiOrSerial: { $in: soldImeis } },
-      { soldToCustomerId: customerId }
-    ).catch(() => {});
-  }
-
-  const finalCustomerName = data.customerName || customerObj?.name || 'Walk-in Customer';
-  const finalCustomerPhone = data.customerPhone || customerObj?.phone || 'N/A';
-  const finalCustomerEmail = data.customerEmail || customerObj?.email || '';
-  const finalCustomerAddress = data.customerAddress || customerObj?.address || '';
-
-  const sale = await Transaction.create({
-    invoiceNumber,
-    txType: 'SALE',
-    saleType: data.saleType || (customerObj?.customerType === 'B2B' ? 'WHOLESALE' : 'RETAIL'),
-    customerId: customerId || null,
-    customerName: finalCustomerName,
-    customerPhone: finalCustomerPhone,
-    customerEmail: finalCustomerEmail,
-    customerAddress: finalCustomerAddress,
-    lineItems,
-    subTotal,
-    discount: data.discount || 0,
-    tax: data.tax || 0,
-    netTotal,
-    paymentBreakdown: {
-      cash: data.paymentBreakdown?.cash || 0,
-      bkash: data.paymentBreakdown?.bkash || 0,
-      rocket: data.paymentBreakdown?.rocket || 0,
-      nagad: data.paymentBreakdown?.nagad || 0,
-      bank: data.paymentBreakdown?.bank || 0,
-      dueAmount,
-    },
-    cashierUsername: createdBy,
-    sellerName: data.sellerName || createdBy,
-    sellerId: data.sellerId || null,
-    publicToken: crypto.randomBytes(24).toString('hex'),
-    tokenExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+  await createAutomatedSaleJournal(sale).catch((err) => {
+    console.error('Sale journal failed (manual reconcile via Sync needed):', sale?.invoiceNumber, err);
   });
-
-  await createAutomatedSaleJournal(sale).catch(err => console.error('Sale journal failed:', err));
 
   return sale;
 };
 
 export const getAllSales = async (page = 1, limit = 20, filters = {}) => {
   const query = { isDeleted: false, txType: 'SALE' };
+  if (filters.tenantId) {
+    query.tenantId = filters.tenantId;
+  }
 
   if (filters.from || filters.to) {
     query.createdAt = {};
@@ -195,15 +302,17 @@ export const getAllSales = async (page = 1, limit = 20, filters = {}) => {
   return { sales, pagination: getPagination(total, page, limit) };
 };
 
-export const getSaleById = async (id) => {
-  const sale = await Transaction.findOne({ _id: id, isDeleted: false })
+export const getSaleById = async (id, tenantId = null) => {
+  const query = { _id: id, isDeleted: false };
+  if (tenantId) query.tenantId = tenantId;
+  const sale = await Transaction.findOne(query)
     .populate('customerId')
     .populate('lineItems.productId');
   if (!sale) throw ApiError.notFound('Sale not found');
   return sale;
 };
 
-export const getSaleByInvoice = async (invoiceQuery) => {
+export const getSaleByInvoice = async (invoiceQuery, tenantId = null) => {
   if (!invoiceQuery || !invoiceQuery.trim()) {
     throw ApiError.badRequest('Invoice search query is required');
   }
@@ -211,7 +320,7 @@ export const getSaleByInvoice = async (invoiceQuery) => {
   const safeQuery = escapeRegex(invoiceQuery.trim());
   const regex = new RegExp(safeQuery, 'i');
 
-  let sale = await Transaction.findOne({
+  const searchQuery = {
     isDeleted: false,
     txType: 'SALE',
     $or: [
@@ -220,7 +329,10 @@ export const getSaleByInvoice = async (invoiceQuery) => {
       { customerPhone: { $regex: regex } },
       { 'lineItems.imeiOrSerial': { $regex: regex } },
     ],
-  })
+  };
+  if (tenantId) searchQuery.tenantId = tenantId;
+
+  let sale = await Transaction.findOne(searchQuery)
     .populate('customerId')
     .populate('lineItems.productId')
     .sort({ createdAt: -1 });
@@ -251,9 +363,11 @@ export const getSaleByPublicToken = async (token) => {
   return sale;
 };
 
-const generateReturnInvoiceNumber = async () => {
+const generateReturnInvoiceNumber = async (tenantId = null) => {
+  const match = { isDeleted: false, 'returnLogs.0': { $exists: true } };
+  if (tenantId) match.tenantId = tenantId;
   const result = await Transaction.aggregate([
-    { $match: { isDeleted: false, 'returnLogs.0': { $exists: true } } },
+    { $match: match },
     { $unwind: '$returnLogs' },
     { $count: 'total' }
   ]);
@@ -262,14 +376,17 @@ const generateReturnInvoiceNumber = async () => {
   return `RET-${new Date().getFullYear()}-${num}`;
 };
 
-export const processReturn = async (saleId, returnData, processedBy = 'system') => {
-  const sale = await Transaction.findOne({ _id: saleId, isDeleted: false });
+export const processReturn = async (saleId, returnData, processedBy = 'system', tenantId = null) => {
+  const saleQuery = { _id: saleId, isDeleted: false };
+  withTenant(saleQuery, tenantId);
+  const sale = await Transaction.findOne(saleQuery);
   if (!sale) throw ApiError.notFound('Sale not found');
 
   let totalRefundForTx = 0;
+  let costOfReturned = 0;
   if (!sale.returnLogs) sale.returnLogs = [];
 
-  const returnInvoiceNumber = await generateReturnInvoiceNumber();
+  const returnInvoiceNumber = await generateReturnInvoiceNumber(tenantId);
 
   for (const ret of returnData.items) {
     // Find line item by lineItemId or by productId / imeiOrSerial
@@ -280,7 +397,10 @@ export const processReturn = async (saleId, returnData, processedBy = 'system') 
         (ret.productId && li.productId?.toString() === ret.productId.toString())
       );
     }
-    if (!lineItem) throw ApiError.notFound(`Line item not found: ${ret.lineItemId || ret.productId}`);
+    if (!lineItem) {
+      const missing = ret.imeiOrSerial ? `IMEI ${ret.imeiOrSerial}` : (ret.lineItemId ? `line item ${ret.lineItemId}` : 'line item');
+      throw ApiError.badRequest(`${missing} is not part of ${sale.invoiceNumber} and cannot be returned`);
+    }
 
     const returnQty = Math.min(ret.quantity || 1, lineItem.qty - (lineItem.returnedQty || 0));
     if (returnQty <= 0) {
@@ -288,35 +408,50 @@ export const processReturn = async (saleId, returnData, processedBy = 'system') 
     }
 
     // Effective unit price calculation:
-    // Takes lineItem.totalPrice (which already has item-level discount) and scales by global sale discount factor
-    const globalDiscountFactor = (sale.subTotal > 0 && sale.netTotal < sale.subTotal)
-      ? (sale.netTotal / sale.subTotal)
-      : 1;
+    // Takes lineItem.totalPrice (which already has item-level discount) and scales by global sale discount factor.
+    // A return always refunds the DISCOUNTED price, proportional to quantity returned.
+    const hasGlobalDiscount = sale.subTotal > 0 && sale.netTotal < sale.subTotal;
+    const globalDiscountFactor = hasGlobalDiscount ? (sale.netTotal / sale.subTotal) : 1;
     const baseEffectiveUnitPrice = lineItem.qty > 0 ? (lineItem.totalPrice / lineItem.qty) : lineItem.unitPrice;
     const effectiveUnitPrice = Math.round(baseEffectiveUnitPrice * globalDiscountFactor);
 
     const itemRefund = Math.round(effectiveUnitPrice * returnQty);
     lineItem.returnedQty = (lineItem.returnedQty || 0) + returnQty;
     totalRefundForTx += itemRefund;
+    costOfReturned += Math.round((lineItem.unitCost || 0) * returnQty);
 
     if (ret.imeiOrSerial || lineItem.imeiOrSerial) {
       const targetImei = ret.imeiOrSerial || lineItem.imeiOrSerial;
-      const unit = await InventoryUnit.findOne({ imeiOrSerial: targetImei, isDeleted: false });
-      if (unit) {
-        unit.status = 'Available'; // Returned back to inventory stock!
-        unit.soldInvoiceNumber = null;
-        unit.soldAt = null;
-        unit.passportHistory.push({
-          event: 'RETURNED',
-          details: `Returned from ${sale.invoiceNumber} (${returnInvoiceNumber}) — Reason: ${ret.reason || 'Customer return'}`,
-          amount: itemRefund,
-          performedBy: processedBy,
-        });
-        await unit.save();
+      // Only restore units that were actually sold on THIS invoice (prevents re-activating
+      // supplier-returned, transferred, or another-invoice units)
+      const unit = await InventoryUnit.findOneAndUpdate(
+        withTenant({ imeiOrSerial: targetImei, isDeleted: false, status: 'Sold', soldInvoiceNumber: sale.invoiceNumber }, tenantId),
+        {
+          $set: {
+            status: 'Available',
+            soldInvoiceNumber: null,
+            soldAt: null,
+            soldToCustomerId: null,
+          },
+          $push: {
+            passportHistory: {
+              event: 'RETURNED',
+              details: `Returned from ${sale.invoiceNumber} (${returnInvoiceNumber}) — Reason: ${ret.reason || 'Customer return'}`,
+              amount: itemRefund,
+              performedBy: processedBy,
+            },
+          },
+        },
+        { new: true }
+      );
+      if (!unit) {
+        throw ApiError.badRequest(`IMEI ${targetImei} was not sold on ${sale.invoiceNumber} and cannot be returned`);
       }
       // Sync IMEI stock count for Product
       if (lineItem.productId) {
-        const availCount = await InventoryUnit.countDocuments({ productId: lineItem.productId, status: 'Available', isDeleted: false });
+        const availCount = await InventoryUnit.countDocuments(
+          withTenant({ productId: lineItem.productId, status: 'Available', isDeleted: false }, tenantId)
+        );
         await Product.updateOne({ _id: lineItem.productId }, { stockQuantity: availCount }).catch(() => {});
       }
     } else if (lineItem.productId) {
@@ -360,40 +495,133 @@ export const processReturn = async (saleId, returnData, processedBy = 'system') 
     sale.status = 'PARTIALLY_RETURNED';
   }
 
-  // Adjust customer due / total purchases if linked to customer
-  if (sale.customerId) {
-    const customer = await Customer.findOne({ _id: sale.customerId, isDeleted: false });
+  // Allocate the refund: first reduce THIS sale's remaining due (AR), then bank, then cash.
+  const breakdown = sale.paymentBreakdown || { cash: 0, bank: 0, bkash: 0, rocket: 0, nagad: 0, dueAmount: 0 };
+  let remaining = totalRefundForTx;
+  const arReduction = Math.min(remaining, Math.max(0, breakdown.dueAmount || 0));
+  remaining -= arReduction;
+  const bankReduction = Math.min(remaining, Math.max(0, breakdown.bank || 0));
+  remaining -= bankReduction;
+  const cashReduction = Math.max(0, remaining);
+  const allocation = { ar: arReduction, bank: bankReduction, cash: cashReduction };
+
+  breakdown.dueAmount = Math.max(0, (breakdown.dueAmount || 0) - arReduction);
+  breakdown.bank = Math.max(0, (breakdown.bank || 0) - bankReduction);
+  breakdown.cash = Math.max(0, (breakdown.cash || 0) - cashReduction);
+
+  // Reduce customer balance ONLY by what was actually still owed on this sale
+  if (sale.customerId && arReduction > 0) {
+    const customer = await Customer.findOne(withTenant({ _id: sale.customerId, isDeleted: false }, tenantId));
     if (customer) {
-      customer.dueBalance = Math.max(0, customer.dueBalance - totalRefundForTx);
-      customer.totalPurchases = Math.max(0, customer.totalPurchases - totalRefundForTx);
+      customer.dueBalance = Math.max(0, customer.dueBalance - arReduction);
       await customer.save();
     }
   }
 
-  // Adjust sale due amount
-  if (sale.paymentBreakdown) {
-    sale.paymentBreakdown.dueAmount = Math.max(0, (sale.paymentBreakdown.dueAmount || 0) - totalRefundForTx);
-  }
-
   await sale.save();
-  await createAutomatedReturnJournal(sale, totalRefundForTx, returnInvoiceNumber).catch(err => console.error('Return journal failed:', err));
+  await createAutomatedReturnJournal(sale, totalRefundForTx, returnInvoiceNumber, {
+    allocation,
+    costOfReturned,
+    processedBy,
+  }).catch(err => console.error('Return journal failed:', err));
 
-  return { sale, refundAmount: totalRefundForTx, returnInvoiceNumber };
+  return { sale, refundAmount: totalRefundForTx, returnInvoiceNumber, allocation };
 };
 
-export const deleteSale = async (id) => {
-  const sale = await Transaction.findOne({ _id: id, isDeleted: false });
+export const deleteSale = async (id, tenantId = null) => {
+  const query = { _id: id, isDeleted: false };
+  withTenant(query, tenantId);
+  const sale = await Transaction.findOne(query);
   if (!sale) throw ApiError.notFound('Sale not found');
+
+  // Never hard-delete a sale with financial history silently — reverse it instead.
+  if (sale.status === 'RETURNED') {
+    throw ApiError.badRequest('Cannot delete a fully returned sale');
+  }
+  if ((sale.returnedAmount || 0) > 0 || (sale.lineItems || []).some((li) => (li.returnedQty || 0) > 0)) {
+    throw ApiError.badRequest('Cannot delete a sale with partial returns. Use return flow instead.');
+  }
+
+  // Reverse inventory: restore IMEIs / bulk stock for items that were sold on this invoice
+  for (const li of sale.lineItems || []) {
+    if (li.imeiOrSerial) {
+      await InventoryUnit.updateMany(
+        withTenant({ imeiOrSerial: li.imeiOrSerial, isDeleted: false, status: 'Sold', soldInvoiceNumber: sale.invoiceNumber }, tenantId),
+        { $set: { status: 'Available', soldInvoiceNumber: null, soldAt: null, soldToCustomerId: null } }
+      );
+      const availCount = await InventoryUnit.countDocuments(
+        withTenant({ productId: li.productId, status: 'Available', isDeleted: false }, tenantId)
+      );
+      await Product.updateOne({ _id: li.productId }, { stockQuantity: availCount }).catch(() => {});
+    } else if (li.productId) {
+      await Product.updateOne({ _id: li.productId }, { $inc: { stockQuantity: li.qty || 0 } }).catch(() => {});
+    }
+  }
+
   sale.isDeleted = true;
   await sale.save();
   return sale;
 };
 
-export const updateSale = async (id, data) => {
-  const sale = await Transaction.findOne({ _id: id, isDeleted: false });
+export const updateSale = async (id, data, tenantId = null) => {
+  const query = { _id: id, isDeleted: false };
+  withTenant(query, tenantId);
+  const sale = await Transaction.findOne(query);
   if (!sale) throw ApiError.notFound('Sale not found');
-  if (data.paymentBreakdown) sale.paymentBreakdown = data.paymentBreakdown;
-  if (data.status) sale.status = data.status;
+  if (sale.isDeleted) throw ApiError.notFound('Sale not found');
+
+  // Only due-collection is allowed via this endpoint. Money must be conserved:
+  // total (cash+bank+due) stays the same; due can only decrease (money collected).
+  const newBreakdown = data.paymentBreakdown;
+  if (!newBreakdown) {
+    throw ApiError.badRequest('Only payment breakdown updates are supported');
+  }
+  if (data.status) {
+    throw ApiError.badRequest('Sale status cannot be edited directly');
+  }
+
+  const old = sale.paymentBreakdown || {};
+  const sumOf = (b) =>
+    (b.cash || 0) + (b.bkash || 0) + (b.rocket || 0) + (b.nagad || 0) + (b.bank || 0) + (b.dueAmount || 0);
+
+  const oldSum = sumOf(old);
+  const newSum = sumOf(newBreakdown);
+  if (Math.abs(oldSum - newSum) > 0.01) {
+    throw ApiError.badRequest('Payment breakdown must conserve the sale total');
+  }
+
+  const oldDue = old.dueAmount || 0;
+  const newDue = newBreakdown.dueAmount || 0;
+  const collected = oldDue - newDue;
+  if (collected < -0.01) {
+    throw ApiError.badRequest('Due amount cannot be increased');
+  }
+
+  if (collected > 0.01) {
+    // Detect which payment method increased (bank/cash/wallet)
+    let method = 'cash';
+    const candidate = { cash: 'cash', bkash: 'bkash', rocket: 'rocket', nagad: 'nagad', bank: 'bank' };
+    for (const key of Object.keys(candidate)) {
+      if (Math.abs((newBreakdown[key] || 0) - (old[key] || 0) - collected) < 1) {
+        method = key;
+        break;
+      }
+    }
+    await createAutomatedDueCollectionJournal(sale, collected, method, data.collectedBy || 'system').catch((err) => {
+      console.error('Due collection journal failed:', err);
+    });
+
+    // Reduce the customer's outstanding due by the amount collected
+    if (sale.customerId) {
+      const customer = await Customer.findOne(withTenant({ _id: sale.customerId, isDeleted: false }, tenantId));
+      if (customer) {
+        customer.dueBalance = Math.max(0, (customer.dueBalance || 0) - collected);
+        await customer.save();
+      }
+    }
+  }
+
+  sale.paymentBreakdown = newBreakdown;
   await sale.save();
   return sale;
 };

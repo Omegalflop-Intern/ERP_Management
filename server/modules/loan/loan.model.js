@@ -12,6 +12,7 @@ const loanInstallmentSchema = new mongoose.Schema({
 
 const loanSchema = new mongoose.Schema(
   {
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', index: true },
     type: { type: String, enum: ['LOAN_TAKEN', 'LOAN_GIVEN'], default: 'LOAN_TAKEN' }, // LOAN_TAKEN (Lender) vs LOAN_GIVEN (Borrower)
     providerName: { type: String, required: true, trim: true }, // Lender Name or Borrower Name
     accountNumber: {
@@ -41,6 +42,7 @@ const loanSchema = new mongoose.Schema(
 
 const loanRepaymentSchema = new mongoose.Schema(
   {
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', index: true },
     loanId: { type: mongoose.Schema.Types.ObjectId, ref: 'Loan', required: true },
     amount: { type: Number, required: true, min: 0.01 },
     paymentMethod: { type: String, enum: ['cash', 'bkash', 'nagad', 'rocket', 'bank'], default: 'cash' },

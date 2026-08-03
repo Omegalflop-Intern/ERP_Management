@@ -8,6 +8,7 @@ export const createSale = async (req, res, next) => {
     const cashierName = req.user?.fullName || req.user?.name || req.user?.username || 'System Admin';
     const saleData = {
       ...req.body,
+      tenantId: req.user?.tenantId || null,
       sellerName: req.body.sellerName || cashierName,
       sellerId: req.user?._id || req.user?.id || null,
     };
@@ -38,21 +39,24 @@ export const createSale = async (req, res, next) => {
 export const getAllSales = async (req, res, next) => {
   try {
     const { page = 1, limit = 20, from, to, customer, status, paymentMethod, saleType } = req.query;
-    const result = await saleService.getAllSales(Number(page), Number(limit), { from, to, customer, status, paymentMethod, saleType });
+    const tenantId = req.user?.tenantId || null;
+    const result = await saleService.getAllSales(Number(page), Number(limit), { from, to, customer, status, paymentMethod, saleType, tenantId });
     return ApiResponse.paginated(res, result.sales, result.pagination.total, result.pagination.page, result.pagination.limit);
   } catch (error) { next(error); }
 };
 
 export const getSaleById = async (req, res, next) => {
   try {
-    const sale = await saleService.getSaleById(req.params.id);
+    const tenantId = req.user?.tenantId || null;
+    const sale = await saleService.getSaleById(req.params.id, tenantId);
     return ApiResponse.success(res, sale);
   } catch (error) { next(error); }
 };
 
 export const getSalePdf = async (req, res, next) => {
   try {
-    const sale = await saleService.getSaleById(req.params.id);
+    const tenantId = req.user?.tenantId || null;
+    const sale = await saleService.getSaleById(req.params.id, tenantId);
     const pdfBuffer = await generateInvoicePdfBuffer(sale);
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `inline; filename="${sale.invoiceNumber}.pdf"`);
@@ -63,14 +67,16 @@ export const getSalePdf = async (req, res, next) => {
 
 export const getSaleByInvoice = async (req, res, next) => {
   try {
-    const sale = await saleService.getSaleByInvoice(req.params.invoiceNumber);
+    const tenantId = req.user?.tenantId || null;
+    const sale = await saleService.getSaleByInvoice(req.params.invoiceNumber, tenantId);
     return ApiResponse.success(res, sale);
   } catch (error) { next(error); }
 };
 
 export const processReturn = async (req, res, next) => {
   try {
-    const result = await saleService.processReturn(req.params.id, req.body, req.user?.username || 'system');
+    const tenantId = req.user?.tenantId || null;
+    const result = await saleService.processReturn(req.params.id, req.body, req.user?.username || 'system', tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'RETURN', module: 'sale', entityId: req.params.id, entityType: 'Transaction', details: { refundAmount: result.refundAmount }, req });
     return ApiResponse.success(res, result, `Return processed — ৳${result.refundAmount.toLocaleString()} refunded`);
   } catch (error) { next(error); }
@@ -78,7 +84,8 @@ export const processReturn = async (req, res, next) => {
 
 export const deleteSale = async (req, res, next) => {
   try {
-    await saleService.deleteSale(req.params.id);
+    const tenantId = req.user?.tenantId || null;
+    await saleService.deleteSale(req.params.id, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'DELETE', module: 'sale', entityId: req.params.id, entityType: 'Transaction', req });
     return ApiResponse.success(res, null, 'Sale deleted');
   } catch (error) { next(error); }
@@ -86,7 +93,8 @@ export const deleteSale = async (req, res, next) => {
 
 export const updateSale = async (req, res, next) => {
   try {
-    const sale = await saleService.updateSale(req.params.id, req.body);
+    const tenantId = req.user?.tenantId || null;
+    const sale = await saleService.updateSale(req.params.id, req.body, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'UPDATE', module: 'sale', entityId: sale._id, entityType: 'Transaction', details: { invoiceNumber: sale.invoiceNumber }, req });
     return ApiResponse.success(res, sale, 'Sale updated');
   } catch (error) { next(error); }

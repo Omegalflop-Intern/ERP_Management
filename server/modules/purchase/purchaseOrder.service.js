@@ -4,12 +4,18 @@ import { InventoryUnit } from '../imei/imei.model.js';
 import { Product } from '../product/product.model.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { paginate, getPagination } from '../../utils/http/pagination.js';
+import { createAutomatedPurchaseReturnJournal, createAutomatedPurchaseJournal } from '../accounting/accounting.service.js';
 
 const generatePoNumber = () => 'PO-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
 
-export const getAllPurchaseOrders = async (page = 1, limit = 20, search = '', status = '') => {
-  const query = { isDeleted: false };
+const withTenant = (query, tenantId) => {
+  if (tenantId) query.tenantId = tenantId;
+  return query;
+};
 
+export const getAllPurchaseOrders = async (page = 1, limit = 20, search = '', status = '', tenantId = null) => {
+  const query = { isDeleted: false };
+  withTenant(query, tenantId);
   if (status && status !== 'ALL') query.status = status;
   if (search) {
     query.$or = [
@@ -27,9 +33,10 @@ export const getAllPurchaseOrders = async (page = 1, limit = 20, search = '', st
   return { orders, pagination: getPagination(total, page, limit) };
 };
 
-export const getPurchaseOrderById = async (id) => {
-  const order = await PurchaseOrder.findOne({ _id: id, isDeleted: false })
-    .populate('supplierId', 'name phone company address dueBalance')
+export const getPurchaseOrderById = async (id, tenantId = null) => {
+  const query = withTenant({ _id: id, isDeleted: false }, tenantId);
+  const order = await PurchaseOrder.findOne(query)
+    .populate('supplierId', 'name phone company address dueBalance creditBalance')
     .populate('lineItems.productId', 'name brand sku category');
   if (!order) throw ApiError.notFound('Purchase order not found');
   return order;
@@ -52,7 +59,10 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
 
   const order = await PurchaseOrder.create({
     poNumber: generatePoNumber(),
+    tenantId: data.tenantId || null,
     supplierId: data.supplierId,
+    status: 'APPROVED',
+    approvedBy: 'system',
     lineItems,
     subTotal,
     discount,
@@ -69,8 +79,9 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
   return order;
 };
 
-export const updatePurchaseOrder = async (id, data) => {
-  const order = await PurchaseOrder.findOne({ _id: id, isDeleted: false });
+export const updatePurchaseOrder = async (id, data, tenantId = null) => {
+  const query = withTenant({ _id: id, isDeleted: false }, tenantId);
+  const order = await PurchaseOrder.findOne(query);
   if (!order) throw ApiError.notFound('Purchase order not found');
 
   if (order.status === 'RECEIVED' || order.status === 'CANCELLED') {
@@ -86,8 +97,9 @@ export const updatePurchaseOrder = async (id, data) => {
   return order;
 };
 
-export const receiveGoods = async (id, grnEntries, receivedBy = 'system') => {
-  const order = await PurchaseOrder.findOne({ _id: id, isDeleted: false })
+export const receiveGoods = async (id, grnEntries, receivedBy = 'system', tenantId = null) => {
+  const query = withTenant({ _id: id, isDeleted: false }, tenantId);
+  const order = await PurchaseOrder.findOne(query)
     .populate('supplierId', 'name')
     .populate('lineItems.productId', 'name');
   if (!order) throw ApiError.notFound('Purchase order not found');
@@ -97,7 +109,11 @@ export const receiveGoods = async (id, grnEntries, receivedBy = 'system') => {
   }
 
   for (const entry of grnEntries) {
-    const existing = await InventoryUnit.findOne({ imeiOrSerial: entry.imeiOrSerial, isDeleted: false });
+    const existing = await InventoryUnit.findOne({
+      imeiOrSerial: entry.imeiOrSerial,
+      isDeleted: false,
+      ...(tenantId ? { tenantId } : {}),
+    });
     if (existing) throw ApiError.conflict(`IMEI ${entry.imeiOrSerial} already exists in inventory`);
   }
 
@@ -110,6 +126,7 @@ export const receiveGoods = async (id, grnEntries, receivedBy = 'system') => {
       imeiOrSerial: entry.imeiOrSerial,
       productId: entry.productId,
       supplierId: order.supplierId._id || order.supplierId,
+      tenantId: tenantId || null,
       purchasePrice: entry.purchasePrice,
       currentSellingPrice: entry.sellingPrice,
       warrantyMonths: entry.warrantyMonths || 12,
@@ -137,7 +154,14 @@ export const receiveGoods = async (id, grnEntries, receivedBy = 'system') => {
 
   await order.save();
 
-  const supplier = await Supplier.findOne({ _id: order.supplierId._id || order.supplierId, isDeleted: false });
+  await createAutomatedPurchaseJournal(order, grnEntries).catch((err) => {
+    console.error('Purchase journal failed:', order.poNumber, err);
+  });
+
+  const supplier = await Supplier.findOne({
+    _id: order.supplierId._id || order.supplierId,
+    isDeleted: false,
+  });
   if (supplier) {
     supplier.totalPurchases += grnEntries.length;
     await supplier.save();
@@ -146,27 +170,62 @@ export const receiveGoods = async (id, grnEntries, receivedBy = 'system') => {
   return order;
 };
 
-export const deletePurchaseOrder = async (id) => {
-  const order = await PurchaseOrder.findOne({ _id: id, isDeleted: false });
+export const deletePurchaseOrder = async (id, tenantId = null) => {
+  const query = withTenant({ _id: id, isDeleted: false }, tenantId);
+  const order = await PurchaseOrder.findOne(query);
   if (!order) throw ApiError.notFound('Purchase order not found');
-  if (order.status !== 'DRAFT') throw ApiError.badRequest('Only draft orders can be deleted');
+  if (order.status === 'RECEIVED' || order.status === 'PARTIALLY_RECEIVED' || order.status === 'CANCELLED') {
+    throw ApiError.badRequest('Only un-received orders can be deleted');
+  }
   order.isDeleted = true;
   await order.save();
   return order;
 };
 
-export const returnToSupplier = async (id, imeiOrSerials = [], reason = '', returnedBy = 'system') => {
-  const order = await PurchaseOrder.findOne({ _id: id, isDeleted: false });
+export const returnToSupplier = async (id, imeiOrSerials = [], reason = '', returnedBy = 'system', tenantId = null) => {
+  const query = withTenant({ _id: id, isDeleted: false }, tenantId);
+  const order = await PurchaseOrder.findOne(query)
+    .populate('supplierId', '_id name dueBalance creditBalance');
   if (!order) throw ApiError.notFound('Purchase order not found');
 
-  const supplier = await Supplier.findOne({ _id: order.supplierId, isDeleted: false });
+  if (order.status !== 'RECEIVED' && order.status !== 'PARTIALLY_RECEIVED') {
+    throw ApiError.badRequest('Only received orders can be returned to supplier');
+  }
+  if (!imeiOrSerials.length) {
+    throw ApiError.badRequest('Select at least one IMEI/serial to return');
+  }
+
+  const receivedImeiSet = new Set((order.grnEntries || []).map((e) => e.imeiOrSerial).filter(Boolean));
+  const alreadyReturnedSet = new Set((order.returnLogs || []).map((r) => r.imeiOrSerial));
+
   let totalRefund = 0;
   const processedItems = [];
+  const skippedItems = [];
+  const newReturnLogs = [];
 
   for (const imei of imeiOrSerials) {
-    const item = await InventoryUnit.findOne({ imeiOrSerial: imei, isDeleted: false });
-    if (!item) continue;
-    if (item.status === 'Returned to Supplier') continue;
+    if (!receivedImeiSet.has(imei)) {
+      skippedItems.push(imei);
+      continue;
+    }
+    if (alreadyReturnedSet.has(imei)) {
+      skippedItems.push(imei);
+      continue;
+    }
+
+    const item = await InventoryUnit.findOne({
+      imeiOrSerial: imei,
+      isDeleted: false,
+      ...(tenantId ? { tenantId } : {}),
+    });
+    if (!item || item.status === 'Returned to Supplier') {
+      skippedItems.push(imei);
+      continue;
+    }
+    if (!['Available', 'Reserved'].includes(item.status)) {
+      skippedItems.push(imei);
+      continue;
+    }
 
     item.status = 'Returned to Supplier';
     item.passportHistory.push({
@@ -178,17 +237,64 @@ export const returnToSupplier = async (id, imeiOrSerials = [], reason = '', retu
     await item.save();
 
     if (item.productId) {
-      await Product.findByIdAndUpdate(item.productId, { $inc: { stockQuantity: -1 } }).catch(() => {});
+      await Product.updateOne({ _id: item.productId }, { $inc: { stockQuantity: -1 } }).catch(() => {});
     }
+
+    const lineItem = order.lineItems.find((li) =>
+      (li.productId?._id ? li.productId._id.toString() : li.productId.toString()) === item.productId.toString()
+    );
+    if (lineItem) {
+      lineItem.returnedQty = (lineItem.returnedQty || 0) + 1;
+    }
+
+    newReturnLogs.push({
+      imeiOrSerial: imei,
+      productId: item.productId,
+      purchasePrice: item.purchasePrice,
+      reason: reason || '',
+      returnedBy,
+      returnedAt: new Date(),
+    });
 
     totalRefund += item.purchasePrice || 0;
     processedItems.push(imei);
   }
 
-  if (supplier && totalRefund > 0) {
-    supplier.dueBalance = Math.max(0, (supplier.dueBalance || 0) - totalRefund);
-    await supplier.save();
+  if (processedItems.length === 0) {
+    throw ApiError.badRequest('No valid items to return. Items must belong to this order and not already be returned.');
   }
 
-  return { returnedCount: processedItems.length, totalRefund, order };
+  order.returnLogs.push(...newReturnLogs);
+  order.returnedCount = (order.returnedCount || 0) + processedItems.length;
+  order.returnedAmount = (order.returnedAmount || 0) + totalRefund;
+  order.returnedDate = new Date();
+
+  // Reconcile money: returns first cancel outstanding due on this PO, then any
+  // remainder is cash the supplier owes the shop (reduces effective paid).
+  const refundFromDue = Math.min(order.dueAmount || 0, totalRefund);
+  order.dueAmount = Math.max(0, (order.dueAmount || 0) - refundFromDue);
+  const cashBack = totalRefund - refundFromDue;
+  if (cashBack > 0) {
+    order.paidAmount = Math.max(0, (order.paidAmount || 0) - cashBack);
+  }
+  await order.save();
+
+  if (order.supplierId && totalRefund > 0) {
+    const supplier = order.supplierId._id
+      ? await Supplier.findOne({ _id: order.supplierId._id, isDeleted: false })
+      : order.supplierId;
+    if (supplier) {
+      const appliedToDue = Math.min(supplier.dueBalance || 0, refundFromDue);
+      supplier.dueBalance = (supplier.dueBalance || 0) - appliedToDue;
+      if (cashBack > 0) {
+        supplier.creditBalance = (supplier.creditBalance || 0) + cashBack;
+      }
+      await supplier.save();
+    }
+  }
+
+  await createAutomatedPurchaseReturnJournal(order, totalRefund)
+    .catch((err) => console.error('Purchase return journal failed:', err));
+
+  return { returnedCount: processedItems.length, skippedCount: skippedItems.length, totalRefund, order };
 };

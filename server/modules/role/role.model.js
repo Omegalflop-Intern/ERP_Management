@@ -28,7 +28,8 @@ const ALL_PERMISSIONS = [
 
 const roleSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true, unique: true, trim: true, uppercase: true },
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', index: true },
+    name: { type: String, required: true, trim: true, uppercase: true },
     displayName: { type: String, required: true, trim: true },
     description: { type: String, trim: true },
     permissions: [{ type: String, enum: ALL_PERMISSIONS }],
@@ -37,6 +38,8 @@ const roleSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+roleSchema.index({ tenantId: 1, name: 1 }, { unique: true, sparse: true });
 
 export const Role = mongoose.model('Role', roleSchema);
 export { ALL_PERMISSIONS };

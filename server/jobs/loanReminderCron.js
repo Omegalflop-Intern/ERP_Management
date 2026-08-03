@@ -68,6 +68,7 @@ export const checkLoanInstallmentReminders = async () => {
             message: msg,
             type: alertReason.includes('OVERDUE') ? 'WARNING' : 'INFO',
             link: '/accounting/loans',
+            tenantId: loan.tenantId || null,
           });
         } catch (e) {
           // Continue if notification system is soft failing

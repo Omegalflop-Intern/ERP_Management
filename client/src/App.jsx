@@ -53,6 +53,9 @@ const MyProfile = lazy(() => import('./pages/Settings/MyProfile'));
 const SystemAnalytics = lazy(() => import('./pages/Settings/SystemAnalytics'));
 const PublicInvoice = lazy(() => import('./pages/Sales/PublicInvoice'));
 const ResetPassword = lazy(() => import('./pages/Auth/ResetPassword'));
+const RegisterShop = lazy(() => import('./pages/Auth/RegisterShop'));
+const TenantManagement = lazy(() => import('./pages/SaaS/TenantManagement'));
+const PricingPage = lazy(() => import('./pages/SaaS/PricingPage'));
 
 const PageSkeletonLoader = () => (
   <div className="p-6 space-y-6 animate-pulse">
@@ -127,6 +130,7 @@ export default function App() {
         />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/register-shop" element={<RegisterShop />} />
         <Route path="/invoice/:token" element={<PublicInvoice />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
 
@@ -533,6 +537,14 @@ export default function App() {
             element={
               <RoleBasedRoute permissions={['settings:view']}>
                 <SystemAnalytics />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="saas/tenants"
+            element={
+              <RoleBasedRoute permissions={['settings:view']}>
+                <TenantManagement />
               </RoleBasedRoute>
             }
           />

@@ -1,10 +1,12 @@
 import { Router } from 'express';
 import * as investorController from './investor.controller.js';
 import { authenticate } from '../../middleware/auth.middleware.js';
+import { checkTenantStatus } from '../../middleware/tenant.middleware.js';
 import { authorize } from '../../middleware/role.middleware.js';
 
 const router = Router();
 router.use(authenticate);
+router.use(checkTenantStatus);
 
 router.get('/', investorController.getAllInvestors);
 router.get('/transactions', investorController.getAllTransactions);

@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const wholesalePriceSchema = new mongoose.Schema(
   {
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', index: true },
     product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
     tier: { type: String, required: true, trim: true },
     minQty: { type: Number, required: true, min: 1 },
@@ -13,11 +14,12 @@ const wholesalePriceSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-wholesalePriceSchema.index({ product: 1, tier: 1 });
+wholesalePriceSchema.index({ tenantId: 1, product: 1, tier: 1 });
 
 const wholesaleOrderSchema = new mongoose.Schema(
   {
-    orderNumber: { type: String, required: true, unique: true },
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', index: true },
+    orderNumber: { type: String, required: true },
     customer: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true },
     items: [{
       product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
@@ -40,6 +42,7 @@ const wholesaleOrderSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+wholesaleOrderSchema.index({ tenantId: 1, orderNumber: 1 }, { unique: true, sparse: true });
 wholesaleOrderSchema.index({ customer: 1 });
 
 export const WholesalePrice = mongoose.model('WholesalePrice', wholesalePriceSchema);

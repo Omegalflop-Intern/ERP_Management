@@ -2,11 +2,12 @@ import mongoose from 'mongoose';
 
 const productSchema = new mongoose.Schema(
   {
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', index: true },
     name: { type: String, required: true, trim: true },
     brand: { type: String, required: true, trim: true },
     category: { type: String, required: true, trim: true },
     model: { type: String, trim: true },
-    sku: { type: String, required: true, unique: true, uppercase: true },
+    sku: { type: String, required: true, uppercase: true },
     barcode: { type: String, sparse: true },
     ram: { type: String },
     storage: { type: String },
@@ -27,6 +28,7 @@ const productSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+productSchema.index({ tenantId: 1, sku: 1 }, { unique: true, sparse: true });
 productSchema.index({ name: 'text', brand: 'text', sku: 'text' });
 
 export const Product = mongoose.model('Product', productSchema);

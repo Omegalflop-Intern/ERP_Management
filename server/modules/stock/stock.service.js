@@ -3,8 +3,9 @@ import { InventoryUnit } from '../imei/imei.model.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { paginate, getPagination } from '../../utils/http/pagination.js';
 
-export const getAllTransfers = async (page = 1, limit = 20, status = '') => {
+export const getAllTransfers = async (page = 1, limit = 20, status = '', tenantId = null) => {
   const query = { isDeleted: false };
+  if (tenantId) query.tenantId = tenantId;
   if (status && status !== 'ALL') query.status = status;
 
   const total = await StockTransfer.countDocuments(query);
@@ -19,8 +20,10 @@ export const getAllTransfers = async (page = 1, limit = 20, status = '') => {
   return { transfers, pagination: getPagination(total, page, limit) };
 };
 
-export const getTransferById = async (id) => {
-  const transfer = await StockTransfer.findOne({ _id: id, isDeleted: false })
+export const getTransferById = async (id, tenantId = null) => {
+  const query = { _id: id, isDeleted: false };
+  if (tenantId) query.tenantId = tenantId;
+  const transfer = await StockTransfer.findOne(query)
     .populate('fromBranchId')
     .populate('toBranchId')
     .populate('productId');
@@ -28,13 +31,15 @@ export const getTransferById = async (id) => {
   return transfer;
 };
 
-export const createTransfer = async (data, transferredBy = 'system') => {
+export const createTransfer = async (data, transferredBy = 'system', tenantId = null) => {
   if (data.fromBranchId === data.toBranchId) throw ApiError.badRequest('Source and destination branches cannot be the same');
 
   const transferNumber = 'TRF-' + Date.now().toString(36).toUpperCase();
 
   if (data.imeiOrSerial) {
-    const unit = await InventoryUnit.findOne({ imeiOrSerial: data.imeiOrSerial, isDeleted: false });
+    const unitQuery = { imeiOrSerial: data.imeiOrSerial, isDeleted: false };
+    if (tenantId) unitQuery.tenantId = tenantId;
+    const unit = await InventoryUnit.findOne(unitQuery);
     if (!unit) throw ApiError.notFound('IMEI not found');
     if (unit.status !== 'Available') throw ApiError.badRequest(`IMEI is ${unit.status}, cannot transfer`);
 
@@ -50,19 +55,24 @@ export const createTransfer = async (data, transferredBy = 'system') => {
   const transfer = await StockTransfer.create({
     ...data,
     transferNumber,
+    tenantId: tenantId || data.tenantId || null,
     transferredBy,
   });
 
   return transfer;
 };
 
-export const updateTransferStatus = async (id, status, performedBy = 'system') => {
-  const transfer = await StockTransfer.findOne({ _id: id, isDeleted: false });
+export const updateTransferStatus = async (id, status, performedBy = 'system', tenantId = null) => {
+  const query = { _id: id, isDeleted: false };
+  if (tenantId) query.tenantId = tenantId;
+  const transfer = await StockTransfer.findOne(query);
   if (!transfer) throw ApiError.notFound('Transfer not found');
 
   if (status === 'DELIVERED') {
     if (transfer.imeiOrSerial) {
-      const unit = await InventoryUnit.findOne({ imeiOrSerial: transfer.imeiOrSerial, isDeleted: false });
+      const unitQuery = { imeiOrSerial: transfer.imeiOrSerial, isDeleted: false };
+      if (tenantId) unitQuery.tenantId = tenantId;
+      const unit = await InventoryUnit.findOne(unitQuery);
       if (unit) {
         unit.branchId = transfer.toBranchId;
         unit.status = 'Available';
@@ -75,6 +85,21 @@ export const updateTransferStatus = async (id, status, performedBy = 'system') =
       }
     }
     transfer.deliveredAt = new Date();
+  } else if (status === 'CANCELLED') {
+    if (transfer.imeiOrSerial) {
+      const unitQuery = { imeiOrSerial: transfer.imeiOrSerial, isDeleted: false };
+      if (tenantId) unitQuery.tenantId = tenantId;
+      const unit = await InventoryUnit.findOne(unitQuery);
+      if (unit && unit.status === 'Transferred') {
+        unit.status = 'Available';
+        unit.passportHistory.push({
+          event: 'TRANSFER_CANCELLED',
+          details: `Transfer cancelled — ${transfer.transferNumber}`,
+          performedBy,
+        });
+        await unit.save();
+      }
+    }
   }
 
   transfer.status = status;
@@ -82,8 +107,10 @@ export const updateTransferStatus = async (id, status, performedBy = 'system') =
   return transfer;
 };
 
-export const deleteTransfer = async (id) => {
-  const transfer = await StockTransfer.findOne({ _id: id, isDeleted: false });
+export const deleteTransfer = async (id, tenantId = null) => {
+  const query = { _id: id, isDeleted: false };
+  if (tenantId) query.tenantId = tenantId;
+  const transfer = await StockTransfer.findOne(query);
   if (!transfer) throw ApiError.notFound('Transfer not found');
   transfer.isDeleted = true;
   await transfer.save();

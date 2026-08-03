@@ -89,7 +89,7 @@ export default function BranchManagement() {
     : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800';
   const inputCls = styled
     ? 'neu-input w-full px-3 py-2.5 rounded-xl text-sm'
-    : 'w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none';
+    : 'w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none';
 
   return (
     <div className="space-y-6">
@@ -102,7 +102,7 @@ export default function BranchManagement() {
         </div>
         <button
           onClick={openCreate}
-          className="flex items-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium transition-colors"
+          className="flex items-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-[#2563EB] text-white rounded-xl text-sm font-medium transition-colors"
         >
           <Plus className="w-4 h-4" /> Add Branch
         </button>
@@ -262,7 +262,7 @@ export default function BranchManagement() {
                   type="checkbox"
                   checked={form.isActive}
                   onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
-                  className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                  className="rounded border-gray-300 text-red-600 focus:ring-[#2563EB]"
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300">Active</span>
               </div>
@@ -280,7 +280,7 @@ export default function BranchManagement() {
                   mutation.mutate(form);
                 }}
                 disabled={mutation.isPending}
-                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium disabled:opacity-50 transition-colors"
+                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-[#2563EB] text-white rounded-xl text-sm font-medium disabled:opacity-50 transition-colors"
               >
                 {mutation.isPending ? 'Saving...' : editing ? 'Update' : 'Create'}
               </button>

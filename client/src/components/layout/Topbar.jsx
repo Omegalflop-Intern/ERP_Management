@@ -49,10 +49,10 @@ function UserAvatar({ user, size = 'md', online = true }) {
   return (
     <div className="relative inline-block flex-shrink-0">
       <div
-        className={`${sz} rounded-full overflow-hidden flex items-center justify-center font-bold border border-red-200 dark:border-red-500/30 ${
+        className={`${sz} rounded-full overflow-hidden flex items-center justify-center font-bold border border-blue-200 dark:border-blue-500/30 ${
           user?.avatar && !imgError
             ? ''
-            : 'bg-red-600/10 dark:bg-red-600/20 text-red-700 dark:text-red-400'
+            : 'bg-green-600/10 dark:bg-green-600/20 text-green-700 dark:text-green-400'
         }`}
       >
         {user?.avatar && !imgError ? (
@@ -219,7 +219,7 @@ function GlobalSearch({ styled }) {
         }}
         className={`relative flex items-center w-full px-3.5 py-2 rounded-xl border text-xs cursor-text transition-all bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm ${
           isOpen
-            ? 'ring-2 ring-red-500/30 border-red-500/50 dark:border-red-500/50 bg-white dark:bg-slate-900'
+            ? 'ring-2 ring-[#2563EB]/30 border-[#2563EB]/50 dark:border-red-500/50 bg-white dark:bg-slate-900'
             : ''
         }`}
       >
@@ -272,11 +272,11 @@ function GlobalSearch({ styled }) {
                       onClick={() => handleSelect(page.path)}
                       className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-left hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors group"
                     >
-                      <div className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 flex items-center justify-center group-hover:bg-red-600/10 group-hover:text-red-500 transition-colors">
+                      <div className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 flex items-center justify-center group-hover:bg-[#2563EB]/10 group-hover:text-[#2563EB] transition-colors">
                         <Icon className="w-4 h-4" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs font-semibold text-gray-800 dark:text-gray-200 group-hover:text-red-600 dark:group-hover:text-red-400 truncate">
+                        <div className="text-xs font-semibold text-gray-800 dark:text-gray-200 group-hover:text-[#2563EB] dark:group-hover:text-blue-400 truncate">
                           {page.title}
                         </div>
                         <div className="text-[10px] text-gray-400 font-mono">{page.category}</div>
@@ -292,7 +292,7 @@ function GlobalSearch({ styled }) {
           {/* Loading Indicator */}
           {loading && (
             <div className="p-4 text-center text-xs text-gray-400 flex items-center justify-center gap-2">
-              <RefreshCw className="w-4 h-4 animate-spin text-red-500" /> Searching database...
+              <RefreshCw className="w-4 h-4 animate-spin text-[#2563EB]" /> Searching database...
             </div>
           )}
 
@@ -424,7 +424,7 @@ function GlobalSearch({ styled }) {
               <kbd className="px-1 py-0.5 bg-gray-200 dark:bg-gray-800 rounded font-mono">Esc</kbd>{' '}
               to close
             </span>
-            <span className="text-red-500 font-medium">Brothers ERP Quick Search</span>
+            <span className="text-[#2563EB] font-medium">Brothers ERP Quick Search</span>
           </div>
         </div>
       )}
@@ -454,7 +454,7 @@ function getNotificationIcon(type) {
       );
     case 'WARRANTY_EXPIRING':
       return (
-        <div className="w-8 h-8 rounded-lg bg-red-500/10 text-red-500 flex items-center justify-center flex-shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-[#2563EB]/10 text-[#2563EB] flex items-center justify-center flex-shrink-0">
           <FileText className="w-4 h-4" />
         </div>
       );
@@ -569,14 +569,14 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
           <div
             className={`w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/40 flex items-center justify-center text-[#2563EB] dark:text-blue-400 ${styled ? 'neu-icon !bg-blue-50 !border-none' : ''}`}
           >
-            <Smartphone className="w-5 h-5" />
+            <Building2 className="w-5 h-5" />
           </div>
-          <span className="hidden md:inline bg-gradient-to-r from-[#2563EB] to-blue-500 dark:from-blue-400 dark:to-blue-300 bg-clip-text text-transparent">
-            Brothers{' '}
+          <span className="hidden md:inline bg-gradient-to-r from-[#2563EB] to-blue-500 dark:from-blue-400 dark:to-blue-300 bg-clip-text text-transparent font-extrabold text-base tracking-tight">
+            {user?.tenant?.shopName || user?.shopName || (user?.tenantId ? 'Mobile Shop ERP' : 'Super Admin Portal')}{' '}
             <span
-              className={`text-xs font-semibold px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/40 text-[#2563EB] dark:text-blue-400 ${styled ? '' : 'border border-blue-200 dark:border-blue-800/40'}`}
+              className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/40 text-[#2563EB] dark:text-blue-400 ${styled ? '' : 'border border-blue-200 dark:border-blue-800/40'}`}
             >
-              ERP
+              {user?.tenant?.plan || (user?.tenantId ? 'STARTER' : 'SUPER ADMIN')}
             </span>
           </span>
         </div>
@@ -654,7 +654,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
           >
             <Bell className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             {notifData?.unreadCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#2563EB] text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
                 {notifData.unreadCount > 9 ? '9+' : notifData.unreadCount}
               </span>
             )}
@@ -668,7 +668,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
                 {notifData?.unreadCount > 0 && (
                   <button
                     onClick={() => markAllReadMutation.mutate()}
-                    className="text-xs text-red-600 hover:underline"
+                    className="text-xs text-[#2563EB] hover:underline"
                   >
                     Mark all read
                   </button>
@@ -685,7 +685,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
                       if (n.link) navigate(n.link);
                       setShowNotifs(false);
                     }}
-                    className={`w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800 transition-colors ${!n.isRead ? 'bg-red-50/30 dark:bg-red-900/5' : ''}`}
+                    className={`w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800 transition-colors ${!n.isRead ? 'bg-blue-50/30 dark:bg-blue-900/5' : ''}`}
                   >
                     <div className="flex items-start gap-3">
                       {getNotificationIcon(n.type)}

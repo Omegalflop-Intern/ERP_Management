@@ -88,7 +88,7 @@ export default function DashboardCharts({
                 onClick={() => onPeriodChange(opt.value)}
                 className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
                   period === opt.value
-                    ? 'bg-red-600 text-white shadow-sm font-semibold'
+                    ? 'bg-[#2563EB] text-white shadow-sm font-semibold'
                     : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200/60 dark:hover:bg-gray-700/50'
                 }`}
               >

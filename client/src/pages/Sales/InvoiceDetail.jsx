@@ -287,7 +287,7 @@ export default function InvoiceDetail() {
                 printSize
               );
             }}
-            className="bg-red-700 hover:bg-red-600 text-white gap-2"
+            className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white gap-2"
             size="sm"
           >
             <Printer className="w-4 h-4" /> Print
@@ -649,7 +649,7 @@ export default function InvoiceDetail() {
                     'a4'
                   )
                 }
-                className="bg-red-700 hover:bg-red-600 text-white font-bold gap-2 text-xs"
+                className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold gap-2 text-xs"
               >
                 <Printer className="w-4 h-4" /> Print Return Credit Note
               </Button>

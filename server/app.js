@@ -15,6 +15,7 @@ import { renderServerLandingPage } from './utils/system/serverLandingHtml.js';
 import { apiLimiter, authLimiter } from './middleware/rateLimiter.middleware.js';
 import { authenticate } from './middleware/auth.middleware.js';
 import { authorize } from './middleware/role.middleware.js';
+import { requireSuperAdmin, checkTenantStatus } from './middleware/tenant.middleware.js';
 import mongoose from 'mongoose';
 import authRoutes from './modules/auth/auth.routes.js';
 import userRoutes from './modules/user/user.routes.js';
@@ -44,6 +45,8 @@ import expenseRoutes from './modules/expense/expense.routes.js';
 import loanRoutes from './modules/loan/loan.routes.js';
 import sseRoutes from './modules/sse/sse.routes.js';
 import documentVaultRoutes from './modules/documentVault/documentVault.routes.js';
+import tenantRoutes from './modules/tenant/tenant.routes.js';
+import plansRoutes from './modules/plans/plans.routes.js';
 import { startLoanReminderJob } from './jobs/loanReminderCron.js';
 import { auditDiffInterceptor } from './middleware/auditInterceptor.middleware.js';
 import { Investor } from './modules/investor/investor.model.js';
@@ -195,7 +198,8 @@ setupSwagger(app);
 app.get('/api/v1/audit-logs', authenticate, authorize('ADMIN', 'MANAGER'), async (req, res, next) => {
   try {
     const { page = 1, limit = 50, module, userId, action, from, to } = req.query;
-    const result = await getAuditLogs(Number(page), Number(limit), { module, userId, action, from, to });
+    const tenantId = req.user?.tenantId || null;
+    const result = await getAuditLogs(Number(page), Number(limit), { module, userId, action, from, to }, tenantId);
     res.json({ success: true, data: result.logs, pagination: result.pagination });
   } catch (error) { next(error); }
 });
@@ -207,7 +211,7 @@ app.delete('/api/v1/audit-logs*', authenticate, (req, res) => {
   });
 });
 
-app.get('/api/v1/system/analytics', authenticate, authorize('ADMIN'), async (req, res, next) => {
+app.get('/api/v1/system/analytics', authenticate, requireSuperAdmin, async (req, res, next) => {
   try {
     const serverStartedAt = global.__serverStartTime || new Date();
     const uptimeSeconds = Math.floor((Date.now() - serverStartedAt.getTime()) / 1000);
@@ -338,6 +342,8 @@ app.use('/api/v1/investors', auditDiffInterceptor('Investor', () => Investor), i
 app.use('/api/v1/expenses', expenseRoutes);
 app.use('/api/v1/loans', auditDiffInterceptor('Loan', () => Loan), loanRoutes);
 app.use('/api/v1/sse', sseRoutes);
+app.use('/api/v1/tenants', tenantRoutes);
+app.use('/api/v1/plans', plansRoutes);
 
 if (process.env.NODE_ENV === 'production') {
   const clientDist = path.join(__dirname, '../client/dist');

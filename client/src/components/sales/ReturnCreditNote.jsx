@@ -39,7 +39,7 @@ export default function ReturnCreditNote({ sale, returnLog, returnLogsGroup }) {
           </div>
 
           <div className="text-right space-y-1">
-            <span className="inline-block bg-red-700 text-white font-black px-3 py-1 text-xs tracking-wider uppercase rounded-md shadow-sm">
+            <span className="inline-block bg-[#2563EB] text-white font-black px-3 py-1 text-xs tracking-wider uppercase rounded-md shadow-sm">
               CREDIT NOTE / RETURN VOUCHER
             </span>
             <div>

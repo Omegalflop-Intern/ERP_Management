@@ -8,14 +8,19 @@ import { Expense } from '../expense/expense.model.js';
 import { PurchaseOrder } from '../purchase/purchaseOrder.model.js';
 import { ApiResponse } from '../../utils/http/ApiResponse.js';
 import { authenticate } from '../../middleware/auth.middleware.js';
+import { checkTenantStatus } from '../../middleware/tenant.middleware.js';
 import { authorize } from '../../middleware/role.middleware.js';
 
 const router = Router();
 router.use(authenticate);
+router.use(checkTenantStatus);
 router.use(authorize('ADMIN', 'MANAGER', 'CASHIER', 'STAFF'));
 
 router.get('/dashboard', async (req, res, next) => {
   try {
+    const tenantId = req.user?.tenantId || null;
+    const tenantMatch = (query) => (tenantId ? { ...query, tenantId } : query);
+
     let totalSalesCount = 0, totalRevenue = 0;
     let totalAvailableUnits = 0, totalStockValue = 0;
     let activeRepairsCount = 0, totalCustomers = 0;
@@ -23,13 +28,13 @@ router.get('/dashboard', async (req, res, next) => {
 
     try {
       const expenseAgg = await Expense.aggregate([
-        { $match: { isDeleted: false } },
+        { $match: tenantMatch({ isDeleted: false }) },
         { $group: { _id: null, total: { $sum: '$amount' } } },
       ]);
       totalExpenses = expenseAgg[0]?.total || 0;
 
       const purchaseAgg = await PurchaseOrder.aggregate([
-        { $match: { isDeleted: false, status: { $ne: 'CANCELLED' } } },
+        { $match: tenantMatch({ isDeleted: false, status: { $ne: 'CANCELLED' } }) },
         { $group: { _id: null, total: { $sum: '$netTotal' } } },
       ]);
       totalPurchasesCost = purchaseAgg[0]?.total || 0;
@@ -40,9 +45,9 @@ router.get('/dashboard', async (req, res, next) => {
     }
 
     try {
-      totalSalesCount = await Transaction.countDocuments({ isDeleted: false });
+      totalSalesCount = await Transaction.countDocuments(tenantMatch({ isDeleted: false }));
       const revenueResult = await Transaction.aggregate([
-        { $match: { isDeleted: false, txType: 'SALE' } },
+        { $match: tenantMatch({ isDeleted: false, txType: 'SALE' }) },
         {
           $group: {
             _id: null,
@@ -57,11 +62,11 @@ router.get('/dashboard', async (req, res, next) => {
 
     let lowStockItems = [];
     try {
-      const activeProducts = await Product.find({ isDeleted: false });
+      const activeProducts = await Product.find(tenantMatch({ isDeleted: false }));
 
       // Get count of available IMEI units grouped by productId
       const imeiAvailableCounts = await InventoryUnit.aggregate([
-        { $match: { status: 'Available', isDeleted: false } },
+        { $match: tenantMatch({ status: 'Available', isDeleted: false }) },
         {
           $group: {
             _id: '$productId',
@@ -80,7 +85,7 @@ router.get('/dashboard', async (req, res, next) => {
 
       // Products that have EVER had IMEI units
       const productsWithIMEI = new Set(
-        (await InventoryUnit.distinct('productId', { isDeleted: false })).map(id => id?.toString()).filter(Boolean)
+        (await InventoryUnit.distinct('productId', tenantMatch({ isDeleted: false }))).map(id => id?.toString()).filter(Boolean)
       );
 
       let calcAvailableUnits = 0;
@@ -123,16 +128,16 @@ router.get('/dashboard', async (req, res, next) => {
     } catch {}
 
     try {
-      activeRepairsCount = await RepairTicket.countDocuments({
+      activeRepairsCount = await RepairTicket.countDocuments(tenantMatch({
         status: { $nin: ['DELIVERED', 'CANCELLED'] },
-      });
+      }));
     } catch {}
 
     let totalDueAmount = 0;
     try {
-      totalCustomers = await Customer.countDocuments({ isDeleted: false });
+      totalCustomers = await Customer.countDocuments(tenantMatch({ isDeleted: false }));
       const custDue = await Customer.aggregate([
-        { $match: { isDeleted: false } },
+        { $match: tenantMatch({ isDeleted: false }) },
         { $group: { _id: null, due: { $sum: '$dueBalance' } } }
       ]);
       totalDueAmount = custDue[0]?.due || 0;
@@ -147,11 +152,11 @@ router.get('/dashboard', async (req, res, next) => {
 
       if (period === '24h') {
         const startTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-        const transactions = await Transaction.find({
+        const transactions = await Transaction.find(tenantMatch({
           isDeleted: false,
           txType: 'SALE',
           createdAt: { $gte: startTime },
-        }).select('netTotal paymentBreakdown.dueAmount createdAt');
+        })).select('netTotal paymentBreakdown.dueAmount createdAt');
 
         const slots = [];
         for (let i = 23; i >= 0; i--) {
@@ -205,11 +210,11 @@ router.get('/dashboard', async (req, res, next) => {
         startTime.setDate(startTime.getDate() - (numDays - 1));
         startTime.setHours(0, 0, 0, 0);
 
-        const transactions = await Transaction.find({
+        const transactions = await Transaction.find(tenantMatch({
           isDeleted: false,
           txType: 'SALE',
           createdAt: { $gte: startTime },
-        }).select('netTotal paymentBreakdown.dueAmount createdAt');
+        })).select('netTotal paymentBreakdown.dueAmount createdAt');
 
         const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -269,7 +274,7 @@ router.get('/dashboard', async (req, res, next) => {
     let brandDistribution = [];
     try {
       const brandData = await InventoryUnit.aggregate([
-        { $match: { status: 'Available', isDeleted: false } },
+        { $match: tenantMatch({ status: 'Available', isDeleted: false }) },
         { $lookup: { from: 'products', localField: 'productId', foreignField: '_id', as: 'product' } },
         { $unwind: { path: '$product', preserveNullAndEmptyArrays: true } },
         { $group: { _id: '$product.brand', count: { $sum: 1 } } },
@@ -280,7 +285,7 @@ router.get('/dashboard', async (req, res, next) => {
 
       if (brandDistribution.length === 0) {
         const prodBrandData = await Product.aggregate([
-          { $match: { isDeleted: false, stockQuantity: { $gt: 0 } } },
+          { $match: tenantMatch({ isDeleted: false, stockQuantity: { $gt: 0 } }) },
           { $group: { _id: '$brand', count: { $sum: '$stockQuantity' } } },
           { $sort: { count: -1 } },
           { $limit: 6 },

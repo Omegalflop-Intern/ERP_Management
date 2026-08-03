@@ -8,7 +8,7 @@ import { Settings } from './modules/settings/settings.model.js';
 import { initAutoBackup } from './modules/settings/settings.service.js';
 import emitter, { EVENTS } from './events/index.js';
 import { printAsciiBanner, printServerInfo, logStep } from './utils/system/banner.js';
-import { broadcastAll } from './modules/sse/sse.controller.js';
+import { broadcastAll, broadcastToTenant } from './modules/sse/sse.controller.js';
 import { User } from './modules/user/user.model.js';
 import { createBulkNotifications } from './modules/notification/notification.service.js';
 import fs from 'fs';
@@ -47,7 +47,7 @@ server.listen(PORT, async () => {
 
   emitter.on(EVENTS.STOCK_UPDATED, (data) => {
     console.log('\x1b[36m[EVENT:STOCK]\x1b[0m Stock updated:', data?.name || data?.sku);
-    broadcastAll({ type: 'STOCK_UPDATED', data });
+    broadcastToTenant(data?.tenantId || null, { type: 'STOCK_UPDATED', data });
 
     sendAdminNotificationEmail(
       `Stock Updated (${data?.name || data?.sku || 'Product'})`,
@@ -63,7 +63,8 @@ server.listen(PORT, async () => {
   emitter.on(EVENTS.SALE_COMPLETED, async (data) => {
     console.log('\x1b[32m[EVENT:SALE]\x1b[0m Sale completed:', data?.invoiceNo || data?.sale?.invoiceNo);
 
-    broadcastAll({ type: 'SALE_COMPLETED', data });
+    const eventTenantId = data?.tenantId || data?.sale?.tenantId || null;
+    broadcastToTenant(eventTenantId, { type: 'SALE_COMPLETED', data });
 
     const invoiceNo = data?.invoiceNo || data?.sale?.invoiceNo || 'Invoice';
     const amount = data?.grandTotal || data?.sale?.grandTotal || 0;
@@ -94,17 +95,25 @@ server.listen(PORT, async () => {
     );
 
     try {
-      const activeUsers = await User.find({ isDeleted: false, isActive: true }).select('_id').lean();
+      // Only notify users belonging to the same tenant as the sale.
+      // Super-admin users (tenantId = null) are excluded from per-tenant sale noise.
+      const userQuery = { isDeleted: false, isActive: true };
+      if (eventTenantId) {
+        userQuery.tenantId = eventTenantId;
+      } else {
+        // No tenantId on event → single-tenant fallback: notify users without a tenantId
+        userQuery.tenantId = { $exists: false };
+      }
+      const activeUsers = await User.find(userQuery).select('_id tenantId').lean();
       if (activeUsers.length) {
-        const userIds = activeUsers.map((u) => u._id);
-        await createBulkNotifications(userIds, {
+        await createBulkNotifications(activeUsers.map((u) => ({ userId: u._id, tenantId: u.tenantId })), {
           type: 'SALE_COMPLETED',
           title: `New Sale Recorded (${invoiceNo})`,
           message: `Sale invoice created for ৳${Number(amount).toLocaleString()}`,
           link: '/sales',
           meta: data,
         });
-        broadcastAll({ type: 'NOTIFICATION', data: { invoiceNo, amount } });
+        broadcastToTenant(eventTenantId, { type: 'NOTIFICATION', data: { invoiceNo, amount } });
       }
     } catch (err) {
       console.error('[Sale Notification Error]:', err?.message);
@@ -138,6 +147,6 @@ server.listen(PORT, async () => {
 
   emitter.on(EVENTS.NOTIFICATION_NEW, (data) => {
     console.log('\x1b[35m[EVENT:NOTIF]\x1b[0m Notification triggered:', data?.title);
-    broadcastAll({ type: 'NOTIFICATION', data });
+    broadcastToTenant(data?.tenantId || null, { type: 'NOTIFICATION', data });
   });
 });

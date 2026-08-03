@@ -2,11 +2,13 @@ import { Router } from 'express';
 import * as repairController from './repair.controller.js';
 import { validate } from '../../middleware/validate.middleware.js';
 import { authenticate } from '../../middleware/auth.middleware.js';
+import { checkTenantStatus } from '../../middleware/tenant.middleware.js';
 import { createRepairSchema, updateStatusSchema, updateRepairSchema } from './repair.validator.js';
 
 const router = Router();
 
 router.use(authenticate);
+router.use(checkTenantStatus);
 
 router.get('/stats', repairController.getRepairStats);
 router.get('/', repairController.getAllRepairs);

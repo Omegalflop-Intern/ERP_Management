@@ -7,24 +7,26 @@ import { sendAdminSMSNotification, sendCustomerRepairSMS } from '../../config/sm
 export const getAllRepairs = async (req, res, next) => {
   try {
     const { page = 1, limit = 50, status = '', search = '' } = req.query;
-    const result = await repairService.getAllRepairs(Number(page), Number(limit), status, search);
+    const tenantId = req.user?.tenantId || null;
+    const result = await repairService.getAllRepairs(Number(page), Number(limit), status, search, tenantId);
     return ApiResponse.paginated(res, result.repairs, result.pagination.total, result.pagination.page, result.pagination.limit);
   } catch (error) { next(error); }
 };
 
 export const getRepairById = async (req, res, next) => {
   try {
-    const ticket = await repairService.getRepairById(req.params.id);
+    const tenantId = req.user?.tenantId || null;
+    const ticket = await repairService.getRepairById(req.params.id, tenantId);
     return ApiResponse.success(res, ticket);
   } catch (error) { next(error); }
 };
 
 export const createRepair = async (req, res, next) => {
   try {
-    const ticket = await repairService.createRepair(req.body);
+    const tenantId = req.user?.tenantId || null;
+    const ticket = await repairService.createRepair(req.body, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'CREATE', module: 'repair', entityId: ticket._id, entityType: 'RepairTicket', details: { ticketNumber: ticket.ticketNumber }, req });
 
-    // Send notifications (Admin + Customer Email & SMS)
     if (ticket.customerEmail) {
       sendCustomerRepairEmail(ticket.customerEmail, ticket.customerName, ticket).catch(e => console.error('[Customer Repair Mail Error]:', e.message));
     }
@@ -45,10 +47,10 @@ export const createRepair = async (req, res, next) => {
 
 export const updateRepairStatus = async (req, res, next) => {
   try {
-    const ticket = await repairService.updateRepairStatus(req.params.id, req.body.status);
+    const tenantId = req.user?.tenantId || null;
+    const ticket = await repairService.updateRepairStatus(req.params.id, req.body.status, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'UPDATE_STATUS', module: 'repair', entityId: ticket._id, entityType: 'RepairTicket', details: { status: ticket.status }, req });
 
-    // Send status update notifications (Email & SMS)
     if (ticket.customerEmail) {
       sendCustomerRepairEmail(ticket.customerEmail, ticket.customerName, ticket).catch(e => console.error('[Customer Repair Mail Error]:', e.message));
     }
@@ -69,7 +71,8 @@ export const updateRepairStatus = async (req, res, next) => {
 
 export const updateRepair = async (req, res, next) => {
   try {
-    const ticket = await repairService.updateRepair(req.params.id, req.body);
+    const tenantId = req.user?.tenantId || null;
+    const ticket = await repairService.updateRepair(req.params.id, req.body, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'UPDATE', module: 'repair', entityId: ticket._id, entityType: 'RepairTicket', req });
     return ApiResponse.success(res, ticket, 'Repair ticket updated');
   } catch (error) { next(error); }
@@ -77,7 +80,8 @@ export const updateRepair = async (req, res, next) => {
 
 export const deleteRepair = async (req, res, next) => {
   try {
-    await repairService.deleteRepair(req.params.id);
+    const tenantId = req.user?.tenantId || null;
+    await repairService.deleteRepair(req.params.id, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'DELETE', module: 'repair', entityId: req.params.id, entityType: 'RepairTicket', req });
     return ApiResponse.success(res, null, 'Repair ticket deleted');
   } catch (error) { next(error); }
@@ -85,7 +89,8 @@ export const deleteRepair = async (req, res, next) => {
 
 export const getRepairStats = async (req, res, next) => {
   try {
-    const stats = await repairService.getRepairStats();
+    const tenantId = req.user?.tenantId || null;
+    const stats = await repairService.getRepairStats(tenantId);
     return ApiResponse.success(res, stats);
   } catch (error) { next(error); }
 };

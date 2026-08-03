@@ -3,9 +3,11 @@ import { Transaction } from '../sale/sale.model.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { paginate, getPagination } from '../../utils/http/pagination.js';
 import { hashText } from '../../utils/crypto.utils.js';
+import { withTenant } from '../../utils/tenant.js';
 
-export const getAllCustomers = async (page = 1, limit = 20, search = '') => {
-  const query = { isDeleted: false };
+export const getAllCustomers = async (page = 1, limit = 20, search = '', tenantId = null) => {
+  const query = withTenant({ isDeleted: false }, tenantId);
+
   if (search) {
     const pHash = hashText(search);
     query.$or = [
@@ -21,27 +23,28 @@ export const getAllCustomers = async (page = 1, limit = 20, search = '') => {
   return { customers, pagination: getPagination(total, page, limit) };
 };
 
-export const getCustomerById = async (id) => {
-  const customer = await Customer.findOne({ _id: id, isDeleted: false });
+export const getCustomerById = async (id, tenantId = null) => {
+  const customer = await Customer.findOne(withTenant({ _id: id, isDeleted: false }, tenantId));
   if (!customer) throw ApiError.notFound('Customer not found');
   return customer;
 };
 
-export const createCustomer = async (data) => {
+export const createCustomer = async (data, tenantId = null) => {
   const pHash = hashText(data.phone);
-  const existing = await Customer.findOne({ phoneHash: pHash, isDeleted: false });
+  const existingQuery = withTenant({ phoneHash: pHash, isDeleted: false }, tenantId);
+  const existing = await Customer.findOne(existingQuery);
   if (existing) throw ApiError.conflict('Customer with this phone already exists');
   data.phoneHash = pHash;
-  return Customer.create(data);
+  return Customer.create({ ...data, tenantId: tenantId || null });
 };
 
-export const updateCustomer = async (id, data) => {
-  const customer = await Customer.findOne({ _id: id, isDeleted: false });
+export const updateCustomer = async (id, data, tenantId = null) => {
+  const customer = await Customer.findOne(withTenant({ _id: id, isDeleted: false }, tenantId));
   if (!customer) throw ApiError.notFound('Customer not found');
 
   if (data.phone && data.phone !== customer.phone) {
     const pHash = hashText(data.phone);
-    const existing = await Customer.findOne({ phoneHash: pHash, isDeleted: false, _id: { $ne: id } });
+    const existing = await Customer.findOne(withTenant({ phoneHash: pHash, isDeleted: false, _id: { $ne: id } }, tenantId));
     if (existing) throw ApiError.conflict('Customer with this phone already exists');
     data.phoneHash = pHash;
   }
@@ -51,28 +54,28 @@ export const updateCustomer = async (id, data) => {
   return customer;
 };
 
-export const deleteCustomer = async (id) => {
-  const customer = await Customer.findOne({ _id: id, isDeleted: false });
+export const deleteCustomer = async (id, tenantId = null) => {
+  const customer = await Customer.findOne(withTenant({ _id: id, isDeleted: false }, tenantId));
   if (!customer) throw ApiError.notFound('Customer not found');
   customer.isDeleted = true;
   await customer.save();
   return customer;
 };
 
-export const getCustomerHistory = async (id) => {
-  const customer = await Customer.findOne({ _id: id, isDeleted: false });
+export const getCustomerHistory = async (id, tenantId = null) => {
+  const customer = await Customer.findOne(withTenant({ _id: id, isDeleted: false }, tenantId));
   if (!customer) throw ApiError.notFound('Customer not found');
 
   const sales = await Transaction.find({
     customerPhone: customer.phone,
     txType: 'SALE',
-    isDeleted: false,
+    ...withTenant({ isDeleted: false }, tenantId),
   }).sort({ createdAt: -1 });
 
   const returns = await Transaction.find({
     customerPhone: customer.phone,
     txType: 'RETURN',
-    isDeleted: false,
+    ...withTenant({ isDeleted: false }, tenantId),
   }).sort({ createdAt: -1 });
 
   const totalPurchased = sales.reduce((sum, s) => sum + (s.netTotal || 0), 0);
@@ -92,8 +95,8 @@ export const getCustomerHistory = async (id) => {
   };
 };
 
-export const collectDue = async (id, amount, paymentMethod, userId) => {
-  const customer = await Customer.findOne({ _id: id, isDeleted: false });
+export const collectDue = async (id, amount, paymentMethod, userId, tenantId = null) => {
+  const customer = await Customer.findOne(withTenant({ _id: id, isDeleted: false }, tenantId));
   if (!customer) throw ApiError.notFound('Customer not found');
   if (customer.dueBalance <= 0) throw ApiError.badRequest('No pending due for this customer');
   if (amount > customer.dueBalance) throw ApiError.badRequest(`Due amount exceeds balance of ৳${customer.dueBalance}`);
@@ -101,8 +104,7 @@ export const collectDue = async (id, amount, paymentMethod, userId) => {
   const dueSales = await Transaction.find({
     customerPhone: customer.phone,
     txType: 'SALE',
-    isDeleted: false,
-    'paymentBreakdown.dueAmount': { $gt: 0 },
+    ...withTenant({ isDeleted: false, 'paymentBreakdown.dueAmount': { $gt: 0 } }, tenantId),
   }).sort({ createdAt: 1 });
 
   let remaining = amount;
@@ -123,17 +125,18 @@ export const collectDue = async (id, amount, paymentMethod, userId) => {
   return { customer, collected: amount - remaining };
 };
 
-export const getCustomerStats = async () => {
-  const total = await Customer.countDocuments({ isDeleted: false });
-  const withDue = await Customer.countDocuments({ isDeleted: false, dueBalance: { $gt: 0 } });
+export const getCustomerStats = async (tenantId = null) => {
+  const baseQuery = withTenant({ isDeleted: false }, tenantId);
+  const total = await Customer.countDocuments(baseQuery);
+  const withDue = await Customer.countDocuments({ ...baseQuery, dueBalance: { $gt: 0 } });
 
   const dueAgg = await Customer.aggregate([
-    { $match: { isDeleted: false, dueBalance: { $gt: 0 } } },
+    { $match: { ...baseQuery, dueBalance: { $gt: 0 } } },
     { $group: { _id: null, totalDue: { $sum: '$dueBalance' }, count: { $sum: 1 } } },
   ]);
 
   const purchaseAgg = await Customer.aggregate([
-    { $match: { isDeleted: false } },
+    { $match: baseQuery },
     { $group: { _id: null, totalPurchases: { $sum: '$totalPurchases' } } },
   ]);
 

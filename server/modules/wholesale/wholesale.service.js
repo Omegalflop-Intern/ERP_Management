@@ -2,17 +2,21 @@ import { WholesalePrice, WholesaleOrder } from './wholesale.model.js';
 import { Transaction } from '../sale/sale.model.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { paginate, getPagination } from '../../utils/http/pagination.js';
+import { createAutomatedWholesaleJournal } from '../accounting/accounting.service.js';
 
-const genOrderNumber = async () => {
+const genOrderNumber = async (tenantId = null) => {
   const now = new Date();
   const date = now.toISOString().slice(0, 10).replace(/-/g, '');
-  const count = await WholesaleOrder.countDocuments({ createdAt: { $gte: new Date(now.getFullYear(), now.getMonth(), now.getDate()) } });
+  const countQuery = { createdAt: { $gte: new Date(now.getFullYear(), now.getMonth(), now.getDate()) } };
+  if (tenantId) countQuery.tenantId = tenantId;
+  const count = await WholesaleOrder.countDocuments(countQuery);
   return `WS-${date}-${String(count + 1).padStart(4, '0')}`;
 };
 
 // --- Prices ---
-export const getAllPrices = async (page = 1, limit = 50, filters = {}) => {
+export const getAllPrices = async (page = 1, limit = 50, filters = {}, tenantId = null) => {
   const query = { isDeleted: false };
+  if (tenantId) query.tenantId = tenantId;
   if (filters.product) query.product = filters.product;
   if (filters.tier) query.tier = { $regex: filters.tier, $options: 'i' };
   const total = await WholesalePrice.countDocuments(query);
@@ -24,24 +28,29 @@ export const createPrice = async (data) => {
   return WholesalePrice.create(data);
 };
 
-export const updatePrice = async (id, data) => {
-  const price = await WholesalePrice.findOne({ _id: id, isDeleted: false });
+export const updatePrice = async (id, data, tenantId = null) => {
+  const query = { _id: id, isDeleted: false };
+  if (tenantId) query.tenantId = tenantId;
+  const price = await WholesalePrice.findOne(query);
   if (!price) throw ApiError.notFound('Wholesale price not found');
   Object.assign(price, data);
   await price.save();
   return price;
 };
 
-export const deletePrice = async (id) => {
-  const price = await WholesalePrice.findOne({ _id: id, isDeleted: false });
+export const deletePrice = async (id, tenantId = null) => {
+  const query = { _id: id, isDeleted: false };
+  if (tenantId) query.tenantId = tenantId;
+  const price = await WholesalePrice.findOne(query);
   if (!price) throw ApiError.notFound('Wholesale price not found');
   price.isDeleted = true;
   await price.save();
 };
 
 // --- Orders ---
-export const getAllOrders = async (page = 1, limit = 20, filters = {}) => {
+export const getAllOrders = async (page = 1, limit = 20, filters = {}, tenantId = null) => {
   const query = { isDeleted: false };
+  if (tenantId) query.tenantId = tenantId;
   if (filters.customer) query.customer = filters.customer;
   if (filters.status) query.status = filters.status;
 
@@ -50,6 +59,7 @@ export const getAllOrders = async (page = 1, limit = 20, filters = {}) => {
 
   // Also fetch POS sales with saleType: WHOLESALE
   const saleQuery = { txType: 'SALE', saleType: 'WHOLESALE' };
+  if (tenantId) saleQuery.tenantId = tenantId;
   if (filters.status === 'COMPLETED' || !filters.status) {
     const wholesaleSales = await Transaction.find(saleQuery)
       .populate('customerId', 'name phone companyName')
@@ -75,15 +85,19 @@ export const getAllOrders = async (page = 1, limit = 20, filters = {}) => {
   return { orders: rawOrders, pagination: getPagination(total, page, limit) };
 };
 
-export const getOrderById = async (id) => {
-  const order = await WholesaleOrder.findOne({ _id: id, isDeleted: false })
+export const getOrderById = async (id, tenantId = null) => {
+  const orderQuery = { _id: id, isDeleted: false };
+  if (tenantId) orderQuery.tenantId = tenantId;
+  const order = await WholesaleOrder.findOne(orderQuery)
     .populate('customer', 'name phone email companyName')
     .populate('items.product', 'name sku brand')
     .populate('createdBy', 'fullName username');
   if (order) return order;
 
   // Fallback to POS Sale if ID is a Transaction
-  const posSale = await Transaction.findOne({ _id: id, txType: 'SALE' }).populate('customerId', 'name phone email companyName');
+  const posQuery = { _id: id, txType: 'SALE' };
+  if (tenantId) posQuery.tenantId = tenantId;
+  const posSale = await Transaction.findOne(posQuery).populate('customerId', 'name phone email companyName');
   if (posSale) {
     return {
       _id: posSale._id,
@@ -109,8 +123,8 @@ export const getOrderById = async (id) => {
   throw ApiError.notFound('Order not found');
 };
 
-export const createOrder = async (data, userId) => {
-  const orderNumber = await genOrderNumber();
+export const createOrder = async (data, userId, tenantId = null) => {
+  const orderNumber = await genOrderNumber(tenantId);
   const items = data.items.map(item => ({ ...item, total: item.quantity * item.unitPrice }));
   const subTotal = items.reduce((sum, i) => sum + i.total, 0);
   const grandTotal = subTotal - (data.discount || 0);
@@ -118,6 +132,7 @@ export const createOrder = async (data, userId) => {
 
   return WholesaleOrder.create({
     orderNumber,
+    tenantId: tenantId || data.tenantId || null,
     customer: data.customer,
     items,
     subTotal,
@@ -129,10 +144,16 @@ export const createOrder = async (data, userId) => {
     notes: data.notes,
     createdBy: userId,
   });
+
+  await createAutomatedWholesaleJournal(order, tenantId).catch(err => console.error('Wholesale journal failed:', err));
+
+  return order;
 };
 
-export const updateOrder = async (id, data) => {
-  const order = await WholesaleOrder.findOne({ _id: id, isDeleted: false });
+export const updateOrder = async (id, data, tenantId = null) => {
+  const query = { _id: id, isDeleted: false };
+  if (tenantId) query.tenantId = tenantId;
+  const order = await WholesaleOrder.findOne(query);
   if (!order) throw ApiError.notFound('Order not found');
   Object.assign(order, data);
   if (data.paidAmount !== undefined) {
@@ -142,8 +163,10 @@ export const updateOrder = async (id, data) => {
   return order;
 };
 
-export const deleteOrder = async (id) => {
-  const order = await WholesaleOrder.findOne({ _id: id, isDeleted: false });
+export const deleteOrder = async (id, tenantId = null) => {
+  const query = { _id: id, isDeleted: false };
+  if (tenantId) query.tenantId = tenantId;
+  const order = await WholesaleOrder.findOne(query);
   if (!order) throw ApiError.notFound('Order not found');
   order.isDeleted = true;
   await order.save();
@@ -152,15 +175,21 @@ export const deleteOrder = async (id) => {
 import { Customer } from '../customer/customer.model.js';
 import { processReturn as processSaleReturn } from '../sale/sale.service.js';
 
-export const getOrdersStats = async () => {
-  const totalOrders = await WholesaleOrder.countDocuments({ isDeleted: false });
+export const getOrdersStats = async (tenantId = null) => {
+  const orderQuery = { isDeleted: false };
+  if (tenantId) orderQuery.tenantId = tenantId;
+  const totalOrders = await WholesaleOrder.countDocuments(orderQuery);
+  const matchQuery = { isDeleted: false };
+  if (tenantId) matchQuery.tenantId = tenantId;
   const totalRevenue = await WholesaleOrder.aggregate([
-    { $match: { isDeleted: false } },
+    { $match: matchQuery },
     { $group: { _id: null, total: { $sum: '$grandTotal' }, due: { $sum: '$dueAmount' } } },
   ]);
 
+  const posMatch = { txType: 'SALE', saleType: 'WHOLESALE' };
+  if (tenantId) posMatch.tenantId = tenantId;
   const posWholesaleStats = await Transaction.aggregate([
-    { $match: { txType: 'SALE', saleType: 'WHOLESALE' } },
+    { $match: posMatch },
     { $group: { _id: null, count: { $sum: 1 }, total: { $sum: '$netTotal' }, due: { $sum: '$paymentBreakdown.dueAmount' } } }
   ]);
 
@@ -172,12 +201,14 @@ export const getOrdersStats = async () => {
   return { totalOrders: wsCount, totalRevenue: wsRevenue, totalPaid: wsPaid, totalDue: wsDue };
 };
 
-export const collectOrderDue = async (id, { amount, paymentMethod = 'cash', reference, notes }) => {
+export const collectOrderDue = async (id, { amount, paymentMethod = 'cash', reference, notes }, tenantId = null) => {
   const numAmount = Number(amount);
   if (isNaN(numAmount) || numAmount <= 0) throw ApiError.badRequest('Invalid due collection amount');
 
   // Try POS Sale Transaction first
-  const sale = await Transaction.findOne({ _id: id, txType: 'SALE' });
+  const saleQuery = { _id: id, txType: 'SALE' };
+  if (tenantId) saleQuery.tenantId = tenantId;
+  const sale = await Transaction.findOne(saleQuery);
   if (sale) {
     const currentDue = sale.paymentBreakdown?.dueAmount || 0;
     if (currentDue <= 0) throw ApiError.badRequest('This wholesale sale has no pending due balance');
@@ -194,7 +225,9 @@ export const collectOrderDue = async (id, { amount, paymentMethod = 'cash', refe
   }
 
   // Fallback to WholesaleOrder collection
-  const order = await WholesaleOrder.findOne({ _id: id, isDeleted: false });
+  const orderQuery = { _id: id, isDeleted: false };
+  if (tenantId) orderQuery.tenantId = tenantId;
+  const order = await WholesaleOrder.findOne(orderQuery);
   if (!order) throw ApiError.notFound('Wholesale order not found');
 
   if (order.dueAmount <= 0) throw ApiError.badRequest('This wholesale order has no pending due balance');
@@ -210,8 +243,10 @@ export const collectOrderDue = async (id, { amount, paymentMethod = 'cash', refe
   return { orderId: order._id, collectedAmount: collectAmt, remainingDue: order.dueAmount };
 };
 
-export const processOrderReturn = async (id, returnData, username) => {
-  const sale = await Transaction.findOne({ _id: id, txType: 'SALE' });
+export const processOrderReturn = async (id, returnData, username, tenantId = null) => {
+  const saleQuery = { _id: id, txType: 'SALE' };
+  if (tenantId) saleQuery.tenantId = tenantId;
+  const sale = await Transaction.findOne(saleQuery);
   if (sale) {
     return processSaleReturn(id, returnData, username);
   }

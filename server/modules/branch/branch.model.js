@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const branchSchema = new mongoose.Schema(
   {
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', index: true },
     name: { type: String, required: true, trim: true },
     address: { type: String, trim: true },
     phone: { type: String, trim: true },
@@ -13,6 +14,6 @@ const branchSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-branchSchema.index({ name: 1 }, { unique: true });
+branchSchema.index({ tenantId: 1, name: 1 }, { unique: true, sparse: true });
 
 export const Branch = mongoose.model('Branch', branchSchema);

@@ -5,7 +5,8 @@ import { logAction } from '../../utils/auth/auditLog.js';
 export const getAllPayroll = async (req, res, next) => {
   try {
     const { page = 1, limit = 20, branch = '', month = '', year = '', status = '' } = req.query;
-    const result = await payrollService.getAllPayroll(Number(page), Number(limit), branch, month, year, status);
+    const tenantId = req.user?.tenantId || null;
+    const result = await payrollService.getAllPayroll(Number(page), Number(limit), branch, month, year, status, tenantId);
     return ApiResponse.paginated(res, result.records, result.pagination.total, result.pagination.page, result.pagination.limit);
   } catch (error) { next(error); }
 };
@@ -13,7 +14,8 @@ export const getAllPayroll = async (req, res, next) => {
 export const processPayroll = async (req, res, next) => {
   try {
     const { employeeIds, month, year, allowances, deductions } = req.body;
-    const result = await payrollService.processPayroll(employeeIds, month, year, allowances, deductions);
+    const tenantId = req.user?.tenantId || null;
+    const result = await payrollService.processPayroll(employeeIds, month, year, allowances, deductions, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'PROCESS_PAYROLL', module: 'payroll', entityType: 'Payroll', details: { processed: result.processed?.length, month, year }, req });
     return ApiResponse.created(res, result, `Processed ${result.processed.length} payroll records`);
   } catch (error) { next(error); }
@@ -21,7 +23,8 @@ export const processPayroll = async (req, res, next) => {
 
 export const markAsPaid = async (req, res, next) => {
   try {
-    const payroll = await payrollService.markAsPaid(req.params.id, req.user._id);
+    const tenantId = req.user?.tenantId || null;
+    const payroll = await payrollService.markAsPaid(req.params.id, req.user._id, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'MARK_PAID', module: 'payroll', entityId: payroll._id, entityType: 'Payroll', req });
     return ApiResponse.success(res, payroll, 'Marked as paid');
   } catch (error) { next(error); }
@@ -30,21 +33,24 @@ export const markAsPaid = async (req, res, next) => {
 export const getPayrollSummary = async (req, res, next) => {
   try {
     const { month, year } = req.query;
-    const summary = await payrollService.getPayrollSummary(Number(month), Number(year));
+    const tenantId = req.user?.tenantId || null;
+    const summary = await payrollService.getPayrollSummary(Number(month), Number(year), tenantId);
     return ApiResponse.success(res, summary);
   } catch (error) { next(error); }
 };
 
 export const getPayslip = async (req, res, next) => {
   try {
-    const payslip = await payrollService.getPayslip(req.params.id);
+    const tenantId = req.user?.tenantId || null;
+    const payslip = await payrollService.getPayslip(req.params.id, tenantId);
     return ApiResponse.success(res, payslip);
   } catch (error) { next(error); }
 };
 
 export const deletePayroll = async (req, res, next) => {
   try {
-    await payrollService.deletePayroll(req.params.id);
+    const tenantId = req.user?.tenantId || null;
+    await payrollService.deletePayroll(req.params.id, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'DELETE', module: 'payroll', entityId: req.params.id, entityType: 'Payroll', req });
     return ApiResponse.success(res, null, 'Payroll record deleted');
   } catch (error) { next(error); }

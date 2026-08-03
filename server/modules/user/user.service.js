@@ -6,9 +6,10 @@ import { ApiError } from '../../utils/http/ApiError.js';
 import { paginate, getPagination } from '../../utils/http/pagination.js';
 import { escapeRegex } from '../../utils/system/helpers.js';
 import { generateOTP, sendOTP } from '../auth/auth.service.js';
+import { withTenant } from '../../utils/tenant.js';
 
-export const getAllUsers = async (page = 1, limit = 20, search = '') => {
-  const query = { isDeleted: false };
+export const getAllUsers = async (page = 1, limit = 20, search = '', tenantId = null) => {
+  const query = withTenant({}, tenantId);
 
   if (search) {
     const safeSearch = escapeRegex(search);
@@ -29,21 +30,40 @@ export const getAllUsers = async (page = 1, limit = 20, search = '') => {
   return { users, pagination: getPagination(total, page, limit) };
 };
 
-export const getUserById = async (id) => {
-  const user = await User.findOne({ _id: id, isDeleted: false }).populate('role', 'name displayName permissions');
+export const getUserById = async (id, tenantId = null) => {
+  const user = await User.findOne(withTenant({ _id: id, isDeleted: false }, tenantId)).populate('role', 'name displayName permissions');
   if (!user) throw ApiError.notFound('User not found');
   return user;
 };
 
-export const createUser = async (data) => {
+export const createUser = async (data, tenantId = null) => {
   if (data.phone && typeof data.phone === 'string' && !data.phone.trim()) {
     delete data.phone;
   }
 
-  const existingUser = await User.findOne({
-    $or: [{ username: data.username }, { email: data.email }],
-    isDeleted: false,
-  });
+  // Enforce tenant plan user limit
+  const effectiveTenantId = tenantId || data.tenantId || null;
+  if (effectiveTenantId) {
+    const { Tenant } = await import('../tenant/tenant.model.js');
+    const tenant = await Tenant.findById(effectiveTenantId).select('maxUsers plan').lean();
+    if (tenant) {
+      const currentCount = await User.countDocuments({ tenantId: effectiveTenantId, isDeleted: false });
+      const userLimit = tenant.maxUsers || 5;
+      if (currentCount >= userLimit) {
+        throw ApiError.forbidden(
+          `Your plan (${tenant.plan || 'STARTER'}) allows a maximum of ${userLimit} user${userLimit === 1 ? '' : 's'}. ` +
+            'Please upgrade your subscription to add more users.'
+        );
+      }
+    }
+  }
+
+  const existingUser = await User.findOne(
+    withTenant({
+      $or: [{ username: data.username }, { email: data.email }],
+      isDeleted: false,
+    }, tenantId)
+  );
 
   if (existingUser) {
     if (existingUser.username === data.username) throw ApiError.conflict('Username already exists');
@@ -51,7 +71,7 @@ export const createUser = async (data) => {
   }
 
   if (data.phone) {
-    const existingPhone = await User.findOne({ phone: data.phone, isDeleted: false });
+    const existingPhone = await User.findOne(withTenant({ phone: data.phone, isDeleted: false }, tenantId));
     if (existingPhone) throw ApiError.conflict('Phone number already exists');
   }
 
@@ -60,7 +80,7 @@ export const createUser = async (data) => {
 
   const passwordHash = await bcrypt.hash(data.password, 10);
   const otpCode = generateOTP();
-  const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+  const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
   const user = await User.create({
     ...data,
@@ -69,11 +89,11 @@ export const createUser = async (data) => {
     isVerified: false,
     otpCode,
     otpExpiresAt,
+    tenantId: tenantId || data.tenantId || null,
   });
 
-  // Auto-create corresponding Employee profile if not exists
   try {
-    const existingEmployee = await Employee.findOne({ user: user._id, isDeleted: false });
+    const existingEmployee = await Employee.findOne(withTenant({ user: user._id, isDeleted: false }, tenantId));
     if (!existingEmployee) {
       await Employee.create({
         user: user._id,
@@ -86,13 +106,13 @@ export const createUser = async (data) => {
         branch: user.branchId || 'Main',
         salary: 0,
         joiningDate: new Date(),
+        tenantId: tenantId || null,
       });
     }
   } catch (empErr) {
     console.error(`[USER] Auto employee creation failed for user ${user._id}:`, empErr.message);
   }
 
-  // Send verification OTP email to user's mail (non-blocking)
   sendOTP(user.email, otpCode, user.fullName || user.username).catch((err) => {
     console.error(`[USER] Failed to send verification OTP to ${user.email}:`, err.message);
   });
@@ -103,26 +123,26 @@ export const createUser = async (data) => {
   return userObj;
 };
 
-export const updateUser = async (id, data) => {
+export const updateUser = async (id, data, tenantId = null) => {
   if (data.phone && typeof data.phone === 'string' && !data.phone.trim()) {
     data.phone = undefined;
   }
 
-  const user = await User.findOne({ _id: id, isDeleted: false });
+  const user = await User.findOne(withTenant({ _id: id, isDeleted: false }, tenantId));
   if (!user) throw ApiError.notFound('User not found');
 
   if (data.username && data.username !== user.username) {
-    const existing = await User.findOne({ username: data.username, isDeleted: false, _id: { $ne: id } });
+    const existing = await User.findOne(withTenant({ username: data.username, isDeleted: false, _id: { $ne: id } }, tenantId));
     if (existing) throw ApiError.conflict('Username already exists');
   }
 
   if (data.email && data.email !== user.email) {
-    const existing = await User.findOne({ email: data.email, isDeleted: false, _id: { $ne: id } });
+    const existing = await User.findOne(withTenant({ email: data.email, isDeleted: false, _id: { $ne: id } }, tenantId));
     if (existing) throw ApiError.conflict('Email already exists');
   }
 
   if (data.phone && data.phone !== user.phone) {
-    const existing = await User.findOne({ phone: data.phone, isDeleted: false, _id: { $ne: id } });
+    const existing = await User.findOne(withTenant({ phone: data.phone, isDeleted: false, _id: { $ne: id } }, tenantId));
     if (existing) throw ApiError.conflict('Phone number already exists');
   }
 
@@ -136,11 +156,10 @@ export const updateUser = async (id, data) => {
   allowed.forEach(key => { if (data[key] !== undefined) user[key] = data[key]; });
   await user.save();
 
-  // Sync corresponding Employee profile
   try {
     const roleObj = data.role ? await Role.findOne({ _id: data.role, isDeleted: false }) : null;
     await Employee.findOneAndUpdate(
-      { user: user._id, isDeleted: false },
+      withTenant({ user: user._id, isDeleted: false }, tenantId),
       {
         $set: {
           name: user.fullName || user.username,
@@ -159,24 +178,31 @@ export const updateUser = async (id, data) => {
   return user;
 };
 
-export const deleteUser = async (id) => {
-  const user = await User.findOne({ _id: id, isDeleted: false });
+export const deleteUser = async (id, tenantId = null) => {
+  const user = await User.findOne(withTenant({ _id: id, isDeleted: false }, tenantId));
   if (!user) throw ApiError.notFound('User not found');
-  user.isDeleted = true;
-  await user.save();
+  
+  await User.findOneAndDelete(withTenant({ _id: id, isDeleted: false }, tenantId));
+  
+  try {
+    await Employee.deleteMany(withTenant({ $or: [{ email: user.email }, { user: user._id }] }, tenantId));
+  } catch (empErr) {
+    console.error(`[USER] Failed to clean linked employee for user ${id}:`, empErr.message);
+  }
+
   return user;
 };
 
-export const toggleVerification = async (id) => {
-  const user = await User.findOne({ _id: id, isDeleted: false });
+export const toggleVerification = async (id, tenantId = null) => {
+  const user = await User.findOne(withTenant({ _id: id, isDeleted: false }, tenantId));
   if (!user) throw ApiError.notFound('User not found');
   user.isVerified = !user.isVerified;
   await user.save();
   return user;
 };
 
-export const changePassword = async (id, currentPassword, newPassword) => {
-  const user = await User.findOne({ _id: id, isDeleted: false }).select('+passwordHash');
+export const changePassword = async (id, currentPassword, newPassword, tenantId = null) => {
+  const user = await User.findOne(withTenant({ _id: id, isDeleted: false }, tenantId)).select('+passwordHash');
   if (!user) throw ApiError.notFound('User not found');
 
   const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
@@ -187,8 +213,8 @@ export const changePassword = async (id, currentPassword, newPassword) => {
   return user;
 };
 
-export const getMyProfile = async (userId) => {
-  const user = await User.findOne({ _id: userId, isDeleted: false })
+export const getMyProfile = async (userId, tenantId = null) => {
+  const user = await User.findOne(withTenant({ _id: userId, isDeleted: false }, tenantId))
     .populate('role', 'name displayName permissions')
     .lean();
   if (!user) throw ApiError.notFound('User not found');
@@ -201,20 +227,20 @@ export const getMyProfile = async (userId) => {
   return user;
 };
 
-export const updateMyProfile = async (userId, data, file) => {
-  const user = await User.findOne({ _id: userId, isDeleted: false });
+export const updateMyProfile = async (userId, data, file, tenantId = null) => {
+  const user = await User.findOne(withTenant({ _id: userId, isDeleted: false }, tenantId));
   if (!user) throw ApiError.notFound('User not found');
 
   if (data.email && data.email !== user.email) {
-    const existing = await User.findOne({ email: data.email, isDeleted: false, _id: { $ne: userId } });
+    const existing = await User.findOne(withTenant({ email: data.email, isDeleted: false, _id: { $ne: userId } }, tenantId));
     if (existing) throw ApiError.conflict('Email already exists');
   }
   if (data.phone && data.phone !== user.phone) {
-    const existing = await User.findOne({ phone: data.phone, isDeleted: false, _id: { $ne: userId } });
+    const existing = await User.findOne(withTenant({ phone: data.phone, isDeleted: false, _id: { $ne: userId } }, tenantId));
     if (existing) throw ApiError.conflict('Phone number already exists');
   }
   if (data.username && data.username !== user.username) {
-    const existing = await User.findOne({ username: data.username, isDeleted: false, _id: { $ne: userId } });
+    const existing = await User.findOne(withTenant({ username: data.username, isDeleted: false, _id: { $ne: userId } }, tenantId));
     if (existing) throw ApiError.conflict('Username already exists');
   }
 
@@ -226,7 +252,7 @@ export const updateMyProfile = async (userId, data, file) => {
   allowed.forEach(key => { if (data[key] !== undefined) user[key] = data[key]; });
   await user.save();
 
-  const updated = await User.findOne({ _id: userId, isDeleted: false })
+  const updated = await User.findOne(withTenant({ _id: userId, isDeleted: false }, tenantId))
     .populate('role', 'name displayName permissions')
     .lean();
   delete updated.passwordHash;

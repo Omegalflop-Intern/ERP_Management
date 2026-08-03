@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const assetSchema = new mongoose.Schema(
   {
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', index: true },
     assetName: { type: String, required: true, trim: true },
     category: { type: String, enum: ['FURNITURE', 'EQUIPMENT', 'ELECTRONICS', 'VEHICLE', 'OTHER'], default: 'EQUIPMENT' },
     purchaseDate: { type: Date, required: true },

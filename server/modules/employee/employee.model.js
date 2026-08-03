@@ -3,8 +3,9 @@ import { encryptText, decryptText } from '../../utils/crypto.utils.js';
 
 const employeeSchema = new mongoose.Schema(
   {
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', index: true },
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    employeeId: { type: String, required: true, unique: true, trim: true },
+    employeeId: { type: String, required: true, trim: true },
     name: { type: String, required: true, trim: true },
     phone: { type: String, required: true, trim: true },
     email: { type: String, trim: true, lowercase: true },
@@ -32,6 +33,7 @@ const employeeSchema = new mongoose.Schema(
   }
 );
 
+employeeSchema.index({ tenantId: 1, employeeId: 1 }, { unique: true, sparse: true });
 employeeSchema.index({ name: 'text', phone: 'text', designation: 'text', department: 'text' });
 
 export const Employee = mongoose.model('Employee', employeeSchema);

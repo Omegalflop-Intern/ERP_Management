@@ -77,7 +77,7 @@ export default function WarrantyClaims() {
         </div>
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-red-700 hover:bg-red-600 text-white font-medium rounded-lg text-sm transition-all"
+          className="flex items-center gap-2 px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-medium rounded-lg text-sm transition-all"
         >
           <Plus className="w-4 h-4" /> New Claim
         </button>
@@ -132,14 +132,14 @@ export default function WarrantyClaims() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search claims..."
-                className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-red-500"
+                className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-[#2563EB]"
               />
             </div>
           </div>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-red-500"
+            className="px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-[#2563EB]"
           >
             <option value="">All Status</option>
             <option value="pending">Pending</option>
@@ -290,7 +290,7 @@ function WarrantyClaimModal({ customers, imeis, onClose }) {
               required
               value={form.customer}
               onChange={(e) => setForm({ ...form, customer: e.target.value })}
-              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-red-500"
+              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-[#2563EB]"
             >
               <option value="">Select customer</option>
               {customers.map((c) => (
@@ -308,7 +308,7 @@ function WarrantyClaimModal({ customers, imeis, onClose }) {
               required
               value={form.imei}
               onChange={(e) => setForm({ ...form, imei: e.target.value })}
-              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-red-500"
+              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-[#2563EB]"
             >
               <option value="">Select IMEI</option>
               {imeis.map((u) => (
@@ -326,7 +326,7 @@ function WarrantyClaimModal({ customers, imeis, onClose }) {
               required
               value={form.claimType}
               onChange={(e) => setForm({ ...form, claimType: e.target.value })}
-              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-red-500 capitalize"
+              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-[#2563EB] capitalize"
             >
               <option value="repair">Repair</option>
               <option value="replacement">Replacement</option>
@@ -342,7 +342,7 @@ function WarrantyClaimModal({ customers, imeis, onClose }) {
               rows={3}
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
-              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-red-500"
+              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-[#2563EB]"
               placeholder="Describe the issue..."
             />
           </div>
@@ -354,7 +354,7 @@ function WarrantyClaimModal({ customers, imeis, onClose }) {
               type="text"
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-red-500"
+              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-[#2563EB]"
             />
           </div>
           <div className="flex justify-end gap-3 pt-2">
@@ -461,7 +461,7 @@ function ClaimDetailModal({ claim: cl, onClose }) {
                   rows={2}
                   value={resolution}
                   onChange={(e) => setResolution(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-red-500"
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-[#2563EB]"
                 />
               </div>
               <div className="flex gap-2">

@@ -1,10 +1,12 @@
 import { Router } from 'express';
 import * as loanController from './loan.controller.js';
 import { authenticate } from '../../middleware/auth.middleware.js';
+import { checkTenantStatus } from '../../middleware/tenant.middleware.js';
 import { authorize } from '../../middleware/role.middleware.js';
 
 const router = Router();
 router.use(authenticate);
+router.use(checkTenantStatus);
 
 router.get('/', loanController.getAllLoans);
 router.get('/:id', loanController.getLoanById);

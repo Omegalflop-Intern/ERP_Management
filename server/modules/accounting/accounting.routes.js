@@ -2,12 +2,14 @@ import { Router } from 'express';
 import * as accountingController from './accounting.controller.js';
 import { validate } from '../../middleware/validate.middleware.js';
 import { authenticate } from '../../middleware/auth.middleware.js';
+import { checkTenantStatus } from '../../middleware/tenant.middleware.js';
 import { authorize } from '../../middleware/role.middleware.js';
 import { createAccountSchema, updateAccountSchema, createJournalEntrySchema, postJournalEntrySchema } from './accounting.validator.js';
 
 const router = Router();
 
 router.use(authenticate);
+router.use(checkTenantStatus);
 
 // Accounts
 router.get('/accounts', accountingController.getAllAccounts);

@@ -10,7 +10,8 @@ const passportEventSchema = new mongoose.Schema({
 
 const inventoryUnitSchema = new mongoose.Schema(
   {
-    imeiOrSerial: { type: String, required: true, unique: true, index: true },
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', index: true },
+    imeiOrSerial: { type: String, required: true, index: true },
     productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
     branchId: { type: mongoose.Schema.Types.ObjectId, ref: 'Branch' },
     supplierId: { type: mongoose.Schema.Types.ObjectId, ref: 'Supplier' },
@@ -35,5 +36,7 @@ const inventoryUnitSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+inventoryUnitSchema.index({ tenantId: 1, imeiOrSerial: 1 }, { unique: true, sparse: true });
 
 export const InventoryUnit = mongoose.model('InventoryUnit', inventoryUnitSchema);

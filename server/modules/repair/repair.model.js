@@ -2,7 +2,8 @@ import mongoose from 'mongoose';
 
 const repairTicketSchema = new mongoose.Schema(
   {
-    ticketNumber: { type: String, required: true, unique: true },
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', index: true },
+    ticketNumber: { type: String, required: true },
     customerName: { type: String, required: true },
     customerPhone: { type: String, required: true },
     deviceModel: { type: String, required: true },
@@ -26,5 +27,7 @@ const repairTicketSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+repairTicketSchema.index({ tenantId: 1, ticketNumber: 1 }, { unique: true, sparse: true });
 
 export const RepairTicket = mongoose.model('RepairTicket', repairTicketSchema);

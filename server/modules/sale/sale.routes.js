@@ -2,6 +2,7 @@ import { Router } from 'express';
 import * as saleController from './sale.controller.js';
 import { validate } from '../../middleware/validate.middleware.js';
 import { authenticate } from '../../middleware/auth.middleware.js';
+import { checkTenantStatus } from '../../middleware/tenant.middleware.js';
 import { authorize } from '../../middleware/role.middleware.js';
 import { createSaleSchema, returnSaleSchema } from './sale.validator.js';
 
@@ -11,6 +12,7 @@ const router = Router();
 router.get('/public/:token', saleController.getPublicInvoice);
 
 router.use(authenticate);
+router.use(checkTenantStatus);
 
 /**
  * @swagger

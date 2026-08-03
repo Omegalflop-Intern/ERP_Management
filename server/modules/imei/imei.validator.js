@@ -11,7 +11,7 @@ export const addInventoryUnitSchema = z.object({
 });
 
 export const updateImeiStatusSchema = z.object({
-  status: z.enum(['Available', 'Reserved', 'Sold', 'Returned', 'Defective', 'Sent for Repair', 'Display Unit']),
+  status: z.enum(['Available', 'Reserved', 'Sold', 'Returned', 'Returned to Supplier', 'Defective', 'Sent for Repair', 'Display Unit']),
 });
 
 export const priceDropSchema = z.object({

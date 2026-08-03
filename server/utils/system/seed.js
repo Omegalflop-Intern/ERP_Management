@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { User } from '../../modules/user/user.model.js';
 import { Role } from '../../modules/role/role.model.js';
 import { seedDefaultRoles } from '../../modules/role/role.service.js';
+import { seedSubscriptionPlans } from '../../modules/plans/plans.service.js';
 import { connectDB } from '../../config/db.js';
 
 const getEnvPassword = (role, defaultPassword) => {
@@ -39,6 +40,10 @@ const seed = async () => {
 
     console.log('[SEED] Seeding default system roles...');
     await seedDefaultRoles();
+
+    console.log('[SEED] Seeding subscription plans...');
+    await seedSubscriptionPlans();
+    console.log('[SEED] Subscription plans seeded (FREE, STARTER, PRO, ENTERPRISE).');
 
     for (const userData of seedUsers) {
       const existing = await User.findOne({ username: userData.username });

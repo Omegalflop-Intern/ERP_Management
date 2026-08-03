@@ -300,7 +300,7 @@ export default function SettingsPage() {
                   <AlertTriangle className="w-4 h-4 shrink-0" /> Restoring will overwrite existing
                   collection documents with the backup file data.
                 </div>
-                <label className="inline-flex items-center gap-2 px-4 py-2 bg-red-700 hover:bg-red-600 text-white font-bold text-xs rounded-lg cursor-pointer transition-all">
+                <label className="inline-flex items-center gap-2 px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-xs rounded-lg cursor-pointer transition-all">
                   <Upload className="w-4 h-4" /> Select Backup JSON File to Restore
                   <input
                     type="file"
@@ -361,7 +361,7 @@ export default function SettingsPage() {
                         type="checkbox"
                         checked={!!form[key]}
                         onChange={(e) => setForm({ ...form, [key]: e.target.checked })}
-                        className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                        className="rounded border-gray-300 text-red-600 focus:ring-[#2563EB]"
                       />
                       <span className="text-sm text-gray-700 dark:text-gray-300">
                         {form[key] ? 'Enabled' : 'Disabled'}

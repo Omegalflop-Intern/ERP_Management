@@ -1,7 +1,8 @@
-const clients = new Map(); // userId (string) → Express response
+const clients = new Map(); // userId (string) → { res, tenantId }
 
 export const sseConnect = (req, res) => {
   const userId = req.user.userId.toString();
+  const tenantId = req.user?.tenantId || null;
 
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache, no-transform');
@@ -10,7 +11,7 @@ export const sseConnect = (req, res) => {
   res.flushHeaders();
 
   res.write(`data: ${JSON.stringify({ type: 'connected', userId })}\n\n`);
-  clients.set(userId, res);
+  clients.set(userId, { res, tenantId });
 
   const heartbeat = setInterval(() => {
     if (res.writableEnded) {
@@ -32,21 +33,37 @@ export const sseConnect = (req, res) => {
  * @param {{ type: string, data?: any, message?: string }} event
  */
 export const pushToUser = (userId, event) => {
-  const res = clients.get(userId.toString());
-  if (res && !res.writableEnded) {
-    res.write(`data: ${JSON.stringify(event)}\n\n`);
+  const client = clients.get(userId.toString());
+  if (client && !client.res.writableEnded) {
+    client.res.write(`data: ${JSON.stringify(event)}\n\n`);
   }
 };
 
 /**
- * Broadcast an event to all connected clients.
+ * Push an event to all connected clients.
  * @param {{ type: string, data?: any, message?: string }} event
  */
 export const broadcastAll = (event) => {
   const payload = `data: ${JSON.stringify(event)}\n\n`;
-  for (const [, res] of clients) {
-    if (!res.writableEnded) {
-      res.write(payload);
+  for (const [, client] of clients) {
+    if (!client.res.writableEnded) {
+      client.res.write(payload);
+    }
+  }
+};
+
+/**
+ * Push an event only to clients belonging to the given tenant.
+ * Platform super admin clients (tenantId null) also receive the event.
+ * @param {string} tenantId
+ * @param {{ type: string, data?: any, message?: string }} event
+ */
+export const broadcastToTenant = (tenantId, event) => {
+  const payload = `data: ${JSON.stringify(event)}\n\n`;
+  for (const [, client] of clients) {
+    if (client.res.writableEnded) continue;
+    if (client.tenantId === tenantId || client.tenantId === null) {
+      client.res.write(payload);
     }
   }
 };

@@ -1,29 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  CheckCircle,
-  Eye,
-  Minus,
-  Package,
-  Pencil,
-  Plus,
-  RefreshCw,
-  Search,
-  Truck,
-  XCircle,
-} from 'lucide-react';
-import React, { useState } from 'react';
+import { Eye, Minus, Package, Pencil, Plus, RefreshCw, Search, Trash2, Truck, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import api from '../../lib/api';
 
-const STATUSES = [
-  'ALL',
-  'DRAFT',
-  'PENDING_APPROVAL',
-  'APPROVED',
-  'PARTIALLY_RECEIVED',
-  'RECEIVED',
-  'CANCELLED',
-];
+const STATUSES = ['ALL', 'APPROVED', 'RECEIVED', 'PARTIALLY_RECEIVED', 'CANCELLED'];
 const STATUS_COLORS = {
   DRAFT: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300',
   PENDING_APPROVAL: 'bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400',
@@ -34,7 +15,6 @@ const STATUS_COLORS = {
 };
 
 import PageHeader from '../../components/layout/PageHeader';
-import EmptyState from '../../components/ui/EmptyState';
 
 export default function PurchaseOrders() {
   const [search, setSearch] = useState('');
@@ -44,6 +24,7 @@ export default function PurchaseOrders() {
   const [viewPO, setViewPO] = useState(null);
   const [showGRN, setShowGRN] = useState(null);
   const [showReturnModal, setShowReturnModal] = useState(null);
+  const [deletePO, setDeletePO] = useState(null);
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -57,15 +38,6 @@ export default function PurchaseOrders() {
   });
 
   const orders = data?.data || [];
-
-  const statusMutation = useMutation({
-    mutationFn: async ({ id, status }) => api.put(`/purchase-orders/${id}`, { status }),
-    onSuccess: () => {
-      toast.success('Order updated');
-      queryClient.invalidateQueries(['purchase-orders']);
-    },
-    onError: (e) => toast.error(e.response?.data?.message || 'Failed'),
-  });
 
   return (
     <div className="space-y-6">
@@ -183,37 +155,24 @@ export default function PurchaseOrders() {
                       {(po.dueAmount || 0) > 0 ? `৳${po.dueAmount.toLocaleString()}` : '-'}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[po.status] || ''}`}
-                      >
-                        {po.status?.replace(/_/g, ' ')}
-                      </span>
+                      <div className="flex flex-col items-center gap-1">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[po.status] || ''}`}
+                        >
+                          {po.status?.replace(/_/g, ' ')}
+                        </span>
+                        {(po.returnedCount || 0) > 0 && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20">
+                            {po.returnedCount} returned
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
                       {new Date(po.createdAt).toLocaleDateString('en-BD')}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        {po.status === 'DRAFT' && (
-                          <button
-                            onClick={() =>
-                              statusMutation.mutate({ id: po._id, status: 'PENDING_APPROVAL' })
-                            }
-                            className="px-2 py-1 text-xs font-medium bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 rounded-lg hover:bg-amber-200 transition-colors"
-                          >
-                            Submit
-                          </button>
-                        )}
-                        {po.status === 'PENDING_APPROVAL' && (
-                          <button
-                            onClick={() =>
-                              statusMutation.mutate({ id: po._id, status: 'APPROVED' })
-                            }
-                            className="px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 rounded-lg hover:bg-blue-200 transition-colors"
-                          >
-                            Approve
-                          </button>
-                        )}
                         {(po.status === 'APPROVED' || po.status === 'PARTIALLY_RECEIVED') && (
                           <button
                             onClick={() => setShowGRN(po)}
@@ -230,13 +189,22 @@ export default function PurchaseOrders() {
                             Return
                           </button>
                         )}
-                        {(po.status === 'DRAFT' || po.status === 'PENDING_APPROVAL') && (
+                        {po.status !== 'CANCELLED' && (
                           <button
                             onClick={() => setEditPO(po)}
                             className="p-1.5 text-gray-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
                             title="Edit Order"
                           >
                             <Pencil className="w-4 h-4" />
+                          </button>
+                        )}
+                        {po.status !== 'RECEIVED' && po.status !== 'PARTIALLY_RECEIVED' && po.status !== 'CANCELLED' && (
+                          <button
+                            onClick={() => setDeletePO(po)}
+                            className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                            title="Delete Order"
+                          >
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         )}
                         <button
@@ -288,15 +256,146 @@ export default function PurchaseOrders() {
           onSuccess={() => setShowReturnModal(null)}
         />
       )}
+      {deletePO && (
+        <DeleteConfirmModal
+          order={deletePO}
+          onClose={() => setDeletePO(null)}
+          onSuccess={() => {
+            setDeletePO(null);
+            queryClient.invalidateQueries(['purchase-orders']);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function ProductSearchInput({ products, value, onChange, onSelect }) {
+  const [query, setQuery] = useState('');
+  const [open, setOpen] = useState(false);
+  const [highlightIdx, setHighlightIdx] = useState(-1);
+  const inputRef = useRef(null);
+  const listRef = useRef(null);
+
+  const selectedProduct = products.find((p) => p._id === value);
+  const displayValue = selectedProduct ? `${selectedProduct.name} (${selectedProduct.sku})` : query;
+
+  const filtered = query.trim()
+    ? products.filter(
+        (p) =>
+          p.name.toLowerCase().includes(query.toLowerCase()) ||
+          (p.sku && p.sku.toLowerCase().includes(query.toLowerCase()))
+      )
+    : products.slice(0, 20);
+
+  useEffect(() => {
+    setHighlightIdx(-1);
+  }, [query]);
+
+  const handleKeyDown = (e) => {
+    if (!open) {
+      if (e.key === 'ArrowDown' || e.key === 'Enter') {
+        setOpen(true);
+        return;
+      }
+      return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setHighlightIdx((prev) => (prev < filtered.length - 1 ? prev + 1 : 0));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightIdx((prev) => (prev > 0 ? prev - 1 : filtered.length - 1));
+    } else if (e.key === 'Enter' && highlightIdx >= 0) {
+      e.preventDefault();
+      const p = filtered[highlightIdx];
+      if (p) {
+        onChange(p._id);
+        onSelect(p);
+        setQuery('');
+        setOpen(false);
+      }
+    } else if (e.key === 'Escape') {
+      setOpen(false);
+    }
+  };
+
+  const handleClear = () => {
+    onChange('');
+    setQuery('');
+    inputRef.current?.focus();
+  };
+
+  return (
+    <div className="relative">
+      <div className="relative">
+        <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+        <input
+          ref={inputRef}
+          type="text"
+          value={open ? query : displayValue}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            if (!open) setOpen(true);
+          }}
+          onFocus={() => {
+            setOpen(true);
+            setQuery('');
+          }}
+          onKeyDown={handleKeyDown}
+          placeholder="Search product by name or SKU..."
+          className="w-full pl-8 pr-7 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]"
+        />
+        {value && !open && (
+          <button
+            type="button"
+            onClick={handleClear}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+      {open && (
+        <div
+          ref={listRef}
+          className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg"
+        >
+          {filtered.length === 0 ? (
+            <div className="px-3 py-2 text-xs text-gray-400">No products found</div>
+          ) : (
+            filtered.map((p, idx) => (
+              <button
+                key={p._id}
+                type="button"
+                className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 ${
+                  idx === highlightIdx ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                } ${p._id === value ? 'font-semibold text-[#2563EB] dark:text-blue-400' : 'text-gray-900 dark:text-gray-100'}`}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  onChange(p._id);
+                  onSelect(p);
+                  setQuery('');
+                  setOpen(false);
+                }}
+                onMouseEnter={() => setHighlightIdx(idx)}
+              >
+                <div className="flex items-center justify-between">
+                  <span>{p.name}</span>
+                  <span className="text-[10px] text-gray-400 font-mono">{p.sku}</span>
+                </div>
+              </button>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
 function CreatePOModal({ editPO, onClose, onSuccess }) {
   const [supplierId, setSupplierId] = useState(editPO?.supplierId?._id || editPO?.supplierId || '');
-  const [paymentMethod, setPaymentMethod] = useState(editPO?.paymentMethod || 'CREDIT');
-  const [paidAmount, setPaidAmount] = useState(editPO?.paidAmount || 0);
-  const [notes, setNotes] = useState(editPO?.notes || '');
+  const [paymentMethod, setPaymentMethod] = useState(editPO?.paymentMethod || 'CASH');
   const [lineItems, setLineItems] = useState(
     editPO?.lineItems?.map((item) => ({
       productId: item.productId?._id || item.productId,
@@ -352,8 +451,7 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
         supplierId,
         lineItems,
         paymentMethod,
-        paidAmount: Number(paidAmount),
-        notes,
+        paidAmount: paymentMethod === 'CREDIT' ? 0 : subTotal,
       };
       if (editPO?._id) {
         return api.put(`/purchase-orders/${editPO._id}`, payload);
@@ -391,7 +489,7 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
                 <select
                   value={supplierId}
                   onChange={(e) => setSupplierId(e.target.value)}
-                  className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-red-500"
+                  className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]"
                 >
                   <option value="">Select Supplier</option>
                   {suppliers.map((s) => (
@@ -422,8 +520,11 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
                 <option value="CASH">Cash</option>
                 <option value="BANK">Bank</option>
                 <option value="BKASH">bKash</option>
-                <option value="CREDIT">Credit</option>
+                <option value="CREDIT">Credit (Udhar)</option>
               </select>
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
+                Paid amount auto-calculated: {paymentMethod === 'CREDIT' ? '৳0 (due stays on order)' : 'Full amount paid'}
+              </p>
             </div>
           </div>
 
@@ -455,18 +556,21 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
                 className="flex gap-2 items-start bg-gray-50 dark:bg-gray-900 rounded-lg p-3"
               >
                 <div className="flex-1">
-                  <select
+                  <ProductSearchInput
+                    products={products}
                     value={item.productId}
-                    onChange={(e) => updateLineItem(idx, 'productId', e.target.value)}
-                    className="w-full px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]"
-                  >
-                    <option value="">Select Product</option>
-                    {products.map((p) => (
-                      <option key={p._id} value={p._id}>
-                        {p.name} ({p.sku})
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => updateLineItem(idx, 'productId', val)}
+                    onSelect={(product) => {
+                      const updated = [...lineItems];
+                      updated[idx] = {
+                        ...updated[idx],
+                        productId: product._id,
+                        description: product.name,
+                        unitCost: product.costPrice || 0,
+                      };
+                      setLineItems(updated);
+                    }}
+                  />
                 </div>
                 <div className="w-20">
                   <input
@@ -513,33 +617,6 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
                 <span>Total</span>
                 <span>৳{subTotal.toLocaleString()}</span>
               </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
-                Paid Amount (৳)
-              </label>
-              <input
-                type="number"
-                value={paidAmount}
-                onChange={(e) => setPaidAmount(e.target.value)}
-                min={0}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
-                Notes
-              </label>
-              <input
-                type="text"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]"
-                placeholder="Optional notes"
-              />
             </div>
           </div>
 
@@ -924,6 +1001,39 @@ function PODetailModal({ order, onClose }) {
               </table>
             </div>
           )}
+          {(order.returnedCount || 0) > 0 && (
+            <div className="bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800/50 rounded-xl p-4">
+              <h4 className="text-xs font-semibold text-rose-700 dark:text-rose-400 uppercase mb-2">
+                Returns to Supplier
+              </h4>
+              <p className="text-xs text-rose-700/80 dark:text-rose-400/80 mb-2">
+                {order.returnedCount} item(s) returned · ৳
+                {(order.returnedAmount || 0).toLocaleString()} refund credit
+              </p>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-rose-200 dark:border-rose-800/50">
+                    <th className="text-left py-1 text-gray-500">IMEI / Serial</th>
+                    <th className="text-left py-1 text-gray-500">Reason</th>
+                    <th className="text-right py-1 text-gray-500">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(order.returnLogs || []).map((r, idx) => (
+                    <tr key={idx} className="border-b border-rose-100 dark:border-rose-900/30">
+                      <td className="py-1.5 font-mono text-rose-700 dark:text-rose-400">
+                        {r.imeiOrSerial}
+                      </td>
+                      <td className="py-1.5 text-gray-600 dark:text-gray-300">{r.reason || '-'}</td>
+                      <td className="py-1.5 text-right text-gray-700 dark:text-gray-300">
+                        ৳{(r.purchasePrice || 0).toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
           {order.notes && (
             <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 text-sm text-gray-700 dark:text-gray-300">
               <span className="text-gray-500">Notes:</span> {order.notes}
@@ -945,15 +1055,25 @@ function GRNModal({ order, onClose, onSuccess }) {
     }))
   );
 
+  const { data: productsData } = useQuery({
+    queryKey: ['products'],
+    queryFn: async () => {
+      const res = await api.get('/products', { params: { limit: 500 } });
+      return res.data?.data || [];
+    },
+  });
+  const products = productsData || [];
+
   const addEntry = (idx) => {
     const updated = [...entries];
     const target = updated[idx];
     const pid = typeof target.productId === 'object' ? target.productId?._id : target.productId;
+    const product = products.find((p) => String(p._id) === String(pid));
     target.items.push({
       productId: String(pid || ''),
       imeiOrSerial: '',
       purchasePrice: order.lineItems[idx]?.unitCost || 0,
-      sellingPrice: 0,
+      sellingPrice: product?.sellingPrice || 0,
       warrantyMonths: 12,
     });
     setEntries(updated);
@@ -1040,7 +1160,7 @@ function GRNModal({ order, onClose, onSuccess }) {
                     placeholder="IMEI / Serial"
                     value={item.imeiOrSerial}
                     onChange={(e) => updateEntry(idx, itemIdx, 'imeiOrSerial', e.target.value)}
-                    className="flex-1 px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-red-500"
+                    className="flex-1 px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]"
                   />
                   <input
                     type="number"
@@ -1049,16 +1169,7 @@ function GRNModal({ order, onClose, onSuccess }) {
                     onChange={(e) =>
                       updateEntry(idx, itemIdx, 'purchasePrice', Number(e.target.value))
                     }
-                    className="w-24 px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-red-500"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Sell Price"
-                    value={item.sellingPrice}
-                    onChange={(e) =>
-                      updateEntry(idx, itemIdx, 'sellingPrice', Number(e.target.value))
-                    }
-                    className="w-24 px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-red-500"
+                    className="w-24 px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]"
                   />
                   <button
                     onClick={() => removeEntry(idx, itemIdx)}
@@ -1105,8 +1216,12 @@ function SupplierReturnModal({ order, onClose, onSuccess }) {
   const [selectedImeis, setSelectedImeis] = useState([]);
   const queryClient = useQueryClient();
 
-  const grnItems = order?.grnEntries || [];
-  const allImeis = grnItems.map((e) => e.imeiOrSerial).filter(Boolean);
+  const returnedImeis = new Set((order?.returnLogs || []).map((r) => r.imeiOrSerial));
+  const grnItems = (order?.grnEntries || []).map((e) => ({
+    ...e,
+    isReturned: returnedImeis.has(e.imeiOrSerial),
+  }));
+  const allImeis = grnItems.filter((e) => !e.isReturned).map((e) => e.imeiOrSerial);
   const isAllSelected = allImeis.length > 0 && selectedImeis.length === allImeis.length;
 
   const toggleSelectAll = () => {
@@ -1126,7 +1241,7 @@ function SupplierReturnModal({ order, onClose, onSuccess }) {
   };
 
   const estimatedRefund = grnItems
-    .filter((e) => selectedImeis.includes(e.imeiOrSerial))
+    .filter((e) => !e.isReturned && selectedImeis.includes(e.imeiOrSerial))
     .reduce((acc, curr) => acc + (Number(curr.purchasePrice) || 0), 0);
 
   const mutation = useMutation({
@@ -1138,7 +1253,7 @@ function SupplierReturnModal({ order, onClose, onSuccess }) {
     onSuccess: (res) => {
       const data = res.data?.data;
       toast.success(
-        `Returned ${data?.returnedCount || selectedImeis.length} item(s) to supplier! Refunded ৳${(data?.totalRefund || estimatedRefund).toLocaleString()}`
+        `Returned ${data?.returnedCount || selectedImeis.length} item(s) to supplier! Refund credit ৳${(data?.totalRefund || estimatedRefund).toLocaleString()}${data?.skippedCount ? ` (${data.skippedCount} skipped)` : ''}`
       );
       queryClient.invalidateQueries(['purchase-orders']);
       onSuccess();
@@ -1188,6 +1303,29 @@ function SupplierReturnModal({ order, onClose, onSuccess }) {
               <div className="max-h-48 overflow-y-auto space-y-2 border border-gray-200 dark:border-gray-800 rounded-xl p-3 bg-gray-50 dark:bg-gray-900">
                 {grnItems.map((entry, idx) => {
                   const isChecked = selectedImeis.includes(entry.imeiOrSerial);
+                  if (entry.isReturned) {
+                    return (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between p-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-100/70 dark:bg-gray-800/40 opacity-60"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-4 h-4 rounded border border-gray-300 dark:border-gray-600" />
+                          <div>
+                            <div className="text-xs font-mono font-bold text-gray-400 line-through">
+                              {entry.imeiOrSerial}
+                            </div>
+                            <div className="text-[10px] text-gray-400">
+                              Purchase Cost: ৳{entry.purchasePrice?.toLocaleString()}
+                            </div>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-semibold uppercase text-rose-500 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-full border border-rose-200 dark:border-rose-800/50">
+                          Returned
+                        </span>
+                      </div>
+                    );
+                  }
                   return (
                     <label
                       key={idx}
@@ -1202,7 +1340,7 @@ function SupplierReturnModal({ order, onClose, onSuccess }) {
                           type="checkbox"
                           checked={isChecked}
                           onChange={() => toggleImei(entry.imeiOrSerial)}
-                          className="rounded text-red-600 focus:ring-red-500 w-4 h-4"
+                          className="rounded text-[#2563EB] focus:ring-[#2563EB] w-4 h-4"
                         />
                         <div>
                           <div className="text-xs font-mono font-bold text-gray-900 dark:text-gray-100">
@@ -1244,7 +1382,7 @@ function SupplierReturnModal({ order, onClose, onSuccess }) {
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="e.g. Defective camera, wrong model, bulk inventory return"
-              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-red-500"
+              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]"
             />
           </div>
 
@@ -1266,6 +1404,68 @@ function SupplierReturnModal({ order, onClose, onSuccess }) {
               Confirm Bulk Return ({selectedImeis.length})
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DeleteConfirmModal({ order, onClose, onSuccess }) {
+  const queryClient = useQueryClient();
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => api.delete(`/purchase-orders/${order._id}`),
+    onSuccess: () => {
+      toast.success('Purchase order deleted');
+      onSuccess();
+    },
+    onError: (e) => toast.error(e.response?.data?.message || 'Failed to delete'),
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-[#111827] rounded-2xl w-full max-w-md border border-gray-200 dark:border-gray-800 shadow-2xl p-6 space-y-4">
+        <div className="flex items-center justify-between border-b dark:border-gray-800 pb-3">
+          <h3 className="font-bold text-gray-900 dark:text-gray-100">Delete Purchase Order</h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          >
+            ✕
+          </button>
+        </div>
+        <div className="space-y-3">
+          <div className="flex items-center gap-3 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 rounded-xl">
+            <Trash2 className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+            <p className="text-sm text-red-700 dark:text-red-300">
+              Are you sure you want to delete purchase order <strong>{order.poNumber}</strong>?
+            </p>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            This action cannot be undone. Only orders that haven't been received can be deleted.
+          </p>
+        </div>
+        <div className="flex gap-3 pt-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium rounded-lg text-sm"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={deleteMutation.isPending}
+            onClick={() => deleteMutation.mutate()}
+            className="flex-1 py-2 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white font-bold rounded-lg text-sm flex items-center justify-center gap-2"
+          >
+            {deleteMutation.isPending ? (
+              <RefreshCw className="w-4 h-4 animate-spin" />
+            ) : (
+              <Trash2 className="w-4 h-4" />
+            )}
+            Delete Order
+          </button>
         </div>
       </div>
     </div>

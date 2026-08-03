@@ -1,9 +1,10 @@
 import { WarrantyClaim } from './warranty.model.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { paginate, getPagination } from '../../utils/http/pagination.js';
+import { withTenant } from '../../utils/tenant.js';
 
-export const getAllClaims = async (page = 1, limit = 20, status = '', search = '') => {
-  const query = {};
+export const getAllClaims = async (page = 1, limit = 20, status = '', search = '', tenantId = null) => {
+  const query = withTenant({}, tenantId);
   if (status) query.status = status;
 
   if (search) {
@@ -22,8 +23,9 @@ export const getAllClaims = async (page = 1, limit = 20, status = '', search = '
   return { claims, pagination: getPagination(total, page, limit) };
 };
 
-export const getClaimById = async (id) => {
-  const claim = await WarrantyClaim.findById(id)
+export const getClaimById = async (id, tenantId = null) => {
+  const query = withTenant({ _id: id }, tenantId);
+  const claim = await WarrantyClaim.findOne(query)
     .populate('imei', 'imeiOrSerial productId warrantyMonths warrantyExpiry')
     .populate('customer', 'name phone email address')
     .populate('invoiceRef', 'invoiceNumber netTotal')
@@ -32,12 +34,13 @@ export const getClaimById = async (id) => {
   return claim;
 };
 
-export const createClaim = async (data) => {
-  return WarrantyClaim.create(data);
+export const createClaim = async (data, tenantId = null) => {
+  return WarrantyClaim.create({ ...data, tenantId: tenantId || null });
 };
 
-export const updateClaim = async (id, data, userId) => {
-  const claim = await WarrantyClaim.findById(id);
+export const updateClaim = async (id, data, userId, tenantId = null) => {
+  const query = withTenant({ _id: id }, tenantId);
+  const claim = await WarrantyClaim.findOne(query);
   if (!claim) throw ApiError.notFound('Warranty claim not found');
 
   if (data.status) {
@@ -54,14 +57,15 @@ export const updateClaim = async (id, data, userId) => {
   return claim;
 };
 
-export const getClaimsByIMEI = async (imeiId) => {
-  const claims = await WarrantyClaim.find({ imei: imeiId })
+export const getClaimsByIMEI = async (imeiId, tenantId = null) => {
+  const query = withTenant({ imei: imeiId }, tenantId);
+  const claims = await WarrantyClaim.find(query)
     .populate('customer', 'name phone')
     .sort({ createdAt: -1 });
   return claims;
 };
 
-export const getWarrantyReport = async (params = {}) => {
+export const getWarrantyReport = async (params = {}, tenantId = null) => {
   const type = typeof params === 'string' ? params : (params.type || 'all');
   const search = typeof params === 'object' && params.search ? params.search : '';
   const status = typeof params === 'object' && params.status !== undefined ? params.status : 'Sold';
@@ -70,7 +74,7 @@ export const getWarrantyReport = async (params = {}) => {
   const thirtyDays = new Date(now);
   thirtyDays.setDate(thirtyDays.getDate() + 30);
 
-  const matchQuery = { isDeleted: false };
+  const matchQuery = withTenant({ isDeleted: false }, tenantId);
   if (status && status !== 'ALL') {
     matchQuery.status = status;
   }
@@ -84,14 +88,15 @@ export const getWarrantyReport = async (params = {}) => {
     .populate('branchId', 'name')
     .sort({ createdAt: -1 });
 
-  // Fallback for missing soldToCustomerId: match via soldInvoiceNumber
   const invoiceNumbers = units
     .filter((u) => !u.soldToCustomerId && u.soldInvoiceNumber)
     .map((u) => u.soldInvoiceNumber);
 
   const txMap = {};
   if (invoiceNumbers.length > 0) {
-    const txs = await Transaction.find({ invoiceNumber: { $in: invoiceNumbers }, isDeleted: false })
+    const txQuery = { invoiceNumber: { $in: invoiceNumbers }, isDeleted: false };
+    if (tenantId) txQuery.tenantId = tenantId;
+    const txs = await Transaction.find(txQuery)
       .select('invoiceNumber customerName customerPhone customerEmail');
     txs.forEach((t) => {
       txMap[t.invoiceNumber] = t;
@@ -174,7 +179,8 @@ export const getWarrantyReport = async (params = {}) => {
     });
   }
 
-  const claims = await WarrantyClaim.find({}).sort({ createdAt: -1 });
+  const claimQuery = withTenant({}, tenantId);
+  const claims = await WarrantyClaim.find(claimQuery).sort({ createdAt: -1 });
   const pendingClaims = claims.filter((c) => c.status === 'pending').length;
   const completedClaims = claims.filter((c) => c.status === 'completed').length;
 

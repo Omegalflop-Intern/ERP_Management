@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const payrollSchema = new mongoose.Schema(
   {
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', index: true },
     employee: { type: mongoose.Schema.Types.ObjectId, ref: 'Employee', required: true },
     month: { type: Number, required: true, min: 1, max: 12 },
     year: { type: Number, required: true },

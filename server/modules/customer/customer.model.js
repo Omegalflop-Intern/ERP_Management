@@ -3,6 +3,7 @@ import { encryptText, decryptText } from '../../utils/crypto.utils.js';
 
 const customerSchema = new mongoose.Schema(
   {
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', index: true },
     name: { type: String, required: true, trim: true },
     phone: {
       type: String,
@@ -13,7 +14,6 @@ const customerSchema = new mongoose.Schema(
     },
     phoneHash: {
       type: String,
-      unique: true,
       sparse: true,
       index: true,
     },
@@ -39,6 +39,7 @@ const customerSchema = new mongoose.Schema(
   }
 );
 
+customerSchema.index({ tenantId: 1, phoneHash: 1 }, { unique: true, sparse: true });
 customerSchema.index({ name: 'text' });
 
 export const Customer = mongoose.model('Customer', customerSchema);

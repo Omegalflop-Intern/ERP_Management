@@ -132,7 +132,7 @@ export default function DocumentVaultModal({ entityType, entityId, entityName, o
                 <select
                   value={docType}
                   onChange={(e) => setDocType(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-medium text-sm focus:outline-none focus:border-red-500"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-medium text-sm focus:outline-none focus:border-[#2563EB]"
                 >
                   <option
                     value="Legal Document"
@@ -170,7 +170,7 @@ export default function DocumentVaultModal({ entityType, entityId, entityName, o
                   placeholder="e.g., Signed Partnership Deed"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 font-medium text-sm focus:outline-none focus:border-red-500"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 font-medium text-sm focus:outline-none focus:border-[#2563EB]"
                   required
                 />
               </div>

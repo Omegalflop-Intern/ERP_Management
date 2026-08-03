@@ -3,14 +3,16 @@ import { DocumentVault } from './documentVault.model.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import fs from 'fs';
 
-export const getDocumentsByEntity = async (entityType, entityId) => {
+export const getDocumentsByEntity = async (entityType, entityId, tenantId = null) => {
   if (!entityType || !entityId) {
     throw ApiError.badRequest('entityType and entityId are required');
   }
   if (!mongoose.Types.ObjectId.isValid(entityId)) {
     return [];
   }
-  return DocumentVault.find({ entityType, entityId, isDeleted: false }).sort({ createdAt: -1 }).lean();
+  const query = { entityType, entityId, isDeleted: false };
+  if (tenantId) query.tenantId = tenantId;
+  return DocumentVault.find(query).sort({ createdAt: -1 }).lean();
 };
 
 export const createDocument = async (docData, username) => {
@@ -21,8 +23,10 @@ export const createDocument = async (docData, username) => {
   return doc;
 };
 
-export const deleteDocument = async (id) => {
-  const doc = await DocumentVault.findOne({ _id: id, isDeleted: false });
+export const deleteDocument = async (id, tenantId = null) => {
+  const query = { _id: id, isDeleted: false };
+  if (tenantId) query.tenantId = tenantId;
+  const doc = await DocumentVault.findOne(query);
   if (!doc) throw ApiError.notFound('Document not found');
 
   doc.isDeleted = true;

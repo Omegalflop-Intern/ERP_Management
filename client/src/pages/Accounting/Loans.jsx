@@ -105,7 +105,7 @@ export default function Loans() {
     : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-5';
   const inputCls = styled
     ? 'neu-input w-full px-3 py-2 rounded-xl text-sm'
-    : 'w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:border-red-500';
+    : 'w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:border-[#2563EB]';
 
   return (
     <div className="space-y-6">
@@ -168,7 +168,7 @@ export default function Loans() {
 
           <button
             onClick={() => setShowAddLoanModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-red-700 hover:bg-red-600 text-white font-medium rounded-lg text-sm transition-all shadow-xs"
+            className="flex items-center gap-2 px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-medium rounded-lg text-sm transition-all shadow-xs"
           >
             <Plus className="w-4 h-4" /> Add{' '}
             {loanType === 'LOAN_TAKEN' ? 'Lender Loan' : 'Borrower Loan'}
@@ -531,7 +531,7 @@ export default function Loans() {
               <button
                 type="submit"
                 disabled={createLoanMutation.isPending}
-                className="w-full py-2.5 bg-red-700 hover:bg-red-600 text-white font-bold rounded-xl text-sm transition-all"
+                className="w-full py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold rounded-xl text-sm transition-all"
               >
                 {createLoanMutation.isPending ? 'Saving...' : 'Save Loan Record'}
               </button>

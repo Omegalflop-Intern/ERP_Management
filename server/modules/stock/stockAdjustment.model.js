@@ -2,7 +2,8 @@ import mongoose from 'mongoose';
 
 const stockAdjustmentSchema = new mongoose.Schema(
   {
-    adjustmentNumber: { type: String, required: true, unique: true },
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', index: true },
+    adjustmentNumber: { type: String, required: true },
     branchId: { type: mongoose.Schema.Types.ObjectId, ref: 'Branch' },
     type: {
       type: String,
@@ -24,5 +25,7 @@ const stockAdjustmentSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+stockAdjustmentSchema.index({ tenantId: 1, adjustmentNumber: 1 }, { unique: true, sparse: true });
 
 export const StockAdjustment = mongoose.model('StockAdjustment', stockAdjustmentSchema);

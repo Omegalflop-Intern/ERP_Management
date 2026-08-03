@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const investorSchema = new mongoose.Schema(
   {
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', index: true },
     name: { type: String, required: true, trim: true },
     phone: { type: String, required: true, trim: true },
     email: { type: String, trim: true },
@@ -20,6 +21,7 @@ const investorSchema = new mongoose.Schema(
 
 const investorTransactionSchema = new mongoose.Schema(
   {
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', index: true },
     investorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Investor', required: true },
     type: { type: String, enum: ['DEPOSIT', 'WITHDRAWAL', 'PROFIT_SHARE', 'PROFIT_PAYOUT', 'PROFIT_REINVESTMENT'], required: true },
     amount: { type: Number, required: true, min: 0.01 },

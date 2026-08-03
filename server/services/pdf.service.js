@@ -12,8 +12,8 @@ const BDT = (n) => `Tk ${Number(n || 0).toLocaleString('en-BD', { minimumFractio
 export async function generateInvoicePdfBuffer(sale) {
   return new Promise(async (resolve, reject) => {
     try {
-      // Load dynamic ERP settings from database
-      const dbSettings = await getAllSettings().catch(() => ({}));
+      // Load dynamic ERP settings from database (tenant-specific, falls back to global defaults)
+      const dbSettings = await getAllSettings(undefined, sale?.tenantId || null).catch(() => ({}));
 
       const companyInfo = {
         name: dbSettings.companyName || 'BROTHERS MOBILE',

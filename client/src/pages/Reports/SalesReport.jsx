@@ -234,7 +234,7 @@ export default function SalesReport() {
             <button
               key={p.key}
               onClick={() => setPeriod(p.key)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${period === p.key ? 'bg-red-700 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${period === p.key ? 'bg-[#2563EB] text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
             >
               {p.label}
             </button>
@@ -245,7 +245,7 @@ export default function SalesReport() {
           <select
             value={saleType}
             onChange={(e) => setSaleType(e.target.value)}
-            className="px-3 py-1.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-xs font-bold text-gray-900 dark:text-gray-100 focus:outline-none focus:border-red-500"
+            className="px-3 py-1.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-xs font-bold text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]"
           >
             <option value="">All Channels (Retail + Wholesale)</option>
             <option value="RETAIL">Retail Only (B2C)</option>

@@ -155,7 +155,7 @@ export default function ActivityLogs() {
     : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800';
   const inputCls = styled
     ? 'neu-input w-full px-3 py-2.5 rounded-xl text-sm'
-    : 'w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-red-500 outline-none';
+    : 'w-full px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-[#2563EB] outline-none';
 
   return (
     <div className="space-y-6">

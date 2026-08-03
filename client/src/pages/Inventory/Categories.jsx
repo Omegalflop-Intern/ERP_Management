@@ -56,7 +56,7 @@ export default function Categories() {
             setEditItem(null);
             setShowForm(true);
           }}
-          className="flex items-center gap-2 px-4 py-2.5 bg-red-700 hover:bg-red-600 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-red-700/20"
+          className="flex items-center gap-2 px-4 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-[#2563EB]/20"
         >
           <Plus className="w-4 h-4" /> Add {activeTab === 'CATEGORY' ? 'Category' : 'Brand'}
         </button>
@@ -71,7 +71,7 @@ export default function Categories() {
               setActiveTab(tab.key);
               setSearch('');
             }}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.key ? 'bg-red-700 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === tab.key ? 'bg-[#2563EB] text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
           >
             {tab.label}
           </button>
@@ -86,7 +86,7 @@ export default function Categories() {
           placeholder={`Search ${activeTab === 'CATEGORY' ? 'categories' : 'brands'}...`}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className={`w-full pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-red-500 ${styled ? 'neu-input rounded-lg' : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100'}`}
+          className={`w-full pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-[#2563EB] ${styled ? 'neu-input rounded-lg' : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100'}`}
         />
       </div>
 

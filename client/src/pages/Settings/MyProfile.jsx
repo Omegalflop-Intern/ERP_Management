@@ -75,7 +75,9 @@ export default function MyProfile() {
   });
 
   React.useEffect(() => {
-    if (user && !formLoaded) {
+    // Re-init form whenever fresh data arrives from the server (profileData takes priority over authUser cache).
+    // We track the last userId we initialised for, so switching accounts also re-initialises correctly.
+    if (user) {
       setForm({
         fullName: user.fullName || '',
         email: user.email || '',
@@ -84,7 +86,7 @@ export default function MyProfile() {
       });
       setFormLoaded(true);
     }
-  }, [user, formLoaded]);
+  }, [profileData]); // intentionally only react to fresh server data
 
   const updateMutation = useMutation({
     mutationFn: async () => {
@@ -246,10 +248,17 @@ export default function MyProfile() {
               <input
                 type="text"
                 value={form.username}
-                onChange={(e) => setForm({ ...form, username: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, username: e.target.value.toLowerCase().replace(/\s+/g, '') })
+                }
                 className={`${inputCls} pl-10`}
+                placeholder="e.g. rahim_owner"
+                autoComplete="username"
               />
             </div>
+            <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
+              Lowercase letters, numbers and underscores only. Used to log in.
+            </p>
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">

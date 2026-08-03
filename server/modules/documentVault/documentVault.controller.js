@@ -7,7 +7,8 @@ import * as documentVaultService from './documentVault.service.js';
 export const getDocuments = async (req, res, next) => {
   try {
     const { entityType, entityId } = req.query;
-    const docs = await documentVaultService.getDocumentsByEntity(entityType, entityId);
+    const tenantId = req.user?.tenantId || null;
+    const docs = await documentVaultService.getDocumentsByEntity(entityType, entityId, tenantId);
     return ApiResponse.success(res, docs, 'Documents retrieved successfully');
   } catch (error) {
     next(error);
@@ -36,6 +37,7 @@ export const uploadDocument = async (req, res, next) => {
     const docData = {
       entityType,
       entityId,
+      tenantId: req.user?.tenantId || null,
       documentType: documentType || 'Other',
       title,
       fileName: req.file.originalname,
@@ -55,7 +57,8 @@ export const uploadDocument = async (req, res, next) => {
 
 export const deleteDocument = async (req, res, next) => {
   try {
-    const doc = await documentVaultService.deleteDocument(req.params.id);
+    const tenantId = req.user?.tenantId || null;
+    const doc = await documentVaultService.deleteDocument(req.params.id, tenantId);
     return ApiResponse.success(res, doc, 'Document removed successfully');
   } catch (error) {
     next(error);

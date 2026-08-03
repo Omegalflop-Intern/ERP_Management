@@ -3,16 +3,24 @@ import { Product } from '../product/product.model.js';
 import { Customer } from '../customer/customer.model.js';
 import { paginate, getPagination } from '../../utils/http/pagination.js';
 
-export const createNotification = async ({ userId, type, title, message, link, meta }) => {
-  return Notification.create({ userId, type, title, message, link, meta });
+export const createNotification = async ({ userId, type, title, message, link, meta, tenantId }) => {
+  return Notification.create({ userId, type, title, message, link, meta, tenantId: tenantId || null });
 };
 
-export const createBulkNotifications = async (userIds, { type, title, message, link, meta }) => {
-  const docs = userIds.map(userId => ({ userId, type, title, message, link, meta }));
+export const createBulkNotifications = async (users, { type, title, message, link, meta }) => {
+  const docs = users.map((u) => ({
+    userId: u.userId,
+    tenantId: u.tenantId || null,
+    type,
+    title,
+    message,
+    link,
+    meta,
+  }));
   return Notification.insertMany(docs);
 };
 
-export const syncSystemNotifications = async (userId) => {
+export const syncSystemNotifications = async (userId, tenantId = null) => {
   try {
     const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -22,6 +30,7 @@ export const syncSystemNotifications = async (userId) => {
     if (userNotifCount === 0) {
       await Notification.create({
         userId,
+        tenantId: tenantId || null,
         type: 'SYSTEM',
         title: 'System Notifications Active',
         message: 'Welcome! You will receive real-time alerts for low stock, sales, and customer dues here.',
@@ -30,13 +39,15 @@ export const syncSystemNotifications = async (userId) => {
     }
 
     // 2. Check low stock products
-    const lowStockProducts = await Product.find({
+    const lowStockQuery = {
       isDeleted: false,
       $or: [
         { $expr: { $lte: ['$stockQuantity', '$minStockLevel'] } },
         { stockQuantity: { $lte: 5 } },
       ],
-    }).select('name stockQuantity minStockLevel').limit(10).lean();
+    };
+    if (tenantId) lowStockQuery.tenantId = tenantId;
+    const lowStockProducts = await Product.find(lowStockQuery).select('name stockQuantity minStockLevel').limit(10).lean();
 
     if (lowStockProducts.length > 0) {
       const recentLowStock = await Notification.findOne({
@@ -50,6 +61,7 @@ export const syncSystemNotifications = async (userId) => {
         const extraCount = lowStockProducts.length > 3 ? ` & ${lowStockProducts.length - 3} more` : '';
         await Notification.create({
           userId,
+          tenantId: tenantId || null,
           type: 'LOW_STOCK',
           title: `Low Stock Alert (${lowStockProducts.length} Products)`,
           message: `${itemNames}${extraCount} are below minimum stock level. Please restock soon.`,
@@ -59,10 +71,12 @@ export const syncSystemNotifications = async (userId) => {
     }
 
     // 3. Check customer dues
-    const dueCustomers = await Customer.find({
+    const dueCustomerQuery = {
       isDeleted: { $ne: true },
       dueBalance: { $gt: 0 },
-    }).select('name dueBalance').limit(10).lean();
+    };
+    if (tenantId) dueCustomerQuery.tenantId = tenantId;
+    const dueCustomers = await Customer.find(dueCustomerQuery).select('name dueBalance').limit(10).lean();
 
     if (dueCustomers.length > 0) {
       const recentDueAlert = await Notification.findOne({
@@ -75,6 +89,7 @@ export const syncSystemNotifications = async (userId) => {
         const totalDue = dueCustomers.reduce((acc, c) => acc + (c.dueBalance || 0), 0);
         await Notification.create({
           userId,
+          tenantId: tenantId || null,
           type: 'DUE_REMINDER',
           title: 'Pending Customer Dues',
           message: `${dueCustomers.length} customer(s) have unpaid balances totaling ৳${totalDue.toLocaleString()}.`,
@@ -87,24 +102,33 @@ export const syncSystemNotifications = async (userId) => {
   }
 };
 
-export const getMyNotifications = async (userId, page = 1, limit = 20, unreadOnly = false) => {
-  await syncSystemNotifications(userId);
+export const getMyNotifications = async (userId, page = 1, limit = 20, unreadOnly = false, tenantId = null) => {
+  await syncSystemNotifications(userId, tenantId);
   const query = { userId };
+  if (tenantId) query.tenantId = tenantId;
   if (unreadOnly) query.isRead = false;
   const total = await Notification.countDocuments(query);
   const notifications = await paginate(Notification.find(query), page, limit).sort({ createdAt: -1 });
-  const unreadCount = await Notification.countDocuments({ userId, isRead: false });
+  const unreadQuery = { userId, isRead: false };
+  if (tenantId) unreadQuery.tenantId = tenantId;
+  const unreadCount = await Notification.countDocuments(unreadQuery);
   return { notifications, unreadCount, pagination: getPagination(total, page, limit) };
 };
 
-export const markAsRead = async (id, userId) => {
-  return Notification.findOneAndUpdate({ _id: id, userId }, { isRead: true }, { new: true });
+export const markAsRead = async (id, userId, tenantId = null) => {
+  const query = { _id: id, userId };
+  if (tenantId) query.tenantId = tenantId;
+  return Notification.findOneAndUpdate(query, { isRead: true }, { new: true });
 };
 
-export const markAllAsRead = async (userId) => {
-  return Notification.updateMany({ userId, isRead: false }, { isRead: true });
+export const markAllAsRead = async (userId, tenantId = null) => {
+  const query = { userId, isRead: false };
+  if (tenantId) query.tenantId = tenantId;
+  return Notification.updateMany(query, { isRead: true });
 };
 
-export const deleteNotification = async (id, userId) => {
-  return Notification.findOneAndDelete({ _id: id, userId });
+export const deleteNotification = async (id, userId, tenantId = null) => {
+  const query = { _id: id, userId };
+  if (tenantId) query.tenantId = tenantId;
+  return Notification.findOneAndDelete(query);
 };

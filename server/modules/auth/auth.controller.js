@@ -96,7 +96,7 @@ export const login = async (req, res, next) => {
     logAction({ userId: user._id, username: user.username, action: 'LOGIN', module: 'auth', entityType: 'User', details: { login }, req });
     setRefreshCookie(res, refreshToken);
     setAccessCookie(res, accessToken);
-    return ApiResponse.success(res, { token: accessToken, user: authService.sanitizeUser(user) }, 'Login successful');
+    return ApiResponse.success(res, { token: accessToken, user: await authService.sanitizeUser(user) }, 'Login successful');
   } catch (error) { next(error); }
 };
 
@@ -146,6 +146,38 @@ export const loginDirect = async (req, res, next) => {
       throw ApiError.forbidden('Account is deactivated');
     }
 
+    // Check tenant status — block PAUSED and PENDING_KYC tenants from logging in
+    if (user.tenantId) {
+      const { Tenant } = await import('../tenant/tenant.model.js');
+      const tenant = await Tenant.findById(user.tenantId).select('status shopName').lean();
+      if (tenant) {
+        if (tenant.status === 'PAUSED') {
+          logSecurityEvent({
+            action: 'LOGIN_BLOCKED',
+            userId: user._id,
+            username: user.username,
+            ipAddress: ip,
+            userAgent: req.headers['user-agent'] || '',
+            details: { login, reason: 'Tenant account suspended', tenantId: user.tenantId },
+            severity: 'medium',
+          });
+          throw ApiError.forbidden('Your shop account has been suspended. Please contact billing support.');
+        }
+        if (tenant.status === 'PENDING_KYC') {
+          logSecurityEvent({
+            action: 'LOGIN_BLOCKED',
+            userId: user._id,
+            username: user.username,
+            ipAddress: ip,
+            userAgent: req.headers['user-agent'] || '',
+            details: { login, reason: 'Tenant pending KYC verification', tenantId: user.tenantId },
+            severity: 'low',
+          });
+          throw ApiError.forbidden('Your shop account is pending KYC verification. Please wait for administrator approval.');
+        }
+      }
+    }
+
     if (!user.isVerified) {
       logSecurityEvent({
         action: 'LOGIN_BLOCKED',
@@ -175,7 +207,7 @@ export const loginDirect = async (req, res, next) => {
     logAction({ userId: user._id, username: user.username, action: 'LOGIN', module: 'auth', entityType: 'User', details: { login }, req });
     setRefreshCookie(res, refreshToken);
     setAccessCookie(res, accessToken);
-    return ApiResponse.success(res, { token: accessToken, user: authService.sanitizeUser(user) }, 'Login successful');
+    return ApiResponse.success(res, { token: accessToken, user: await authService.sanitizeUser(user) }, 'Login successful');
   } catch (error) { next(error); }
 };
 
@@ -187,7 +219,7 @@ export const verifyOtp = async (req, res, next) => {
     logAction({ userId: user._id, username: user.username, action: 'OTP_VERIFIED', module: 'auth', entityType: 'User', details: { email }, req });
     setRefreshCookie(res, refreshToken);
     setAccessCookie(res, accessToken);
-    return ApiResponse.success(res, { token: accessToken, user: authService.sanitizeUser(user) }, 'Verification successful');
+    return ApiResponse.success(res, { token: accessToken, user: await authService.sanitizeUser(user) }, 'Verification successful');
   } catch (error) { next(error); }
 };
 
@@ -206,7 +238,7 @@ export const getMe = async (req, res, next) => {
   try {
     const user = await authService.findUserByLogin(req.user.username);
     if (!user) throw ApiError.unauthorized('User not found');
-    return ApiResponse.success(res, { user: authService.sanitizeUser(user) }, 'User profile');
+    return ApiResponse.success(res, { user: await authService.sanitizeUser(user) }, 'User profile');
   } catch (error) { next(error); }
 };
 
@@ -236,7 +268,7 @@ export const verifyEmail = async (req, res, next) => {
     logAction({ userId: user._id, username: user.username, action: 'EMAIL_VERIFIED', module: 'auth', entityType: 'User', details: { email }, req });
     setRefreshCookie(res, refreshToken);
     setAccessCookie(res, accessToken);
-    return ApiResponse.success(res, { token: accessToken, user: authService.sanitizeUser(user) }, 'Email verified successfully');
+    return ApiResponse.success(res, { token: accessToken, user: await authService.sanitizeUser(user) }, 'Email verified successfully');
   } catch (error) { next(error); }
 };
 

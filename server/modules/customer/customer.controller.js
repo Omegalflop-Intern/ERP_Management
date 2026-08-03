@@ -5,21 +5,24 @@ import { logAction } from '../../utils/auth/auditLog.js';
 export const getAllCustomers = async (req, res, next) => {
   try {
     const { page = 1, limit = 20, search = '' } = req.query;
-    const result = await customerService.getAllCustomers(Number(page), Number(limit), search);
+    const tenantId = req.user?.tenantId || null;
+    const result = await customerService.getAllCustomers(Number(page), Number(limit), search, tenantId);
     return ApiResponse.paginated(res, result.customers, result.pagination.total, result.pagination.page, result.pagination.limit);
   } catch (error) { next(error); }
 };
 
 export const getCustomerById = async (req, res, next) => {
   try {
-    const customer = await customerService.getCustomerById(req.params.id);
+    const tenantId = req.user?.tenantId || null;
+    const customer = await customerService.getCustomerById(req.params.id, tenantId);
     return ApiResponse.success(res, customer);
   } catch (error) { next(error); }
 };
 
 export const createCustomer = async (req, res, next) => {
   try {
-    const customer = await customerService.createCustomer(req.body);
+    const tenantId = req.user?.tenantId || null;
+    const customer = await customerService.createCustomer(req.body, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'CREATE', module: 'customer', entityId: customer._id, entityType: 'Customer', details: { name: customer.name }, req });
     return ApiResponse.created(res, customer, 'Customer created');
   } catch (error) { next(error); }
@@ -27,7 +30,8 @@ export const createCustomer = async (req, res, next) => {
 
 export const updateCustomer = async (req, res, next) => {
   try {
-    const customer = await customerService.updateCustomer(req.params.id, req.body);
+    const tenantId = req.user?.tenantId || null;
+    const customer = await customerService.updateCustomer(req.params.id, req.body, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'UPDATE', module: 'customer', entityId: customer._id, entityType: 'Customer', details: { name: customer.name }, req });
     return ApiResponse.success(res, customer, 'Customer updated');
   } catch (error) { next(error); }
@@ -35,7 +39,8 @@ export const updateCustomer = async (req, res, next) => {
 
 export const deleteCustomer = async (req, res, next) => {
   try {
-    await customerService.deleteCustomer(req.params.id);
+    const tenantId = req.user?.tenantId || null;
+    await customerService.deleteCustomer(req.params.id, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'DELETE', module: 'customer', entityId: req.params.id, entityType: 'Customer', req });
     return ApiResponse.success(res, null, 'Customer deleted');
   } catch (error) { next(error); }
@@ -43,7 +48,8 @@ export const deleteCustomer = async (req, res, next) => {
 
 export const getCustomerHistory = async (req, res, next) => {
   try {
-    const result = await customerService.getCustomerHistory(req.params.id);
+    const tenantId = req.user?.tenantId || null;
+    const result = await customerService.getCustomerHistory(req.params.id, tenantId);
     return ApiResponse.success(res, result);
   } catch (error) { next(error); }
 };
@@ -51,7 +57,8 @@ export const getCustomerHistory = async (req, res, next) => {
 export const collectDue = async (req, res, next) => {
   try {
     const { amount, paymentMethod } = req.body;
-    const result = await customerService.collectDue(req.params.id, amount, paymentMethod, req.user._id);
+    const tenantId = req.user?.tenantId || null;
+    const result = await customerService.collectDue(req.params.id, amount, paymentMethod, req.user._id, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'COLLECT_DUE', module: 'customer', entityId: req.params.id, entityType: 'Customer', details: { amount, paymentMethod }, req });
     return ApiResponse.success(res, result, `৳${result.collected} collected`);
   } catch (error) { next(error); }
@@ -59,7 +66,8 @@ export const collectDue = async (req, res, next) => {
 
 export const getCustomerStats = async (req, res, next) => {
   try {
-    const stats = await customerService.getCustomerStats();
+    const tenantId = req.user?.tenantId || null;
+    const stats = await customerService.getCustomerStats(tenantId);
     return ApiResponse.success(res, stats);
   } catch (error) { next(error); }
 };

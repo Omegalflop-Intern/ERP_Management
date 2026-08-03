@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const documentVaultSchema = new mongoose.Schema(
   {
+    tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', index: true },
     entityType: { type: String, enum: ['Investor', 'Lender', 'Borrower', 'Loan'], required: true },
     entityId: { type: mongoose.Schema.Types.ObjectId, required: true },
     documentType: { type: String, enum: ['Legal Document', 'Cheque', 'NID', 'Other'], default: 'Other' },

@@ -243,7 +243,7 @@ export default function StockOverview() {
             className={`w-full pl-10 pr-4 py-2 text-sm ${
               styled
                 ? 'neu-input'
-                : 'bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-gray-100 focus:outline-none focus:border-red-500'
+                : 'bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]'
             }`}
           />
         </div>
@@ -256,7 +256,7 @@ export default function StockOverview() {
               onClick={() => setActiveFilter(f.id)}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 activeFilter === f.id
-                  ? 'bg-red-600 text-white shadow-md'
+                  ? 'bg-[#2563EB] text-white shadow-md'
                   : styled
                     ? 'neu-btn-sm'
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'

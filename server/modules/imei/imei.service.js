@@ -5,12 +5,15 @@ import { paginate, getPagination } from '../../utils/http/pagination.js';
 import { escapeRegex } from '../../utils/system/helpers.js';
 import { getImeiPassport as getFullPassport } from './imeiPassport.service.js';
 
-export const getAllIMEI = async (page = 1, limit = 20, search = '', status = '', category = '') => {
+export const getAllIMEI = async (page = 1, limit = 20, search = '', status = '', category = '', tenantId = null) => {
   const query = { isDeleted: false };
+  if (tenantId) {
+    query.tenantId = tenantId;
+  }
 
   if (search) {
     const safeSearch = escapeRegex(search);
-    const matchingProducts = await Product.find({
+    const productQuery = {
       $or: [
         { name: { $regex: safeSearch, $options: 'i' } },
         { brand: { $regex: safeSearch, $options: 'i' } },
@@ -18,7 +21,9 @@ export const getAllIMEI = async (page = 1, limit = 20, search = '', status = '',
         { sku: { $regex: safeSearch, $options: 'i' } },
       ],
       isDeleted: false,
-    }).select('_id');
+    };
+    if (tenantId) productQuery.tenantId = tenantId;
+    const matchingProducts = await Product.find(productQuery).select('_id');
 
     const matchingProductIds = matchingProducts.map(p => p._id);
 
@@ -33,7 +38,9 @@ export const getAllIMEI = async (page = 1, limit = 20, search = '', status = '',
   }
 
   if (category && category !== 'ALL') {
-    const productIds = await Product.find({ category, isDeleted: false }).select('_id');
+    const productQuery = { category, isDeleted: false };
+    if (tenantId) productQuery.tenantId = tenantId;
+    const productIds = await Product.find(productQuery).select('_id');
     query.productId = { $in: productIds.map(p => p._id) };
   }
 
@@ -45,8 +52,10 @@ export const getAllIMEI = async (page = 1, limit = 20, search = '', status = '',
 
   // Attach available stock count for each product
   const productIds = units.map(u => u.productId?._id).filter(Boolean);
+  const countQuery = { productId: { $in: productIds }, status: 'Available', isDeleted: false };
+  if (tenantId) countQuery.tenantId = tenantId;
   const counts = await InventoryUnit.aggregate([
-    { $match: { productId: { $in: productIds }, status: 'Available', isDeleted: false } },
+    { $match: countQuery },
     { $group: { _id: '$productId', count: { $sum: 1 } } }
   ]);
   const countMap = {};
@@ -65,8 +74,10 @@ export const getAllIMEI = async (page = 1, limit = 20, search = '', status = '',
   return { units: enrichedUnits, pagination: getPagination(total, page, limit) };
 };
 
-export const getIMEIBySerial = async (imeiOrSerial) => {
-  const unit = await InventoryUnit.findOne({ imeiOrSerial, isDeleted: false })
+export const getIMEIBySerial = async (imeiOrSerial, tenantId = null) => {
+  const query = { imeiOrSerial, isDeleted: false };
+  if (tenantId) query.tenantId = tenantId;
+  const unit = await InventoryUnit.findOne(query)
     .populate('productId')
     .populate('branchId')
     .populate('supplierId');
@@ -74,15 +85,19 @@ export const getIMEIBySerial = async (imeiOrSerial) => {
   return unit;
 };
 
-export const getIMEIPassport = async (imeiOrSerial) => {
-  return await getFullPassport(imeiOrSerial);
+export const getIMEIPassport = async (imeiOrSerial, tenantId = null) => {
+  return await getFullPassport(imeiOrSerial, tenantId);
 };
 
-export const addInventoryUnit = async (data) => {
-  const existing = await InventoryUnit.findOne({ imeiOrSerial: data.imeiOrSerial, isDeleted: false });
+export const addInventoryUnit = async (data, tenantId = null) => {
+  const existingQuery = { imeiOrSerial: data.imeiOrSerial, isDeleted: false };
+  if (tenantId) existingQuery.tenantId = tenantId;
+  const existing = await InventoryUnit.findOne(existingQuery);
   if (existing) throw ApiError.conflict('IMEI already exists');
 
-  const product = await Product.findOne({ _id: data.productId, isDeleted: false });
+  const productQuery = { _id: data.productId, isDeleted: false };
+  if (tenantId) productQuery.tenantId = tenantId;
+  const product = await Product.findOne(productQuery);
   if (!product) throw ApiError.notFound('Product not found');
 
   const warrantyExpiry = new Date();
@@ -90,6 +105,7 @@ export const addInventoryUnit = async (data) => {
 
   const unit = await InventoryUnit.create({
     ...data,
+    tenantId: tenantId || data.tenantId || null,
     currentSellingPrice: data.currentSellingPrice || product.sellingPrice,
     purchasePrice: data.purchasePrice || product.costPrice,
     warrantyExpiry,
@@ -104,9 +120,32 @@ export const addInventoryUnit = async (data) => {
   return unit;
 };
 
-export const updateIMEIStatus = async (id, status, performedBy = 'system') => {
-  const unit = await InventoryUnit.findOne({ _id: id, isDeleted: false });
+export const updateIMEIStatus = async (id, status, performedBy = 'system', tenantId = null) => {
+  const query = { _id: id, isDeleted: false };
+  if (tenantId) query.tenantId = tenantId;
+  const unit = await InventoryUnit.findOne(query);
   if (!unit) throw ApiError.notFound('IMEI not found');
+
+  const allowedTransitions = {
+    'Available': ['Reserved', 'Sold', 'Defective', 'Sent for Repair', 'Display Unit', 'Returned to Supplier'],
+    'Reserved': ['Available', 'Sold', 'Defective'],
+    'Sold': ['Returned', 'Defective', 'Sent for Repair'],
+    'Returned': ['Available', 'Defective'],
+    'Returned to Supplier': ['Available'],
+    'Defective': ['Available', 'Returned to Supplier'],
+    'Sent for Repair': ['Available', 'Defective'],
+    'Display Unit': ['Available', 'Sold'],
+  };
+
+  const current = unit.status;
+  if (current === status) {
+    throw ApiError.badRequest(`IMEI is already in "${status}" status`);
+  }
+
+  const permitted = allowedTransitions[current] || [];
+  if (!permitted.includes(status)) {
+    throw ApiError.badRequest(`Cannot transition IMEI from "${current}" to "${status}"`);
+  }
 
   unit.status = status;
   unit.passportHistory.push({
@@ -118,15 +157,19 @@ export const updateIMEIStatus = async (id, status, performedBy = 'system') => {
   return unit;
 };
 
-export const priceDropAdjustment = async (productName, newSellingPrice) => {
-  const product = await Product.findOne({ name: productName, isDeleted: false });
+export const priceDropAdjustment = async (productName, newSellingPrice, tenantId = null) => {
+  const productQuery = { name: productName, isDeleted: false };
+  if (tenantId) productQuery.tenantId = tenantId;
+  const product = await Product.findOne(productQuery);
   if (!product) throw ApiError.notFound('Product not found');
 
   product.sellingPrice = newSellingPrice;
   await product.save();
 
+  const unitQuery = { productId: product._id, status: 'Available', isDeleted: false };
+  if (tenantId) unitQuery.tenantId = tenantId;
   const result = await InventoryUnit.updateMany(
-    { productId: product._id, status: 'Available', isDeleted: false },
+    unitQuery,
     {
       $set: { currentSellingPrice: newSellingPrice },
       $push: {
@@ -143,8 +186,10 @@ export const priceDropAdjustment = async (productName, newSellingPrice) => {
   return { modifiedCount: result.modifiedCount, productName };
 };
 
-export const deleteIMEI = async (id) => {
-  const unit = await InventoryUnit.findOne({ _id: id, isDeleted: false });
+export const deleteIMEI = async (id, tenantId = null) => {
+  const query = { _id: id, isDeleted: false };
+  if (tenantId) query.tenantId = tenantId;
+  const unit = await InventoryUnit.findOne(query);
   if (!unit) throw ApiError.notFound('IMEI not found');
   unit.isDeleted = true;
   await unit.save();
