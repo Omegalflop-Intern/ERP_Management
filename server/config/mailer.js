@@ -13,6 +13,9 @@ export const initMailer = async () => {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
       },
+      tls: { rejectUnauthorized: false },
+      connectionTimeout: 10000,
+      greetingTimeout: 5000,
     });
   } else {
     const testAccount = await nodemailer.createTestAccount();
@@ -32,72 +35,80 @@ export const initMailer = async () => {
 const SENDER_NAME = process.env.SMTP_SENDER_NAME || 'Brothers Mobile';
 const SENDER_EMAIL = process.env.SMTP_SENDER_EMAIL || process.env.SMTP_USER || 'no-reply@brothersmobile.com';
 const APP_NAME = process.env.APP_NAME || 'Brothers Mobile Shop ERP';
+const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || SENDER_EMAIL;
+const COMPANY_ADDRESS = process.env.COMPANY_ADDRESS || '';
+
+const baseHeaders = {
+  'X-Mailer': 'BrothersERP-Mailer/1.0',
+  'X-Priority': '3',
+  'Precedence': 'bulk',
+  'List-Unsubscribe': `<mailto:${SENDER_EMAIL}?subject=unsubscribe>`,
+  'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+  'Feedback-ID': `erp:${APP_NAME.replace(/\s/g, '')}`,
+};
+
+const addressBlock = COMPANY_ADDRESS
+  ? `<p style="margin:8px 0 0;color:#999;font-size:11px;">${COMPANY_ADDRESS}</p>`
+  : '';
 
 export const sendOTPEmail = async (toEmail, otpCode, userName = '') => {
   if (!transporter) await initMailer();
-
   const displayName = userName || 'User';
 
   const mailOptions = {
     from: `"${SENDER_NAME}" <${SENDER_EMAIL}>`,
     to: toEmail,
-    subject: `🔐 Your Verification Code — ${APP_NAME}`,
+    replyTo: SUPPORT_EMAIL,
+    subject: `Your Verification Code - ${SENDER_NAME}`,
+    headers: baseHeaders,
+    text: `Hello ${displayName},\n\nYour verification code is: ${otpCode}\n\nThis code expires in 10 minutes.\n\nIf you did not request this, please ignore this email.\n\nThank you,\n${SENDER_NAME}\n${COMPANY_ADDRESS || ''}`,
     html: `
       <!DOCTYPE html>
       <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      </head>
-      <body style="margin:0;padding:0;background-color:#f1f5f9;font-family:'Segoe UI',Arial,sans-serif;">
-        <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;background-color:#f1f5f9;">
-          <tr>
-            <td align="center">
-              <table width="480" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
-                <!-- Header -->
-                <tr>
-                  <td style="background:linear-gradient(135deg,#dc2626,#b91c1c);padding:32px 40px;text-align:center;">
-                    <div style="font-size:32px;margin-bottom:8px;">📱</div>
-                    <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:0.5px;">${APP_NAME}</h1>
-                  </td>
-                </tr>
-                <!-- Body -->
-                <tr>
-                  <td style="padding:40px;">
-                    <p style="margin:0 0 8px;color:#64748b;font-size:15px;">Hello <strong style="color:#1e293b;">${displayName}</strong>,</p>
-                    <p style="margin:0 0 24px;color:#64748b;font-size:15px;line-height:1.6;">
-                      We received a request to verify your email address. Use the code below to complete verification:
-                    </p>
-                    <!-- OTP Box -->
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="background:#fef2f2;border:2px dashed #fca5a5;border-radius:12px;padding:20px;text-align:center;">
-                          <p style="margin:0 0 8px;color:#94a3b8;font-size:12px;text-transform:uppercase;letter-spacing:2px;">Your Verification Code</p>
-                          <div style="font-size:36px;font-weight:800;letter-spacing:8px;color:#dc2626;font-family:'Courier New',monospace;">
-                            ${otpCode}
-                          </div>
-                        </td>
-                      </tr>
-                    </table>
-                    <p style="margin:24px 0 0;color:#94a3b8;font-size:13px;line-height:1.5;">
-                      This code expires in <strong style="color:#64748b;">10 minutes</strong>. If you didn't request this, you can safely ignore this email — someone may have entered your email by mistake.
-                    </p>
-                  </td>
-                </tr>
-                <!-- Footer -->
-                <tr>
-                  <td style="padding:20px 40px;background:#f8fafc;border-top:1px solid #e2e8f0;text-align:center;">
-                    <p style="margin:0;color:#94a3b8;font-size:12px;">
-                      © ${new Date().getFullYear()} ${SENDER_NAME}. All rights reserved.
-                    </p>
-                    <p style="margin:4px 0 0;color:#cbd5e1;font-size:11px;">
-                      This is an automated email — please do not reply.
-                    </p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
+      <head><meta charset="utf-8"></head>
+      <body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:30px 0;">
+          <tr><td align="center">
+            <table width="480" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #e0e0e0;">
+              <tr>
+                <td style="background:#1a1a2e;padding:24px 32px;text-align:center;">
+                  <h1 style="margin:0;color:#ffffff;font-size:18px;font-weight:700;">${SENDER_NAME}</h1>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:32px;">
+                  <p style="margin:0 0 16px;color:#333;font-size:14px;">Hello <strong>${displayName}</strong>,</p>
+                  <p style="margin:0 0 20px;color:#555;font-size:14px;line-height:1.6;">
+                    We received a request to verify your email address. Please use the code below:
+                  </p>
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="background:#f8f8f8;border:2px solid #1a1a2e;padding:16px;text-align:center;">
+                        <p style="margin:0 0 6px;color:#888;font-size:11px;text-transform:uppercase;letter-spacing:2px;">Verification Code</p>
+                        <div style="font-size:32px;font-weight:800;letter-spacing:8px;color:#1a1a2e;font-family:'Courier New',monospace;">
+                          ${otpCode}
+                        </div>
+                      </td>
+                    </tr>
+                  </table>
+                  <p style="margin:20px 0 0;color:#888;font-size:12px;">
+                    This code expires in 10 minutes. If you did not request this, please ignore this email.
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td style="background:#f8f8f8;border-top:1px solid #e0e0e0;padding:16px 32px;text-align:center;">
+                  <p style="margin:0;color:#999;font-size:11px;">
+                    &copy; ${new Date().getFullYear()} ${SENDER_NAME}. All rights reserved.
+                  </p>
+                  ${addressBlock}
+                  <p style="margin:4px 0 0;color:#bbb;font-size:10px;">
+                    This is an automated email. Please do not reply.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td></tr>
         </table>
       </body>
       </html>
@@ -116,70 +127,65 @@ export const sendOTPEmail = async (toEmail, otpCode, userName = '') => {
 
 export const sendPasswordResetEmail = async (toEmail, resetLink, userName = '') => {
   if (!transporter) await initMailer();
-
   const displayName = userName || 'User';
 
   const mailOptions = {
     from: `"${SENDER_NAME}" <${SENDER_EMAIL}>`,
     to: toEmail,
-    subject: `🔐 Password Reset — ${APP_NAME}`,
+    replyTo: SUPPORT_EMAIL,
+    subject: `Password Reset Request - ${SENDER_NAME}`,
+    headers: baseHeaders,
+    text: `Hello ${displayName},\n\nYou requested a password reset. Click the link below:\n\n${resetLink}\n\nThis link expires in 1 hour.\n\nIf you did not request this, please ignore this email.\n\nThank you,\n${SENDER_NAME}\n${COMPANY_ADDRESS || ''}`,
     html: `
       <!DOCTYPE html>
       <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      </head>
-      <body style="margin:0;padding:0;background-color:#f1f5f9;font-family:'Segoe UI',Arial,sans-serif;">
-        <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;background-color:#f1f5f9;">
-          <tr>
-            <td align="center">
-              <table width="480" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
-                <tr>
-                  <td style="background:linear-gradient(135deg,#dc2626,#b91c1c);padding:32px 40px;text-align:center;">
-                    <div style="font-size:32px;margin-bottom:8px;">📱</div>
-                    <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:0.5px;">${APP_NAME}</h1>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding:40px;">
-                    <p style="margin:0 0 8px;color:#64748b;font-size:15px;">Hello <strong style="color:#1e293b;">${displayName}</strong>,</p>
-                    <p style="margin:0 0 24px;color:#64748b;font-size:15px;line-height:1.6;">
-                      We received a password reset request for your account. Click the button below to reset your password. This link expires in <strong>1 hour</strong>.
-                    </p>
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td align="center" style="padding:8px 0 24px;">
-                          <a href="${resetLink}" style="display:inline-block;padding:14px 36px;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;border-radius:12px;letter-spacing:0.5px;">
-                            Reset Password
-                          </a>
-                        </td>
-                      </tr>
-                    </table>
-                    <p style="margin:24px 0 0;color:#94a3b8;font-size:13px;line-height:1.5;">
-                      If the button doesn't work, copy and paste this link into your browser:
-                    </p>
-                    <p style="margin:4px 0 0;color:#64748b;font-size:12px;word-break:break-all;background:#f8fafc;padding:12px;border-radius:8px;border:1px solid #e2e8f0;">
-                      ${resetLink}
-                    </p>
-                    <p style="margin:24px 0 0;color:#94a3b8;font-size:13px;line-height:1.5;">
-                      If you didn't request this, you can safely ignore this email — your password will remain unchanged.
-                    </p>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding:20px 40px;background:#f8fafc;border-top:1px solid #e2e8f0;text-align:center;">
-                    <p style="margin:0;color:#94a3b8;font-size:12px;">
-                      &copy; ${new Date().getFullYear()} ${SENDER_NAME}. All rights reserved.
-                    </p>
-                    <p style="margin:4px 0 0;color:#cbd5e1;font-size:11px;">
-                      This is an automated email — please do not reply.
-                    </p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
+      <head><meta charset="utf-8"></head>
+      <body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:30px 0;">
+          <tr><td align="center">
+            <table width="480" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #e0e0e0;">
+              <tr>
+                <td style="background:#1a1a2e;padding:24px 32px;text-align:center;">
+                  <h1 style="margin:0;color:#ffffff;font-size:18px;font-weight:700;">${SENDER_NAME}</h1>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:32px;">
+                  <p style="margin:0 0 16px;color:#333;font-size:14px;">Hello <strong>${displayName}</strong>,</p>
+                  <p style="margin:0 0 20px;color:#555;font-size:14px;line-height:1.6;">
+                    We received a password reset request for your account. Click the button below to reset your password.
+                  </p>
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td align="center" style="padding:8px 0 20px;">
+                        <a href="${resetLink}" style="display:inline-block;padding:12px 32px;background:#1a1a2e;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;">
+                          Reset Password
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                  <p style="margin:0 0 8px;color:#888;font-size:12px;">Or copy this link into your browser:</p>
+                  <p style="margin:0 0 20px;color:#1a1a2e;font-size:11px;word-break:break-all;background:#f8f8f8;padding:10px;border:1px solid #e0e0e0;font-family:'Courier New',monospace;">
+                    ${resetLink}
+                  </p>
+                  <p style="margin:0;color:#888;font-size:12px;">
+                    This link expires in 1 hour. If you did not request this, please ignore this email.
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td style="background:#f8f8f8;border-top:1px solid #e0e0e0;padding:16px 32px;text-align:center;">
+                  <p style="margin:0;color:#999;font-size:11px;">
+                    &copy; ${new Date().getFullYear()} ${SENDER_NAME}. All rights reserved.
+                  </p>
+                  ${addressBlock}
+                  <p style="margin:4px 0 0;color:#bbb;font-size:10px;">
+                    This is an automated email. Please do not reply.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td></tr>
         </table>
       </body>
       </html>
@@ -225,35 +231,38 @@ export const sendAdminNotificationEmail = async (subject, title, detailsHtml) =>
   if (!recipientString) return { success: false, reason: 'No admin email found' };
 
   const mailOptions = {
-    from: `"${SENDER_NAME} Alerts" <${SENDER_EMAIL}>`,
+    from: `"${SENDER_NAME}" <${SENDER_EMAIL}>`,
     to: recipientString,
-    subject: `🔔 [Admin Alert] ${subject}`,
+    replyTo: SUPPORT_EMAIL,
+    subject: `[Admin Alert] ${subject}`,
+    headers: { ...baseHeaders, 'X-Priority': '1' },
+    text: `${title}\n\n${detailsHtml?.replace(/<[^>]*>/g, '') || ''}\n\n- ${SENDER_NAME} System`,
     html: `
       <!DOCTYPE html>
       <html>
       <head><meta charset="utf-8"></head>
-      <body style="margin:0;padding:20px;background:#f8fafc;font-family:Arial,sans-serif;">
-        <table width="100%" cellpadding="0" cellspacing="0">
-          <tr>
-            <td align="center">
-              <table width="560" style="background:#ffffff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;">
-                <tr style="background:#0f172a;color:#ffffff;">
-                  <td style="padding:20px 24px;">
-                    <h2 style="margin:0;font-size:18px;">🔔 ${title}</h2>
-                    <p style="margin:4px 0 0;font-size:12px;color:#94a3b8;">System Admin Notification • ${APP_NAME}</p>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding:24px;color:#334155;font-size:14px;line-height:1.6;">
-                    ${detailsHtml}
-                  </td>
-                </tr>
-                <tr style="background:#f1f5f9;color:#64748b;font-size:11px;text-align:center;">
-                  <td style="padding:12px;">© ${new Date().getFullYear()} ${APP_NAME}. System Event Notification</td>
-                </tr>
-              </table>
-            </td>
-          </tr>
+      <body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:30px 0;">
+          <tr><td align="center">
+            <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #e0e0e0;">
+              <tr>
+                <td style="background:#1a1a2e;padding:20px 24px;">
+                  <h2 style="margin:0;color:#ffffff;font-size:16px;font-weight:700;">${title}</h2>
+                  <p style="margin:4px 0 0;color:#aaa;font-size:11px;">Admin Notification - ${APP_NAME}</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:24px;color:#333;font-size:14px;line-height:1.6;">
+                  ${detailsHtml}
+                </td>
+              </tr>
+              <tr>
+                <td style="background:#f8f8f8;border-top:1px solid #e0e0e0;padding:12px;text-align:center;color:#999;font-size:10px;">
+                  &copy; ${new Date().getFullYear()} ${APP_NAME}. System Event Notification
+                </td>
+              </tr>
+            </table>
+          </td></tr>
         </table>
       </body>
       </html>
@@ -262,7 +271,7 @@ export const sendAdminNotificationEmail = async (subject, title, detailsHtml) =>
 
   try {
     const info = await transporter.sendMail(mailOptions);
-    console.log(`[Admin Mailer] Alert sent to ${adminEmail}: ${subject}`);
+    console.log(`[Admin Mailer] Alert sent to ${recipientString}: ${subject}`);
     return { success: true, messageId: info.messageId };
   } catch (err) {
     console.error(`[Admin Mailer Error]: ${err.message}`);
@@ -276,65 +285,75 @@ export const sendCustomerInvoiceEmail = async (toEmail, customerName, invoiceDat
 
   const customer = customerName || 'Valued Customer';
   const invoiceNo = invoiceData.invoiceNo || 'Receipt';
-  const grandTotal = invoiceData.grandTotal ? `৳${Number(invoiceData.grandTotal).toLocaleString()}` : '$0.00';
+  const grandTotal = invoiceData.grandTotal ? `\u09F3${Number(invoiceData.grandTotal).toLocaleString()}` : '\u09F30';
 
   const mailOptions = {
-    from: `"${SENDER_NAME} Sales" <${SENDER_EMAIL}>`,
+    from: `"${SENDER_NAME}" <${SENDER_EMAIL}>`,
     to: toEmail,
-    subject: `🧾 Purchase Receipt ${invoiceNo} — ${SENDER_NAME}`,
+    replyTo: SUPPORT_EMAIL,
+    subject: `Purchase Receipt ${invoiceNo} - ${SENDER_NAME}`,
+    headers: baseHeaders,
+    text: `Dear ${customer},\n\nThank you for your purchase at ${SENDER_NAME}.\n\nInvoice: ${invoiceNo}\nTotal: ${grandTotal}\nStatus: ${invoiceData.paymentStatus || 'Completed'}\n\n${invoiceData.invoiceLink || ''}\n\nThank you,\n${SENDER_NAME}\n${COMPANY_ADDRESS || ''}`,
     html: `
       <!DOCTYPE html>
       <html>
       <head><meta charset="utf-8"></head>
-      <body style="margin:0;padding:20px;background:#f8fafc;font-family:Arial,sans-serif;">
-        <table width="100%" cellpadding="0" cellspacing="0">
-          <tr>
-            <td align="center">
-              <table width="560" style="background:#ffffff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;">
-                <tr style="background:linear-gradient(135deg,#dc2626,#b91c1c);color:#ffffff;">
-                  <td style="padding:24px;text-align:center;">
-                    <h2 style="margin:0;font-size:22px;">Thank You for Your Purchase!</h2>
-                    <p style="margin:4px 0 0;font-size:13px;color:#fca5a5;">Invoice #${invoiceNo}</p>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding:24px;color:#334155;font-size:14px;line-height:1.6;">
-                    <p>Dear <strong>${customer}</strong>,</p>
-                    <p>Thank you for shopping at <strong>${SENDER_NAME}</strong>. Here is the summary of your transaction:</p>
-                    <table width="100%" style="margin:16px 0;border-collapse:collapse;background:#f8fafc;border-radius:8px;">
-                      <tr>
-                        <td style="padding:10px 14px;border-bottom:1px solid #e2e8f0;"><strong>Invoice Number:</strong></td>
-                        <td style="padding:10px 14px;border-bottom:1px solid #e2e8f0;text-align:right;">${invoiceNo}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding:10px 14px;border-bottom:1px solid #e2e8f0;"><strong>Total Paid / Amount:</strong></td>
-                        <td style="padding:10px 14px;border-bottom:1px solid #e2e8f0;text-align:right;color:#dc2626;font-weight:bold;">${grandTotal}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding:10px 14px;"><strong>Payment Status:</strong></td>
-                        <td style="padding:10px 14px;text-align:right;color:#166534;font-weight:bold;">${invoiceData.paymentStatus || 'Completed'}</td>
-                      </tr>
-                    </table>
-                    ${invoiceData.invoiceLink ? `
-                    <table width="100%" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td align="center" style="padding:16px 0;">
-                          <a href="${invoiceData.invoiceLink}" style="display:inline-block;padding:12px 28px;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;border-radius:10px;">
-                            View Invoice
-                          </a>
-                        </td>
-                      </tr>
-                    </table>
-                    ` : ''}
-                    <p style="font-size:12px;color:#64748b;">If you have any questions regarding your invoice or warranty, please contact support.</p>
-                  </td>
-                </tr>
-                <tr style="background:#f1f5f9;color:#64748b;font-size:11px;text-align:center;">
-                  <td style="padding:16px;">© ${new Date().getFullYear()} ${SENDER_NAME}. All rights reserved.</td>
-                </tr>
-              </table>
-            </td>
-          </tr>
+      <body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:30px 0;">
+          <tr><td align="center">
+            <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #e0e0e0;">
+              <tr>
+                <td style="background:#1a1a2e;padding:24px 32px;text-align:center;">
+                  <h1 style="margin:0;color:#ffffff;font-size:18px;font-weight:700;">Thank You for Your Purchase!</h1>
+                  <p style="margin:6px 0 0;color:#aaa;font-size:12px;">Invoice #${invoiceNo}</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:32px;">
+                  <p style="margin:0 0 16px;color:#333;font-size:14px;">Dear <strong>${customer}</strong>,</p>
+                  <p style="margin:0 0 20px;color:#555;font-size:14px;line-height:1.6;">
+                    Thank you for shopping at <strong>${SENDER_NAME}</strong>. Here is your transaction summary:
+                  </p>
+                  <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;border:1px solid #e0e0e0;">
+                    <tr style="background:#f8f8f8;">
+                      <td style="padding:10px 14px;border-bottom:1px solid #e0e0e0;color:#555;font-size:13px;">Invoice Number</td>
+                      <td style="padding:10px 14px;border-bottom:1px solid #e0e0e0;text-align:right;font-weight:700;color:#333;font-size:13px;">${invoiceNo}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:10px 14px;border-bottom:1px solid #e0e0e0;color:#555;font-size:13px;">Total Amount</td>
+                      <td style="padding:10px 14px;border-bottom:1px solid #e0e0e0;text-align:right;color:#c00;font-weight:700;font-size:15px;">${grandTotal}</td>
+                    </tr>
+                    <tr style="background:#f8f8f8;">
+                      <td style="padding:10px 14px;color:#555;font-size:13px;">Payment Status</td>
+                      <td style="padding:10px 14px;text-align:right;color:#1a7a1a;font-weight:700;font-size:13px;">${invoiceData.paymentStatus || 'Completed'}</td>
+                    </tr>
+                  </table>
+                  ${invoiceData.invoiceLink ? `
+                  <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td align="center" style="padding:8px 0 16px;">
+                        <a href="${invoiceData.invoiceLink}" style="display:inline-block;padding:10px 28px;background:#1a1a2e;color:#ffffff;font-size:13px;font-weight:700;text-decoration:none;">
+                          View Invoice
+                        </a>
+                      </td>
+                    </tr>
+                  </table>` : ''}
+                  <p style="margin:0;color:#888;font-size:12px;">If you have any questions, please contact our support team.</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="background:#f8f8f8;border-top:1px solid #e0e0e0;padding:16px 32px;text-align:center;">
+                  <p style="margin:0;color:#999;font-size:11px;">
+                    &copy; ${new Date().getFullYear()} ${SENDER_NAME}. All rights reserved.
+                  </p>
+                  ${addressBlock}
+                  <p style="margin:4px 0 0;color:#bbb;font-size:10px;">
+                    This is an automated email. Please do not reply.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td></tr>
         </table>
       </body>
       </html>
@@ -343,10 +362,10 @@ export const sendCustomerInvoiceEmail = async (toEmail, customerName, invoiceDat
 
   try {
     const info = await transporter.sendMail(mailOptions);
-    console.log(`[Customer Invoice Email] Receipt sent to ${toEmail} for Invoice ${invoiceNo}`);
+    console.log(`[Customer Invoice] Receipt sent to ${toEmail} for ${invoiceNo}`);
     return { success: true, messageId: info.messageId };
   } catch (err) {
-    console.error(`[Customer Invoice Email Error]: ${err.message}`);
+    console.error(`[Customer Invoice Error]: ${err.message}`);
     return { success: false, error: err.message };
   }
 };
@@ -360,42 +379,57 @@ export const sendCustomerRepairEmail = async (toEmail, customerName, repairData)
   const status = repairData.status || 'Updated';
 
   const mailOptions = {
-    from: `"${SENDER_NAME} Service" <${SENDER_EMAIL}>`,
+    from: `"${SENDER_NAME}" <${SENDER_EMAIL}>`,
     to: toEmail,
-    subject: `🔧 Device Repair Status Update (${status}) — ${SENDER_NAME}`,
+    replyTo: SUPPORT_EMAIL,
+    subject: `Repair Status Update (${status}) - ${SENDER_NAME}`,
+    headers: baseHeaders,
+    text: `Dear ${customer},\n\nYour device repair status has been updated to: ${status}\n\nDevice: ${repairData.brand || ''} ${repairData.model || 'Device'}\nIssue: ${repairData.problemDescription || 'N/A'}\nJob Sheet: ${jobNo}\n\nPlease bring your repair claim receipt when picking up your device.\n\nThank you,\n${SENDER_NAME}\n${COMPANY_ADDRESS || ''}`,
     html: `
       <!DOCTYPE html>
       <html>
       <head><meta charset="utf-8"></head>
-      <body style="margin:0;padding:20px;background:#f8fafc;font-family:Arial,sans-serif;">
-        <table width="100%" cellpadding="0" cellspacing="0">
-          <tr>
-            <td align="center">
-              <table width="560" style="background:#ffffff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;">
-                <tr style="background:#2563eb;color:#ffffff;">
-                  <td style="padding:24px;text-align:center;">
-                    <h2 style="margin:0;font-size:20px;">Device Repair Service Update</h2>
-                    <p style="margin:4px 0 0;font-size:13px;color:#93c5fd;">Job Sheet #${jobNo}</p>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding:24px;color:#334155;font-size:14px;line-height:1.6;">
-                    <p>Dear <strong>${customer}</strong>,</p>
-                    <p>Your device repair status has been updated to <strong style="color:#2563eb;text-transform:uppercase;">${status}</strong>.</p>
-                    <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px;margin:16px 0;">
-                      <p style="margin:0;"><strong>Device:</strong> ${repairData.brand || ''} ${repairData.model || 'Device'}</p>
-                      <p style="margin:4px 0 0;"><strong>Reported Issue:</strong> ${repairData.problemDescription || 'N/A'}</p>
-                      <p style="margin:4px 0 0;"><strong>Current Status:</strong> <span style="color:#1d4ed8;font-weight:bold;">${status}</span></p>
-                    </div>
-                    <p style="font-size:12px;color:#64748b;">Please bring your repair claim receipt when picking up your repaired device.</p>
-                  </td>
-                </tr>
-                <tr style="background:#f1f5f9;color:#64748b;font-size:11px;text-align:center;">
-                  <td style="padding:16px;">© ${new Date().getFullYear()} ${SENDER_NAME} Service Center</td>
-                </tr>
-              </table>
-            </td>
-          </tr>
+      <body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:30px 0;">
+          <tr><td align="center">
+            <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #e0e0e0;">
+              <tr>
+                <td style="background:#1a1a2e;padding:24px 32px;text-align:center;">
+                  <h1 style="margin:0;color:#ffffff;font-size:18px;font-weight:700;">Device Repair Service Update</h1>
+                  <p style="margin:6px 0 0;color:#aaa;font-size:12px;">Job Sheet #${jobNo}</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:32px;">
+                  <p style="margin:0 0 16px;color:#333;font-size:14px;">Dear <strong>${customer}</strong>,</p>
+                  <p style="margin:0 0 20px;color:#555;font-size:14px;line-height:1.6;">
+                    Your device repair status has been updated to <strong style="text-transform:uppercase;">${status}</strong>.
+                  </p>
+                  <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;background:#f0f4ff;border:1px solid #c0d0e8;">
+                    <tr>
+                      <td style="padding:16px;">
+                        <p style="margin:0 0 6px;color:#333;font-size:13px;"><strong>Device:</strong> ${repairData.brand || ''} ${repairData.model || 'Device'}</p>
+                        <p style="margin:0 0 6px;color:#333;font-size:13px;"><strong>Reported Issue:</strong> ${repairData.problemDescription || 'N/A'}</p>
+                        <p style="margin:0;color:#333;font-size:13px;"><strong>Current Status:</strong> <strong style="color:#0055aa;">${status}</strong></p>
+                      </td>
+                    </tr>
+                  </table>
+                  <p style="margin:0;color:#888;font-size:12px;">Please bring your repair claim receipt when picking up your repaired device.</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="background:#f8f8f8;border-top:1px solid #e0e0e0;padding:16px 32px;text-align:center;">
+                  <p style="margin:0;color:#999;font-size:11px;">
+                    &copy; ${new Date().getFullYear()} ${SENDER_NAME} Service Center
+                  </p>
+                  ${addressBlock}
+                  <p style="margin:4px 0 0;color:#bbb;font-size:10px;">
+                    This is an automated email. Please do not reply.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td></tr>
         </table>
       </body>
       </html>
@@ -404,10 +438,10 @@ export const sendCustomerRepairEmail = async (toEmail, customerName, repairData)
 
   try {
     const info = await transporter.sendMail(mailOptions);
-    console.log(`[Customer Repair Email] Update sent to ${toEmail} for Repair ${jobNo}`);
+    console.log(`[Customer Repair] Update sent to ${toEmail} for ${jobNo}`);
     return { success: true, messageId: info.messageId };
   } catch (err) {
-    console.error(`[Customer Repair Email Error]: ${err.message}`);
+    console.error(`[Customer Repair Error]: ${err.message}`);
     return { success: false, error: err.message };
   }
 };

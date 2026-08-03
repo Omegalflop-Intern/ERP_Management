@@ -270,7 +270,7 @@ export default function PurchaseOrders() {
   );
 }
 
-function ProductSearchInput({ products, value, onChange, onSelect }) {
+function ProductSearchInput({ products, value, onChange, onSelect, onCreateNew }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [highlightIdx, setHighlightIdx] = useState(-1);
@@ -288,6 +288,9 @@ function ProductSearchInput({ products, value, onChange, onSelect }) {
       )
     : products.slice(0, 20);
 
+  const showCreateOption = query.trim().length >= 2 && filtered.length === 0;
+  const totalItems = filtered.length + (showCreateOption ? 1 : 0);
+
   useEffect(() => {
     setHighlightIdx(-1);
   }, [query]);
@@ -302,18 +305,24 @@ function ProductSearchInput({ products, value, onChange, onSelect }) {
     }
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setHighlightIdx((prev) => (prev < filtered.length - 1 ? prev + 1 : 0));
+      setHighlightIdx((prev) => (prev < totalItems - 1 ? prev + 1 : 0));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setHighlightIdx((prev) => (prev > 0 ? prev - 1 : filtered.length - 1));
+      setHighlightIdx((prev) => (prev > 0 ? prev - 1 : totalItems - 1));
     } else if (e.key === 'Enter' && highlightIdx >= 0) {
       e.preventDefault();
-      const p = filtered[highlightIdx];
-      if (p) {
-        onChange(p._id);
-        onSelect(p);
+      if (showCreateOption && highlightIdx === filtered.length) {
+        onCreateNew?.(query);
         setQuery('');
         setOpen(false);
+      } else {
+        const p = filtered[highlightIdx];
+        if (p) {
+          onChange(p._id);
+          onSelect(p);
+          setQuery('');
+          setOpen(false);
+        }
       }
     } else if (e.key === 'Escape') {
       setOpen(false);
@@ -361,31 +370,50 @@ function ProductSearchInput({ products, value, onChange, onSelect }) {
           ref={listRef}
           className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg"
         >
-          {filtered.length === 0 ? (
+          {filtered.length === 0 && !showCreateOption && (
             <div className="px-3 py-2 text-xs text-gray-400">No products found</div>
-          ) : (
-            filtered.map((p, idx) => (
-              <button
-                key={p._id}
-                type="button"
-                className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 ${
-                  idx === highlightIdx ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-                } ${p._id === value ? 'font-semibold text-[#2563EB] dark:text-blue-400' : 'text-gray-900 dark:text-gray-100'}`}
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  onChange(p._id);
-                  onSelect(p);
-                  setQuery('');
-                  setOpen(false);
-                }}
-                onMouseEnter={() => setHighlightIdx(idx)}
-              >
-                <div className="flex items-center justify-between">
-                  <span>{p.name}</span>
-                  <span className="text-[10px] text-gray-400 font-mono">{p.sku}</span>
-                </div>
-              </button>
-            ))
+          )}
+          {filtered.map((p, idx) => (
+            <button
+              key={p._id}
+              type="button"
+              className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 ${
+                idx === highlightIdx ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+              } ${p._id === value ? 'font-semibold text-[#2563EB] dark:text-blue-400' : 'text-gray-900 dark:text-gray-100'}`}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                onChange(p._id);
+                onSelect(p);
+                setQuery('');
+                setOpen(false);
+              }}
+              onMouseEnter={() => setHighlightIdx(idx)}
+            >
+              <div className="flex items-center justify-between">
+                <span>{p.name}</span>
+                <span className="text-[10px] text-gray-400 font-mono">{p.sku}</span>
+              </div>
+            </button>
+          ))}
+          {showCreateOption && (
+            <button
+              type="button"
+              className={`w-full text-left px-3 py-2 text-sm hover:bg-emerald-50 dark:hover:bg-emerald-900/20 border-t border-gray-200 dark:border-gray-700 ${
+                highlightIdx === filtered.length ? 'bg-emerald-50 dark:bg-emerald-900/20' : ''
+              } text-emerald-700 dark:text-emerald-400 font-semibold`}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                onCreateNew?.(query);
+                setQuery('');
+                setOpen(false);
+              }}
+              onMouseEnter={() => setHighlightIdx(filtered.length)}
+            >
+              <div className="flex items-center gap-2">
+                <Plus className="w-3.5 h-3.5" />
+                <span>Create "{query}"</span>
+              </div>
+            </button>
           )}
         </div>
       )}
@@ -406,6 +434,7 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
   );
   const [showAddSupplierModal, setShowAddSupplierModal] = useState(false);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
+  const [inlineProductName, setInlineProductName] = useState('');
   const queryClient = useQueryClient();
 
   const { data: suppliersData } = useQuery({
@@ -570,6 +599,10 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
                       };
                       setLineItems(updated);
                     }}
+                    onCreateNew={(productName) => {
+                      setInlineProductName(productName);
+                      setShowAddProductModal(true);
+                    }}
                   />
                 </div>
                 <div className="w-20">
@@ -657,9 +690,14 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
 
       {showAddProductModal && (
         <QuickProductModal
-          onClose={() => setShowAddProductModal(false)}
+          initialName={inlineProductName}
+          onClose={() => {
+            setShowAddProductModal(false);
+            setInlineProductName('');
+          }}
           onSuccess={(newProd) => {
             setShowAddProductModal(false);
+            setInlineProductName('');
             if (newProd?._id) {
               setLineItems((prev) => [
                 ...prev.filter((i) => i.productId),
@@ -763,9 +801,9 @@ function QuickSupplierModal({ onClose, onSuccess }) {
   );
 }
 
-function QuickProductModal({ onClose, onSuccess }) {
+function QuickProductModal({ onClose, onSuccess, initialName = '' }) {
   const [form, setForm] = useState({
-    name: '',
+    name: initialName,
     brand: '',
     category: '',
     costPrice: '',

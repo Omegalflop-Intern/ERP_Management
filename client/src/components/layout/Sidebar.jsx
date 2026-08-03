@@ -138,11 +138,6 @@ const menuItems = [
         icon: Wrench,
         permissions: ['repairs:view'],
       },
-    ],
-  },
-  {
-    section: 'Costing & Investments',
-    items: [
       {
         label: 'Costing & Capital',
         icon: HandCoins,
@@ -277,6 +272,15 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
   const { user, hasPermission, hasAnyPermission } = useAuth();
   const { styled } = useTheme();
   const location = useLocation();
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 1024);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const isCollapsed = collapsed && !isMobile;
 
   // Fetch settings for company logo
   const { data: settings } = useQuery({
@@ -323,14 +327,14 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
         h-[calc(100vh-1rem)] lg:h-auto my-2 ml-2 lg:my-0 lg:ml-0 glass-primary rounded-[24px]
         flex flex-col justify-between py-4
         transform transition-all duration-250 ease-in-out
-        ${collapsed ? 'lg:w-[68px]' : 'lg:w-64'}
+        ${isCollapsed ? 'lg:w-[68px]' : 'lg:w-64'}
         ${isOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full lg:translate-x-0'}
       `}
       >
         <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 overscroll-contain sidebar-scrollbar">
           {/* Mobile header */}
           <div className="flex items-center justify-between px-3 mb-4 lg:hidden">
-            {!collapsed && (
+            {!isCollapsed && (
               <div className="flex items-center gap-2">
                 {companyLogo ? (
                   <img
@@ -353,7 +357,7 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
           </div>
 
           {/* Desktop collapsed logo */}
-          {collapsed && (
+          {isCollapsed && (
             <div className="hidden lg:flex justify-center mb-4">
               {companyLogo ? (
                 <img
@@ -395,12 +399,12 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
 
             return (
               <div key={group.section} className="mb-3">
-                {!collapsed && (
+                {!isCollapsed && (
                   <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                     {group.section}
                   </div>
                 )}
-                {collapsed && (
+                {isCollapsed && (
                   <div className="mx-2 mb-1 border-t border-gray-200 dark:border-gray-800" />
                 )}
 
@@ -415,7 +419,7 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
                           onClick={() => toggleSubmenu(item.label)}
                           className={`
                             w-full flex items-center justify-between rounded-lg font-medium text-sm transition-all
-                            ${collapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5'}
+                            ${isCollapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5'}
                             ${
                               hasActiveChild
                                 ? 'bg-blue-50/80 dark:bg-blue-900/20 text-[#2563EB] dark:text-blue-400 font-semibold'
@@ -425,9 +429,9 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
                         >
                           <div className="flex items-center gap-3">
                             <item.icon className="w-4 h-4 shrink-0 text-[#2563EB] dark:text-blue-400" />
-                            {!collapsed && <span className="truncate">{item.label}</span>}
+                            {!isCollapsed && <span className="truncate">{item.label}</span>}
                           </div>
-                          {!collapsed &&
+                          {!isCollapsed &&
                             (isOpenMenu ? (
                               <ChevronDown className="w-4 h-4 text-slate-400" />
                             ) : (
@@ -436,7 +440,7 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
                         </button>
 
                         {/* Dropdown Children Submenu */}
-                        {!collapsed && isOpenMenu && (
+                        {!isCollapsed && isOpenMenu && (
                           <div className="pl-4 mt-1 space-y-0.5 border-l-2 border-[#2563EB]/20 ml-5">
                             {item.children.map((child) => (
                               <NavLink
@@ -465,10 +469,10 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
                     <NavLink
                       key={item.path}
                       to={item.path}
-                      title={collapsed ? item.label : undefined}
+                      title={isCollapsed ? item.label : undefined}
                       className={({ isActive }) => `
                         w-full flex items-center gap-3 rounded-xl font-medium text-sm transition-all mb-0.5
-                        ${collapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5'}
+                        ${isCollapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5'}
                         ${
                           isActive
                             ? 'bg-blue-50/80 dark:bg-blue-900/20 text-[#2563EB] dark:text-blue-400 font-semibold border border-blue-200/60 dark:border-blue-800/40 shadow-xs'
@@ -477,7 +481,7 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
                       `}
                     >
                       <item.icon className="w-4 h-4 shrink-0" />
-                      {!collapsed && <span className="truncate">{item.label}</span>}
+                      {!isCollapsed && <span className="truncate">{item.label}</span>}
                     </NavLink>
                   );
                 })}
@@ -486,7 +490,7 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
           })}
         </div>
 
-        {!collapsed && (
+        {!isCollapsed && (
           <div
             className={`px-4 py-3 mx-2 rounded-xl text-xs space-y-1.5 ${styled ? 'neu-card-sm' : 'bg-gray-50 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-800'}`}
           >
@@ -504,7 +508,7 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
             </div>
           </div>
         )}
-        {collapsed && (
+        {isCollapsed && (
           <div className="hidden lg:flex justify-center px-2">
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" title="Online" />
           </div>

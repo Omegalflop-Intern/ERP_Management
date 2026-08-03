@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function AnimatedBackground() {
   const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
@@ -77,10 +77,34 @@ export default function AnimatedBackground() {
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 select-none">
       {/* Primary & Secondary Layer Base */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#F8FAFC] via-[#F1F5F9] to-[#F8FAFC] dark:from-[#0b0f17] dark:via-[#111827] dark:to-[#0b0f17] animate-bg-breathe" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#F8FAFC] via-[#EFF6FF] to-[#F0F4FF] dark:from-[#0b0f17] dark:via-[#111827] dark:to-[#0b0f17] animate-bg-breathe" />
+
+      {/* Subtle Mesh Gradient Overlay for Light Mode Depth */}
+      <div className="absolute inset-0 dark:hidden opacity-40">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[400px] bg-[radial-gradient(ellipse_at_center,rgba(37,99,235,0.06)_0%,transparent_70%)] pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-[600px] h-[300px] bg-[radial-gradient(ellipse_at_center,rgba(99,102,241,0.05)_0%,transparent_70%)] pointer-events-none" />
+        <div className="absolute top-1/2 left-0 w-[500px] h-[400px] bg-[radial-gradient(ellipse_at_center,rgba(14,165,233,0.04)_0%,transparent_70%)] pointer-events-none" />
+      </div>
+
+      {/* Light Mode Decorative Geometric Shapes */}
+      {!reducedMotion && (
+        <div className="absolute inset-0 dark:hidden pointer-events-none overflow-hidden">
+          {/* Floating circle - top right */}
+          <div className="absolute top-[15%] right-[8%] w-64 h-64 rounded-full border border-blue-200/30 animate-float-slow opacity-50" />
+          <div className="absolute top-[20%] right-[12%] w-40 h-40 rounded-full border border-indigo-200/25 animate-pulse-slow opacity-40" />
+          {/* Floating circle - bottom left */}
+          <div className="absolute bottom-[20%] left-[5%] w-48 h-48 rounded-full border border-sky-200/30 animate-float-slow opacity-40" style={{ animationDelay: '4s' }} />
+          {/* Diamond shape - center right */}
+          <div className="absolute top-[40%] right-[15%] w-20 h-20 rotate-45 border border-blue-200/20 animate-pulse-slow opacity-30" style={{ animationDelay: '6s' }} />
+          {/* Small decorative dots */}
+          <div className="absolute top-[30%] left-[20%] w-2 h-2 rounded-full bg-blue-300/40 animate-pulse-slow" style={{ animationDelay: '2s' }} />
+          <div className="absolute top-[55%] right-[25%] w-1.5 h-1.5 rounded-full bg-indigo-300/40 animate-pulse-slow" style={{ animationDelay: '5s' }} />
+          <div className="absolute bottom-[35%] left-[35%] w-2 h-2 rounded-full bg-sky-300/30 animate-pulse-slow" style={{ animationDelay: '8s' }} />
+        </div>
+      )}
 
       {/* Extremely Subtle SVG Noise Texture */}
-      <svg className="absolute inset-0 w-full h-full opacity-[0.015] pointer-events-none">
+      <svg className="absolute inset-0 w-full h-full opacity-[0.018] pointer-events-none">
         <filter id="erpNoiseFilter">
           <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2" stitchTiles="stitch" />
         </filter>

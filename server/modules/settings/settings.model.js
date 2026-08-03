@@ -43,7 +43,7 @@ const defaultSettings = [
 
 settingsSchema.statics.seedDefaults = async function () {
   for (const s of defaultSettings) {
-    await this.findOneAndUpdate({ key: s.key }, { $setOnInsert: s }, { upsert: true });
+    await this.findOneAndUpdate({ key: s.key, tenantId: null }, { $setOnInsert: { ...s, tenantId: null } }, { upsert: true });
   }
 };
 

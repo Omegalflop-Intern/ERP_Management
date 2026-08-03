@@ -133,6 +133,7 @@ export default function App() {
         <Route path="/register-shop" element={<RegisterShop />} />
         <Route path="/invoice/:token" element={<PublicInvoice />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Route path="/pricing" element={<PricingPage />} />
 
         <Route
           path="/"

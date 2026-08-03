@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const createTenantSchema = z.object({
   shopName: z.string().min(2).max(100).trim(),
   ownerName: z.string().min(2).max(100).trim(),
-  email: z.string().email(),
+  email: z.string().trim().toLowerCase().email('Please provide a valid email address'),
   phone: z.string().min(6).max(20).trim(),
   username: z
     .string()

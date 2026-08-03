@@ -3,7 +3,7 @@ import { encryptText, decryptText } from '../../utils/crypto.utils.js';
 
 const userSchema = new mongoose.Schema(
   {
-    username: { type: String, required: true, unique: true, trim: true, lowercase: true },
+    username: { type: String, required: true, trim: true, lowercase: true },
     email: { type: String, required: true, unique: true, trim: true, lowercase: true },
     phone: { type: String, unique: true, sparse: true, trim: true },
     passwordHash: { type: String, required: true, select: false },
@@ -41,5 +41,9 @@ const userSchema = new mongoose.Schema(
     toJSON: { getters: true },
   }
 );
+
+// Compound unique index: username must be unique per tenant (not globally)
+// sparse: true allows multiple documents with null tenantId (super admin users)
+userSchema.index({ username: 1, tenantId: 1 }, { unique: true, sparse: true });
 
 export const User = mongoose.model('User', userSchema);

@@ -1,21 +1,14 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Building2,
   Plus,
   Search,
-  ShieldCheck,
   PauseCircle,
   PlayCircle,
   Trash2,
   FileText,
   CheckCircle2,
-  Clock,
-  AlertTriangle,
-  ExternalLink,
-  Smartphone,
-  Users,
-  Shield,
   Loader2,
   Mail,
   Phone,
@@ -36,6 +29,10 @@ export default function TenantManagement() {
   const [otpCodeInput, setOtpCodeInput] = useState('');
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createdCredentials, setCreatedCredentials] = useState(null);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [credOtpInput, setCredOtpInput] = useState('');
+  const [credVerifyingOtp, setCredVerifyingOtp] = useState(false);
   const [form, setForm] = useState({
     shopName: '',
     ownerName: '',
@@ -52,23 +49,57 @@ export default function TenantManagement() {
     queryKey: ['tenants', search],
     queryFn: async () => {
       const res = await api.get('/tenants', { params: { search } });
-      return res.data?.data || [];
+      const tenantsList = res.data?.data || [];
+      // Fetch user data for each tenant to check verification status
+      const tenantsWithUsers = await Promise.all(
+        tenantsList.map(async (t) => {
+          try {
+            const userRes = await api.get('/users', { params: { search: t.email, limit: 1 } });
+            const users = userRes.data?.data || [];
+            const ownerUser = users.find((u) => u.email === t.email && u.roleName === 'ADMIN');
+            return { ...t, ownerUser };
+          } catch {
+            return { ...t, ownerUser: null };
+          }
+        })
+      );
+      return tenantsWithUsers;
     },
   });
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
-      const res = await api.post('/tenants', data);
+      const trimmed = {
+        ...data,
+        shopName: data.shopName?.trim(),
+        ownerName: data.ownerName?.trim(),
+        email: data.email?.trim().toLowerCase(),
+        phone: data.phone?.trim(),
+        username: data.username?.trim().toLowerCase(),
+        password: data.password,
+      };
+      const res = await api.post('/tenants', trimmed);
       return res.data;
     },
-    onSuccess: () => {
+    onSuccess: (_res, variables) => {
       toast.success('Shop Tenant created successfully');
+      setCreatedCredentials({
+        shopName: variables.shopName,
+        username: variables.username || variables.email.split('@')[0],
+        email: variables.email,
+        password: variables.password,
+      });
       setShowCreateModal(false);
+      setOtpCodeInput('');
+      setOtpVerified(false);
+      setCredOtpInput('');
+      setCredVerifyingOtp(false);
       setForm({
         shopName: '',
         ownerName: '',
         email: '',
         phone: '',
+        username: '',
         plan: 'STARTER',
         nidNumber: '',
         tradeLicenseNumber: '',
@@ -103,9 +134,33 @@ export default function TenantManagement() {
     onError: (err) => toast.error(err.response?.data?.message || 'KYC update failed'),
   });
 
-  const handleVerifyKyc = async (id, status, rejectionReason) => {
-    await kycMutation.mutateAsync({ id, status, rejectionReason });
-  };
+  const otpVerifyMutation = useMutation({
+    mutationFn: async ({ email, otpCode }) => {
+      const res = await api.post('/auth/verify-otp', { email, otpCode });
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success('OTP verified! Shop owner is now verified and can login.');
+      setOtpVerified(true);
+      qc.invalidateQueries({ queryKey: ['tenants'] });
+      setCredVerifyingOtp(false);
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'OTP verification failed');
+      setCredVerifyingOtp(false);
+    },
+  });
+
+  const resendOtpMutation = useMutation({
+    mutationFn: async (email) => {
+      const res = await api.post('/auth/resend-verification-otp', { email });
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success('OTP resent to shop owner email!');
+    },
+    onError: (err) => toast.error(err.response?.data?.message || 'Failed to resend OTP'),
+  });
 
   return (
     <div className="p-6 space-y-6">
@@ -217,23 +272,41 @@ export default function TenantManagement() {
 
               {/* Action Buttons */}
               <div className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                <button
-                  onClick={() => setSelectedTenantForKyc(t)}
-                  className="flex-1 py-2 px-3 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/40 text-[#2563EB] dark:text-blue-400 text-xs font-semibold rounded-xl border border-blue-200 dark:border-blue-800 transition-colors flex items-center justify-center gap-1.5"
-                >
-                  <FileText className="w-3.5 h-3.5" /> KYC Vault
-                </button>
-
-                {t.status !== 'ACTIVE' && (
+                {/* Unverified user - show Enter OTP button */}
+                {t.ownerUser && !t.ownerUser.isVerified && (
                   <button
                     onClick={() => {
                       setSelectedTenantForOtp(t);
                       setOtpCodeInput('');
                     }}
-                    className="py-2 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 text-xs font-semibold rounded-xl border border-emerald-200 transition-colors flex items-center justify-center gap-1.5"
-                    title="Verify Owner with OTP Pipeline"
+                    className="flex-1 py-2 px-3 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/40 text-amber-600 dark:text-amber-400 text-xs font-semibold rounded-xl border border-amber-200 dark:border-amber-800 transition-colors flex items-center justify-center gap-1.5"
+                    title="Verify Owner with OTP"
                   >
-                    <Key className="w-3.5 h-3.5" /> Enter OTP Code
+                    <Key className="w-3.5 h-3.5" /> Enter OTP
+                  </button>
+                )}
+                {/* Verified user - show verified badge */}
+                {t.ownerUser && t.ownerUser.isVerified && (
+                  <span className="flex-1 py-2 px-3 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 text-xs font-semibold rounded-xl border border-emerald-200 dark:border-emerald-800 flex items-center justify-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Verified
+                  </span>
+                )}
+
+                <button
+                  onClick={() => setSelectedTenantForKyc(t)}
+                  className="py-2 px-3 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/40 text-[#2563EB] dark:text-blue-400 text-xs font-semibold rounded-xl border border-blue-200 dark:border-blue-800 transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <FileText className="w-3.5 h-3.5" /> KYC
+                </button>
+
+                {t.status !== 'ACTIVE' && (
+                  <button
+                    onClick={() => statusMutation.mutate({ id: t._id, status: 'ACTIVE' })}
+                    disabled={statusMutation.isPending}
+                    className="flex-1 py-2 px-3 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 text-xs font-semibold rounded-xl border border-emerald-200 dark:border-emerald-800 transition-colors flex items-center justify-center gap-1.5"
+                    title="Activate Shop - No OTP Required"
+                  >
+                    <PlayCircle className="w-3.5 h-3.5" /> Activate
                   </button>
                 )}
 
@@ -322,22 +395,33 @@ export default function TenantManagement() {
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
-                  onClick={() => setSelectedTenantForOtp(null)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-500 hover:underline"
+                  onClick={() => resendOtpMutation.mutate(selectedTenantForOtp.email)}
+                  disabled={resendOtpMutation.isPending}
+                  className="text-xs text-[#2563EB] hover:underline font-semibold"
                 >
-                  Cancel
+                  {resendOtpMutation.isPending ? 'Resending...' : 'Resend OTP'}
                 </button>
 
-                <button
-                  type="submit"
-                  disabled={verifyingOtp}
-                  className="px-5 py-2.5 bg-[#2563EB] hover:bg-blue-700 text-white font-semibold text-xs rounded-xl flex items-center gap-1.5"
-                >
-                  {verifyingOtp ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />} Verify OTP
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedTenantForOtp(null)}
+                    className="px-4 py-2 text-xs font-semibold text-slate-500 hover:underline"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={verifyingOtp}
+                    className="px-5 py-2.5 bg-[#2563EB] hover:bg-blue-700 text-white font-semibold text-xs rounded-xl flex items-center gap-1.5"
+                  >
+                    {verifyingOtp ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />} Verify OTP
+                  </button>
+                </div>
               </div>
             </form>
           </div>
@@ -379,6 +463,7 @@ export default function TenantManagement() {
                 <label className="block font-semibold mb-1">Owner Email *</label>
                 <input
                   type="email"
+                  required
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   placeholder="owner@rahimtelecom.com"
@@ -423,7 +508,7 @@ export default function TenantManagement() {
               </div>
 
               <div>
-                <label className="block font-semibold mb-1">Initial Admin Password</label>
+                <label className="block font-semibold mb-1">Admin Password *</label>
                 <PasswordInput
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
@@ -442,10 +527,121 @@ export default function TenantManagement() {
               </button>
               <button
                 onClick={() => createMutation.mutate(form)}
-                disabled={createMutation.isPending || !form.shopName || !form.email}
+                disabled={createMutation.isPending || !form.shopName || !form.email || !form.password}
                 className="px-5 py-2 bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold rounded-xl transition-all disabled:opacity-50"
               >
                 Create Shop Owner
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Credentials Display Modal */}
+      {createdCredentials && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
+            <div className="text-center">
+              <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center mx-auto mb-3">
+                <CheckCircle2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Shop Created Successfully!</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Share these credentials with the shop owner</p>
+            </div>
+
+            <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500 dark:text-slate-400">Shop Name:</span>
+                <span className="text-sm font-bold text-slate-900 dark:text-white">{createdCredentials.shopName}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500 dark:text-slate-400">Username:</span>
+                <span className="text-sm font-mono font-bold text-[#2563EB] dark:text-blue-400">{createdCredentials.username}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500 dark:text-slate-400">Email:</span>
+                <span className="text-sm font-mono text-slate-700 dark:text-slate-300">{createdCredentials.email}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500 dark:text-slate-400">Password:</span>
+                <span className="text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400">{createdCredentials.password}</span>
+              </div>
+            </div>
+
+            <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl p-3 text-xs text-amber-700 dark:text-amber-400">
+              <strong>Important:</strong> OTP has been sent to <strong>{createdCredentials.email}</strong>. Verify the OTP below so the shop owner can login without re-verification.
+            </div>
+
+            {!otpVerified && (
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                if (!credOtpInput || credOtpInput.length !== 6) {
+                  toast.error('Please enter valid 6-digit OTP code');
+                  return;
+                }
+                setCredVerifyingOtp(true);
+                otpVerifyMutation.mutate({ email: createdCredentials.email, otpCode: credOtpInput });
+              }} className="space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold mb-1">6-Digit OTP Code</label>
+                  <input
+                    type="text"
+                    maxLength={6}
+                    required
+                    value={credOtpInput}
+                    onChange={(e) => setCredOtpInput(e.target.value.trim())}
+                    placeholder="e.g. 123456"
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-center font-mono text-lg tracking-widest"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={credVerifyingOtp || otpVerifyMutation.isPending}
+                  className="w-full py-2.5 bg-[#2563EB] hover:bg-blue-700 text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  {credVerifyingOtp || otpVerifyMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />} Verify OTP
+                </button>
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => resendOtpMutation.mutate(createdCredentials.email)}
+                    disabled={resendOtpMutation.isPending}
+                    className="text-xs text-[#2563EB] hover:underline font-semibold"
+                  >
+                    {resendOtpMutation.isPending ? 'Resending...' : 'Resend OTP'}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {otpVerified && (
+              <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl p-3 text-xs text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4" /> OTP verified! Shop owner can now login directly.
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(
+                    `Shop: ${createdCredentials.shopName}\nUsername: ${createdCredentials.username}\nEmail: ${createdCredentials.email}\nPassword: ${createdCredentials.password}`
+                  );
+                  toast.success('Credentials copied to clipboard!');
+                }}
+                className="flex-1 py-2.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/40 text-[#2563EB] dark:text-blue-400 text-xs font-semibold rounded-xl border border-blue-200 dark:border-blue-800 transition-colors flex items-center justify-center gap-1.5"
+              >
+                <Key className="w-3.5 h-3.5" /> Copy Credentials
+              </button>
+              <button
+                onClick={() => {
+                  setCreatedCredentials(null);
+                  setCredOtpInput('');
+                  setOtpVerified(false);
+                  setCredVerifyingOtp(false);
+                }}
+                className="flex-1 py-2.5 bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold rounded-xl transition-all"
+              >
+                Done
               </button>
             </div>
           </div>

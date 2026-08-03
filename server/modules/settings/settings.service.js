@@ -5,9 +5,9 @@ export const getAllSettings = async (category, tenantId = null) => {
   if (category) query.category = category;
 
   if (tenantId) {
-    // Fetch both global (no tenantId) and tenant-specific settings.
+    // Fetch both global (tenantId: null) and tenant-specific settings.
     // Tenant-specific values override global ones when the same key exists for both.
-    const globalQuery = { ...query, tenantId: { $exists: false } };
+    const globalQuery = { ...query, tenantId: null };
     const tenantQuery = { ...query, tenantId };
 
     const [globalSettings, tenantSettings] = await Promise.all([
@@ -23,7 +23,7 @@ export const getAllSettings = async (category, tenantId = null) => {
   }
 
   // Super admin (no tenantId) — return only global settings
-  const settings = await Settings.find({ ...query, tenantId: { $exists: false } }).sort({ key: 1 });
+  const settings = await Settings.find({ ...query, tenantId: null }).sort({ key: 1 });
   const result = {};
   settings.forEach(s => { result[s.key] = s.value; });
   return result;
@@ -36,7 +36,7 @@ export const getSettingsArray = async (category, tenantId = null) => {
     // Return tenant-specific rows; caller merges with global if needed
     return Settings.find({ ...query, tenantId }).sort({ key: 1 });
   }
-  return Settings.find({ ...query, tenantId: { $exists: false } }).sort({ key: 1 });
+  return Settings.find({ ...query, tenantId: null }).sort({ key: 1 });
 };
 
 export const updateSettings = async (updates, userId, tenantId = null) => {
@@ -51,10 +51,10 @@ export const updateSettings = async (updates, userId, tenantId = null) => {
       );
       results.push(setting);
     } else {
-      // Super admin updating global defaults (no tenantId)
+      // Super admin updating global defaults (tenantId = null)
       const setting = await Settings.findOneAndUpdate(
-        { key, tenantId: { $exists: false } },
-        { $set: { value, updatedBy: userId } },
+        { key, tenantId: null },
+        { $set: { value, updatedBy: userId, tenantId: null } },
         { upsert: true, new: true }
       );
       results.push(setting);
@@ -68,10 +68,10 @@ export const getSetting = async (key, tenantId = null) => {
     // Prefer tenant-specific, fall back to global
     const tenantSetting = await Settings.findOne({ key, tenantId });
     if (tenantSetting) return tenantSetting.value;
-    const globalSetting = await Settings.findOne({ key, tenantId: { $exists: false } });
+    const globalSetting = await Settings.findOne({ key, tenantId: null });
     return globalSetting?.value;
   }
-  const s = await Settings.findOne({ key, tenantId: { $exists: false } });
+  const s = await Settings.findOne({ key, tenantId: null });
   return s?.value;
 };
 

@@ -77,7 +77,8 @@ export const createTenant = async (data) => {
 
   const username = data.username?.trim().toLowerCase() || emailLower.split('@')[0];
 
-  const existingUsername = await User.findOne({ username });
+  // Check if username exists for super admin users (tenantId: null)
+  const existingUsername = await User.findOne({ username, tenantId: null });
   if (existingUsername) {
     throw ApiError.conflict(`Username "${username}" is already taken. Please choose another username.`);
   }
@@ -131,7 +132,7 @@ export const createTenant = async (data) => {
       role: adminRole._id,
       roleName: 'ADMIN',
       tenantId: tenant._id,
-      isVerified: false, // Verified via OTP pipeline in Admin Panel or Register
+       isVerified: false,
       otpCode,
       otpExpiresAt,
     });
