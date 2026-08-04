@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
 import { confirmDelete } from '../../lib/confirm';
+import { NumberInput } from '../../components/ui/NumberInput';
 
 import PageHeader from '../../components/layout/PageHeader';
 import EmptyState from '../../components/ui/EmptyState';
@@ -591,9 +592,9 @@ function CustomerCouponModal({ customer, onClose }) {
               <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
                 Discount Amount (৳):
               </label>
-              <input
-                type="number"
+              <NumberInput
                 required
+                min="1"
                 value={discountAmount}
                 onChange={(e) => setDiscountAmount(e.target.value)}
                 className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none"

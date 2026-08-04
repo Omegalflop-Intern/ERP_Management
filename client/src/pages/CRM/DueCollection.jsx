@@ -13,6 +13,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import api from '../../lib/api';
+import { NumberInput } from '../../components/ui/NumberInput';
 
 import PageHeader from '../../components/layout/PageHeader';
 import EmptyState from '../../components/ui/EmptyState';
@@ -285,8 +286,7 @@ function CollectDueModal({ sale, onClose, onSuccess }) {
             <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
               Amount (৳)
             </label>
-            <input
-              type="number"
+            <NumberInput
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder={`Max: ${dueAmount}`}

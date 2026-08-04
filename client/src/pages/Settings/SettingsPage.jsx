@@ -18,6 +18,7 @@ import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { useTheme } from '../../context/ThemeContext';
 import api, { getAssetUrl } from '../../lib/api';
+import { NumberInput } from '../../components/ui/NumberInput';
 
 const settingGroups = [
   {
@@ -370,8 +371,7 @@ export default function SettingsPage() {
                   ) : key === 'defaultVatRate' ||
                     key === 'lowStockThreshold' ||
                     key === 'defaultWarrantyMonths' ? (
-                    <input
-                      type="number"
+                    <NumberInput
                       value={form[key] || ''}
                       onChange={(e) => setForm({ ...form, [key]: Number(e.target.value) })}
                       className={inputCls}

@@ -16,6 +16,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
+import { NumberInput } from '../../components/ui/NumberInput';
 
 const METHODS = ['cash', 'bkash', 'rocket', 'nagad', 'bank'];
 
@@ -285,8 +286,7 @@ export default function CustomerDetail() {
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
                   Amount (৳)
                 </label>
-                <input
-                  type="number"
+                <NumberInput
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder={`Max: ${c.dueBalance}`}

@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
 import { confirmAction, confirmDelete } from '../../lib/confirm';
+import { NumberInput } from '../../components/ui/NumberInput';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -397,8 +398,7 @@ function ProcessPayrollModal({ employees, month, year, onClose }) {
               {Object.keys(allowances).map((k) => (
                 <div key={k} className="flex items-center gap-2 mb-1">
                   <span className="text-xs text-gray-500 capitalize w-20">{k}</span>
-                  <input
-                    type="number"
+                  <NumberInput
                     min="0"
                     value={allowances[k]}
                     onChange={(e) => setAllowances({ ...allowances, [k]: Number(e.target.value) })}
@@ -416,8 +416,7 @@ function ProcessPayrollModal({ employees, month, year, onClose }) {
                   <span className="text-xs text-gray-500 capitalize w-20">
                     {k.replace(/([A-Z])/g, ' $1')}
                   </span>
-                  <input
-                    type="number"
+                  <NumberInput
                     min="0"
                     value={deductions[k]}
                     onChange={(e) => setDeductions({ ...deductions, [k]: Number(e.target.value) })}

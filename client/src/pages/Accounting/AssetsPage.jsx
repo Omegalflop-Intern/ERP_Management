@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
+import { NumberInput } from '../../components/ui/NumberInput';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
 
@@ -306,8 +307,7 @@ function AddAssetModal({ onClose, onSuccess }) {
               <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
                 Purchase Cost (৳) *
               </label>
-              <input
-                type="number"
+              <NumberInput
                 required
                 placeholder="50000"
                 value={form.purchaseCost}
@@ -319,9 +319,9 @@ function AddAssetModal({ onClose, onSuccess }) {
               <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
                 Useful Life (Months)
               </label>
-              <input
-                type="number"
+              <NumberInput
                 required
+                min="1"
                 value={form.usefulLifeMonths}
                 onChange={(e) => setForm({ ...form, usefulLifeMonths: e.target.value })}
                 className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none"

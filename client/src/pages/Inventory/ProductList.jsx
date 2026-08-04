@@ -22,6 +22,7 @@ import { toast } from 'sonner';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
 import { confirmDelete } from '../../lib/confirm';
+import { NumberInput } from '../../components/ui/NumberInput';
 
 const PHONE_CATEGORIES = [
   'smartphones',
@@ -1151,8 +1152,7 @@ function ProductFormModal({ product, onClose, onSuccess }) {
                   <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
                     Cost Price (৳) *
                   </label>
-                  <input
-                    type="number"
+                  <NumberInput
                     required
                     value={form.costPrice}
                     onFocus={(e) => e.target.select()}
@@ -1165,8 +1165,7 @@ function ProductFormModal({ product, onClose, onSuccess }) {
                   <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
                     Selling Price (৳) *
                   </label>
-                  <input
-                    type="number"
+                  <NumberInput
                     required
                     value={form.sellingPrice}
                     onFocus={(e) => e.target.select()}
@@ -1179,8 +1178,7 @@ function ProductFormModal({ product, onClose, onSuccess }) {
                   <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
                     Wholesale (৳)
                   </label>
-                  <input
-                    type="number"
+                  <NumberInput
                     value={form.wholesalePrice}
                     onFocus={(e) => e.target.select()}
                     onChange={(e) => setForm({ ...form, wholesalePrice: e.target.value })}
@@ -1208,8 +1206,7 @@ function ProductFormModal({ product, onClose, onSuccess }) {
                   <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
                     Stock Qty {isPhone ? '(auto)' : '*'}
                   </label>
-                  <input
-                    type="number"
+                  <NumberInput
                     min="0"
                     required
                     disabled={isPhone && imeiLinesCount > 0}
@@ -1240,8 +1237,7 @@ function ProductFormModal({ product, onClose, onSuccess }) {
                   <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
                     Min Stock Alert
                   </label>
-                  <input
-                    type="number"
+                  <NumberInput
                     value={form.minStockAlert}
                     onChange={(e) => setForm({ ...form, minStockAlert: e.target.value })}
                     min={1}

@@ -18,6 +18,7 @@ import ReturnCreditNote from '../../components/sales/ReturnCreditNote';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
 import { executeClientPrint } from '../../utils/invoiceGenerator';
+import { NumberInput } from '../../components/ui/NumberInput';
 
 export default function Returns() {
   const navigate = useNavigate();
@@ -349,8 +350,7 @@ export default function Returns() {
                           <label className="block text-[9px] font-bold text-gray-400 uppercase">
                             Return Qty
                           </label>
-                          <input
-                            type="number"
+                          <NumberInput
                             value={item.quantity}
                             onChange={(e) => updateReturnQty(i, Number(e.target.value))}
                             min={1}
@@ -380,7 +380,15 @@ export default function Returns() {
                             Refund
                           </label>
                           <span className="text-sm font-mono font-bold text-red-600 dark:text-red-400">
-                            ৳{((lineItem?.unitPrice || 0) * item.quantity).toLocaleString()}
+                            ৳
+                            {(() => {
+                              // Calculate effective refund price considering discounts
+                              const hasGlobalDiscount = selectedSale.subTotal > 0 && selectedSale.netTotal < selectedSale.subTotal;
+                              const globalDiscountFactor = hasGlobalDiscount ? (selectedSale.netTotal / selectedSale.subTotal) : 1;
+                              const baseEffectiveUnitPrice = lineItem?.qty > 0 ? ((lineItem.totalPrice || 0) / lineItem.qty) : (lineItem?.unitPrice || 0);
+                              const effectiveUnitPrice = Math.round(baseEffectiveUnitPrice * globalDiscountFactor);
+                              return (effectiveUnitPrice * item.quantity).toLocaleString();
+                            })()}
                           </span>
                         </div>
                       </div>
@@ -403,10 +411,17 @@ export default function Returns() {
                     {returnItems
                       .filter((i) => i.selected)
                       .reduce(
-                        (sum, item) =>
-                          sum +
-                          (selectedSale.lineItems[returnItems.indexOf(item)]?.unitPrice || 0) *
-                            item.quantity,
+                        (sum, item) => {
+                          const idx = returnItems.indexOf(item);
+                          const lineItem = selectedSale.lineItems[idx];
+                          if (!lineItem) return sum;
+                          // Calculate effective refund price considering discounts
+                          const hasGlobalDiscount = selectedSale.subTotal > 0 && selectedSale.netTotal < selectedSale.subTotal;
+                          const globalDiscountFactor = hasGlobalDiscount ? (selectedSale.netTotal / selectedSale.subTotal) : 1;
+                          const baseEffectiveUnitPrice = lineItem.qty > 0 ? ((lineItem.totalPrice || 0) / lineItem.qty) : (lineItem.unitPrice || 0);
+                          const effectiveUnitPrice = Math.round(baseEffectiveUnitPrice * globalDiscountFactor);
+                          return sum + (effectiveUnitPrice * item.quantity);
+                        },
                         0
                       )
                       .toLocaleString()}

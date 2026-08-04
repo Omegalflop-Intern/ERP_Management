@@ -27,6 +27,7 @@ import { toast } from 'sonner';
 import AuditLogViewerModal from '../../components/AuditLogViewerModal';
 import DocumentVaultModal from '../../components/DocumentVaultModal';
 import DatePicker from '../../components/ui/DatePicker';
+import { NumberInput } from '../../components/ui/NumberInput';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
 
@@ -693,8 +694,7 @@ export default function Investors() {
                   <label className="text-xs font-medium text-gray-700 dark:text-gray-300 block mb-1">
                     Profit Share (%)
                   </label>
-                  <input
-                    type="number"
+                  <NumberInput
                     min="0"
                     max="100"
                     value={newForm.sharePercentage}
@@ -708,8 +708,7 @@ export default function Investors() {
                   <label className="text-xs font-medium text-gray-700 dark:text-gray-300 block mb-1">
                     Initial Capital (৳)
                   </label>
-                  <input
-                    type="number"
+                  <NumberInput
                     min="0"
                     value={newForm.initialCapital}
                     onChange={(e) =>
@@ -791,8 +790,7 @@ export default function Investors() {
                 <label className="text-xs font-medium text-gray-700 dark:text-gray-300 block mb-1">
                   Amount (৳) *
                 </label>
-                <input
-                  type="number"
+                <NumberInput
                   min="1"
                   required
                   value={txForm.amount}

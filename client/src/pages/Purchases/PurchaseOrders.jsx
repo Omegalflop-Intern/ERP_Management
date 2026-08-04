@@ -3,6 +3,7 @@ import { Eye, Minus, Package, Pencil, Plus, RefreshCw, Search, Trash2, Truck, X 
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import api from '../../lib/api';
+import { NumberInput } from '../../components/ui/NumberInput';
 
 const STATUSES = ['ALL', 'APPROVED', 'RECEIVED', 'PARTIALLY_RECEIVED', 'CANCELLED'];
 const STATUS_COLORS = {
@@ -606,8 +607,7 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
                   />
                 </div>
                 <div className="w-20">
-                  <input
-                    type="number"
+                  <NumberInput
                     value={item.qty}
                     onChange={(e) => updateLineItem(idx, 'qty', Number(e.target.value))}
                     min={1}
@@ -616,8 +616,7 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
                   />
                 </div>
                 <div className="w-28">
-                  <input
-                    type="number"
+                  <NumberInput
                     value={item.unitCost}
                     onChange={(e) => updateLineItem(idx, 'unitCost', Number(e.target.value))}
                     min={0}
@@ -899,8 +898,7 @@ function QuickProductModal({ onClose, onSuccess, initialName = '' }) {
               <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
                 Cost Price (৳) *
               </label>
-              <input
-                type="number"
+              <NumberInput
                 min="0"
                 required
                 value={form.costPrice}
@@ -912,8 +910,7 @@ function QuickProductModal({ onClose, onSuccess, initialName = '' }) {
               <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
                 Selling Price (৳) (Optional)
               </label>
-              <input
-                type="number"
+              <NumberInput
                 min="0"
                 value={form.sellingPrice}
                 onChange={(e) => setForm({ ...form, sellingPrice: e.target.value })}
@@ -1200,8 +1197,7 @@ function GRNModal({ order, onClose, onSuccess }) {
                     onChange={(e) => updateEntry(idx, itemIdx, 'imeiOrSerial', e.target.value)}
                     className="flex-1 px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]"
                   />
-                  <input
-                    type="number"
+                  <NumberInput
                     placeholder="Cost"
                     value={item.purchasePrice}
                     onChange={(e) =>

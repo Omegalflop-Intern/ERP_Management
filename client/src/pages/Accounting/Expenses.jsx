@@ -16,6 +16,7 @@ import {
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import DatePicker from '../../components/ui/DatePicker';
+import { NumberInput } from '../../components/ui/NumberInput';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
 import { confirmDelete } from '../../lib/confirm';
@@ -344,8 +345,7 @@ export default function Expenses() {
                   <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
                     Amount (৳) *
                   </label>
-                  <input
-                    type="number"
+                  <NumberInput
                     required
                     min="1"
                     name="amount"
@@ -515,8 +515,7 @@ function EditExpenseModal({
               <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
                 Amount (৳) *
               </label>
-              <input
-                type="number"
+              <NumberInput
                 required
                 min="1"
                 value={amount}

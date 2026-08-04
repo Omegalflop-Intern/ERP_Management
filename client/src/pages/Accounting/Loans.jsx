@@ -22,6 +22,7 @@ import { toast } from 'sonner';
 import AuditLogViewerModal from '../../components/AuditLogViewerModal';
 import DocumentVaultModal from '../../components/DocumentVaultModal';
 import DatePicker from '../../components/ui/DatePicker';
+import { NumberInput } from '../../components/ui/NumberInput';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
 import { confirmDelete } from '../../lib/confirm';
@@ -482,8 +483,7 @@ export default function Loans() {
                   <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
                     Principal (৳) *
                   </label>
-                  <input
-                    type="number"
+                  <NumberInput
                     required
                     min="1"
                     name="loanAmount"
@@ -495,8 +495,7 @@ export default function Loans() {
                   <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
                     Interest %
                   </label>
-                  <input
-                    type="number"
+                  <NumberInput
                     step="0.1"
                     name="interestRate"
                     placeholder="9.5"
@@ -507,8 +506,7 @@ export default function Loans() {
                   <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
                     Installments
                   </label>
-                  <input
-                    type="number"
+                  <NumberInput
                     min="1"
                     name="installmentCount"
                     defaultValue="1"
@@ -580,8 +578,7 @@ export default function Loans() {
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
                   Payment Amount (৳) *
                 </label>
-                <input
-                  type="number"
+                <NumberInput
                   required
                   min="1"
                   max={repayTargetLoan.remainingDue}

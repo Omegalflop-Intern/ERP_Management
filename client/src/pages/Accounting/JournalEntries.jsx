@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 import PageHeader from '../../components/layout/PageHeader';
 import { Badge } from '../../components/ui/badge';
 import EmptyState from '../../components/ui/EmptyState';
+import { NumberInput } from '../../components/ui/NumberInput';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
 import { confirmAction, confirmDelete } from '../../lib/confirm';
@@ -519,8 +520,7 @@ function JournalEntryForm({ onClose, onSuccess }) {
                   </select>
                 </div>
                 <div className="w-full sm:w-32">
-                  <input
-                    type="number"
+                  <NumberInput
                     value={line.debit || ''}
                     onChange={(e) => updateLine(idx, 'debit', Number(e.target.value))}
                     min={0}
@@ -529,8 +529,7 @@ function JournalEntryForm({ onClose, onSuccess }) {
                   />
                 </div>
                 <div className="w-full sm:w-32">
-                  <input
-                    type="number"
+                  <NumberInput
                     value={line.credit || ''}
                     onChange={(e) => updateLine(idx, 'credit', Number(e.target.value))}
                     min={0}

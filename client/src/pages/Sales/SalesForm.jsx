@@ -21,6 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
+import { NumberInput } from '../../components/ui/NumberInput';
 
 export default function SalesForm() {
   const navigate = useNavigate();
@@ -602,8 +603,7 @@ export default function SalesForm() {
                       </div>
                     </div>
                     <div className="w-16">
-                      <input
-                        type="number"
+                      <NumberInput
                         value={item.qty}
                         onFocus={(e) => e.target.select()}
                         onChange={(e) => updateCartItem(i, 'qty', Number(e.target.value))}
@@ -612,8 +612,7 @@ export default function SalesForm() {
                       />
                     </div>
                     <div className="w-28">
-                      <input
-                        type="number"
+                      <NumberInput
                         value={item.unitPrice}
                         onFocus={(e) => e.target.select()}
                         onChange={(e) => updateCartItem(i, 'unitPrice', Number(e.target.value))}
@@ -963,8 +962,7 @@ export default function SalesForm() {
                 <label className="text-[11px] font-bold text-gray-500 uppercase block mb-1">
                   Discount ({discountType === 'PERCENT' ? '%' : '৳'})
                 </label>
-                <input
-                  type="number"
+                <NumberInput
                   value={discount}
                   placeholder="0"
                   min={0}
@@ -1000,8 +998,7 @@ export default function SalesForm() {
                 <label className="text-[11px] font-bold text-gray-500 uppercase flex items-center gap-1 mb-1">
                   <Percent className="w-3 h-3 text-blue-500" /> VAT Rate (%)
                 </label>
-                <input
-                  type="number"
+                <NumberInput
                   value={vatRate}
                   placeholder="0"
                   min={0}
@@ -1064,8 +1061,7 @@ export default function SalesForm() {
               ].map(({ key, icon: Icon, color, placeholder }) => (
                 <div key={key} className="flex items-center gap-2">
                   <Icon className={`w-4 h-4 ${color} flex-shrink-0`} />
-                  <input
-                    type="number"
+                  <NumberInput
                     placeholder={placeholder}
                     value={payment[key]}
                     onFocus={(e) => e.target.select()}

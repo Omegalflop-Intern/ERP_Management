@@ -18,6 +18,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import DatePicker from '../../components/ui/DatePicker';
+import { NumberInput } from '../../components/ui/NumberInput';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
 import { confirmDelete } from '../../lib/confirm';
@@ -372,8 +373,7 @@ export default function WholesaleOrders() {
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
                   Collection Amount (৳) *
                 </label>
-                <input
-                  type="number"
+                <NumberInput
                   required
                   min="1"
                   max={collectDueOrder.dueAmount}
@@ -494,46 +494,67 @@ export default function WholesaleOrders() {
                 restored back to inventory.
               </div>
 
-              <div className="space-y-3">
-                {(returnOrder.items || []).map((item) => {
-                  const maxReturn = item.quantity || item.qty || 1;
-                  const itemKey = item._id || item.productId;
-                  return (
-                    <div
-                      key={itemKey}
-                      className="p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl space-y-2"
-                    >
-                      <div className="flex justify-between font-medium text-gray-900 dark:text-gray-100">
-                        <span>{item.product?.name || item.description || 'Item'}</span>
-                        <span>৳{(item.unitPrice || 0).toLocaleString()} / unit</span>
+              {(() => {
+                const wsSubTotal = returnOrder.subTotal || 0;
+                const wsGrandTotal = returnOrder.grandTotal || 0;
+                const hasWsDiscount = wsSubTotal > 0 && wsGrandTotal < wsSubTotal;
+                const wsDiscountFactor = hasWsDiscount ? (wsGrandTotal / wsSubTotal) : 1;
+
+                return (
+                  <>
+                    {hasWsDiscount && (
+                      <div className="text-[10px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-3 py-1.5 rounded-lg border border-amber-200 dark:border-amber-800">
+                        Global discount: {Math.round(((wsSubTotal - wsGrandTotal) / wsSubTotal) * 100)}% off — refund uses discounted price
                       </div>
-                      <div className="flex items-center justify-between text-xs text-gray-500">
-                        <span>
-                          Ordered Qty:{' '}
-                          <strong className="text-gray-800 dark:text-gray-200">
-                            {maxReturn} pcs
-                          </strong>
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <label className="font-semibold text-gray-700 dark:text-gray-300">
-                            Return Qty:
-                          </label>
-                          <input
-                            type="number"
-                            min="0"
-                            max={maxReturn}
-                            value={returnItems[itemKey] || 0}
-                            onChange={(e) =>
-                              setReturnItems({ ...returnItems, [itemKey]: Number(e.target.value) })
-                            }
-                            className="w-20 px-2 py-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-center font-bold"
-                          />
-                        </div>
-                      </div>
+                    )}
+                    <div className="space-y-3">
+                      {(returnOrder.items || []).map((item) => {
+                        const maxReturn = item.quantity || item.qty || 1;
+                        const itemKey = item._id || item.productId;
+                        const effectiveUnitPrice = Math.round((item.unitPrice || 0) * wsDiscountFactor);
+                        return (
+                          <div
+                            key={itemKey}
+                            className="p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl space-y-2"
+                          >
+                            <div className="flex justify-between font-medium text-gray-900 dark:text-gray-100">
+                              <span>{item.product?.name || item.description || 'Item'}</span>
+                              <div className="text-right">
+                                <span className="text-emerald-600 dark:text-emerald-400">৳{effectiveUnitPrice.toLocaleString()} / unit</span>
+                                {hasWsDiscount && (
+                                  <span className="text-[10px] text-gray-400 ml-1 line-through">৳{(item.unitPrice || 0).toLocaleString()}</span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between text-xs text-gray-500">
+                              <span>
+                                Ordered Qty:{' '}
+                                <strong className="text-gray-800 dark:text-gray-200">
+                                  {maxReturn} pcs
+                                </strong>
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <label className="font-semibold text-gray-700 dark:text-gray-300">
+                                  Return Qty:
+                                </label>
+                                <NumberInput
+                                  min="0"
+                                  max={maxReturn}
+                                  value={returnItems[itemKey] || 0}
+                                  onChange={(e) =>
+                                    setReturnItems({ ...returnItems, [itemKey]: Number(e.target.value) })
+                                  }
+                                  className="w-20 px-2 py-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-center font-bold"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  );
-                })}
-              </div>
+                  </>
+                );
+              })()}
 
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">

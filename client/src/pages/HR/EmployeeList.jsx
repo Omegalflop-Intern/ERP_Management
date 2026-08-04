@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
 import { confirmDelete } from '../../lib/confirm';
+import { NumberInput } from '../../components/ui/NumberInput';
 
 const DEPARTMENTS = ['Sales', 'Accounts', 'Inventory', 'Management', 'Service', 'Other'];
 const DESIGNATIONS = [
@@ -436,8 +437,7 @@ function EmployeeModal({ editEmp, onClose }) {
               <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
                 Monthly Salary (৳) *
               </label>
-              <input
-                type="number"
+              <NumberInput
                 required
                 min="0"
                 value={form.salary}

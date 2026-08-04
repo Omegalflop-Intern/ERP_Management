@@ -259,7 +259,7 @@ const menuItems = [
       },
       {
         path: '/saas/tenants',
-        label: 'Shop Tenants (SaaS)',
+        label: 'Shop Management',
         icon: Building2,
         permissions: ['saas:manage'],
       },

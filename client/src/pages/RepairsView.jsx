@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { useTheme } from '../context/ThemeContext';
 import api from '../lib/api';
+import { NumberInput } from '../components/ui/NumberInput';
 
 const statusConfig = {
   RECEIVED: {
@@ -339,8 +340,7 @@ export default function RepairsView() {
                   <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
                     Estimated Cost (৳)
                   </label>
-                  <input
-                    type="number"
+                  <NumberInput
                     required
                     min="0"
                     value={ticketForm.estimatedCost}
@@ -352,8 +352,7 @@ export default function RepairsView() {
                   <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
                     Advance Deposit (৳)
                   </label>
-                  <input
-                    type="number"
+                  <NumberInput
                     min="0"
                     value={ticketForm.advancePaid}
                     onChange={(e) => handleFormChange('advancePaid', e.target.value)}

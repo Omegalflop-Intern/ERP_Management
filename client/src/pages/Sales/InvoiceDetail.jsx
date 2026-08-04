@@ -1,19 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  AlertCircle,
   ArrowLeft,
-  CheckCircle2,
   Download,
   FileText,
   Maximize,
   Minimize,
   Printer,
+  RefreshCw,
   RotateCcw,
   Smartphone,
 } from 'lucide-react';
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useReactToPrint } from 'react-to-print';
+
 import { toast } from 'sonner';
 import {
   InvoiceA4Full,
@@ -82,25 +81,7 @@ export default function InvoiceDetail() {
     },
   });
 
-  const getPageStyle = () => {
-    switch (printSize) {
-      case 'a4half':
-        return `@page { size: A5 portrait; margin: 0; } @media print { html, body { margin: 0 !important; padding: 0 !important; background: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }`;
-      case 'receipt':
-        return `@page { size: 80mm auto; margin: 0; } @media print { html, body { margin: 0 !important; padding: 0 !important; background: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }`;
-      case 'thermal':
-        return `@page { size: 58mm auto; margin: 0; } @media print { html, body { margin: 0 !important; padding: 0 !important; background: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }`;
-      default:
-        return `@page { size: A4 portrait; margin: 0; } @media print { html, body { margin: 0 !important; padding: 0 !important; background: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }`;
-    }
-  };
 
-  const handlePrint = useReactToPrint({
-    content: () => printRef.current,
-    contentRef: printRef,
-    documentTitle: sale ? `Invoice-${sale.invoiceNumber}` : 'Invoice',
-    pageStyle: getPageStyle(),
-  });
 
   if (isLoading) {
     return (
@@ -194,9 +175,17 @@ export default function InvoiceDetail() {
     });
   };
 
+  // Calculate effective refund price accounting for global discount
+  const getEffectiveReturnUnitPrice = (item) => {
+    const hasGlobalDiscount = sale.subTotal > 0 && sale.netTotal < sale.subTotal;
+    const globalDiscountFactor = hasGlobalDiscount ? (sale.netTotal / sale.subTotal) : 1;
+    const baseEffective = item.unitPrice;
+    return Math.round(baseEffective * globalDiscountFactor);
+  };
+
   const calculateReturnTotal = () => {
     return Object.values(returnSelection).reduce(
-      (sum, item) => sum + item.unitPrice * (Number(item.quantity) || 0),
+      (sum, item) => sum + getEffectiveReturnUnitPrice(item) * (Number(item.quantity) || 0),
       0
     );
   };
@@ -253,32 +242,37 @@ export default function InvoiceDetail() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          {/* Print Size Selector */}
+          <div className="flex bg-gray-100 dark:bg-gray-800/80 rounded-xl p-1 border border-gray-200 dark:border-gray-700/50">
             {INVOICE_SIZES.map((size) => (
               <button
                 key={size.key}
                 onClick={() => setPrintSize(size.key)}
-                className={`px-2 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1 ${printSize === size.key ? 'bg-white dark:bg-gray-700 shadow text-gray-900 dark:text-gray-100' : 'text-gray-500'}`}
+                className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 flex items-center gap-1.5 ${
+                  printSize === size.key
+                    ? 'bg-white dark:bg-gray-700 shadow-md shadow-gray-200/50 dark:shadow-gray-900/50 text-[#2563EB] dark:text-blue-400'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
               >
-                <size.icon className="w-3 h-3" />
+                <size.icon className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">{size.label}</span>
               </button>
             ))}
           </div>
 
+          {/* Return Items Button */}
           {sale.status !== 'RETURNED' && (
-            <Button
-              variant="outline"
-              size="sm"
+            <button
               onClick={() => setShowReturnModal(true)}
-              className="gap-1.5 text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/10"
+              className="px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-2 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 hover:bg-amber-100 dark:hover:bg-amber-900/40 hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-md hover:shadow-amber-200/30 dark:hover:shadow-amber-900/20 active:scale-[0.97]"
             >
               <RotateCcw className="w-4 h-4" /> Return Items
-            </Button>
+            </button>
           )}
 
-          <Button
+          {/* Print Button */}
+          <button
             onClick={async () => {
               const { executeClientPrint } = await import('../../utils/invoiceGenerator');
               executeClientPrint(
@@ -287,28 +281,30 @@ export default function InvoiceDetail() {
                 printSize
               );
             }}
-            className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white gap-2"
-            size="sm"
+            className="px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-md shadow-blue-500/25 hover:shadow-lg hover:shadow-blue-500/30 active:scale-[0.97]"
           >
             <Printer className="w-4 h-4" /> Print
-          </Button>
+          </button>
 
+          {/* PDF Dropdown */}
           <div className="relative">
-            <Button
-              variant="outline"
-              size="sm"
+            <button
               onClick={() => setShowDownload(!showDownload)}
-              className="gap-2 text-slate-800 dark:text-slate-100 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 font-medium"
+              className="px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-md hover:shadow-gray-200/40 dark:hover:shadow-gray-900/30 active:scale-[0.97]"
             >
-              <Download className="w-4 h-4 text-slate-700 dark:text-slate-300" /> PDF
-            </Button>
+              <Download className="w-4 h-4" /> PDF
+            </button>
             {showDownload && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowDownload(false)} />
-                <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg py-1 min-w-[180px]">
+                <div className="absolute right-0 top-full mt-2 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl shadow-gray-300/40 dark:shadow-gray-900/60 py-2 min-w-[220px] animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-800">
+                    <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Export Options</span>
+                  </div>
                   {[
                     {
                       label: '⚡ Backend Vector PDF',
+                      desc: 'Server-rendered high quality',
                       fn: async () => {
                         const mod = await import('../../utils/invoiceGenerator');
                         mod.downloadBackendInvoicePdf(sale._id, sale.invoiceNumber);
@@ -316,6 +312,7 @@ export default function InvoiceDetail() {
                     },
                     {
                       label: 'A4 Full Size',
+                      desc: 'Standard full page',
                       fn: async () => {
                         const mod = await import('../../utils/invoiceGenerator');
                         mod.generateA4Invoice(sale, printRef.current);
@@ -323,6 +320,7 @@ export default function InvoiceDetail() {
                     },
                     {
                       label: 'A4 Half Size',
+                      desc: 'Compact A5 format',
                       fn: async () => {
                         const mod = await import('../../utils/invoiceGenerator');
                         mod.generateA4HalfInvoice(sale, printRef.current);
@@ -330,6 +328,7 @@ export default function InvoiceDetail() {
                     },
                     {
                       label: 'Receipt (80mm)',
+                      desc: 'POS receipt format',
                       fn: async () => {
                         const mod = await import('../../utils/invoiceGenerator');
                         mod.generateReceipt80(sale, printRef.current);
@@ -337,21 +336,23 @@ export default function InvoiceDetail() {
                     },
                     {
                       label: 'Thermal (58mm)',
+                      desc: 'Small thermal printer',
                       fn: async () => {
                         const mod = await import('../../utils/invoiceGenerator');
                         mod.generateReceipt58(sale, printRef.current);
                       },
                     },
-                  ].map((opt) => (
+                  ].map((opt, idx) => (
                     <button
                       key={opt.label}
                       onClick={() => {
                         opt.fn();
                         setShowDownload(false);
                       }}
-                      className="w-full text-left px-4 py-2 text-xs font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
+                      className="w-full text-left px-4 py-2.5 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors flex flex-col gap-0.5"
                     >
-                      {opt.label}
+                      <span>{opt.label}</span>
+                      <span className="text-[10px] text-gray-400 dark:text-gray-500 font-normal">{opt.desc}</span>
                     </button>
                   ))}
                 </div>
@@ -532,7 +533,12 @@ export default function InvoiceDetail() {
                           </div>
                           <div className="text-xs text-muted-foreground font-mono">
                             {item.imeiOrSerial ? `IMEI: ${item.imeiOrSerial}` : 'Bulk Product'} |
-                            Unit: ৳{item.unitPrice?.toLocaleString()}
+                            Unit: ৳{getEffectiveReturnUnitPrice({ unitPrice: item.unitPrice })?.toLocaleString()}
+                            {sale.subTotal > 0 && sale.netTotal < sale.subTotal && (
+                              <span className="text-[10px] text-gray-400 ml-1">
+                                (original: ৳{item.unitPrice?.toLocaleString()})
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -604,24 +610,40 @@ export default function InvoiceDetail() {
           </div>
 
           <DialogFooter className="flex-row items-center justify-between sm:justify-between border-t pt-3">
-            <div className="text-sm font-semibold">
-              Total Refund:{' '}
-              <span className="text-red-600 font-mono">
-                ৳{calculateReturnTotal().toLocaleString()}
-              </span>
+            <div className="space-y-1">
+              <div className="text-sm font-semibold">
+                Total Refund:{' '}
+                <span className="text-red-600 font-mono">
+                  ৳{calculateReturnTotal().toLocaleString()}
+                </span>
+              </div>
+              {sale.subTotal > 0 && sale.netTotal < sale.subTotal && (
+                <div className="text-[10px] text-amber-600 dark:text-amber-400">
+                  Discount applied: {Math.round(((sale.subTotal - sale.netTotal) / sale.subTotal) * 100)}% off original price
+                </div>
+              )}
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => setShowReturnModal(false)}>
+              <button
+                type="button"
+                onClick={() => setShowReturnModal(false)}
+                className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-lg text-xs transition-all border border-gray-200 dark:border-gray-700"
+              >
                 Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
+              </button>
+              <button
+                type="button"
                 disabled={returnMutation.isPending || Object.keys(returnSelection).length === 0}
                 onClick={handleSubmitReturn}
+                className="px-5 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-semibold rounded-lg text-xs transition-all flex items-center gap-2 shadow-xs"
               >
-                {returnMutation.isPending ? 'Processing...' : 'Confirm Return & Refund'}
-              </Button>
+                {returnMutation.isPending ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <RotateCcw className="w-3.5 h-3.5" />
+                )}
+                Confirm Return & Refund
+              </button>
             </div>
           </DialogFooter>
         </DialogContent>
