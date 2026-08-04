@@ -110,9 +110,9 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
-  const { theme, styled, mode } = useTheme();
+  const { theme, styled, designMode } = useTheme();
   const isDark = theme === 'dark';
-  const wc = useMemo(() => getWaveColors(mode || 'flat', isDark), [mode, isDark]);
+  const wc = useMemo(() => getWaveColors(designMode || 'flat', isDark), [designMode, isDark]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

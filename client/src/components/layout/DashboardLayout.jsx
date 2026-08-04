@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import { useInactivityLogout } from '../../hooks/useInactivityLogout';
 import AnimatedBackground from './AnimatedBackground';
 import Bottombar from './Bottombar';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 
 export default function DashboardLayout() {
-  useInactivityLogout();
 
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 1024);
   const [collapsed, setCollapsed] = useState(() => {
@@ -26,7 +24,7 @@ export default function DashboardLayout() {
   }, [collapsed]);
 
   return (
-    <div className="relative h-screen bg-[#FFFCF9] dark:bg-[#08080c] flex flex-col overflow-hidden text-slate-900 dark:text-slate-100 font-sans">
+    <div className="relative h-screen bg-[#FAFAF9] dark:bg-[#111010] flex flex-col overflow-hidden text-slate-900 dark:text-slate-100 font-sans">
       {/* 60 FPS Subtle Animated Global Background */}
       <AnimatedBackground />
 

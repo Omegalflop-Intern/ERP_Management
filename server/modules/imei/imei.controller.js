@@ -23,6 +23,14 @@ export const getIMEIPassport = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
+export const lookupIMEI = async (req, res, next) => {
+  try {
+    const tenantId = req.user?.tenantId || null;
+    const result = await imeiService.lookupIMEI(req.params.imei, tenantId);
+    return ApiResponse.success(res, result);
+  } catch (error) { next(error); }
+};
+
 export const addInventoryUnit = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;

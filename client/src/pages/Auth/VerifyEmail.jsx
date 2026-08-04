@@ -119,10 +119,10 @@ export default function VerifyEmail() {
   const [email, setEmail] = useState(emailFromState);
   const inputRefs = useRef([]);
 
-  const { theme, styled, mode } = useTheme();
+  const { theme, styled, designMode } = useTheme();
   const { setUser } = useAuth();
   const isDark = theme === 'dark';
-  const wc = useMemo(() => getWaveColors(mode || 'flat', isDark), [mode, isDark]);
+  const wc = useMemo(() => getWaveColors(designMode || 'flat', isDark), [designMode, isDark]);
 
   const handleChange = useCallback(
     (index, value) => {

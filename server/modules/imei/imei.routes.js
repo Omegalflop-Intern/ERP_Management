@@ -31,6 +31,7 @@ router.use(authenticate);
 router.use(checkTenantStatus);
 
 router.get('/', imeiController.getAllIMEI);
+router.get('/lookup/:imei', imeiController.lookupIMEI);
 router.get('/passport/:imei', imeiController.getIMEIPassport);
 router.post('/', authorize('ADMIN', 'MANAGER'), validate(addInventoryUnitSchema), imeiController.addInventoryUnit);
 router.post('/import', authorize('ADMIN', 'MANAGER'), upload.single('file'), imeiController.importIMEI);

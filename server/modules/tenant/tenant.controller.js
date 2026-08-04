@@ -10,10 +10,28 @@ export const getTenants = async (req, res, next) => {
   }
 };
 
+export const getTenantStats = async (req, res, next) => {
+  try {
+    const stats = await tenantService.getTenantStats();
+    return ApiResponse.success(res, stats, 'Stats retrieved');
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getTenant = async (req, res, next) => {
   try {
     const tenant = await tenantService.getTenantById(req.params.id);
     return ApiResponse.success(res, tenant, 'Tenant details retrieved');
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateTenant = async (req, res, next) => {
+  try {
+    const tenant = await tenantService.updateTenant(req.params.id, req.body);
+    return ApiResponse.success(res, tenant, 'Tenant updated successfully');
   } catch (error) {
     next(error);
   }

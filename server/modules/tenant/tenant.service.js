@@ -13,6 +13,52 @@ import { ApiError } from '../../utils/http/ApiError.js';
 import { generateOTP, sendOTP } from '../auth/auth.service.js';
 import bcrypt from 'bcryptjs';
 
+export const getTenantStats = async () => {
+  const [total, active, paused, pendingKyc, expiringSoon] = await Promise.all([
+    Tenant.countDocuments({ isDeleted: false }),
+    Tenant.countDocuments({ isDeleted: false, status: 'ACTIVE' }),
+    Tenant.countDocuments({ isDeleted: false, status: 'PAUSED' }),
+    Tenant.countDocuments({ isDeleted: false, status: 'PENDING_KYC' }),
+    Tenant.countDocuments({
+      isDeleted: false,
+      expiresAt: { $lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), $gte: new Date() },
+    }),
+  ]);
+
+  let totalRevenue = 0;
+  try {
+    const revenueResult = await Transaction.aggregate([
+      { $match: { isDeleted: false } },
+      { $group: { _id: null, total: { $sum: '$netTotal' } } },
+    ]);
+    totalRevenue = revenueResult[0]?.total || 0;
+  } catch { /* ignore */ }
+
+  // Recently joined tenants
+  const recentTenants = await Tenant.find({ isDeleted: false })
+    .sort({ createdAt: -1 })
+    .limit(5)
+    .select('shopName ownerName email plan status createdAt')
+    .lean();
+
+  // Tenants expiring soon (details)
+  const expiringSoonList = await Tenant.find({
+    isDeleted: false,
+    expiresAt: { $lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), $gte: new Date() },
+  })
+    .sort({ expiresAt: 1 })
+    .limit(10)
+    .select('shopName ownerName email plan expiresAt status')
+    .lean();
+
+  return {
+    counts: { total, active, paused, pendingKyc, expiringSoon },
+    totalRevenue,
+    recentTenants,
+    expiringSoonList,
+  };
+};
+
 export const getAllTenants = async (search = '') => {
   const query = { isDeleted: false };
   if (search) {
@@ -59,6 +105,26 @@ export const getTenantById = async (id) => {
   if (!tenant) throw ApiError.notFound('Shop tenant account not found');
   return tenant;
 };
+
+export const updateTenant = async (id, data) => {
+  const tenant = await Tenant.findOne({ _id: id, isDeleted: false });
+  if (!tenant) throw ApiError.notFound('Shop tenant account not found');
+
+  const allowedFields = ['shopName', 'ownerName', 'phone', 'plan', 'maxBranches', 'maxUsers', 'expiresAt', 'notes'];
+  for (const field of allowedFields) {
+    if (data[field] !== undefined) {
+      if (field === 'expiresAt') {
+        tenant.expiresAt = data[field] ? new Date(data[field]) : null;
+      } else {
+        tenant[field] = data[field];
+      }
+    }
+  }
+
+  await tenant.save();
+  return tenant;
+};
+
 
 export const createTenant = async (data) => {
   const emailLower = data.email.toLowerCase().trim();

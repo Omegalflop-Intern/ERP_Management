@@ -57,6 +57,12 @@ const RegisterShop = lazy(() => import('./pages/Auth/RegisterShop'));
 const TenantManagement = lazy(() => import('./pages/SaaS/TenantManagement'));
 const PricingPage = lazy(() => import('./pages/SaaS/PricingPage'));
 
+// Super Admin Panel
+const SuperAdminLayout = lazy(() => import('./layouts/SuperAdminLayout'));
+const SADashboard = lazy(() => import('./pages/SuperAdmin/SADashboard'));
+const SAShopManagement = lazy(() => import('./pages/SuperAdmin/SAShopManagement'));
+const SAKycVerification = lazy(() => import('./pages/SuperAdmin/SAKycVerification'));
+
 const PageSkeletonLoader = () => (
   <div className="p-6 space-y-6 animate-pulse">
     {/* Top Header Skeleton */}
@@ -115,8 +121,20 @@ const PageSkeletonLoader = () => (
   </div>
 );
 
+// Super Admin guard — blocks shop users from super-admin routes
+const SuperAdminGuard = ({ children }) => {
+  const { isAuthenticated, user } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  // Super admin = authenticated + no tenantId + ADMIN role
+  if (!user?.tenantId && user?.roleName === 'ADMIN') return children;
+  return <Navigate to="/dashboard" replace />;
+};
+
 export default function App() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  // Determine where to redirect after login
+  const isSuperAdmin = isAuthenticated && !user?.tenantId && user?.roleName === 'ADMIN';
+  const homeRedirect = isSuperAdmin ? '/super-admin/dashboard' : '/dashboard';
 
   useSSE();
   useInactivityLogout();
@@ -126,7 +144,7 @@ export default function App() {
       <Routes>
         <Route
           path="/login"
-          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />}
+          element={isAuthenticated ? <Navigate to={homeRedirect} replace /> : <Login />}
         />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
@@ -541,17 +559,24 @@ export default function App() {
               </RoleBasedRoute>
             }
           />
-          <Route
-            path="saas/tenants"
-            element={
-              <RoleBasedRoute permissions={['settings:view']}>
-                <TenantManagement />
-              </RoleBasedRoute>
-            }
-          />
         </Route>
 
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        {/* Super Admin Panel — separate layout, own Suspense inside */}
+        <Route
+          path="/super-admin"
+          element={
+            <SuperAdminGuard>
+              <SuperAdminLayout />
+            </SuperAdminGuard>
+          }
+        >
+          <Route index element={<Navigate to="/super-admin/dashboard" replace />} />
+          <Route path="dashboard" element={<SADashboard />} />
+          <Route path="shops" element={<SAShopManagement />} />
+          <Route path="kyc" element={<SAKycVerification />} />
+        </Route>
+
+        <Route path="*" element={<Navigate to={homeRedirect} replace />} />
       </Routes>
     </Suspense>
   );

@@ -1092,6 +1092,9 @@ function GRNModal({ order, onClose, onSuccess }) {
   );
   const [showCameraScanner, setShowCameraScanner] = useState(false);
   const [scanTarget, setScanTarget] = useState(null);
+  // imeiLookupState: { [entryIdx-itemIdx]: { loading, result } }
+  const [imeiLookupState, setImeiLookupState] = useState({});
+  const lookupTimers = useRef({});
 
   const { data: productsData } = useQuery({
     queryKey: ['products'],
@@ -1120,6 +1123,9 @@ function GRNModal({ order, onClose, onSuccess }) {
     const updated = [...entries];
     updated[idx].items.splice(itemIdx, 1);
     setEntries(updated);
+    // Clear lookup state for removed item
+    const key = `${idx}-${itemIdx}`;
+    setImeiLookupState((prev) => { const n = { ...prev }; delete n[key]; return n; });
   };
   const updateEntry = (idx, itemIdx, field, value) => {
     const updated = [...entries];
@@ -1127,10 +1133,51 @@ function GRNModal({ order, onClose, onSuccess }) {
     setEntries(updated);
   };
 
+  // Smart IMEI lookup with debounce
+  const handleIMEIChange = (idx, itemIdx, value) => {
+    updateEntry(idx, itemIdx, 'imeiOrSerial', value);
+    const key = `${idx}-${itemIdx}`;
+
+    // Clear previous timer
+    if (lookupTimers.current[key]) clearTimeout(lookupTimers.current[key]);
+
+    if (!value || value.trim().length < 6) {
+      setImeiLookupState((prev) => { const n = { ...prev }; delete n[key]; return n; });
+      return;
+    }
+
+    // Set loading
+    setImeiLookupState((prev) => ({ ...prev, [key]: { loading: true, result: null } }));
+
+    lookupTimers.current[key] = setTimeout(async () => {
+      try {
+        const res = await api.get(`/inventory/lookup/${encodeURIComponent(value.trim())}`);
+        const result = res.data?.data;
+        setImeiLookupState((prev) => ({ ...prev, [key]: { loading: false, result } }));
+
+        // If found in inventory, auto-fill prices from existing record
+        if (result?.found && result.unit?.product) {
+          const prod = result.unit.product;
+          const updated = [...entries];
+          updated[idx].items[itemIdx] = {
+            ...updated[idx].items[itemIdx],
+            purchasePrice: result.unit.purchasePrice || updated[idx].items[itemIdx].purchasePrice,
+            sellingPrice: result.unit.currentSellingPrice || prod.sellingPrice || updated[idx].items[itemIdx].sellingPrice,
+            warrantyMonths: result.unit.warrantyMonths || updated[idx].items[itemIdx].warrantyMonths,
+          };
+          setEntries(updated);
+          toast.info(`🔍 Found: ${prod.name} (${result.unit.status})`);
+        }
+      } catch {
+        setImeiLookupState((prev) => ({ ...prev, [key]: { loading: false, result: null } }));
+      }
+    }, 600);
+  };
+
   const handleCameraScan = (decodedText) => {
     setShowCameraScanner(false);
     if (scanTarget) {
-      updateEntry(scanTarget.entryIdx, scanTarget.itemIdx, 'imeiOrSerial', decodedText);
+      handleIMEIChange(scanTarget.entryIdx, scanTarget.itemIdx, decodedText);
       setScanTarget(null);
     } else {
       // Find first entry that still has room and fill the last empty IMEI slot
@@ -1139,7 +1186,7 @@ function GRNModal({ order, onClose, onSuccess }) {
         const emptyItem = entry.items.find((item) => !item.imeiOrSerial);
         if (emptyItem) {
           const itemIdx = entry.items.indexOf(emptyItem);
-          updateEntry(i, itemIdx, 'imeiOrSerial', decodedText);
+          handleIMEIChange(i, itemIdx, decodedText);
           return;
         }
       }
@@ -1211,42 +1258,84 @@ function GRNModal({ order, onClose, onSuccess }) {
                   </button>
                 )}
               </div>
-              {entry.items.map((item, itemIdx) => (
-                <div key={itemIdx} className="flex gap-2 items-center">
-                  <input
-                    type="text"
-                    placeholder="IMEI / Serial"
-                    value={item.imeiOrSerial}
-                    onChange={(e) => updateEntry(idx, itemIdx, 'imeiOrSerial', e.target.value)}
-                    className="flex-1 px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setScanTarget({ entryIdx: idx, itemIdx });
-                      setShowCameraScanner(true);
-                    }}
-                    className="p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded transition-colors"
-                    title="Scan IMEI"
-                  >
-                    <Camera className="w-4 h-4" />
-                  </button>
-                  <NumberInput
-                    placeholder="Cost"
-                    value={item.purchasePrice}
-                    onChange={(e) =>
-                      updateEntry(idx, itemIdx, 'purchasePrice', Number(e.target.value))
-                    }
-                    className="w-24 px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]"
-                  />
-                  <button
-                    onClick={() => removeEntry(idx, itemIdx)}
-                    className="p-1 text-gray-400 hover:text-red-600 rounded"
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
+              {entry.items.map((item, itemIdx) => {
+                const lookupKey = `${idx}-${itemIdx}`;
+                const ls = imeiLookupState[lookupKey];
+                const lookupResult = ls?.result;
+                return (
+                  <div key={itemIdx} className="space-y-1">
+                    <div className="flex gap-2 items-center">
+                      <div className="flex-1 relative">
+                        <input
+                          type="text"
+                          placeholder="IMEI / Serial — type or scan to auto-detect product"
+                          value={item.imeiOrSerial}
+                          onChange={(e) => handleIMEIChange(idx, itemIdx, e.target.value)}
+                          className={`w-full px-2 py-1.5 bg-white dark:bg-gray-800 border rounded text-sm text-gray-900 dark:text-gray-100 focus:outline-none transition-colors ${
+                            lookupResult?.found
+                              ? 'border-emerald-400 dark:border-emerald-600 focus:border-emerald-500'
+                              : lookupResult?.found === false
+                              ? 'border-gray-300 dark:border-gray-700 focus:border-[#2563EB]'
+                              : 'border-gray-300 dark:border-gray-700 focus:border-[#2563EB]'
+                          }`}
+                        />
+                        {ls?.loading && (
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin text-blue-400 absolute right-2 top-1/2 -translate-y-1/2" />
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setScanTarget({ entryIdx: idx, itemIdx });
+                          setShowCameraScanner(true);
+                        }}
+                        className="p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded transition-colors"
+                        title="Scan IMEI"
+                      >
+                        <Camera className="w-4 h-4" />
+                      </button>
+                      <NumberInput
+                        placeholder="Cost"
+                        value={item.purchasePrice}
+                        onChange={(e) =>
+                          updateEntry(idx, itemIdx, 'purchasePrice', Number(e.target.value))
+                        }
+                        className="w-24 px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]"
+                      />
+                      <button
+                        onClick={() => removeEntry(idx, itemIdx)}
+                        className="p-1 text-gray-400 hover:text-red-600 rounded"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </button>
+                    </div>
+                    {/* IMEI Lookup Result Badge */}
+                    {lookupResult?.found && lookupResult.unit?.product && (
+                      <div className="ml-1 flex items-center gap-2 text-[11px] bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-lg px-2.5 py-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0" />
+                        <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+                          {lookupResult.unit.product.name}
+                        </span>
+                        {lookupResult.unit.product.brand && (
+                          <span className="text-emerald-600 dark:text-emerald-500">{lookupResult.unit.product.brand}</span>
+                        )}
+                        {lookupResult.unit.product.model && (
+                          <span className="text-emerald-600 dark:text-emerald-500">· {lookupResult.unit.product.model}</span>
+                        )}
+                        <span className={`ml-auto px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                          lookupResult.unit.status === 'Available'
+                            ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400'
+                            : lookupResult.unit.status === 'Sold'
+                            ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'
+                            : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400'
+                        }`}>
+                          {lookupResult.unit.status}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           ))}
 

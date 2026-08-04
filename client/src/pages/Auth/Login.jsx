@@ -182,7 +182,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
-  const { theme, styled, mode } = useTheme();
+  const { theme, styled, designMode } = useTheme();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -198,7 +198,12 @@ export default function Login() {
         navigate('/verify-email', { state: { email: result.email } });
         return;
       }
-      navigate('/dashboard');
+      // Super admin (no tenantId + ADMIN role) goes to super admin panel
+      if (!result?.tenantId && result?.roleName === 'ADMIN') {
+        navigate('/super-admin/dashboard');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (error) {
     } finally {
       setLoading(false);
@@ -206,7 +211,7 @@ export default function Login() {
   };
 
   const isDark = theme === 'dark';
-  const wc = useMemo(() => getWaveColors(mode || 'flat', isDark), [mode, isDark]);
+  const wc = useMemo(() => getWaveColors(designMode || 'flat', isDark), [designMode, isDark]);
 
   const inputClass = styled
     ? 'neu-input w-full px-4 py-3 text-sm focus:outline-none transition-all'

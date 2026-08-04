@@ -186,6 +186,51 @@ export const priceDropAdjustment = async (productName, newSellingPrice, tenantId
   return { modifiedCount: result.modifiedCount, productName };
 };
 
+export const lookupIMEI = async (imeiOrSerial, tenantId = null) => {
+  const imei = imeiOrSerial?.trim();
+  if (!imei) throw ApiError.badRequest('IMEI or serial number is required');
+
+  // 1. Check inventory (any status) — exact match first
+  const query = { imeiOrSerial: imei, isDeleted: false };
+  if (tenantId) query.tenantId = tenantId;
+  const unit = await InventoryUnit.findOne(query)
+    .populate('productId')
+    .populate('branchId')
+    .lean();
+
+  if (unit) {
+    return {
+      found: true,
+      source: 'inventory',
+      unit: {
+        _id: unit._id,
+        imeiOrSerial: unit.imeiOrSerial,
+        status: unit.status,
+        purchasePrice: unit.purchasePrice,
+        currentSellingPrice: unit.currentSellingPrice,
+        warrantyMonths: unit.warrantyMonths,
+        product: unit.productId ? {
+          _id: unit.productId._id,
+          name: unit.productId.name,
+          brand: unit.productId.brand,
+          model: unit.productId.model,
+          category: unit.productId.category,
+          sku: unit.productId.sku,
+          sellingPrice: unit.productId.sellingPrice,
+          costPrice: unit.productId.costPrice,
+          variants: unit.productId.variants,
+        } : null,
+        branch: unit.branchId ? { _id: unit.branchId._id, name: unit.branchId.name } : null,
+      },
+    };
+  }
+
+  // 2. Not found in inventory — try product catalog
+  // IMEI prefix (first 8 digits = TAC) can sometimes identify brand/model
+  // We do a broad fallback returning nothing — caller should prompt manual selection
+  return { found: false, unit: null, source: null };
+};
+
 export const deleteIMEI = async (id, tenantId = null) => {
   const query = { _id: id, isDeleted: false };
   if (tenantId) query.tenantId = tenantId;

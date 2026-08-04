@@ -6,7 +6,7 @@ import * as tenantController from './tenant.controller.js';
 import { authenticate } from '../../middleware/auth.middleware.js';
 import { requireSuperAdmin } from '../../middleware/tenant.middleware.js';
 import { validate } from '../../middleware/validate.middleware.js';
-import { createTenantSchema, updateTenantStatusSchema, verifyKycSchema } from './tenant.validator.js';
+import { createTenantSchema, updateTenantSchema, updateTenantStatusSchema, verifyKycSchema } from './tenant.validator.js';
 
 const uploadDir = 'uploads/tenants/kyc';
 const logoDir = 'uploads/tenants/logos';
@@ -56,8 +56,10 @@ const router = express.Router();
 router.post('/', validate(createTenantSchema), tenantController.createTenant);
 
 // Super admin only: list, inspect, change status, approve KYC
+router.get('/stats', authenticate, requireSuperAdmin, tenantController.getTenantStats);
 router.get('/', authenticate, requireSuperAdmin, tenantController.getTenants);
 router.get('/:id', authenticate, requireSuperAdmin, tenantController.getTenant);
+router.put('/:id', authenticate, requireSuperAdmin, validate(updateTenantSchema), tenantController.updateTenant);
 router.patch('/:id/status', authenticate, requireSuperAdmin, validate(updateTenantStatusSchema), tenantController.updateStatus);
 router.patch('/:id/verify-kyc', authenticate, requireSuperAdmin, validate(verifyKycSchema), tenantController.handleVerifyKyc);
 

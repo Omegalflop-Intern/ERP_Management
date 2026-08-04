@@ -256,12 +256,6 @@ const menuItems = [
         icon: Activity,
         permissions: ['settings:view'],
       },
-      {
-        path: '/saas/tenants',
-        label: 'Shop Management',
-        icon: Building2,
-        permissions: ['saas:manage'],
-      },
       { path: '/settings', label: 'Settings', icon: Settings, permissions: ['settings:view'] },
     ],
   },
@@ -375,10 +369,6 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
 
           {menuItems.map((group) => {
             const visibleItems = group.items.filter((item) => {
-              // Hide SaaS Tenants control panel from Shop Owners & Staff
-              if (item.path === '/saas/tenants' && user?.tenantId) {
-                return false;
-              }
               if (item.children) {
                 return item.children.some(
                   (child) =>
@@ -396,9 +386,9 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
             if (visibleItems.length === 0) return null;
 
             return (
-              <div key={group.section} className="mb-3">
+              <div key={group.section} className="mb-1.5">
                 {!isCollapsed && (
-                  <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  <div className="px-3 pt-3 pb-1 text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">
                     {group.section}
                   </div>
                 )}
@@ -416,12 +406,12 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
                         <button
                           onClick={() => toggleSubmenu(item.label)}
                           className={`
-                            w-full flex items-center justify-between rounded-lg font-medium text-sm transition-all
+                            w-full flex items-center justify-between rounded-xl font-medium text-sm transition-all
                             ${isCollapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5'}
                             ${
                               hasActiveChild
                                 ? 'bg-blue-50/80 dark:bg-blue-900/20 text-[#2563EB] dark:text-blue-400 font-semibold'
-                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-slate-800/40'
+                                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700/60'
                             }
                           `}
                         >
@@ -431,9 +421,9 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
                           </div>
                           {!isCollapsed &&
                             (isOpenMenu ? (
-                              <ChevronDown className="w-4 h-4 text-slate-400" />
+                              <ChevronDown className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                             ) : (
-                              <ChevronRight className="w-4 h-4 text-slate-400" />
+                              <ChevronRight className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                             ))}
                         </button>
 
@@ -445,11 +435,11 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
                                 key={child.path}
                                 to={child.path}
                                 className={({ isActive }) => `
-                                  w-full flex items-center gap-2.5 px-3 py-2 rounded-xl font-medium text-xs transition-all
+                                  w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-medium text-xs transition-all
                                   ${
                                     isActive
-                                      ? 'bg-[#2563EB] text-white font-bold shadow-xs'
-                                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-slate-800/50'
+                                      ? 'bg-[#2563EB] text-white font-bold shadow-sm'
+                                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700/70'
                                   }
                                 `}
                               >
@@ -469,12 +459,12 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
                       to={item.path}
                       title={isCollapsed ? item.label : undefined}
                       className={({ isActive }) => `
-                        w-full flex items-center gap-3 rounded-xl font-medium text-sm transition-all mb-0.5
+                        w-full flex items-center gap-3 rounded-xl font-medium text-sm transition-all mb-1
                         ${isCollapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5'}
                         ${
                           isActive
-                            ? 'bg-blue-50/80 dark:bg-blue-900/20 text-[#2563EB] dark:text-blue-400 font-semibold border border-blue-200/60 dark:border-blue-800/40 shadow-xs'
-                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-slate-800/40'
+                            ? 'bg-blue-50/80 dark:bg-blue-900/20 text-[#2563EB] dark:text-blue-400 font-semibold border border-blue-200/60 dark:border-blue-800/50'
+                            : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700/60'
                         }
                       `}
                     >

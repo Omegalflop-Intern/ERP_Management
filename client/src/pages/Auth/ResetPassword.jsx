@@ -133,9 +133,9 @@ export default function ResetPassword() {
   const [done, setDone] = useState(false);
   const [error, setError] = useState('');
 
-  const { theme, styled, mode } = useTheme();
+  const { theme, styled, designMode } = useTheme();
   const isDark = theme === 'dark';
-  const wc = useMemo(() => getWaveColors(mode || 'flat', isDark), [mode, isDark]);
+  const wc = useMemo(() => getWaveColors(designMode || 'flat', isDark), [designMode, isDark]);
 
   const strength = getPasswordStrength(password);
 
