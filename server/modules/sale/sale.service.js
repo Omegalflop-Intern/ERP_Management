@@ -568,60 +568,213 @@ export const updateSale = async (id, data, tenantId = null) => {
   withTenant(query, tenantId);
   const sale = await Transaction.findOne(query);
   if (!sale) throw ApiError.notFound('Sale not found');
-  if (sale.isDeleted) throw ApiError.notFound('Sale not found');
 
-  // Only due-collection is allowed via this endpoint. Money must be conserved:
-  // total (cash+bank+due) stays the same; due can only decrease (money collected).
-  const newBreakdown = data.paymentBreakdown;
-  if (!newBreakdown) {
-    throw ApiError.badRequest('Only payment breakdown updates are supported');
-  }
-  if (data.status) {
-    throw ApiError.badRequest('Sale status cannot be edited directly');
+  if (sale.status === 'RETURNED') {
+    throw ApiError.badRequest('Cannot edit a fully returned sale');
   }
 
-  const old = sale.paymentBreakdown || {};
-  const sumOf = (b) =>
-    (b.cash || 0) + (b.bkash || 0) + (b.rocket || 0) + (b.nagad || 0) + (b.bank || 0) + (b.dueAmount || 0);
-
-  const oldSum = sumOf(old);
-  const newSum = sumOf(newBreakdown);
-  if (Math.abs(oldSum - newSum) > 0.01) {
-    throw ApiError.badRequest('Payment breakdown must conserve the sale total');
+  // ── Step 1: Restore old inventory (IMEI → Available, bulk → stock back) ──
+  for (const oldItem of sale.lineItems) {
+    if (oldItem.imeiOrSerial) {
+      await InventoryUnit.findOneAndUpdate(
+        withTenant({ imeiOrSerial: oldItem.imeiOrSerial, isDeleted: false, status: 'Sold' }, tenantId),
+        {
+          $set: { status: 'Available', soldInvoiceNumber: null, soldAt: null, soldToCustomerId: null },
+          $pull: { passportHistory: { event: 'SOLD', details: { $regex: `Sold on ${sale.invoiceNumber}` } } },
+        }
+      ).catch(() => {});
+      // Recount product stock from available IMEI units
+      if (oldItem.productId) {
+        const availCount = await InventoryUnit.countDocuments(
+          withTenant({ productId: oldItem.productId, status: 'Available', isDeleted: false }, tenantId)
+        );
+        await Product.updateOne({ _id: oldItem.productId }, { stockQuantity: availCount }).catch(() => {});
+      }
+    } else if (oldItem.productId) {
+      // Bulk product — restore stock
+      await Product.updateOne(
+        { _id: oldItem.productId },
+        { $inc: { stockQuantity: oldItem.qty || 1 } }
+      ).catch(() => {});
+    }
   }
 
-  const oldDue = old.dueAmount || 0;
-  const newDue = newBreakdown.dueAmount || 0;
-  const collected = oldDue - newDue;
-  if (collected < -0.01) {
-    throw ApiError.badRequest('Due amount cannot be increased');
+  // ── Step 2: Resolve customer ──
+  let customerId = data.customerId !== undefined ? data.customerId : sale.customerId;
+  let customerObj = null;
+
+  if (customerId) {
+    customerObj = await Customer.findOne(withTenant({ _id: customerId, isDeleted: false }, tenantId));
+  } else if (data.customerPhone && data.customerPhone.trim()) {
+    const phoneVal = data.customerPhone.trim();
+    customerObj = await Customer.findOne(withTenant({ phoneHash: hashText(phoneVal), isDeleted: false }, tenantId));
+    if (!customerObj) {
+      customerObj = await Customer.create({
+        tenantId,
+        name: data.customerName || 'Walk-in Customer',
+        phone: phoneVal,
+        phoneHash: hashText(phoneVal),
+        email: data.customerEmail || '',
+        address: data.customerAddress || '',
+      });
+    }
+    customerId = customerObj._id;
   }
 
-  if (collected > 0.01) {
-    // Detect which payment method increased (bank/cash/wallet)
-    let method = 'cash';
-    const candidate = { cash: 'cash', bkash: 'bkash', rocket: 'rocket', nagad: 'nagad', bank: 'bank' };
-    for (const key of Object.keys(candidate)) {
-      if (Math.abs((newBreakdown[key] || 0) - (old[key] || 0) - collected) < 1) {
-        method = key;
-        break;
+  // ── Step 3: Build new line items & validate products ──
+  const newItems = data.items || sale.lineItems.map((li) => ({
+    productId: li.productId?._id || li.productId,
+    imeiOrSerial: li.imeiOrSerial || undefined,
+    description: li.description,
+    qty: li.qty,
+    unitPrice: li.unitPrice,
+    unitCost: li.unitCost || 0,
+  }));
+
+  let subTotal = 0;
+  const lineItems = [];
+  const soldImeis = [];
+  const productWarrantyMonths = {};
+
+  for (const item of newItems) {
+    const productQuery = { _id: item.productId, isDeleted: false };
+    withTenant(productQuery, tenantId);
+    const product = await Product.findOne(productQuery);
+    if (!product) throw ApiError.notFound(`Product not found: ${item.productId}`);
+    productWarrantyMonths[item.productId] = product.warrantyMonths || 0;
+
+    let unitCost = item.unitCost || product.costPrice || 0;
+
+    if (item.imeiOrSerial) {
+      const unit = await InventoryUnit.findOne(
+        withTenant({ imeiOrSerial: item.imeiOrSerial, isDeleted: false, status: 'Available' }, tenantId)
+      );
+      if (!unit) throw ApiError.badRequest(`IMEI ${item.imeiOrSerial} is not available for sale`);
+      unitCost = unit.purchasePrice || product.costPrice || 0;
+    } else {
+      const requestedQty = Math.abs(item.qty || 1);
+      if (product.stockQuantity < requestedQty) {
+        throw ApiError.badRequest(`Insufficient stock for "${product.name}". Available: ${product.stockQuantity}, Requested: ${requestedQty}`);
       }
     }
-    await createAutomatedDueCollectionJournal(sale, collected, method, data.collectedBy || 'system').catch((err) => {
-      console.error('Due collection journal failed:', err);
+
+    const itemTotal = (item.unitPrice * item.qty);
+    subTotal += itemTotal;
+    lineItems.push({
+      productId: item.productId,
+      imeiOrSerial: item.imeiOrSerial || '',
+      description: item.description,
+      qty: item.qty,
+      unitPrice: item.unitPrice,
+      unitCost,
+      totalPrice: itemTotal,
     });
+  }
 
-    // Reduce the customer's outstanding due by the amount collected
-    if (sale.customerId) {
-      const customer = await Customer.findOne(withTenant({ _id: sale.customerId, isDeleted: false }, tenantId));
-      if (customer) {
-        customer.dueBalance = Math.max(0, (customer.dueBalance || 0) - collected);
-        await customer.save();
+  const discount = data.discount ?? sale.discount ?? 0;
+  const tax = data.tax ?? sale.tax ?? 0;
+  const netTotal = subTotal - discount + tax;
+
+  // ── Step 4: Apply new inventory (IMEI → Sold, bulk → deduct) ──
+  const soldDate = new Date();
+  for (let i = 0; i < newItems.length; i++) {
+    const item = newItems[i];
+    if (item.imeiOrSerial) {
+      const unitUpdate = {
+        status: 'Sold',
+        soldInvoiceNumber: sale.invoiceNumber,
+        soldAt: soldDate,
+        $push: {
+          passportHistory: {
+            event: 'SOLD',
+            details: `Sold on ${sale.invoiceNumber} (edited)`,
+            amount: item.unitPrice,
+            performedBy: 'system',
+          },
+        },
+      };
+      const warrantyMonths = productWarrantyMonths[item.productId] || 0;
+      if (warrantyMonths) {
+        const expiry = new Date(soldDate);
+        expiry.setMonth(expiry.getMonth() + warrantyMonths);
+        unitUpdate.warrantyExpiry = expiry;
       }
+      const unit = await InventoryUnit.findOneAndUpdate(
+        withTenant({ imeiOrSerial: item.imeiOrSerial, isDeleted: false, status: 'Available' }, tenantId),
+        unitUpdate,
+        { new: true }
+      );
+      if (!unit) throw ApiError.badRequest(`IMEI ${item.imeiOrSerial} is not available`);
+      soldImeis.push(unit.imeiOrSerial);
+
+      const availCount = await InventoryUnit.countDocuments(
+        withTenant({ productId: item.productId, status: 'Available', isDeleted: false }, tenantId)
+      );
+      await Product.updateOne({ _id: item.productId }, { stockQuantity: availCount }).catch(() => {});
+    } else {
+      const requestedQty = Math.abs(item.qty || 1);
+      await Product.updateOne(
+        { _id: item.productId },
+        { $inc: { stockQuantity: -requestedQty } }
+      ).catch(() => {});
     }
   }
 
-  sale.paymentBreakdown = newBreakdown;
+  // Mark sold IMEIs with customer
+  if (soldImeis.length > 0 && customerId) {
+    await InventoryUnit.updateMany(
+      withTenant({ imeiOrSerial: { $in: soldImeis } }, tenantId),
+      { soldToCustomerId: customerId }
+    ).catch(() => {});
+  }
+
+  // ── Step 5: Update payment breakdown ──
+  const newBreakdown = data.paymentBreakdown || sale.paymentBreakdown;
+  const paidAmount = (newBreakdown.cash || 0) + (newBreakdown.bkash || 0) +
+    (newBreakdown.rocket || 0) + (newBreakdown.nagad || 0) + (newBreakdown.bank || 0);
+  const dueAmount = Math.max(0, netTotal - paidAmount);
+
+  // ── Step 6: Save sale ──
+  const finalCustomerName = data.customerName || customerObj?.name || sale.customerName;
+  const finalCustomerPhone = data.customerPhone || customerObj?.phone || sale.customerPhone;
+  const finalCustomerEmail = data.customerEmail ?? sale.customerEmail;
+  const finalCustomerAddress = data.customerAddress ?? sale.customerAddress;
+
+  sale.customerId = customerId || null;
+  sale.customerName = finalCustomerName;
+  sale.customerPhone = finalCustomerPhone;
+  sale.customerEmail = finalCustomerEmail;
+  sale.customerAddress = finalCustomerAddress;
+  sale.saleType = data.saleType || sale.saleType;
+  sale.lineItems = lineItems;
+  sale.subTotal = subTotal;
+  sale.discount = discount;
+  sale.tax = tax;
+  sale.netTotal = netTotal;
+  sale.paymentBreakdown = {
+    cash: newBreakdown.cash || 0,
+    bkash: newBreakdown.bkash || 0,
+    rocket: newBreakdown.rocket || 0,
+    nagad: newBreakdown.nagad || 0,
+    bank: newBreakdown.bank || 0,
+    dueAmount,
+  };
+
   await sale.save();
+
+  // ── Step 7: Update customer balances ──
+  if (customerObj) {
+    // Recalculate due balance from all non-deleted sales for this customer
+    const allSales = await Transaction.find(
+      withTenant({ customerId: customerObj._id, isDeleted: false, txType: 'SALE' }, tenantId)
+    );
+    let totalDue = 0;
+    for (const s of allSales) {
+      totalDue += s.paymentBreakdown?.dueAmount || 0;
+    }
+    customerObj.dueBalance = totalDue;
+    await customerObj.save();
+  }
+
   return sale;
 };

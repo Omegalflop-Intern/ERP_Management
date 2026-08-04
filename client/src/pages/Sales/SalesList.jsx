@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Calendar, Eye, Filter, Plus, Receipt, Search, Trash2 } from 'lucide-react';
+import { Calendar, Eye, Filter, Pencil, Plus, Receipt, Search, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -8,6 +8,7 @@ import api from '../../lib/api';
 
 import PageHeader from '../../components/layout/PageHeader';
 import EmptyState from '../../components/ui/EmptyState';
+import EditSaleModal from './EditSaleModal';
 
 export default function SalesList() {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ export default function SalesList() {
   const [dateTo, setDateTo] = useState('');
   const [paymentFilter, setPaymentFilter] = useState('');
   const [saleTypeFilter, setSaleTypeFilter] = useState('');
+  const [editSaleId, setEditSaleId] = useState(null);
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
@@ -285,6 +287,15 @@ export default function SalesList() {
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-2">
                           <button
+                            type="button"
+                            onClick={() => setEditSaleId(s._id)}
+                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-amber-600 transition-colors"
+                            title="Edit Sale"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => navigate(`/sales/${s._id}`)}
                             className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-blue-600 transition-colors"
                             title="View / Print / Return"
@@ -306,6 +317,14 @@ export default function SalesList() {
           </div>
         )}
       </div>
+
+      {editSaleId && (
+        <EditSaleModal
+          saleId={editSaleId}
+          onClose={() => setEditSaleId(null)}
+          onSuccess={() => setEditSaleId(null)}
+        />
+      )}
     </div>
   );
 }

@@ -73,7 +73,7 @@ export default function DashboardCharts({
   return (
     <div className="space-y-4">
       {onPeriodChange && (
-        <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-3 px-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-gradient-to-br from-white/60 to-white/30 dark:from-white/[0.08] dark:to-white/[0.02] backdrop-blur-[24px] saturate-[1.7] border border-white/40 dark:border-white/[0.08] rounded-xl p-3 px-4 shadow-[0_2px_16px_rgba(15,23,42,0.04)] dark:shadow-[0_2px_16px_rgba(0,0,0,0.2)]">
           <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
             <span>Chart Timeframe</span>
             <span className="text-xs font-normal text-gray-500 dark:text-gray-400">
@@ -101,7 +101,7 @@ export default function DashboardCharts({
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {salesTrendData.length > 0 && (
-          <div className="bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+          <div className="bg-gradient-to-br from-white/60 to-white/30 dark:from-white/[0.08] dark:to-white/[0.02] backdrop-blur-[24px] saturate-[1.7] border border-white/40 dark:border-white/[0.08] rounded-xl p-5 shadow-[0_2px_16px_rgba(15,23,42,0.04)] dark:shadow-[0_2px_16px_rgba(0,0,0,0.2)]">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
               Sales Trend ({currentLabel})
             </h3>
@@ -147,7 +147,7 @@ export default function DashboardCharts({
         )}
 
         {dueTrendData.length > 0 && (
-          <div className="bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+          <div className="bg-gradient-to-br from-white/60 to-white/30 dark:from-white/[0.08] dark:to-white/[0.02] backdrop-blur-[24px] saturate-[1.7] border border-white/40 dark:border-white/[0.08] rounded-xl p-5 shadow-[0_2px_16px_rgba(15,23,42,0.04)] dark:shadow-[0_2px_16px_rgba(0,0,0,0.2)]">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
               Due vs Paid Collection ({currentLabel})
             </h3>
@@ -185,7 +185,7 @@ export default function DashboardCharts({
         )}
 
         {brandDistribution.length > 0 && (
-          <div className="bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-5">
+          <div className="bg-gradient-to-br from-white/60 to-white/30 dark:from-white/[0.08] dark:to-white/[0.02] backdrop-blur-[24px] saturate-[1.7] border border-white/40 dark:border-white/[0.08] rounded-xl p-5 shadow-[0_2px_16px_rgba(15,23,42,0.04)] dark:shadow-[0_2px_16px_rgba(0,0,0,0.2)]">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
               Stock by Brand
             </h3>

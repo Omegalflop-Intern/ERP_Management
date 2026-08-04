@@ -4,7 +4,7 @@ import { validate } from '../../middleware/validate.middleware.js';
 import { authenticate } from '../../middleware/auth.middleware.js';
 import { checkTenantStatus } from '../../middleware/tenant.middleware.js';
 import { authorize } from '../../middleware/role.middleware.js';
-import { createSaleSchema, returnSaleSchema } from './sale.validator.js';
+import { createSaleSchema, updateSaleSchema, returnSaleSchema } from './sale.validator.js';
 
 const router = Router();
 
@@ -268,7 +268,7 @@ router.post('/:id/return', validate(returnSaleSchema), saleController.processRet
  *       404:
  *         description: Sale not found
  */
-router.put('/:id', saleController.updateSale);
+router.put('/:id', validate(updateSaleSchema), saleController.updateSale);
 
 /**
  * @swagger

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Banknote,
+  Camera,
   CreditCard,
   Gift,
   Package,
@@ -22,6 +23,7 @@ import { toast } from 'sonner';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
 import { NumberInput } from '../../components/ui/NumberInput';
+import BarcodeScannerModal from '../../components/ui/BarcodeScannerModal';
 
 export default function SalesForm() {
   const navigate = useNavigate();
@@ -250,6 +252,7 @@ export default function SalesForm() {
 
   const [discountType, setDiscountType] = useState('FIXED'); // 'FIXED' or 'PERCENT'
   const [fastScanInput, setFastScanInput] = useState('');
+  const [showCameraScanner, setShowCameraScanner] = useState(false);
 
   const handleFastScanSubmit = async (e) => {
     if (e) e.preventDefault();
@@ -300,6 +303,15 @@ export default function SalesForm() {
   };
 
   const removeFromCart = (index) => setCart(cart.filter((_, i) => i !== index));
+
+  const handleCameraScan = (decodedText) => {
+    setFastScanInput(decodedText);
+    setShowCameraScanner(false);
+    setTimeout(() => {
+      const event = { preventDefault: () => {} };
+      handleFastScanSubmit(event);
+    }, 100);
+  };
 
   const subTotal = cart.reduce((sum, item) => sum + item.unitPrice * item.qty, 0);
   const discountVal = Number(discount) || 0;
@@ -409,7 +421,7 @@ export default function SalesForm() {
         <div className="lg:col-span-2 space-y-4">
           {/* Fast IMEI / Barcode Scanner Input */}
           <div
-            className={`${cardCls} p-3.5 bg-gradient-to-r from-blue-50/50 via-slate-50 to-emerald-50/50 dark:from-blue-950/20 dark:via-slate-900 dark:to-emerald-950/20 border-blue-200/80 dark:border-blue-900/40`}
+            className={`${cardCls} p-3.5 border-l-[3px] border-l-[#2563EB]/50`}
           >
             <form onSubmit={handleFastScanSubmit} className="flex items-center gap-2">
               <div className="relative flex-1">
@@ -434,6 +446,14 @@ export default function SalesForm() {
               >
                 <Wand2 className="w-3.5 h-3.5" />
                 Scan Item
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCameraScanner(true)}
+                className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-lg text-xs transition-all shadow-xs flex items-center gap-1.5 flex-shrink-0"
+                title="Camera Scanner"
+              >
+                <Camera className="w-3.5 h-3.5" />
               </button>
             </form>
           </div>
@@ -1134,6 +1154,13 @@ export default function SalesForm() {
           inputCls={inputCls}
         />
       )}
+
+      {/* Camera Barcode Scanner */}
+      <BarcodeScannerModal
+        open={showCameraScanner}
+        onScan={handleCameraScan}
+        onClose={() => setShowCameraScanner(false)}
+      />
     </div>
   );
 }

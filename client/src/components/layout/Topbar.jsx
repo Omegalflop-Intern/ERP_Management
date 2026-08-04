@@ -6,6 +6,7 @@ import {
   Building2,
   ChevronDown,
   Command,
+  Diamond,
   DollarSign,
   FileText,
   LogOut,
@@ -33,6 +34,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import ThemeToggle from '../ui/ThemeToggle';
 import api, { getAssetUrl } from '../../lib/api';
 
 function UserAvatar({ user, size = 'md', online = true }) {
@@ -83,7 +85,7 @@ function UserAvatar({ user, size = 'md', online = true }) {
   );
 }
 
-function GlobalSearch({ styled }) {
+function GlobalSearch() {
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [products, setProducts] = useState([]);
@@ -475,7 +477,8 @@ function getNotificationIcon(type) {
 
 export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed }) {
   const { user, logout } = useAuth();
-  const { theme, toggleTheme, designMode, cycleDesignMode, styled } = useTheme();
+  const { theme, toggleTheme, designMode, toggleDesignMode } = useTheme();
+  const styled = designMode === 'glass';
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [showNotifs, setShowNotifs] = useState(false);
@@ -533,16 +536,6 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
     navigate('/login');
   };
 
-  const MODE_LABELS = {
-    flat: 'Flat',
-    neumorphism: 'Neumorphism',
-    glassmorphism: 'Glassmorphism',
-    liquidglass: 'Liquid Glass',
-    neobrutalism: 'Neo Brutal',
-    aurora: 'Aurora',
-    glassmorphismpro: 'Glass Pro',
-  };
-
   return (
     <header
       className="h-14 glass-primary rounded-[20px] m-2 px-3 md:px-6 flex items-center justify-between sticky top-2 z-30 shadow-sm"
@@ -583,13 +576,13 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
       </div>
 
       {/* Middle: Global Search Bar */}
-      <GlobalSearch styled={styled} />
+      <GlobalSearch />
 
       {/* Right: controls */}
       <div className="flex items-center gap-1.5 md:gap-2">
         {/* Desktop: ThemeToggle inline */}
         <div className="hidden md:block">
-          <DesktopThemeToggle styled={styled} />
+          <ThemeToggle />
         </div>
 
         {/* Mobile: settings gear/dots button → popover */}
@@ -625,16 +618,21 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
                   {theme === 'dark' ? 'ON' : 'OFF'}
                 </span>
               </button>
-              <div className="px-3 py-2 border-t border-gray-100 dark:border-gray-800 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                Design
-              </div>
               <button
-                onClick={cycleDesignMode}
+                onClick={() => {
+                  toggleDesignMode();
+                }}
                 className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 text-sm text-gray-700 dark:text-gray-300"
               >
-                <Palette className="w-4 h-4 text-purple-500" />
-                {MODE_LABELS[designMode] || 'Flat'}
-                <span className="ml-auto text-[10px] text-gray-400">Tap to cycle</span>
+                {designMode === 'glass' ? (
+                  <Sparkles className="w-4 h-4 text-blue-400" />
+                ) : (
+                  <Diamond className="w-4 h-4 text-gray-400" />
+                )}
+                {designMode === 'glass' ? 'Glass Mode' : 'Flat Mode'}
+                <span className="ml-auto text-[10px] text-gray-400">
+                  {designMode === 'glass' ? 'ON' : 'OFF'}
+                </span>
               </button>
             </div>
           )}
@@ -735,10 +733,10 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
                 setShowNotifs(false);
                 setShowMobileSettings(false);
               }}
-              className={`hidden md:flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-gray-200/80 dark:border-gray-800 transition-all ${
+              className={`hidden md:flex items-center gap-2.5 px-3 py-1.5 rounded-xl transition-all ${
                 styled
                   ? 'neu-flat !border-none !shadow-none hover:bg-white/10 dark:hover:bg-gray-800/40'
-                  : 'bg-gray-50 dark:bg-gray-900/80 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  : 'bg-gradient-to-br from-white/60 to-white/30 dark:from-white/[0.08] dark:to-white/[0.02] backdrop-blur-[24px] saturate-[1.7] border border-white/40 dark:border-white/[0.08] hover:from-white/70 hover:to-white/40 dark:hover:from-white/[0.12] dark:hover:to-white/[0.04] shadow-[0_2px_16px_rgba(15,23,42,0.04)] dark:shadow-[0_2px_16px_rgba(0,0,0,0.2)]'
               }`}
             >
               <UserAvatar user={user} size="sm" online={online} />
@@ -800,49 +798,5 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
         )}
       </div>
     </header>
-  );
-}
-
-function DesktopThemeToggle({ styled }) {
-  const { theme, toggleTheme, designMode, cycleDesignMode } = useTheme();
-  const MODE_LABELS = {
-    flat: 'Flat',
-    neumorphism: 'Neumorphism',
-    glassmorphism: 'Glassmorphism',
-    liquidglass: 'Liquid Glass',
-    aurora: 'Aurora',
-    glassmorphismpro: 'Glass Pro',
-  };
-  const MODE_ICONS = {
-    flat: '○',
-    neumorphism: '◉',
-    glassmorphism: '◈',
-    liquidglass: '◎',
-    aurora: '✧',
-    glassmorphismpro: '◇',
-  };
-
-  return (
-    <div className="flex items-center gap-1">
-      <button
-        onClick={toggleTheme}
-        className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${styled ? 'neu-btn !p-2' : ''}`}
-        title={theme === 'dark' ? 'Switch to Light' : 'Switch to Dark'}
-      >
-        {theme === 'dark' ? (
-          <Moon className="w-4 h-4 text-blue-400" />
-        ) : (
-          <Sun className="w-4 h-4 text-amber-500" />
-        )}
-      </button>
-      <button
-        onClick={cycleDesignMode}
-        className={`px-2 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${styled ? 'neu-btn !px-2 !py-1.5' : 'hover:bg-gray-100 dark:hover:bg-gray-800'} ${designMode !== 'flat' ? 'text-[#2563EB] dark:text-blue-400 font-bold' : 'text-gray-500 dark:text-gray-400'}`}
-        title={`Design: ${MODE_LABELS[designMode]}`}
-      >
-        <span className="mr-1">{MODE_ICONS[designMode]}</span>
-        <span className="hidden lg:inline">{MODE_LABELS[designMode]}</span>
-      </button>
-    </div>
   );
 }

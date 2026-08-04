@@ -39,7 +39,6 @@ import React, { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
 
 const menuItems = [
@@ -270,7 +269,6 @@ const menuItems = [
 
 export default function Sidebar({ isOpen, onClose, collapsed = false }) {
   const { user, hasPermission, hasAnyPermission } = useAuth();
-  const { styled } = useTheme();
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 1024);
 
@@ -367,7 +365,7 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
                 />
               ) : (
                 <div
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center ${styled ? 'neu-icon !rounded-xl' : 'bg-blue-50 dark:bg-blue-900/20'}`}
+                  className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50 dark:bg-blue-900/20"
                 >
                   <Smartphone className="w-5 h-5 text-[#2563EB] dark:text-blue-400" />
                 </div>
@@ -489,30 +487,6 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
             );
           })}
         </div>
-
-        {!isCollapsed && (
-          <div
-            className={`px-4 py-3 mx-2 rounded-xl text-xs space-y-1.5 ${styled ? 'neu-card-sm' : 'bg-gray-50 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-800'}`}
-          >
-            <div className="flex items-center justify-between text-gray-500 dark:text-gray-400">
-              <span>Server:</span>
-              <span className="text-green-600 dark:text-green-400 font-semibold flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Online
-              </span>
-            </div>
-            <div className="flex items-center justify-between text-gray-500 dark:text-gray-400">
-              <span>Database:</span>
-              <span className="text-blue-600 dark:text-blue-400 font-mono text-[11px]">
-                MongoDB
-              </span>
-            </div>
-          </div>
-        )}
-        {isCollapsed && (
-          <div className="hidden lg:flex justify-center px-2">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" title="Online" />
-          </div>
-        )}
       </aside>
     </>
   );

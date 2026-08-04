@@ -24,7 +24,7 @@ export const ThemeProvider = ({ children }) => {
     const root = document.documentElement;
     root.setAttribute('data-mode', designMode);
     root.setAttribute('data-theme', theme);
-  }, [designMode, theme]);
+  }, [theme, designMode]);
 
   return <>{children}</>;
 };

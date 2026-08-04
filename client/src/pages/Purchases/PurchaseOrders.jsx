@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Eye, Minus, Package, Pencil, Plus, RefreshCw, Search, Trash2, Truck, X } from 'lucide-react';
+import { Camera, Eye, Minus, Package, Pencil, Plus, RefreshCw, Search, Trash2, Truck, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import api from '../../lib/api';
 import { NumberInput } from '../../components/ui/NumberInput';
+import BarcodeScannerModal from '../../components/ui/BarcodeScannerModal';
 
 const STATUSES = ['ALL', 'APPROVED', 'RECEIVED', 'PARTIALLY_RECEIVED', 'CANCELLED'];
 const STATUS_COLORS = {
@@ -1089,6 +1090,8 @@ function GRNModal({ order, onClose, onSuccess }) {
       items: [],
     }))
   );
+  const [showCameraScanner, setShowCameraScanner] = useState(false);
+  const [scanTarget, setScanTarget] = useState(null);
 
   const { data: productsData } = useQuery({
     queryKey: ['products'],
@@ -1122,6 +1125,26 @@ function GRNModal({ order, onClose, onSuccess }) {
     const updated = [...entries];
     updated[idx].items[itemIdx] = { ...updated[idx].items[itemIdx], [field]: value };
     setEntries(updated);
+  };
+
+  const handleCameraScan = (decodedText) => {
+    setShowCameraScanner(false);
+    if (scanTarget) {
+      updateEntry(scanTarget.entryIdx, scanTarget.itemIdx, 'imeiOrSerial', decodedText);
+      setScanTarget(null);
+    } else {
+      // Find first entry that still has room and fill the last empty IMEI slot
+      for (let i = 0; i < entries.length; i++) {
+        const entry = entries[i];
+        const emptyItem = entry.items.find((item) => !item.imeiOrSerial);
+        if (emptyItem) {
+          const itemIdx = entry.items.indexOf(emptyItem);
+          updateEntry(i, itemIdx, 'imeiOrSerial', decodedText);
+          return;
+        }
+      }
+      toast.error('No empty IMEI slots available. Add more IMEI entries first.');
+    }
   };
 
   const allItems = entries.flatMap((e) => {
@@ -1197,6 +1220,17 @@ function GRNModal({ order, onClose, onSuccess }) {
                     onChange={(e) => updateEntry(idx, itemIdx, 'imeiOrSerial', e.target.value)}
                     className="flex-1 px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]"
                   />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setScanTarget({ entryIdx: idx, itemIdx });
+                      setShowCameraScanner(true);
+                    }}
+                    className="p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded transition-colors"
+                    title="Scan IMEI"
+                  >
+                    <Camera className="w-4 h-4" />
+                  </button>
                   <NumberInput
                     placeholder="Cost"
                     value={item.purchasePrice}
@@ -1241,6 +1275,12 @@ function GRNModal({ order, onClose, onSuccess }) {
           </div>
         </div>
       </div>
+
+      <BarcodeScannerModal
+        open={showCameraScanner}
+        onScan={handleCameraScan}
+        onClose={() => { setShowCameraScanner(false); setScanTarget(null); }}
+      />
     </div>
   );
 }

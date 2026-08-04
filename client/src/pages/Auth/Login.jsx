@@ -213,27 +213,30 @@ export default function Login() {
     : 'w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all duration-300 bg-white dark:bg-gray-900/80 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20';
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gray-50 dark:bg-[#0b0f19]">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gray-950 dark:bg-[#050810]">
       <ParticleCanvas />
+
+      {/* Darkened overlay */}
+      <div className="absolute inset-0 z-[1] bg-black/30 dark:bg-black/50 pointer-events-none" />
 
       {/* Animated gradient background */}
       <div className="absolute inset-0 login-bg z-0" style={{ background: wc.bg }} />
 
       {/* Floating orbs — mode-aware colors */}
       <div
-        className="absolute w-[600px] h-[600px] -top-48 -left-48 rounded-full blur-[120px] animate-drift pointer-events-none"
+        className="absolute w-[600px] h-[600px] -top-48 -left-48 rounded-full blur-[120px] animate-drift pointer-events-none opacity-80"
         style={{ background: wc.glow }}
       />
       <div
-        className="absolute w-[500px] h-[500px] -bottom-40 -right-40 rounded-full blur-[110px] animate-drift pointer-events-none"
+        className="absolute w-[500px] h-[500px] -bottom-40 -right-40 rounded-full blur-[110px] animate-drift pointer-events-none opacity-80"
         style={{ background: wc.accent, animationDelay: '4s' }}
       />
       <div
-        className="absolute w-[350px] h-[350px] top-1/4 left-1/3 rounded-full blur-[90px] animate-float pointer-events-none"
+        className="absolute w-[350px] h-[350px] top-1/4 left-1/3 rounded-full blur-[90px] animate-float pointer-events-none opacity-70"
         style={{ background: wc.mid, animationDelay: '2s' }}
       />
       <div
-        className="absolute w-[250px] h-[250px] bottom-1/3 right-1/4 rounded-full blur-[70px] animate-float-delayed pointer-events-none"
+        className="absolute w-[250px] h-[250px] bottom-1/3 right-1/4 rounded-full blur-[70px] animate-float-delayed pointer-events-none opacity-70"
         style={{ background: wc.light }}
       />
 
@@ -367,12 +370,39 @@ export default function Login() {
         <ThemeToggle />
       </div>
 
+      {/* Spotlight decorations — left and right of card */}
+      <div
+        className="absolute z-[2] pointer-events-none animate-pulse"
+        style={{
+          width: '380px',
+          height: '500px',
+          left: 'calc(50% - 420px)',
+          top: 'calc(50% - 250px)',
+          background: `radial-gradient(ellipse at center, ${wc.glow} 0%, transparent 70%)`,
+          filter: 'blur(60px)',
+          opacity: 0.6,
+        }}
+      />
+      <div
+        className="absolute z-[2] pointer-events-none animate-pulse"
+        style={{
+          width: '380px',
+          height: '500px',
+          left: 'calc(50% + 40px)',
+          top: 'calc(50% - 250px)',
+          background: `radial-gradient(ellipse at center, ${wc.accent} 0%, transparent 70%)`,
+          filter: 'blur(60px)',
+          opacity: 0.6,
+          animationDelay: '2s',
+        }}
+      />
+
       {/* Login card */}
       <div className="relative z-10 w-full max-w-md mx-4">
         {/* Brand icon */}
         <div className="flex justify-center mb-6">
           <div
-            className={`w-16 h-16 rounded-2xl flex items-center justify-center ${styled ? 'neu-icon !bg-[#2563EB]/10 !border-none' : 'bg-white/10 dark:bg-white/5 backdrop-blur-md border border-white/20 dark:border-white/10'}`}
+            className={`w-16 h-16 rounded-2xl flex items-center justify-center ${styled ? 'neu-icon !bg-[#2563EB]/10 !border-none' : 'bg-gradient-to-br from-red-500/20 to-red-600/10 dark:from-red-500/15 dark:to-red-600/5 backdrop-blur-xl border border-red-400/30 dark:border-red-500/20 shadow-lg shadow-red-500/10'}`}
           >
             <Smartphone className="w-8 h-8 text-red-500" />
           </div>
@@ -388,7 +418,7 @@ export default function Login() {
         {/* Form */}
         <form
           onSubmit={handleSubmit}
-          className={`rounded-2xl p-8 ${styled ? 'neu-card' : 'bg-white/80 dark:bg-white/[0.06] backdrop-blur-xl border border-white/40 dark:border-white/[0.08] shadow-2xl shadow-black/5 dark:shadow-black/30'}`}
+          className={`rounded-2xl p-8 ${styled ? 'neu-card' : 'bg-gradient-to-br from-white/70 to-white/30 dark:from-white/[0.1] dark:to-white/[0.03] backdrop-blur-[32px] saturate-[1.8] border border-white/50 dark:border-white/[0.1] shadow-2xl shadow-black/10 dark:shadow-black/40 before:absolute before:inset-0 before:rounded-2xl before:border before:border-white/30 dark:before:border-white/[0.06] before:pointer-events-none relative overflow-hidden'}`}
         >
           <div className="space-y-5">
             <div>

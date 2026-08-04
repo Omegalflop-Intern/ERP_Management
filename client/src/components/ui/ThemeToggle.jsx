@@ -1,35 +1,31 @@
-import {
-  CircleDot,
-  Diamond,
-  Droplets,
-  Layers,
-  Moon,
-  Sparkles,
-  Sun,
-  Zap,
-} from 'lucide-react';
+import { Moon, Sun, Diamond, Sparkles } from 'lucide-react';
 import React from 'react';
 import { useTheme } from '../../context/ThemeContext';
 
-const MODE_CONFIG = {
-  flat: { icon: CircleDot, label: 'Flat', color: 'text-slate-400' },
-  neumorphism: { icon: Layers, label: 'Neumorphism', color: 'text-blue-500' },
-  glassmorphism: { icon: Sparkles, label: 'Glassmorphism', color: 'text-cyan-500' },
-  liquidglass: { icon: Droplets, label: 'Liquid Glass', color: 'text-blue-400' },
-  aurora: { icon: Zap, label: 'Aurora', color: 'text-violet-500' },
-  glassmorphismpro: { icon: Diamond, label: 'Glass Pro', color: 'text-indigo-500' },
-};
-
 export default function ThemeToggle({ className = '' }) {
-  const { theme, toggleTheme, designMode, cycleDesignMode } = useTheme();
-  const config = MODE_CONFIG[designMode] || MODE_CONFIG.flat;
-  const ModeIcon = config.icon;
+  const { theme, toggleTheme, designMode, toggleDesignMode } = useTheme();
 
   return (
-    <div className="flex items-center gap-1">
+    <div className={`flex items-center gap-1 ${className}`}>
+      <button
+        onClick={toggleDesignMode}
+        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 hover:bg-blue-500/10 active:scale-90 ${
+          designMode === 'glass'
+            ? 'bg-blue-500/15 ring-1 ring-blue-400/30'
+            : ''
+        }`}
+        aria-label={designMode === 'glass' ? 'Switch to flat mode' : 'Switch to glass mode'}
+        title={designMode === 'glass' ? 'Flat Mode' : 'Glass Mode'}
+      >
+        {designMode === 'glass' ? (
+          <Sparkles size={18} className="text-blue-400 transition-all duration-500" />
+        ) : (
+          <Diamond size={18} className="text-slate-400 transition-all duration-500" />
+        )}
+      </button>
       <button
         onClick={toggleTheme}
-        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 hover:bg-blue-500/10 active:rotate-180 active:scale-90 ${className}`}
+        className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 hover:bg-blue-500/10 active:rotate-180 active:scale-90"
         aria-label="Toggle theme"
       >
         {theme === 'dark' ? (
@@ -37,23 +33,6 @@ export default function ThemeToggle({ className = '' }) {
         ) : (
           <Sun size={20} className="text-amber-500 transition-all duration-500" />
         )}
-      </button>
-      <button
-        onClick={cycleDesignMode}
-        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
-          designMode !== 'flat'
-            ? 'bg-blue-500/15 text-[#2563EB] dark:text-blue-400 scale-110'
-            : 'hover:bg-blue-500/10 text-slate-400'
-        }`}
-        aria-label="Toggle design mode"
-        title={`Design: ${config.label}`}
-      >
-        <ModeIcon
-          size={20}
-          className={`transition-all duration-300 ${
-            designMode !== 'flat' ? 'drop-shadow-[0_0_6px_rgba(37,99,235,0.4)]' : ''
-          }`}
-        />
       </button>
     </div>
   );
