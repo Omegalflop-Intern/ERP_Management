@@ -5,11 +5,11 @@ import {
   CheckCircle2,
   PauseCircle,
   Clock,
-  TrendingUp,
   AlertTriangle,
   Loader2,
   Calendar,
   Users,
+  TrendingDown,
 } from 'lucide-react';
 import api from '../../lib/api';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -69,7 +69,7 @@ export default function SADashboard() {
     );
   }
 
-  const { counts = {}, totalRevenue = 0, recentTenants = [], expiringSoonList = [] } = data || {};
+  const { counts = {}, recentTenants = [], expiringSoonList = [] } = data || {};
 
   return (
     <div className="space-y-6">
@@ -113,47 +113,34 @@ export default function SADashboard() {
         />
       </div>
 
-      {/* Revenue + Expiring */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Revenue card */}
-        <div className="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-2xl p-6 text-white shadow-lg">
-          <div className="flex items-center gap-2 mb-3">
-            <TrendingUp className="w-5 h-5 text-indigo-200" />
-            <span className="text-sm font-medium text-indigo-200">Total Platform Revenue</span>
-          </div>
-          <div className="text-3xl font-bold">৳{totalRevenue.toLocaleString()}</div>
-          <div className="text-xs text-indigo-300 mt-1">Aggregate across all active shops</div>
+      {/* Expiring Soon */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+        <div className="flex items-center gap-2 mb-4">
+          <AlertTriangle className="w-4 h-4 text-amber-500" />
+          <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+            Expiring Soon ({counts.expiringSoon ?? 0})
+          </span>
         </div>
-
-        {/* Expiring soon */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
-          <div className="flex items-center gap-2 mb-4">
-            <AlertTriangle className="w-4 h-4 text-amber-500" />
-            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-              Expiring Soon ({counts.expiringSoon ?? 0})
-            </span>
-          </div>
-          {expiringSoonList.length === 0 ? (
-            <p className="text-xs text-slate-400 text-center py-4">No subscriptions expiring within 30 days 🎉</p>
-          ) : (
-            <div className="space-y-2 max-h-48 overflow-y-auto">
-              {expiringSoonList.map((t) => (
-                <div key={t._id} className="flex items-center justify-between text-xs py-1.5 border-b border-slate-100 dark:border-slate-800 last:border-0">
-                  <div>
-                    <div className="font-semibold text-slate-800 dark:text-slate-200">{t.shopName}</div>
-                    <div className="text-slate-500">{t.email}</div>
-                  </div>
-                  <div className="text-right">
-                    <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold ${PLAN_COLORS[t.plan] || ''}`}>{t.plan}</span>
-                    <div className="text-amber-600 dark:text-amber-400 font-medium mt-0.5">
-                      {t.expiresAt ? formatDistanceToNow(new Date(t.expiresAt), { addSuffix: true }) : 'No expiry'}
-                    </div>
+        {expiringSoonList.length === 0 ? (
+          <p className="text-xs text-slate-400 text-center py-4">No subscriptions expiring within 30 days 🎉</p>
+        ) : (
+          <div className="space-y-2 max-h-48 overflow-y-auto">
+            {expiringSoonList.map((t) => (
+              <div key={t._id} className="flex items-center justify-between text-xs py-1.5 border-b border-slate-100 dark:border-slate-800 last:border-0">
+                <div>
+                  <div className="font-semibold text-slate-800 dark:text-slate-200">{t.shopName}</div>
+                  <div className="text-slate-500">{t.email}</div>
+                </div>
+                <div className="text-right">
+                  <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold ${PLAN_COLORS[t.plan] || ''}`}>{t.plan}</span>
+                  <div className="text-amber-600 dark:text-amber-400 font-medium mt-0.5">
+                    {t.expiresAt ? formatDistanceToNow(new Date(t.expiresAt), { addSuffix: true }) : 'No expiry'}
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Recent Sign-ups */}

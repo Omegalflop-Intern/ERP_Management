@@ -62,6 +62,8 @@ const SuperAdminLayout = lazy(() => import('./layouts/SuperAdminLayout'));
 const SADashboard = lazy(() => import('./pages/SuperAdmin/SADashboard'));
 const SAShopManagement = lazy(() => import('./pages/SuperAdmin/SAShopManagement'));
 const SAKycVerification = lazy(() => import('./pages/SuperAdmin/SAKycVerification'));
+const SAAuditLogs = lazy(() => import('./pages/SuperAdmin/SAAuditLogs'));
+const SASubscriptionPlans = lazy(() => import('./pages/SuperAdmin/SASubscriptionPlans'));
 
 const PageSkeletonLoader = () => (
   <div className="p-6 space-y-6 animate-pulse">
@@ -574,6 +576,8 @@ export default function App() {
           <Route path="dashboard" element={<SADashboard />} />
           <Route path="shops" element={<SAShopManagement />} />
           <Route path="kyc" element={<SAKycVerification />} />
+          <Route path="audit-logs" element={<SAAuditLogs />} />
+          <Route path="subscriptions" element={<SASubscriptionPlans />} />
         </Route>
 
         <Route path="*" element={<Navigate to={homeRedirect} replace />} />

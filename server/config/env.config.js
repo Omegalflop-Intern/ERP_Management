@@ -27,6 +27,10 @@ const envSchema = z.object({
   SMS_SENDER_ID: z.string().optional(),
   APP_NAME: z.string().default('Brothers Mobile Shop ERP'),
   APP_URL: z.string().default('http://localhost:3000'),
+  CLIENT_URL: z.string().optional(),
+  CLIENT_DIST_PATH: z.string().optional(),
+  TLS_CERT_PATH: z.string().optional(),
+  TLS_KEY_PATH: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

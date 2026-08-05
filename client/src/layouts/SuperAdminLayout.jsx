@@ -1,31 +1,41 @@
-import React, { Suspense, useState } from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard,
+  Activity,
   Building2,
-  FileCheck,
-  LogOut,
   ChevronLeft,
   ChevronRight,
-  Shield,
-  Menu,
-  X,
+  CreditCard,
+  FileCheck,
+  LayoutDashboard,
   Loader2,
+  LogOut,
+  Menu,
+  Moon,
+  Shield,
+  Sun,
+  X,
 } from 'lucide-react';
+import React, { Suspense, useState } from 'react';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import ThemeToggle from '../components/ui/ThemeToggle';
+import { useTheme } from '../context/ThemeContext';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 const NAV_ITEMS = [
   { to: '/super-admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/super-admin/shops', icon: Building2, label: 'Shop Management' },
   { to: '/super-admin/kyc', icon: FileCheck, label: 'KYC Verification' },
+  { to: '/super-admin/audit-logs', icon: Activity, label: 'Audit Logs' },
+  { to: '/super-admin/subscriptions', icon: CreditCard, label: 'Subscriptions' },
 ];
 
 export default function SuperAdminLayout() {
+  useDocumentTitle('Omni-Manage');
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const isDark = theme === 'dark';
 
   const handleLogout = async () => {
     await logout();
@@ -34,13 +44,15 @@ export default function SuperAdminLayout() {
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
-      <div className={`flex items-center gap-3 px-4 py-5 border-b border-white/10 ${collapsed ? 'justify-center' : ''}`}>
+      <div
+        className={`flex items-center gap-3 px-4 py-5 border-b border-white/10 ${collapsed ? 'justify-center' : ''}`}
+      >
         <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-lg">
           <Shield className="w-5 h-5 text-white" />
         </div>
         {!collapsed && (
           <div>
-            <div className="text-sm font-bold text-white leading-tight">Super Admin</div>
+            <div className="text-sm font-bold text-white leading-tight">Omni-Manage</div>
             <div className="text-[10px] text-indigo-300 font-medium">Central Management</div>
           </div>
         )}
@@ -67,15 +79,25 @@ export default function SuperAdminLayout() {
         ))}
       </nav>
 
-      <div className={`px-3 py-4 border-t border-white/10 space-y-2 ${collapsed ? 'flex flex-col items-center' : ''}`}>
+      <div
+        className={`px-3 py-4 border-t border-white/10 space-y-2 ${collapsed ? 'flex flex-col items-center' : ''}`}
+      >
         {!collapsed && (
           <div className="px-3 py-2 rounded-xl bg-white/5 mb-2">
-            <div className="text-[11px] text-indigo-300 font-medium truncate">{user?.fullName || user?.username}</div>
+            <div className="text-[11px] text-indigo-300 font-medium truncate">
+              {user?.fullName || user?.username}
+            </div>
             <div className="text-[10px] text-indigo-400 truncate">{user?.email}</div>
           </div>
         )}
         <div className={`flex items-center ${collapsed ? 'flex-col gap-2' : 'gap-2'}`}>
-          <ThemeToggle />
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-xl text-indigo-200 hover:bg-white/10 transition-colors"
+            title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
           <button
             onClick={handleLogout}
             className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-indigo-200 hover:bg-red-500/20 hover:text-red-300 transition-all ${collapsed ? 'justify-center w-full' : 'flex-1'}`}
@@ -107,9 +129,15 @@ export default function SuperAdminLayout() {
 
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setMobileOpen(false)}
+          />
           <aside className="relative z-10 w-64 flex flex-col bg-gradient-to-b from-indigo-900 via-indigo-950 to-slate-950 border-r border-indigo-800/40 h-full shadow-2xl">
-            <button onClick={() => setMobileOpen(false)} className="absolute top-4 right-4 text-indigo-300 hover:text-white">
+            <button
+              onClick={() => setMobileOpen(false)}
+              className="absolute top-4 right-4 text-indigo-300 hover:text-white"
+            >
               <X className="w-5 h-5" />
             </button>
             <SidebarContent />
@@ -128,14 +156,19 @@ export default function SuperAdminLayout() {
             </button>
             <div className="flex items-center gap-2">
               <Shield className="w-4 h-4 text-indigo-500" />
-              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Super Admin Panel</span>
+              <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                Omni-Manage
+              </span>
               <span className="hidden sm:inline text-xs px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 font-medium border border-indigo-200 dark:border-indigo-800">
                 Central Management
               </span>
             </div>
           </div>
           <div className="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">
-            Logged in as <strong className="text-slate-700 dark:text-slate-200">{user?.fullName || user?.username}</strong>
+            Logged in as{' '}
+            <strong className="text-slate-700 dark:text-slate-200">
+              {user?.fullName || user?.username}
+            </strong>
           </div>
         </header>
         <main className="flex-1 overflow-y-auto p-4 md:p-6">

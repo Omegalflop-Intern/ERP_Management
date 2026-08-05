@@ -5,6 +5,7 @@ import PasswordInput from '../../components/ui/PasswordInput';
 import ThemeToggle from '../../components/ui/ThemeToggle';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 function ParticleCanvas() {
   const canvasRef = useRef(null);
@@ -176,6 +177,7 @@ function getWaveColors(mode, isDark) {
 }
 
 export default function Login() {
+  useDocumentTitle('Login');
   const [loginField, setLoginField] = useState(() => localStorage.getItem('rememberedLogin') || '');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(() => !!localStorage.getItem('rememberedLogin'));

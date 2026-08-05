@@ -30,8 +30,12 @@ export const getRoleById = async (id, tenantId = null) => {
   return role;
 };
 
-export const getRoleByName = async (name) => {
-  return Role.findOne({ name: name.toUpperCase(), isDeleted: false });
+export const getRoleByName = async (name, tenantId = null) => {
+  const query = { name: name.toUpperCase(), isDeleted: false };
+  if (tenantId) {
+    query.$or = [{ tenantId }, { tenantId: { $exists: false } }];
+  }
+  return Role.findOne(query);
 };
 
 export const createRole = async (data) => {

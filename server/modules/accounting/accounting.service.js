@@ -42,7 +42,9 @@ export const createAccount = async (data) => {
   const existing = await Account.findOne(duplicateQuery);
   if (existing) throw ApiError.conflict('Account code already exists');
   if (data.parentId) {
-    const parent = await Account.findOne({ _id: data.parentId, isDeleted: false });
+    const parentQuery = { _id: data.parentId, isDeleted: false };
+    if (data.tenantId) parentQuery.tenantId = data.tenantId;
+    const parent = await Account.findOne(parentQuery);
     if (!parent) throw ApiError.notFound('Parent account not found');
   }
   return Account.create(data);
@@ -63,14 +65,16 @@ export const deleteAccount = async (id, tenantId = null) => {
   if (tenantId) query.tenantId = tenantId;
   const account = await Account.findOne(query);
   if (!account) throw ApiError.notFound('Account not found');
-  const hasEntries = await JournalEntry.findOne({ 'lines.accountId': id, isDeleted: false, status: 'POSTED' });
+  const hasEntriesQuery = { 'lines.accountId': id, isDeleted: false, status: 'POSTED' };
+  if (tenantId) hasEntriesQuery.tenantId = tenantId;
+  const hasEntries = await JournalEntry.findOne(hasEntriesQuery);
   if (hasEntries) throw ApiError.badRequest('Cannot delete account with posted journal entries');
   account.isDeleted = true;
   await account.save();
   return account;
 };
 
-export const seedDefaultAccounts = async () => {
+export const seedDefaultAccounts = async (tenantId = null) => {
   const defaults = [
     { code: '1000', name: 'Cash', type: 'ASSET', subType: 'CURRENT_ASSET', description: 'Cash on hand' },
     { code: '1010', name: 'Bank Account', type: 'ASSET', subType: 'CURRENT_ASSET', description: 'Bank account balance' },
@@ -105,9 +109,11 @@ export const seedDefaultAccounts = async () => {
 
   let count = 0;
   for (const def of defaults) {
-    const existing = await Account.findOne({ code: def.code });
+    const existingQuery = { code: def.code };
+    if (tenantId) existingQuery.tenantId = tenantId;
+    const existing = await Account.findOne(existingQuery);
     if (!existing) {
-      await Account.create(def);
+      await Account.create({ ...def, ...(tenantId ? { tenantId } : {}) });
       count++;
     } else if (existing.isDeleted) {
       existing.isDeleted = false;
@@ -167,14 +173,17 @@ export const createJournalEntry = async (data) => {
     throw ApiError.badRequest('At least 2 lines required');
   }
 
+  const tenantId = data.tenantId || null;
   for (const line of data.lines) {
-    const account = await Account.findOne({ _id: line.accountId, isDeleted: false });
+    const acctQuery = { _id: line.accountId, isDeleted: false };
+    if (tenantId) acctQuery.tenantId = tenantId;
+    const account = await Account.findOne(acctQuery);
     if (!account) throw ApiError.badRequest(`Account not found: ${line.accountId}`);
   }
 
   return JournalEntry.create({
     entryNumber: generateEntryNumber(),
-    tenantId: data.tenantId || null,
+    tenantId,
     date: data.date ? new Date(data.date) : new Date(),
     description: data.description,
     reference: data.reference,
@@ -193,13 +202,17 @@ export const postJournalEntry = async (id, postedBy = 'system', tenantId = null)
   if (entry.status !== 'DRAFT') throw ApiError.badRequest('Only draft entries can be posted');
 
   for (const line of entry.lines) {
-    const account = await Account.findOne({ _id: line.accountId, isDeleted: false });
+    const acctQuery = { _id: line.accountId, isDeleted: false };
+    if (tenantId) acctQuery.tenantId = tenantId;
+    const account = await Account.findOne(acctQuery);
     if (!account) throw ApiError.badRequest(`Account not found: ${line.accountId}`);
     const isDebitSide = account.type === 'ASSET' || account.type === 'EXPENSE';
+    const updateQuery = { _id: line.accountId };
+    if (tenantId) updateQuery.tenantId = tenantId;
     if (isDebitSide) {
-      await Account.updateOne({ _id: line.accountId }, { $inc: { balance: (line.debit || 0) - (line.credit || 0) } });
+      await Account.updateOne(updateQuery, { $inc: { balance: (line.debit || 0) - (line.credit || 0) } });
     } else {
-      await Account.updateOne({ _id: line.accountId }, { $inc: { balance: (line.credit || 0) - (line.debit || 0) } });
+      await Account.updateOne(updateQuery, { $inc: { balance: (line.credit || 0) - (line.debit || 0) } });
     }
   }
 
@@ -217,13 +230,17 @@ export const voidJournalEntry = async (id, voidedBy = 'system', tenantId = null)
   if (entry.status !== 'POSTED') throw ApiError.badRequest('Only posted entries can be voided');
 
   for (const line of entry.lines) {
-    const account = await Account.findOne({ _id: line.accountId, isDeleted: false });
+    const acctQuery = { _id: line.accountId, isDeleted: false };
+    if (tenantId) acctQuery.tenantId = tenantId;
+    const account = await Account.findOne(acctQuery);
     if (account) {
       const isDebitSide = account.type === 'ASSET' || account.type === 'EXPENSE';
+      const updateQuery = { _id: line.accountId };
+      if (tenantId) updateQuery.tenantId = tenantId;
       if (isDebitSide) {
-        await Account.updateOne({ _id: line.accountId }, { $inc: { balance: -((line.debit || 0) - (line.credit || 0)) } });
+        await Account.updateOne(updateQuery, { $inc: { balance: -((line.debit || 0) - (line.credit || 0)) } });
       } else {
-        await Account.updateOne({ _id: line.accountId }, { $inc: { balance: -((line.credit || 0) - (line.debit || 0)) } });
+        await Account.updateOne(updateQuery, { $inc: { balance: -((line.credit || 0) - (line.debit || 0)) } });
       }
     }
   }
@@ -362,7 +379,7 @@ export const getProfitLoss = async (from = '', to = '', tenantId = null) => {
 };
 
 export const getTrialBalance = async (tenantId = null) => {
-  await seedDefaultAccounts();
+  await seedDefaultAccounts(tenantId);
 
   const accountQuery = { isDeleted: false, isActive: true };
   if (tenantId) accountQuery.tenantId = tenantId;
@@ -684,8 +701,8 @@ export const createAutomatedPurchaseJournal = async (purchaseOrder, grnEntries =
       postedBy: 'system',
     });
 
-    await Account.updateOne({ _id: inventoryAcc._id }, { $inc: { balance: totalCost } });
-    await Account.updateOne({ _id: apAcc._id }, { $inc: { balance: totalCost } });
+    await Account.updateOne({ _id: inventoryAcc._id, ...(tenantId ? { tenantId } : {}) }, { $inc: { balance: totalCost } });
+    await Account.updateOne({ _id: apAcc._id, ...(tenantId ? { tenantId } : {}) }, { $inc: { balance: totalCost } });
 
     return entry;
   } catch (err) {
@@ -730,15 +747,17 @@ export const createAutomatedExpenseJournal = async (expense) => {
   }
 };
 
-export const syncHistoricalJournals = async () => {
-  await seedDefaultAccounts();
+export const syncHistoricalJournals = async (tenantId = null) => {
+  await seedDefaultAccounts(tenantId);
 
   const { Transaction } = await import('../sale/sale.model.js');
   const { Expense } = await import('../expense/expense.model.js');
 
   let syncedCount = 0;
 
-  const sales = await Transaction.find({ txType: 'SALE', isDeleted: false });
+  const saleQuery = { txType: 'SALE', isDeleted: false };
+  if (tenantId) saleQuery.tenantId = tenantId;
+  const sales = await Transaction.find(saleQuery);
   for (const sale of sales) {
     try {
       const existing = await JournalEntry.findOne({ reference: sale.invoiceNumber, isDeleted: false, ...(sale.tenantId ? { tenantId: sale.tenantId } : {}) });
@@ -762,7 +781,9 @@ export const syncHistoricalJournals = async () => {
     }
   }
 
-  const expenses = await Expense.find({ isDeleted: false });
+  const expenseQuery = { isDeleted: false };
+  if (tenantId) expenseQuery.tenantId = tenantId;
+  const expenses = await Expense.find(expenseQuery);
   for (const exp of expenses) {
     try {
       const refKey = exp.voucherNumber || exp._id.toString();
@@ -805,8 +826,8 @@ export const createAutomatedPayrollJournal = async (payroll, tenantId = null) =>
       postedBy: payroll.paidBy || 'system',
     });
 
-    await Account.updateOne({ _id: salaryExpAcc._id }, { $inc: { balance: amount } });
-    await Account.updateOne({ _id: cashAcc._id }, { $inc: { balance: -amount } });
+    await Account.updateOne({ _id: salaryExpAcc._id, ...(tId ? { tenantId: tId } : {}) }, { $inc: { balance: amount } });
+    await Account.updateOne({ _id: cashAcc._id, ...(tId ? { tenantId: tId } : {}) }, { $inc: { balance: -amount } });
 
     return entry;
   } catch (err) {
@@ -840,8 +861,8 @@ export const createAutomatedWholesaleJournal = async (order, tenantId = null) =>
       postedBy: order.createdBy || 'system',
     });
 
-    await Account.updateOne({ _id: arAcc._id }, { $inc: { balance: total } });
-    await Account.updateOne({ _id: revenueAcc._id }, { $inc: { balance: total } });
+    await Account.updateOne({ _id: arAcc._id, ...(tId ? { tenantId: tId } : {}) }, { $inc: { balance: total } });
+    await Account.updateOne({ _id: revenueAcc._id, ...(tId ? { tenantId: tId } : {}) }, { $inc: { balance: total } });
 
     return entry;
   } catch (err) {
@@ -875,8 +896,8 @@ export const createAutomatedRepairJournal = async (ticket, tenantId = null) => {
       postedBy: 'system',
     });
 
-    await Account.updateOne({ _id: arAcc._id }, { $inc: { balance: amount } });
-    await Account.updateOne({ _id: serviceRevenueAcc._id }, { $inc: { balance: amount } });
+    await Account.updateOne({ _id: arAcc._id, ...(tId ? { tenantId: tId } : {}) }, { $inc: { balance: amount } });
+    await Account.updateOne({ _id: serviceRevenueAcc._id, ...(tId ? { tenantId: tId } : {}) }, { $inc: { balance: amount } });
 
     return entry;
   } catch (err) {
@@ -916,8 +937,8 @@ export const createAutomatedInvestorJournal = async (investor, txType, amount, t
       postedBy: 'system',
     });
 
-    await Account.updateOne({ _id: cashAcc._id }, { $inc: { balance: isDebitToCash ? amt : -amt } });
-    await Account.updateOne({ _id: capitalAcc._id }, { $inc: { balance: isDebitToCash ? -amt : amt } });
+    await Account.updateOne({ _id: cashAcc._id, ...(tId ? { tenantId: tId } : {}) }, { $inc: { balance: isDebitToCash ? amt : -amt } });
+    await Account.updateOne({ _id: capitalAcc._id, ...(tId ? { tenantId: tId } : {}) }, { $inc: { balance: isDebitToCash ? -amt : amt } });
 
     return entry;
   } catch (err) {
@@ -957,8 +978,8 @@ export const createAutomatedLoanJournal = async (loan, txType, amount, tenantId 
       postedBy: 'system',
     });
 
-    await Account.updateOne({ _id: cashAcc._id }, { $inc: { balance: isNewLoan ? amt : -amt } });
-    await Account.updateOne({ _id: loanAcc._id }, { $inc: { balance: isNewLoan ? -amt : amt } });
+    await Account.updateOne({ _id: cashAcc._id, ...(tId ? { tenantId: tId } : {}) }, { $inc: { balance: isNewLoan ? amt : -amt } });
+    await Account.updateOne({ _id: loanAcc._id, ...(tId ? { tenantId: tId } : {}) }, { $inc: { balance: isNewLoan ? -amt : amt } });
 
     return entry;
   } catch (err) {

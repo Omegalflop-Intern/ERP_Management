@@ -1,0 +1,245 @@
+import {
+  ArrowRightLeft,
+  BarChart3,
+  BookOpen,
+  Building,
+  Building2,
+  CircleDollarSign,
+  ClipboardList,
+  Contact,
+  FileBarChart,
+  FileText,
+  HandCoins,
+  Landmark,
+  LayoutDashboard,
+  Package,
+  Receipt,
+  RotateCcw,
+  Scale,
+  Settings,
+  Shield,
+  ShieldCheck,
+  ShoppingCart,
+  Smartphone,
+  Tags,
+  Truck,
+  User,
+  UserCog,
+  Users,
+  Wallet,
+  Wrench,
+} from 'lucide-react';
+
+export const menuItems = [
+  {
+    section: 'Main',
+    items: [
+      {
+        path: '/dashboard',
+        label: 'Dashboard',
+        icon: LayoutDashboard,
+        permissions: ['dashboard:view'],
+      },
+    ],
+  },
+  {
+    section: 'Sales & Orders',
+    items: [
+      {
+        path: '/sales/new',
+        label: 'New Sale (POS)',
+        icon: ShoppingCart,
+        permissions: ['sales:create'],
+      },
+      { path: '/sales', label: 'Sales History', icon: Receipt, permissions: ['sales:view'] },
+      { path: '/sales/returns', label: 'Returns', icon: RotateCcw, permissions: ['sales:view'] },
+      {
+        path: '/wholesale/orders',
+        label: 'Wholesale Orders',
+        icon: ShoppingCart,
+        permissions: ['wholesale:view'],
+      },
+    ],
+  },
+  {
+    section: 'Products & Stock',
+    items: [
+      {
+        path: '/products',
+        label: 'Products & Stock',
+        icon: Package,
+        permissions: ['products:view'],
+      },
+      {
+        path: '/products/categories',
+        label: 'Categories',
+        icon: Tags,
+        permissions: ['categories:manage'],
+      },
+      {
+        path: '/inventory',
+        label: 'IMEI Tracker',
+        icon: Smartphone,
+        permissions: ['inventory:view'],
+      },
+      { path: '/stock', label: 'Stock Overview', icon: BarChart3, permissions: ['stock:view'] },
+      {
+        path: '/stock-transfer',
+        label: 'Stock Transfer',
+        icon: ArrowRightLeft,
+        permissions: ['stock:transfer'],
+      },
+    ],
+  },
+  {
+    section: 'Customers & Dues',
+    items: [
+      { path: '/customers', label: 'Customers', icon: Users, permissions: ['customers:view'] },
+      {
+        path: '/customers/due-collection',
+        label: 'Due Collection',
+        icon: CircleDollarSign,
+        permissions: ['customers:view'],
+      },
+      {
+        path: '/warranties',
+        label: 'Warranty Claims',
+        icon: Shield,
+        permissions: ['warranties:view'],
+      },
+      {
+        path: '/warranties/report',
+        label: 'Warranty Report',
+        icon: FileBarChart,
+        permissions: ['warranties:view'],
+      },
+    ],
+  },
+  {
+    section: 'Purchases & Repairs',
+    items: [
+      { path: '/purchases', label: 'Purchases', icon: Truck, permissions: ['purchases:view'] },
+      { path: '/suppliers', label: 'Suppliers', icon: Contact, permissions: ['suppliers:view'] },
+      {
+        path: '/repairs',
+        label: 'Repairs & Services',
+        icon: Wrench,
+        permissions: ['repairs:view'],
+      },
+      {
+        label: 'Costing & Capital',
+        icon: HandCoins,
+        permissions: ['accounting:view'],
+        children: [
+          {
+            path: '/expenses',
+            label: 'Shop Costing & Expenses',
+            icon: Receipt,
+            permissions: ['accounting:view'],
+          },
+          {
+            path: '/investors',
+            label: 'Investors & Partners',
+            icon: Wallet,
+            permissions: ['accounting:view'],
+          },
+          {
+            path: '/assets',
+            label: 'Shop Assets & Equipment',
+            icon: Building,
+            permissions: ['accounting:view'],
+          },
+          {
+            path: '/loans',
+            label: 'Loans & Liabilities',
+            icon: Landmark,
+            permissions: ['accounting:view'],
+          },
+        ],
+      },
+      {
+        label: 'Accounting & Reports',
+        icon: FileBarChart,
+        permissions: ['accounting:view'],
+        children: [
+          {
+            path: '/reports',
+            label: 'Financial Reports',
+            icon: FileBarChart,
+            permissions: ['reports:view'],
+          },
+          {
+            path: '/accounting',
+            label: 'Chart of Accounts',
+            icon: Landmark,
+            permissions: ['accounting:view'],
+          },
+          {
+            path: '/accounting/journal-entries',
+            label: 'Journal Entries',
+            icon: BookOpen,
+            permissions: ['accounting:view'],
+          },
+          {
+            path: '/reports/balance-sheet',
+            label: 'Balance Sheet',
+            icon: Scale,
+            permissions: ['accounting:view'],
+          },
+          {
+            path: '/reports/profit-loss',
+            label: 'Profit & Loss',
+            icon: FileText,
+            permissions: ['accounting:view'],
+          },
+          {
+            path: '/reports/trial-balance',
+            label: 'Trial Balance',
+            icon: Receipt,
+            permissions: ['accounting:view'],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    section: 'HR & Payroll',
+    items: [
+      { path: '/hr/employees', label: 'Employees', icon: Users, permissions: ['employees:view'] },
+      {
+        path: '/hr/attendance',
+        label: 'Attendance',
+        icon: ClipboardList,
+        permissions: ['attendance:view'],
+      },
+      {
+        path: '/hr/leaves',
+        label: 'Leave Management',
+        icon: FileText,
+        permissions: ['leaves:view'],
+      },
+      { path: '/hr/payroll', label: 'Payroll', icon: Wallet, permissions: ['payroll:view'] },
+    ],
+  },
+  {
+    section: 'System Administration',
+    items: [
+      { path: '/profile', label: 'My Profile', icon: User, permissions: [] },
+      { path: '/users', label: 'Users', icon: UserCog, permissions: ['users:view'] },
+      {
+        path: '/roles',
+        label: 'Roles & Permissions',
+        icon: ShieldCheck,
+        permissions: ['roles:view'],
+      },
+      { path: '/branches', label: 'Branches', icon: Building2, permissions: ['branches:view'] },
+      {
+        path: '/activity-logs',
+        label: 'Activity Logs',
+        icon: ClipboardList,
+        permissions: ['users:view'],
+      },
+      { path: '/settings', label: 'Settings', icon: Settings, permissions: ['settings:view'] },
+    ],
+  },
+];

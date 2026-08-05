@@ -21,6 +21,9 @@ import {
   X,
   Save,
   AlertTriangle,
+  Clock,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../../lib/api';
@@ -42,7 +45,141 @@ const STATUS_COLORS = {
   PENDING_KYC: 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800',
 };
 
+const DURATION_OPTIONS = [
+  { label: '1 Hour', value: '1h' },
+  { label: '2 Hours', value: '2h' },
+  { label: '5 Hours', value: '5h' },
+  { label: '24 Hours', value: '24h' },
+];
+
+function TempAdminModal({ tenant, onClose }) {
+  const qc = useQueryClient();
+  const [duration, setDuration] = useState('2h');
+  const [reason, setReason] = useState('');
+  const [credentials, setCredentials] = useState(null);
+  const [copied, setCopied] = useState(false);
+
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      const res = await api.post(`/tenants/${tenant._id}/temp-admin`, { duration, reason });
+      return res.data?.data;
+    },
+    onSuccess: (data) => {
+      setCredentials(data);
+      toast.success('Temp admin created');
+      qc.invalidateQueries({ queryKey: ['sa-shops'] });
+    },
+    onError: (e) => toast.error(e.response?.data?.message || 'Failed to create'),
+  });
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md border border-slate-200 dark:border-slate-800 shadow-2xl">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Clock className="w-4 h-4 text-indigo-500" /> Create Temporary Admin
+          </h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {!credentials ? (
+          <div className="p-6 space-y-4">
+            <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-3 text-sm">
+              <span className="text-slate-500">Shop:</span>{' '}
+              <strong className="text-slate-900 dark:text-white">{tenant.shopName}</strong>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 block">Duration</label>
+              <div className="grid grid-cols-4 gap-2">
+                {DURATION_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setDuration(opt.value)}
+                    className={`py-2 text-xs font-medium rounded-lg border transition-colors ${
+                      duration === opt.value
+                        ? 'bg-indigo-600 text-white border-indigo-600'
+                        : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-indigo-400'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 block">Reason (optional)</label>
+              <input
+                type="text"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="e.g. Troubleshooting login issue"
+                className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 text-slate-900 dark:text-white"
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="p-6 space-y-4">
+            <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4 text-center">
+              <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
+              <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">Temp Admin Created!</p>
+            </div>
+
+            <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-4 space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Username:</span>
+                <code className="font-mono text-slate-900 dark:text-white bg-white dark:bg-slate-900 px-2 py-0.5 rounded">{credentials.username}</code>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500">Password:</span>
+                <div className="flex items-center gap-1">
+                  <code className="font-mono text-slate-900 dark:text-white bg-white dark:bg-slate-900 px-2 py-0.5 rounded">{credentials.password}</code>
+                  <button onClick={() => copyToClipboard(credentials.password)} className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded">
+                    {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3 text-slate-400" />}
+                  </button>
+                </div>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Expires:</span>
+                <span className="text-amber-600 dark:text-amber-400 font-medium">{new Date(credentials.expiresAt).toLocaleString()}</span>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-500 text-center">Share these credentials with the shop owner for support access.</p>
+          </div>
+        )}
+
+        <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2">
+          <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+            {credentials ? 'Close' : 'Cancel'}
+          </button>
+          {!credentials && (
+            <button
+              onClick={() => createMutation.mutate()}
+              disabled={createMutation.isPending}
+              className="px-4 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-lg transition-colors flex items-center gap-2"
+            >
+              {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Clock className="w-4 h-4" />}
+              Create Access
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function EditTenantModal({ tenant, onClose, onSuccess }) {
+  const PLAN_DEFAULTS = { FREE: 30, STARTER: 30, PRO: 90, ENTERPRISE: 365 };
   const [form, setForm] = useState({
     shopName: tenant.shopName || '',
     ownerName: tenant.ownerName || '',
@@ -50,10 +187,29 @@ function EditTenantModal({ tenant, onClose, onSuccess }) {
     plan: tenant.plan || 'STARTER',
     maxBranches: tenant.maxBranches ?? 2,
     maxUsers: tenant.maxUsers ?? 5,
+    durationDays: tenant.expiresAt
+      ? Math.max(1, Math.ceil((new Date(tenant.expiresAt) - new Date()) / 86400000))
+      : (PLAN_DEFAULTS[tenant.plan || 'STARTER'] || 30),
     expiresAt: tenant.expiresAt ? new Date(tenant.expiresAt).toISOString().slice(0, 10) : '',
     notes: tenant.notes || '',
   });
   const qc = useQueryClient();
+
+  const calcExpiry = (days) => {
+    if (!days || days <= 0) return '';
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    return d.toISOString().slice(0, 10);
+  };
+
+  const handlePlanChange = (newPlan) => {
+    const days = PLAN_DEFAULTS[newPlan] || 30;
+    setForm((f) => ({ ...f, plan: newPlan, durationDays: days, expiresAt: calcExpiry(days) }));
+  };
+
+  const handleDurationChange = (days) => {
+    setForm((f) => ({ ...f, durationDays: days, expiresAt: calcExpiry(days) }));
+  };
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -124,7 +280,7 @@ function EditTenantModal({ tenant, onClose, onSuccess }) {
                 <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Plan</label>
                 <select
                   value={form.plan}
-                  onChange={(e) => setForm({ ...form, plan: e.target.value })}
+                  onChange={(e) => handlePlanChange(e.target.value)}
                   className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   {['FREE', 'STARTER', 'PRO', 'ENTERPRISE'].map((p) => (
@@ -133,6 +289,17 @@ function EditTenantModal({ tenant, onClose, onSuccess }) {
                 </select>
               </div>
               <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Duration (days)</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="3650"
+                  value={form.durationDays}
+                  onChange={(e) => handleDurationChange(Number(e.target.value))}
+                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              <div className="col-span-2">
                 <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Expiry Date</label>
                 <input
                   type="date"
@@ -204,10 +371,12 @@ export default function SAShopManagement() {
   const [search, setSearch] = useState('');
   const [editingTenant, setEditingTenant] = useState(null);
   const [kycTenant, setKycTenant] = useState(null);
+  const [tempAdminTenant, setTempAdminTenant] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
+  const PLAN_DEFAULTS = { FREE: 30, STARTER: 30, PRO: 90, ENTERPRISE: 365 };
   const [createForm, setCreateForm] = useState({
     shopName: '', ownerName: '', username: '', email: '', phone: '',
-    plan: 'STARTER', password: '',
+    plan: 'STARTER', durationDays: 30, password: '',
   });
 
   const { data: tenants = [], isLoading } = useQuery({
@@ -220,7 +389,10 @@ export default function SAShopManagement() {
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      const res = await api.post('/tenants', createForm);
+      const expiry = new Date();
+      expiry.setDate(expiry.getDate() + (createForm.durationDays || 30));
+      const body = { ...createForm, expiresAt: expiry.toISOString() };
+      const res = await api.post('/tenants', body);
       return res.data;
     },
     onSuccess: () => {
@@ -228,7 +400,7 @@ export default function SAShopManagement() {
       qc.invalidateQueries({ queryKey: ['sa-shops'] });
       qc.invalidateQueries({ queryKey: ['sa-stats'] });
       setShowCreate(false);
-      setCreateForm({ shopName: '', ownerName: '', username: '', email: '', phone: '', plan: 'STARTER', password: '' });
+      setCreateForm({ shopName: '', ownerName: '', username: '', email: '', phone: '', plan: 'STARTER', durationDays: 30, password: '' });
     },
     onError: (e) => toast.error(e.response?.data?.message || 'Create failed'),
   });
@@ -394,6 +566,12 @@ export default function SAShopManagement() {
                 >
                   <FileText className="w-3 h-3" /> KYC
                 </button>
+                <button
+                  onClick={() => setTempAdminTenant(t)}
+                  className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium bg-slate-100 dark:bg-slate-800 hover:bg-violet-100 dark:hover:bg-violet-900/40 text-slate-700 dark:text-slate-300 hover:text-violet-700 dark:hover:text-violet-400 rounded-lg transition-colors"
+                >
+                  <Clock className="w-3 h-3" /> Support
+                </button>
                 {t.status === 'ACTIVE' ? (
                   <button
                     onClick={() => statusMutation.mutate({ id: t._id, status: 'PAUSED' })}
@@ -435,6 +613,11 @@ export default function SAShopManagement() {
         <DocumentVaultModal tenant={kycTenant} onClose={() => setKycTenant(null)} />
       )}
 
+      {/* Temp Admin Modal */}
+      {tempAdminTenant && (
+        <TempAdminModal tenant={tempAdminTenant} onClose={() => setTempAdminTenant(null)} />
+      )}
+
       {/* Create Modal */}
       {showCreate && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
@@ -470,13 +653,27 @@ export default function SAShopManagement() {
                 <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Plan</label>
                 <select
                   value={createForm.plan}
-                  onChange={(e) => setCreateForm({ ...createForm, plan: e.target.value })}
+                  onChange={(e) => {
+                    const p = e.target.value;
+                    setCreateForm({ ...createForm, plan: p, durationDays: PLAN_DEFAULTS[p] || 30 });
+                  }}
                   className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   {['FREE', 'STARTER', 'PRO', 'ENTERPRISE'].map((p) => (
                     <option key={p} value={p}>{p}</option>
                   ))}
                 </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Duration (days)</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="3650"
+                  value={createForm.durationDays}
+                  onChange={(e) => setCreateForm({ ...createForm, durationDays: Number(e.target.value) })}
+                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Owner Password</label>

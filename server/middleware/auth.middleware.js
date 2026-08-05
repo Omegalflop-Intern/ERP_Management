@@ -1,5 +1,6 @@
 import { verifyToken } from '../utils/auth/generateToken.js';
 import { User } from '../modules/user/user.model.js';
+import { TempAdmin } from '../modules/tenant/tempAdmin.model.js';
 import { ApiError } from '../utils/http/ApiError.js';
 
 export const authenticate = async (req, res, next) => {
@@ -21,6 +22,19 @@ export const authenticate = async (req, res, next) => {
     const user = await User.findOne({ _id: decoded.userId, isDeleted: false, isActive: true })
       .populate('role', 'name displayName permissions');
     if (!user) throw ApiError.unauthorized('User not found or deactivated');
+
+    if (user.isTempAdmin) {
+      const tempAdmin = await TempAdmin.findOne({ userId: user._id, status: 'ACTIVE' });
+      if (!tempAdmin || tempAdmin.expiresAt < new Date()) {
+        user.isActive = false;
+        await user.save();
+        if (tempAdmin) {
+          tempAdmin.status = 'EXPIRED';
+          await tempAdmin.save();
+        }
+        throw ApiError.forbidden('Temporary access has expired');
+      }
+    }
 
     req.user = {
       userId: user._id,

@@ -3,6 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import * as tenantController from './tenant.controller.js';
+import * as tempAdminController from './tempAdmin.controller.js';
 import { authenticate } from '../../middleware/auth.middleware.js';
 import { requireSuperAdmin } from '../../middleware/tenant.middleware.js';
 import { validate } from '../../middleware/validate.middleware.js';
@@ -62,6 +63,12 @@ router.get('/:id', authenticate, requireSuperAdmin, tenantController.getTenant);
 router.put('/:id', authenticate, requireSuperAdmin, validate(updateTenantSchema), tenantController.updateTenant);
 router.patch('/:id/status', authenticate, requireSuperAdmin, validate(updateTenantStatusSchema), tenantController.updateStatus);
 router.patch('/:id/verify-kyc', authenticate, requireSuperAdmin, validate(verifyKycSchema), tenantController.handleVerifyKyc);
+
+// Temp admin routes
+router.get('/temp-admin/active', authenticate, requireSuperAdmin, tempAdminController.getAllActiveTempAdmins);
+router.post('/:id/temp-admin', authenticate, requireSuperAdmin, tempAdminController.createTempAdmin);
+router.get('/:id/temp-admin', authenticate, requireSuperAdmin, tempAdminController.getShopTempAdmins);
+router.delete('/temp-admin/:id/revoke', authenticate, requireSuperAdmin, tempAdminController.revokeTempAdmin);
 
 // Public: KYC document upload right after registration
 router.post(

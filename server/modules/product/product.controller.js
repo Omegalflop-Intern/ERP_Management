@@ -18,7 +18,8 @@ export const getAllProducts = async (req, res, next) => {
 
 export const getProductById = async (req, res, next) => {
   try {
-    const product = await productService.getProductById(req.params.id);
+    const tenantId = req.user?.tenantId || null;
+    const product = await productService.getProductById(req.params.id, tenantId);
     return ApiResponse.success(res, product);
   } catch (error) { next(error); }
 };
@@ -59,7 +60,8 @@ export const createProduct = async (req, res, next) => {
 
 export const updateProduct = async (req, res, next) => {
   try {
-    const product = await productService.updateProduct(req.params.id, req.body);
+    const tenantId = req.user?.tenantId || null;
+    const product = await productService.updateProduct(req.params.id, req.body, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'UPDATE', module: 'product', entityId: product._id, entityType: 'Product', details: { name: product.name }, req });
     return ApiResponse.success(res, product, 'Product updated');
   } catch (error) { next(error); }
@@ -67,7 +69,8 @@ export const updateProduct = async (req, res, next) => {
 
 export const deleteProduct = async (req, res, next) => {
   try {
-    await productService.deleteProduct(req.params.id);
+    const tenantId = req.user?.tenantId || null;
+    await productService.deleteProduct(req.params.id, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'DELETE', module: 'product', entityId: req.params.id, entityType: 'Product', req });
     return ApiResponse.success(res, null, 'Product deleted');
   } catch (error) { next(error); }
@@ -78,7 +81,8 @@ export const uploadImage = async (req, res, next) => {
     await validateUploadedFile(req);
     if (!req.file) throw ApiError.badRequest('No image file provided');
     const imageUrl = `/uploads/products/${req.file.filename}`;
-    const product = await productService.updateProduct(req.params.id, { image: imageUrl });
+    const tenantId = req.user?.tenantId || null;
+    const product = await productService.updateProduct(req.params.id, { image: imageUrl }, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'UPLOAD_IMAGE', module: 'product', entityId: req.params.id, entityType: 'Product', details: { image: imageUrl }, req });
     return ApiResponse.success(res, { image: imageUrl }, 'Image uploaded');
   } catch (error) { next(error); }
@@ -86,7 +90,10 @@ export const uploadImage = async (req, res, next) => {
 
 export const exportProducts = async (req, res, next) => {
   try {
-    const products = await Product.find({ isDeleted: false }).select('-isDeleted -createdAt -updatedAt -__v').lean();
+    const tenantId = req.user?.tenantId || null;
+    const query = { isDeleted: false };
+    if (tenantId) query.tenantId = tenantId;
+    const products = await Product.find(query).select('-isDeleted -createdAt -updatedAt -__v').lean();
     const rows = products.map(p => ({
       Name: p.name,
       Brand: p.brand,
@@ -173,7 +180,10 @@ export const bulkImportJSON = async (req, res, next) => {
 export const getProductIMEIUnits = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const units = await InventoryUnit.find({ productId: id, isDeleted: false })
+    const tenantId = req.user?.tenantId || null;
+    const query = { productId: id, isDeleted: false };
+    if (tenantId) query.tenantId = tenantId;
+    const units = await InventoryUnit.find(query)
       .select('imeiOrSerial color ram storage status purchasePrice currentSellingPrice')
       .sort({ status: 1, createdAt: -1 })
       .lean();

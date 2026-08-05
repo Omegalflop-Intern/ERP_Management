@@ -26,4 +26,7 @@ client/dist/
 client/.env
 client/.env.local
 client/.env.production
+
+
 server/tests
+server/certs

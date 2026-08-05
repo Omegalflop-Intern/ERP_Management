@@ -6,11 +6,18 @@ import fs from 'fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Load mkcert certificates if they exist (run: mkcert localhost 192.168.110.252)
-const certPath = path.resolve(__dirname, 'certs/cert.pem');
-const keyPath = path.resolve(__dirname, 'certs/key.pem');
-const hasCerts = fs.existsSync(certPath) && fs.existsSync(keyPath);
+// Client HTTPS certs (browser ↔ Vite dev server)
+const clientCertPath = path.resolve(__dirname, 'certs/cert.pem');
+const clientKeyPath = path.resolve(__dirname, 'certs/key.pem');
+const hasClientCerts = fs.existsSync(clientCertPath) && fs.existsSync(clientKeyPath);
 
+// Server HTTPS certs (Vite proxy ↔ Express server)
+const serverCertPath = path.resolve(__dirname, '../server/certs/cert.pem');
+const serverKeyPath = path.resolve(__dirname, '../server/certs/key.pem');
+const hasServerCerts = fs.existsSync(serverCertPath) && fs.existsSync(serverKeyPath);
+
+// Server protocol: HTTPS if server has certs, otherwise HTTP
+const serverProtocol = hasServerCerts ? 'https' : 'http';
 
 export default defineConfig({
   plugins: [react()],
@@ -22,22 +29,22 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    host: true, // Listen on all interfaces (0.0.0.0) — allows LAN access
-    // HTTPS with mkcert certs (run mkcert setup first — see README)
-    ...(hasCerts && {
+    host: true,
+    // HTTPS on the Vite dev server (browser ↔ Vite)
+    ...(hasClientCerts && {
       https: {
-        cert: fs.readFileSync(certPath),
-        key: fs.readFileSync(keyPath),
+        cert: fs.readFileSync(clientCertPath),
+        key: fs.readFileSync(clientKeyPath),
       },
     }),
     proxy: {
       '/api': {
-        target: hasCerts ? 'https://localhost:5000' : 'http://localhost:5000',
+        target: `${serverProtocol}://localhost:5000`,
         changeOrigin: true,
-        secure: false, // Allow self-signed mkcert certificate
+        secure: false, // Allow self-signed certificates
       },
       '/uploads': {
-        target: hasCerts ? 'https://localhost:5000' : 'http://localhost:5000',
+        target: `${serverProtocol}://localhost:5000`,
         changeOrigin: true,
         secure: false,
       },

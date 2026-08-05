@@ -26,7 +26,9 @@ export const syncSystemNotifications = async (userId, tenantId = null) => {
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
     // 1. Check total notifications for initial welcome note
-    const userNotifCount = await Notification.countDocuments({ userId });
+    const userNotifQuery = { userId };
+    if (tenantId) userNotifQuery.tenantId = tenantId;
+    const userNotifCount = await Notification.countDocuments(userNotifQuery);
     if (userNotifCount === 0) {
       await Notification.create({
         userId,
@@ -50,11 +52,13 @@ export const syncSystemNotifications = async (userId, tenantId = null) => {
     const lowStockProducts = await Product.find(lowStockQuery).select('name stockQuantity minStockLevel').limit(10).lean();
 
     if (lowStockProducts.length > 0) {
-      const recentLowStock = await Notification.findOne({
+      const lowStockNotifQuery = {
         userId,
         type: 'LOW_STOCK',
         createdAt: { $gte: twelveHoursAgo },
-      });
+      };
+      if (tenantId) lowStockNotifQuery.tenantId = tenantId;
+      const recentLowStock = await Notification.findOne(lowStockNotifQuery);
 
       if (!recentLowStock) {
         const itemNames = lowStockProducts.map(p => p.name).slice(0, 3).join(', ');
@@ -79,11 +83,13 @@ export const syncSystemNotifications = async (userId, tenantId = null) => {
     const dueCustomers = await Customer.find(dueCustomerQuery).select('name dueBalance').limit(10).lean();
 
     if (dueCustomers.length > 0) {
-      const recentDueAlert = await Notification.findOne({
+      const dueNotifQuery = {
         userId,
         type: 'DUE_REMINDER',
         createdAt: { $gte: twentyFourHoursAgo },
-      });
+      };
+      if (tenantId) dueNotifQuery.tenantId = tenantId;
+      const recentDueAlert = await Notification.findOne(dueNotifQuery);
 
       if (!recentDueAlert) {
         const totalDue = dueCustomers.reduce((acc, c) => acc + (c.dueBalance || 0), 0);

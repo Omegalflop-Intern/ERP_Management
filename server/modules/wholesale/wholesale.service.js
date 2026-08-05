@@ -219,7 +219,9 @@ export const collectOrderDue = async (id, { amount, paymentMethod = 'cash', refe
     await sale.save();
 
     if (sale.customerId) {
-      await Customer.updateOne({ _id: sale.customerId }, { $inc: { dueBalance: -collectAmt } }).catch(() => {});
+      const custQuery = { _id: sale.customerId };
+      if (tenantId) custQuery.tenantId = tenantId;
+      await Customer.updateOne(custQuery, { $inc: { dueBalance: -collectAmt } }).catch(() => {});
     }
     return { orderId: sale._id, collectedAmount: collectAmt, remainingDue: sale.paymentBreakdown.dueAmount };
   }
@@ -238,7 +240,9 @@ export const collectOrderDue = async (id, { amount, paymentMethod = 'cash', refe
   await order.save();
 
   if (order.customer) {
-    await Customer.updateOne({ _id: order.customer }, { $inc: { dueBalance: -collectAmt } }).catch(() => {});
+    const custQuery = { _id: order.customer };
+    if (tenantId) custQuery.tenantId = tenantId;
+    await Customer.updateOne(custQuery, { $inc: { dueBalance: -collectAmt } }).catch(() => {});
   }
   return { orderId: order._id, collectedAmount: collectAmt, remainingDue: order.dueAmount };
 };

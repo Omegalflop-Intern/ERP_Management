@@ -34,6 +34,7 @@ const userSchema = new mongoose.Schema(
     passwordResetToken: { type: String, select: false },
     passwordResetExpires: { type: Date, select: false },
     isDeleted: { type: Boolean, default: false },
+    isTempAdmin: { type: Boolean, default: false },
   },
   {
     timestamps: true,

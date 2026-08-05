@@ -43,7 +43,10 @@ export const getPurchaseOrderById = async (id, tenantId = null) => {
 };
 
 export const createPurchaseOrder = async (data, createdBy = 'system') => {
-  const supplier = await Supplier.findOne({ _id: data.supplierId, isDeleted: false });
+  const tenantId = data.tenantId || null;
+  const supplierQuery = { _id: data.supplierId, isDeleted: false };
+  if (tenantId) supplierQuery.tenantId = tenantId;
+  const supplier = await Supplier.findOne(supplierQuery);
   if (!supplier) throw ApiError.notFound('Supplier not found');
 
   const lineItems = data.lineItems.map((item) => ({
@@ -158,10 +161,12 @@ export const receiveGoods = async (id, grnEntries, receivedBy = 'system', tenant
     console.error('Purchase journal failed:', order.poNumber, err);
   });
 
-  const supplier = await Supplier.findOne({
+  const supplierQuery = {
     _id: order.supplierId._id || order.supplierId,
     isDeleted: false,
-  });
+  };
+  if (tenantId) supplierQuery.tenantId = tenantId;
+  const supplier = await Supplier.findOne(supplierQuery);
   if (supplier) {
     supplier.totalPurchases += grnEntries.length;
     await supplier.save();
@@ -280,9 +285,10 @@ export const returnToSupplier = async (id, imeiOrSerials = [], reason = '', retu
   await order.save();
 
   if (order.supplierId && totalRefund > 0) {
-    const supplier = order.supplierId._id
-      ? await Supplier.findOne({ _id: order.supplierId._id, isDeleted: false })
-      : order.supplierId;
+    const supplierId = order.supplierId._id ? order.supplierId._id : order.supplierId;
+    const supplierQuery = { _id: supplierId, isDeleted: false };
+    if (tenantId) supplierQuery.tenantId = tenantId;
+    const supplier = await Supplier.findOne(supplierQuery);
     if (supplier) {
       const appliedToDue = Math.min(supplier.dueBalance || 0, refundFromDue);
       supplier.dueBalance = (supplier.dueBalance || 0) - appliedToDue;

@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import AnimatedBackground from './AnimatedBackground';
 import Bottombar from './Bottombar';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 
 export default function DashboardLayout() {
+  useDocumentTitle();
 
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 1024);
   const [collapsed, setCollapsed] = useState(() => {

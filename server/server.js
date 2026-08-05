@@ -16,19 +16,30 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { createServer as createHttpServer } from 'http';
 import { createServer as createHttpsServer } from 'https';
+import { ensureSSLCerts } from './utils/system/ssl.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = env.PORT || 5000;
 
-const certPath = path.resolve(__dirname, '../client/certs/cert.pem');
-const keyPath = path.resolve(__dirname, '../client/certs/key.pem');
+// Auto-generate self-signed TLS certs in development if missing
+if (env.NODE_ENV === 'development') {
+  ensureSSLCerts({
+    certDir: path.resolve(__dirname, 'certs'),
+    host: 'localhost',
+    validDays: 365,
+  });
+}
+
+// TLS certs: check env vars first, fallback to server/certs/ directory
+const certPath = env.TLS_CERT_PATH || path.resolve(__dirname, 'certs/cert.pem');
+const keyPath = env.TLS_KEY_PATH || path.resolve(__dirname, 'certs/key.pem');
 const hasCerts = fs.existsSync(certPath) && fs.existsSync(keyPath);
 
-const server = hasCerts && env.NODE_ENV === 'development'
+const server = hasCerts
   ? createHttpsServer({ cert: fs.readFileSync(certPath), key: fs.readFileSync(keyPath) }, app)
   : createHttpServer(app);
 
-const protocol = hasCerts && env.NODE_ENV === 'development' ? 'https' : 'http';
+const protocol = hasCerts ? 'https' : 'http';
 
 server.listen(PORT, async () => {
   global.__serverStartTime = new Date();
@@ -41,6 +52,9 @@ server.listen(PORT, async () => {
   await logStep('Default System Roles', seedDefaultRoles);
   await logStep('ERP System Settings', () => Settings.seedDefaults());
   await logStep('Weekly Backup Scheduler', () => initAutoBackup());
+  const { startSubscriptionChecker, startTempAdminCleanup } = await import('./jobs/subscriptionChecker.js');
+  startSubscriptionChecker();
+  startTempAdminCleanup();
 
   console.log('');
   printServerInfo(PORT, env.NODE_ENV || 'development', protocol);

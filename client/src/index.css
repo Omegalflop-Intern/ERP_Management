@@ -436,6 +436,15 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   background-color: rgba(220, 38, 38, 0.3);
 }
 
+/* --- Dark Mode Native Select --- */
+.dark select option {
+  background-color: #1e293b;
+  color: #e2e8f0;
+}
+.dark select option:hover {
+  background-color: #334155;
+}
+
 /* --- Neumorphism Date Picker --- */
 [data-mode="neumorphism"] input[type="date"] {
   background: #eaeff8 !important;

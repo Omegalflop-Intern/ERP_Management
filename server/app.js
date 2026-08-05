@@ -47,6 +47,7 @@ import sseRoutes from './modules/sse/sse.routes.js';
 import documentVaultRoutes from './modules/documentVault/documentVault.routes.js';
 import tenantRoutes from './modules/tenant/tenant.routes.js';
 import plansRoutes from './modules/plans/plans.routes.js';
+import auditLogRoutes from './modules/audit/auditLog.routes.js';
 import { startLoanReminderJob } from './jobs/loanReminderCron.js';
 import { auditDiffInterceptor } from './middleware/auditInterceptor.middleware.js';
 import { Investor } from './modules/investor/investor.model.js';
@@ -344,9 +345,12 @@ app.use('/api/v1/loans', auditDiffInterceptor('Loan', () => Loan), loanRoutes);
 app.use('/api/v1/sse', sseRoutes);
 app.use('/api/v1/tenants', tenantRoutes);
 app.use('/api/v1/plans', plansRoutes);
+app.use('/api/v1/super-admin/audit-logs', auditLogRoutes);
 
-if (process.env.NODE_ENV === 'production') {
-  const clientDist = path.join(__dirname, '../client/dist');
+// Production: Serve client build if CLIENT_DIST_PATH is set (e.g. when server + client on same host)
+// On separate deployments (Nginx + Node API), leave CLIENT_DIST_PATH empty — API-only mode
+if (process.env.NODE_ENV === 'production' && process.env.CLIENT_DIST_PATH) {
+  const clientDist = path.resolve(process.env.CLIENT_DIST_PATH);
   app.use(express.static(clientDist));
   app.get('*', (req, res, next) => {
     if (req.originalUrl.startsWith('/api') || req.originalUrl.startsWith('/uploads')) {

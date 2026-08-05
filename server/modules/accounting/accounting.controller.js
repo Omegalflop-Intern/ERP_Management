@@ -53,7 +53,8 @@ export const deleteAccount = async (req, res, next) => {
 
 export const seedDefaultAccounts = async (req, res, next) => {
   try {
-    const result = await accountingService.seedDefaultAccounts();
+    const tenantId = req.user?.tenantId || null;
+    const result = await accountingService.seedDefaultAccounts(tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'SEED_ACCOUNTS', module: 'accounting', entityType: 'Account', details: { count: result.count }, req });
     return ApiResponse.success(res, result, result.message);
   } catch (error) { next(error); }
@@ -118,7 +119,8 @@ export const deleteJournalEntry = async (req, res, next) => {
 
 export const syncHistoricalJournals = async (req, res, next) => {
   try {
-    const result = await accountingService.syncHistoricalJournals();
+    const tenantId = req.user?.tenantId || null;
+    const result = await accountingService.syncHistoricalJournals(tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'SYNC_JOURNALS', module: 'accounting', entityType: 'JournalEntry', details: { count: result.syncedCount }, req });
     return ApiResponse.success(res, result, result.message);
   } catch (error) { next(error); }

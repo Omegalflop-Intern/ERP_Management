@@ -12,7 +12,9 @@ export const getAllPayroll = async (page = 1, limit = 20, branch = '', month = '
   if (year) query.year = Number(year);
 
   if (branch) {
-    const branchEmployees = await Employee.find({ branch, isDeleted: false }).select('_id');
+    const empQuery = { branch, isDeleted: false };
+    if (tenantId) empQuery.tenantId = tenantId;
+    const branchEmployees = await Employee.find(empQuery).select('_id');
     query.employee = { $in: branchEmployees.map((e) => e._id) };
   }
 

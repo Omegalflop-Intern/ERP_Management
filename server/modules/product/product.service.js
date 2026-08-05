@@ -36,7 +36,9 @@ export const getAllProducts = async (page = 1, limit = 50, search = '', category
 
   // Attach available inventory units / IMEIs count and IMEIs list for each product
   const productIds = products.map(p => p._id);
-  const units = await InventoryUnit.find({ productId: { $in: productIds }, isDeleted: false }).lean();
+  const unitQuery = { productId: { $in: productIds }, isDeleted: false };
+  if (tenantId) unitQuery.tenantId = tenantId;
+  const units = await InventoryUnit.find(unitQuery).lean();
 
   const productsWithIMEI = products.map(p => {
     const pUnits = units.filter(u => u.productId?.toString() === p._id?.toString());
@@ -52,10 +54,14 @@ export const getAllProducts = async (page = 1, limit = 50, search = '', category
   return { products: productsWithIMEI, pagination: getPagination(total, page, limit) };
 };
 
-export const getProductById = async (id) => {
-  const product = await Product.findOne({ _id: id, isDeleted: false }).lean();
+export const getProductById = async (id, tenantId = null) => {
+  const query = { _id: id, isDeleted: false };
+  if (tenantId) query.tenantId = tenantId;
+  const product = await Product.findOne(query).lean();
   if (!product) throw ApiError.notFound('Product not found');
-  const units = await InventoryUnit.find({ productId: id, status: 'Available', isDeleted: false }).lean();
+  const unitQuery = { productId: id, status: 'Available', isDeleted: false };
+  if (tenantId) unitQuery.tenantId = tenantId;
+  const units = await InventoryUnit.find(unitQuery).lean();
   return {
     ...product,
     availableIMEIs: units.map(u => u.imeiOrSerial),
@@ -63,34 +69,46 @@ export const getProductById = async (id) => {
   };
 };
 
-export const getProductBySku = async (sku) => {
-  return Product.findOne({ sku, isDeleted: false });
+export const getProductBySku = async (sku, tenantId = null) => {
+  const query = { sku, isDeleted: false };
+  if (tenantId) query.tenantId = tenantId;
+  return Product.findOne(query);
 };
 
 export const createProduct = async (data) => {
+  const tenantId = data.tenantId || null;
+
   // Auto-generate SKU if missing
   if (!data.sku || !data.sku.trim()) {
     let newSku = generateSKU(data.brand);
     let attempts = 0;
-    while (await Product.findOne({ sku: newSku, isDeleted: false })) {
+    const skuQuery = { sku: newSku, isDeleted: false };
+    if (tenantId) skuQuery.tenantId = tenantId;
+    while (await Product.findOne(skuQuery)) {
       newSku = generateSKU(data.brand);
+      skuQuery.sku = newSku;
       attempts++;
       if (attempts > 5) break;
     }
     data.sku = newSku;
   }
 
-  const existing = await Product.findOne({ sku: data.sku, isDeleted: false });
+  // SKU uniqueness check scoped to tenant
+  const skuCheckQuery = { sku: data.sku, isDeleted: false };
+  if (tenantId) skuCheckQuery.tenantId = tenantId;
+  const existing = await Product.findOne(skuCheckQuery);
   if (existing) throw ApiError.conflict(`SKU "${data.sku}" already exists`);
 
   if (data.category && data.category.trim()) {
     const catName = data.category.trim();
-    const existingCat = await CatalogItem.findOne({
+    const catQuery = {
       name: { $regex: `^${catName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}$`, $options: 'i' },
       type: 'CATEGORY',
-    });
+    };
+    if (tenantId) catQuery.tenantId = tenantId;
+    const existingCat = await CatalogItem.findOne(catQuery);
     if (!existingCat) {
-      await CatalogItem.create({ name: catName, type: 'CATEGORY', isDeleted: false }).catch(() => {});
+      await CatalogItem.create({ name: catName, type: 'CATEGORY', tenantId, isDeleted: false }).catch(() => {});
     } else if (existingCat.isDeleted) {
       existingCat.isDeleted = false;
       await existingCat.save().catch(() => {});
@@ -99,12 +117,14 @@ export const createProduct = async (data) => {
 
   if (data.brand && data.brand.trim()) {
     const brandName = data.brand.trim();
-    const existingBrand = await CatalogItem.findOne({
+    const brandQuery = {
       name: { $regex: `^${brandName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}$`, $options: 'i' },
       type: 'BRAND',
-    });
+    };
+    if (tenantId) brandQuery.tenantId = tenantId;
+    const existingBrand = await CatalogItem.findOne(brandQuery);
     if (!existingBrand) {
-      await CatalogItem.create({ name: brandName, type: 'BRAND', isDeleted: false }).catch(() => {});
+      await CatalogItem.create({ name: brandName, type: 'BRAND', tenantId, isDeleted: false }).catch(() => {});
     } else if (existingBrand.isDeleted) {
       existingBrand.isDeleted = false;
       await existingBrand.save().catch(() => {});
@@ -133,7 +153,9 @@ export const createProduct = async (data) => {
 
       if (!imeiVal) continue;
 
-      const existingImei = await InventoryUnit.findOne({ imeiOrSerial: imeiVal, isDeleted: false });
+      const imeiCheckQuery = { imeiOrSerial: imeiVal, isDeleted: false };
+      if (tenantId) imeiCheckQuery.tenantId = tenantId;
+      const existingImei = await InventoryUnit.findOne(imeiCheckQuery);
       if (!existingImei) {
         await InventoryUnit.create({
           tenantId: data.tenantId || undefined,
@@ -150,7 +172,9 @@ export const createProduct = async (data) => {
       }
     }
 
-    const totalAvail = await InventoryUnit.countDocuments({ productId: product._id, status: 'Available', isDeleted: false });
+    const totalAvailQuery = { productId: product._id, status: 'Available', isDeleted: false };
+    if (tenantId) totalAvailQuery.tenantId = tenantId;
+    const totalAvail = await InventoryUnit.countDocuments(totalAvailQuery);
     if (totalAvail > 0) {
       product.stockQuantity = totalAvail;
       await product.save().catch(() => {});
@@ -160,23 +184,29 @@ export const createProduct = async (data) => {
   return product;
 };
 
-export const updateProduct = async (id, data) => {
-  const product = await Product.findOne({ _id: id, isDeleted: false });
+export const updateProduct = async (id, data, tenantId = null) => {
+  const query = { _id: id, isDeleted: false };
+  if (tenantId) query.tenantId = tenantId;
+  const product = await Product.findOne(query);
   if (!product) throw ApiError.notFound('Product not found');
 
   if (data.sku && data.sku !== product.sku) {
-    const existing = await Product.findOne({ sku: data.sku, isDeleted: false, _id: { $ne: id } });
+    const skuCheckQuery = { sku: data.sku, isDeleted: false, _id: { $ne: id } };
+    if (tenantId) skuCheckQuery.tenantId = tenantId;
+    const existing = await Product.findOne(skuCheckQuery);
     if (existing) throw ApiError.conflict(`SKU "${data.sku}" already exists`);
   }
 
   if (data.category && data.category.trim()) {
     const catName = data.category.trim();
-    const existingCat = await CatalogItem.findOne({
+    const catQuery = {
       name: { $regex: `^${catName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}$`, $options: 'i' },
       type: 'CATEGORY',
-    });
+    };
+    if (tenantId) catQuery.tenantId = tenantId;
+    const existingCat = await CatalogItem.findOne(catQuery);
     if (!existingCat) {
-      await CatalogItem.create({ name: catName, type: 'CATEGORY', isDeleted: false }).catch(() => {});
+      await CatalogItem.create({ name: catName, type: 'CATEGORY', tenantId, isDeleted: false }).catch(() => {});
     } else if (existingCat.isDeleted) {
       existingCat.isDeleted = false;
       await existingCat.save().catch(() => {});
@@ -185,12 +215,14 @@ export const updateProduct = async (id, data) => {
 
   if (data.brand && data.brand.trim()) {
     const brandName = data.brand.trim();
-    const existingBrand = await CatalogItem.findOne({
+    const brandQuery = {
       name: { $regex: `^${brandName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}$`, $options: 'i' },
       type: 'BRAND',
-    });
+    };
+    if (tenantId) brandQuery.tenantId = tenantId;
+    const existingBrand = await CatalogItem.findOne(brandQuery);
     if (!existingBrand) {
-      await CatalogItem.create({ name: brandName, type: 'BRAND', isDeleted: false }).catch(() => {});
+      await CatalogItem.create({ name: brandName, type: 'BRAND', tenantId, isDeleted: false }).catch(() => {});
     } else if (existingBrand.isDeleted) {
       existingBrand.isDeleted = false;
       await existingBrand.save().catch(() => {});
@@ -204,10 +236,12 @@ export const updateProduct = async (id, data) => {
       .filter(Boolean);
 
     for (const imeiVal of imeis) {
-      const existingImei = await InventoryUnit.findOne({ imeiOrSerial: imeiVal, isDeleted: false });
+      const imeiQuery = { imeiOrSerial: imeiVal, isDeleted: false };
+      if (tenantId) imeiQuery.tenantId = tenantId;
+      const existingImei = await InventoryUnit.findOne(imeiQuery);
       if (!existingImei) {
         await InventoryUnit.create({
-          tenantId: product.tenantId || undefined,
+          tenantId: tenantId || product.tenantId || undefined,
           productId: product._id,
           imeiOrSerial: imeiVal,
           purchasePrice: data.costPrice || product.costPrice || 0,
@@ -217,13 +251,18 @@ export const updateProduct = async (id, data) => {
       }
     }
 
-    const totalAvail = await InventoryUnit.countDocuments({ productId: product._id, status: 'Available', isDeleted: false });
+    const countQuery = { productId: product._id, status: 'Available', isDeleted: false };
+    if (tenantId) countQuery.tenantId = tenantId;
+    const totalAvail = await InventoryUnit.countDocuments(countQuery);
     data.stockQuantity = totalAvail;
   } else {
-    // Check if product has any IMEI records
-    const imeiCount = await InventoryUnit.countDocuments({ productId: product._id, isDeleted: false });
+    const imeiCountQuery = { productId: product._id, isDeleted: false };
+    if (tenantId) imeiCountQuery.tenantId = tenantId;
+    const imeiCount = await InventoryUnit.countDocuments(imeiCountQuery);
     if (imeiCount > 0) {
-      const availCount = await InventoryUnit.countDocuments({ productId: product._id, status: 'Available', isDeleted: false });
+      const availCountQuery = { productId: product._id, status: 'Available', isDeleted: false };
+      if (tenantId) availCountQuery.tenantId = tenantId;
+      const availCount = await InventoryUnit.countDocuments(availCountQuery);
       data.stockQuantity = availCount;
     }
   }
@@ -233,8 +272,10 @@ export const updateProduct = async (id, data) => {
   return product;
 };
 
-export const deleteProduct = async (id) => {
-  const product = await Product.findOne({ _id: id, isDeleted: false });
+export const deleteProduct = async (id, tenantId = null) => {
+  const query = { _id: id, isDeleted: false };
+  if (tenantId) query.tenantId = tenantId;
+  const product = await Product.findOne(query);
   if (!product) throw ApiError.notFound('Product not found');
   product.isDeleted = true;
   await product.save();
