@@ -34,6 +34,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { detectSubdomain } from '../../utils/subdomain';
 import ThemeToggle from '../ui/ThemeToggle';
 import api, { getAssetUrl } from '../../lib/api';
 
@@ -481,6 +482,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
   const styled = designMode === 'glass';
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const subdomain = detectSubdomain();
   const [showNotifs, setShowNotifs] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileSettings, setShowMobileSettings] = useState(false);
@@ -572,6 +574,11 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
               {user?.tenant?.plan || (user?.tenantId ? 'STARTER' : 'SUPER ADMIN')}
             </span>
           </span>
+          {(subdomain || user?.subdomain) && (
+            <span className="hidden lg:inline text-[10px] font-mono text-indigo-500 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800/40">
+              {subdomain || user?.subdomain}.erp.com
+            </span>
+          )}
         </div>
       </div>
 

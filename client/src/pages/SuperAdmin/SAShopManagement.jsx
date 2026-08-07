@@ -18,6 +18,7 @@ import {
   Calendar,
   CreditCard,
   Users,
+  Globe,
   X,
   Save,
   AlertTriangle,
@@ -187,6 +188,8 @@ function EditTenantModal({ tenant, onClose, onSuccess }) {
     plan: tenant.plan || 'STARTER',
     maxBranches: tenant.maxBranches ?? 2,
     maxUsers: tenant.maxUsers ?? 5,
+    subdomain: tenant.subdomain || '',
+    customDomain: tenant.customDomain || '',
     durationDays: tenant.expiresAt
       ? Math.max(1, Math.ceil((new Date(tenant.expiresAt) - new Date()) / 86400000))
       : (PLAN_DEFAULTS[tenant.plan || 'STARTER'] || 30),
@@ -289,15 +292,38 @@ function EditTenantModal({ tenant, onClose, onSuccess }) {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Duration (days)</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="3650"
-                  value={form.durationDays}
-                  onChange={(e) => handleDurationChange(Number(e.target.value))}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Duration</label>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={[30, 60, 90, 180, 300, 365].includes(form.durationDays) ? form.durationDays : 'custom'}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val !== 'custom') {
+                        handleDurationChange(Number(val));
+                      }
+                    }}
+                    className="flex-1 px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value={30}>30 Days (1 Mo)</option>
+                    <option value={60}>60 Days (2 Mos)</option>
+                    <option value={90}>90 Days (3 Mos)</option>
+                    <option value={180}>180 Days (6 Mos)</option>
+                    <option value={300}>300 Days (10 Mos)</option>
+                    <option value={365}>365 Days (1 Yr)</option>
+                    <option value="custom">Custom Days</option>
+                  </select>
+                  {![30, 60, 90, 180, 300, 365].includes(form.durationDays) && (
+                    <input
+                      type="number"
+                      min="1"
+                      max="3650"
+                      value={form.durationDays}
+                      onChange={(e) => handleDurationChange(Number(e.target.value))}
+                      placeholder="Days"
+                      className="w-20 px-2 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  )}
+                </div>
               </div>
               <div className="col-span-2">
                 <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Expiry Date</label>
@@ -331,6 +357,41 @@ function EditTenantModal({ tenant, onClose, onSuccess }) {
                 />
               </div>
             </div>
+          </div>
+
+          {/* Domain */}
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5">
+              <Globe className="w-3.5 h-3.5 text-indigo-500" /> Domain Settings
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Subdomain</label>
+                <div className="flex items-center gap-0">
+                  <input
+                    value={form.subdomain}
+                    onChange={(e) => setForm({ ...form, subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
+                    placeholder="shop-name"
+                    className="flex-1 px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-l-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <span className="px-2 py-2 text-xs text-slate-400 bg-slate-100 dark:bg-slate-800 border border-l-0 border-slate-200 dark:border-slate-700 rounded-r-xl whitespace-nowrap">.erp.com</span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Custom Domain</label>
+                <input
+                  value={form.customDomain}
+                  onChange={(e) => setForm({ ...form, customDomain: e.target.value.toLowerCase() })}
+                  placeholder="optional — e.g. mystore.com"
+                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+            </div>
+            {form.subdomain && (
+              <p className="text-[11px] text-slate-400 mt-1.5">
+                Preview: <span className="font-mono text-indigo-500">{form.subdomain}.erp.com</span>
+              </p>
+            )}
           </div>
 
           {/* Notes */}
@@ -376,7 +437,7 @@ export default function SAShopManagement() {
   const PLAN_DEFAULTS = { FREE: 30, STARTER: 30, PRO: 90, ENTERPRISE: 365 };
   const [createForm, setCreateForm] = useState({
     shopName: '', ownerName: '', username: '', email: '', phone: '',
-    plan: 'STARTER', durationDays: 30, password: '',
+    plan: 'STARTER', durationDays: 30, subdomain: '', password: '',
   });
 
   const { data: tenants = [], isLoading } = useQuery({
@@ -400,7 +461,7 @@ export default function SAShopManagement() {
       qc.invalidateQueries({ queryKey: ['sa-shops'] });
       qc.invalidateQueries({ queryKey: ['sa-stats'] });
       setShowCreate(false);
-      setCreateForm({ shopName: '', ownerName: '', username: '', email: '', phone: '', plan: 'STARTER', durationDays: 30, password: '' });
+      setCreateForm({ shopName: '', ownerName: '', username: '', email: '', phone: '', plan: 'STARTER', durationDays: 30, subdomain: '', password: '' });
     },
     onError: (e) => toast.error(e.response?.data?.message || 'Create failed'),
   });
@@ -492,6 +553,18 @@ export default function SAShopManagement() {
                       {t.plan}
                     </span>
                   </div>
+                  {t.subdomain && (
+                    <div className="flex items-center gap-1 mt-1">
+                      <span className="text-[10px] font-mono text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-1.5 py-0.5 rounded">
+                        {t.subdomain}.erp.com
+                      </span>
+                      {t.customDomain && (
+                        <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">
+                          {t.customDomain}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -621,7 +694,7 @@ export default function SAShopManagement() {
       {/* Create Modal */}
       {showCreate && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md border border-slate-200 dark:border-slate-800 shadow-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-2xl border border-slate-200 dark:border-slate-800 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
               <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Plus className="w-4 h-4 text-indigo-500" /> Create New Shop
@@ -630,59 +703,133 @@ export default function SAShopManagement() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="p-6 space-y-3">
-              {[
-                { field: 'shopName', label: 'Shop Name', placeholder: 'e.g. Dhaka Mobile Store' },
-                { field: 'ownerName', label: 'Owner Name', placeholder: 'e.g. Rahim Uddin' },
-                { field: 'username', label: 'Username', placeholder: 'e.g. rahim_store' },
-                { field: 'email', label: 'Email', placeholder: 'owner@email.com', type: 'email' },
-                { field: 'phone', label: 'Phone', placeholder: '+880...' },
-              ].map(({ field, label, placeholder, type = 'text' }) => (
-                <div key={field}>
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">{label}</label>
+            <div className="p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Shop Name *</label>
                   <input
-                    type={type}
-                    value={createForm[field]}
-                    onChange={(e) => setCreateForm({ ...createForm, [field]: e.target.value })}
-                    placeholder={placeholder}
+                    type="text"
+                    value={createForm.shopName}
+                    onChange={(e) => setCreateForm({ ...createForm, shopName: e.target.value })}
+                    placeholder="e.g. Dhaka Mobile Store"
                     className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
-              ))}
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Plan</label>
-                <select
-                  value={createForm.plan}
-                  onChange={(e) => {
-                    const p = e.target.value;
-                    setCreateForm({ ...createForm, plan: p, durationDays: PLAN_DEFAULTS[p] || 30 });
-                  }}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  {['FREE', 'STARTER', 'PRO', 'ENTERPRISE'].map((p) => (
-                    <option key={p} value={p}>{p}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Duration (days)</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="3650"
-                  value={createForm.durationDays}
-                  onChange={(e) => setCreateForm({ ...createForm, durationDays: Number(e.target.value) })}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Owner Password</label>
-                <PasswordInput
-                  value={createForm.password}
-                  onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
-                  placeholder="Min 8 characters"
-                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Owner Name *</label>
+                  <input
+                    type="text"
+                    value={createForm.ownerName}
+                    onChange={(e) => setCreateForm({ ...createForm, ownerName: e.target.value })}
+                    placeholder="e.g. Rahim Uddin"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Username</label>
+                  <input
+                    type="text"
+                    value={createForm.username}
+                    onChange={(e) => setCreateForm({ ...createForm, username: e.target.value })}
+                    placeholder="e.g. rahim_store"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Email *</label>
+                  <input
+                    type="email"
+                    value={createForm.email}
+                    onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                    placeholder="owner@email.com"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Phone</label>
+                  <input
+                    type="text"
+                    value={createForm.phone}
+                    onChange={(e) => setCreateForm({ ...createForm, phone: e.target.value })}
+                    placeholder="+880..."
+                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Plan</label>
+                  <select
+                    value={createForm.plan}
+                    onChange={(e) => {
+                      const p = e.target.value;
+                      setCreateForm({ ...createForm, plan: p, durationDays: PLAN_DEFAULTS[p] || 30 });
+                    }}
+                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    {['FREE', 'STARTER', 'PRO', 'ENTERPRISE'].map((p) => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Duration</label>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={[30, 60, 90, 180, 300, 365].includes(createForm.durationDays) ? createForm.durationDays : 'custom'}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val !== 'custom') {
+                          setCreateForm({ ...createForm, durationDays: Number(val) });
+                        }
+                      }}
+                      className="flex-1 px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value={30}>30 Days (1 Month)</option>
+                      <option value={60}>60 Days (2 Months)</option>
+                      <option value={90}>90 Days (3 Months)</option>
+                      <option value={180}>180 Days (6 Months)</option>
+                      <option value={300}>300 Days (10 Months)</option>
+                      <option value={365}>365 Days (1 Year)</option>
+                      <option value="custom">Custom Days</option>
+                    </select>
+                    {![30, 60, 90, 180, 300, 365].includes(createForm.durationDays) && (
+                      <input
+                        type="number"
+                        min="1"
+                        max="3650"
+                        value={createForm.durationDays}
+                        onChange={(e) => setCreateForm({ ...createForm, durationDays: Number(e.target.value) })}
+                        placeholder="Days"
+                        className="w-20 px-2 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Subdomain</label>
+                  <div className="flex items-center gap-0">
+                    <input
+                      value={createForm.subdomain}
+                      onChange={(e) => setCreateForm({ ...createForm, subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
+                      placeholder={createForm.shopName ? createForm.shopName.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 30) : 'auto from shop name'}
+                      className="flex-1 px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-l-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                    <span className="px-2 py-2 text-xs text-slate-400 bg-slate-100 dark:bg-slate-800 border border-l-0 border-slate-200 dark:border-slate-700 rounded-r-xl whitespace-nowrap">.erp.com</span>
+                  </div>
+                  {createForm.subdomain && (
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      Preview: <span className="font-mono text-indigo-500">{createForm.subdomain}.erp.com</span>
+                    </p>
+                  )}
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Owner Password *</label>
+                  <PasswordInput
+                    value={createForm.password}
+                    onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
+                    placeholder="Min 8 characters"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
               </div>
             </div>
             <div className="px-6 pb-6 flex gap-3">

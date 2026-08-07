@@ -31,6 +31,7 @@ const envSchema = z.object({
   CLIENT_DIST_PATH: z.string().optional(),
   TLS_CERT_PATH: z.string().optional(),
   TLS_KEY_PATH: z.string().optional(),
+  BASE_DOMAIN: z.string().default('erp.com'),
 });
 
 const parsed = envSchema.safeParse(process.env);

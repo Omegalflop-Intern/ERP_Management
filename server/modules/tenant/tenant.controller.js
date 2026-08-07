@@ -83,3 +83,25 @@ export const uploadLogo = async (req, res, next) => {
     next(error);
   }
 };
+
+export const checkSubdomain = async (req, res, next) => {
+  try {
+    const { slug } = req.params;
+    const result = await tenantService.checkSubdomainAvailability(slug);
+    return ApiResponse.success(res, result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getSubdomainInfo = async (req, res, next) => {
+  try {
+    const tenant = await tenantService.getTenantById(req.params.id);
+    return ApiResponse.success(res, {
+      subdomain: tenant.subdomain,
+      customDomain: tenant.customDomain,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

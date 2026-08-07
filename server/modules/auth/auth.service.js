@@ -58,6 +58,8 @@ export const sanitizeUser = async (user) => {
     tenantId: user.tenantId || null,
     shopName: tenant?.shopName || user.shopName || null,
     tenant: tenant ? { _id: tenant._id, shopName: tenant.shopName, plan: tenant.plan, status: tenant.status } : null,
+    subdomain: tenant?.subdomain || null,
+    customDomain: tenant?.customDomain || null,
     roleName: user.roleName || roleData?.name,
     roleDisplayName: roleData?.displayName,
     permissions: roleData?.permissions || [],

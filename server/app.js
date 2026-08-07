@@ -16,6 +16,7 @@ import { apiLimiter, authLimiter } from './middleware/rateLimiter.middleware.js'
 import { authenticate } from './middleware/auth.middleware.js';
 import { authorize } from './middleware/role.middleware.js';
 import { requireSuperAdmin, checkTenantStatus } from './middleware/tenant.middleware.js';
+import { extractTenantFromHost } from './middleware/subdomain.middleware.js';
 import mongoose from 'mongoose';
 import authRoutes from './modules/auth/auth.routes.js';
 import userRoutes from './modules/user/user.routes.js';
@@ -109,6 +110,7 @@ app.use(helmet({
 app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json());
+app.use(extractTenantFromHost);
 
 morgan.token('url', (req) => (req.originalUrl || req.url).replace(/([?&]token=)[^&]+/g, '$1[REDACTED]'));
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));

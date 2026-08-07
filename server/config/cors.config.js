@@ -8,14 +8,24 @@ const allowedOrigins = [
   'http://127.0.0.1:5173',
 ].filter(Boolean);
 
+const baseDomain = process.env.BASE_DOMAIN || 'erp.com';
+
 if (allowedOrigins.length === 0) {
   console.warn('[CORS] No allowed origins configured. Set CLIENT_URL, APP_URL, or ALLOWED_ORIGIN env vars.');
 }
 
 export const corsOptions = {
   origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, server-to-server)
+    if (!origin) return callback(null, true);
+
+    // Allow any *.baseDomain subdomain in all environments
+    if (origin.includes(`.${baseDomain}`) || origin.endsWith(`://${baseDomain}`)) {
+      return callback(null, true);
+    }
+
     if (process.env.NODE_ENV === 'production') {
-      if (origin && allowedOrigins.includes(origin)) {
+      if (allowedOrigins.some((o) => origin.startsWith(o))) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));

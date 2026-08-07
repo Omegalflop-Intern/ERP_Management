@@ -73,37 +73,37 @@ export default function AnimatedBackground() {
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 select-none">
       {/* ── Base ── */}
       <div className="absolute inset-0">
-        {/* Light: warm white */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#FFFCF9] via-[#FFF8F3] to-[#FFF5EE] dark:hidden" />
+        {/* Light: crisp slate-indigo */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#F8FAFC] via-[#F1F5F9] to-[#EEF2FF] dark:hidden" />
         {/* Dark: deep black */}
         <div className="absolute inset-0 hidden dark:block bg-[#08080c]" />
       </div>
 
       {/* ══════════════════════════════════════════════════════════
-          LIGHT MODE — 3 Warm Spotlights
+          LIGHT MODE — 3 Modern Blue-Violet Ambient Spotlights
           ══════════════════════════════════════════════════════════ */}
       {!reducedMotion && (
         <div className="absolute inset-0 dark:hidden pointer-events-none overflow-hidden">
-          {/* Spotlight 1: top-right warm amber */}
+          {/* Spotlight 1: top-left soft indigo */}
           <div
             style={{
               transform: `translate3d(${mouseOffset.x * 22}px, ${mouseOffset.y * 20 - scrollY * 0.03}px, 0)`,
             }}
-            className="absolute -top-28 -right-28 w-[550px] h-[550px] bg-[#FDBA74]/18 rounded-full blur-[110px] animate-ambient-glow-1 will-change-transform"
+            className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-indigo-400/15 rounded-full blur-[130px] animate-ambient-glow-1 will-change-transform"
           />
-          {/* Spotlight 2: bottom-left soft peach */}
+          {/* Spotlight 2: bottom-right soft blue */}
           <div
             style={{
               transform: `translate3d(${mouseOffset.x * -20}px, ${mouseOffset.y * -18 - scrollY * 0.04}px, 0)`,
             }}
-            className="absolute -bottom-28 -left-28 w-[500px] h-[500px] bg-[#FB923C]/12 rounded-full blur-[100px] animate-ambient-glow-2 will-change-transform"
+            className="absolute -bottom-32 -right-32 w-[550px] h-[550px] bg-blue-400/12 rounded-full blur-[120px] animate-ambient-glow-2 will-change-transform"
           />
-          {/* Spotlight 3: center subtle rose */}
+          {/* Spotlight 3: top-right subtle sky */}
           <div
             style={{
               transform: `translate3d(${mouseOffset.x * 16}px, ${mouseOffset.y * 14 - scrollY * 0.02}px, 0)`,
             }}
-            className="absolute top-[35%] -right-12 w-[420px] h-[420px] bg-[#FED7AA]/14 rounded-full blur-[90px] animate-ambient-glow-3 will-change-transform"
+            className="absolute top-[30%] -right-20 w-[480px] h-[480px] bg-sky-300/15 rounded-full blur-[100px] animate-ambient-glow-3 will-change-transform"
           />
         </div>
       )}
@@ -117,24 +117,24 @@ export default function AnimatedBackground() {
       </svg>
 
       {/* ══════════════════════════════════════════════════════════
-          DARK MODE — 2 Gray-White Spotlights
-          Top-left + Bottom-right, subtle white glow
+          DARK MODE — 2 Purple Spotlights
+          Top-left + Bottom-right glowing purple
           ══════════════════════════════════════════════════════════ */}
       {!reducedMotion && (
         <div className="absolute inset-0 hidden dark:block pointer-events-none overflow-hidden">
-          {/* Top-left: soft white/slate glow */}
+          {/* Top-left: rich purple spotlight */}
           <div
             style={{
               transform: `translate3d(${mouseOffset.x * 24}px, ${mouseOffset.y * 22 - scrollY * 0.04}px, 0)`,
             }}
-            className="absolute -top-36 -left-36 w-[650px] h-[650px] bg-[#94a3b8]/8 rounded-full blur-[130px] animate-ambient-glow-1 will-change-transform"
+            className="absolute -top-44 -left-44 w-[700px] h-[700px] bg-[#8B5CF6]/25 rounded-full blur-[150px] animate-ambient-glow-1 will-change-transform"
           />
-          {/* Bottom-right: subtle white glow */}
+          {/* Bottom-right: deep violet/purple spotlight */}
           <div
             style={{
               transform: `translate3d(${mouseOffset.x * -22}px, ${mouseOffset.y * -20 - scrollY * 0.05}px, 0)`,
             }}
-            className="absolute -bottom-36 -right-36 w-[600px] h-[600px] bg-[#e2e8f0]/6 rounded-full blur-[120px] animate-ambient-glow-2 will-change-transform"
+            className="absolute -bottom-44 -right-44 w-[700px] h-[700px] bg-[#7C3AED]/22 rounded-full blur-[140px] animate-ambient-glow-2 will-change-transform"
           />
         </div>
       )}

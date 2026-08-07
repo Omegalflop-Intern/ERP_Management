@@ -13,6 +13,18 @@ import { ApiError } from '../../utils/http/ApiError.js';
 import { generateOTP, sendOTP } from '../auth/auth.service.js';
 import bcrypt from 'bcryptjs';
 
+export const checkSubdomainAvailability = async (slug) => {
+  const clean = slug?.toLowerCase().trim().replace(/[^a-z0-9-]/g, '');
+  if (!clean || clean.length < 3) {
+    return { available: false, slug: clean, reason: 'Minimum 3 characters required' };
+  }
+  if (clean.startsWith('-') || clean.endsWith('-')) {
+    return { available: false, slug: clean, reason: 'Cannot start or end with hyphen' };
+  }
+  const taken = await Tenant.findOne({ subdomain: clean, isDeleted: false }).select('_id');
+  return { available: !taken, slug: clean };
+};
+
 export const getTenantStats = async () => {
   const [total, active, paused, pendingKyc, expiringSoon] = await Promise.all([
     Tenant.countDocuments({ isDeleted: false }),
@@ -110,6 +122,26 @@ export const updateTenant = async (id, data) => {
   const tenant = await Tenant.findOne({ _id: id, isDeleted: false });
   if (!tenant) throw ApiError.notFound('Shop tenant account not found');
 
+  // Subdomain uniqueness
+  if (data.subdomain !== undefined) {
+    const sub = data.subdomain.trim().toLowerCase();
+    if (sub) {
+      const exists = await Tenant.findOne({ subdomain: sub, _id: { $ne: id }, isDeleted: false });
+      if (exists) throw ApiError.conflict(`Subdomain "${sub}" is already taken.`);
+    }
+    tenant.subdomain = sub || null;
+  }
+
+  // Custom domain uniqueness
+  if (data.customDomain !== undefined) {
+    const domain = data.customDomain.trim().toLowerCase();
+    if (domain) {
+      const exists = await Tenant.findOne({ customDomain: domain, _id: { $ne: id }, isDeleted: false });
+      if (exists) throw ApiError.conflict(`Custom domain "${domain}" is already in use.`);
+    }
+    tenant.customDomain = domain || null;
+  }
+
   const allowedFields = ['shopName', 'ownerName', 'phone', 'plan', 'maxBranches', 'maxUsers', 'expiresAt', 'notes'];
   for (const field of allowedFields) {
     if (data[field] !== undefined) {
@@ -141,6 +173,34 @@ export const createTenant = async (data) => {
     throw ApiError.conflict(`A user account with email "${emailLower}" already exists.`);
   }
 
+  // Subdomain: auto-generate from shop name if not provided, then validate uniqueness
+  let subdomain = data.subdomain?.trim().toLowerCase() || null;
+  if (!subdomain) {
+    subdomain = data.shopName
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 30);
+  }
+  // Ensure uniqueness
+  if (subdomain) {
+    let finalSlug = subdomain;
+    let counter = 1;
+    while (await Tenant.findOne({ subdomain: finalSlug, isDeleted: false })) {
+      finalSlug = `${subdomain}-${counter++}`;
+    }
+    subdomain = finalSlug;
+  }
+
+  // Custom domain uniqueness
+  const customDomain = data.customDomain?.trim().toLowerCase() || null;
+  if (customDomain) {
+    const exists = await Tenant.findOne({ customDomain, isDeleted: false });
+    if (exists) throw ApiError.conflict(`Custom domain "${customDomain}" is already in use.`);
+  }
+
   const username = data.username?.trim().toLowerCase() || emailLower.split('@')[0];
 
   // Check if username exists for super admin users (tenantId: null)
@@ -157,7 +217,9 @@ export const createTenant = async (data) => {
       email: emailLower,
       phone: data.phone,
       plan: data.plan || 'STARTER',
-      status: 'ACTIVE', // Direct Super Admin creation starts active
+      subdomain,
+      customDomain,
+      status: 'ACTIVE',
       kycDocuments: {
         nidNumber: data.nidNumber || '',
         tradeLicenseNumber: data.tradeLicenseNumber || '',

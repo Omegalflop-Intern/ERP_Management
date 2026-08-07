@@ -26,7 +26,7 @@ export default function DashboardLayout() {
   }, [collapsed]);
 
   return (
-    <div className="relative h-screen bg-[#FAFAF9] dark:bg-[#111010] flex flex-col overflow-hidden text-slate-900 dark:text-slate-100 font-sans">
+    <div className="relative h-screen bg-[#F8FAFC] dark:bg-[#111010] flex flex-col overflow-hidden text-slate-900 dark:text-slate-100 font-sans">
       {/* 60 FPS Subtle Animated Global Background */}
       <AnimatedBackground />
 

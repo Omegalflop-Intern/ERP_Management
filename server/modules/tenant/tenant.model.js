@@ -58,7 +58,6 @@ const tenantSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
     },
-    dnsVerified: { type: Boolean, default: false },
   },
   {
     timestamps: true,

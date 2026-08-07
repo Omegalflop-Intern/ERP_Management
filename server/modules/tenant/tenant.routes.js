@@ -53,6 +53,9 @@ const uploadLogo = multer({
 
 const router = express.Router();
 
+// Public: check subdomain availability
+router.get('/check-subdomain/:slug', tenantController.checkSubdomain);
+
 // Public: shop self-registration (also used by super admin from SaaS panel)
 router.post('/', validate(createTenantSchema), tenantController.createTenant);
 
@@ -63,6 +66,9 @@ router.get('/:id', authenticate, requireSuperAdmin, tenantController.getTenant);
 router.put('/:id', authenticate, requireSuperAdmin, validate(updateTenantSchema), tenantController.updateTenant);
 router.patch('/:id/status', authenticate, requireSuperAdmin, validate(updateTenantStatusSchema), tenantController.updateStatus);
 router.patch('/:id/verify-kyc', authenticate, requireSuperAdmin, validate(verifyKycSchema), tenantController.handleVerifyKyc);
+
+// Super admin: subdomain info
+router.get('/:id/subdomain', authenticate, requireSuperAdmin, tenantController.getSubdomainInfo);
 
 // Temp admin routes
 router.get('/temp-admin/active', authenticate, requireSuperAdmin, tempAdminController.getAllActiveTempAdmins);

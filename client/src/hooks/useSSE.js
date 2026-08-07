@@ -6,6 +6,23 @@ import { useAuthStore } from '../store/authStore';
 const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
 
 /**
+ * Build an absolute SSE URL from the API base.
+ * EventSource resolves relative URLs against the current page path,
+ * so on /super-admin/dashboard a relative "/api/v1/sse/connect"
+ * would become "/super-admin/api/v1/sse/connect" (wrong).
+ * Using window.location.origin + API_URL avoids this.
+ */
+function getSseUrl(token) {
+  let baseUrl = API_URL || '/api/v1';
+  if (!baseUrl.startsWith('http')) {
+    const formattedPath = baseUrl.startsWith('/') ? baseUrl : `/${baseUrl}`;
+    baseUrl = `${window.location.origin}${formattedPath}`;
+  }
+  baseUrl = baseUrl.replace(/\/+$/, '');
+  return `${baseUrl}/sse/connect?token=${encodeURIComponent(token)}`;
+}
+
+/**
  * useSSE — Connects to the server's SSE endpoint and invalidates
  * TanStack Query caches in response to real-time server events.
  *
@@ -27,14 +44,14 @@ export function useSSE() {
       return;
     }
 
-    const sseUrl = `${API_URL}/sse/connect?token=${encodeURIComponent(token)}`;
+    const sseUrl = getSseUrl(token);
 
     const connect = () => {
       // Double-check token is still valid before connecting
       const currentToken = useAuthStore.getState().token;
       if (!currentToken) return;
 
-      const url = `${API_URL}/sse/connect?token=${encodeURIComponent(currentToken)}`;
+      const url = getSseUrl(currentToken);
       const es = new EventSource(url, { withCredentials: true });
       esRef.current = es;
 

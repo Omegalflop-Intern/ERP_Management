@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+const subdomainRegex = /^[a-z0-9-]+$/;
+
 export const createTenantSchema = z.object({
   shopName: z.string().min(2).max(100).trim(),
   ownerName: z.string().min(2).max(100).trim(),
@@ -14,9 +16,17 @@ export const createTenantSchema = z.object({
     .regex(/^[a-z0-9_]+$/, 'Username can only contain lowercase letters, numbers, and underscores')
     .optional(),
   plan: z.enum(['FREE', 'STARTER', 'PRO', 'ENTERPRISE']).optional().default('STARTER'),
+  subdomain: z
+    .string()
+    .min(3, 'Subdomain must be at least 3 characters')
+    .max(63, 'Subdomain must be at most 63 characters')
+    .regex(subdomainRegex, 'Only lowercase letters, numbers, and hyphens')
+    .refine((v) => !v.startsWith('-') && !v.endsWith('-'), 'Cannot start or end with hyphen')
+    .optional(),
+  customDomain: z.string().toLowerCase().optional(),
   nidNumber: z.string().optional(),
   tradeLicenseNumber: z.string().optional(),
-  password: z.string().min(8).optional(), // If creating owner user simultaneously
+  password: z.string().min(8).optional(),
 });
 
 export const updateTenantSchema = z.object({
@@ -24,6 +34,14 @@ export const updateTenantSchema = z.object({
   ownerName: z.string().min(2).max(100).trim().optional(),
   phone: z.string().min(6).max(20).trim().optional(),
   plan: z.enum(['FREE', 'STARTER', 'PRO', 'ENTERPRISE']).optional(),
+  subdomain: z
+    .string()
+    .min(3)
+    .max(63)
+    .regex(subdomainRegex, 'Only lowercase letters, numbers, and hyphens')
+    .refine((v) => !v.startsWith('-') && !v.endsWith('-'), 'Cannot start or end with hyphen')
+    .optional(),
+  customDomain: z.string().toLowerCase().optional(),
   maxBranches: z.number().int().min(1).max(50).optional(),
   maxUsers: z.number().int().min(1).max(500).optional(),
   expiresAt: z.string().datetime({ offset: true }).or(z.null()).optional(),

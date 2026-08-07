@@ -6,6 +6,7 @@ import DashboardLayout from './components/layout/DashboardLayout';
 import { useAuth } from './context/AuthContext';
 import { useInactivityLogout } from './hooks/useInactivityLogout';
 import { useSSE } from './hooks/useSSE';
+import { detectSubdomain } from './utils/subdomain';
 
 // Lazy-loaded pages
 const Login = lazy(() => import('./pages/Auth/Login'));
@@ -132,6 +133,19 @@ const SuperAdminGuard = ({ children }) => {
   return <Navigate to="/dashboard" replace />;
 };
 
+// Subdomain guard — if accessed via subdomain, ensure user belongs to this shop
+const SubdomainGuard = ({ children }) => {
+  const subdomain = detectSubdomain();
+  const { user } = useAuth();
+  if (subdomain && user && user.tenantId) {
+    // User is logged in but accessing wrong shop's subdomain
+    if (user.subdomain !== subdomain && user.customDomain !== subdomain) {
+      return <Navigate to="/login" replace />;
+    }
+  }
+  return children;
+};
+
 export default function App() {
   const { isAuthenticated, user } = useAuth();
   // Determine where to redirect after login
@@ -159,7 +173,9 @@ export default function App() {
           path="/"
           element={
             <ProtectedRoute>
-              <DashboardLayout />
+              <SubdomainGuard>
+                <DashboardLayout />
+              </SubdomainGuard>
             </ProtectedRoute>
           }
         >
