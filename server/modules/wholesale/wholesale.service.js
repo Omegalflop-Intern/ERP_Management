@@ -1,258 +1,293 @@
-import { WholesalePrice, WholesaleOrder } from './wholesale.model.js';
-import { Transaction } from '../sale/sale.model.js';
+import { db } from '../../config/db.knex.js';
 import { ApiError } from '../../utils/http/ApiError.js';
-import { paginate, getPagination } from '../../utils/http/pagination.js';
-import { createAutomatedWholesaleJournal } from '../accounting/accounting.service.js';
+import { getPagination } from '../../utils/http/pagination.js';
 
 const genOrderNumber = async (tenantId = null) => {
-  const now = new Date();
-  const date = now.toISOString().slice(0, 10).replace(/-/g, '');
-  const countQuery = { createdAt: { $gte: new Date(now.getFullYear(), now.getMonth(), now.getDate()) } };
-  if (tenantId) countQuery.tenantId = tenantId;
-  const count = await WholesaleOrder.countDocuments(countQuery);
-  return `WS-${date}-${String(count + 1).padStart(4, '0')}`;
+  const countQuery = db('wholesale_orders');
+  if (tenantId) countQuery.where('tenant_id', tenantId);
+  const countRes = await countQuery.count({ count: '*' }).first();
+  const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  return `WS-${date}-${String(Number(countRes?.count || 0) + 1).padStart(4, '0')}`;
 };
 
-// --- Prices ---
+function parseJSON(str) {
+  if (typeof str === 'string') {
+    try { return JSON.parse(str); } catch { return []; }
+  }
+  return str || [];
+}
+
+export function formatWholesalePrice(row, productRow = null) {
+  if (!row) return null;
+  return {
+    _id: String(row.id),
+    id: row.id,
+    tenantId: row.tenant_id || null,
+    product: productRow ? {
+      _id: String(productRow.id),
+      id: productRow.id,
+      name: productRow.name,
+      sku: productRow.sku,
+      brand: productRow.brand,
+    } : String(row.product_id),
+    tier: row.tier,
+    minQty: Number(row.min_qty || 1),
+    maxQty: row.max_qty ? Number(row.max_qty) : null,
+    price: Number(row.price || 0),
+    isActive: Boolean(row.is_active),
+    isDeleted: Boolean(row.is_deleted),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export function formatWholesaleOrder(row, customerRow = null, userRow = null) {
+  if (!row) return null;
+  return {
+    _id: String(row.id),
+    id: row.id,
+    tenantId: row.tenant_id || null,
+    orderNumber: row.order_number,
+    customer: customerRow ? {
+      _id: String(customerRow.id),
+      id: customerRow.id,
+      name: customerRow.name,
+      phone: customerRow.phone,
+      companyName: customerRow.company_name || '',
+    } : String(row.customer_id),
+    items: parseJSON(row.items),
+    subTotal: Number(row.sub_total || 0),
+    discount: Number(row.discount || 0),
+    grandTotal: Number(row.grand_total || 0),
+    paidAmount: Number(row.paid_amount || 0),
+    dueAmount: Number(row.due_amount || 0),
+    paymentMethod: row.payment_method || 'CASH',
+    status: row.status || 'PENDING',
+    notes: row.notes || '',
+    createdBy: userRow ? {
+      _id: String(userRow.id),
+      id: userRow.id,
+      username: userRow.username,
+    } : (row.created_by ? String(row.created_by) : null),
+    isDeleted: Boolean(row.is_deleted),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function applyTenantScope(query, tenantId, tablePrefix = 'wholesale_orders') {
+  if (tenantId) {
+    query.where(`${tablePrefix}.tenant_id`, tenantId);
+  }
+}
+
+// Prices
 export const getAllPrices = async (page = 1, limit = 50, filters = {}, tenantId = null) => {
-  const query = { isDeleted: false };
-  if (tenantId) query.tenantId = tenantId;
-  if (filters.product) query.product = filters.product;
-  if (filters.tier) query.tier = { $regex: filters.tier, $options: 'i' };
-  const total = await WholesalePrice.countDocuments(query);
-  const prices = await paginate(WholesalePrice.find(query).populate('product', 'name sku brand'), page, limit).sort({ createdAt: -1 });
+  const countQuery = db('wholesale_prices').where('wholesale_prices.is_deleted', false);
+  applyTenantScope(countQuery, tenantId, 'wholesale_prices');
+  if (filters.product) countQuery.where('wholesale_prices.product_id', filters.product);
+
+  const countRes = await countQuery.count({ total: '*' }).first();
+  const total = Number(countRes?.total || 0);
+
+  const offset = (page - 1) * limit;
+  const dataQuery = db('wholesale_prices')
+    .leftJoin('products', 'wholesale_prices.product_id', 'products.id')
+    .where('wholesale_prices.is_deleted', false)
+    .select(
+      'wholesale_prices.*',
+      'products.id as p_id', 'products.name as p_name', 'products.sku as p_sku', 'products.brand as p_brand'
+    );
+  applyTenantScope(dataQuery, tenantId, 'wholesale_prices');
+  if (filters.product) dataQuery.where('wholesale_prices.product_id', filters.product);
+
+  const rows = await dataQuery.orderBy('wholesale_prices.created_at', 'desc').limit(limit).offset(offset);
+
+  const prices = rows.map((row) => {
+    const pRow = row.p_id ? { id: row.p_id, name: row.p_name, sku: row.p_sku, brand: row.p_brand } : null;
+    return formatWholesalePrice(row, pRow);
+  });
+
   return { prices, pagination: getPagination(total, page, limit) };
 };
 
-export const createPrice = async (data) => {
-  return WholesalePrice.create(data);
+export const createPrice = async (data, tenantId = null) => {
+  const [insertedId] = await db('wholesale_prices').insert({
+    tenant_id: tenantId || data.tenantId || null,
+    product_id: data.product || data.productId,
+    tier: data.tier,
+    min_qty: data.minQty || 1,
+    max_qty: data.maxQty || null,
+    price: data.price,
+    is_active: data.isActive !== undefined ? Boolean(data.isActive) : true,
+    is_deleted: false,
+  });
+
+  const q = db('wholesale_prices').where({ id: insertedId });
+  if (tenantId) q.andWhere('tenant_id', tenantId);
+  const row = await q.first();
+  return formatWholesalePrice(row);
 };
 
 export const updatePrice = async (id, data, tenantId = null) => {
-  const query = { _id: id, isDeleted: false };
-  if (tenantId) query.tenantId = tenantId;
-  const price = await WholesalePrice.findOne(query);
+  const query = db('wholesale_prices').where({ id, is_deleted: false });
+  applyTenantScope(query, tenantId, 'wholesale_prices');
+  const price = await query.first();
   if (!price) throw ApiError.notFound('Wholesale price not found');
-  Object.assign(price, data);
-  await price.save();
-  return price;
+
+  const updateFields = {};
+  if (data.tier !== undefined) updateFields.tier = data.tier;
+  if (data.minQty !== undefined) updateFields.min_qty = data.minQty;
+  if (data.maxQty !== undefined) updateFields.max_qty = data.maxQty;
+  if (data.price !== undefined) updateFields.price = data.price;
+  if (data.isActive !== undefined) updateFields.is_active = Boolean(data.isActive);
+
+  if (Object.keys(updateFields).length > 0) {
+    const uq = db('wholesale_prices').where({ id });
+    if (tenantId) uq.andWhere('tenant_id', tenantId);
+    await uq.update(updateFields);
+  }
+
+  const rq = db('wholesale_prices').where({ id });
+  if (tenantId) rq.andWhere('tenant_id', tenantId);
+  const updated = await rq.first();
+  return formatWholesalePrice(updated);
 };
 
 export const deletePrice = async (id, tenantId = null) => {
-  const query = { _id: id, isDeleted: false };
-  if (tenantId) query.tenantId = tenantId;
-  const price = await WholesalePrice.findOne(query);
+  const query = db('wholesale_prices').where({ id, is_deleted: false });
+  applyTenantScope(query, tenantId, 'wholesale_prices');
+  const price = await query.first();
   if (!price) throw ApiError.notFound('Wholesale price not found');
-  price.isDeleted = true;
-  await price.save();
+
+  const delQ = db('wholesale_prices').where({ id });
+  if (tenantId) delQ.andWhere('tenant_id', tenantId);
+  await delQ.update({ is_deleted: true });
+  return { id, isDeleted: true };
 };
 
-// --- Orders ---
+// Orders
 export const getAllOrders = async (page = 1, limit = 20, filters = {}, tenantId = null) => {
-  const query = { isDeleted: false };
-  if (tenantId) query.tenantId = tenantId;
-  if (filters.customer) query.customer = filters.customer;
-  if (filters.status) query.status = filters.status;
+  const countQuery = db('wholesale_orders').where('wholesale_orders.is_deleted', false);
+  applyTenantScope(countQuery, tenantId, 'wholesale_orders');
+  if (filters.status) countQuery.where('wholesale_orders.status', filters.status);
 
-  const total = await WholesaleOrder.countDocuments(query);
-  const rawOrders = await paginate(WholesaleOrder.find(query).populate('customer', 'name phone companyName').populate('createdBy', 'fullName username'), page, limit).sort({ createdAt: -1 });
+  const countRes = await countQuery.count({ total: '*' }).first();
+  const total = Number(countRes?.total || 0);
 
-  // Also fetch POS sales with saleType: WHOLESALE
-  const saleQuery = { txType: 'SALE', saleType: 'WHOLESALE' };
-  if (tenantId) saleQuery.tenantId = tenantId;
-  if (filters.status === 'COMPLETED' || !filters.status) {
-    const wholesaleSales = await Transaction.find(saleQuery)
-      .populate('customerId', 'name phone companyName')
-      .sort({ createdAt: -1 })
-      .limit(limit);
+  const offset = (page - 1) * limit;
+  const dataQuery = db('wholesale_orders')
+    .leftJoin('customers', 'wholesale_orders.customer_id', 'customers.id')
+    .leftJoin('users', 'wholesale_orders.created_by', 'users.id')
+    .where('wholesale_orders.is_deleted', false)
+    .select(
+      'wholesale_orders.*',
+      'customers.id as c_id', 'customers.name as c_name', 'customers.phone as c_phone', 'customers.company_name as c_company',
+      'users.id as u_id', 'users.username as u_username'
+    );
+  applyTenantScope(dataQuery, tenantId, 'wholesale_orders');
+  if (filters.status) dataQuery.where('wholesale_orders.status', filters.status);
 
-    const formattedSales = wholesaleSales.map(s => ({
-      _id: s._id,
-      orderNumber: s.invoiceNumber,
-      customer: s.customerId || { name: s.customerName || 'Walk-in Dealer', phone: s.customerPhone || '' },
-      grandTotal: s.netTotal,
-      paidAmount: (s.paymentBreakdown?.cash || 0) + (s.paymentBreakdown?.bkash || 0) + (s.paymentBreakdown?.rocket || 0) + (s.paymentBreakdown?.nagad || 0) + (s.paymentBreakdown?.bank || 0),
-      dueAmount: s.paymentBreakdown?.dueAmount || 0,
-      status: s.status === 'COMPLETED' ? 'DELIVERED' : 'PENDING',
-      createdAt: s.createdAt,
-      isPosSale: true,
-    }));
+  const rows = await dataQuery.orderBy('wholesale_orders.created_at', 'desc').limit(limit).offset(offset);
 
-    const combined = [...formattedSales, ...rawOrders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    return { orders: combined.slice(0, limit), pagination: getPagination(total + formattedSales.length, page, limit) };
-  }
+  const orders = rows.map((row) => {
+    const cRow = row.c_id ? { id: row.c_id, name: row.c_name, phone: row.c_phone, company_name: row.c_company } : null;
+    const uRow = row.u_id ? { id: row.u_id, username: row.u_username } : null;
+    return formatWholesaleOrder(row, cRow, uRow);
+  });
 
-  return { orders: rawOrders, pagination: getPagination(total, page, limit) };
+  return { orders, pagination: getPagination(total, page, limit) };
 };
 
 export const getOrderById = async (id, tenantId = null) => {
-  const orderQuery = { _id: id, isDeleted: false };
-  if (tenantId) orderQuery.tenantId = tenantId;
-  const order = await WholesaleOrder.findOne(orderQuery)
-    .populate('customer', 'name phone email companyName')
-    .populate('items.product', 'name sku brand')
-    .populate('createdBy', 'fullName username');
-  if (order) return order;
+  const dataQuery = db('wholesale_orders')
+    .leftJoin('customers', 'wholesale_orders.customer_id', 'customers.id')
+    .leftJoin('users', 'wholesale_orders.created_by', 'users.id')
+    .where({ 'wholesale_orders.id': id, 'wholesale_orders.is_deleted': false })
+    .select(
+      'wholesale_orders.*',
+      'customers.id as c_id', 'customers.name as c_name', 'customers.phone as c_phone', 'customers.company_name as c_company',
+      'users.id as u_id', 'users.username as u_username'
+    );
+  applyTenantScope(dataQuery, tenantId, 'wholesale_orders');
 
-  // Fallback to POS Sale if ID is a Transaction
-  const posQuery = { _id: id, txType: 'SALE' };
-  if (tenantId) posQuery.tenantId = tenantId;
-  const posSale = await Transaction.findOne(posQuery).populate('customerId', 'name phone email companyName');
-  if (posSale) {
-    return {
-      _id: posSale._id,
-      orderNumber: posSale.invoiceNumber,
-      customer: posSale.customerId || { name: posSale.customerName, phone: posSale.customerPhone, email: posSale.customerEmail },
-      items: (posSale.lineItems || []).map(li => ({
-        product: { name: li.description },
-        quantity: li.qty,
-        unitPrice: li.unitPrice,
-        total: li.totalPrice,
-      })),
-      subTotal: posSale.subTotal,
-      discount: posSale.discount,
-      grandTotal: posSale.netTotal,
-      paidAmount: (posSale.paymentBreakdown?.cash || 0) + (posSale.paymentBreakdown?.bkash || 0) + (posSale.paymentBreakdown?.rocket || 0) + (posSale.paymentBreakdown?.nagad || 0) + (posSale.paymentBreakdown?.bank || 0),
-      dueAmount: posSale.paymentBreakdown?.dueAmount || 0,
-      status: posSale.status === 'COMPLETED' ? 'DELIVERED' : 'PENDING',
-      createdAt: posSale.createdAt,
-      isPosSale: true,
-    };
-  }
+  const row = await dataQuery.first();
+  if (!row) throw ApiError.notFound('Order not found');
 
-  throw ApiError.notFound('Order not found');
+  const cRow = row.c_id ? { id: row.c_id, name: row.c_name, phone: row.c_phone, company_name: row.c_company } : null;
+  const uRow = row.u_id ? { id: row.u_id, username: row.u_username } : null;
+
+  return formatWholesaleOrder(row, cRow, uRow);
 };
 
 export const createOrder = async (data, userId, tenantId = null) => {
   const orderNumber = await genOrderNumber(tenantId);
-  const items = data.items.map(item => ({ ...item, total: item.quantity * item.unitPrice }));
+  const items = (data.items || []).map(item => ({ ...item, total: item.quantity * item.unitPrice }));
   const subTotal = items.reduce((sum, i) => sum + i.total, 0);
   const grandTotal = subTotal - (data.discount || 0);
-  const dueAmount = grandTotal - (data.paidAmount || 0);
+  const paidAmount = data.paidAmount || 0;
+  const dueAmount = grandTotal - paidAmount;
 
-  return WholesaleOrder.create({
-    orderNumber,
-    tenantId: tenantId || data.tenantId || null,
-    customer: data.customer,
-    items,
-    subTotal,
+  const [insertedId] = await db('wholesale_orders').insert({
+    tenant_id: tenantId || data.tenantId || null,
+    order_number: orderNumber,
+    customer_id: data.customer || data.customerId,
+    items: JSON.stringify(items),
+    sub_total: subTotal,
     discount: data.discount || 0,
-    grandTotal,
-    paidAmount: data.paidAmount || 0,
-    dueAmount,
-    paymentMethod: data.paymentMethod,
-    notes: data.notes,
-    createdBy: userId,
+    grand_total: grandTotal,
+    paid_amount: paidAmount,
+    due_amount: dueAmount,
+    payment_method: data.paymentMethod || 'CASH',
+    status: data.status || 'PENDING',
+    notes: data.notes || null,
+    created_by: userId || null,
+    is_deleted: false,
   });
 
-  await createAutomatedWholesaleJournal(order, tenantId).catch(err => console.error('Wholesale journal failed:', err));
-
-  return order;
+  return getOrderById(insertedId, tenantId);
 };
 
 export const updateOrder = async (id, data, tenantId = null) => {
-  const query = { _id: id, isDeleted: false };
-  if (tenantId) query.tenantId = tenantId;
-  const order = await WholesaleOrder.findOne(query);
+  const order = await getOrderById(id, tenantId);
   if (!order) throw ApiError.notFound('Order not found');
-  Object.assign(order, data);
+
+  const updateFields = {};
+  if (data.status !== undefined) updateFields.status = data.status;
   if (data.paidAmount !== undefined) {
-    order.dueAmount = order.grandTotal - data.paidAmount;
+    updateFields.paid_amount = data.paidAmount;
+    updateFields.due_amount = Math.max(0, order.grandTotal - data.paidAmount);
   }
-  await order.save();
-  return order;
+
+  if (Object.keys(updateFields).length > 0) {
+    const oq = db('wholesale_orders').where({ id });
+    if (tenantId) oq.andWhere('tenant_id', tenantId);
+    await oq.update(updateFields);
+  }
+
+  return getOrderById(id, tenantId);
 };
 
 export const deleteOrder = async (id, tenantId = null) => {
-  const query = { _id: id, isDeleted: false };
-  if (tenantId) query.tenantId = tenantId;
-  const order = await WholesaleOrder.findOne(query);
+  const order = await getOrderById(id, tenantId);
   if (!order) throw ApiError.notFound('Order not found');
-  order.isDeleted = true;
-  await order.save();
-};
 
-import { Customer } from '../customer/customer.model.js';
-import { processReturn as processSaleReturn } from '../sale/sale.service.js';
+  const delQ = db('wholesale_orders').where({ id });
+  if (tenantId) delQ.andWhere('tenant_id', tenantId);
+  await delQ.update({ is_deleted: true });
+  return { ...order, isDeleted: true };
+};
 
 export const getOrdersStats = async (tenantId = null) => {
-  const orderQuery = { isDeleted: false };
-  if (tenantId) orderQuery.tenantId = tenantId;
-  const totalOrders = await WholesaleOrder.countDocuments(orderQuery);
-  const matchQuery = { isDeleted: false };
-  if (tenantId) matchQuery.tenantId = tenantId;
-  const totalRevenue = await WholesaleOrder.aggregate([
-    { $match: matchQuery },
-    { $group: { _id: null, total: { $sum: '$grandTotal' }, due: { $sum: '$dueAmount' } } },
-  ]);
+  const query = db('wholesale_orders').where({ is_deleted: false });
+  applyTenantScope(query, tenantId, 'wholesale_orders');
 
-  const posMatch = { txType: 'SALE', saleType: 'WHOLESALE' };
-  if (tenantId) posMatch.tenantId = tenantId;
-  const posWholesaleStats = await Transaction.aggregate([
-    { $match: posMatch },
-    { $group: { _id: null, count: { $sum: 1 }, total: { $sum: '$netTotal' }, due: { $sum: '$paymentBreakdown.dueAmount' } } }
-  ]);
+  const countRes = await query.count({ totalOrders: '*' }).sum({ totalRevenue: 'grand_total' }).sum({ totalDue: 'due_amount' }).first();
 
-  const wsCount = (totalOrders || 0) + (posWholesaleStats[0]?.count || 0);
-  const wsRevenue = (totalRevenue[0]?.total || 0) + (posWholesaleStats[0]?.total || 0);
-  const wsDue = (totalRevenue[0]?.due || 0) + (posWholesaleStats[0]?.due || 0);
-  const wsPaid = Math.max(0, wsRevenue - wsDue);
+  const totalOrders = Number(countRes?.totalOrders || 0);
+  const totalRevenue = Number(countRes?.totalRevenue || 0);
+  const totalDue = Number(countRes?.totalDue || 0);
+  const totalPaid = Math.max(0, totalRevenue - totalDue);
 
-  return { totalOrders: wsCount, totalRevenue: wsRevenue, totalPaid: wsPaid, totalDue: wsDue };
-};
-
-export const collectOrderDue = async (id, { amount, paymentMethod = 'cash', reference, notes }, tenantId = null) => {
-  const numAmount = Number(amount);
-  if (isNaN(numAmount) || numAmount <= 0) throw ApiError.badRequest('Invalid due collection amount');
-
-  // Try POS Sale Transaction first
-  const saleQuery = { _id: id, txType: 'SALE' };
-  if (tenantId) saleQuery.tenantId = tenantId;
-  const sale = await Transaction.findOne(saleQuery);
-  if (sale) {
-    const currentDue = sale.paymentBreakdown?.dueAmount || 0;
-    if (currentDue <= 0) throw ApiError.badRequest('This wholesale sale has no pending due balance');
-    const collectAmt = Math.min(numAmount, currentDue);
-
-    sale.paymentBreakdown[paymentMethod] = (sale.paymentBreakdown[paymentMethod] || 0) + collectAmt;
-    sale.paymentBreakdown.dueAmount = currentDue - collectAmt;
-    await sale.save();
-
-    if (sale.customerId) {
-      const custQuery = { _id: sale.customerId };
-      if (tenantId) custQuery.tenantId = tenantId;
-      await Customer.updateOne(custQuery, { $inc: { dueBalance: -collectAmt } }).catch(() => {});
-    }
-    return { orderId: sale._id, collectedAmount: collectAmt, remainingDue: sale.paymentBreakdown.dueAmount };
-  }
-
-  // Fallback to WholesaleOrder collection
-  const orderQuery = { _id: id, isDeleted: false };
-  if (tenantId) orderQuery.tenantId = tenantId;
-  const order = await WholesaleOrder.findOne(orderQuery);
-  if (!order) throw ApiError.notFound('Wholesale order not found');
-
-  if (order.dueAmount <= 0) throw ApiError.badRequest('This wholesale order has no pending due balance');
-  const collectAmt = Math.min(numAmount, order.dueAmount);
-
-  order.paidAmount = (order.paidAmount || 0) + collectAmt;
-  order.dueAmount = Math.max(0, order.dueAmount - collectAmt);
-  await order.save();
-
-  if (order.customer) {
-    const custQuery = { _id: order.customer };
-    if (tenantId) custQuery.tenantId = tenantId;
-    await Customer.updateOne(custQuery, { $inc: { dueBalance: -collectAmt } }).catch(() => {});
-  }
-  return { orderId: order._id, collectedAmount: collectAmt, remainingDue: order.dueAmount };
-};
-
-export const processOrderReturn = async (id, returnData, username, tenantId = null) => {
-  const saleQuery = { _id: id, txType: 'SALE' };
-  if (tenantId) saleQuery.tenantId = tenantId;
-  const sale = await Transaction.findOne(saleQuery);
-  if (sale) {
-    return processSaleReturn(id, returnData, username);
-  }
-  throw ApiError.notFound('Wholesale sale transaction not found for return processing');
+  return { totalOrders, totalRevenue, totalPaid, totalDue };
 };

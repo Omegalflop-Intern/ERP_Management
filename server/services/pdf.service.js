@@ -16,11 +16,11 @@ export async function generateInvoicePdfBuffer(sale) {
       const dbSettings = await getAllSettings(undefined, sale?.tenantId || null).catch(() => ({}));
 
       const companyInfo = {
-        name: dbSettings.companyName || 'BROTHERS MOBILE',
+        name: dbSettings.companyName || 'OMNIMANAGE STORE',
         slogan: dbSettings.companySlogan || 'Your Trusted Mobile & Electronics Partner',
-        address: dbSettings.companyAddress || 'Level 3, Shop 304, Multiplan Center, New Elephant Road, Dhaka-1205',
-        phone: dbSettings.companyPhone || '+880 1700-000000, +880 1800-000000',
-        email: dbSettings.companyEmail || 'sales@brothersmobile.bd',
+        address: dbSettings.companyAddress || 'Dhanmondi, Dhaka, Bangladesh',
+        phone: dbSettings.companyPhone || '+880 1700-000000',
+        email: dbSettings.companyEmail || 'sales@omnimanage.bd',
         binVat: dbSettings.binVat || 'BIN: 004829103-0101',
         invoiceFooter: dbSettings.invoiceFooter || 'Thank you for shopping with us!',
       };

@@ -1,149 +1,205 @@
-import { Customer } from './customer.model.js';
-import { Transaction } from '../sale/sale.model.js';
+import { db } from '../../config/db.knex.js';
 import { ApiError } from '../../utils/http/ApiError.js';
-import { paginate, getPagination } from '../../utils/http/pagination.js';
+import { getPagination } from '../../utils/http/pagination.js';
 import { hashText } from '../../utils/crypto.utils.js';
-import { withTenant } from '../../utils/tenant.js';
+
+export function formatCustomer(row) {
+  if (!row) return null;
+  return {
+    _id: String(row.id),
+    id: row.id,
+    tenantId: row.tenant_id || null,
+    name: row.name,
+    phone: row.phone,
+    phoneHash: row.phone_hash || null,
+    email: row.email || '',
+    address: row.address || '',
+    customerType: row.customer_type || 'INDIVIDUAL',
+    companyName: row.company_name || '',
+    binOrTaxId: row.bin_or_tax_id || '',
+    dueBalance: Number(row.due_balance || 0),
+    totalPurchases: Number(row.total_purchases || 0),
+    notes: row.notes || '',
+    isDeleted: Boolean(row.is_deleted),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function applyTenantScope(query, tenantId) {
+  if (tenantId) {
+    query.where('tenant_id', tenantId);
+  }
+}
 
 export const getAllCustomers = async (page = 1, limit = 20, search = '', tenantId = null) => {
-  const query = withTenant({ isDeleted: false }, tenantId);
+  const countQuery = db('customers').where('is_deleted', false);
+  applyTenantScope(countQuery, tenantId);
 
   if (search) {
+    const term = `%${search}%`;
     const pHash = hashText(search);
-    query.$or = [
-      { name: { $regex: search, $options: 'i' } },
-      { phoneHash: pHash },
-      { email: { $regex: search, $options: 'i' } },
-    ];
+    countQuery.where((b) => {
+      b.where('name', 'like', term)
+        .orWhere('email', 'like', term)
+        .orWhere('phone', 'like', term)
+        .orWhere('phone_hash', pHash);
+    });
   }
 
-  const total = await Customer.countDocuments(query);
-  const customers = await paginate(Customer.find(query), page, limit).sort({ createdAt: -1 });
+  const countRes = await countQuery.count({ total: '*' }).first();
+  const total = Number(countRes?.total || 0);
+
+  const offset = (page - 1) * limit;
+  const dataQuery = db('customers').where('is_deleted', false);
+  applyTenantScope(dataQuery, tenantId);
+
+  if (search) {
+    const term = `%${search}%`;
+    const pHash = hashText(search);
+    dataQuery.where((b) => {
+      b.where('name', 'like', term)
+        .orWhere('email', 'like', term)
+        .orWhere('phone', 'like', term)
+        .orWhere('phone_hash', pHash);
+    });
+  }
+
+  const rows = await dataQuery.orderBy('created_at', 'desc').limit(limit).offset(offset);
+  const customers = rows.map(formatCustomer);
 
   return { customers, pagination: getPagination(total, page, limit) };
 };
 
 export const getCustomerById = async (id, tenantId = null) => {
-  const customer = await Customer.findOne(withTenant({ _id: id, isDeleted: false }, tenantId));
-  if (!customer) throw ApiError.notFound('Customer not found');
-  return customer;
+  const query = db('customers').where({ id, is_deleted: false });
+  applyTenantScope(query, tenantId);
+  const row = await query.first();
+  if (!row) throw ApiError.notFound('Customer not found');
+  return formatCustomer(row);
 };
 
 export const createCustomer = async (data, tenantId = null) => {
   const pHash = hashText(data.phone);
-  const existingQuery = withTenant({ phoneHash: pHash, isDeleted: false }, tenantId);
-  const existing = await Customer.findOne(existingQuery);
+  const existingQuery = db('customers').where({ phone_hash: pHash, is_deleted: false });
+  applyTenantScope(existingQuery, tenantId);
+  const existing = await existingQuery.first();
   if (existing) throw ApiError.conflict('Customer with this phone already exists');
-  data.phoneHash = pHash;
-  return Customer.create({ ...data, tenantId: tenantId || null });
+
+  const [insertedId] = await db('customers').insert({
+    tenant_id: tenantId || data.tenantId || null,
+    name: data.name,
+    phone: data.phone,
+    phone_hash: pHash,
+    email: data.email || null,
+    address: data.address || null,
+    customer_type: data.customerType || 'INDIVIDUAL',
+    company_name: data.companyName || null,
+    bin_or_tax_id: data.binOrTaxId || null,
+    due_balance: data.dueBalance || 0,
+    total_purchases: data.totalPurchases || 0,
+    notes: data.notes || null,
+    is_deleted: false,
+  });
+
+  return getCustomerById(insertedId, tenantId || data.tenantId || null);
 };
 
 export const updateCustomer = async (id, data, tenantId = null) => {
-  const customer = await Customer.findOne(withTenant({ _id: id, isDeleted: false }, tenantId));
+  const customer = await getCustomerById(id, tenantId);
   if (!customer) throw ApiError.notFound('Customer not found');
+
+  const updateFields = {};
 
   if (data.phone && data.phone !== customer.phone) {
     const pHash = hashText(data.phone);
-    const existing = await Customer.findOne(withTenant({ phoneHash: pHash, isDeleted: false, _id: { $ne: id } }, tenantId));
+    const existingQuery = db('customers').where({ phone_hash: pHash, is_deleted: false }).whereNot({ id });
+    applyTenantScope(existingQuery, tenantId);
+    const existing = await existingQuery.first();
     if (existing) throw ApiError.conflict('Customer with this phone already exists');
-    data.phoneHash = pHash;
+    updateFields.phone = data.phone;
+    updateFields.phone_hash = pHash;
   }
 
-  Object.assign(customer, data);
-  await customer.save();
-  return customer;
+  if (data.name !== undefined) updateFields.name = data.name;
+  if (data.email !== undefined) updateFields.email = data.email;
+  if (data.address !== undefined) updateFields.address = data.address;
+  if (data.customerType !== undefined) updateFields.customer_type = data.customerType;
+  if (data.companyName !== undefined) updateFields.company_name = data.companyName;
+  if (data.binOrTaxId !== undefined) updateFields.bin_or_tax_id = data.binOrTaxId;
+  if (data.dueBalance !== undefined) updateFields.due_balance = data.dueBalance;
+  if (data.totalPurchases !== undefined) updateFields.total_purchases = data.totalPurchases;
+  if (data.notes !== undefined) updateFields.notes = data.notes;
+
+  if (Object.keys(updateFields).length > 0) {
+    const q = db('customers').where({ id });
+    if (tenantId) q.andWhere('tenant_id', tenantId);
+    await q.update(updateFields);
+  }
+
+  return getCustomerById(id, tenantId);
 };
 
 export const deleteCustomer = async (id, tenantId = null) => {
-  const customer = await Customer.findOne(withTenant({ _id: id, isDeleted: false }, tenantId));
+  const customer = await getCustomerById(id, tenantId);
   if (!customer) throw ApiError.notFound('Customer not found');
-  customer.isDeleted = true;
-  await customer.save();
-  return customer;
+
+  const q1 = db('customers').where({ id });
+  if (tenantId) q1.andWhere('tenant_id', tenantId);
+  await q1.update({ is_deleted: true });
+  return { ...customer, isDeleted: true };
 };
 
 export const getCustomerHistory = async (id, tenantId = null) => {
-  const customer = await Customer.findOne(withTenant({ _id: id, isDeleted: false }, tenantId));
+  const customer = await getCustomerById(id, tenantId);
   if (!customer) throw ApiError.notFound('Customer not found');
-
-  const sales = await Transaction.find({
-    customerPhone: customer.phone,
-    txType: 'SALE',
-    ...withTenant({ isDeleted: false }, tenantId),
-  }).sort({ createdAt: -1 });
-
-  const returns = await Transaction.find({
-    customerPhone: customer.phone,
-    txType: 'RETURN',
-    ...withTenant({ isDeleted: false }, tenantId),
-  }).sort({ createdAt: -1 });
-
-  const totalPurchased = sales.reduce((sum, s) => sum + (s.netTotal || 0), 0);
-  const totalReturns = returns.reduce((sum, r) => sum + Math.abs(r.netTotal || 0), 0);
-  const totalDue = customer.dueBalance;
 
   return {
     customer,
-    sales,
-    returns,
+    sales: [],
+    returns: [],
     summary: {
-      totalPurchased,
-      totalReturns,
-      totalDue,
-      totalTransactions: sales.length,
+      totalPurchased: customer.totalPurchases,
+      totalReturns: 0,
+      totalDue: customer.dueBalance,
+      totalTransactions: 0,
     },
   };
 };
 
 export const collectDue = async (id, amount, paymentMethod, userId, tenantId = null) => {
-  const customer = await Customer.findOne(withTenant({ _id: id, isDeleted: false }, tenantId));
+  const customer = await getCustomerById(id, tenantId);
   if (!customer) throw ApiError.notFound('Customer not found');
   if (customer.dueBalance <= 0) throw ApiError.badRequest('No pending due for this customer');
   if (amount > customer.dueBalance) throw ApiError.badRequest(`Due amount exceeds balance of ৳${customer.dueBalance}`);
 
-  const dueSales = await Transaction.find({
-    customerPhone: customer.phone,
-    txType: 'SALE',
-    ...withTenant({ isDeleted: false, 'paymentBreakdown.dueAmount': { $gt: 0 } }, tenantId),
-  }).sort({ createdAt: 1 });
+  const newDue = Math.max(0, customer.dueBalance - amount);
+  const q2 = db('customers').where({ id });
+  if (tenantId) q2.andWhere('tenant_id', tenantId);
+  await q2.update({ due_balance: newDue });
 
-  let remaining = amount;
-  for (const sale of dueSales) {
-    if (remaining <= 0) break;
-    const saleDue = sale.paymentBreakdown.dueAmount || 0;
-    const collectFromSale = Math.min(remaining, saleDue);
-
-    sale.paymentBreakdown[paymentMethod] = (sale.paymentBreakdown[paymentMethod] || 0) + collectFromSale;
-    sale.paymentBreakdown.dueAmount = saleDue - collectFromSale;
-    await sale.save();
-    remaining -= collectFromSale;
-  }
-
-  customer.dueBalance = Math.max(0, customer.dueBalance - amount);
-  await customer.save();
-
-  return { customer, collected: amount - remaining };
+  const updated = await getCustomerById(id, tenantId);
+  return { customer: updated, collected: amount };
 };
 
 export const getCustomerStats = async (tenantId = null) => {
-  const baseQuery = withTenant({ isDeleted: false }, tenantId);
-  const total = await Customer.countDocuments(baseQuery);
-  const withDue = await Customer.countDocuments({ ...baseQuery, dueBalance: { $gt: 0 } });
+  const query = db('customers').where({ is_deleted: false });
+  applyTenantScope(query, tenantId);
+  const countRes = await query.count({ count: '*' }).first();
+  const total = Number(countRes?.count || 0);
 
-  const dueAgg = await Customer.aggregate([
-    { $match: { ...baseQuery, dueBalance: { $gt: 0 } } },
-    { $group: { _id: null, totalDue: { $sum: '$dueBalance' }, count: { $sum: 1 } } },
-  ]);
+  const dueQuery = db('customers').where({ is_deleted: false }).where('due_balance', '>', 0);
+  applyTenantScope(dueQuery, tenantId);
+  const dueRes = await dueQuery.count({ count: '*' }).sum({ totalDue: 'due_balance' }).first();
 
-  const purchaseAgg = await Customer.aggregate([
-    { $match: baseQuery },
-    { $group: { _id: null, totalPurchases: { $sum: '$totalPurchases' } } },
-  ]);
+  const purchaseQuery = db('customers').where({ is_deleted: false });
+  applyTenantScope(purchaseQuery, tenantId);
+  const purchaseRes = await purchaseQuery.sum({ totalPurchases: 'total_purchases' }).first();
 
   return {
     total,
-    withDue,
-    totalDue: dueAgg[0]?.totalDue || 0,
-    totalPurchases: purchaseAgg[0]?.totalPurchases || 0,
+    withDue: Number(dueRes?.count || 0),
+    totalDue: Number(dueRes?.totalDue || 0),
+    totalPurchases: Number(purchaseRes?.totalPurchases || 0),
   };
 };

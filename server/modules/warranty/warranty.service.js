@@ -1,200 +1,166 @@
-import { WarrantyClaim } from './warranty.model.js';
+import { db } from '../../config/db.knex.js';
 import { ApiError } from '../../utils/http/ApiError.js';
-import { paginate, getPagination } from '../../utils/http/pagination.js';
-import { withTenant } from '../../utils/tenant.js';
+import { getPagination } from '../../utils/http/pagination.js';
+
+export function formatWarrantyClaim(row, imeiRow = null, customerRow = null, invoiceRow = null, userRow = null) {
+  if (!row) return null;
+  return {
+    _id: String(row.id),
+    id: row.id,
+    tenantId: row.tenant_id || null,
+    imei: imeiRow ? {
+      _id: String(imeiRow.id),
+      id: imeiRow.id,
+      imeiOrSerial: imeiRow.imei_or_serial,
+      warrantyMonths: Number(imeiRow.warranty_months || 12),
+      warrantyExpiry: imeiRow.warranty_expiry || null,
+    } : String(row.imei_id),
+    customer: customerRow ? {
+      _id: String(customerRow.id),
+      id: customerRow.id,
+      name: customerRow.name,
+      phone: customerRow.phone,
+      email: customerRow.email || '',
+      address: customerRow.address || '',
+    } : String(row.customer_id),
+    invoiceRef: invoiceRow ? {
+      _id: String(invoiceRow.id),
+      id: invoiceRow.id,
+      invoiceNumber: invoiceRow.invoice_number,
+      netTotal: Number(invoiceRow.net_total || 0),
+    } : (row.invoice_id ? String(row.invoice_id) : null),
+    claimType: row.claim_type,
+    description: row.description,
+    status: row.status || 'pending',
+    resolution: row.resolution || '',
+    resolvedBy: userRow ? {
+      _id: String(userRow.id),
+      id: userRow.id,
+      username: userRow.username,
+    } : (row.resolved_by ? String(row.resolved_by) : null),
+    resolvedAt: row.resolved_at || null,
+    notes: row.notes || '',
+    isDeleted: Boolean(row.is_deleted),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function applyTenantScope(query, tenantId, tablePrefix = 'warranty_claims') {
+  if (tenantId) {
+    query.where(`${tablePrefix}.tenant_id`, tenantId);
+  }
+}
 
 export const getAllClaims = async (page = 1, limit = 20, status = '', search = '', tenantId = null) => {
-  const query = withTenant({}, tenantId);
-  if (status) query.status = status;
+  const countQuery = db('warranty_claims').where({ 'warranty_claims.is_deleted': false });
+  applyTenantScope(countQuery, tenantId, 'warranty_claims');
+  if (status) countQuery.where('warranty_claims.status', status);
 
-  if (search) {
-    query.$or = [
-      { description: { $regex: search, $options: 'i' } },
-      { resolution: { $regex: search, $options: 'i' } },
-    ];
-  }
+  const countRes = await countQuery.count({ total: '*' }).first();
+  const total = Number(countRes?.total || 0);
 
-  const total = await WarrantyClaim.countDocuments(query);
-  const claims = await paginate(WarrantyClaim.find(query), page, limit)
-    .populate('imei', 'imeiOrSerial productId')
-    .populate('customer', 'name phone')
-    .sort({ createdAt: -1 });
+  const offset = (page - 1) * limit;
+  const dataQuery = db('warranty_claims')
+    .leftJoin('inventory_units', 'warranty_claims.imei_id', 'inventory_units.id')
+    .leftJoin('customers', 'warranty_claims.customer_id', 'customers.id')
+    .leftJoin('transactions', 'warranty_claims.invoice_id', 'transactions.id')
+    .leftJoin('users', 'warranty_claims.resolved_by', 'users.id')
+    .where({ 'warranty_claims.is_deleted': false })
+    .select(
+      'warranty_claims.*',
+      'inventory_units.id as i_id', 'inventory_units.imei_or_serial as i_imei', 'inventory_units.warranty_months as i_wm', 'inventory_units.warranty_expiry as i_we',
+      'customers.id as c_id', 'customers.name as c_name', 'customers.phone as c_phone', 'customers.email as c_email', 'customers.address as c_address',
+      'transactions.id as tx_id', 'transactions.invoice_number as tx_num', 'transactions.net_total as tx_total',
+      'users.id as u_id', 'users.username as u_username'
+    );
+  applyTenantScope(dataQuery, tenantId, 'warranty_claims');
+  if (status) dataQuery.where('warranty_claims.status', status);
+
+  const rows = await dataQuery.orderBy('warranty_claims.created_at', 'desc').limit(limit).offset(offset);
+
+  const claims = rows.map((row) => {
+    const iRow = row.i_id ? { id: row.i_id, imei_or_serial: row.i_imei, warranty_months: row.i_wm, warranty_expiry: row.i_we } : null;
+    const cRow = row.c_id ? { id: row.c_id, name: row.c_name, phone: row.c_phone, email: row.c_email, address: row.c_address } : null;
+    const txRow = row.tx_id ? { id: row.tx_id, invoice_number: row.tx_num, net_total: row.tx_total } : null;
+    const uRow = row.u_id ? { id: row.u_id, username: row.u_username } : null;
+    return formatWarrantyClaim(row, iRow, cRow, txRow, uRow);
+  });
 
   return { claims, pagination: getPagination(total, page, limit) };
 };
 
 export const getClaimById = async (id, tenantId = null) => {
-  const query = withTenant({ _id: id }, tenantId);
-  const claim = await WarrantyClaim.findOne(query)
-    .populate('imei', 'imeiOrSerial productId warrantyMonths warrantyExpiry')
-    .populate('customer', 'name phone email address')
-    .populate('invoiceRef', 'invoiceNumber netTotal')
-    .populate('resolvedBy', 'username');
-  if (!claim) throw ApiError.notFound('Warranty claim not found');
-  return claim;
+  const dataQuery = db('warranty_claims')
+    .leftJoin('inventory_units', 'warranty_claims.imei_id', 'inventory_units.id')
+    .leftJoin('customers', 'warranty_claims.customer_id', 'customers.id')
+    .leftJoin('transactions', 'warranty_claims.invoice_id', 'transactions.id')
+    .leftJoin('users', 'warranty_claims.resolved_by', 'users.id')
+    .where({ 'warranty_claims.id': id, 'warranty_claims.is_deleted': false })
+    .select(
+      'warranty_claims.*',
+      'inventory_units.id as i_id', 'inventory_units.imei_or_serial as i_imei', 'inventory_units.warranty_months as i_wm', 'inventory_units.warranty_expiry as i_we',
+      'customers.id as c_id', 'customers.name as c_name', 'customers.phone as c_phone', 'customers.email as c_email', 'customers.address as c_address',
+      'transactions.id as tx_id', 'transactions.invoice_number as tx_num', 'transactions.net_total as tx_total',
+      'users.id as u_id', 'users.username as u_username'
+    );
+  applyTenantScope(dataQuery, tenantId, 'warranty_claims');
+
+  const row = await dataQuery.first();
+  if (!row) throw ApiError.notFound('Warranty claim not found');
+
+  const iRow = row.i_id ? { id: row.i_id, imei_or_serial: row.i_imei, warranty_months: row.i_wm, warranty_expiry: row.i_we } : null;
+  const cRow = row.c_id ? { id: row.c_id, name: row.c_name, phone: row.c_phone, email: row.c_email, address: row.c_address } : null;
+  const txRow = row.tx_id ? { id: row.tx_id, invoice_number: row.tx_num, net_total: row.tx_total } : null;
+  const uRow = row.u_id ? { id: row.u_id, username: row.u_username } : null;
+
+  return formatWarrantyClaim(row, iRow, cRow, txRow, uRow);
 };
 
 export const createClaim = async (data, tenantId = null) => {
-  return WarrantyClaim.create({ ...data, tenantId: tenantId || null });
+  const [insertedId] = await db('warranty_claims').insert({
+    tenant_id: tenantId || data.tenantId || null,
+    imei_id: data.imei || data.imeiId,
+    customer_id: data.customer || data.customerId,
+    invoice_id: data.invoiceRef || data.invoiceId || null,
+    claim_type: data.claimType,
+    description: data.description,
+    status: data.status || 'pending',
+    resolution: data.resolution || null,
+    notes: data.notes || null,
+    is_deleted: false,
+  });
+
+  return getClaimById(insertedId, tenantId);
 };
 
 export const updateClaim = async (id, data, userId, tenantId = null) => {
-  const query = withTenant({ _id: id }, tenantId);
-  const claim = await WarrantyClaim.findOne(query);
+  const claim = await getClaimById(id, tenantId);
   if (!claim) throw ApiError.notFound('Warranty claim not found');
 
+  const updateFields = {};
   if (data.status) {
-    claim.status = data.status;
+    updateFields.status = data.status;
     if (data.status !== 'pending') {
-      claim.resolvedBy = userId;
-      claim.resolvedAt = new Date();
+      updateFields.resolved_by = userId || null;
+      updateFields.resolved_at = new Date();
     }
   }
-  if (data.resolution) claim.resolution = data.resolution;
-  if (data.notes) claim.notes = data.notes;
+  if (data.resolution !== undefined) updateFields.resolution = data.resolution;
+  if (data.notes !== undefined) updateFields.notes = data.notes;
 
-  await claim.save();
-  return claim;
+  if (Object.keys(updateFields).length > 0) {
+    const q = db('warranty_claims').where({ id });
+    if (tenantId) q.andWhere('tenant_id', tenantId);
+    await q.update(updateFields);
+  }
+
+  return getClaimById(id, tenantId);
 };
 
 export const getClaimsByIMEI = async (imeiId, tenantId = null) => {
-  const query = withTenant({ imei: imeiId }, tenantId);
-  const claims = await WarrantyClaim.find(query)
-    .populate('customer', 'name phone')
-    .sort({ createdAt: -1 });
-  return claims;
-};
-
-export const getWarrantyReport = async (params = {}, tenantId = null) => {
-  const type = typeof params === 'string' ? params : (params.type || 'all');
-  const search = typeof params === 'object' && params.search ? params.search : '';
-  const status = typeof params === 'object' && params.status !== undefined ? params.status : 'Sold';
-
-  const now = new Date();
-  const thirtyDays = new Date(now);
-  thirtyDays.setDate(thirtyDays.getDate() + 30);
-
-  const matchQuery = withTenant({ isDeleted: false }, tenantId);
-  if (status && status !== 'ALL') {
-    matchQuery.status = status;
-  }
-
-  const InventoryUnit = (await import('../imei/imei.model.js')).InventoryUnit;
-  const Transaction = (await import('../sale/sale.model.js')).Transaction;
-
-  const units = await InventoryUnit.find(matchQuery)
-    .populate('productId', 'name brand model category')
-    .populate('soldToCustomerId', 'name phone email')
-    .populate('branchId', 'name')
-    .sort({ createdAt: -1 });
-
-  const invoiceNumbers = units
-    .filter((u) => !u.soldToCustomerId && u.soldInvoiceNumber)
-    .map((u) => u.soldInvoiceNumber);
-
-  const txMap = {};
-  if (invoiceNumbers.length > 0) {
-    const txQuery = { invoiceNumber: { $in: invoiceNumbers }, isDeleted: false };
-    if (tenantId) txQuery.tenantId = tenantId;
-    const txs = await Transaction.find(txQuery)
-      .select('invoiceNumber customerName customerPhone customerEmail');
-    txs.forEach((t) => {
-      txMap[t.invoiceNumber] = t;
-    });
-  }
-
-  const addMonths = (date, months) => {
-    const d = new Date(date);
-    d.setMonth(d.getMonth() + (months || 12));
-    return d;
-  };
-
-  const enrichedUnits = units.map((u) => {
-    const unitObj = u.toObject ? u.toObject() : u;
-    let customerName = unitObj.soldToCustomerId?.name || '';
-    let customerPhone = unitObj.soldToCustomerId?.phone || '';
-    let customerEmail = unitObj.soldToCustomerId?.email || '';
-
-    if (!customerName && unitObj.soldInvoiceNumber && txMap[unitObj.soldInvoiceNumber]) {
-      const tx = txMap[unitObj.soldInvoiceNumber];
-      customerName = tx.customerName || '';
-      customerPhone = tx.customerPhone || '';
-      customerEmail = tx.customerEmail || '';
-    }
-
-    let expiry = unitObj.warrantyExpiry ? new Date(unitObj.warrantyExpiry) : null;
-    if (!expiry) {
-      if (unitObj.soldAt) {
-        expiry = addMonths(unitObj.soldAt, unitObj.warrantyMonths || 12);
-      } else if (unitObj.createdAt) {
-        expiry = addMonths(unitObj.createdAt, unitObj.warrantyMonths || 12);
-      }
-    }
-
-    const daysLeft = expiry ? Math.ceil((expiry - now) / (1000 * 60 * 60 * 24)) : null;
-
-    return {
-      ...unitObj,
-      warrantyExpiry: expiry,
-      customerName: customerName || 'Walk-in Customer',
-      customerPhone: customerPhone || 'N/A',
-      customerEmail: customerEmail || '',
-      daysLeft,
-    };
-  });
-
-  const totalActiveSold = enrichedUnits.filter((u) => u.warrantyExpiry && u.warrantyExpiry >= now).length;
-  const totalExpiredSold = enrichedUnits.filter((u) => u.warrantyExpiry && u.warrantyExpiry < now).length;
-  const totalExpiringSoon = enrichedUnits.filter(
-    (u) => u.warrantyExpiry && u.warrantyExpiry >= now && u.warrantyExpiry <= thirtyDays
-  ).length;
-
-  let filteredUnits = enrichedUnits;
-  if (type === 'expiring') {
-    filteredUnits = enrichedUnits.filter((u) => u.warrantyExpiry && u.warrantyExpiry >= now && u.warrantyExpiry <= thirtyDays);
-  } else if (type === 'expired') {
-    filteredUnits = enrichedUnits.filter((u) => u.warrantyExpiry && u.warrantyExpiry < now);
-  } else if (type === 'active') {
-    filteredUnits = enrichedUnits.filter((u) => !u.warrantyExpiry || u.warrantyExpiry >= now);
-  }
-
-  if (search && search.trim()) {
-    const safeSearch = search.trim().toLowerCase();
-    filteredUnits = filteredUnits.filter((u) => {
-      const pName = (u.productId?.name || '').toLowerCase();
-      const pBrand = (u.productId?.brand || '').toLowerCase();
-      const imei = (u.imeiOrSerial || '').toLowerCase();
-      const inv = (u.soldInvoiceNumber || '').toLowerCase();
-      const cName = (u.customerName || '').toLowerCase();
-      const cPhone = (u.customerPhone || '').toLowerCase();
-
-      return (
-        pName.includes(safeSearch) ||
-        pBrand.includes(safeSearch) ||
-        imei.includes(safeSearch) ||
-        inv.includes(safeSearch) ||
-        cName.includes(safeSearch) ||
-        cPhone.includes(safeSearch)
-      );
-    });
-  }
-
-  const claimQuery = withTenant({}, tenantId);
-  const claims = await WarrantyClaim.find(claimQuery).sort({ createdAt: -1 });
-  const pendingClaims = claims.filter((c) => c.status === 'pending').length;
-  const completedClaims = claims.filter((c) => c.status === 'completed').length;
-
-  return {
-    units: filteredUnits,
-    summary: {
-      total: enrichedUnits.length,
-      totalSoldUnits: enrichedUnits.length,
-      totalActiveSold,
-      totalExpiringSoon,
-      totalExpiredSold,
-      pendingClaims,
-      completedClaims,
-      totalClaims: claims.length,
-    },
-  };
+  const dataQuery = db('warranty_claims').where({ imei_id: imeiId, is_deleted: false });
+  applyTenantScope(dataQuery, tenantId, 'warranty_claims');
+  const rows = await dataQuery.orderBy('created_at', 'desc');
+  return rows.map(r => formatWarrantyClaim(r));
 };

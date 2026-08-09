@@ -1,62 +1,104 @@
-import { Transaction } from './sale.model.js';
-import { InventoryUnit } from '../imei/imei.model.js';
-import { Customer } from '../customer/customer.model.js';
-import { Product } from '../product/product.model.js';
+import { db } from '../../config/db.knex.js';
 import { ApiError } from '../../utils/http/ApiError.js';
-import { paginate, getPagination } from '../../utils/http/pagination.js';
-import { escapeRegex } from '../../utils/system/helpers.js';
-import { hashText } from '../../utils/crypto.utils.js';
-import {
-  createAutomatedSaleJournal,
-  createAutomatedReturnJournal,
-  createAutomatedDueCollectionJournal,
-} from '../accounting/accounting.service.js';
+import { getPagination } from '../../utils/http/pagination.js';
+import emitter, { EVENTS } from '../../events/index.js';
 import crypto from 'crypto';
 
 const generateInvoiceNumber = async (tenantId = null) => {
-  // Count ALL sales (including soft-deleted) so numbers are never reused after a delete
-  const query = { txType: 'SALE' };
-  if (tenantId) query.tenantId = tenantId;
-  const count = await Transaction.countDocuments(query);
-  const num = (count + 1).toString().padStart(5, '0');
+  const query = db('transactions').where({ tx_type: 'SALE' });
+  if (tenantId) query.where('tenant_id', tenantId);
+  const countRes = await query.count({ count: '*' }).first();
+  const num = (Number(countRes?.count || 0) + 1).toString().padStart(5, '0');
   return `INV-${new Date().getFullYear()}-${num}`;
 };
 
-const withTenant = (query, tenantId) => {
-  if (tenantId) query.tenantId = tenantId;
-  return query;
-};
+function parseJSON(str) {
+  if (typeof str === 'string') {
+    try { return JSON.parse(str); } catch { return []; }
+  }
+  return str || [];
+}
+
+export function formatTransaction(row, customerRow = null) {
+  if (!row) return null;
+  const breakdown = typeof row.payment_breakdown === 'string' ? JSON.parse(row.payment_breakdown) : (row.payment_breakdown || {});
+
+  return {
+    _id: String(row.id),
+    id: row.id,
+    tenantId: row.tenant_id || null,
+    invoiceNumber: row.invoice_number,
+    txType: row.tx_type,
+    saleType: row.sale_type || 'RETAIL',
+    status: row.status || 'COMPLETED',
+    customerId: customerRow ? {
+      _id: String(customerRow.id),
+      id: customerRow.id,
+      name: customerRow.name,
+      phone: customerRow.phone,
+      email: customerRow.email || '',
+      address: customerRow.address || '',
+    } : (row.customer_id ? String(row.customer_id) : null),
+    supplierId: row.supplier_id ? String(row.supplier_id) : null,
+    lineItems: parseJSON(row.line_items),
+    returnLogs: parseJSON(row.return_logs),
+    customerName: row.customer_name || '',
+    customerPhone: row.customer_phone || '',
+    customerEmail: row.customer_email || '',
+    customerAddress: row.customer_address || '',
+    subTotal: Number(row.sub_total || 0),
+    discount: Number(row.discount || 0),
+    tax: Number(row.tax || 0),
+    netTotal: Number(row.net_total || 0),
+    returnedAmount: Number(row.returned_amount || 0),
+    paymentBreakdown: {
+      cash: Number(breakdown.cash || 0),
+      bkash: Number(breakdown.bkash || 0),
+      rocket: Number(breakdown.rocket || 0),
+      nagad: Number(breakdown.nagad || 0),
+      bank: Number(breakdown.bank || 0),
+      dueAmount: Number(breakdown.dueAmount || 0),
+    },
+    cashierUsername: row.cashier_username || '',
+    sellerName: row.seller_name || '',
+    sellerId: row.seller_id || null,
+    publicToken: row.public_token || null,
+    tokenExpiresAt: row.token_expires_at || null,
+    isDeleted: Boolean(row.is_deleted),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function applyTenantScope(query, tenantId, tablePrefix = 'transactions') {
+  if (tenantId) {
+    query.where(`${tablePrefix}.tenant_id`, tenantId);
+  }
+}
 
 export const createSale = async (data, createdBy = 'system') => {
   const tenantId = data.tenantId || null;
-
   let subTotal = 0;
   const lineItems = [];
-  const soldImeis = [];
-  const productWarrantyMonths = {};
 
-  // Pass 1 — validate products and compute line items WITHOUT side effects.
-  // This guarantees no inventory mutation happens for a request that fails validation.
   for (const item of data.items) {
-    const productQuery = { _id: item.productId, isDeleted: false };
-    withTenant(productQuery, tenantId);
-    const product = await Product.findOne(productQuery);
+    const prodQuery = db('products').where({ id: item.productId, is_deleted: false });
+    if (tenantId) prodQuery.where('tenant_id', tenantId);
+    const product = await prodQuery.first();
     if (!product) throw ApiError.notFound(`Product not found: ${item.productId}`);
-    productWarrantyMonths[item.productId] = product.warrantyMonths || 0;
 
-    let unitCost = product.costPrice || 0;
+    let unitCost = Number(product.cost_price || 0);
 
     if (item.imeiOrSerial) {
-      const unit = await InventoryUnit.findOne(
-        withTenant({ imeiOrSerial: item.imeiOrSerial, isDeleted: false, status: 'Available' }, tenantId)
-      );
+      const unitQuery = db('inventory_units').where({ imei_or_serial: item.imeiOrSerial, status: 'Available', is_deleted: false });
+      if (tenantId) unitQuery.where('tenant_id', tenantId);
+      const unit = await unitQuery.first();
       if (!unit) throw ApiError.badRequest(`IMEI ${item.imeiOrSerial} is not available for sale`);
-      unitCost = unit.purchasePrice || product.costPrice || 0;
+      unitCost = Number(unit.purchase_price || product.cost_price || 0);
     } else {
-      // Bulk product (stockQuantity-based) — verify sufficient stock
       const requestedQty = Math.abs(item.qty || 1);
-      if (product.stockQuantity < requestedQty) {
-        throw ApiError.badRequest(`Insufficient stock for "${product.name}". Available: ${product.stockQuantity} pcs, Requested: ${requestedQty} pcs`);
+      if (Number(product.stock_quantity || 0) < requestedQty) {
+        throw ApiError.badRequest(`Insufficient stock for "${product.name}". Available: ${product.stock_quantity} pcs`);
       }
     }
 
@@ -64,8 +106,8 @@ export const createSale = async (data, createdBy = 'system') => {
     subTotal += itemTotal;
     lineItems.push({
       productId: item.productId,
-      imeiOrSerial: item.imeiOrSerial,
-      description: item.description,
+      imeiOrSerial: item.imeiOrSerial || null,
+      description: item.description || product.name,
       qty: item.qty,
       unitPrice: item.unitPrice,
       unitCost,
@@ -80,701 +122,289 @@ export const createSale = async (data, createdBy = 'system') => {
     (data.paymentBreakdown?.nagad || 0) +
     (data.paymentBreakdown?.bank || 0);
 
-  // Overpayment guard — never store a negative dueAmount / unbalanced journal
   if (paidAmount > netTotal + 0.01) {
-    throw ApiError.badRequest(`Paid amount (৳${paidAmount.toLocaleString()}) exceeds sale total (৳${netTotal.toLocaleString()})`);
+    throw ApiError.badRequest(`Paid amount (৳${paidAmount}) exceeds sale total (৳${netTotal})`);
   }
   const dueAmount = netTotal - paidAmount;
 
-  if (dueAmount > 0 && !data.customerPhone) {
-    throw ApiError.badRequest('Customer phone is required for due amount');
-  }
-
-  // Resolve customer (create if needed) — but DON'T touch balances yet;
-  // those only move once the sale record actually persists.
-  let customerId = data.customerId;
+  let customerId = data.customerId || null;
   let customerObj = null;
-
   if (customerId) {
-    customerObj = await Customer.findOne(withTenant({ _id: customerId, isDeleted: false }, tenantId));
-    if (!customerObj) throw ApiError.badRequest('Customer not found');
-  } else if (data.customerPhone && data.customerPhone.trim()) {
-    const phoneVal = data.customerPhone.trim();
-    customerObj = await Customer.findOne(withTenant({ phoneHash: hashText(phoneVal), isDeleted: false }, tenantId));
-    if (!customerObj) {
-      customerObj = await Customer.create({
-        tenantId,
-        name: data.customerName || 'Walk-in Customer',
-        phone: phoneVal,
-        phoneHash: hashText(phoneVal),
-        email: data.customerEmail || '',
-        address: data.customerAddress || '',
-      });
-    }
-    customerId = customerObj._id;
+    const custQuery = db('customers').where({ id: customerId, is_deleted: false });
+    if (tenantId) custQuery.where('tenant_id', tenantId);
+    customerObj = await custQuery.first();
   }
 
-  const finalCustomerName = data.customerName || customerObj?.name || 'Walk-in Customer';
-  const finalCustomerPhone = data.customerPhone || customerObj?.phone || 'N/A';
-  const finalCustomerEmail = data.customerEmail || customerObj?.email || '';
-  const finalCustomerAddress = data.customerAddress || customerObj?.address || '';
+  const invoiceNumber = await generateInvoiceNumber(tenantId);
+  const soldDate = new Date();
 
-  // Pass 2 — persist with retry. Each attempt flips inventory atomically and is
-  // fully compensated (IMEI restored, stock added back) before retrying or throwing.
-  let sale = null;
-  let lastError = null;
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const invoiceNumber = await generateInvoiceNumber(tenantId);
-    const attemptedImeis = [];
-    try {
-      const soldDate = new Date();
-      for (const item of data.items) {
-        if (item.imeiOrSerial) {
-          // Atomic sell: only flips if still Available (prevents double-sale race)
-          const unitUpdate = {
-            status: 'Sold',
-            soldInvoiceNumber: invoiceNumber,
-            soldAt: soldDate,
-            $push: {
-              passportHistory: {
-                event: 'SOLD',
-                details: `Sold on ${invoiceNumber} to ${finalCustomerName}`,
-                amount: item.unitPrice,
-                performedBy: createdBy,
-              },
-            },
-          };
-          const warrantyMonths = productWarrantyMonths[item.productId] || 0;
-          if (warrantyMonths) {
-            const expiry = new Date(soldDate);
-            expiry.setMonth(expiry.getMonth() + warrantyMonths);
-            unitUpdate.warrantyExpiry = expiry;
-          }
-          const unit = await InventoryUnit.findOneAndUpdate(
-            withTenant({ imeiOrSerial: item.imeiOrSerial, isDeleted: false, status: 'Available' }, tenantId),
-            unitUpdate,
-            { new: true }
-          );
-          if (!unit) {
-            throw ApiError.badRequest(`IMEI ${item.imeiOrSerial} is not available for sale`);
-          }
-          attemptedImeis.push(unit.imeiOrSerial);
+  for (const item of data.items) {
+    if (item.imeiOrSerial) {
+      const unitQuery = db('inventory_units').where({ imei_or_serial: item.imeiOrSerial, status: 'Available', is_deleted: false });
+      if (tenantId) unitQuery.where('tenant_id', tenantId);
+      const unit = await unitQuery.first();
+      if (unit) {
+        let history = [];
+        try { history = typeof unit.passport_history === 'string' ? JSON.parse(unit.passport_history) : (unit.passport_history || []); } catch { history = []; }
+        history.push({
+          event: 'SOLD',
+          details: `Sold on ${invoiceNumber}`,
+          amount: item.unitPrice,
+          performedBy: createdBy,
+          timestamp: soldDate.toISOString(),
+        });
 
-          const availCount = await InventoryUnit.countDocuments(
-            withTenant({ productId: item.productId, status: 'Available', isDeleted: false }, tenantId)
-          );
-          await Product.updateOne({ _id: item.productId }, { stockQuantity: availCount }).catch(() => {});
-        } else {
-          // Bulk product — deduct stock (re-validated already in pass 1)
-          const requestedQty = Math.abs(item.qty || 1);
-          await Product.updateOne(
-            { _id: item.productId },
-            { $inc: { stockQuantity: -requestedQty } }
-          ).catch(() => {});
-        }
-      }
+        const unitUpdate = db('inventory_units').where({ id: unit.id });
+        if (tenantId) unitUpdate.andWhere('tenant_id', tenantId);
+        await unitUpdate.update({
+          status: 'Sold',
+          sold_invoice_number: invoiceNumber,
+          sold_at: soldDate,
+          sold_to_customer_id: customerId,
+          passport_history: JSON.stringify(history),
+        });
 
-      if (attemptedImeis.length > 0 && customerId) {
-        await InventoryUnit.updateMany(
-          withTenant({ imeiOrSerial: { $in: attemptedImeis } }, tenantId),
-          { soldToCustomerId: customerId }
-        ).catch(() => {});
+        const prodCountQuery = db('inventory_units').where({ product_id: item.productId, status: 'Available', is_deleted: false });
+        if (tenantId) prodCountQuery.andWhere('tenant_id', tenantId);
+        const availCountRes = await prodCountQuery.count({ count: '*' }).first();
+        const prodUpdate = db('products').where({ id: item.productId });
+        if (tenantId) prodUpdate.andWhere('tenant_id', tenantId);
+        await prodUpdate.update({ stock_quantity: Number(availCountRes?.count || 0) });
       }
-
-      sale = await Transaction.create({
-        tenantId,
-        invoiceNumber,
-        txType: 'SALE',
-        saleType: data.saleType || (customerObj?.customerType === 'B2B' ? 'WHOLESALE' : 'RETAIL'),
-        customerId: customerId || null,
-        customerName: finalCustomerName,
-        customerPhone: finalCustomerPhone,
-        customerEmail: finalCustomerEmail,
-        customerAddress: finalCustomerAddress,
-        lineItems,
-        subTotal,
-        discount: data.discount || 0,
-        tax: data.tax || 0,
-        netTotal,
-        paymentBreakdown: {
-          cash: data.paymentBreakdown?.cash || 0,
-          bkash: data.paymentBreakdown?.bkash || 0,
-          rocket: data.paymentBreakdown?.rocket || 0,
-          nagad: data.paymentBreakdown?.nagad || 0,
-          bank: data.paymentBreakdown?.bank || 0,
-          dueAmount,
-        },
-        cashierUsername: createdBy,
-        sellerName: data.sellerName || createdBy,
-        sellerId: data.sellerId || null,
-        publicToken: crypto.randomBytes(24).toString('hex'),
-        tokenExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      });
-      break;
-    } catch (err) {
-      // Compensate ALL inventory side-effects from this attempt
-      if (attemptedImeis.length > 0) {
-        await InventoryUnit.updateMany(
-          withTenant({ imeiOrSerial: { $in: attemptedImeis }, isDeleted: false, status: 'Sold' }, tenantId),
-          {
-            $set: { status: 'Available', soldInvoiceNumber: null, soldAt: null, soldToCustomerId: null },
-            $pull: { passportHistory: { event: 'SOLD', details: { $regex: `Sold on ${invoiceNumber}` } } },
-          }
-        ).catch(() => {});
-        for (const imei of attemptedImeis) {
-          const availCount = await InventoryUnit.countDocuments(
-            withTenant({ productId: lineItems.find((li) => li.imeiOrSerial === imei)?.productId, status: 'Available', isDeleted: false }, tenantId)
-          );
-          await Product.updateOne({ _id: lineItems.find((li) => li.imeiOrSerial === imei)?.productId }, { stockQuantity: availCount }).catch(() => {});
-        }
-      }
-      for (const item of data.items) {
-        if (!item.imeiOrSerial) {
-          const q = Math.abs(item.qty || 1);
-          await Product.updateOne({ _id: item.productId }, { $inc: { stockQuantity: q } }).catch(() => {});
-        }
-      }
-      if (err?.code === 11000) {
-        lastError = err;
-        continue; // invoice collision — retry with a fresh number
-      }
-      throw err;
+    } else {
+      const requestedQty = Math.abs(item.qty || 1);
+      await db('products').where({ id: item.productId }).decrement('stock_quantity', requestedQty);
     }
   }
 
-  if (!sale) {
-    if (lastError) throw lastError;
-    throw ApiError.badRequest('Could not create sale due to invoice number collision');
-  }
+  const paymentBreakdown = {
+    cash: data.paymentBreakdown?.cash || 0,
+    bkash: data.paymentBreakdown?.bkash || 0,
+    rocket: data.paymentBreakdown?.rocket || 0,
+    nagad: data.paymentBreakdown?.nagad || 0,
+    bank: data.paymentBreakdown?.bank || 0,
+    dueAmount,
+  };
 
-  // Now that the sale exists, move customer balances
-  if (customerObj) {
-    customerObj.totalPurchases = (customerObj.totalPurchases || 0) + netTotal;
-    customerObj.dueBalance = (customerObj.dueBalance || 0) + dueAmount;
-    if (data.customerName && data.customerName !== 'Walk-in Customer' && !data.customerId) {
-      customerObj.name = data.customerName;
-    }
-    if (data.customerEmail) customerObj.email = data.customerEmail;
-    if (data.customerAddress) customerObj.address = data.customerAddress;
-    await customerObj.save();
-  }
-
-  await createAutomatedSaleJournal(sale).catch((err) => {
-    console.error('Sale journal failed (manual reconcile via Sync needed):', sale?.invoiceNumber, err);
+  const [insertedId] = await db('transactions').insert({
+    tenant_id: tenantId,
+    invoice_number: invoiceNumber,
+    tx_type: 'SALE',
+    sale_type: data.saleType || 'RETAIL',
+    status: 'COMPLETED',
+    customer_id: customerId,
+    line_items: JSON.stringify(lineItems),
+    return_logs: JSON.stringify([]),
+    customer_name: data.customerName || customerObj?.name || 'Walk-in Customer',
+    customer_phone: data.customerPhone || customerObj?.phone || 'N/A',
+    customer_email: data.customerEmail || customerObj?.email || null,
+    customer_address: data.customerAddress || customerObj?.address || null,
+    sub_total: subTotal,
+    discount: data.discount || 0,
+    tax: data.tax || 0,
+    net_total: netTotal,
+    returned_amount: 0,
+    payment_breakdown: JSON.stringify(paymentBreakdown),
+    cashier_username: createdBy,
+    seller_name: data.sellerName || createdBy,
+    seller_id: data.sellerId || null,
+    public_token: crypto.randomBytes(24).toString('hex'),
+    token_expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    is_deleted: false,
   });
 
+  if (customerObj) {
+    const custUpdate = db('customers').where({ id: customerObj.id });
+    if (tenantId) custUpdate.andWhere('tenant_id', tenantId);
+    await custUpdate.update({
+      total_purchases: Number(customerObj.total_purchases || 0) + netTotal,
+      due_balance: Number(customerObj.due_balance || 0) + dueAmount,
+    });
+  }
+
+  const sale = await getSaleById(insertedId, tenantId);
+  emitter.emit(EVENTS.SALE_COMPLETED, { ...sale, tenantId });
   return sale;
 };
 
 export const getAllSales = async (page = 1, limit = 20, filters = {}) => {
-  const query = { isDeleted: false, txType: 'SALE' };
-  if (filters.tenantId) {
-    query.tenantId = filters.tenantId;
-  }
+  const countQuery = db('transactions').where({ 'transactions.is_deleted': false, 'transactions.tx_type': 'SALE' });
+  applyTenantScope(countQuery, filters.tenantId, 'transactions');
+  if (filters.status) countQuery.where('transactions.status', filters.status);
 
-  if (filters.from || filters.to) {
-    query.createdAt = {};
-    if (filters.from) query.createdAt.$gte = new Date(filters.from);
-    if (filters.to) query.createdAt.$lte = new Date(filters.to + 'T23:59:59');
-  }
+  const countRes = await countQuery.count({ total: '*' }).first();
+  const total = Number(countRes?.total || 0);
 
-  if (filters.customer) {
-    query.$or = [
-      { customerName: { $regex: filters.customer, $options: 'i' } },
-      { customerPhone: { $regex: filters.customer, $options: 'i' } },
-    ];
-  }
+  const offset = (page - 1) * limit;
+  const dataQuery = db('transactions')
+    .leftJoin('customers', 'transactions.customer_id', 'customers.id')
+    .where({ 'transactions.is_deleted': false, 'transactions.tx_type': 'SALE' })
+    .select(
+      'transactions.*',
+      'customers.id as c_id', 'customers.name as c_name', 'customers.phone as c_phone',
+      'customers.email as c_email', 'customers.address as c_address'
+    );
+  applyTenantScope(dataQuery, filters.tenantId, 'transactions');
+  if (filters.status) dataQuery.where('transactions.status', filters.status);
 
-  if (filters.status) query.status = filters.status;
-  if (filters.saleType) query.saleType = filters.saleType.toUpperCase();
-  if (filters.paymentMethod) {
-    if (filters.paymentMethod === 'cash') query['paymentBreakdown.cash'] = { $gt: 0 };
-    if (filters.paymentMethod === 'bkash') query['paymentBreakdown.bkash'] = { $gt: 0 };
-    if (filters.paymentMethod === 'due') query['paymentBreakdown.dueAmount'] = { $gt: 0 };
-  }
+  const rows = await dataQuery.orderBy('transactions.created_at', 'desc').limit(limit).offset(offset);
 
-  const total = await Transaction.countDocuments(query);
-  const sales = await paginate(
-    Transaction.find(query).populate('customerId'),
-    page, limit
-  ).sort({ createdAt: -1 });
+  const sales = rows.map((row) => {
+    const cRow = row.c_id ? { id: row.c_id, name: row.c_name, phone: row.c_phone, email: row.c_email, address: row.c_address } : null;
+    return formatTransaction(row, cRow);
+  });
 
   return { sales, pagination: getPagination(total, page, limit) };
 };
 
 export const getSaleById = async (id, tenantId = null) => {
-  const query = { _id: id, isDeleted: false };
-  if (tenantId) query.tenantId = tenantId;
-  const sale = await Transaction.findOne(query)
-    .populate('customerId')
-    .populate('lineItems.productId');
-  if (!sale) throw ApiError.notFound('Sale not found');
-  return sale;
+  const dataQuery = db('transactions')
+    .leftJoin('customers', 'transactions.customer_id', 'customers.id')
+    .where({ 'transactions.id': id, 'transactions.is_deleted': false })
+    .select(
+      'transactions.*',
+      'customers.id as c_id', 'customers.name as c_name', 'customers.phone as c_phone',
+      'customers.email as c_email', 'customers.address as c_address'
+    );
+  applyTenantScope(dataQuery, tenantId, 'transactions');
+
+  const row = await dataQuery.first();
+  if (!row) throw ApiError.notFound('Sale not found');
+
+  const cRow = row.c_id ? { id: row.c_id, name: row.c_name, phone: row.c_phone, email: row.c_email, address: row.c_address } : null;
+  return formatTransaction(row, cRow);
 };
 
 export const getSaleByInvoice = async (invoiceQuery, tenantId = null) => {
-  if (!invoiceQuery || !invoiceQuery.trim()) {
-    throw ApiError.badRequest('Invoice search query is required');
-  }
+  const dataQuery = db('transactions')
+    .leftJoin('customers', 'transactions.customer_id', 'customers.id')
+    .where({ 'transactions.invoice_number': invoiceQuery, 'transactions.is_deleted': false })
+    .select(
+      'transactions.*',
+      'customers.id as c_id', 'customers.name as c_name', 'customers.phone as c_phone'
+    );
+  applyTenantScope(dataQuery, tenantId, 'transactions');
 
-  const safeQuery = escapeRegex(invoiceQuery.trim());
-  const regex = new RegExp(safeQuery, 'i');
+  const row = await dataQuery.first();
+  if (!row) throw ApiError.notFound(`No sale found matching "${invoiceQuery}"`);
 
-  const searchQuery = {
-    isDeleted: false,
-    txType: 'SALE',
-    $or: [
-      { invoiceNumber: { $regex: regex } },
-      { customerName: { $regex: regex } },
-      { customerPhone: { $regex: regex } },
-      { 'lineItems.imeiOrSerial': { $regex: regex } },
-    ],
-  };
-  if (tenantId) searchQuery.tenantId = tenantId;
-
-  let sale = await Transaction.findOne(searchQuery)
-    .populate('customerId')
-    .populate('lineItems.productId')
-    .sort({ createdAt: -1 });
-
-  if (!sale) {
-    throw ApiError.notFound(`No sale found matching "${invoiceQuery}"`);
-  }
-
-  return sale;
+  const cRow = row.c_id ? { id: row.c_id, name: row.c_name, phone: row.c_phone } : null;
+  return formatTransaction(row, cRow);
 };
 
 export const getSaleByPublicToken = async (token) => {
-  if (!token) throw ApiError.badRequest('Invalid token');
-
-  const sale = await Transaction.findOne({
-    publicToken: token,
-    isDeleted: false,
-    txType: 'SALE',
-  })
-    .populate('customerId')
-    .populate('lineItems.productId');
-
-  if (!sale) throw ApiError.notFound('Invoice not found or link has expired');
-  if (sale.tokenExpiresAt && sale.tokenExpiresAt < new Date()) {
-    throw ApiError.gone('This invoice link has expired (valid for 7 days)');
-  }
-
-  return sale;
-};
-
-const generateReturnInvoiceNumber = async (tenantId = null) => {
-  const match = { isDeleted: false, 'returnLogs.0': { $exists: true } };
-  if (tenantId) match.tenantId = tenantId;
-  const result = await Transaction.aggregate([
-    { $match: match },
-    { $unwind: '$returnLogs' },
-    { $count: 'total' }
-  ]);
-  const total = result[0]?.total || 0;
-  const num = (total + 1).toString().padStart(5, '0');
-  return `RET-${new Date().getFullYear()}-${num}`;
-};
-
-export const processReturn = async (saleId, returnData, processedBy = 'system', tenantId = null) => {
-  const saleQuery = { _id: saleId, isDeleted: false };
-  withTenant(saleQuery, tenantId);
-  const sale = await Transaction.findOne(saleQuery);
-  if (!sale) throw ApiError.notFound('Sale not found');
-
-  let totalRefundForTx = 0;
-  let costOfReturned = 0;
-  if (!sale.returnLogs) sale.returnLogs = [];
-
-  const returnInvoiceNumber = await generateReturnInvoiceNumber(tenantId);
-
-  for (const ret of returnData.items) {
-    // Find line item by lineItemId or by productId / imeiOrSerial
-    let lineItem = sale.lineItems.id(ret.lineItemId);
-    if (!lineItem) {
-      lineItem = sale.lineItems.find(li => 
-        (ret.imeiOrSerial && li.imeiOrSerial === ret.imeiOrSerial) || 
-        (ret.productId && li.productId?.toString() === ret.productId.toString())
-      );
-    }
-    if (!lineItem) {
-      const missing = ret.imeiOrSerial ? `IMEI ${ret.imeiOrSerial}` : (ret.lineItemId ? `line item ${ret.lineItemId}` : 'line item');
-      throw ApiError.badRequest(`${missing} is not part of ${sale.invoiceNumber} and cannot be returned`);
-    }
-
-    const returnQty = Math.min(ret.quantity || 1, lineItem.qty - (lineItem.returnedQty || 0));
-    if (returnQty <= 0) {
-      continue; // Item already fully returned
-    }
-
-    // Effective unit price calculation:
-    // Takes lineItem.totalPrice (which already has item-level discount) and scales by global sale discount factor.
-    // A return always refunds the DISCOUNTED price, proportional to quantity returned.
-    const hasGlobalDiscount = sale.subTotal > 0 && sale.netTotal < sale.subTotal;
-    const globalDiscountFactor = hasGlobalDiscount ? (sale.netTotal / sale.subTotal) : 1;
-    const baseEffectiveUnitPrice = lineItem.qty > 0 ? (lineItem.totalPrice / lineItem.qty) : lineItem.unitPrice;
-    const effectiveUnitPrice = Math.round(baseEffectiveUnitPrice * globalDiscountFactor);
-
-    const itemRefund = Math.round(effectiveUnitPrice * returnQty);
-    lineItem.returnedQty = (lineItem.returnedQty || 0) + returnQty;
-    totalRefundForTx += itemRefund;
-    costOfReturned += Math.round((lineItem.unitCost || 0) * returnQty);
-
-    if (ret.imeiOrSerial || lineItem.imeiOrSerial) {
-      const targetImei = ret.imeiOrSerial || lineItem.imeiOrSerial;
-      // Only restore units that were actually sold on THIS invoice (prevents re-activating
-      // supplier-returned, transferred, or another-invoice units)
-      const unit = await InventoryUnit.findOneAndUpdate(
-        withTenant({ imeiOrSerial: targetImei, isDeleted: false, status: 'Sold', soldInvoiceNumber: sale.invoiceNumber }, tenantId),
-        {
-          $set: {
-            status: 'Available',
-            soldInvoiceNumber: null,
-            soldAt: null,
-            soldToCustomerId: null,
-          },
-          $push: {
-            passportHistory: {
-              event: 'RETURNED',
-              details: `Returned from ${sale.invoiceNumber} (${returnInvoiceNumber}) — Reason: ${ret.reason || 'Customer return'}`,
-              amount: itemRefund,
-              performedBy: processedBy,
-            },
-          },
-        },
-        { new: true }
-      );
-      if (!unit) {
-        throw ApiError.badRequest(`IMEI ${targetImei} was not sold on ${sale.invoiceNumber} and cannot be returned`);
-      }
-      // Sync IMEI stock count for Product
-      if (lineItem.productId) {
-        const availCount = await InventoryUnit.countDocuments(
-          withTenant({ productId: lineItem.productId, status: 'Available', isDeleted: false }, tenantId)
-        );
-        await Product.updateOne({ _id: lineItem.productId }, { stockQuantity: availCount }).catch(() => {});
-      }
-    } else if (lineItem.productId) {
-      // Bulk product — restore stock quantity
-      await Product.updateOne(
-        { _id: lineItem.productId },
-        { $inc: { stockQuantity: Math.abs(returnQty) } }
-      ).catch(() => {});
-    }
-
-    sale.returnLogs.push({
-      returnInvoiceNumber,
-      lineItemId: lineItem._id,
-      productId: lineItem.productId,
-      description: lineItem.description || 'Product',
-      imeiOrSerial: ret.imeiOrSerial || lineItem.imeiOrSerial,
-      qty: returnQty,
-      originalUnitPrice: lineItem.unitPrice,
-      effectiveUnitPrice,
-      refundAmount: itemRefund,
-      reason: ret.reason || 'defective',
-      notes: ret.notes || '',
-      processedBy,
-      returnedAt: new Date(),
-    });
-  }
-
-  if (totalRefundForTx <= 0) {
-    throw ApiError.badRequest('Selected items have already been fully returned');
-  }
-
-  sale.returnedAmount = (sale.returnedAmount || 0) + totalRefundForTx;
-
-  // Check if fully returned or partially returned
-  const totalItemsCount = sale.lineItems.reduce((acc, li) => acc + li.qty, 0);
-  const totalReturnedCount = sale.lineItems.reduce((acc, li) => acc + (li.returnedQty || 0), 0);
-
-  if (totalReturnedCount >= totalItemsCount || sale.returnedAmount >= sale.netTotal) {
-    sale.status = 'RETURNED';
-  } else if (totalReturnedCount > 0 || sale.returnedAmount > 0) {
-    sale.status = 'PARTIALLY_RETURNED';
-  }
-
-  // Allocate the refund: first reduce THIS sale's remaining due (AR), then bank, then cash.
-  const breakdown = sale.paymentBreakdown || { cash: 0, bank: 0, bkash: 0, rocket: 0, nagad: 0, dueAmount: 0 };
-  let remaining = totalRefundForTx;
-  const arReduction = Math.min(remaining, Math.max(0, breakdown.dueAmount || 0));
-  remaining -= arReduction;
-  const bankReduction = Math.min(remaining, Math.max(0, breakdown.bank || 0));
-  remaining -= bankReduction;
-  const cashReduction = Math.max(0, remaining);
-  const allocation = { ar: arReduction, bank: bankReduction, cash: cashReduction };
-
-  breakdown.dueAmount = Math.max(0, (breakdown.dueAmount || 0) - arReduction);
-  breakdown.bank = Math.max(0, (breakdown.bank || 0) - bankReduction);
-  breakdown.cash = Math.max(0, (breakdown.cash || 0) - cashReduction);
-
-  // Reduce customer balance ONLY by what was actually still owed on this sale
-  if (sale.customerId && arReduction > 0) {
-    const customer = await Customer.findOne(withTenant({ _id: sale.customerId, isDeleted: false }, tenantId));
-    if (customer) {
-      customer.dueBalance = Math.max(0, customer.dueBalance - arReduction);
-      await customer.save();
-    }
-  }
-
-  await sale.save();
-  await createAutomatedReturnJournal(sale, totalRefundForTx, returnInvoiceNumber, {
-    allocation,
-    costOfReturned,
-    processedBy,
-  }).catch(err => console.error('Return journal failed:', err));
-
-  return { sale, refundAmount: totalRefundForTx, returnInvoiceNumber, allocation };
-};
-
-export const deleteSale = async (id, tenantId = null) => {
-  const query = { _id: id, isDeleted: false };
-  withTenant(query, tenantId);
-  const sale = await Transaction.findOne(query);
-  if (!sale) throw ApiError.notFound('Sale not found');
-
-  // Never hard-delete a sale with financial history silently — reverse it instead.
-  if (sale.status === 'RETURNED') {
-    throw ApiError.badRequest('Cannot delete a fully returned sale');
-  }
-  if ((sale.returnedAmount || 0) > 0 || (sale.lineItems || []).some((li) => (li.returnedQty || 0) > 0)) {
-    throw ApiError.badRequest('Cannot delete a sale with partial returns. Use return flow instead.');
-  }
-
-  // Reverse inventory: restore IMEIs / bulk stock for items that were sold on this invoice
-  for (const li of sale.lineItems || []) {
-    if (li.imeiOrSerial) {
-      await InventoryUnit.updateMany(
-        withTenant({ imeiOrSerial: li.imeiOrSerial, isDeleted: false, status: 'Sold', soldInvoiceNumber: sale.invoiceNumber }, tenantId),
-        { $set: { status: 'Available', soldInvoiceNumber: null, soldAt: null, soldToCustomerId: null } }
-      );
-      const availCount = await InventoryUnit.countDocuments(
-        withTenant({ productId: li.productId, status: 'Available', isDeleted: false }, tenantId)
-      );
-      await Product.updateOne({ _id: li.productId }, { stockQuantity: availCount }).catch(() => {});
-    } else if (li.productId) {
-      await Product.updateOne({ _id: li.productId }, { $inc: { stockQuantity: li.qty || 0 } }).catch(() => {});
-    }
-  }
-
-  sale.isDeleted = true;
-  await sale.save();
-  return sale;
+  const row = await db('transactions').where({ public_token: token, is_deleted: false }).first();
+  if (!row) throw ApiError.notFound('Invoice not found or link has expired');
+  return formatTransaction(row);
 };
 
 export const updateSale = async (id, data, tenantId = null) => {
-  const query = { _id: id, isDeleted: false };
-  withTenant(query, tenantId);
-  const sale = await Transaction.findOne(query);
-  if (!sale) throw ApiError.notFound('Sale not found');
+  const existing = await getSaleById(id, tenantId);
+  if (!existing) throw ApiError.notFound('Sale not found');
 
-  if (sale.status === 'RETURNED') {
-    throw ApiError.badRequest('Cannot edit a fully returned sale');
-  }
+  const updateFields = {};
+  if (data.customerName !== undefined) updateFields.customer_name = data.customerName;
+  if (data.customerPhone !== undefined) updateFields.customer_phone = data.customerPhone;
+  if (data.customerEmail !== undefined) updateFields.customer_email = data.customerEmail;
+  if (data.customerAddress !== undefined) updateFields.customer_address = data.customerAddress;
+  if (data.saleType !== undefined) updateFields.sale_type = data.saleType;
 
-  // ── Step 1: Restore old inventory (IMEI → Available, bulk → stock back) ──
-  for (const oldItem of sale.lineItems) {
-    if (oldItem.imeiOrSerial) {
-      await InventoryUnit.findOneAndUpdate(
-        withTenant({ imeiOrSerial: oldItem.imeiOrSerial, isDeleted: false, status: 'Sold' }, tenantId),
-        {
-          $set: { status: 'Available', soldInvoiceNumber: null, soldAt: null, soldToCustomerId: null },
-          $pull: { passportHistory: { event: 'SOLD', details: { $regex: `Sold on ${sale.invoiceNumber}` } } },
-        }
-      ).catch(() => {});
-      // Recount product stock from available IMEI units
-      if (oldItem.productId) {
-        const availCount = await InventoryUnit.countDocuments(
-          withTenant({ productId: oldItem.productId, status: 'Available', isDeleted: false }, tenantId)
-        );
-        await Product.updateOne({ _id: oldItem.productId }, { stockQuantity: availCount }).catch(() => {});
-      }
-    } else if (oldItem.productId) {
-      // Bulk product — restore stock
-      await Product.updateOne(
-        { _id: oldItem.productId },
-        { $inc: { stockQuantity: oldItem.qty || 1 } }
-      ).catch(() => {});
-    }
-  }
+  const newDiscount = data.discount !== undefined ? Number(data.discount) : existing.discount;
+  const newTax = data.tax !== undefined ? Number(data.tax) : existing.tax;
 
-  // ── Step 2: Resolve customer ──
-  let customerId = data.customerId !== undefined ? data.customerId : sale.customerId;
-  let customerObj = null;
+  if (data.discount !== undefined) updateFields.discount = data.discount;
+  if (data.tax !== undefined) updateFields.tax = data.tax;
 
-  if (customerId) {
-    customerObj = await Customer.findOne(withTenant({ _id: customerId, isDeleted: false }, tenantId));
-  } else if (data.customerPhone && data.customerPhone.trim()) {
-    const phoneVal = data.customerPhone.trim();
-    customerObj = await Customer.findOne(withTenant({ phoneHash: hashText(phoneVal), isDeleted: false }, tenantId));
-    if (!customerObj) {
-      customerObj = await Customer.create({
-        tenantId,
-        name: data.customerName || 'Walk-in Customer',
-        phone: phoneVal,
-        phoneHash: hashText(phoneVal),
-        email: data.customerEmail || '',
-        address: data.customerAddress || '',
-      });
-    }
-    customerId = customerObj._id;
-  }
+  let lineItems = existing.lineItems;
+  let subTotal = existing.subTotal;
 
-  // ── Step 3: Build new line items & validate products ──
-  const newItems = data.items || sale.lineItems.map((li) => ({
-    productId: li.productId?._id || li.productId,
-    imeiOrSerial: li.imeiOrSerial || undefined,
-    description: li.description,
-    qty: li.qty,
-    unitPrice: li.unitPrice,
-    unitCost: li.unitCost || 0,
-  }));
-
-  let subTotal = 0;
-  const lineItems = [];
-  const soldImeis = [];
-  const productWarrantyMonths = {};
-
-  for (const item of newItems) {
-    const productQuery = { _id: item.productId, isDeleted: false };
-    withTenant(productQuery, tenantId);
-    const product = await Product.findOne(productQuery);
-    if (!product) throw ApiError.notFound(`Product not found: ${item.productId}`);
-    productWarrantyMonths[item.productId] = product.warrantyMonths || 0;
-
-    let unitCost = item.unitCost || product.costPrice || 0;
-
-    if (item.imeiOrSerial) {
-      const unit = await InventoryUnit.findOne(
-        withTenant({ imeiOrSerial: item.imeiOrSerial, isDeleted: false, status: 'Available' }, tenantId)
-      );
-      if (!unit) throw ApiError.badRequest(`IMEI ${item.imeiOrSerial} is not available for sale`);
-      unitCost = unit.purchasePrice || product.costPrice || 0;
-    } else {
-      const requestedQty = Math.abs(item.qty || 1);
-      if (product.stockQuantity < requestedQty) {
-        throw ApiError.badRequest(`Insufficient stock for "${product.name}". Available: ${product.stockQuantity}, Requested: ${requestedQty}`);
-      }
-    }
-
-    const itemTotal = (item.unitPrice * item.qty);
-    subTotal += itemTotal;
-    lineItems.push({
+  if (data.items !== undefined) {
+    lineItems = data.items.map((item) => ({
       productId: item.productId,
-      imeiOrSerial: item.imeiOrSerial || '',
+      imeiOrSerial: item.imeiOrSerial || null,
       description: item.description,
       qty: item.qty,
       unitPrice: item.unitPrice,
-      unitCost,
-      totalPrice: itemTotal,
+      unitCost: item.unitCost || 0,
+      totalPrice: item.unitPrice * item.qty,
+    }));
+    subTotal = lineItems.reduce((sum, li) => sum + li.totalPrice, 0);
+    updateFields.line_items = JSON.stringify(lineItems);
+  }
+
+  const netTotal = subTotal - newDiscount + newTax;
+  updateFields.sub_total = subTotal;
+  updateFields.net_total = netTotal;
+
+  if (data.paymentBreakdown !== undefined) {
+    const paidAmount = (data.paymentBreakdown.cash || 0) +
+      (data.paymentBreakdown.bkash || 0) +
+      (data.paymentBreakdown.rocket || 0) +
+      (data.paymentBreakdown.nagad || 0) +
+      (data.paymentBreakdown.bank || 0);
+    const dueAmount = Math.max(0, netTotal - paidAmount);
+
+    updateFields.payment_breakdown = JSON.stringify({
+      cash: data.paymentBreakdown.cash || 0,
+      bkash: data.paymentBreakdown.bkash || 0,
+      rocket: data.paymentBreakdown.rocket || 0,
+      nagad: data.paymentBreakdown.nagad || 0,
+      bank: data.paymentBreakdown.bank || 0,
+      dueAmount,
     });
-  }
 
-  const discount = data.discount ?? sale.discount ?? 0;
-  const tax = data.tax ?? sale.tax ?? 0;
-  const netTotal = subTotal - discount + tax;
-
-  // ── Step 4: Apply new inventory (IMEI → Sold, bulk → deduct) ──
-  const soldDate = new Date();
-  for (let i = 0; i < newItems.length; i++) {
-    const item = newItems[i];
-    if (item.imeiOrSerial) {
-      const unitUpdate = {
-        status: 'Sold',
-        soldInvoiceNumber: sale.invoiceNumber,
-        soldAt: soldDate,
-        $push: {
-          passportHistory: {
-            event: 'SOLD',
-            details: `Sold on ${sale.invoiceNumber} (edited)`,
-            amount: item.unitPrice,
-            performedBy: 'system',
-          },
-        },
-      };
-      const warrantyMonths = productWarrantyMonths[item.productId] || 0;
-      if (warrantyMonths) {
-        const expiry = new Date(soldDate);
-        expiry.setMonth(expiry.getMonth() + warrantyMonths);
-        unitUpdate.warrantyExpiry = expiry;
+    if (existing.customerId) {
+      const oldDue = existing.paymentBreakdown?.dueAmount || 0;
+      const dueDiff = dueAmount - oldDue;
+      if (dueDiff !== 0) {
+        const custDueQuery = db('customers').where({ id: existing.customerId });
+        if (tenantId) custDueQuery.andWhere('tenant_id', tenantId);
+        await custDueQuery.increment('due_balance', dueDiff);
       }
-      const unit = await InventoryUnit.findOneAndUpdate(
-        withTenant({ imeiOrSerial: item.imeiOrSerial, isDeleted: false, status: 'Available' }, tenantId),
-        unitUpdate,
-        { new: true }
-      );
-      if (!unit) throw ApiError.badRequest(`IMEI ${item.imeiOrSerial} is not available`);
-      soldImeis.push(unit.imeiOrSerial);
-
-      const availCount = await InventoryUnit.countDocuments(
-        withTenant({ productId: item.productId, status: 'Available', isDeleted: false }, tenantId)
-      );
-      await Product.updateOne({ _id: item.productId }, { stockQuantity: availCount }).catch(() => {});
-    } else {
-      const requestedQty = Math.abs(item.qty || 1);
-      await Product.updateOne(
-        { _id: item.productId },
-        { $inc: { stockQuantity: -requestedQty } }
-      ).catch(() => {});
     }
   }
 
-  // Mark sold IMEIs with customer
-  if (soldImeis.length > 0 && customerId) {
-    await InventoryUnit.updateMany(
-      withTenant({ imeiOrSerial: { $in: soldImeis } }, tenantId),
-      { soldToCustomerId: customerId }
-    ).catch(() => {});
-  }
+  if (Object.keys(updateFields).length === 0) return existing;
 
-  // ── Step 5: Update payment breakdown ──
-  const newBreakdown = data.paymentBreakdown || sale.paymentBreakdown;
-  const paidAmount = (newBreakdown.cash || 0) + (newBreakdown.bkash || 0) +
-    (newBreakdown.rocket || 0) + (newBreakdown.nagad || 0) + (newBreakdown.bank || 0);
-  const dueAmount = Math.max(0, netTotal - paidAmount);
+  updateFields.updated_at = new Date();
+  const txUpdate = db('transactions').where({ id });
+  if (tenantId) txUpdate.andWhere('tenant_id', tenantId);
+  await txUpdate.update(updateFields);
 
-  // ── Step 6: Save sale ──
-  const finalCustomerName = data.customerName || customerObj?.name || sale.customerName;
-  const finalCustomerPhone = data.customerPhone || customerObj?.phone || sale.customerPhone;
-  const finalCustomerEmail = data.customerEmail ?? sale.customerEmail;
-  const finalCustomerAddress = data.customerAddress ?? sale.customerAddress;
+  return getSaleById(id, tenantId);
+};
 
-  sale.customerId = customerId || null;
-  sale.customerName = finalCustomerName;
-  sale.customerPhone = finalCustomerPhone;
-  sale.customerEmail = finalCustomerEmail;
-  sale.customerAddress = finalCustomerAddress;
-  sale.saleType = data.saleType || sale.saleType;
-  sale.lineItems = lineItems;
-  sale.subTotal = subTotal;
-  sale.discount = discount;
-  sale.tax = tax;
-  sale.netTotal = netTotal;
-  sale.paymentBreakdown = {
-    cash: newBreakdown.cash || 0,
-    bkash: newBreakdown.bkash || 0,
-    rocket: newBreakdown.rocket || 0,
-    nagad: newBreakdown.nagad || 0,
-    bank: newBreakdown.bank || 0,
-    dueAmount,
-  };
+export const deleteSale = async (id, tenantId = null) => {
+  const sale = await getSaleById(id, tenantId);
+  if (!sale) throw ApiError.notFound('Sale not found');
 
-  await sale.save();
-
-  // ── Step 7: Update customer balances ──
-  if (customerObj) {
-    // Recalculate due balance from all non-deleted sales for this customer
-    const allSales = await Transaction.find(
-      withTenant({ customerId: customerObj._id, isDeleted: false, txType: 'SALE' }, tenantId)
-    );
-    let totalDue = 0;
-    for (const s of allSales) {
-      totalDue += s.paymentBreakdown?.dueAmount || 0;
+  // 1. Restore product stock & inventory units (IMEIs)
+  for (const item of sale.lineItems || []) {
+    if (item.productId) {
+      const prodQuery = db('products').where({ id: item.productId });
+      if (tenantId) prodQuery.andWhere('tenant_id', tenantId);
+      await prodQuery.increment('stock_quantity', Math.abs(item.qty || 1));
     }
-    customerObj.dueBalance = totalDue;
-    await customerObj.save();
+    if (item.imeiOrSerial) {
+      const unitQuery = db('inventory_units').where({ imei_or_serial: item.imeiOrSerial });
+      if (tenantId) unitQuery.andWhere('tenant_id', tenantId);
+      await unitQuery.update({ status: 'Available', sale_price: null, updated_at: new Date() });
+    }
   }
 
-  return sale;
+  // 2. Restore customer due balance if any
+  const dueAmount = sale.paymentBreakdown?.dueAmount || 0;
+  if (sale.customerId && dueAmount > 0) {
+    const custId = typeof sale.customerId === 'object' ? sale.customerId.id : sale.customerId;
+    const custQuery = db('customers').where({ id: custId });
+    if (tenantId) custQuery.andWhere('tenant_id', tenantId);
+    await custQuery.decrement('due_balance', dueAmount);
+  }
+
+  // 3. Mark transaction as deleted & cancelled
+  const txDel = db('transactions').where({ id });
+  if (tenantId) txDel.andWhere('tenant_id', tenantId);
+  await txDel.update({ is_deleted: true, status: 'CANCELLED', updated_at: new Date() });
+
+  return { ...sale, isDeleted: true, status: 'CANCELLED' };
 };

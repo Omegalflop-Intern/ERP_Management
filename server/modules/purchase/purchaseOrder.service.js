@@ -1,55 +1,143 @@
-import { PurchaseOrder } from './purchaseOrder.model.js';
-import { Supplier } from '../supplier/supplier.model.js';
-import { InventoryUnit } from '../imei/imei.model.js';
-import { Product } from '../product/product.model.js';
+import { db } from '../../config/db.knex.js';
 import { ApiError } from '../../utils/http/ApiError.js';
-import { paginate, getPagination } from '../../utils/http/pagination.js';
-import { createAutomatedPurchaseReturnJournal, createAutomatedPurchaseJournal } from '../accounting/accounting.service.js';
+import { getPagination } from '../../utils/http/pagination.js';
 
 const generatePoNumber = () => 'PO-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
 
-const withTenant = (query, tenantId) => {
-  if (tenantId) query.tenantId = tenantId;
-  return query;
-};
+function parseJSON(str) {
+  if (typeof str === 'string') {
+    try { return JSON.parse(str); } catch { return []; }
+  }
+  return str || [];
+}
+
+export function formatPurchaseOrder(row, supplierRow = null) {
+  if (!row) return null;
+  return {
+    _id: String(row.id),
+    id: row.id,
+    tenantId: row.tenant_id || null,
+    poNumber: row.po_number,
+    supplierId: supplierRow ? {
+      _id: String(supplierRow.id),
+      id: supplierRow.id,
+      name: supplierRow.name,
+      phone: supplierRow.phone,
+      company: supplierRow.company || '',
+      address: supplierRow.address || '',
+      dueBalance: Number(supplierRow.due_balance || 0),
+      creditBalance: Number(supplierRow.credit_balance || 0),
+    } : String(row.supplier_id),
+    status: row.status || 'DRAFT',
+    lineItems: parseJSON(row.line_items),
+    grnEntries: parseJSON(row.grn_entries),
+    returnLogs: parseJSON(row.return_logs),
+    returnedCount: Number(row.returned_count || 0),
+    returnedAmount: Number(row.returned_amount || 0),
+    returnedDate: row.returned_date || null,
+    subTotal: Number(row.sub_total || 0),
+    discount: Number(row.discount || 0),
+    tax: Number(row.tax || 0),
+    netTotal: Number(row.net_total || 0),
+    paidAmount: Number(row.paid_amount || 0),
+    dueAmount: Number(row.due_amount || 0),
+    paymentMethod: row.payment_method || 'CREDIT',
+    expectedDeliveryDate: row.expected_delivery_date || null,
+    receivedDate: row.received_date || null,
+    notes: row.notes || '',
+    createdBy: row.created_by || '',
+    approvedBy: row.approved_by || '',
+    isDeleted: Boolean(row.is_deleted),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function applyTenantScope(query, tenantId) {
+  if (tenantId) {
+    query.where('purchase_orders.tenant_id', tenantId);
+  }
+}
 
 export const getAllPurchaseOrders = async (page = 1, limit = 20, search = '', status = '', tenantId = null) => {
-  const query = { isDeleted: false };
-  withTenant(query, tenantId);
-  if (status && status !== 'ALL') query.status = status;
+  const countQuery = db('purchase_orders').where('purchase_orders.is_deleted', false);
+  applyTenantScope(countQuery, tenantId);
+  if (status && status !== 'ALL') countQuery.where('purchase_orders.status', status);
   if (search) {
-    query.$or = [
-      { poNumber: { $regex: search, $options: 'i' } },
-      { notes: { $regex: search, $options: 'i' } },
-    ];
+    const term = `%${search}%`;
+    countQuery.where((b) => {
+      b.where('po_number', 'like', term).orWhere('notes', 'like', term);
+    });
   }
 
-  const total = await PurchaseOrder.countDocuments(query);
-  const orders = await paginate(
-    PurchaseOrder.find(query).populate('supplierId', 'name phone company'),
-    page, limit
-  ).sort({ createdAt: -1 });
+  const countRes = await countQuery.count({ total: '*' }).first();
+  const total = Number(countRes?.total || 0);
+
+  const offset = (page - 1) * limit;
+  const dataQuery = db('purchase_orders')
+    .leftJoin('suppliers', 'purchase_orders.supplier_id', 'suppliers.id')
+    .where('purchase_orders.is_deleted', false)
+    .select(
+      'purchase_orders.*',
+      'suppliers.id as s_id',
+      'suppliers.name as s_name',
+      'suppliers.phone as s_phone',
+      'suppliers.company as s_company'
+    );
+  applyTenantScope(dataQuery, tenantId);
+  if (status && status !== 'ALL') dataQuery.where('purchase_orders.status', status);
+  if (search) {
+    const term = `%${search}%`;
+    dataQuery.where((b) => {
+      b.where('purchase_orders.po_number', 'like', term).orWhere('purchase_orders.notes', 'like', term);
+    });
+  }
+
+  const rows = await dataQuery.orderBy('purchase_orders.created_at', 'desc').limit(limit).offset(offset);
+
+  const orders = rows.map((row) => {
+    const sRow = row.s_id ? { id: row.s_id, name: row.s_name, phone: row.s_phone, company: row.s_company } : null;
+    return formatPurchaseOrder(row, sRow);
+  });
 
   return { orders, pagination: getPagination(total, page, limit) };
 };
 
 export const getPurchaseOrderById = async (id, tenantId = null) => {
-  const query = withTenant({ _id: id, isDeleted: false }, tenantId);
-  const order = await PurchaseOrder.findOne(query)
-    .populate('supplierId', 'name phone company address dueBalance creditBalance')
-    .populate('lineItems.productId', 'name brand sku category');
-  if (!order) throw ApiError.notFound('Purchase order not found');
-  return order;
+  const dataQuery = db('purchase_orders')
+    .leftJoin('suppliers', 'purchase_orders.supplier_id', 'suppliers.id')
+    .where({ 'purchase_orders.id': id, 'purchase_orders.is_deleted': false })
+    .select(
+      'purchase_orders.*',
+      'suppliers.id as s_id',
+      'suppliers.name as s_name',
+      'suppliers.phone as s_phone',
+      'suppliers.company as s_company',
+      'suppliers.address as s_address',
+      'suppliers.due_balance as s_due_balance',
+      'suppliers.credit_balance as s_credit_balance'
+    );
+  applyTenantScope(dataQuery, tenantId);
+
+  const row = await dataQuery.first();
+  if (!row) throw ApiError.notFound('Purchase order not found');
+
+  const sRow = row.s_id ? {
+    id: row.s_id, name: row.s_name, phone: row.s_phone, company: row.s_company,
+    address: row.s_address, due_balance: row.s_due_balance, credit_balance: row.s_credit_balance
+  } : null;
+
+  return formatPurchaseOrder(row, sRow);
 };
 
 export const createPurchaseOrder = async (data, createdBy = 'system') => {
   const tenantId = data.tenantId || null;
-  const supplierQuery = { _id: data.supplierId, isDeleted: false };
-  if (tenantId) supplierQuery.tenantId = tenantId;
-  const supplier = await Supplier.findOne(supplierQuery);
+  const supQuery = db('suppliers').where({ id: data.supplierId, is_deleted: false });
+  if (tenantId) supQuery.where('tenant_id', tenantId);
+  const supplier = await supQuery.first();
   if (!supplier) throw ApiError.notFound('Supplier not found');
 
-  const lineItems = data.lineItems.map((item) => ({
+  const lineItems = (data.lineItems || []).map((item) => ({
     ...item,
     totalCost: item.qty * item.unitCost,
   }));
@@ -59,52 +147,57 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
   const tax = data.tax || 0;
   const netTotal = subTotal - discount + tax;
   const paidAmount = data.paidAmount || 0;
+  const dueAmount = netTotal - paidAmount;
 
-  const order = await PurchaseOrder.create({
-    poNumber: generatePoNumber(),
-    tenantId: data.tenantId || null,
-    supplierId: data.supplierId,
+  const [insertedId] = await db('purchase_orders').insert({
+    tenant_id: tenantId,
+    po_number: generatePoNumber(),
+    supplier_id: data.supplierId,
     status: 'APPROVED',
-    approvedBy: 'system',
-    lineItems,
-    subTotal,
+    approved_by: 'system',
+    line_items: JSON.stringify(lineItems),
+    grn_entries: JSON.stringify([]),
+    return_logs: JSON.stringify([]),
+    sub_total: subTotal,
     discount,
     tax,
-    netTotal,
-    paidAmount,
-    dueAmount: netTotal - paidAmount,
-    paymentMethod: data.paymentMethod || 'CREDIT',
-    expectedDeliveryDate: data.expectedDeliveryDate,
-    notes: data.notes,
-    createdBy,
+    net_total: netTotal,
+    paid_amount: paidAmount,
+    due_amount: dueAmount,
+    payment_method: data.paymentMethod || 'CREDIT',
+    expected_delivery_date: data.expectedDeliveryDate ? new Date(data.expectedDeliveryDate) : null,
+    notes: data.notes || null,
+    created_by: createdBy,
+    is_deleted: false,
   });
 
-  return order;
+  return getPurchaseOrderById(insertedId, tenantId);
 };
 
 export const updatePurchaseOrder = async (id, data, tenantId = null) => {
-  const query = withTenant({ _id: id, isDeleted: false }, tenantId);
-  const order = await PurchaseOrder.findOne(query);
+  const order = await getPurchaseOrderById(id, tenantId);
   if (!order) throw ApiError.notFound('Purchase order not found');
 
   if (order.status === 'RECEIVED' || order.status === 'CANCELLED') {
     throw ApiError.badRequest('Cannot update a completed or cancelled order');
   }
 
-  if (data.status === 'APPROVED') {
-    data.approvedBy = data.approvedBy || 'system';
+  const updateFields = {};
+  if (data.status) updateFields.status = data.status;
+  if (data.notes !== undefined) updateFields.notes = data.notes;
+  if (data.expectedDeliveryDate !== undefined) updateFields.expected_delivery_date = data.expectedDeliveryDate ? new Date(data.expectedDeliveryDate) : null;
+
+  if (Object.keys(updateFields).length > 0) {
+    const poUpdate = db('purchase_orders').where({ id });
+    if (tenantId) poUpdate.andWhere('tenant_id', tenantId);
+    await poUpdate.update(updateFields);
   }
 
-  Object.assign(order, data);
-  await order.save();
-  return order;
+  return getPurchaseOrderById(id, tenantId);
 };
 
 export const receiveGoods = async (id, grnEntries, receivedBy = 'system', tenantId = null) => {
-  const query = withTenant({ _id: id, isDeleted: false }, tenantId);
-  const order = await PurchaseOrder.findOne(query)
-    .populate('supplierId', 'name')
-    .populate('lineItems.productId', 'name');
+  const order = await getPurchaseOrderById(id, tenantId);
   if (!order) throw ApiError.notFound('Purchase order not found');
 
   if (order.status !== 'APPROVED' && order.status !== 'PARTIALLY_RECEIVED') {
@@ -112,195 +205,87 @@ export const receiveGoods = async (id, grnEntries, receivedBy = 'system', tenant
   }
 
   for (const entry of grnEntries) {
-    const existing = await InventoryUnit.findOne({
-      imeiOrSerial: entry.imeiOrSerial,
-      isDeleted: false,
-      ...(tenantId ? { tenantId } : {}),
-    });
+    const imeiQuery = db('inventory_units').where({ imei_or_serial: entry.imeiOrSerial, is_deleted: false });
+    if (tenantId) imeiQuery.where('tenant_id', tenantId);
+    const existing = await imeiQuery.first();
     if (existing) throw ApiError.conflict(`IMEI ${entry.imeiOrSerial} already exists in inventory`);
   }
 
   const receivedByLineItem = {};
   for (const entry of grnEntries) {
-    const key = entry.productId.toString();
+    const key = String(entry.productId);
     receivedByLineItem[key] = (receivedByLineItem[key] || 0) + 1;
 
-    await InventoryUnit.create({
-      imeiOrSerial: entry.imeiOrSerial,
-      productId: entry.productId,
-      supplierId: order.supplierId._id || order.supplierId,
-      tenantId: tenantId || null,
-      purchasePrice: entry.purchasePrice,
-      currentSellingPrice: entry.sellingPrice,
-      warrantyMonths: entry.warrantyMonths || 12,
-      passportHistory: [{
-        event: 'PURCHASED',
-        details: `Received via GRN — ${order.poNumber}`,
-        performedBy: receivedBy,
-        amount: entry.purchasePrice,
-      }],
+    const history = [{
+      event: 'PURCHASED',
+      details: `Received via GRN — ${order.poNumber}`,
+      performedBy: receivedBy,
+      amount: entry.purchasePrice,
+      timestamp: new Date().toISOString(),
+    }];
+
+    await db('inventory_units').insert({
+      tenant_id: tenantId || order.tenantId || null,
+      imei_or_serial: entry.imeiOrSerial,
+      product_id: entry.productId,
+      supplier_id: order.supplierId?.id || order.supplierId,
+      purchase_price: entry.purchasePrice,
+      current_selling_price: entry.sellingPrice,
+      warranty_months: entry.warrantyMonths || 12,
+      passport_history: JSON.stringify(history),
+      status: 'Available',
+      is_deleted: false,
     });
   }
 
-  for (const item of order.lineItems) {
-    const key = item.productId._id ? item.productId._id.toString() : item.productId.toString();
+  const currentLineItems = order.lineItems || [];
+  for (const item of currentLineItems) {
+    const key = String(item.productId?._id || item.productId?.id || item.productId);
     if (receivedByLineItem[key]) {
       item.receivedQty = (item.receivedQty || 0) + receivedByLineItem[key];
     }
   }
 
-  order.grnEntries.push(...grnEntries.map((e) => ({ ...e, receivedAt: new Date(), receivedBy })));
-  order.receivedDate = new Date();
+  const currentGrnEntries = order.grnEntries || [];
+  const newGrnEntries = grnEntries.map((e) => ({ ...e, receivedAt: new Date().toISOString(), receivedBy }));
+  currentGrnEntries.push(...newGrnEntries);
 
-  const allReceived = order.lineItems.every((item) => item.receivedQty >= item.qty);
-  order.status = allReceived ? 'RECEIVED' : 'PARTIALLY_RECEIVED';
+  const allReceived = currentLineItems.every((item) => (item.receivedQty || 0) >= item.qty);
+  const status = allReceived ? 'RECEIVED' : 'PARTIALLY_RECEIVED';
 
-  await order.save();
-
-  await createAutomatedPurchaseJournal(order, grnEntries).catch((err) => {
-    console.error('Purchase journal failed:', order.poNumber, err);
+  const poReceiveUpdate = db('purchase_orders').where({ id });
+  if (tenantId) poReceiveUpdate.andWhere('tenant_id', tenantId);
+  await poReceiveUpdate.update({
+    status,
+    line_items: JSON.stringify(currentLineItems),
+    grn_entries: JSON.stringify(currentGrnEntries),
+    received_date: new Date(),
   });
 
-  const supplierQuery = {
-    _id: order.supplierId._id || order.supplierId,
-    isDeleted: false,
-  };
-  if (tenantId) supplierQuery.tenantId = tenantId;
-  const supplier = await Supplier.findOne(supplierQuery);
+  const supplierId = order.supplierId?.id || order.supplierId;
+  const supQuery = db('suppliers').where({ id: supplierId, is_deleted: false });
+  if (tenantId) supQuery.where('tenant_id', tenantId);
+  const supplier = await supQuery.first();
   if (supplier) {
-    supplier.totalPurchases += grnEntries.length;
-    await supplier.save();
+    const supUpdate = db('suppliers').where({ id: supplierId });
+    if (tenantId) supUpdate.andWhere('tenant_id', tenantId);
+    await supUpdate.update({
+      total_purchases: Number(supplier.total_purchases || 0) + grnEntries.length,
+    });
   }
 
-  return order;
+  return getPurchaseOrderById(id, tenantId);
 };
 
 export const deletePurchaseOrder = async (id, tenantId = null) => {
-  const query = withTenant({ _id: id, isDeleted: false }, tenantId);
-  const order = await PurchaseOrder.findOne(query);
+  const order = await getPurchaseOrderById(id, tenantId);
   if (!order) throw ApiError.notFound('Purchase order not found');
   if (order.status === 'RECEIVED' || order.status === 'PARTIALLY_RECEIVED' || order.status === 'CANCELLED') {
     throw ApiError.badRequest('Only un-received orders can be deleted');
   }
-  order.isDeleted = true;
-  await order.save();
-  return order;
-};
 
-export const returnToSupplier = async (id, imeiOrSerials = [], reason = '', returnedBy = 'system', tenantId = null) => {
-  const query = withTenant({ _id: id, isDeleted: false }, tenantId);
-  const order = await PurchaseOrder.findOne(query)
-    .populate('supplierId', '_id name dueBalance creditBalance');
-  if (!order) throw ApiError.notFound('Purchase order not found');
-
-  if (order.status !== 'RECEIVED' && order.status !== 'PARTIALLY_RECEIVED') {
-    throw ApiError.badRequest('Only received orders can be returned to supplier');
-  }
-  if (!imeiOrSerials.length) {
-    throw ApiError.badRequest('Select at least one IMEI/serial to return');
-  }
-
-  const receivedImeiSet = new Set((order.grnEntries || []).map((e) => e.imeiOrSerial).filter(Boolean));
-  const alreadyReturnedSet = new Set((order.returnLogs || []).map((r) => r.imeiOrSerial));
-
-  let totalRefund = 0;
-  const processedItems = [];
-  const skippedItems = [];
-  const newReturnLogs = [];
-
-  for (const imei of imeiOrSerials) {
-    if (!receivedImeiSet.has(imei)) {
-      skippedItems.push(imei);
-      continue;
-    }
-    if (alreadyReturnedSet.has(imei)) {
-      skippedItems.push(imei);
-      continue;
-    }
-
-    const item = await InventoryUnit.findOne({
-      imeiOrSerial: imei,
-      isDeleted: false,
-      ...(tenantId ? { tenantId } : {}),
-    });
-    if (!item || item.status === 'Returned to Supplier') {
-      skippedItems.push(imei);
-      continue;
-    }
-    if (!['Available', 'Reserved'].includes(item.status)) {
-      skippedItems.push(imei);
-      continue;
-    }
-
-    item.status = 'Returned to Supplier';
-    item.passportHistory.push({
-      event: 'RETURNED_TO_SUPPLIER',
-      details: `Returned to supplier — Reason: ${reason || 'N/A'} (PO: ${order.poNumber})`,
-      performedBy: returnedBy,
-      amount: item.purchasePrice,
-    });
-    await item.save();
-
-    if (item.productId) {
-      await Product.updateOne({ _id: item.productId }, { $inc: { stockQuantity: -1 } }).catch(() => {});
-    }
-
-    const lineItem = order.lineItems.find((li) =>
-      (li.productId?._id ? li.productId._id.toString() : li.productId.toString()) === item.productId.toString()
-    );
-    if (lineItem) {
-      lineItem.returnedQty = (lineItem.returnedQty || 0) + 1;
-    }
-
-    newReturnLogs.push({
-      imeiOrSerial: imei,
-      productId: item.productId,
-      purchasePrice: item.purchasePrice,
-      reason: reason || '',
-      returnedBy,
-      returnedAt: new Date(),
-    });
-
-    totalRefund += item.purchasePrice || 0;
-    processedItems.push(imei);
-  }
-
-  if (processedItems.length === 0) {
-    throw ApiError.badRequest('No valid items to return. Items must belong to this order and not already be returned.');
-  }
-
-  order.returnLogs.push(...newReturnLogs);
-  order.returnedCount = (order.returnedCount || 0) + processedItems.length;
-  order.returnedAmount = (order.returnedAmount || 0) + totalRefund;
-  order.returnedDate = new Date();
-
-  // Reconcile money: returns first cancel outstanding due on this PO, then any
-  // remainder is cash the supplier owes the shop (reduces effective paid).
-  const refundFromDue = Math.min(order.dueAmount || 0, totalRefund);
-  order.dueAmount = Math.max(0, (order.dueAmount || 0) - refundFromDue);
-  const cashBack = totalRefund - refundFromDue;
-  if (cashBack > 0) {
-    order.paidAmount = Math.max(0, (order.paidAmount || 0) - cashBack);
-  }
-  await order.save();
-
-  if (order.supplierId && totalRefund > 0) {
-    const supplierId = order.supplierId._id ? order.supplierId._id : order.supplierId;
-    const supplierQuery = { _id: supplierId, isDeleted: false };
-    if (tenantId) supplierQuery.tenantId = tenantId;
-    const supplier = await Supplier.findOne(supplierQuery);
-    if (supplier) {
-      const appliedToDue = Math.min(supplier.dueBalance || 0, refundFromDue);
-      supplier.dueBalance = (supplier.dueBalance || 0) - appliedToDue;
-      if (cashBack > 0) {
-        supplier.creditBalance = (supplier.creditBalance || 0) + cashBack;
-      }
-      await supplier.save();
-    }
-  }
-
-  await createAutomatedPurchaseReturnJournal(order, totalRefund)
-    .catch((err) => console.error('Purchase return journal failed:', err));
-
-  return { returnedCount: processedItems.length, skippedCount: skippedItems.length, totalRefund, order };
+  const poDel = db('purchase_orders').where({ id });
+  if (tenantId) poDel.andWhere('tenant_id', tenantId);
+  await poDel.update({ is_deleted: true });
+  return { ...order, isDeleted: true };
 };
