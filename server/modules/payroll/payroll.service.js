@@ -1,27 +1,90 @@
-import { Payroll } from './payroll.model.js';
-import { Employee } from '../employee/employee.model.js';
+import { db } from '../../config/db.knex.js';
 import { ApiError } from '../../utils/http/ApiError.js';
-import { paginate, getPagination } from '../../utils/http/pagination.js';
-import { withTenant } from '../../utils/tenant.js';
-import { createAutomatedPayrollJournal } from '../accounting/accounting.service.js';
+import { getPagination } from '../../utils/http/pagination.js';
+
+function parseJSON(str) {
+  if (typeof str === 'string') {
+    try { return JSON.parse(str); } catch { return {}; }
+  }
+  return str || {};
+}
+
+export function formatPayroll(row, employeeRow = null, paidByRow = null) {
+  if (!row) return null;
+  return {
+    _id: String(row.id),
+    id: row.id,
+    tenantId: row.tenant_id || null,
+    employee: employeeRow ? {
+      _id: String(employeeRow.id),
+      id: employeeRow.id,
+      name: employeeRow.name,
+      employeeId: employeeRow.employee_id,
+      department: employeeRow.department || '',
+      designation: employeeRow.designation || '',
+      salary: Number(employeeRow.salary || 0),
+    } : String(row.employee_id),
+    month: Number(row.month),
+    year: Number(row.year),
+    basicSalary: Number(row.basic_salary || 0),
+    allowances: parseJSON(row.allowances),
+    deductions: parseJSON(row.deductions),
+    totalAllowances: Number(row.total_allowances || 0),
+    totalDeductions: Number(row.total_deductions || 0),
+    netSalary: Number(row.net_salary || 0),
+    status: row.status || 'pending',
+    paidDate: row.paid_date || null,
+    paidBy: paidByRow ? {
+      _id: String(paidByRow.id),
+      id: paidByRow.id,
+      username: paidByRow.username,
+    } : (row.paid_by ? String(row.paid_by) : null),
+    notes: row.notes || '',
+    isDeleted: Boolean(row.is_deleted),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function applyTenantScope(query, tenantId, tablePrefix = 'payrolls') {
+  if (tenantId) {
+    query.where(`${tablePrefix}.tenant_id`, tenantId);
+  }
+}
 
 export const getAllPayroll = async (page = 1, limit = 20, branch = '', month = '', year = '', status = '', tenantId = null) => {
-  const query = withTenant({}, tenantId);
-  if (status) query.status = status;
-  if (month) query.month = Number(month);
-  if (year) query.year = Number(year);
+  const countQuery = db('payrolls').where('payrolls.is_deleted', false);
+  applyTenantScope(countQuery, tenantId, 'payrolls');
+  if (status) countQuery.where('payrolls.status', status);
+  if (month) countQuery.where('payrolls.month', Number(month));
+  if (year) countQuery.where('payrolls.year', Number(year));
 
-  if (branch) {
-    const empQuery = { branch, isDeleted: false };
-    if (tenantId) empQuery.tenantId = tenantId;
-    const branchEmployees = await Employee.find(empQuery).select('_id');
-    query.employee = { $in: branchEmployees.map((e) => e._id) };
-  }
+  const countRes = await countQuery.count({ total: '*' }).first();
+  const total = Number(countRes?.total || 0);
 
-  const total = await Payroll.countDocuments(query);
-  const records = await paginate(Payroll.find(query), page, limit)
-    .populate('employee', 'name employeeId department designation salary')
-    .sort({ year: -1, month: -1 });
+  const offset = (page - 1) * limit;
+  const dataQuery = db('payrolls')
+    .leftJoin('employees', 'payrolls.employee_id', 'employees.id')
+    .leftJoin('users', 'payrolls.paid_by', 'users.id')
+    .where('payrolls.is_deleted', false)
+    .select(
+      'payrolls.*',
+      'employees.id as emp_id', 'employees.name as emp_name', 'employees.employee_id as emp_code',
+      'employees.department as emp_dept', 'employees.designation as emp_desig', 'employees.salary as emp_salary',
+      'users.id as u_id', 'users.username as u_username'
+    );
+  applyTenantScope(dataQuery, tenantId, 'payrolls');
+  if (status) dataQuery.where('payrolls.status', status);
+  if (month) dataQuery.where('payrolls.month', Number(month));
+  if (year) dataQuery.where('payrolls.year', Number(year));
+
+  const rows = await dataQuery.orderBy('payrolls.year', 'desc').orderBy('payrolls.month', 'desc').limit(limit).offset(offset);
+
+  const records = rows.map((row) => {
+    const eRow = row.emp_id ? { id: row.emp_id, name: row.emp_name, employee_id: row.emp_code, department: row.emp_dept, designation: row.emp_desig, salary: row.emp_salary } : null;
+    const uRow = row.u_id ? { id: row.u_id, username: row.u_username } : null;
+    return formatPayroll(row, eRow, uRow);
+  });
 
   return { records, pagination: getPagination(total, page, limit) };
 };
@@ -31,59 +94,85 @@ export const processPayroll = async (employeeIds, month, year, allowances = {}, 
   const skipped = [];
 
   for (const empId of employeeIds) {
-    const existing = await Payroll.findOne(withTenant({ employee: empId, month, year }, tenantId));
+    const existQuery = db('payrolls').where({ employee_id: empId, month: Number(month), year: Number(year), is_deleted: false });
+    applyTenantScope(existQuery, tenantId, 'payrolls');
+    const existing = await existQuery.first();
     if (existing) {
       skipped.push(empId);
       continue;
     }
 
-    const employee = await Employee.findOne(withTenant({ _id: empId, isDeleted: false }, tenantId));
+    const empQuery = db('employees').where({ id: empId, is_deleted: false });
+    if (tenantId) empQuery.where('tenant_id', tenantId);
+    const employee = await empQuery.first();
     if (!employee) {
       skipped.push(empId);
       continue;
     }
+    if (tenantId && employee.tenant_id && employee.tenant_id !== tenantId) {
+      skipped.push(empId);
+      continue;
+    }
 
-    const totalAllowances = Object.values(allowances).reduce((s, v) => s + (v || 0), 0);
-    const totalDeductions = Object.values(deductions).reduce((s, v) => s + (v || 0), 0);
-    const netSalary = employee.salary + totalAllowances - totalDeductions;
+    const totalAllowances = Object.values(allowances).reduce((s, v) => s + (Number(v) || 0), 0);
+    const totalDeductions = Object.values(deductions).reduce((s, v) => s + (Number(v) || 0), 0);
+    const basicSalary = Number(employee.salary || 0);
+    const netSalary = Math.max(0, basicSalary + totalAllowances - totalDeductions);
 
-    const payroll = await Payroll.create({
-      employee: empId,
-      month,
-      year,
-      basicSalary: employee.salary,
-      allowances,
-      deductions,
-      totalAllowances,
-      totalDeductions,
-      netSalary: Math.max(0, netSalary),
-      tenantId: tenantId || null,
+    const [insertedId] = await db('payrolls').insert({
+      tenant_id: tenantId || employee.tenant_id || null,
+      employee_id: empId,
+      month: Number(month),
+      year: Number(year),
+      basic_salary: basicSalary,
+      allowances: JSON.stringify(allowances),
+      deductions: JSON.stringify(deductions),
+      total_allowances: totalAllowances,
+      total_deductions: totalDeductions,
+      net_salary: netSalary,
+      status: 'pending',
+      is_deleted: false,
     });
 
-    await createAutomatedPayrollJournal(payroll, tenantId).catch(err => console.error('Payroll journal failed:', err));
-
-    results.push(payroll);
+    const prq = db('payrolls').where({ id: insertedId });
+    if (tenantId) prq.andWhere('tenant_id', tenantId);
+    const row = await prq.first();
+    results.push(formatPayroll(row, employee));
   }
 
   return { processed: results, skipped };
 };
 
-export const markAsPaid = async (id, paidBy, tenantId = null) => {
-  const payroll = await Payroll.findOne(withTenant({ _id: id, isDeleted: false }, tenantId));
+export const markAsPaid = async (id, paidBy = null, tenantId = null) => {
+  const query = db('payrolls').where({ id, is_deleted: false });
+  applyTenantScope(query, tenantId, 'payrolls');
+  const payroll = await query.first();
   if (!payroll) throw ApiError.notFound('Payroll record not found');
   if (payroll.status === 'paid') throw ApiError.badRequest('Already paid');
 
-  payroll.status = 'paid';
-  payroll.paidDate = new Date();
-  payroll.paidBy = paidBy;
-  await payroll.save();
+  const mq = db('payrolls').where({ id });
+  if (tenantId) mq.andWhere('tenant_id', tenantId);
+  await mq.update({
+    status: 'paid',
+    paid_date: new Date(),
+    paid_by: paidBy || null,
+  });
 
-  return payroll;
+  const urq = db('payrolls').where({ id });
+  if (tenantId) urq.andWhere('tenant_id', tenantId);
+  const updated = await urq.first();
+  const empQuery = db('employees').where({ id: payroll.employee_id, is_deleted: false });
+  applyTenantScope(empQuery, tenantId, 'employees');
+  const employee = await empQuery.first();
+  return formatPayroll(updated, employee);
 };
 
 export const getPayrollSummary = async (month, year, tenantId = null) => {
-  const query = withTenant({ month, year }, tenantId);
-  const records = await Payroll.find(query).populate('employee', 'name employeeId department');
+  const query = db('payrolls').where({ month: Number(month), year: Number(year), is_deleted: false });
+  applyTenantScope(query, tenantId, 'payrolls');
+
+  const rows = await query;
+  const records = rows.map(r => formatPayroll(r));
 
   const totalPaid = records.filter((r) => r.status === 'paid').reduce((s, r) => s + r.netSalary, 0);
   const totalPending = records.filter((r) => r.status === 'pending').reduce((s, r) => s + r.netSalary, 0);
@@ -103,17 +192,25 @@ export const getPayrollSummary = async (month, year, tenantId = null) => {
 };
 
 export const getPayslip = async (id, tenantId = null) => {
-  const payroll = await Payroll.findOne(withTenant({ _id: id, isDeleted: false }, tenantId))
-    .populate('employee', 'name employeeId department designation phone address joiningDate')
-    .populate('paidBy', 'username');
-  if (!payroll) throw ApiError.notFound('Payroll record not found');
-  return payroll;
+  const query = db('payrolls').where({ id, is_deleted: false });
+  applyTenantScope(query, tenantId, 'payrolls');
+  const row = await query.first();
+  if (!row) throw ApiError.notFound('Payroll record not found');
+  const empQuery = db('employees').where({ id: row.employee_id, is_deleted: false });
+  applyTenantScope(empQuery, tenantId, 'employees');
+  const employee = await empQuery.first();
+  return formatPayroll(row, employee);
 };
 
 export const deletePayroll = async (id, tenantId = null) => {
-  const payroll = await Payroll.findOne(withTenant({ _id: id, isDeleted: false }, tenantId));
+  const query = db('payrolls').where({ id, is_deleted: false });
+  applyTenantScope(query, tenantId, 'payrolls');
+  const payroll = await query.first();
   if (!payroll) throw ApiError.notFound('Payroll record not found');
   if (payroll.status === 'paid') throw ApiError.badRequest('Cannot delete paid payroll');
-  await Payroll.findOneAndDelete(withTenant({ _id: id, isDeleted: false }, tenantId));
-  return payroll;
+
+  const dq = db('payrolls').where({ id });
+  if (tenantId) dq.andWhere('tenant_id', tenantId);
+  await dq.update({ is_deleted: true });
+  return { ...formatPayroll(payroll), isDeleted: true };
 };

@@ -1,5 +1,4 @@
 import * as accountingService from './accounting.service.js';
-import { Asset } from './asset.model.js';
 import { ApiResponse } from '../../utils/http/ApiResponse.js';
 import { logAction } from '../../utils/auth/auditLog.js';
 
@@ -23,12 +22,9 @@ export const getAccountById = async (req, res, next) => {
 
 export const createAccount = async (req, res, next) => {
   try {
-    const accountData = {
-      ...req.body,
-      tenantId: req.user?.tenantId || null,
-    };
-    const account = await accountingService.createAccount(accountData);
-    logAction({ userId: req.user?.userId, username: req.user?.username, action: 'CREATE_ACCOUNT', module: 'accounting', entityId: account._id, entityType: 'Account', details: { name: account.name, type: account.type }, req });
+    const tenantId = req.user?.tenantId || null;
+    const account = await accountingService.createAccount(req.body, tenantId);
+    logAction({ userId: req.user?.userId, username: req.user?.username, action: 'CREATE', module: 'accounting', entityId: account.id, entityType: 'Account', details: { name: account.name, code: account.code }, req });
     return ApiResponse.created(res, account, 'Account created');
   } catch (error) { next(error); }
 };
@@ -37,7 +33,7 @@ export const updateAccount = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
     const account = await accountingService.updateAccount(req.params.id, req.body, tenantId);
-    logAction({ userId: req.user?.userId, username: req.user?.username, action: 'UPDATE_ACCOUNT', module: 'accounting', entityId: account._id, entityType: 'Account', details: { name: account.name }, req });
+    logAction({ userId: req.user?.userId, username: req.user?.username, action: 'UPDATE', module: 'accounting', entityId: account.id, entityType: 'Account', details: { name: account.name }, req });
     return ApiResponse.success(res, account, 'Account updated');
   } catch (error) { next(error); }
 };
@@ -46,26 +42,24 @@ export const deleteAccount = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
     await accountingService.deleteAccount(req.params.id, tenantId);
-    logAction({ userId: req.user?.userId, username: req.user?.username, action: 'DELETE_ACCOUNT', module: 'accounting', entityId: req.params.id, entityType: 'Account', req });
+    logAction({ userId: req.user?.userId, username: req.user?.username, action: 'DELETE', module: 'accounting', entityId: req.params.id, entityType: 'Account', req });
     return ApiResponse.success(res, null, 'Account deleted');
   } catch (error) { next(error); }
 };
 
-export const seedDefaultAccounts = async (req, res, next) => {
+export const seedDefaults = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
     const result = await accountingService.seedDefaultAccounts(tenantId);
-    logAction({ userId: req.user?.userId, username: req.user?.username, action: 'SEED_ACCOUNTS', module: 'accounting', entityType: 'Account', details: { count: result.count }, req });
-    return ApiResponse.success(res, result, result.message);
+    return ApiResponse.success(res, result, 'Default accounts seeded');
   } catch (error) { next(error); }
 };
 
-
-export const getAllJournalEntries = async (req, res, next) => {
+export const getJournalEntries = async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, search = '', status = '', from = '', to = '' } = req.query;
+    const { page = 1, limit = 50, fromDate = '', toDate = '' } = req.query;
     const tenantId = req.user?.tenantId || null;
-    const result = await accountingService.getAllJournalEntries(Number(page), Number(limit), search, status, from, to, tenantId);
+    const result = await accountingService.getJournalEntries(Number(page), Number(limit), fromDate, toDate, tenantId);
     return ApiResponse.paginated(res, result.entries, result.pagination.total, result.pagination.page, result.pagination.limit);
   } catch (error) { next(error); }
 };
@@ -80,13 +74,10 @@ export const getJournalEntryById = async (req, res, next) => {
 
 export const createJournalEntry = async (req, res, next) => {
   try {
-    const entryData = {
-      ...req.body,
-      tenantId: req.user?.tenantId || null,
-    };
-    const entry = await accountingService.createJournalEntry(entryData);
-    logAction({ userId: req.user?.userId, username: req.user?.username, action: 'CREATE_JOURNAL', module: 'accounting', entityId: entry._id, entityType: 'JournalEntry', details: { reference: entry.reference }, req });
-    return ApiResponse.created(res, entry, 'Journal entry created');
+    const tenantId = req.user?.tenantId || null;
+    const entry = await accountingService.createJournalEntry(req.body, req.user?.username, tenantId);
+    logAction({ userId: req.user?.userId, username: req.user?.username, action: 'CREATE_JOURNAL', module: 'accounting', entityId: entry.id, entityType: 'JournalEntry', details: { voucherNumber: entry.voucherNumber, totalAmount: entry.totalAmount }, req });
+    return ApiResponse.created(res, entry, 'Journal entry recorded');
   } catch (error) { next(error); }
 };
 
@@ -126,21 +117,29 @@ export const syncHistoricalJournals = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
-
-export const getBalanceSheet = async (req, res, next) => {
+export const getLedger = async (req, res, next) => {
   try {
-    const { asOf = '' } = req.query;
+    const { accountId, fromDate = '', toDate = '' } = req.query;
     const tenantId = req.user?.tenantId || null;
-    const data = await accountingService.getBalanceSheet(asOf, tenantId);
-    return ApiResponse.success(res, data);
+    const ledger = await accountingService.getLedger(accountId, fromDate, toDate, tenantId);
+    return ApiResponse.success(res, ledger);
   } catch (error) { next(error); }
 };
 
 export const getProfitLoss = async (req, res, next) => {
   try {
-    const { from = '', to = '' } = req.query;
+    const { startDate = '', endDate = '' } = req.query;
     const tenantId = req.user?.tenantId || null;
-    const data = await accountingService.getProfitLoss(from, to, tenantId);
+    const data = await accountingService.getProfitLoss(startDate, endDate, tenantId);
+    return ApiResponse.success(res, data);
+  } catch (error) { next(error); }
+};
+
+export const getBalanceSheet = async (req, res, next) => {
+  try {
+    const { asOfDate = '' } = req.query;
+    const tenantId = req.user?.tenantId || null;
+    const data = await accountingService.getBalanceSheet(asOfDate, tenantId);
     return ApiResponse.success(res, data);
   } catch (error) { next(error); }
 };
@@ -153,25 +152,19 @@ export const getTrialBalance = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
-
 export const getAssets = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const query = {};
-    if (tenantId) query.tenantId = tenantId;
-    const assets = await Asset.find(query).sort({ createdAt: -1 });
-    return ApiResponse.success(res, assets);
+    const result = await accountingService.getAllAccounts(1, 100, '', 'ASSET', tenantId);
+    return ApiResponse.success(res, result.accounts);
   } catch (error) { next(error); }
 };
 
 export const createAsset = async (req, res, next) => {
   try {
-    const assetData = {
-      ...req.body,
-      tenantId: req.user?.tenantId || null,
-    };
-    const asset = await Asset.create(assetData);
-    logAction({ userId: req.user?.userId, username: req.user?.username, action: 'CREATE_ASSET', module: 'accounting', entityId: asset._id, entityType: 'Asset', details: { name: asset.assetName, cost: asset.purchaseCost }, req });
-    return ApiResponse.created(res, asset, 'Asset registered successfully');
+    const tenantId = req.user?.tenantId || null;
+    const account = await accountingService.createAccount({ ...req.body, type: 'ASSET' }, tenantId);
+    logAction({ userId: req.user?.userId, username: req.user?.username, action: 'CREATE_ASSET', module: 'accounting', entityId: account.id, entityType: 'Account', details: { name: account.name, code: account.code }, req });
+    return ApiResponse.created(res, account, 'Asset registered successfully');
   } catch (error) { next(error); }
 };

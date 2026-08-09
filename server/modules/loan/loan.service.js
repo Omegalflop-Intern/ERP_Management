@@ -1,58 +1,94 @@
-import mongoose from 'mongoose';
-import { Loan, LoanRepayment } from './loan.model.js';
+import { db } from '../../config/db.knex.js';
 import { ApiError } from '../../utils/http/ApiError.js';
-import { withTenant } from '../../utils/tenant.js';
-import { createAutomatedLoanJournal } from '../accounting/accounting.service.js';
 
-export const getAllLoans = async (type = 'LOAN_TAKEN', tenantId = null) => {
-  const query = withTenant({ isDeleted: false }, tenantId);
-  if (type) query.type = type;
+function parseJSON(str) {
+  if (typeof str === 'string') {
+    try { return JSON.parse(str); } catch { return []; }
+  }
+  return str || [];
+}
 
-  const loans = await Loan.find(query).sort({ createdAt: -1 }).lean();
-
-  const totalAmount = loans.reduce((sum, l) => sum + (l.loanAmount || 0), 0);
-  const totalRepaid = loans.reduce((sum, l) => sum + (l.repaidAmount || 0), 0);
-  const activeDueBalance = Math.max(0, totalAmount - totalRepaid);
-  const activeCount = loans.filter(l => l.status === 'Active').length;
-
-  const now = new Date();
-  const threeDaysLater = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
-
-  const processedLoans = loans.map(l => {
-    const remainingDue = Math.max(0, (l.loanAmount || 0) - (l.repaidAmount || 0));
-
-    let alertStatus = 'NONE';
-    if (remainingDue > 0 && l.dueDate) {
-      const due = new Date(l.dueDate);
-      if (due < now) {
-        alertStatus = 'OVERDUE';
-      } else if (due <= threeDaysLater) {
-        alertStatus = 'UPCOMING';
-      }
-    }
-
-    return {
-      ...l,
-      remainingDue,
-      alertStatus,
-    };
-  });
+export function formatLoan(row) {
+  if (!row) return null;
+  const loanAmt = Number(row.loan_amount || 0);
+  const repaidAmt = Number(row.repaid_amount || 0);
+  const remainingDue = Math.max(0, loanAmt - repaidAmt);
 
   return {
-    loans: processedLoans,
+    _id: String(row.id),
+    id: row.id,
+    tenantId: row.tenant_id || null,
+    type: row.type || 'LOAN_TAKEN',
+    providerName: row.provider_name,
+    accountNumber: row.account_number || '',
+    phone: row.phone || '',
+    loanAmount: loanAmt,
+    interestRate: Number(row.interest_rate || 0),
+    borrowedDate: row.borrowed_date,
+    dueDate: row.due_date || null,
+    installmentCount: Number(row.installment_count || 1),
+    installmentSchedule: parseJSON(row.installment_schedule),
+    repaidAmount: repaidAmt,
+    remainingDue,
+    status: row.status || 'Active',
+    notes: row.notes || '',
+    isDeleted: Boolean(row.is_deleted),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export function formatLoanRepayment(row) {
+  if (!row) return null;
+  return {
+    _id: String(row.id),
+    id: row.id,
+    tenantId: row.tenant_id || null,
+    loanId: String(row.loan_id),
+    amount: Number(row.amount || 0),
+    paymentMethod: row.payment_method || 'cash',
+    reference: row.reference || '',
+    notes: row.notes || '',
+    date: row.date,
+    recordedBy: row.recorded_by || '',
+    isDeleted: Boolean(row.is_deleted),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function applyTenantScope(query, tenantId) {
+  if (tenantId) {
+    query.where('tenant_id', tenantId);
+  }
+}
+
+export const getAllLoans = async (type = 'LOAN_TAKEN', tenantId = null) => {
+  const query = db('loans').where({ is_deleted: false });
+  applyTenantScope(query, tenantId);
+  if (type) query.where({ type });
+
+  const rows = await query.orderBy('created_at', 'desc');
+  const loans = rows.map(formatLoan);
+
+  const totalAmount = loans.reduce((sum, l) => sum + l.loanAmount, 0);
+  const totalRepaid = loans.reduce((sum, l) => sum + l.repaidAmount, 0);
+  const activeDueBalance = Math.max(0, totalAmount - totalRepaid);
+  const activeLoans = loans.filter(l => l.status === 'Active').length;
+
+  return {
+    loans,
     summary: {
       totalAmount,
       totalRepaid,
       activeDueBalance,
-      activeLoans: activeCount,
+      activeLoans,
     },
   };
 };
 
-export const createLoan = async (data, username, tenantId = null) => {
-  if (!data.loanAmount || Number(data.loanAmount) <= 0) {
-    throw ApiError.badRequest('Loan amount must be greater than 0');
-  }
+export const createLoan = async (data, username = 'system', tenantId = null) => {
+  if (!data.loanAmount || Number(data.loanAmount) <= 0) throw ApiError.badRequest('Loan amount must be greater than 0');
 
   const loanAmount = Number(data.loanAmount);
   const interestRate = Number(data.interestRate) || 0;
@@ -68,164 +104,97 @@ export const createLoan = async (data, username, tenantId = null) => {
     instDueDate.setMonth(instDueDate.getMonth() + (i - 1));
     schedule.push({
       installmentNo: i,
-      dueDate: instDueDate,
+      dueDate: instDueDate.toISOString(),
       amount: perInstallmentAmount,
       status: 'Pending',
       paidAmount: 0,
     });
   }
 
-  const session = await mongoose.startSession();
-  session.startTransaction();
+  const [insertedId] = await db('loans').insert({
+    tenant_id: tenantId || data.tenantId || null,
+    type: data.type || 'LOAN_TAKEN',
+    provider_name: data.providerName,
+    account_number: data.accountNumber || null,
+    phone: data.phone || null,
+    loan_amount: totalWithInterest,
+    interest_rate: interestRate,
+    borrowed_date: data.borrowedDate ? new Date(data.borrowedDate) : new Date(),
+    due_date: data.dueDate ? new Date(data.dueDate) : null,
+    installment_count: installmentCount,
+    installment_schedule: JSON.stringify(schedule),
+    repaid_amount: 0,
+    status: 'Active',
+    notes: data.notes || null,
+    is_deleted: false,
+  });
 
-  try {
-    const [loan] = await Loan.create(
-      [
-        {
-          ...data,
-          type: data.type || 'LOAN_TAKEN',
-          loanAmount: totalWithInterest,
-          interestRate,
-          installmentCount,
-          installmentSchedule: schedule,
-          tenantId: tenantId || null,
-        },
-      ],
-      { session }
-    );
-
-    const { LedgerEntry } = await import('../accounting/ledgerEntry.model.js');
-    await LedgerEntry.create(
-      [
-        {
-          transactionId: loan._id,
-          transactionType: 'LOAN',
-          accountId: loan._id,
-          entryType: loan.type === 'LOAN_TAKEN' ? 'CREDIT' : 'DEBIT',
-          amount: totalWithInterest,
-          narration: `New Loan (${loan.type}): ${loan.providerName}`,
-        },
-      ],
-      { session }
-    );
-
-    await createAutomatedLoanJournal(loan, loan.type, totalWithInterest, tenantId).catch(err => console.error('Loan journal failed:', err));
-
-    await session.commitTransaction();
-    session.endSession();
-    return loan;
-  } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-    throw error;
-  }
-};
-
-export const repayLoanInstalment = async (loanId, data, username, tenantId = null) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  try {
-    const loan = await Loan.findOne(withTenant({ _id: loanId, isDeleted: false }, tenantId)).session(session);
-    if (!loan) throw ApiError.notFound('Loan record not found');
-
-    const amount = Number(data.amount);
-    if (isNaN(amount) || amount <= 0) throw ApiError.badRequest('Invalid repayment amount');
-
-    const remainingDue = (loan.loanAmount || 0) - (loan.repaidAmount || 0);
-    if (amount > remainingDue) {
-      throw ApiError.badRequest(`Repayment amount (৳${amount}) exceeds remaining loan due (৳${remainingDue})`);
-    }
-
-    loan.repaidAmount = (loan.repaidAmount || 0) + amount;
-    if (loan.repaidAmount >= loan.loanAmount) {
-      loan.status = 'Fully Repaid';
-    }
-
-    let remainingPayment = amount;
-    if (loan.installmentSchedule && loan.installmentSchedule.length > 0) {
-      for (const inst of loan.installmentSchedule) {
-        if (remainingPayment <= 0) break;
-        if (inst.status !== 'Paid') {
-          const instDue = inst.amount - (inst.paidAmount || 0);
-          if (remainingPayment >= instDue) {
-            remainingPayment -= instDue;
-            inst.paidAmount = inst.amount;
-            inst.status = 'Paid';
-            inst.paidDate = new Date();
-          } else {
-            inst.paidAmount = (inst.paidAmount || 0) + remainingPayment;
-            remainingPayment = 0;
-          }
-        }
-      }
-    }
-
-    await loan.save({ session });
-
-    const [repayment] = await LoanRepayment.create(
-      [
-        {
-          loanId: loan._id,
-          amount,
-          paymentMethod: data.paymentMethod || 'cash',
-          reference: data.reference || '',
-          notes: data.notes || '',
-          date: data.date || new Date(),
-          recordedBy: username,
-          tenantId: tenantId || null,
-        },
-      ],
-      { session }
-    );
-
-    const { LedgerEntry } = await import('../accounting/ledgerEntry.model.js');
-    await LedgerEntry.create(
-      [
-        {
-          transactionId: repayment._id,
-          transactionType: 'LOAN',
-          accountId: loan._id,
-          entryType: loan.type === 'LOAN_TAKEN' ? 'DEBIT' : 'CREDIT',
-          amount,
-          narration: `Loan Repayment (${loan.type}) for ${loan.providerName}: ৳${amount}`,
-        },
-      ],
-      { session }
-    );
-
-    await createAutomatedLoanJournal(loan, loan.type === 'LOAN_GIVEN' ? 'LOAN_GIVEN' : 'LOAN_TAKEN', amount, tenantId).catch(err => console.error('Loan repayment journal failed:', err));
-
-    await session.commitTransaction();
-    session.endSession();
-
-    return { loan, repayment };
-  } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-    throw error;
-  }
+  return getLoanById(insertedId, tenantId);
 };
 
 export const getLoanById = async (id, tenantId = null) => {
-  const loan = await Loan.findOne(withTenant({ _id: id, isDeleted: false }, tenantId)).lean();
+  const query = db('loans').where({ id, is_deleted: false });
+  applyTenantScope(query, tenantId);
+  const row = await query.first();
+  if (!row) throw ApiError.notFound('Loan record not found');
+
+  const repQuery = db('loan_repayments').where({ loan_id: id, is_deleted: false });
+  applyTenantScope(repQuery, tenantId);
+  const repRows = await repQuery.orderBy('created_at', 'desc');
+
+  const loan = formatLoan(row);
+  loan.repayments = repRows.map(formatLoanRepayment);
+  return loan;
+};
+
+export const repayLoanInstalment = async (loanId, data, username = 'system', tenantId = null) => {
+  const loan = await getLoanById(loanId, tenantId);
   if (!loan) throw ApiError.notFound('Loan record not found');
 
-  const repayments = await LoanRepayment.find(withTenant({ loanId: id, isDeleted: false }, tenantId)).sort({ createdAt: -1 }).lean();
+  const amount = Number(data.amount);
+  if (isNaN(amount) || amount <= 0) throw ApiError.badRequest('Invalid repayment amount');
 
-  return {
-    ...loan,
-    remainingDue: Math.max(0, (loan.loanAmount || 0) - (loan.repaidAmount || 0)),
-    repayments,
-  };
+  const remainingDue = loan.loanAmount - loan.repaidAmount;
+  if (amount > remainingDue) {
+    throw ApiError.badRequest(`Repayment amount (৳${amount}) exceeds remaining loan due (৳${remainingDue})`);
+  }
+
+  const newRepaid = loan.repaidAmount + amount;
+  const status = newRepaid >= loan.loanAmount ? 'Fully Repaid' : 'Active';
+
+  const q1 = db('loans').where({ id: loanId });
+  if (tenantId) q1.andWhere('tenant_id', tenantId);
+  await q1.update({
+    repaid_amount: newRepaid,
+    status,
+  });
+
+  const [repId] = await db('loan_repayments').insert({
+    tenant_id: tenantId || loan.tenantId || null,
+    loan_id: loanId,
+    amount,
+    payment_method: data.paymentMethod || 'cash',
+    reference: data.reference || '',
+    notes: data.notes || '',
+    date: data.date ? new Date(data.date) : new Date(),
+    recorded_by: username,
+    is_deleted: false,
+  });
+
+  const updatedLoan = await getLoanById(loanId, tenantId);
+  const repQuery = db('loan_repayments').where({ id: repId });
+  if (tenantId) repQuery.andWhere('tenant_id', tenantId);
+  const repRow = await repQuery.first();
+
+  return { loan: updatedLoan, repayment: formatLoanRepayment(repRow) };
 };
 
 export const deleteLoan = async (id, tenantId = null) => {
-  const loan = await Loan.findOneAndUpdate(
-    withTenant({ _id: id, isDeleted: false }, tenantId),
-    { $set: { isDeleted: true } },
-    { new: true }
-  );
+  const loan = await getLoanById(id, tenantId);
   if (!loan) throw ApiError.notFound('Loan record not found');
-  return loan;
+
+  const q2 = db('loans').where({ id });
+  if (tenantId) q2.andWhere('tenant_id', tenantId);
+  await q2.update({ is_deleted: true });
+  return { ...loan, isDeleted: true };
 };

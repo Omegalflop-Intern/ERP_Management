@@ -1,33 +1,49 @@
-import { Expense } from './expense.model.js';
+import { db } from '../../config/db.knex.js';
 import { ApiError } from '../../utils/http/ApiError.js';
-import { createAutomatedExpenseJournal, voidJournalEntry } from '../accounting/accounting.service.js';
-import { withTenant } from '../../utils/tenant.js';
+
+export function formatExpense(row) {
+  if (!row) return null;
+  return {
+    _id: String(row.id),
+    id: row.id,
+    tenantId: row.tenant_id || null,
+    title: row.title,
+    category: row.category || 'Miscellaneous',
+    amount: Number(row.amount || 0),
+    paymentMethod: row.payment_method || 'cash',
+    date: row.date,
+    voucherNumber: row.voucher_number || '',
+    notes: row.notes || '',
+    recordedBy: row.recorded_by || '',
+    isDeleted: Boolean(row.is_deleted),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function applyTenantScope(query, tenantId) {
+  if (tenantId) {
+    query.where('tenant_id', tenantId);
+  }
+}
 
 export const getAllExpenses = async (params = {}, tenantId = null) => {
-  const { category, from, to, search } = params;
-  const query = withTenant({ isDeleted: false }, tenantId);
+  const { category, search } = params;
+  const query = db('expenses').where({ is_deleted: false });
+  applyTenantScope(query, tenantId);
 
-  if (category && category !== 'ALL') {
-    query.category = category;
-  }
-
+  if (category && category !== 'ALL') query.where({ category });
   if (search) {
-    query.$or = [
-      { title: { $regex: search, $options: 'i' } },
-      { voucherNumber: { $regex: search, $options: 'i' } },
-      { notes: { $regex: search, $options: 'i' } },
-    ];
+    const term = `%${search}%`;
+    query.where((b) => {
+      b.where('title', 'like', term).orWhere('voucher_number', 'like', term).orWhere('notes', 'like', term);
+    });
   }
 
-  if (from || to) {
-    query.date = {};
-    if (from) query.date.$gte = new Date(from);
-    if (to) query.date.$lte = new Date(to + 'T23:59:59.999Z');
-  }
+  const rows = await query.orderBy('date', 'desc');
+  const expenses = rows.map(formatExpense);
 
-  const expenses = await Expense.find(query).sort({ date: -1, createdAt: -1 }).lean();
-
-  const totalExpense = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+  const totalExpense = expenses.reduce((sum, e) => sum + e.amount, 0);
   const categoryBreakdown = {};
   expenses.forEach(e => {
     categoryBreakdown[e.category] = (categoryBreakdown[e.category] || 0) + e.amount;
@@ -43,79 +59,66 @@ export const getAllExpenses = async (params = {}, tenantId = null) => {
   };
 };
 
-export const createExpense = async (data, recordedBy, tenantId = null) => {
-  if (!data.amount || Number(data.amount) <= 0) {
-    throw ApiError.badRequest('Expense amount must be greater than 0');
-  }
+export const createExpense = async (data, recordedBy = 'system', tenantId = null) => {
+  if (!data.amount || Number(data.amount) <= 0) throw ApiError.badRequest('Expense amount must be greater than 0');
 
-  const expense = await Expense.create({
-    ...data,
+  const [insertedId] = await db('expenses').insert({
+    tenant_id: tenantId || data.tenantId || null,
+    title: data.title,
+    category: data.category || 'Miscellaneous',
     amount: Number(data.amount),
-    recordedBy,
-    tenantId: tenantId || data.tenantId || null,
+    payment_method: data.paymentMethod || 'cash',
+    date: data.date ? new Date(data.date) : new Date(),
+    voucher_number: data.voucherNumber || null,
+    notes: data.notes || null,
+    recorded_by: recordedBy,
+    is_deleted: false,
   });
 
-  await createAutomatedExpenseJournal(expense).catch(err => console.error('Expense journal failed:', err));
-
-  return expense;
+  const rowQ = db('expenses').where({ id: insertedId });
+  if (tenantId) rowQ.andWhere('tenant_id', tenantId);
+  const row = await rowQ.first();
+  return formatExpense(row);
 };
 
 export const updateExpense = async (id, data, tenantId = null) => {
-  const expense = await Expense.findOne(withTenant({ _id: id, isDeleted: false }, tenantId));
+  const query = db('expenses').where({ id, is_deleted: false });
+  applyTenantScope(query, tenantId);
+  const expense = await query.first();
   if (!expense) throw ApiError.notFound('Expense entry not found');
 
-  const oldAmount = expense.amount;
-  const oldTitle = expense.title;
-
+  const updateFields = {};
+  if (data.title !== undefined) updateFields.title = data.title;
+  if (data.category !== undefined) updateFields.category = data.category;
   if (data.amount !== undefined) {
     if (Number(data.amount) <= 0) throw ApiError.badRequest('Expense amount must be greater than 0');
-    expense.amount = Number(data.amount);
+    updateFields.amount = Number(data.amount);
+  }
+  if (data.paymentMethod !== undefined) updateFields.payment_method = data.paymentMethod;
+  if (data.notes !== undefined) updateFields.notes = data.notes;
+
+  if (Object.keys(updateFields).length > 0) {
+    const q = db('expenses').where({ id });
+    if (tenantId) q.andWhere('tenant_id', tenantId);
+    await q.update(updateFields);
   }
 
-  const allowedFields = ['title', 'category', 'notes', 'paymentMethod', 'vendor', 'date', 'voucherNumber'];
-  allowedFields.forEach((field) => {
-    if (data[field] !== undefined) expense[field] = data[field];
-  });
-
-  await expense.save();
-
-  if (data.amount !== undefined || data.title !== undefined) {
-    const { JournalEntry } = await import('../accounting/journalEntry.model.js');
-    const refKey = expense.voucherNumber || expense._id.toString();
-    const oldEntry = await JournalEntry.findOne({
-      reference: refKey,
-      isDeleted: false,
-      ...withTenant({}, tenantId),
-    });
-    if (oldEntry && oldEntry.status === 'POSTED') {
-      await voidJournalEntry(oldEntry._id, 'system', tenantId);
-    }
-    await createAutomatedExpenseJournal(expense).catch(err => console.error('Expense journal update failed:', err));
-  }
-
-  return expense;
+  const uq = db('expenses').where({ id });
+  if (tenantId) uq.andWhere('tenant_id', tenantId);
+  const updated = await uq.first();
+  return formatExpense(updated);
 };
 
 export const deleteExpense = async (id, tenantId = null) => {
-  const expense = await Expense.findOneAndUpdate(
-    withTenant({ _id: id, isDeleted: false }, tenantId),
-    { $set: { isDeleted: true } },
-    { new: true }
-  );
+  const query = db('expenses').where({ id, is_deleted: false });
+  applyTenantScope(query, tenantId);
+  const expense = await query.first();
   if (!expense) throw ApiError.notFound('Expense entry not found');
 
-  const { JournalEntry } = await import('../accounting/journalEntry.model.js');
-  const refKey = expense.voucherNumber || expense._id.toString();
-  const oldEntry = await JournalEntry.findOne({
-    reference: refKey,
-    isDeleted: false,
-    ...withTenant({}, tenantId),
-  });
-  if (oldEntry && oldEntry.status === 'POSTED') {
-    await voidJournalEntry(oldEntry._id, 'system', tenantId);
-  }
-
-  return expense;
+  const dq = db('expenses').where({ id });
+  if (tenantId) dq.andWhere('tenant_id', tenantId);
+  await dq.update({ is_deleted: true });
+  return { ...formatExpense(expense), isDeleted: true };
 };
 
 export const DEFAULT_EXPENSE_CATEGORIES = [
@@ -132,7 +135,9 @@ export const DEFAULT_EXPENSE_CATEGORIES = [
 ];
 
 export const getExpenseCategories = async (tenantId = null) => {
-  const dbCategories = await Expense.distinct('category', withTenant({ isDeleted: false }, tenantId));
-  const allCategories = Array.from(new Set([...DEFAULT_EXPENSE_CATEGORIES, ...dbCategories])).filter(Boolean);
-  return allCategories;
+  const query = db('expenses').where({ is_deleted: false }).distinct('category');
+  applyTenantScope(query, tenantId);
+  const rows = await query;
+  const dbCats = rows.map(r => r.category).filter(Boolean);
+  return Array.from(new Set([...DEFAULT_EXPENSE_CATEGORIES, ...dbCats]));
 };

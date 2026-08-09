@@ -1,8 +1,7 @@
-import { Investor, InvestorTransaction } from './investor.model.js';
+import { db } from '../../config/db.knex.js';
 import { getProfitLoss } from '../accounting/accounting.service.js';
 import { ApiError } from '../../utils/http/ApiError.js';
-import { runInTransaction } from '../../utils/db/transactionHelper.js';
-import { withTenant } from '../../utils/tenant.js';
+import { getInvestorById, formatInvestorTransaction } from './investor.service.js';
 
 const parseValidDate = (val, fallback) => {
   if (!val || val === 'undefined' || val === 'null') return fallback;
@@ -10,28 +9,39 @@ const parseValidDate = (val, fallback) => {
   return isNaN(d.getTime()) ? fallback : d;
 };
 
+function applyTenantScope(query, tenantId) {
+  if (tenantId) {
+    query.where('tenant_id', tenantId);
+  }
+}
+
 export const calculateProfitDistribution = async (startDate, endDate, tenantId = null) => {
   const fromDate = parseValidDate(startDate, new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const toDate = parseValidDate(endDate, new Date());
 
-  const plData = await getProfitLoss(fromDate.toISOString(), toDate.toISOString());
+  const plData = await getProfitLoss(fromDate.toISOString(), toDate.toISOString(), tenantId);
   const netProfit = plData.netIncome || 0;
 
-  const investors = await Investor.find(withTenant({ isDeleted: false, status: 'Active' }, tenantId)).lean();
+  const query = db('investors').where({ is_deleted: false, status: 'Active' });
+  applyTenantScope(query, tenantId);
+  const investors = await query;
 
-  const totalPercentageAllocated = investors.reduce((sum, inv) => sum + (inv.sharePercentage || 0), 0);
+  const totalPercentageAllocated = investors.reduce((sum, inv) => sum + Number(inv.share_percentage || 0), 0);
 
   const shares = investors.map((inv) => {
-    const percentage = inv.sharePercentage || 0;
+    const percentage = Number(inv.share_percentage || 0);
     const shareAmount = Number(((netProfit * percentage) / 100).toFixed(2));
+    const invested = Number(inv.total_invested || 0);
+    const withdrawn = Number(inv.total_withdrawn || 0);
     return {
-      investorId: inv._id,
+      investorId: String(inv.id),
+      id: inv.id,
       name: inv.name,
       phone: inv.phone,
       sharePercentage: percentage,
-      currentBalance: Math.max(0, (inv.totalInvested || 0) - (inv.totalWithdrawn || 0)),
-      totalInvested: inv.totalInvested || 0,
-      totalProfitPaid: inv.totalProfitPaid || 0,
+      currentBalance: Math.max(0, invested - withdrawn),
+      totalInvested: invested,
+      totalProfitPaid: Number(inv.total_profit_paid || 0),
       calculatedShare: shareAmount,
     };
   });
@@ -44,85 +54,54 @@ export const calculateProfitDistribution = async (startDate, endDate, tenantId =
   };
 };
 
-export const executeShareDistribution = async (distributionData, username, tenantId = null) => {
+export const executeShareDistribution = async (distributionData, username = 'system', tenantId = null) => {
   const { investorId, actionType, amount, paymentMethod, reference, notes } = distributionData;
 
   if (!investorId || !actionType || !amount || Number(amount) <= 0) {
     throw ApiError.badRequest('investorId, valid actionType (PAYOUT or REINVEST), and amount are required');
   }
 
-  if (!['PAYOUT', 'REINVEST'].includes(actionType)) {
-    throw ApiError.badRequest('actionType must be either PAYOUT or REINVEST');
+  const numericAmount = Number(amount);
+  const investor = await getInvestorById(investorId, tenantId);
+  if (!investor) throw ApiError.notFound('Investor profile not found');
+
+  let txType = 'PROFIT_PAYOUT';
+  let referenceMsg = reference || 'Profit Share Pay Out';
+
+  if (actionType === 'PAYOUT') {
+    txType = 'PROFIT_PAYOUT';
+    const pdPayoutUpdate = db('investors').where({ id: investorId });
+    if (tenantId) pdPayoutUpdate.andWhere('tenant_id', tenantId);
+    await pdPayoutUpdate.update({
+      total_profit_paid: Number(investor.totalProfitPaid || 0) + numericAmount,
+    });
+  } else if (actionType === 'REINVEST') {
+    txType = 'PROFIT_REINVESTMENT';
+    referenceMsg = reference || 'Profit Share Reinvested into Capital';
+    const pdReinvestUpdate = db('investors').where({ id: investorId });
+    if (tenantId) pdReinvestUpdate.andWhere('tenant_id', tenantId);
+    await pdReinvestUpdate.update({
+      total_invested: Number(investor.totalInvested || 0) + numericAmount,
+    });
   }
 
-  const numericAmount = Number(amount);
-
-  return runInTransaction(async (session) => {
-    const investorQuery = Investor.findOne(withTenant({ _id: investorId, isDeleted: false }, tenantId));
-    const investor = session ? await investorQuery.session(session) : await investorQuery;
-
-    if (!investor) {
-      throw ApiError.notFound('Investor profile not found');
-    }
-
-    let txType = 'PROFIT_PAYOUT';
-    let referenceMsg = reference || 'Profit Share Pay Out';
-
-    if (actionType === 'PAYOUT') {
-      txType = 'PROFIT_PAYOUT';
-      investor.totalProfitPaid = (investor.totalProfitPaid || 0) + numericAmount;
-    } else if (actionType === 'REINVEST') {
-      txType = 'PROFIT_REINVESTMENT';
-      referenceMsg = reference || 'Profit Share Reinvested into Capital';
-      investor.totalInvested = (investor.totalInvested || 0) + numericAmount;
-    }
-
-    if (session) {
-      await investor.save({ session });
-    } else {
-      await investor.save();
-    }
-
-    const txPayload = [
-      {
-        investorId: investor._id,
-        type: txType,
-        amount: numericAmount,
-        paymentMethod: paymentMethod || 'cash',
-        reference: referenceMsg,
-        notes: notes || `Profit share distribution (${actionType})`,
-        date: new Date(),
-        recordedBy: username,
-        tenantId: tenantId || null,
-      },
-    ];
-
-    const transactions = session
-      ? await InvestorTransaction.create(txPayload, { session })
-      : await InvestorTransaction.create(txPayload);
-
-    const transaction = transactions[0];
-
-    const { LedgerEntry } = await import('../accounting/ledgerEntry.model.js');
-    const ledgerPayload = [
-      {
-        transactionId: transaction._id,
-        transactionType: 'INVESTMENT',
-        accountId: investor._id,
-        entryType: actionType === 'PAYOUT' ? 'DEBIT' : 'CREDIT',
-        amount: numericAmount,
-        narration: `Profit Share Distribution (${actionType}) for ${investor.name}: ৳${numericAmount}`,
-      },
-    ];
-
-    if (session) {
-      await LedgerEntry.create(ledgerPayload, { session });
-    } else {
-      await LedgerEntry.create(ledgerPayload);
-    }
-
-    await createAutomatedInvestorJournal(investor, txType, numericAmount, tenantId).catch(err => console.error('Investor distribution journal failed:', err));
-
-    return { investor, transaction };
+  const [txId] = await db('investor_transactions').insert({
+    tenant_id: tenantId || investor.tenantId || null,
+    investor_id: investorId,
+    type: txType,
+    amount: numericAmount,
+    payment_method: paymentMethod || 'cash',
+    reference: referenceMsg,
+    notes: notes || `Profit share distribution (${actionType})`,
+    date: new Date(),
+    recorded_by: username,
+    is_deleted: false,
   });
+
+  const updatedInvestor = await getInvestorById(investorId, tenantId);
+  const txReQuery = db('investor_transactions').where({ id: txId });
+  if (tenantId) txReQuery.andWhere('tenant_id', tenantId);
+  const txRow = await txReQuery.first();
+
+  return { investor: updatedInvestor, transaction: formatInvestorTransaction(txRow) };
 };

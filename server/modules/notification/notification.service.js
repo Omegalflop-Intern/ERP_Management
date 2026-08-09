@@ -1,140 +1,125 @@
-import { Notification } from './notification.model.js';
-import { Product } from '../product/product.model.js';
-import { Customer } from '../customer/customer.model.js';
-import { paginate, getPagination } from '../../utils/http/pagination.js';
+import { db } from '../../config/db.knex.js';
+import { getPagination } from '../../utils/http/pagination.js';
+import emitter, { EVENTS } from '../../events/index.js';
+
+export function formatNotification(row) {
+  if (!row) return null;
+  let meta = row.meta;
+  if (typeof meta === 'string') {
+    try { meta = JSON.parse(meta); } catch { meta = {}; }
+  }
+
+  return {
+    _id: String(row.id),
+    id: row.id,
+    tenantId: row.tenant_id || null,
+    userId: String(row.user_id),
+    type: row.type,
+    title: row.title,
+    message: row.message,
+    isRead: Boolean(row.is_read),
+    link: row.link || null,
+    meta: meta || {},
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function applyTenantScope(query, tenantId) {
+  if (tenantId) {
+    query.where('tenant_id', tenantId);
+  }
+}
 
 export const createNotification = async ({ userId, type, title, message, link, meta, tenantId }) => {
-  return Notification.create({ userId, type, title, message, link, meta, tenantId: tenantId || null });
+  const [insertedId] = await db('notifications').insert({
+    tenant_id: tenantId || null,
+    user_id: userId,
+    type,
+    title,
+    message,
+    is_read: false,
+    link: link || null,
+    meta: meta ? JSON.stringify(meta) : null,
+  });
+
+  const nrq = db('notifications').where({ id: insertedId });
+  if (tenantId) nrq.andWhere('tenant_id', tenantId);
+  const row = await nrq.first();
+  const notif = formatNotification(row);
+  emitter.emit(EVENTS.NOTIFICATION_NEW, { ...notif, tenantId });
+  return notif;
 };
 
 export const createBulkNotifications = async (users, { type, title, message, link, meta }) => {
   const docs = users.map((u) => ({
-    userId: u.userId,
-    tenantId: u.tenantId || null,
+    tenant_id: u.tenantId || null,
+    user_id: u.userId,
     type,
     title,
     message,
-    link,
-    meta,
+    is_read: false,
+    link: link || null,
+    meta: meta ? JSON.stringify(meta) : null,
   }));
-  return Notification.insertMany(docs);
-};
-
-export const syncSystemNotifications = async (userId, tenantId = null) => {
-  try {
-    const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000);
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-
-    // 1. Check total notifications for initial welcome note
-    const userNotifQuery = { userId };
-    if (tenantId) userNotifQuery.tenantId = tenantId;
-    const userNotifCount = await Notification.countDocuments(userNotifQuery);
-    if (userNotifCount === 0) {
-      await Notification.create({
-        userId,
-        tenantId: tenantId || null,
-        type: 'SYSTEM',
-        title: 'System Notifications Active',
-        message: 'Welcome! You will receive real-time alerts for low stock, sales, and customer dues here.',
-        link: '/dashboard',
+  if (docs.length > 0) {
+    await db('notifications').insert(docs);
+    for (const u of users) {
+      emitter.emit(EVENTS.NOTIFICATION_NEW, {
+        type,
+        title,
+        message,
+        link,
+        tenantId: u.tenantId || null,
+        userId: u.userId,
       });
     }
-
-    // 2. Check low stock products
-    const lowStockQuery = {
-      isDeleted: false,
-      $or: [
-        { $expr: { $lte: ['$stockQuantity', '$minStockLevel'] } },
-        { stockQuantity: { $lte: 5 } },
-      ],
-    };
-    if (tenantId) lowStockQuery.tenantId = tenantId;
-    const lowStockProducts = await Product.find(lowStockQuery).select('name stockQuantity minStockLevel').limit(10).lean();
-
-    if (lowStockProducts.length > 0) {
-      const lowStockNotifQuery = {
-        userId,
-        type: 'LOW_STOCK',
-        createdAt: { $gte: twelveHoursAgo },
-      };
-      if (tenantId) lowStockNotifQuery.tenantId = tenantId;
-      const recentLowStock = await Notification.findOne(lowStockNotifQuery);
-
-      if (!recentLowStock) {
-        const itemNames = lowStockProducts.map(p => p.name).slice(0, 3).join(', ');
-        const extraCount = lowStockProducts.length > 3 ? ` & ${lowStockProducts.length - 3} more` : '';
-        await Notification.create({
-          userId,
-          tenantId: tenantId || null,
-          type: 'LOW_STOCK',
-          title: `Low Stock Alert (${lowStockProducts.length} Products)`,
-          message: `${itemNames}${extraCount} are below minimum stock level. Please restock soon.`,
-          link: '/stock',
-        });
-      }
-    }
-
-    // 3. Check customer dues
-    const dueCustomerQuery = {
-      isDeleted: { $ne: true },
-      dueBalance: { $gt: 0 },
-    };
-    if (tenantId) dueCustomerQuery.tenantId = tenantId;
-    const dueCustomers = await Customer.find(dueCustomerQuery).select('name dueBalance').limit(10).lean();
-
-    if (dueCustomers.length > 0) {
-      const dueNotifQuery = {
-        userId,
-        type: 'DUE_REMINDER',
-        createdAt: { $gte: twentyFourHoursAgo },
-      };
-      if (tenantId) dueNotifQuery.tenantId = tenantId;
-      const recentDueAlert = await Notification.findOne(dueNotifQuery);
-
-      if (!recentDueAlert) {
-        const totalDue = dueCustomers.reduce((acc, c) => acc + (c.dueBalance || 0), 0);
-        await Notification.create({
-          userId,
-          tenantId: tenantId || null,
-          type: 'DUE_REMINDER',
-          title: 'Pending Customer Dues',
-          message: `${dueCustomers.length} customer(s) have unpaid balances totaling ৳${totalDue.toLocaleString()}.`,
-          link: '/customers/due-collection',
-        });
-      }
-    }
-  } catch (err) {
-    console.error('[Notification Sync Error]:', err?.message);
   }
+  return true;
 };
 
 export const getMyNotifications = async (userId, page = 1, limit = 20, unreadOnly = false, tenantId = null) => {
-  await syncSystemNotifications(userId, tenantId);
-  const query = { userId };
-  if (tenantId) query.tenantId = tenantId;
-  if (unreadOnly) query.isRead = false;
-  const total = await Notification.countDocuments(query);
-  const notifications = await paginate(Notification.find(query), page, limit).sort({ createdAt: -1 });
-  const unreadQuery = { userId, isRead: false };
-  if (tenantId) unreadQuery.tenantId = tenantId;
-  const unreadCount = await Notification.countDocuments(unreadQuery);
+  const countQuery = db('notifications').where({ user_id: userId });
+  applyTenantScope(countQuery, tenantId);
+  if (unreadOnly) countQuery.where({ is_read: false });
+
+  const countRes = await countQuery.count({ total: '*' }).first();
+  const total = Number(countRes?.total || 0);
+
+  const offset = (page - 1) * limit;
+  const dataQuery = db('notifications').where({ user_id: userId });
+  applyTenantScope(dataQuery, tenantId);
+  if (unreadOnly) dataQuery.where({ is_read: false });
+
+  const rows = await dataQuery.orderBy('created_at', 'desc').limit(limit).offset(offset);
+  const notifications = rows.map(formatNotification);
+
+  const unreadQuery = db('notifications').where({ user_id: userId, is_read: false });
+  applyTenantScope(unreadQuery, tenantId);
+  const unreadRes = await unreadQuery.count({ count: '*' }).first();
+  const unreadCount = Number(unreadRes?.count || 0);
+
   return { notifications, unreadCount, pagination: getPagination(total, page, limit) };
 };
 
 export const markAsRead = async (id, userId, tenantId = null) => {
-  const query = { _id: id, userId };
-  if (tenantId) query.tenantId = tenantId;
-  return Notification.findOneAndUpdate(query, { isRead: true }, { new: true });
+  const updateQ = db('notifications').where({ id, user_id: userId });
+  if (tenantId) updateQ.andWhere('tenant_id', tenantId);
+  await updateQ.update({ is_read: true });
+  const rq = db('notifications').where({ id, user_id: userId });
+  if (tenantId) rq.andWhere('tenant_id', tenantId);
+  const row = await rq.first();
+  return formatNotification(row);
 };
 
 export const markAllAsRead = async (userId, tenantId = null) => {
-  const query = { userId, isRead: false };
-  if (tenantId) query.tenantId = tenantId;
-  return Notification.updateMany(query, { isRead: true });
+  const query = db('notifications').where({ user_id: userId, is_read: false });
+  applyTenantScope(query, tenantId);
+  await query.update({ is_read: true });
+  return true;
 };
 
 export const deleteNotification = async (id, userId, tenantId = null) => {
-  const query = { _id: id, userId };
-  if (tenantId) query.tenantId = tenantId;
-  return Notification.findOneAndDelete(query);
+  await db('notifications').where({ id, user_id: userId }).delete();
+  return { id };
 };

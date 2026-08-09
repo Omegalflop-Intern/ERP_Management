@@ -17,10 +17,10 @@ router.get('/accounts/:id', accountingController.getAccountById);
 router.post('/accounts', authorize('ADMIN', 'MANAGER'), validate(createAccountSchema), accountingController.createAccount);
 router.put('/accounts/:id', authorize('ADMIN', 'MANAGER'), validate(updateAccountSchema), accountingController.updateAccount);
 router.delete('/accounts/:id', authorize('ADMIN'), accountingController.deleteAccount);
-router.post('/accounts/seed', authorize('ADMIN'), accountingController.seedDefaultAccounts);
+router.post('/accounts/seed', authorize('ADMIN'), accountingController.seedDefaults);
 
 // Journal Entries
-router.get('/journal-entries', accountingController.getAllJournalEntries);
+router.get('/journal-entries', accountingController.getJournalEntries);
 router.get('/journal-entries/:id', accountingController.getJournalEntryById);
 router.post('/journal-entries', authorize('ADMIN', 'MANAGER'), validate(createJournalEntrySchema), accountingController.createJournalEntry);
 router.post('/journal-entries/sync', authorize('ADMIN', 'MANAGER'), accountingController.syncHistoricalJournals);

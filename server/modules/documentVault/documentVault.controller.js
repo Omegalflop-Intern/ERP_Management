@@ -1,4 +1,3 @@
-import mongoose from 'mongoose';
 import { ApiResponse } from '../../utils/http/ApiResponse.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { validateUploadedFile } from '../../config/upload.js';
@@ -26,10 +25,6 @@ export const uploadDocument = async (req, res, next) => {
     const { entityType, entityId, documentType, title, notes } = req.body;
     if (!entityType || !entityId || !title) {
       throw ApiError.badRequest('entityType, entityId, and title are required');
-    }
-
-    if (!mongoose.Types.ObjectId.isValid(entityId)) {
-      throw ApiError.badRequest('Please select an active Investor or Loan record to upload documents.');
     }
 
     const fileUrl = `/uploads/documents/${req.file.filename}`;
