@@ -21,6 +21,7 @@ import {
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
 import { NumberInput } from '../../components/ui/NumberInput';
@@ -28,8 +29,19 @@ import BarcodeScannerModal from '../../components/ui/BarcodeScannerModal';
 
 export default function SalesForm() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { styled } = useTheme();
   const queryClient = useQueryClient();
+
+  const { data: tenantInfo } = useQuery({
+    queryKey: ['my-tenant-info'],
+    queryFn: async () => {
+      const r = await api.get('/tenants/me');
+      return r.data?.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   const [cart, setCart] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [customerName, setCustomerName] = useState('');
