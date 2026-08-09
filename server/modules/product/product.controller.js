@@ -1,10 +1,9 @@
 import * as productService from './product.service.js';
+import * as imeiService from '../imei/imei.service.js';
 import { ApiResponse } from '../../utils/http/ApiResponse.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { logAction } from '../../utils/auth/auditLog.js';
 import XLSX from 'xlsx';
-import { Product } from './product.model.js';
-import { InventoryUnit } from '../imei/imei.model.js';
 import { validateUploadedFile } from '../../config/upload.js';
 
 export const getAllProducts = async (req, res, next) => {
@@ -26,34 +25,15 @@ export const getProductById = async (req, res, next) => {
 
 export const createProduct = async (req, res, next) => {
   try {
-    const productData = {
-      ...req.body,
-      tenantId: req.user?.tenantId || null,
-    };
-    const product = await productService.createProduct(productData);
-
-    // If IMEI / Serial number is provided in product creation, create Available InventoryUnit
-    if (req.body.imeiOrSerial || req.body.imei) {
-      const imei = (req.body.imeiOrSerial || req.body.imei).toString().trim();
-      if (imei) {
-        await InventoryUnit.create({
-          tenantId: req.user?.tenantId || undefined,
-          imeiOrSerial: imei,
-          productId: product._id,
-          purchasePrice: product.costPrice || 0,
-          currentSellingPrice: product.sellingPrice || 0,
-          status: 'Available',
-          warrantyMonths: req.body.warrantyMonths || 12,
-        }).catch(() => {});
-      }
+    const tenantId = req.user?.tenantId || null;
+    const productData = { ...req.body, tenantId };
+    if (req.file) {
+      await validateUploadedFile(req);
+      productData.image = `/uploads/${req.file.filename}`;
     }
 
-    // Sync stockQuantity on Product document
-    const availableCount = await InventoryUnit.countDocuments({ productId: product._id, status: 'Available', isDeleted: false });
-    product.stockQuantity = availableCount > 0 ? availableCount : (req.body.stockQuantity || 0);
-    await product.save().catch(() => {});
-
-    logAction({ userId: req.user?.userId, username: req.user?.username, action: 'CREATE', module: 'product', entityId: product._id, entityType: 'Product', details: { name: product.name, sku: product.sku }, req });
+    const product = await productService.createProduct(productData);
+    logAction({ userId: req.user?.userId, username: req.user?.username, action: 'CREATE', module: 'product', entityId: product.id, entityType: 'Product', details: { name: product.name, sku: product.sku }, req });
     return ApiResponse.created(res, product, 'Product created');
   } catch (error) { next(error); }
 };
@@ -62,7 +42,7 @@ export const updateProduct = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
     const product = await productService.updateProduct(req.params.id, req.body, tenantId);
-    logAction({ userId: req.user?.userId, username: req.user?.username, action: 'UPDATE', module: 'product', entityId: product._id, entityType: 'Product', details: { name: product.name }, req });
+    logAction({ userId: req.user?.userId, username: req.user?.username, action: 'UPDATE', module: 'product', entityId: product.id, entityType: 'Product', details: { name: product.name }, req });
     return ApiResponse.success(res, product, 'Product updated');
   } catch (error) { next(error); }
 };
@@ -78,22 +58,21 @@ export const deleteProduct = async (req, res, next) => {
 
 export const uploadImage = async (req, res, next) => {
   try {
+    if (!req.file) throw ApiError.badRequest('No image file uploaded');
     await validateUploadedFile(req);
-    if (!req.file) throw ApiError.badRequest('No image file provided');
-    const imageUrl = `/uploads/products/${req.file.filename}`;
     const tenantId = req.user?.tenantId || null;
+    const imageUrl = `/uploads/${req.file.filename}`;
     const product = await productService.updateProduct(req.params.id, { image: imageUrl }, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'UPLOAD_IMAGE', module: 'product', entityId: req.params.id, entityType: 'Product', details: { image: imageUrl }, req });
-    return ApiResponse.success(res, { image: imageUrl }, 'Image uploaded');
+    return ApiResponse.success(res, product, 'Image uploaded');
   } catch (error) { next(error); }
 };
 
 export const exportProducts = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const query = { isDeleted: false };
-    if (tenantId) query.tenantId = tenantId;
-    const products = await Product.find(query).select('-isDeleted -createdAt -updatedAt -__v').lean();
+    const result = await productService.getAllProducts(1, 10000, '', '', tenantId);
+    const products = result.products || [];
     const rows = products.map(p => ({
       Name: p.name,
       Brand: p.brand,
@@ -135,11 +114,7 @@ export const importProducts = async (req, res, next) => {
     for (const row of rows) {
       try {
         if (!row.Name || !row.SKU) { skipped++; continue; }
-        const query = { sku: row.SKU, isDeleted: false };
-        if (tenantId) query.tenantId = tenantId;
-        const exists = await Product.findOne(query);
-        if (exists) { skipped++; continue; }
-        await Product.create({
+        await productService.createProduct({
           tenantId: tenantId || undefined,
           name: row.Name,
           brand: row.Brand || '',
@@ -160,7 +135,10 @@ export const importProducts = async (req, res, next) => {
           description: row.Description || '',
         });
         created++;
-      } catch (e) { errors.push({ row: row.SKU, error: e.message }); }
+      } catch (e) {
+        if (e.message?.includes('already exists')) { skipped++; }
+        else { errors.push({ row: row.SKU, error: e.message }); }
+      }
     }
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'IMPORT', module: 'product', entityType: 'Product', details: { created, skipped, errors: errors.length }, req });
     return ApiResponse.success(res, { created, skipped, errors }, 'Import complete');
@@ -181,13 +159,8 @@ export const getProductIMEIUnits = async (req, res, next) => {
   try {
     const { id } = req.params;
     const tenantId = req.user?.tenantId || null;
-    const query = { productId: id, isDeleted: false };
-    if (tenantId) query.tenantId = tenantId;
-    const units = await InventoryUnit.find(query)
-      .select('imeiOrSerial color ram storage status purchasePrice currentSellingPrice')
-      .sort({ status: 1, createdAt: -1 })
-      .lean();
+    const result = await imeiService.getAllIMEIs(1, 100, '', '', '', tenantId);
+    const units = (result.units || []).filter(u => String(u.productId?.id || u.productId) === String(id));
     return ApiResponse.success(res, units);
   } catch (error) { next(error); }
 };
-

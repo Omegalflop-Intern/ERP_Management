@@ -3,8 +3,6 @@ import { ApiResponse } from '../../utils/http/ApiResponse.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { logAction } from '../../utils/auth/auditLog.js';
 import XLSX from 'xlsx';
-import { Product } from '../product/product.model.js';
-import { InventoryUnit } from './imei.model.js';
 
 export const getAllIMEI = async (req, res, next) => {
   try {
@@ -55,42 +53,25 @@ export const importIMEI = async (req, res, next) => {
 
     for (const row of rows) {
       try {
-        const imei = (row['IMEI'] || row['imei'] || '').toString().trim();
-        const sku = (row['SKU'] || row['sku'] || '').toString().trim().toUpperCase();
-        if (!imei || !sku) { skipped++; continue; }
+        const imei = String(row['IMEI/Serial'] || row['IMEI'] || '').trim();
+        const productId = row['Product ID'] || row['productId'];
+        if (!imei || !productId) { skipped++; continue; }
 
-        const existsQuery = { imeiOrSerial: imei, isDeleted: false };
-        if (tenantId) existsQuery.tenantId = tenantId;
-        const exists = await InventoryUnit.findOne(existsQuery);
-        if (exists) { skipped++; continue; }
-
-        const productQuery = { sku, isDeleted: false };
-        if (tenantId) productQuery.tenantId = tenantId;
-        const product = await Product.findOne(productQuery);
-        if (!product) { errors.push({ row: imei, error: `Product not found for SKU: ${sku}` }); continue; }
-
-        const warrantyMonths = Number(row['Warranty Months']) || 12;
-        const warrantyExpiry = new Date();
-        warrantyExpiry.setMonth(warrantyExpiry.getMonth() + warrantyMonths);
-
-        await InventoryUnit.create({
-          tenantId: tenantId || null,
+        await imeiService.addIMEI({
           imeiOrSerial: imei,
-          productId: product._id,
-          branchId: row['Branch ID'] || undefined,
-          purchasePrice: Number(row['Purchase Price']) || product.costPrice,
-          currentSellingPrice: Number(row['Selling Price']) || product.sellingPrice,
-          supplierId: row['Supplier ID'] || undefined,
-          warrantyMonths,
-          warrantyExpiry,
-          status: 'Available',
-        });
+          productId,
+          purchasePrice: Number(row['Purchase Price']) || 0,
+          currentSellingPrice: Number(row['Selling Price']) || 0,
+        }, tenantId);
         created++;
-      } catch (e) { errors.push({ row: row['IMEI'] || '?', error: e.message }); }
+      } catch (e) {
+        if (e.message?.includes('already exists')) { skipped++; }
+        else { errors.push({ row: row['IMEI'] || '?', error: e.message }); }
+      }
     }
 
-    logAction({ userId: req.user?.userId, username: req.user?.username, action: 'IMPORT', module: 'imei', entityType: 'InventoryUnit', details: { created, skipped, errors: errors.length }, req });
-    return ApiResponse.success(res, { created, skipped, errors }, 'Import complete');
+    logAction({ userId: req.user?.userId, username: req.user?.username, action: 'IMPORT_IMEI', module: 'imei', entityType: 'InventoryUnit', details: { created, skipped, errors: errors.length }, req });
+    return ApiResponse.success(res, { created, skipped, errors }, 'IMEI import complete');
   } catch (error) { next(error); }
 };
 

@@ -59,7 +59,7 @@ export const deleteRole = async (req, res, next) => {
 
 export const getPermissions = async (req, res, next) => {
   try {
-    const { ALL_PERMISSIONS } = await import('./role.model.js');
+    const { ALL_PERMISSIONS } = await import('./role.service.js');
     return ApiResponse.success(res, ALL_PERMISSIONS);
   } catch (error) { next(error); }
 };

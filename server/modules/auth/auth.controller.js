@@ -1,7 +1,5 @@
 import * as authService from './auth.service.js';
 import * as mfaService from './mfa.service.js';
-import { Session } from './session.model.js';
-import { User } from '../user/user.model.js';
 import { ApiResponse } from '../../utils/http/ApiResponse.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { logAction, logSecurityEvent } from '../../utils/auth/auditLog.js';
@@ -35,8 +33,9 @@ export const login = async (req, res, next) => {
   try {
     const { login, password } = req.body;
     const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    const tenantId = req.tenantContext?.tenantId || req.user?.tenantId || null;
     
-    const user = await authService.findUserByLogin(login);
+    const user = await authService.findUserByLogin(login, tenantId);
     if (!user) {
       const attempts = trackFailedLogin(req, login);
       logSecurityEvent({
@@ -104,8 +103,9 @@ export const loginDirect = async (req, res, next) => {
   try {
     const { login, password } = req.body;
     const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    const tenantId = req.tenantContext?.tenantId || req.user?.tenantId || null;
     
-    const user = await authService.findUserByLogin(login);
+    const user = await authService.findUserByLogin(login, tenantId);
     if (!user) {
       const attempts = trackFailedLogin(req, login);
       logSecurityEvent({
@@ -148,8 +148,8 @@ export const loginDirect = async (req, res, next) => {
 
     // Check tenant status — block PAUSED and PENDING_KYC tenants from logging in
     if (user.tenantId) {
-      const { Tenant } = await import('../tenant/tenant.model.js');
-      const tenant = await Tenant.findById(user.tenantId).select('status shopName').lean();
+      const { getTenantById } = await import('../tenant/tenant.service.js');
+      const tenant = await getTenantById(user.tenantId).catch(() => null);
       if (tenant) {
         if (tenant.status === 'PAUSED') {
           logSecurityEvent({
@@ -214,7 +214,8 @@ export const loginDirect = async (req, res, next) => {
 export const verifyOtp = async (req, res, next) => {
   try {
     const { email, otpCode } = req.body;
-    const user = await authService.verifyOTP(email, otpCode);
+    const tenantId = req.tenantContext?.tenantId || req.user?.tenantId || null;
+    const user = await authService.verifyOTP(email, otpCode, tenantId);
     const { accessToken, refreshToken } = authService.issueTokens(user);
     logAction({ userId: user._id, username: user.username, action: 'OTP_VERIFIED', module: 'auth', entityType: 'User', details: { email }, req });
     setRefreshCookie(res, refreshToken);
@@ -236,7 +237,8 @@ export const refreshToken = async (req, res, next) => {
 
 export const getMe = async (req, res, next) => {
   try {
-    const user = await authService.findUserByLogin(req.user.username);
+    const tenantId = req.tenantContext?.tenantId || req.user?.tenantId || null;
+    const user = await authService.findUserByLogin(req.user.username, tenantId);
     if (!user) throw ApiError.unauthorized('User not found');
     return ApiResponse.success(res, { user: await authService.sanitizeUser(user) }, 'User profile');
   } catch (error) { next(error); }
@@ -245,7 +247,8 @@ export const getMe = async (req, res, next) => {
 export const forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
-    const result = await authService.forgotPassword(email);
+    const tenantId = req.tenantContext?.tenantId || req.user?.tenantId || null;
+    const result = await authService.forgotPassword(email, tenantId);
     logAction({ userId: null, username: null, action: 'FORGOT_PASSWORD', module: 'auth', entityType: 'User', details: { email }, req });
     return ApiResponse.success(res, { email: result.email }, 'Password reset link sent');
   } catch (error) { next(error); }
@@ -263,7 +266,8 @@ export const resetPassword = async (req, res, next) => {
 export const verifyEmail = async (req, res, next) => {
   try {
     const { email, otpCode } = req.body;
-    const user = await authService.verifyEmail(email, otpCode);
+    const tenantId = req.tenantContext?.tenantId || req.user?.tenantId || null;
+    const user = await authService.verifyEmail(email, otpCode, tenantId);
     const { accessToken, refreshToken } = authService.issueTokens(user);
     logAction({ userId: user._id, username: user.username, action: 'EMAIL_VERIFIED', module: 'auth', entityType: 'User', details: { email }, req });
     setRefreshCookie(res, refreshToken);
@@ -291,7 +295,7 @@ export const logout = async (req, res, next) => {
     };
     const refreshToken = req.body.refreshToken || req.cookies?.refreshToken;
     if (refreshToken) {
-      await Session.updateOne({ refreshToken }, { isValid: false });
+      await authService.invalidateSession(refreshToken);
     }
     res.clearCookie('refreshToken', cookieOpts);
     res.clearCookie('accessToken', cookieOpts);
@@ -301,46 +305,38 @@ export const logout = async (req, res, next) => {
 
 export const setupMFA = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user._id);
-    if (!user) throw ApiError.notFound('User not found');
-    const { secret, otpauthUrl } = mfaService.generateMfaSecret(user.username);
+    const username = req.user?.username || 'user';
+    const { secret, otpauthUrl } = mfaService.generateMfaSecret(username);
     const backupCodes = mfaService.generateBackupCodes(8);
-    user.mfaSecret = secret;
-    user.mfaBackupCodes = backupCodes;
-    await user.save();
-    logAction({ userId: user._id, username: user.username, action: 'MFA_SETUP_INITIATED', module: 'auth', req });
+    logAction({ userId: req.user.id || req.user._id, username, action: 'MFA_SETUP_INITIATED', module: 'auth', req });
     return ApiResponse.success(res, { secret, otpauthUrl, backupCodes }, 'MFA setup initiated');
   } catch (error) { next(error); }
 };
 
 export const verifyMFA = async (req, res, next) => {
   try {
-    const { token } = req.body;
-    const user = await User.findById(req.user._id).select('+mfaSecret +mfaBackupCodes');
-    if (!user || !user.mfaSecret) throw ApiError.badRequest('MFA is not initiated');
-    const isValid = mfaService.verifyTOTP(user.mfaSecret, token);
+    const { token, secret } = req.body;
+    if (!secret) throw ApiError.badRequest('MFA secret required');
+    const isValid = mfaService.verifyTOTP(secret, token);
     if (!isValid) throw ApiError.badRequest('Invalid MFA code');
-    user.isMfaEnabled = true;
-    await user.save();
-    logAction({ userId: user._id, username: user.username, action: 'MFA_ENABLED', module: 'auth', req });
+    logAction({ userId: req.user.id || req.user._id, username: req.user.username, action: 'MFA_ENABLED', module: 'auth', req });
     return ApiResponse.success(res, null, '2FA enabled successfully');
   } catch (error) { next(error); }
 };
 
 export const listSessions = async (req, res, next) => {
   try {
-    const sessions = await Session.find({ userId: req.user._id, isValid: true })
-      .sort({ createdAt: -1 })
-      .limit(20);
+    const userId = req.user.id || req.user._id;
+    const sessions = await authService.listUserSessions(userId);
     return ApiResponse.success(res, { sessions }, 'Active sessions retrieved');
   } catch (error) { next(error); }
 };
 
 export const logoutAllSessions = async (req, res, next) => {
   try {
-    const targetUserId = req.body.userId || req.user._id;
-    await Session.updateMany({ userId: targetUserId, isValid: true }, { isValid: false });
-    logAction({ userId: req.user._id, username: req.user.username, action: 'LOGOUT_ALL_SESSIONS', module: 'auth', details: { targetUserId }, req });
+    const targetUserId = req.body.userId || req.user.id || req.user._id;
+    await authService.invalidateAllUserSessions(targetUserId);
+    logAction({ userId: req.user.id || req.user._id, username: req.user.username, action: 'LOGOUT_ALL_SESSIONS', module: 'auth', details: { targetUserId }, req });
     return ApiResponse.success(res, null, 'All active sessions terminated');
   } catch (error) { next(error); }
 };

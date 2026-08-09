@@ -1,78 +1,99 @@
-import { CatalogItem } from './catalog.model.js';
+import { db } from '../../config/db.knex.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 
+function formatCatalogItem(row) {
+  if (!row) return null;
+  return {
+    _id: String(row.id),
+    id: row.id,
+    tenantId: row.tenant_id || null,
+    name: row.name,
+    type: row.type,
+    isDeleted: Boolean(row.is_deleted),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function applyTenantScope(query, tenantId) {
+  if (tenantId) {
+    query.where('tenant_id', tenantId);
+  }
+}
+
 export const getAllCatalogItems = async (type = '', search = '', tenantId = null) => {
-  const query = { isDeleted: false };
-  if (tenantId) query.tenantId = tenantId;
-  if (type) query.type = type;
-  if (search) query.name = { $regex: search, $options: 'i' };
-  return CatalogItem.find(query).sort({ type: 1, name: 1 });
+  const query = db('catalog_items').where({ is_deleted: false });
+  applyTenantScope(query, tenantId);
+  if (type) query.where({ type });
+  if (search) query.where('name', 'like', `%${search}%`);
+
+  const rows = await query.orderBy('type', 'asc').orderBy('name', 'asc');
+  return rows.map(formatCatalogItem);
 };
 
 export const getCatalogItemById = async (id, tenantId = null) => {
-  const query = { _id: id, isDeleted: false };
-  if (tenantId) query.tenantId = tenantId;
-  const item = await CatalogItem.findOne(query);
-  if (!item) throw ApiError.notFound('Catalog item not found');
-  return item;
+  const query = db('catalog_items').where({ id, is_deleted: false });
+  applyTenantScope(query, tenantId);
+  const row = await query.first();
+  if (!row) throw ApiError.notFound('Catalog item not found');
+  return formatCatalogItem(row);
 };
 
 export const createCatalogItem = async (data) => {
-  const existing = await CatalogItem.findOne({
-    name: { $regex: `^${data.name}$`, $options: 'i' },
-    type: data.type,
-    isDeleted: false,
-    ...(data.tenantId ? { tenantId: data.tenantId } : {}),
-  });
+  const query = db('catalog_items')
+    .where({ type: data.type, is_deleted: false })
+    .whereRaw('LOWER(name) = ?', [data.name.toLowerCase()]);
+  applyTenantScope(query, data.tenantId || null);
+
+  const existing = await query.first();
   if (existing) throw ApiError.badRequest(`${data.type.toLowerCase()} "${data.name}" already exists`);
-  return CatalogItem.create(data);
+
+  const [insertedId] = await db('catalog_items').insert({
+    tenant_id: data.tenantId || null,
+    name: data.name,
+    type: data.type,
+    is_deleted: false,
+  });
+
+  return getCatalogItemById(insertedId, data.tenantId || null);
 };
 
 export const updateCatalogItem = async (id, data, tenantId = null) => {
-  const query = { _id: id, isDeleted: false };
-  if (tenantId) query.tenantId = tenantId;
-  const item = await CatalogItem.findOne(query);
+  const item = await getCatalogItemById(id, tenantId);
   if (!item) throw ApiError.notFound('Catalog item not found');
 
-  const duplicate = await CatalogItem.findOne({
-    _id: { $ne: id },
-    name: { $regex: `^${data.name}$`, $options: 'i' },
-    type: item.type,
-    isDeleted: false,
-    ...(tenantId ? { tenantId } : {}),
-  });
+  const dupQuery = db('catalog_items')
+    .where({ type: item.type, is_deleted: false })
+    .whereNot({ id })
+    .whereRaw('LOWER(name) = ?', [data.name.toLowerCase()]);
+  applyTenantScope(dupQuery, tenantId);
+
+  const duplicate = await dupQuery.first();
   if (duplicate) throw ApiError.badRequest(`${item.type.toLowerCase()} "${data.name}" already exists`);
 
-  item.name = data.name;
-  await item.save();
-  return item;
+  const uq = db('catalog_items').where({ id });
+  if (tenantId) uq.andWhere('tenant_id', tenantId);
+  await uq.update({ name: data.name });
+  return getCatalogItemById(id, tenantId);
 };
 
 export const deleteCatalogItem = async (id, tenantId = null) => {
-  const query = { _id: id, isDeleted: false };
-  if (tenantId) query.tenantId = tenantId;
-  const item = await CatalogItem.findOne(query);
+  const item = await getCatalogItemById(id, tenantId);
   if (!item) throw ApiError.notFound('Catalog item not found');
-  item.isDeleted = true;
-  await item.save();
-  return item;
+
+  const delQ = db('catalog_items').where({ id });
+  if (tenantId) delQ.andWhere('tenant_id', tenantId);
+  await delQ.update({ is_deleted: true });
+  return { ...item, isDeleted: true };
 };
 
 export const bulkCreateCatalogItems = async (items, tenantId = null) => {
   const results = [];
   for (const item of items) {
     try {
-      const existing = await CatalogItem.findOne({
-        name: { $regex: `^${item.name}$`, $options: 'i' },
-        type: item.type,
-        isDeleted: false,
-        ...(tenantId ? { tenantId } : {}),
-      });
-      if (!existing) {
-        const created = await CatalogItem.create({ ...item, tenantId: tenantId || null });
-        results.push(created);
-      }
-    } catch (e) {
+      const created = await createCatalogItem({ ...item, tenantId });
+      results.push(created);
+    } catch {
       // skip duplicates
     }
   }
@@ -80,9 +101,15 @@ export const bulkCreateCatalogItems = async (items, tenantId = null) => {
 };
 
 export const getCatalogStats = async (tenantId = null) => {
-  const query = { isDeleted: false };
-  if (tenantId) query.tenantId = tenantId;
-  const categories = await CatalogItem.countDocuments({ ...query, type: 'CATEGORY' });
-  const brands = await CatalogItem.countDocuments({ ...query, type: 'BRAND' });
+  const catQuery = db('catalog_items').where({ type: 'CATEGORY', is_deleted: false });
+  applyTenantScope(catQuery, tenantId);
+  const catRes = await catQuery.count({ count: '*' }).first();
+
+  const brandQuery = db('catalog_items').where({ type: 'BRAND', is_deleted: false });
+  applyTenantScope(brandQuery, tenantId);
+  const brandRes = await brandQuery.count({ count: '*' }).first();
+
+  const categories = Number(catRes?.count || 0);
+  const brands = Number(brandRes?.count || 0);
   return { categories, brands, total: categories + brands };
 };

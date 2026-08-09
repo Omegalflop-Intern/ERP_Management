@@ -68,3 +68,10 @@ export const triggerManualBackup = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
+export const listBackups = async (req, res, next) => {
+  try {
+    const backups = await settingsService.listServerBackups();
+    return ApiResponse.success(res, backups, 'Server backups listed successfully');
+  } catch (error) { next(error); }
+};
+

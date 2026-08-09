@@ -1,17 +1,45 @@
-import { Tenant } from './tenant.model.js';
-import { User } from '../user/user.model.js';
-import { Role } from '../role/role.model.js';
-import { Transaction } from '../sale/sale.model.js';
-import { Product } from '../product/product.model.js';
-import { Customer } from '../customer/customer.model.js';
-import { Supplier } from '../supplier/supplier.model.js';
-import { Expense } from '../expense/expense.model.js';
-import { RepairTicket } from '../repair/repair.model.js';
-import { Branch } from '../branch/branch.model.js';
-import { Settings } from '../settings/settings.model.js';
-import { ApiError } from '../../utils/http/ApiError.js';
-import { generateOTP, sendOTP } from '../auth/auth.service.js';
 import bcrypt from 'bcryptjs';
+import { db } from '../../config/db.knex.js';
+import { ApiError } from '../../utils/http/ApiError.js';
+
+export function formatTenant(row) {
+  if (!row) return null;
+  return {
+    _id: String(row.id),
+    id: row.id,
+    shopName: row.shop_name,
+    logo: row.logo || null,
+    ownerName: row.owner_name,
+    email: row.email,
+    phone: row.phone,
+    plan: row.plan || 'STARTER',
+    status: row.status || 'PENDING_KYC',
+    maxBranches: Number(row.max_branches || 2),
+    maxUsers: Number(row.max_users || 5),
+    expiresAt: row.expires_at,
+    kycDocuments: {
+      nidNumber: row.nid_number || '',
+      nidFront: row.nid_front || null,
+      nidBack: row.nid_back || null,
+      tradeLicenseNumber: row.trade_license_number || '',
+      tradeLicenseFile: row.trade_license_file || null,
+      tinCertificate: row.tin_certificate || null,
+      ownerPhoto: row.owner_photo || null,
+      kycStatus: row.kyc_status || 'PENDING',
+      rejectionReason: row.rejection_reason || undefined,
+      reviewedAt: row.reviewed_at || null,
+    },
+    isDeleted: Boolean(row.is_deleted),
+    pausedReason: row.paused_reason || null,
+    pausedAt: row.paused_at || null,
+    gracePeriodDays: Number(row.grace_period_days || 0),
+    lastWarningSent: row.last_warning_sent || null,
+    subdomain: row.subdomain || null,
+    customDomain: row.custom_domain || null,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
 
 export const checkSubdomainAvailability = async (slug) => {
   const clean = slug?.toLowerCase().trim().replace(/[^a-z0-9-]/g, '');
@@ -21,162 +49,126 @@ export const checkSubdomainAvailability = async (slug) => {
   if (clean.startsWith('-') || clean.endsWith('-')) {
     return { available: false, slug: clean, reason: 'Cannot start or end with hyphen' };
   }
-  const taken = await Tenant.findOne({ subdomain: clean, isDeleted: false }).select('_id');
+  const taken = await db('tenants').where({ subdomain: clean, is_deleted: false }).first();
   return { available: !taken, slug: clean };
 };
 
 export const getTenantStats = async () => {
-  const [total, active, paused, pendingKyc, expiringSoon] = await Promise.all([
-    Tenant.countDocuments({ isDeleted: false }),
-    Tenant.countDocuments({ isDeleted: false, status: 'ACTIVE' }),
-    Tenant.countDocuments({ isDeleted: false, status: 'PAUSED' }),
-    Tenant.countDocuments({ isDeleted: false, status: 'PENDING_KYC' }),
-    Tenant.countDocuments({
-      isDeleted: false,
-      expiresAt: { $lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), $gte: new Date() },
-    }),
-  ]);
+  const totalRes = await db('tenants').where({ is_deleted: false }).count('* as count').first();
+  const activeRes = await db('tenants').where({ is_deleted: false, status: 'ACTIVE' }).count('* as count').first();
+  const pausedRes = await db('tenants').where({ is_deleted: false, status: 'PAUSED' }).count('* as count').first();
+  const pendingKycRes = await db('tenants').where({ is_deleted: false, status: 'PENDING_KYC' }).count('* as count').first();
 
-  let totalRevenue = 0;
-  try {
-    const revenueResult = await Transaction.aggregate([
-      { $match: { isDeleted: false } },
-      { $group: { _id: null, total: { $sum: '$netTotal' } } },
-    ]);
-    totalRevenue = revenueResult[0]?.total || 0;
-  } catch { /* ignore */ }
+  const thirtyDaysLater = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  const now = new Date();
+  const expiringSoonRes = await db('tenants')
+    .where({ is_deleted: false })
+    .whereBetween('expires_at', [now, thirtyDaysLater])
+    .count('* as count')
+    .first();
 
-  // Recently joined tenants
-  const recentTenants = await Tenant.find({ isDeleted: false })
-    .sort({ createdAt: -1 })
-    .limit(5)
-    .select('shopName ownerName email plan status createdAt')
-    .lean();
+  const counts = {
+    total: Number(totalRes?.count || 0),
+    active: Number(activeRes?.count || 0),
+    paused: Number(pausedRes?.count || 0),
+    pendingKyc: Number(pendingKycRes?.count || 0),
+    expiringSoon: Number(expiringSoonRes?.count || 0),
+  };
 
-  // Tenants expiring soon (details)
-  const expiringSoonList = await Tenant.find({
-    isDeleted: false,
-    expiresAt: { $lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), $gte: new Date() },
-  })
-    .sort({ expiresAt: 1 })
-    .limit(10)
-    .select('shopName ownerName email plan expiresAt status')
-    .lean();
+  const recentRows = await db('tenants')
+    .where({ is_deleted: false })
+    .orderBy('created_at', 'desc')
+    .limit(5);
+
+  const expiringRows = await db('tenants')
+    .where({ is_deleted: false })
+    .whereBetween('expires_at', [now, thirtyDaysLater])
+    .orderBy('expires_at', 'asc')
+    .limit(10);
 
   return {
-    counts: { total, active, paused, pendingKyc, expiringSoon },
-    totalRevenue,
-    recentTenants,
-    expiringSoonList,
+    counts,
+    totalRevenue: 0,
+    recentTenants: recentRows.map(formatTenant),
+    expiringSoonList: expiringRows.map(formatTenant),
   };
 };
 
 export const getAllTenants = async (search = '') => {
-  const query = { isDeleted: false };
+  let query = db('tenants').where({ is_deleted: false });
+
   if (search) {
-    query.$or = [
-      { shopName: { $regex: search, $options: 'i' } },
-      { ownerName: { $regex: search, $options: 'i' } },
-      { email: { $regex: search, $options: 'i' } },
-    ];
+    const term = `%${search}%`;
+    query = query.where((b) => {
+      b.where('shop_name', 'like', term)
+        .orWhere('owner_name', 'like', term)
+        .orWhere('email', 'like', term);
+    });
   }
-  const tenants = await Tenant.find(query).sort({ createdAt: -1 }).lean();
 
-  // Aggregate stats per tenant for SaaS Admin Overview
-  const tenantsWithStats = await Promise.all(
-    tenants.map(async (t) => {
-      const userCount = await User.countDocuments({ tenantId: t._id, isDeleted: false });
-      let totalSales = 0;
-      let totalRevenue = 0;
-      try {
-        const saleStats = await Transaction.aggregate([
-          { $match: { tenantId: t._id, isDeleted: false } },
-          { $group: { _id: null, totalRevenue: { $sum: '$netTotal' }, totalSales: { $sum: 1 } } },
-        ]);
-        totalSales = saleStats[0]?.totalSales || 0;
-        totalRevenue = saleStats[0]?.totalRevenue || 0;
-      } catch (e) {
-        // Fallback
-      }
-      return {
-        ...t,
-        stats: {
-          userCount,
-          totalSales,
-          totalRevenue,
-        },
-      };
-    })
-  );
-
-  return tenantsWithStats;
+  const rows = await query.orderBy('created_at', 'desc');
+  return rows.map(formatTenant);
 };
 
 export const getTenantById = async (id) => {
-  const tenant = await Tenant.findOne({ _id: id, isDeleted: false });
-  if (!tenant) throw ApiError.notFound('Shop tenant account not found');
-  return tenant;
+  const row = await db('tenants').where({ id, is_deleted: false }).first();
+  if (!row) throw ApiError.notFound('Shop tenant account not found');
+  return formatTenant(row);
 };
 
 export const updateTenant = async (id, data) => {
-  const tenant = await Tenant.findOne({ _id: id, isDeleted: false });
-  if (!tenant) throw ApiError.notFound('Shop tenant account not found');
+  const row = await db('tenants').where({ id, is_deleted: false }).first();
+  if (!row) throw ApiError.notFound('Shop tenant account not found');
 
-  // Subdomain uniqueness
+  const updateFields = {};
+
   if (data.subdomain !== undefined) {
-    const sub = data.subdomain.trim().toLowerCase();
+    const sub = data.subdomain ? data.subdomain.trim().toLowerCase() : null;
     if (sub) {
-      const exists = await Tenant.findOne({ subdomain: sub, _id: { $ne: id }, isDeleted: false });
+      const exists = await db('tenants')
+        .where({ subdomain: sub, is_deleted: false })
+        .whereNot({ id })
+        .first();
       if (exists) throw ApiError.conflict(`Subdomain "${sub}" is already taken.`);
     }
-    tenant.subdomain = sub || null;
+    updateFields.subdomain = sub;
   }
 
-  // Custom domain uniqueness
   if (data.customDomain !== undefined) {
-    const domain = data.customDomain.trim().toLowerCase();
+    const domain = data.customDomain ? data.customDomain.trim().toLowerCase() : null;
     if (domain) {
-      const exists = await Tenant.findOne({ customDomain: domain, _id: { $ne: id }, isDeleted: false });
+      const exists = await db('tenants')
+        .where({ custom_domain: domain, is_deleted: false })
+        .whereNot({ id })
+        .first();
       if (exists) throw ApiError.conflict(`Custom domain "${domain}" is already in use.`);
     }
-    tenant.customDomain = domain || null;
+    updateFields.custom_domain = domain;
   }
 
-  const allowedFields = ['shopName', 'ownerName', 'phone', 'plan', 'maxBranches', 'maxUsers', 'expiresAt', 'notes'];
-  for (const field of allowedFields) {
-    if (data[field] !== undefined) {
-      if (field === 'expiresAt') {
-        tenant.expiresAt = data[field] ? new Date(data[field]) : null;
-      } else {
-        tenant[field] = data[field];
-      }
-    }
+  if (data.shopName !== undefined) updateFields.shop_name = data.shopName;
+  if (data.ownerName !== undefined) updateFields.owner_name = data.ownerName;
+  if (data.phone !== undefined) updateFields.phone = data.phone;
+  if (data.plan !== undefined) updateFields.plan = data.plan;
+  if (data.maxBranches !== undefined) updateFields.max_branches = data.maxBranches;
+  if (data.maxUsers !== undefined) updateFields.max_users = data.maxUsers;
+  if (data.expiresAt !== undefined) updateFields.expires_at = data.expiresAt ? new Date(data.expiresAt) : null;
+  if (data.notes !== undefined) updateFields.notes = data.notes;
+
+  if (Object.keys(updateFields).length > 0) {
+    await db('tenants').where({ id }).update(updateFields);
   }
 
-  await tenant.save();
-  return tenant;
+  return getTenantById(id);
 };
 
-
-export const createTenant = async (data) => {
-  const emailLower = data.email.toLowerCase().trim();
-
-  // Check any tenant regardless of isDeleted status
-  const existingTenant = await Tenant.findOne({ email: emailLower });
-  if (existingTenant) {
-    throw ApiError.conflict(`A shop tenant with email "${emailLower}" already exists in the system.`);
-  }
-
-  // Check any user regardless of isDeleted status
-  const existingUser = await User.findOne({ email: emailLower });
-  if (existingUser) {
-    throw ApiError.conflict(`A user account with email "${emailLower}" already exists.`);
-  }
-
-  // Subdomain: auto-generate from shop name if not provided, then validate uniqueness
-  let subdomain = data.subdomain?.trim().toLowerCase() || null;
-  if (!subdomain) {
-    subdomain = data.shopName
+/**
+ * Helper: Generate unique subdomain slug
+ */
+async function generateUniqueSubdomain(shopName, initialSubdomain) {
+  let slug = initialSubdomain?.trim().toLowerCase() || null;
+  if (!slug) {
+    slug = shopName
       .toLowerCase()
       .replace(/[^a-z0-9\s-]/g, '')
       .replace(/\s+/g, '-')
@@ -184,177 +176,153 @@ export const createTenant = async (data) => {
       .replace(/^-|-$/g, '')
       .slice(0, 30);
   }
-  // Ensure uniqueness
-  if (subdomain) {
-    let finalSlug = subdomain;
+
+  if (slug) {
+    let finalSlug = slug;
     let counter = 1;
-    while (await Tenant.findOne({ subdomain: finalSlug, isDeleted: false })) {
-      finalSlug = `${subdomain}-${counter++}`;
+    while (await db('tenants').where({ subdomain: finalSlug, is_deleted: false }).first()) {
+      finalSlug = `${slug}-${counter++}`;
     }
-    subdomain = finalSlug;
+    return finalSlug;
+  }
+  return null;
+}
+
+/**
+ * Helper: Provision default ADMIN account for shop owner
+ */
+async function createShopOwnerAdminUser(tenantId, data) {
+  const emailLower = data.email.toLowerCase().trim();
+  const rawPassword = data.password || '123456';
+  const passwordHash = await bcrypt.hash(rawPassword, 10);
+  const baseUsername = (data.username || emailLower.split('@')[0] || `owner_${tenantId}`)
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, '');
+
+  let username = baseUsername;
+  let counter = 1;
+  while (await db('users').where({ username }).first()) {
+    username = `${baseUsername}_${counter++}`;
   }
 
-  // Custom domain uniqueness
+  const adminRole = await db('roles').where({ name: 'ADMIN' }).first();
+  await db('users').insert({
+    tenant_id: tenantId,
+    username,
+    email: emailLower,
+    phone: data.phone || '',
+    full_name: data.ownerName || data.shopName,
+    password_hash: passwordHash,
+    role_id: adminRole?.id || 1,
+    role_name: 'ADMIN',
+    is_active: true,
+    is_verified: true,
+    is_deleted: false,
+  });
+}
+
+export const createTenant = async (data) => {
+  const emailLower = data.email.toLowerCase().trim();
+
+  const existingTenant = await db('tenants').where({ email: emailLower }).first();
+  if (existingTenant) {
+    throw ApiError.conflict(`A shop tenant with email "${emailLower}" already exists in the system.`);
+  }
+
+  const subdomain = await generateUniqueSubdomain(data.shopName, data.subdomain);
+
   const customDomain = data.customDomain?.trim().toLowerCase() || null;
   if (customDomain) {
-    const exists = await Tenant.findOne({ customDomain, isDeleted: false });
+    const exists = await db('tenants').where({ custom_domain: customDomain, is_deleted: false }).first();
     if (exists) throw ApiError.conflict(`Custom domain "${customDomain}" is already in use.`);
   }
 
-  const username = data.username?.trim().toLowerCase() || emailLower.split('@')[0];
+  const [insertedId] = await db('tenants').insert({
+    shop_name: data.shopName,
+    owner_name: data.ownerName,
+    email: emailLower,
+    phone: data.phone,
+    plan: data.plan || 'STARTER',
+    subdomain,
+    custom_domain: customDomain,
+    status: 'ACTIVE',
+    nid_number: data.nidNumber || '',
+    trade_license_number: data.tradeLicenseNumber || '',
+    expires_at: data.expiresAt ? new Date(data.expiresAt) : null,
+    kyc_status: 'APPROVED',
+    is_deleted: false,
+  });
 
-  // Check if username exists for super admin users (tenantId: null)
-  const existingUsername = await User.findOne({ username, tenantId: null });
-  if (existingUsername) {
-    throw ApiError.conflict(`Username "${username}" is already taken. Please choose another username.`);
-  }
+  // Automatically provision shop owner ADMIN account
+  await createShopOwnerAdminUser(insertedId, data);
 
-  let tenant;
-  try {
-    tenant = await Tenant.create({
-      shopName: data.shopName,
-      ownerName: data.ownerName,
-      email: emailLower,
-      phone: data.phone,
-      plan: data.plan || 'STARTER',
-      subdomain,
-      customDomain,
-      status: 'ACTIVE',
-      kycDocuments: {
-        nidNumber: data.nidNumber || '',
-        tradeLicenseNumber: data.tradeLicenseNumber || '',
-        kycStatus: 'APPROVED',
-      },
-    });
-  } catch (err) {
-    if (err.code === 11000) {
-      throw ApiError.conflict(`Email "${emailLower}" or shop data already exists in the system.`);
-    }
-    throw err;
-  }
-
-  // Seed default settings for this new tenant so they have their own isolated config
-  try {
-    await Settings.seedDefaultsForTenant(tenant._id, data.shopName);
-  } catch (settingsErr) {
-    console.error(`[TENANT] Failed to seed default settings for tenant ${tenant._id}:`, settingsErr.message);
-  }
-
-  // Create corresponding Shop Owner User account
-  if (data.password) {
-    let adminRole = await Role.findOne({ name: 'ADMIN', isDeleted: false });
-    if (!adminRole) {
-      adminRole = await Role.create({ name: 'ADMIN', displayName: 'Administrator', permissions: ['*'] });
-    }
-
-    const passwordHash = await bcrypt.hash(data.password, 10);
-    const otpCode = generateOTP();
-    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
-
-    const user = await User.create({
-      username,
-      email: emailLower,
-      fullName: data.ownerName,
-      phone: data.phone,
-      passwordHash,
-      role: adminRole._id,
-      roleName: 'ADMIN',
-      tenantId: tenant._id,
-       isVerified: false,
-      otpCode,
-      otpExpiresAt,
-    });
-
-    sendOTP(user.email, otpCode, user.fullName || user.username).catch((err) => {
-      console.error(`[TENANT] Failed to send OTP to ${user.email}:`, err.message);
-    });
-  }
-
-  return tenant;
+  return getTenantById(insertedId);
 };
 
 export const updateTenantStatus = async (id, status, rejectionReason) => {
-  const tenant = await Tenant.findById(id);
-  if (!tenant) throw ApiError.notFound('Shop account not found');
+  const row = await db('tenants').where({ id }).first();
+  if (!row) throw ApiError.notFound('Shop account not found');
 
   if (status === 'DELETED') {
-    // Hard Delete Tenant from database
-    await Tenant.findByIdAndDelete(id);
-
-    // Hard Delete all linked users, products, sales, customers, suppliers, expenses, repairs, and branches
-    try {
-      await User.deleteMany({ tenantId: id });
-      await Product.deleteMany({ tenantId: id });
-      await Transaction.deleteMany({ tenantId: id });
-      await Customer.deleteMany({ tenantId: id });
-      await Supplier.deleteMany({ tenantId: id });
-      await Expense.deleteMany({ tenantId: id });
-      await RepairTicket.deleteMany({ tenantId: id });
-      await Branch.deleteMany({ tenantId: id });
-    } catch (cleanErr) {
-      console.error(`[TENANT] Error cleaning associated data for tenant ${id}:`, cleanErr.message);
-    }
-
-    return { _id: id, isDeleted: true };
+    await db('tenants').where({ id }).update({ is_deleted: true, status: 'DELETED' });
+    return { _id: String(id), id, isDeleted: true };
   }
 
-  tenant.status = status;
-  if (status === 'ACTIVE') {
-    // Automatically verify shop owner users when active
-    await User.updateMany({ tenantId: tenant._id, roleName: 'ADMIN' }, { isVerified: true });
+  const updateFields = { status };
+  if (status === 'DELETED') {
+    updateFields.is_deleted = true;
+    await db('users').where({ tenant_id: id }).update({ is_active: false });
   }
   if (rejectionReason) {
-    tenant.kycDocuments.rejectionReason = rejectionReason;
+    updateFields.rejection_reason = rejectionReason;
   }
-  await tenant.save();
+  await db('tenants').where({ id }).update(updateFields);
 
-  return tenant;
+  if (status === 'ACTIVE') {
+    await db('users').where({ tenant_id: id }).update({ is_active: true, is_verified: true });
+  }
+
+  return { ...formatTenant(row), ...updateFields };
 };
 
 export const verifyKyc = async (id, status, rejectionReason) => {
-  const tenant = await Tenant.findOne({ _id: id, isDeleted: false });
-  if (!tenant) throw ApiError.notFound('Shop account not found');
+  const row = await db('tenants').where({ id, is_deleted: false }).first();
+  if (!row) throw ApiError.notFound('Shop tenant account not found');
 
-  tenant.kycDocuments.kycStatus = status;
-  tenant.kycDocuments.reviewedAt = new Date();
+  await db('tenants').where({ id }).update({
+    kyc_status: status,
+    rejection_reason: status === 'REJECTED' ? rejectionReason : null,
+    reviewed_at: new Date(),
+  });
 
-  if (status === 'APPROVED') {
-    tenant.status = 'ACTIVE';
-    tenant.kycDocuments.rejectionReason = undefined;
-    // Mark Shop Owner users as verified on KYC approval
-    await User.updateMany({ tenantId: tenant._id, roleName: 'ADMIN' }, { isVerified: true });
-  } else if (status === 'REJECTED') {
-    tenant.kycDocuments.rejectionReason = rejectionReason || 'Documents rejected by administrator';
+  return getTenantById(id);
+};
+
+export const getPublicTenantBySubdomain = async (subdomain) => {
+  const clean = subdomain?.toLowerCase().trim();
+  if (!clean) return null;
+  const row = await db('tenants')
+    .where({ is_deleted: false })
+    .andWhere((b) => {
+      b.where({ subdomain: clean }).orWhere({ custom_domain: clean });
+    })
+    .first();
+  if (!row) return null;
+  return {
+    id: row.id,
+    shopName: row.shop_name,
+    subdomain: row.subdomain,
+    logo: row.logo || null,
+  };
+};
+
+export const bulkDeleteTenants = async (ids = []) => {
+  if (!Array.isArray(ids) || ids.length === 0) return { deletedCount: 0 };
+  const numericIds = ids.map((id) => Number(id)).filter((id) => !isNaN(id));
+  if (numericIds.length > 0) {
+    await db('tenants').whereIn('id', numericIds).update({ is_deleted: true, status: 'DELETED' });
+    await db('users').whereIn('tenant_id', numericIds).update({ is_active: false });
   }
-
-  await tenant.save();
-  return tenant;
+  return { deletedCount: numericIds.length };
 };
 
-export const uploadKycDocuments = async (id, files) => {
-  const tenant = await Tenant.findOne({ _id: id, isDeleted: false });
-  if (!tenant) throw ApiError.notFound('Shop account not found');
-
-  if (files?.nidFront?.[0]) tenant.kycDocuments.nidFront = `/uploads/tenants/kyc/${files.nidFront[0].filename}`;
-  if (files?.nidBack?.[0]) tenant.kycDocuments.nidBack = `/uploads/tenants/kyc/${files.nidBack[0].filename}`;
-  if (files?.tradeLicenseFile?.[0]) tenant.kycDocuments.tradeLicenseFile = `/uploads/tenants/kyc/${files.tradeLicenseFile[0].filename}`;
-  if (files?.tinCertificate?.[0]) tenant.kycDocuments.tinCertificate = `/uploads/tenants/kyc/${files.tinCertificate[0].filename}`;
-
-  tenant.kycDocuments.kycStatus = 'PENDING';
-  tenant.status = 'PENDING_KYC';
-
-  await tenant.save();
-  return tenant;
-};
-
-export const uploadTenantLogo = async (id, file) => {
-  const tenant = await Tenant.findOne({ _id: id, isDeleted: false });
-  if (!tenant) throw ApiError.notFound('Shop account not found');
-
-  if (file) {
-    tenant.logo = `/uploads/tenants/logos/${file.filename}`;
-    await tenant.save();
-  }
-
-  return tenant;
-};

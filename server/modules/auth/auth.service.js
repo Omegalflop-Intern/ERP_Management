@@ -1,231 +1,301 @@
-import crypto from 'crypto';
+import { db } from '../../config/db.knex.js';
 import bcrypt from 'bcryptjs';
-import { User } from '../user/user.model.js';
+import crypto from 'crypto';
+import { generateAccessToken, generateRefreshToken, verifyToken } from '../../utils/auth/generateToken.js';
 import { ApiError } from '../../utils/http/ApiError.js';
-import { sendOTPEmail } from '../../config/mailer.js';
-import { generateAccessToken, generateRefreshToken } from '../../utils/auth/generateToken.js';
+import { sendOTPEmail, sendPasswordResetEmail } from '../../config/mailer.js';
 
-export const findUserByLogin = async (login) => {
-  const user = await User.findOne({
-    $or: [
-      { username: login },
-      { email: login },
-      { phone: login },
-    ],
-    isDeleted: false,
-  }).select('+passwordHash').populate('role', 'name displayName permissions');
-  return user;
+export const generateOTP = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-export const verifyPassword = async (password, passwordHash) => {
-  return bcrypt.compare(password, passwordHash);
+export const sendOTP = async (recipient, otpCode) => {
+  if (recipient && recipient.includes('@')) {
+    return sendOTPEmail(recipient, otpCode);
+  }
+  const { sendSMS } = await import('../../config/sms.js');
+  return sendSMS(recipient, `Your ERP verification OTP is: ${otpCode}`);
+};
+
+export const verifyPassword = async (password, hash) => {
+  if (!password || !hash) return false;
+  return bcrypt.compare(password, hash);
+};
+
+export function formatUser(row) {
+  if (!row) return null;
+  return {
+    _id: String(row.id),
+    id: row.id,
+    tenantId: row.tenant_id || null,
+    subdomain: row.subdomain || row.tenant_subdomain || null,
+    customDomain: row.customDomain || row.tenant_custom_domain || null,
+    username: row.username,
+    fullName: row.full_name || '',
+    email: row.email,
+    phone: row.phone || '',
+    avatar: row.avatar || null,
+    roleId: row.role_id,
+    role: row.role_id,
+    roleName: row.role_name || '',
+    roleDisplayName: row.role_display_name || '',
+    isSuperAdmin: Boolean(row.is_super_admin),
+    isActive: Boolean(row.is_active),
+    isVerified: Boolean(row.is_verified),
+    mfaEnabled: Boolean(row.is_mfa_enabled),
+    isMfaEnabled: Boolean(row.is_mfa_enabled),
+    isDeleted: Boolean(row.is_deleted),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export const findUserByLogin = async (identifier, tenantId = null) => {
+  const term = (identifier || '').trim().toLowerCase();
+  const query = db('users')
+    .leftJoin('roles', 'users.role_id', 'roles.id')
+    .leftJoin('tenants', 'users.tenant_id', 'tenants.id')
+    .where((b) => b.where('users.username', term).orWhere('users.email', term))
+    .where('users.is_deleted', false)
+    .select(
+      'users.*',
+      'roles.name as role_name_val',
+      'roles.display_name as role_display_name_val',
+      'tenants.subdomain as tenant_subdomain',
+      'tenants.custom_domain as tenant_custom_domain'
+    );
+
+  if (tenantId) {
+    query.where('users.tenant_id', tenantId);
+  }
+
+  const row = await query.first();
+
+  if (!row) return null;
+  row.role_name = row.role_name_val || row.role_name;
+  row.role_display_name = row.role_display_name_val || row.role_display_name;
+  row.subdomain = row.tenant_subdomain || null;
+  row.customDomain = row.tenant_custom_domain || null;
+  row._id = String(row.id);
+  row.passwordHash = row.password_hash;
+  row.isActive = Boolean(row.is_active);
+  row.isVerified = Boolean(row.is_verified);
+  row.isMfaEnabled = Boolean(row.is_mfa_enabled);
+  return row;
+};
+
+export const createSessionRecord = async (userId, refreshToken, ipAddress = '', userAgent = '') => {
+  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  const [insertedId] = await db('sessions').insert({
+    user_id: userId,
+    refresh_token: refreshToken,
+    ip_address: ipAddress,
+    user_agent: userAgent,
+    is_valid: true,
+    expires_at: expiresAt,
+  });
+  return insertedId;
+};
+
+export const invalidateSession = async (refreshToken) => {
+  if (!refreshToken) return;
+  await db('sessions').where({ refresh_token: refreshToken }).update({ is_valid: false });
+};
+
+export const listUserSessions = async (userId) => {
+  const rows = await db('sessions').where({ user_id: userId, is_valid: true }).orderBy('created_at', 'desc').limit(20);
+  return rows.map(r => ({
+    _id: String(r.id),
+    id: r.id,
+    ipAddress: r.ip_address,
+    userAgent: r.user_agent,
+    createdAt: r.created_at,
+    expiresAt: r.expires_at,
+  }));
+};
+
+export const invalidateAllUserSessions = async (userId) => {
+  await db('sessions').where({ user_id: userId, is_valid: true }).update({ is_valid: false });
+  return true;
+};
+
+export const loginDirect = async (identifier, password, ipAddress = '', userAgent = '', tenantId = null) => {
+  const userRow = await findUserByLogin(identifier, tenantId);
+  if (!userRow) throw ApiError.unauthorized('Invalid username or password');
+  if (!userRow.is_active) throw ApiError.forbidden('Account is deactivated');
+
+  const isMatch = await bcrypt.compare(password, userRow.password_hash);
+  if (!isMatch) throw ApiError.unauthorized('Invalid username or password');
+
+  const payload = {
+    userId: String(userRow.id),
+    id: userRow.id,
+    username: userRow.username,
+    role: userRow.role_id,
+    roleName: userRow.role_name,
+    tenantId: userRow.tenant_id || null,
+  };
+
+  const accessToken = generateAccessToken(payload);
+  const refreshToken = generateRefreshToken(payload);
+
+  await createSessionRecord(userRow.id, refreshToken, ipAddress, userAgent);
+
+  return {
+    user: formatUser(userRow),
+    accessToken,
+    refreshToken,
+  };
+};
+
+export const loginInitiate = async (identifier, password, tenantId = null) => {
+  const userRow = await findUserByLogin(identifier, tenantId);
+  if (!userRow) throw ApiError.unauthorized('Invalid username or password');
+  if (!userRow.is_active) throw ApiError.forbidden('Account is deactivated');
+
+  const isMatch = await bcrypt.compare(password, userRow.password_hash);
+  if (!isMatch) throw ApiError.unauthorized('Invalid username or password');
+
+  const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+  const otpQ = db('users').where({ id: userRow.id });
+  if (tenantId) otpQ.andWhere('tenant_id', tenantId);
+  await otpQ.update({
+    otp_code: otpCode,
+    otp_expires_at: new Date(Date.now() + 10 * 60 * 1000),
+    otp_attempts: 0,
+  });
+
+  await sendOTP(userRow.email, otpCode, userRow.full_name || userRow.username);
+  return { email: userRow.email, requiresOtp: true };
+};
+
+export const verifyOTP = async (email, otpCode, tenantId = null) => {
+  const normalizedEmail = (email || '').trim().toLowerCase();
+  const query = db('users').where({ email: normalizedEmail, is_deleted: false });
+  if (tenantId) query.where('tenant_id', tenantId);
+  const row = await query.first();
+  if (!row) throw ApiError.notFound('User not found');
+
+  if (row.otp_code !== otpCode || !row.otp_expires_at || new Date(row.otp_expires_at) < new Date()) {
+    throw ApiError.badRequest('Invalid or expired OTP code');
+  }
+
+  const verQ = db('users').where({ id: row.id });
+  if (tenantId) verQ.andWhere('tenant_id', tenantId);
+  await verQ.update({
+    is_verified: true,
+    otp_code: null,
+    otp_expires_at: null,
+    otp_attempts: 0,
+  });
+
+  return findUserByLogin(row.email);
+};
+
+export const refreshAccessToken = async (refreshToken) => {
+  const decoded = verifyToken(refreshToken);
+  const query = db('users')
+    .leftJoin('roles', 'users.role_id', 'roles.id')
+    .where({ 'users.id': decoded.id || decoded.userId, 'users.is_deleted': false })
+    .select('users.*', 'roles.name as role_name_val', 'roles.display_name as role_display_name_val');
+
+  if (decoded.tenantId) {
+    query.where('users.tenant_id', decoded.tenantId);
+  }
+
+  const row = await query.first();
+
+  if (!row) throw ApiError.unauthorized('User not found');
+
+  const payload = {
+    userId: String(row.id),
+    id: row.id,
+    username: row.username,
+    role: row.role_id,
+    roleName: row.role_name_val || row.role_name,
+    tenantId: row.tenant_id || null,
+  };
+
+  const accessToken = generateAccessToken(payload);
+  const newRefreshToken = generateRefreshToken(payload);
+  return { accessToken, refreshToken: newRefreshToken };
+};
+
+export const forgotPassword = async (email, tenantId = null) => {
+  const normalizedEmail = (email || '').trim().toLowerCase();
+  const query = db('users').where({ email: normalizedEmail, is_deleted: false });
+  if (tenantId) query.where('tenant_id', tenantId);
+  const row = await query.first();
+  if (!row) throw ApiError.notFound('No account found with this email');
+
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+  const fpQ = db('users').where({ id: row.id });
+  if (tenantId) fpQ.andWhere('tenant_id', tenantId);
+  await fpQ.update({
+    password_reset_token: resetTokenHash,
+    password_reset_expires: new Date(Date.now() + 60 * 60 * 1000),
+  });
+
+  const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+  const resetLink = `${clientUrl}/reset-password/${resetToken}`;
+
+  try {
+    await sendPasswordResetEmail(row.email, resetLink, row.full_name || row.username);
+  } catch (err) {
+    console.error('[ForgotPassword] Failed to send email:', err.message);
+  }
+
+  return { email: row.email };
+};
+
+export const resetPassword = async (token, newPassword) => {
+  const resetTokenHash = crypto.createHash('sha256').update(token).digest('hex');
+  const row = await db('users')
+    .where({ password_reset_token: resetTokenHash, is_deleted: false })
+    .where('password_reset_expires', '>', new Date())
+    .first();
+
+  if (!row) throw ApiError.badRequest('Invalid or expired reset token');
+
+  const newHash = await bcrypt.hash(newPassword, 10);
+  const rpQ = db('users').where({ id: row.id });
+  await rpQ.update({
+    password_hash: newHash,
+    password_reset_token: null,
+    password_reset_expires: null,
+  });
+
+  return findUserByLogin(row.email);
 };
 
 export const issueTokens = (user) => {
   const payload = {
-    userId: user._id,
+    userId: String(user.id || user._id),
+    id: user.id || user._id,
     username: user.username,
-    role: user.role?._id || user.role,
-    roleName: user.roleName || user.role?.name || user.role,
-    tenantId: user.tenantId || null,
+    role: user.role_id || user.role || 1,
+    roleName: user.role_name || user.roleName || 'ADMIN',
+    tenantId: user.tenant_id || user.tenantId || null,
   };
   const accessToken = generateAccessToken(payload);
   const refreshToken = generateRefreshToken(payload);
   return { accessToken, refreshToken };
 };
 
-export const sanitizeUser = async (user) => {
-  const roleData = user.role;
-  let tenant = null;
-  if (user.tenantId) {
-    try {
-      const { Tenant } = await import('../tenant/tenant.model.js');
-      tenant = await Tenant.findById(user.tenantId).select('shopName plan status').lean();
-    } catch (e) {
-      tenant = null;
-    }
-  }
-  return {
-    _id: user._id,
-    username: user.username,
-    email: user.email,
-    phone: user.phone,
-    fullName: user.fullName,
-    avatar: user.avatar,
-    isActive: user.isActive,
-    isVerified: user.isVerified,
-    branchId: user.branchId,
-    tenantId: user.tenantId || null,
-    shopName: tenant?.shopName || user.shopName || null,
-    tenant: tenant ? { _id: tenant._id, shopName: tenant.shopName, plan: tenant.plan, status: tenant.status } : null,
-    subdomain: tenant?.subdomain || null,
-    customDomain: tenant?.customDomain || null,
-    roleName: user.roleName || roleData?.name,
-    roleDisplayName: roleData?.displayName,
-    permissions: roleData?.permissions || [],
-  };
+export const sanitizeUser = (user) => {
+  return formatUser(user);
 };
 
-export const generateOTP = () => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+export const verifyEmail = async (email, otpCode, tenantId = null) => {
+  return verifyOTP(email, otpCode, tenantId);
 };
 
-export const sendOTP = async (email, otpCode, userName) => {
-  return sendOTPEmail(email, otpCode, userName);
-};
-
-const MAX_OTP_ATTEMPTS = 5;
-const OTP_LOCKOUT_MINUTES = 15;
-
-export const verifyOTP = async (email, otpCode) => {
-  const normalizedEmail = (email || '').trim().toLowerCase();
-  const user = await User.findOne({ email: normalizedEmail, isDeleted: false }).select('+otpCode +otpExpiresAt +otpAttempts +otpLockedUntil');
+export const resendVerificationOTP = async (email, tenantId = null) => {
+  const user = await findUserByLogin(email, tenantId);
   if (!user) throw ApiError.notFound('User not found');
-
-  if (user.otpLockedUntil && user.otpLockedUntil > new Date()) {
-    const minutesLeft = Math.ceil((user.otpLockedUntil - new Date()) / 60000);
-    throw ApiError.badRequest(`Account locked due to too many failed OTP attempts. Try again in ${minutesLeft} minutes`);
-  }
-
-  if (user.otpCode !== otpCode || !user.otpExpiresAt || user.otpExpiresAt < new Date()) {
-    user.otpAttempts = (user.otpAttempts || 0) + 1;
-    if (user.otpAttempts >= MAX_OTP_ATTEMPTS) {
-      user.otpLockedUntil = new Date(Date.now() + OTP_LOCKOUT_MINUTES * 60 * 1000);
-      user.otpAttempts = 0;
-    }
-    await user.save();
-    throw ApiError.badRequest('Invalid or expired OTP code');
-  }
-
-  user.isVerified = true;
-  user.otpCode = null;
-  user.otpExpiresAt = null;
-  user.otpAttempts = 0;
-  user.otpLockedUntil = null;
-  await user.save();
-
-  if (user.tenantId) {
-    const { Tenant } = await import('../tenant/tenant.model.js');
-    await Tenant.findByIdAndUpdate(user.tenantId, { status: 'ACTIVE' });
-  }
-
-  return user;
-};
-
-export const verifyEmail = async (email, otpCode) => {
-  const normalizedEmail = (email || '').trim().toLowerCase();
-  const user = await User.findOne({ email: normalizedEmail, isDeleted: false })
-    .select('+otpCode +otpExpiresAt +otpAttempts +otpLockedUntil');
-  if (!user) throw ApiError.notFound('User not found');
-
-  if (user.isVerified) {
-    throw ApiError.badRequest('Email is already verified');
-  }
-
-  if (user.otpLockedUntil && user.otpLockedUntil > new Date()) {
-    const minutesLeft = Math.ceil((user.otpLockedUntil - new Date()) / 60000);
-    throw ApiError.badRequest(`Account locked due to too many failed attempts. Try again in ${minutesLeft} minutes`);
-  }
-
-  if (user.otpCode !== otpCode || !user.otpExpiresAt || user.otpExpiresAt < new Date()) {
-    user.otpAttempts = (user.otpAttempts || 0) + 1;
-    if (user.otpAttempts >= MAX_OTP_ATTEMPTS) {
-      user.otpLockedUntil = new Date(Date.now() + OTP_LOCKOUT_MINUTES * 60 * 1000);
-      user.otpAttempts = 0;
-    }
-    await user.save();
-    throw ApiError.badRequest('Invalid or expired OTP code');
-  }
-
-  user.isVerified = true;
-  user.otpCode = null;
-  user.otpExpiresAt = null;
-  user.otpAttempts = 0;
-  user.otpLockedUntil = null;
-  await user.save();
-
-  return user;
-};
-
-export const resendVerificationOTP = async (email) => {
-  const normalizedEmail = (email || '').trim().toLowerCase();
-  const user = await User.findOne({ email: normalizedEmail, isDeleted: false })
-    .select('+otpCode +otpExpiresAt +otpAttempts +otpLockedUntil');
-  if (!user) throw ApiError.notFound('User not found');
-  if (user.isVerified) throw ApiError.badRequest('Email is already verified');
-
-  if (user.otpLockedUntil && user.otpLockedUntil > new Date()) {
-    const minutesLeft = Math.ceil((user.otpLockedUntil - new Date()) / 60000);
-    throw ApiError.badRequest(`Account locked due to too many failed attempts. Try again in ${minutesLeft} minutes`);
-  }
-
   const otpCode = generateOTP();
-  user.otpCode = otpCode;
-  user.otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
-  user.otpAttempts = 0;
-  await user.save();
-
-  await sendOTP(user.email, otpCode, user.fullName || user.username);
+  await sendOTP(user.email, otpCode);
   return { email: user.email };
-};
-
-export const refreshAccessToken = async (refreshToken) => {
-  const { verifyToken: verify } = await import('../../utils/auth/generateToken.js');
-  const decoded = verify(refreshToken);
-  const user = await User.findOne({ _id: decoded.userId, isDeleted: false })
-    .populate('role', 'name displayName permissions');
-  if (!user) throw ApiError.unauthorized('User not found');
-
-  const payload = {
-    userId: user._id,
-    username: user.username,
-    role: user.role?._id || decoded.role,
-    roleName: user.roleName || user.role?.name,
-    tenantId: user.tenantId || null,
-  };
-  const accessToken = generateAccessToken(payload);
-  const newRefreshToken = generateRefreshToken(payload);
-  return { accessToken, refreshToken: newRefreshToken };
-};
-
-export const forgotPassword = async (email) => {
-  const user = await User.findOne({ email, isDeleted: false });
-  if (!user) throw ApiError.notFound('No account found with this email');
-
-  const resetToken = crypto.randomBytes(32).toString('hex');
-  const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
-
-  user.passwordResetToken = resetTokenHash;
-  user.passwordResetExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-  await user.save();
-
-  const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
-  const resetLink = `${clientUrl}/reset-password/${resetToken}`;
-
-  try {
-    const { sendPasswordResetEmail } = await import('../../config/mailer.js');
-    await sendPasswordResetEmail(user.email, resetLink, user.fullName || user.username);
-  } catch (err) {
-    console.error('[ForgotPassword] Failed to send email:', err.message);
-  }
-
-  return { email };
-};
-
-export const resetPassword = async (token, newPassword) => {
-  const resetTokenHash = crypto.createHash('sha256').update(token).digest('hex');
-  const user = await User.findOne({
-    passwordResetToken: resetTokenHash,
-    passwordResetExpires: { $gt: new Date() },
-    isDeleted: false,
-  });
-
-  if (!user) throw ApiError.badRequest('Invalid or expired reset token');
-
-  user.passwordHash = await bcrypt.hash(newPassword, 10);
-  user.passwordResetToken = undefined;
-  user.passwordResetExpires = undefined;
-  await user.save();
-
-  return user;
 };

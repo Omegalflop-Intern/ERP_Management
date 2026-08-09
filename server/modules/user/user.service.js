@@ -1,39 +1,129 @@
 import bcrypt from 'bcryptjs';
-import { User } from './user.model.js';
-import { Role } from '../role/role.model.js';
-import { Employee } from '../employee/employee.model.js';
+import { db } from '../../config/db.knex.js';
 import { ApiError } from '../../utils/http/ApiError.js';
-import { paginate, getPagination } from '../../utils/http/pagination.js';
-import { escapeRegex } from '../../utils/system/helpers.js';
+import { getPagination } from '../../utils/http/pagination.js';
 import { generateOTP, sendOTP } from '../auth/auth.service.js';
-import { withTenant } from '../../utils/tenant.js';
+import emitter, { EVENTS } from '../../events/index.js';
+
+export function formatUser(row, roleRow = null) {
+  if (!row) return null;
+  return {
+    _id: String(row.id),
+    id: row.id,
+    username: row.username,
+    email: row.email,
+    phone: row.phone || null,
+    fullName: row.full_name || '',
+    avatar: row.avatar || null,
+    role: roleRow ? {
+      _id: String(roleRow.id),
+      id: roleRow.id,
+      name: roleRow.name,
+      displayName: roleRow.display_name,
+      permissions: typeof roleRow.permissions === 'string' ? JSON.parse(roleRow.permissions) : (roleRow.permissions || []),
+    } : (row.role_id ? String(row.role_id) : null),
+    roleName: row.role_name,
+    isActive: Boolean(row.is_active),
+    isVerified: Boolean(row.is_verified),
+    branchId: row.branch_id || null,
+    tenantId: row.tenant_id || null,
+    commissionRate: Number(row.commission_rate || 0),
+    isMfaEnabled: Boolean(row.is_mfa_enabled),
+    failedLoginAttempts: Number(row.failed_login_attempts || 0),
+    lockUntil: row.lock_until || null,
+    lastLoginAt: row.last_login_at || null,
+    isDeleted: Boolean(row.is_deleted),
+    isTempAdmin: Boolean(row.is_temp_admin),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function applyTenantScope(query, tenantId) {
+  if (tenantId) {
+    query.where('users.tenant_id', tenantId);
+  }
+}
 
 export const getAllUsers = async (page = 1, limit = 20, search = '', tenantId = null) => {
-  const query = withTenant({}, tenantId);
+  const countQuery = db('users').where('users.is_deleted', false);
+  applyTenantScope(countQuery, tenantId);
 
   if (search) {
-    const safeSearch = escapeRegex(search);
-    query.$or = [
-      { username: { $regex: safeSearch, $options: 'i' } },
-      { email: { $regex: safeSearch, $options: 'i' } },
-      { fullName: { $regex: safeSearch, $options: 'i' } },
-      { phone: { $regex: safeSearch, $options: 'i' } },
-    ];
+    const term = `%${search}%`;
+    countQuery.where((b) => {
+      b.where('username', 'like', term)
+        .orWhere('email', 'like', term)
+        .orWhere('full_name', 'like', term)
+        .orWhere('phone', 'like', term);
+    });
   }
 
-  const total = await User.countDocuments(query);
-  const users = await paginate(
-    User.find(query).populate('role', 'name displayName permissions'),
-    page, limit
-  ).sort({ createdAt: -1 });
+  const countResult = await countQuery.count({ total: '*' }).first();
+  const total = Number(countResult?.total || 0);
+
+  const offset = (page - 1) * limit;
+  const dataQuery = db('users')
+    .leftJoin('roles', 'users.role_id', 'roles.id')
+    .where('users.is_deleted', false)
+    .select(
+      'users.*',
+      'roles.id as role_id_val',
+      'roles.name as role_name_val',
+      'roles.display_name as role_display_name_val',
+      'roles.permissions as role_permissions_val'
+    );
+  applyTenantScope(dataQuery, tenantId);
+
+  if (search) {
+    const term = `%${search}%`;
+    dataQuery.where((b) => {
+      b.where('users.username', 'like', term)
+        .orWhere('users.email', 'like', term)
+        .orWhere('users.full_name', 'like', term)
+        .orWhere('users.phone', 'like', term);
+    });
+  }
+
+  const rows = await dataQuery.orderBy('users.created_at', 'desc').limit(limit).offset(offset);
+
+  const users = rows.map((row) => {
+    const roleRow = row.role_id_val ? {
+      id: row.role_id_val,
+      name: row.role_name_val,
+      display_name: row.role_display_name_val,
+      permissions: row.role_permissions_val,
+    } : null;
+    return formatUser(row, roleRow);
+  });
 
   return { users, pagination: getPagination(total, page, limit) };
 };
 
 export const getUserById = async (id, tenantId = null) => {
-  const user = await User.findOne(withTenant({ _id: id, isDeleted: false }, tenantId)).populate('role', 'name displayName permissions');
-  if (!user) throw ApiError.notFound('User not found');
-  return user;
+  const dataQuery = db('users')
+    .leftJoin('roles', 'users.role_id', 'roles.id')
+    .where({ 'users.id': id, 'users.is_deleted': false })
+    .select(
+      'users.*',
+      'roles.id as role_id_val',
+      'roles.name as role_name_val',
+      'roles.display_name as role_display_name_val',
+      'roles.permissions as role_permissions_val'
+    );
+  applyTenantScope(dataQuery, tenantId);
+
+  const row = await dataQuery.first();
+  if (!row) throw ApiError.notFound('User not found');
+
+  const roleRow = row.role_id_val ? {
+    id: row.role_id_val,
+    name: row.role_name_val,
+    display_name: row.role_display_name_val,
+    permissions: row.role_permissions_val,
+  } : null;
+
+  return formatUser(row, roleRow);
 };
 
 export const createUser = async (data, tenantId = null) => {
@@ -41,86 +131,97 @@ export const createUser = async (data, tenantId = null) => {
     delete data.phone;
   }
 
-  // Enforce tenant plan user limit
   const effectiveTenantId = tenantId || data.tenantId || null;
   if (effectiveTenantId) {
-    const { Tenant } = await import('../tenant/tenant.model.js');
-    const tenant = await Tenant.findById(effectiveTenantId).select('maxUsers plan').lean();
+    const tenant = await db('tenants').where({ id: effectiveTenantId }).select('max_branches', 'max_users', 'plan').first();
     if (tenant) {
-      const currentCount = await User.countDocuments({ tenantId: effectiveTenantId, isDeleted: false });
-      const userLimit = tenant.maxUsers || 5;
+      const countRes = await db('users').where({ tenant_id: effectiveTenantId, is_deleted: false }).count({ count: '*' }).first();
+      const currentCount = Number(countRes?.count || 0);
+      const userLimit = tenant.max_users || 5;
       if (currentCount >= userLimit) {
         throw ApiError.forbidden(
-          `Your plan (${tenant.plan || 'STARTER'}) allows a maximum of ${userLimit} user${userLimit === 1 ? '' : 's'}. ` +
-            'Please upgrade your subscription to add more users.'
+          `Your plan (${tenant.plan || 'STARTER'}) allows a maximum of ${userLimit} user${userLimit === 1 ? '' : 's'}. Please upgrade subscription.`
         );
       }
     }
   }
 
-  const existingUser = await User.findOne(
-    withTenant({
-      $or: [{ username: data.username }, { email: data.email }],
-      isDeleted: false,
-    }, tenantId)
-  );
+  const usernameLower = data.username.toLowerCase().trim();
+  const emailLower = data.email.toLowerCase().trim();
+
+  const existingQuery = db('users').where('is_deleted', false).where((b) => {
+    b.where({ username: usernameLower }).orWhere({ email: emailLower });
+  });
+  applyTenantScope(existingQuery, effectiveTenantId);
+  const existingUser = await existingQuery.first();
 
   if (existingUser) {
-    if (existingUser.username === data.username) throw ApiError.conflict('Username already exists');
-    if (existingUser.email === data.email) throw ApiError.conflict('Email already exists');
+    if (existingUser.username === usernameLower) throw ApiError.conflict('Username already exists');
+    if (existingUser.email === emailLower) throw ApiError.conflict('Email already exists');
   }
 
   if (data.phone) {
-    const existingPhone = await User.findOne(withTenant({ phone: data.phone, isDeleted: false }, tenantId));
+    const phoneQuery = db('users').where({ phone: data.phone, is_deleted: false });
+    applyTenantScope(phoneQuery, effectiveTenantId);
+    const existingPhone = await phoneQuery.first();
     if (existingPhone) throw ApiError.conflict('Phone number already exists');
   }
 
-  const role = await Role.findOne({ _id: data.role, isDeleted: false });
+  let role = null;
+  if (data.role) {
+    const roleQuery = db('roles').where({ is_deleted: false });
+    if (effectiveTenantId) {
+      roleQuery.where(function () {
+        this.where('tenant_id', effectiveTenantId).orWhere(function () {
+          this.whereNull('tenant_id').andWhere('is_system', true);
+        });
+      });
+    }
+    role = await roleQuery.where({ id: data.role }).first();
+    if (!role) {
+      const byName = db('roles').where({ is_deleted: false });
+      if (effectiveTenantId) {
+        byName.where(function () {
+          this.where('tenant_id', effectiveTenantId).orWhere(function () {
+            this.whereNull('tenant_id').andWhere('is_system', true);
+          });
+        });
+      }
+      role = await byName.where({ name: String(data.role).toUpperCase() }).first();
+    }
+  }
   if (!role) throw ApiError.badRequest('Invalid role');
 
   const passwordHash = await bcrypt.hash(data.password, 10);
   const otpCode = generateOTP();
   const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-  const user = await User.create({
-    ...data,
-    passwordHash,
-    roleName: role.name,
-    isVerified: false,
-    otpCode,
-    otpExpiresAt,
-    tenantId: tenantId || data.tenantId || null,
+  const [insertedId] = await db('users').insert({
+    username: usernameLower,
+    email: emailLower,
+    phone: data.phone || null,
+    password_hash: passwordHash,
+    role_id: role.id,
+    role_name: role.name,
+    full_name: data.fullName || data.name || '',
+    avatar: data.avatar || null,
+    is_active: data.isActive !== undefined ? Boolean(data.isActive) : true,
+    is_verified: false,
+    branch_id: data.branchId || null,
+    tenant_id: effectiveTenantId,
+    commission_rate: data.commissionRate || 0,
+    otp_code: otpCode,
+    otp_expires_at: otpExpiresAt,
+    is_deleted: false,
   });
 
-  try {
-    const existingEmployee = await Employee.findOne(withTenant({ user: user._id, isDeleted: false }, tenantId));
-    if (!existingEmployee) {
-      await Employee.create({
-        user: user._id,
-        employeeId: `EMP-${Math.floor(10000 + Math.random() * 90000)}`,
-        name: user.fullName || user.username,
-        phone: user.phone || '0000000000',
-        email: user.email || '',
-        designation: role.displayName || role.name || 'Staff',
-        department: 'General',
-        branch: user.branchId || 'Main',
-        salary: 0,
-        joiningDate: new Date(),
-        tenantId: tenantId || null,
-      });
-    }
-  } catch (empErr) {
-    console.error(`[USER] Auto employee creation failed for user ${user._id}:`, empErr.message);
-  }
-
-  sendOTP(user.email, otpCode, user.fullName || user.username).catch((err) => {
-    console.error(`[USER] Failed to send verification OTP to ${user.email}:`, err.message);
+  sendOTP(emailLower, otpCode, data.fullName || usernameLower).catch((err) => {
+    console.error(`[USER] Failed to send verification OTP to ${emailLower}:`, err.message);
   });
 
-  const userObj = user.toObject();
-  delete userObj.passwordHash;
-  delete userObj.otpExpiresAt;
-  return userObj;
+  const user = await getUserById(insertedId, effectiveTenantId);
+  emitter.emit(EVENTS.USER_CREATED, { ...user, tenantId: effectiveTenantId });
+  return user;
 };
 
 export const updateUser = async (id, data, tenantId = null) => {
@@ -128,138 +229,124 @@ export const updateUser = async (id, data, tenantId = null) => {
     data.phone = undefined;
   }
 
-  const user = await User.findOne(withTenant({ _id: id, isDeleted: false }, tenantId));
+  const user = await getUserById(id, tenantId);
   if (!user) throw ApiError.notFound('User not found');
 
-  if (data.username && data.username !== user.username) {
-    const existing = await User.findOne(withTenant({ username: data.username, isDeleted: false, _id: { $ne: id } }, tenantId));
+  const updateFields = {};
+
+  if (data.username && data.username.toLowerCase() !== user.username) {
+    const subQuery = db('users').where({ username: data.username.toLowerCase(), is_deleted: false }).whereNot({ id });
+    applyTenantScope(subQuery, tenantId);
+    const existing = await subQuery.first();
     if (existing) throw ApiError.conflict('Username already exists');
+    updateFields.username = data.username.toLowerCase();
   }
 
-  if (data.email && data.email !== user.email) {
-    const existing = await User.findOne(withTenant({ email: data.email, isDeleted: false, _id: { $ne: id } }, tenantId));
+  if (data.email && data.email.toLowerCase() !== user.email) {
+    const subQuery = db('users').where({ email: data.email.toLowerCase(), is_deleted: false }).whereNot({ id });
+    applyTenantScope(subQuery, tenantId);
+    const existing = await subQuery.first();
     if (existing) throw ApiError.conflict('Email already exists');
+    updateFields.email = data.email.toLowerCase();
   }
 
   if (data.phone && data.phone !== user.phone) {
-    const existing = await User.findOne(withTenant({ phone: data.phone, isDeleted: false, _id: { $ne: id } }, tenantId));
+    const subQuery = db('users').where({ phone: data.phone, is_deleted: false }).whereNot({ id });
+    applyTenantScope(subQuery, tenantId);
+    const existing = await subQuery.first();
     if (existing) throw ApiError.conflict('Phone number already exists');
+    updateFields.phone = data.phone;
   }
 
   if (data.role) {
-    const role = await Role.findOne({ _id: data.role, isDeleted: false });
+    const roleQuery = db('roles').where({ is_deleted: false });
+    if (tenantId) {
+      roleQuery.where(function () {
+        this.where('tenant_id', tenantId).orWhere(function () {
+          this.whereNull('tenant_id').andWhere('is_system', true);
+        });
+      });
+    }
+    let role = await roleQuery.where({ id: data.role }).first();
+    if (!role) {
+      const byName = db('roles').where({ is_deleted: false });
+      if (tenantId) {
+        byName.where(function () {
+          this.where('tenant_id', tenantId).orWhere(function () {
+            this.whereNull('tenant_id').andWhere('is_system', true);
+          });
+        });
+      }
+      role = await byName.where({ name: String(data.role).toUpperCase() }).first();
+    }
     if (!role) throw ApiError.badRequest('Invalid role');
-    data.roleName = role.name;
+    updateFields.role_id = role.id;
+    updateFields.role_name = role.name;
   }
 
-  const allowed = ['fullName', 'email', 'phone', 'username', 'role', 'roleName', 'isActive', 'branchId', 'commissionRate'];
-  allowed.forEach(key => { if (data[key] !== undefined) user[key] = data[key]; });
-  await user.save();
+  if (data.fullName !== undefined) updateFields.full_name = data.fullName;
+  if (data.name !== undefined && data.fullName === undefined) updateFields.full_name = data.name;
+  if (data.avatar !== undefined) updateFields.avatar = data.avatar;
+  if (data.isActive !== undefined) updateFields.is_active = Boolean(data.isActive);
+  if (data.branchId !== undefined) updateFields.branch_id = data.branchId;
+  if (data.commissionRate !== undefined) updateFields.commission_rate = data.commissionRate;
 
-  try {
-    const roleObj = data.role ? await Role.findOne({ _id: data.role, isDeleted: false }) : null;
-    await Employee.findOneAndUpdate(
-      withTenant({ user: user._id, isDeleted: false }, tenantId),
-      {
-        $set: {
-          name: user.fullName || user.username,
-          phone: user.phone || '0000000000',
-          email: user.email || '',
-          ...(roleObj ? { designation: roleObj.displayName || roleObj.name } : {}),
-          ...(data.branchId ? { branch: data.branchId } : {}),
-        },
-      },
-      { upsert: false }
-    );
-  } catch (empErr) {
-    console.error(`[USER] Employee sync failed for user ${user._id}:`, empErr.message);
+  if (Object.keys(updateFields).length > 0) {
+    const q = db('users').where({ id });
+    if (tenantId) q.andWhere('tenant_id', tenantId);
+    await q.update(updateFields);
   }
 
-  return user;
+  return getUserById(id, tenantId);
 };
 
 export const deleteUser = async (id, tenantId = null) => {
-  const user = await User.findOne(withTenant({ _id: id, isDeleted: false }, tenantId));
+  const user = await getUserById(id, tenantId);
   if (!user) throw ApiError.notFound('User not found');
-  
-  await User.findOneAndDelete(withTenant({ _id: id, isDeleted: false }, tenantId));
-  
-  try {
-    await Employee.deleteMany(withTenant({ $or: [{ email: user.email }, { user: user._id }] }, tenantId));
-  } catch (empErr) {
-    console.error(`[USER] Failed to clean linked employee for user ${id}:`, empErr.message);
-  }
 
-  return user;
+  const q1 = db('users').where({ id });
+  if (tenantId) q1.andWhere('tenant_id', tenantId);
+  await q1.update({ is_deleted: true });
+  return { ...user, isDeleted: true };
 };
 
 export const toggleVerification = async (id, tenantId = null) => {
-  const user = await User.findOne(withTenant({ _id: id, isDeleted: false }, tenantId));
+  const user = await getUserById(id, tenantId);
   if (!user) throw ApiError.notFound('User not found');
-  user.isVerified = !user.isVerified;
-  await user.save();
-  return user;
+
+  const newStatus = !user.isVerified;
+  const q2 = db('users').where({ id });
+  if (tenantId) q2.andWhere('tenant_id', tenantId);
+  await q2.update({ is_verified: newStatus });
+
+  return getUserById(id, tenantId);
 };
 
 export const changePassword = async (id, currentPassword, newPassword, tenantId = null) => {
-  const user = await User.findOne(withTenant({ _id: id, isDeleted: false }, tenantId)).select('+passwordHash');
+  const user = await getUserById(id, tenantId);
   if (!user) throw ApiError.notFound('User not found');
 
-  const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+  const pwQuery = db('users').where({ id, is_deleted: false });
+  if (tenantId) pwQuery.andWhere('tenant_id', tenantId);
+  const row = await pwQuery.first();
+  const isMatch = await bcrypt.compare(currentPassword, row.password_hash);
   if (!isMatch) throw ApiError.badRequest('Current password is incorrect');
 
-  user.passwordHash = await bcrypt.hash(newPassword, 10);
-  await user.save();
-  return user;
+  const newHash = await bcrypt.hash(newPassword, 10);
+  const q3 = db('users').where({ id });
+  if (tenantId) q3.andWhere('tenant_id', tenantId);
+  await q3.update({ password_hash: newHash });
+
+  return getUserById(id, tenantId);
 };
 
 export const getMyProfile = async (userId, tenantId = null) => {
-  const user = await User.findOne(withTenant({ _id: userId, isDeleted: false }, tenantId))
-    .populate('role', 'name displayName permissions')
-    .lean();
-  if (!user) throw ApiError.notFound('User not found');
-  delete user.passwordHash;
-  delete user.refreshToken;
-  delete user.passwordResetToken;
-  delete user.passwordResetExpires;
-  delete user.otpCode;
-  delete user.otpExpiresAt;
-  return user;
+  return getUserById(userId, tenantId);
 };
 
 export const updateMyProfile = async (userId, data, file, tenantId = null) => {
-  const user = await User.findOne(withTenant({ _id: userId, isDeleted: false }, tenantId));
-  if (!user) throw ApiError.notFound('User not found');
-
-  if (data.email && data.email !== user.email) {
-    const existing = await User.findOne(withTenant({ email: data.email, isDeleted: false, _id: { $ne: userId } }, tenantId));
-    if (existing) throw ApiError.conflict('Email already exists');
-  }
-  if (data.phone && data.phone !== user.phone) {
-    const existing = await User.findOne(withTenant({ phone: data.phone, isDeleted: false, _id: { $ne: userId } }, tenantId));
-    if (existing) throw ApiError.conflict('Phone number already exists');
-  }
-  if (data.username && data.username !== user.username) {
-    const existing = await User.findOne(withTenant({ username: data.username, isDeleted: false, _id: { $ne: userId } }, tenantId));
-    if (existing) throw ApiError.conflict('Username already exists');
-  }
-
   if (file) {
     data.avatar = `/uploads/avatars/${file.filename}`;
   }
-
-  const allowed = ['fullName', 'email', 'phone', 'username', 'avatar'];
-  allowed.forEach(key => { if (data[key] !== undefined) user[key] = data[key]; });
-  await user.save();
-
-  const updated = await User.findOne(withTenant({ _id: userId, isDeleted: false }, tenantId))
-    .populate('role', 'name displayName permissions')
-    .lean();
-  delete updated.passwordHash;
-  delete updated.refreshToken;
-  delete updated.passwordResetToken;
-  delete updated.passwordResetExpires;
-  delete updated.otpCode;
-  delete updated.otpExpiresAt;
-  return updated;
+  return updateUser(userId, data, tenantId);
 };

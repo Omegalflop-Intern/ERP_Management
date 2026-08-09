@@ -18,6 +18,7 @@ router.post('/logo', uploadCompanyLogo, settingsController.uploadLogo);
 
 // Database Backup & Restore routes — super-admin only (cross-tenant data)
 router.get('/backup', requireSuperAdmin, settingsController.exportBackup);
+router.get('/backup/list', requireSuperAdmin, settingsController.listBackups);
 router.post('/backup/now', requireSuperAdmin, settingsController.triggerManualBackup);
 router.post('/restore', requireSuperAdmin, settingsController.restoreBackup);
 

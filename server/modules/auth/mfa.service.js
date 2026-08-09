@@ -1,5 +1,4 @@
 import crypto from 'crypto';
-import { User } from '../user/user.model.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 
 const base32Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';

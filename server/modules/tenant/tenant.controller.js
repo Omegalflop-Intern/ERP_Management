@@ -28,6 +28,19 @@ export const getTenant = async (req, res, next) => {
   }
 };
 
+export const getMyTenant = async (req, res, next) => {
+  try {
+    const tenantId = req.user?.tenantId;
+    if (!tenantId) {
+      return ApiResponse.success(res, null, 'No tenant associated with this account');
+    }
+    const tenant = await tenantService.getTenantById(tenantId);
+    return ApiResponse.success(res, tenant, 'Tenant info retrieved');
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const updateTenant = async (req, res, next) => {
   try {
     const tenant = await tenantService.updateTenant(req.params.id, req.body);
@@ -105,3 +118,25 @@ export const getSubdomainInfo = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getPublicTenantInfo = async (req, res, next) => {
+  try {
+    const { subdomain } = req.params;
+    const info = await tenantService.getPublicTenantBySubdomain(subdomain);
+    if (!info) throw ApiError.notFound('Shop not found');
+    return ApiResponse.success(res, info, 'Public shop details fetched');
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const bulkDeleteTenants = async (req, res, next) => {
+  try {
+    const { ids } = req.body;
+    const result = await tenantService.bulkDeleteTenants(ids);
+    return ApiResponse.success(res, result, `${result.deletedCount} shop(s) deleted successfully`);
+  } catch (error) {
+    next(error);
+  }
+};
+

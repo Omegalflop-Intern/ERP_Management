@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ALL_PERMISSIONS } from './role.model.js';
+import { ALL_PERMISSIONS } from './role.service.js';
 
 export const createRoleSchema = z.object({
   name: z.string().min(1).max(50).trim(),

@@ -1,6 +1,34 @@
-import { SubscriptionPlan } from '../tenant/subscription.model.js';
+import { db } from '../../config/db.knex.js';
 import { ApiError } from '../../utils/http/ApiError.js';
-import { paginate, getPagination } from '../../utils/http/pagination.js';
+import { getPagination } from '../../utils/http/pagination.js';
+
+export function formatSubscriptionPlan(row) {
+  if (!row) return null;
+  let features = row.features;
+  if (typeof features === 'string') {
+    try { features = JSON.parse(features); } catch { features = []; }
+  }
+  return {
+    _id: String(row.id),
+    id: row.id,
+    name: row.name,
+    displayName: row.display_name,
+    description: row.description || '',
+    monthlyPrice: Number(row.monthly_price || 0),
+    yearlyPrice: Number(row.yearly_price || 0),
+    trialDays: Number(row.trial_days || 0),
+    maxBranches: Number(row.max_branches || 1),
+    maxUsers: Number(row.max_users || 2),
+    maxProducts: Number(row.max_products || 500),
+    maxCustomers: Number(row.max_customers || 200),
+    maxStorageMB: Number(row.max_storage_mb || 100),
+    sortOrder: Number(row.sort_order || 0),
+    features: Array.isArray(features) ? features : [],
+    isActive: Boolean(row.is_active),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
 
 export const DEFAULT_PLANS = [
   {
@@ -66,65 +94,110 @@ export const DEFAULT_PLANS = [
 ];
 
 export const getAllPlans = async (page = 1, limit = 50) => {
-  const query = {};
-  const total = await SubscriptionPlan.countDocuments(query);
-  const plans = await paginate(SubscriptionPlan.find(query).sort({ sortOrder: 1, monthlyPrice: 1 }), page, limit).lean();
+  const countRes = await db('subscription_plans').count({ total: '*' }).first();
+  const total = Number(countRes?.total || 0);
+
+  const offset = (page - 1) * limit;
+  const rows = await db('subscription_plans').orderBy('sort_order', 'asc').limit(limit).offset(offset);
+  const plans = rows.map(formatSubscriptionPlan);
+
   return { plans, pagination: getPagination(total, page, limit) };
 };
 
 export const getActivePlans = async () => {
-  const plans = await SubscriptionPlan.find({ isActive: true }).sort({ sortOrder: 1, monthlyPrice: 1 }).lean();
-  if (plans.length > 0) return plans;
+  const rows = await db('subscription_plans').where({ is_active: true }).orderBy('sort_order', 'asc');
+  if (rows.length > 0) return rows.map(formatSubscriptionPlan);
   return DEFAULT_PLANS;
 };
 
 export const getPlanById = async (id) => {
-  const plan = await SubscriptionPlan.findById(id).lean();
-  if (!plan) throw ApiError.notFound('Plan not found');
-  return plan;
+  const row = await db('subscription_plans').where({ id }).first();
+  if (!row) throw ApiError.notFound('Plan not found');
+  return formatSubscriptionPlan(row);
 };
 
 export const createPlan = async (data) => {
-  const existing = await SubscriptionPlan.findOne({ name: data.name.toUpperCase() });
-  if (existing) throw ApiError.conflict(`Plan "${data.name}" already exists`);
-  return SubscriptionPlan.create({ ...data, name: data.name.toUpperCase() });
+  const name = data.name.toUpperCase();
+  const existing = await db('subscription_plans').where({ name }).first();
+  if (existing) throw ApiError.conflict(`Plan "${name}" already exists`);
+
+  const [insertedId] = await db('subscription_plans').insert({
+    name,
+    display_name: data.displayName || name,
+    description: data.description || '',
+    monthly_price: data.monthlyPrice || 0,
+    yearly_price: data.yearlyPrice || 0,
+    trial_days: data.trialDays || 0,
+    max_branches: data.maxBranches || 1,
+    max_users: data.maxUsers || 2,
+    max_products: data.maxProducts || 500,
+    max_customers: data.maxCustomers || 200,
+    max_storage_mb: data.maxStorageMB || 100,
+    sort_order: data.sortOrder || 0,
+    features: JSON.stringify(data.features || []),
+    is_active: data.isActive !== undefined ? Boolean(data.isActive) : true,
+  });
+
+  return getPlanById(insertedId);
 };
 
 export const updatePlan = async (id, data) => {
-  const plan = await SubscriptionPlan.findById(id);
+  const plan = await getPlanById(id);
   if (!plan) throw ApiError.notFound('Plan not found');
-  if (data.name && data.name.toUpperCase() !== plan.name) {
-    const dup = await SubscriptionPlan.findOne({ name: data.name.toUpperCase(), _id: { $ne: id } });
-    if (dup) throw ApiError.conflict(`Plan "${data.name}" already exists`);
-    data.name = data.name.toUpperCase();
+
+  const updateFields = {};
+  if (data.displayName !== undefined) updateFields.display_name = data.displayName;
+  if (data.description !== undefined) updateFields.description = data.description;
+  if (data.monthlyPrice !== undefined) updateFields.monthly_price = data.monthlyPrice;
+  if (data.yearlyPrice !== undefined) updateFields.yearly_price = data.yearlyPrice;
+  if (data.maxBranches !== undefined) updateFields.max_branches = data.maxBranches;
+  if (data.maxUsers !== undefined) updateFields.max_users = data.maxUsers;
+  if (data.features !== undefined) updateFields.features = JSON.stringify(data.features);
+
+  if (Object.keys(updateFields).length > 0) {
+    await db('subscription_plans').where({ id }).update(updateFields);
   }
-  Object.assign(plan, data);
-  await plan.save();
-  return plan;
+
+  return getPlanById(id);
 };
 
 export const deletePlan = async (id) => {
-  const plan = await SubscriptionPlan.findById(id);
+  const plan = await getPlanById(id);
   if (!plan) throw ApiError.notFound('Plan not found');
   if (plan.name === 'FREE') throw ApiError.badRequest('Cannot delete the Free plan');
-  await SubscriptionPlan.findByIdAndDelete(id);
+  await db('subscription_plans').where({ id }).delete();
+  return { id };
 };
 
 export const togglePlanActive = async (id) => {
-  const plan = await SubscriptionPlan.findById(id);
+  const plan = await getPlanById(id);
   if (!plan) throw ApiError.notFound('Plan not found');
   if (plan.name === 'FREE') throw ApiError.badRequest('Cannot deactivate the Free plan');
-  plan.isActive = !plan.isActive;
-  await plan.save();
-  return plan;
+
+  await db('subscription_plans').where({ id }).update({ is_active: !plan.isActive });
+  return getPlanById(id);
 };
 
 export const seedSubscriptionPlans = async () => {
   for (const plan of DEFAULT_PLANS) {
-    await SubscriptionPlan.findOneAndUpdate(
-      { name: plan.name },
-      { $set: plan },
-      { upsert: true, new: true }
-    );
+    const existing = await db('subscription_plans').where({ name: plan.name }).first();
+    if (!existing) {
+      await db('subscription_plans').insert({
+        name: plan.name,
+        display_name: plan.displayName,
+        description: plan.description,
+        monthly_price: plan.monthlyPrice,
+        yearly_price: plan.yearlyPrice,
+        trial_days: plan.trialDays,
+        max_branches: plan.maxBranches,
+        max_users: plan.maxUsers,
+        max_products: plan.maxProducts,
+        max_customers: plan.maxCustomers,
+        max_storage_mb: plan.maxStorageMB,
+        sort_order: plan.sortOrder,
+        features: JSON.stringify(plan.features),
+        is_active: true,
+      });
+    }
   }
 };

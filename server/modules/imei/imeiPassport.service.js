@@ -1,86 +1,52 @@
-import { InventoryUnit } from './imei.model.js';
-import { Transaction } from '../sale/sale.model.js';
-import { RepairTicket } from '../../models/RepairTicket.js';
-import { WarrantyClaim } from '../warranty/warranty.model.js';
+import { db } from '../../config/db.knex.js';
 import { ApiError } from '../../utils/http/ApiError.js';
+import { getIMEIBySerial } from './imei.service.js';
 
 export const getImeiPassport = async (imei, tenantId = null) => {
-  const unitQuery = { imeiOrSerial: imei };
-  if (tenantId) unitQuery.tenantId = tenantId;
-  const unit = await InventoryUnit.findOne(unitQuery)
-    .populate('productId', 'name brand model category price costPrice')
-    .populate('supplierId', 'name phone companyName')
-    .populate('branchId', 'name code');
-
+  const unit = await getIMEIBySerial(imei, tenantId);
   if (!unit) {
     throw ApiError.notFound(`IMEI or Serial '${imei}' not found in inventory.`);
   }
 
-  // Gather sales history
-  const saleQuery = { 'items.imeiOrSerial': imei };
-  if (tenantId) saleQuery.tenantId = tenantId;
-  const sales = await Transaction.find(saleQuery)
-    .populate('customerId', 'name phone email customerType')
-    .populate('soldBy', 'username fullName');
+  const txQuery = db('transactions').where({ 'transactions.is_deleted': false });
+  if (tenantId) txQuery.where('tenant_id', tenantId);
 
-  // Gather repair history
-  const repairQuery = { imeiOrSerial: imei };
-  if (tenantId) repairQuery.tenantId = tenantId;
-  const repairs = await RepairTicket.find(repairQuery);
+  const sales = await txQuery.whereRaw("JSON_SEARCH(line_items, 'one', ?) IS NOT NULL", [imei]);
 
-  // Gather warranty claim history
-  const warrantyQuery = { imeiOrSerial: imei };
-  if (tenantId) warrantyQuery.tenantId = tenantId;
-  const warrantyClaims = await WarrantyClaim.find(warrantyQuery);
+  const repQuery = db('repair_tickets').where({ imei_or_serial: imei, is_deleted: false });
+  if (tenantId) repQuery.where('tenant_id', tenantId);
+  const repairs = await repQuery;
 
-  // Build sequential timeline events
   const timeline = [];
-
-  // Event 1: Inward / Purchase
   timeline.push({
     event: 'STOCK_INWARD',
     timestamp: unit.createdAt,
-    details: `Purchased from ${unit.supplierId?.name || 'Supplier'} at Cost TK ${unit.costPrice || 0}`,
-    costPrice: unit.costPrice,
+    details: `Purchased at Cost ৳${unit.purchasePrice || 0}`,
+    purchasePrice: unit.purchasePrice,
     status: unit.status,
   });
 
-  // Event 2: Sales history
   sales.forEach((sale) => {
     timeline.push({
       event: 'SOLD',
-      timestamp: sale.createdAt,
-      invoiceNumber: sale.invoiceNumber,
-      customer: sale.customerId?.name || 'Walk-in Customer',
-      soldBy: sale.soldBy?.fullName || sale.soldBy?.username,
-      salePrice: sale.netTotal,
+      timestamp: sale.created_at,
+      invoiceNumber: sale.invoice_number,
+      customer: sale.customer_name || 'Walk-in Customer',
+      salePrice: Number(sale.net_total || 0),
     });
   });
 
-  // Event 3: Repairs
   repairs.forEach((repair) => {
     timeline.push({
       event: 'REPAIR_SERVICED',
-      timestamp: repair.createdAt,
-      ticketNumber: repair.ticketNumber,
-      problem: repair.problemDescription,
-      cost: repair.cost,
+      timestamp: repair.created_at,
+      ticketNumber: repair.ticket_number,
+      problem: repair.issue_description,
+      cost: Number(repair.estimated_cost || 0),
       status: repair.status,
     });
   });
 
-  // Event 4: Warranty Claims
-  warrantyClaims.forEach((claim) => {
-    timeline.push({
-      event: 'WARRANTY_CLAIMED',
-      timestamp: claim.createdAt,
-      issue: claim.issueDescription,
-      status: claim.status,
-      resolution: claim.resolutionNotes,
-    });
-  });
-
-  // Sort timeline chronologically
   timeline.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
   return {

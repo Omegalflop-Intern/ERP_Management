@@ -18,15 +18,22 @@ export const createTenantSchema = z.object({
   plan: z.enum(['FREE', 'STARTER', 'PRO', 'ENTERPRISE']).optional().default('STARTER'),
   subdomain: z
     .string()
-    .min(3, 'Subdomain must be at least 3 characters')
-    .max(63, 'Subdomain must be at most 63 characters')
-    .regex(subdomainRegex, 'Only lowercase letters, numbers, and hyphens')
-    .refine((v) => !v.startsWith('-') && !v.endsWith('-'), 'Cannot start or end with hyphen')
+    .transform((val) => (val && val.trim() ? val.trim().toLowerCase() : undefined))
+    .pipe(
+      z
+        .string()
+        .min(3, 'Subdomain must be at least 3 characters')
+        .max(63, 'Subdomain must be at most 63 characters')
+        .regex(subdomainRegex, 'Only lowercase letters, numbers, and hyphens')
+        .refine((v) => !v.startsWith('-') && !v.endsWith('-'), 'Cannot start or end with hyphen')
+        .optional()
+    )
     .optional(),
   customDomain: z.string().toLowerCase().optional(),
   nidNumber: z.string().optional(),
   tradeLicenseNumber: z.string().optional(),
   password: z.string().min(8).optional(),
+  expiresAt: z.string().datetime({ offset: true }).or(z.null()).optional(),
 });
 
 export const updateTenantSchema = z.object({
@@ -36,10 +43,16 @@ export const updateTenantSchema = z.object({
   plan: z.enum(['FREE', 'STARTER', 'PRO', 'ENTERPRISE']).optional(),
   subdomain: z
     .string()
-    .min(3)
-    .max(63)
-    .regex(subdomainRegex, 'Only lowercase letters, numbers, and hyphens')
-    .refine((v) => !v.startsWith('-') && !v.endsWith('-'), 'Cannot start or end with hyphen')
+    .transform((val) => (val && val.trim() ? val.trim().toLowerCase() : undefined))
+    .pipe(
+      z
+        .string()
+        .min(3, 'Subdomain must be at least 3 characters')
+        .max(63, 'Subdomain must be at most 63 characters')
+        .regex(subdomainRegex, 'Only lowercase letters, numbers, and hyphens')
+        .refine((v) => !v.startsWith('-') && !v.endsWith('-'), 'Cannot start or end with hyphen')
+        .optional()
+    )
     .optional(),
   customDomain: z.string().toLowerCase().optional(),
   maxBranches: z.number().int().min(1).max(50).optional(),

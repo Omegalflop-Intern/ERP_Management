@@ -55,13 +55,18 @@ const router = express.Router();
 
 // Public: check subdomain availability
 router.get('/check-subdomain/:slug', tenantController.checkSubdomain);
+router.get('/public/by-subdomain/:subdomain', tenantController.getPublicTenantInfo);
 
 // Public: shop self-registration (also used by super admin from SaaS panel)
 router.post('/', validate(createTenantSchema), tenantController.createTenant);
 
-// Super admin only: list, inspect, change status, approve KYC
+// Super admin only: list, inspect, change status, approve KYC, bulk delete
 router.get('/stats', authenticate, requireSuperAdmin, tenantController.getTenantStats);
 router.get('/', authenticate, requireSuperAdmin, tenantController.getTenants);
+router.delete('/bulk', authenticate, requireSuperAdmin, tenantController.bulkDeleteTenants);
+
+// Authenticated shop user: get their own tenant info
+router.get('/me', authenticate, tenantController.getMyTenant);
 router.get('/:id', authenticate, requireSuperAdmin, tenantController.getTenant);
 router.put('/:id', authenticate, requireSuperAdmin, validate(updateTenantSchema), tenantController.updateTenant);
 router.patch('/:id/status', authenticate, requireSuperAdmin, validate(updateTenantStatusSchema), tenantController.updateStatus);
