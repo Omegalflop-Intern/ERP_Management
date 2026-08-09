@@ -31,7 +31,7 @@ import {
   X,
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { detectSubdomain, getBaseDomain } from '../../utils/subdomain';
@@ -480,12 +480,19 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
   const { user, logout, setUser } = useAuth();
   const { theme, toggleTheme, designMode, toggleDesignMode } = useTheme();
   const styled = designMode === 'glass';
+  const location = useLocation();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const subdomain = detectSubdomain();
   const [showNotifs, setShowNotifs] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showMobileSettings, setShowMobileSettings] = useState(false);
+
+  useEffect(() => {
+    setShowNotifs(false);
+    setShowUserMenu(false);
+    setShowMobileSettings(false);
+  }, [location.pathname]);
   const [online, setOnline] = useState(navigator.onLine);
   const notifRef = useRef(null);
 
@@ -562,7 +569,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
   };
 
   return (
-    <header className="h-14 glass-primary rounded-[20px] m-2 px-3 md:px-6 flex items-center justify-between sticky top-2 z-30 shadow-sm">
+    <header className="h-14 glass-primary rounded-[20px] m-2 px-3 md:px-6 flex items-center justify-between sticky top-2 z-[100] shadow-sm">
       {/* Left: menu + brand */}
       <div className="flex items-center gap-2">
         <button
@@ -630,7 +637,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
             <Palette className="w-5 h-5 text-gray-500 dark:text-gray-300" />
           </button>
           {showMobileSettings && (
-            <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-50 overflow-hidden">
+            <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-[110] overflow-hidden">
               <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-800 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                 Theme
               </div>
@@ -690,7 +697,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
             )}
           </button>
           {showNotifs && (
-            <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-50 max-h-96 overflow-y-auto">
+            <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl z-[110] max-h-96 overflow-y-auto">
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                 <h3 className="font-semibold text-sm text-gray-900 dark:text-gray-100">
                   Notifications
@@ -785,7 +792,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
 
             {/* Dropdown menu (both mobile and desktop) */}
             {showUserMenu && (
-              <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-50 overflow-hidden">
+              <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-[110] overflow-hidden">
                 {/* Mobile only: show user info at top */}
                 <div className="md:hidden px-3 py-3 border-b border-gray-100 dark:border-gray-800">
                   <div className="flex items-center gap-2.5">

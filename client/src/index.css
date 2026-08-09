@@ -9,32 +9,41 @@
    ═══════════════════════════════════════════════════════════════ */
 @layer base {
   :root {
-    --background: 210 40% 98%; /* #F8FAFC */
-    --foreground: 222 47% 11%; /* #0F172A */
+    --background: 210 40% 98%;
+    /* #F8FAFC */
+    --foreground: 222 47% 11%;
+    /* #0F172A */
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    --primary: 221 83% 53%; /* Enterprise Blue #2563EB */
+    --primary: 221 83% 53%;
+    /* Enterprise Blue #2563EB */
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96%; /* #F1F5F9 */
+    --secondary: 210 40% 96%;
+    /* #F1F5F9 */
     --secondary-foreground: 222 47% 11%;
     --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%; /* #64748B */
+    --muted-foreground: 215 16% 47%;
+    /* #64748B */
     --accent: 210 40% 96%;
     --accent-foreground: 222 47% 11%;
-    --destructive: 0 84% 60%; /* #DC2626 */
+    --destructive: 0 84% 60%;
+    /* #DC2626 */
     --destructive-foreground: 0 0% 100%;
-    --border: 214 32% 91%; /* #E2E8F0 */
+    --border: 214 32% 91%;
+    /* #E2E8F0 */
     --input: 214 32% 91%;
     --ring: 221 83% 53%;
     --radius: 0.75rem;
   }
 
   .dark {
-    --background: 222 47% 7%; /* #0b0f19 */
+    --background: 222 47% 7%;
+    /* #0b0f19 */
     --foreground: 213 31% 91%;
-    --card: 224 71% 10%; /* #111827 */
+    --card: 224 71% 10%;
+    /* #111827 */
     --card-foreground: 213 31% 91%;
     --popover: 224 71% 10%;
     --popover-foreground: 213 31% 91%;
@@ -155,11 +164,13 @@
    SECTION 3: KEYFRAMES & ANIMATIONS
    ═══════════════════════════════════════════════════════════════ */
 @keyframes bgBreathe {
+
   0%,
   100% {
     opacity: 0.97;
     filter: brightness(1);
   }
+
   50% {
     opacity: 1;
     filter: brightness(1.02);
@@ -167,81 +178,97 @@
 }
 
 @keyframes ambientGlow1 {
+
   0%,
   100% {
     transform: translate(0px, 0px) scale(1);
   }
+
   50% {
     transform: translate(40px, 35px) scale(1.08);
   }
 }
 
 @keyframes ambientGlow2 {
+
   0%,
   100% {
     transform: translate(0px, 0px) scale(1);
   }
+
   50% {
     transform: translate(-35px, 45px) scale(1.1);
   }
 }
 
 @keyframes ambientGlow3 {
+
   0%,
   100% {
     transform: translate(0px, 0px) scale(1);
   }
+
   50% {
     transform: translate(30px, -40px) scale(1.05);
   }
 }
 
 @keyframes ambientGlow4 {
+
   0%,
   100% {
     transform: translate(0px, 0px) scale(1);
   }
+
   50% {
     transform: translate(-45px, -30px) scale(1.12);
   }
 }
 
 @keyframes blobFloat1 {
+
   0%,
   100% {
     transform: translate(0px, 0px) rotate(0deg) scale(1);
   }
+
   50% {
     transform: translate(50px, -40px) rotate(15deg) scale(1.12);
   }
 }
 
 @keyframes blobFloat2 {
+
   0%,
   100% {
     transform: translate(0px, 0px) rotate(0deg) scale(1);
   }
+
   50% {
     transform: translate(-40px, 50px) rotate(-12deg) scale(1.15);
   }
 }
 
 @keyframes floatSlow {
+
   0%,
   100% {
     transform: translateY(0px) scale(1);
   }
+
   50% {
     transform: translateY(-24px) scale(1.06);
   }
 }
 
 @keyframes pulseSlow {
+
   0%,
   100% {
     opacity: 0.35;
     transform: scale(1);
   }
+
   50% {
     opacity: 0.65;
     transform: scale(1.08);
@@ -249,26 +276,32 @@
 }
 
 @keyframes floatAura1 {
+
   0%,
   100% {
     transform: translate(0px, 0px) scale(1);
   }
+
   33% {
     transform: translate(35px, -30px) scale(1.1);
   }
+
   66% {
     transform: translate(-25px, 25px) scale(0.95);
   }
 }
 
 @keyframes floatAura2 {
+
   0%,
   100% {
     transform: translate(0px, 0px) scale(1);
   }
+
   33% {
     transform: translate(-45px, 30px) scale(1.12);
   }
+
   66% {
     transform: translate(30px, -40px) scale(0.92);
   }
@@ -277,38 +310,49 @@
 .animate-bg-breathe {
   animation: bgBreathe 18s ease-in-out infinite;
 }
+
 .animate-ambient-glow-1 {
   animation: ambientGlow1 45s ease-in-out infinite;
 }
+
 .animate-ambient-glow-2 {
   animation: ambientGlow2 50s ease-in-out infinite;
 }
+
 .animate-ambient-glow-3 {
   animation: ambientGlow3 55s ease-in-out infinite;
 }
+
 .animate-ambient-glow-4 {
   animation: ambientGlow4 60s ease-in-out infinite;
 }
+
 .animate-blob-float-1 {
   animation: blobFloat1 50s ease-in-out infinite alternate;
 }
+
 .animate-blob-float-2 {
   animation: blobFloat2 65s ease-in-out infinite alternate;
 }
+
 .animate-float-slow {
   animation: floatSlow 18s ease-in-out infinite;
 }
+
 .animate-pulse-slow {
   animation: pulseSlow 14s ease-in-out infinite;
 }
+
 .animate-aura-1 {
   animation: floatAura1 20s ease-in-out infinite;
 }
+
 .animate-aura-2 {
   animation: floatAura2 25s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .animate-bg-breathe,
   .animate-ambient-glow-1,
   .animate-ambient-glow-2,
@@ -417,6 +461,7 @@ input[type="number"] {
   background-color: #1e293b;
   color: #e2e8f0;
 }
+
 .dark select option:hover {
   background-color: #334155;
 }
@@ -462,6 +507,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   border-radius: 10px !important;
   color: #1e293b !important;
 }
+
 [data-mode="neumorphism"][data-theme="dark"] input[type="date"] {
   background: #1c2237 !important;
   box-shadow:
@@ -479,6 +525,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   border-radius: 10px !important;
   color: #0f172a !important;
 }
+
 [data-mode="glass"][data-theme="dark"] input[type="date"],
 [data-mode="glassmorphism"][data-theme="dark"] input[type="date"] {
   background: rgba(17, 24, 39, 0.6) !important;
@@ -489,17 +536,16 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 
 /* Liquid Glass Date Picker */
 [data-mode="liquidglass"] input[type="date"] {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.6),
-    rgba(255, 255, 255, 0.25)
-  ) !important;
+  background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.6),
+      rgba(255, 255, 255, 0.25)) !important;
   backdrop-filter: blur(16px) saturate(180%) !important;
   border: 1px solid rgba(255, 255, 255, 0.7) !important;
   box-shadow: 0 4px 16px rgba(31, 38, 135, 0.08) !important;
   border-radius: 12px !important;
   color: #0f172a !important;
 }
+
 [data-mode="liquidglass"][data-theme="dark"] input[type="date"] {
   background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.4)) !important;
   backdrop-filter: blur(16px) saturate(180%) !important;
@@ -567,6 +613,7 @@ input[type="checkbox"]:focus {
     -6px -6px 12px #ffffff !important;
   border-radius: 16px !important;
 }
+
 [data-mode="neumorphism"] .neu-card-sm {
   background: #eaeff8 !important;
   border: none !important;
@@ -575,6 +622,7 @@ input[type="checkbox"]:focus {
     -3px -3px 6px #ffffff !important;
   border-radius: 12px !important;
 }
+
 [data-mode="neumorphism"] .neu-pressed {
   background: #eaeff8 !important;
   border: none !important;
@@ -583,6 +631,7 @@ input[type="checkbox"]:focus {
     inset -3px -3px 6px #ffffff !important;
   border-radius: 12px !important;
 }
+
 [data-mode="neumorphism"] .neu-btn {
   background: #eaeff8 !important;
   border: none !important;
@@ -592,22 +641,26 @@ input[type="checkbox"]:focus {
   border-radius: 12px !important;
   transition: all 0.15s ease !important;
 }
+
 [data-mode="neumorphism"] .neu-btn:hover {
   box-shadow:
     1px 1px 3px #cdd2de,
     -1px -1px 3px #ffffff !important;
 }
+
 [data-mode="neumorphism"] .neu-btn:active,
 [data-mode="neumorphism"] .neu-btn-active {
   box-shadow:
     inset 2px 2px 5px #cdd2de,
     inset -2px -2px 5px #ffffff !important;
 }
+
 [data-mode="neumorphism"] .neu-flat {
   background: #eaeff8 !important;
   border: none !important;
   box-shadow: none !important;
 }
+
 [data-mode="neumorphism"] .neu-input {
   background: #eaeff8 !important;
   border: none !important;
@@ -618,12 +671,14 @@ input[type="checkbox"]:focus {
   color: #1a202c !important;
   outline: none !important;
 }
+
 [data-mode="neumorphism"] .neu-input:focus {
   box-shadow:
     inset 3px 3px 7px #cdd2de,
     inset -3px -3px 7px #ffffff,
     0 0 0 2px rgba(220, 38, 38, 0.25) !important;
 }
+
 [data-mode="neumorphism"] .neu-icon {
   background: #eaeff8 !important;
   box-shadow:
@@ -634,11 +689,9 @@ input[type="checkbox"]:focus {
 
 /* --- Glassmorphism / Glass Mode --- */
 [data-mode="glass"] .neu-card {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.65),
-    rgba(255, 255, 255, 0.3)
-  ) !important;
+  background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.65),
+      rgba(255, 255, 255, 0.3)) !important;
   backdrop-filter: blur(14px) saturate(180%) brightness(1.05) !important;
   -webkit-backdrop-filter: blur(14px) saturate(180%) brightness(1.05) !important;
   border: 1px solid rgba(255, 255, 255, 0.5) !important;
@@ -649,6 +702,7 @@ input[type="checkbox"]:focus {
     inset 0 1px 0 rgba(255, 255, 255, 0.65) !important;
   border-radius: 18px !important;
 }
+
 [data-mode="glass"][data-theme="dark"] .neu-card {
   background: linear-gradient(135deg, rgba(30, 41, 59, 0.55), rgba(15, 23, 42, 0.4)) !important;
   backdrop-filter: blur(36px) saturate(185%) brightness(0.9) !important;
@@ -663,11 +717,9 @@ input[type="checkbox"]:focus {
 }
 
 [data-mode="glass"] .neu-btn {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.55),
-    rgba(255, 255, 255, 0.25)
-  ) !important;
+  background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.55),
+      rgba(255, 255, 255, 0.25)) !important;
   backdrop-filter: blur(12px) saturate(160%) brightness(1.05) !important;
   -webkit-backdrop-filter: blur(12px) saturate(160%) brightness(1.05) !important;
   border: 1px solid rgba(255, 255, 255, 0.45) !important;
@@ -678,6 +730,7 @@ input[type="checkbox"]:focus {
   border-radius: 14px !important;
   transition: all 0.2s ease !important;
 }
+
 [data-mode="glass"][data-theme="dark"] .neu-btn {
   background: linear-gradient(135deg, rgba(30, 41, 59, 0.5), rgba(15, 23, 42, 0.35)) !important;
   backdrop-filter: blur(28px) saturate(170%) brightness(0.92) !important;
@@ -691,16 +744,15 @@ input[type="checkbox"]:focus {
 }
 
 [data-mode="glass"] .neu-sidebar {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.6),
-    rgba(255, 255, 255, 0.3)
-  ) !important;
+  background: linear-gradient(180deg,
+      rgba(255, 255, 255, 0.6),
+      rgba(255, 255, 255, 0.3)) !important;
   backdrop-filter: blur(14px) saturate(170%) !important;
   -webkit-backdrop-filter: blur(14px) saturate(170%) !important;
   border-right: 1px solid rgba(255, 255, 255, 0.4) !important;
   box-shadow: 3px 0 16px rgba(0, 0, 0, 0.03) !important;
 }
+
 [data-mode="glass"][data-theme="dark"] .neu-sidebar {
   background: linear-gradient(180deg, rgba(20, 27, 40, 0.6), rgba(10, 15, 25, 0.45)) !important;
   backdrop-filter: blur(14px) saturate(170%) !important;
@@ -711,11 +763,9 @@ input[type="checkbox"]:focus {
 
 /* --- Liquid Glass Mode --- */
 [data-mode="liquidglass"] .glass-primary {
-  background: linear-gradient(
-    145deg,
-    rgba(255, 255, 255, 0.72),
-    rgba(255, 255, 255, 0.38)
-  ) !important;
+  background: linear-gradient(145deg,
+      rgba(255, 255, 255, 0.72),
+      rgba(255, 255, 255, 0.38)) !important;
   backdrop-filter: blur(16px) saturate(180%) brightness(1.02) !important;
   -webkit-backdrop-filter: blur(16px) saturate(180%) brightness(1.02) !important;
   border: 1px solid rgba(255, 255, 255, 0.65) !important;
@@ -725,12 +775,11 @@ input[type="checkbox"]:focus {
     inset 0 1.5px 0 rgba(255, 255, 255, 0.9) !important;
   border-radius: 20px !important;
 }
+
 [data-mode="liquidglass"][data-theme="dark"] .glass-primary {
-  background: linear-gradient(
-    145deg,
-    rgba(255, 255, 255, 0.08),
-    rgba(255, 255, 255, 0.03)
-  ) !important;
+  background: linear-gradient(145deg,
+      rgba(255, 255, 255, 0.08),
+      rgba(255, 255, 255, 0.03)) !important;
   backdrop-filter: blur(48px) saturate(200%) brightness(0.85) !important;
   -webkit-backdrop-filter: blur(48px) saturate(200%) brightness(0.85) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -742,11 +791,9 @@ input[type="checkbox"]:focus {
 }
 
 [data-mode="liquidglass"] .glass-secondary {
-  background: linear-gradient(
-    145deg,
-    rgba(255, 255, 255, 0.65),
-    rgba(255, 255, 255, 0.28)
-  ) !important;
+  background: linear-gradient(145deg,
+      rgba(255, 255, 255, 0.65),
+      rgba(255, 255, 255, 0.28)) !important;
   backdrop-filter: blur(14px) saturate(175%) brightness(1.02) !important;
   -webkit-backdrop-filter: blur(14px) saturate(175%) brightness(1.02) !important;
   border: 1px solid rgba(255, 255, 255, 0.55) !important;
@@ -756,12 +803,11 @@ input[type="checkbox"]:focus {
     inset 0 1.5px 0 rgba(255, 255, 255, 0.85) !important;
   border-radius: 18px !important;
 }
+
 [data-mode="liquidglass"][data-theme="dark"] .glass-secondary {
-  background: linear-gradient(
-    145deg,
-    rgba(255, 255, 255, 0.07),
-    rgba(255, 255, 255, 0.02)
-  ) !important;
+  background: linear-gradient(145deg,
+      rgba(255, 255, 255, 0.07),
+      rgba(255, 255, 255, 0.02)) !important;
   backdrop-filter: blur(36px) saturate(190%) brightness(0.87) !important;
   -webkit-backdrop-filter: blur(36px) saturate(190%) brightness(0.87) !important;
   border: 1px solid rgba(255, 255, 255, 0.09) !important;
@@ -773,16 +819,15 @@ input[type="checkbox"]:focus {
 }
 
 [data-mode="liquidglass"] .neu-sidebar {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.82),
-    rgba(255, 255, 255, 0.55)
-  ) !important;
+  background: linear-gradient(180deg,
+      rgba(255, 255, 255, 0.82),
+      rgba(255, 255, 255, 0.55)) !important;
   backdrop-filter: blur(16px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
   border-right: 1px solid rgba(255, 255, 255, 0.55) !important;
   box-shadow: 4px 0 24px rgba(15, 23, 42, 0.06) !important;
 }
+
 [data-mode="liquidglass"][data-theme="dark"] .neu-sidebar {
   background: linear-gradient(180deg, rgba(15, 23, 42, 0.8), rgba(11, 15, 23, 0.65)) !important;
   backdrop-filter: blur(60px) saturate(200%) !important;
@@ -792,11 +837,9 @@ input[type="checkbox"]:focus {
 }
 
 [data-mode="liquidglass"] .neu-card {
-  background: linear-gradient(
-    145deg,
-    rgba(255, 255, 255, 0.65),
-    rgba(255, 255, 255, 0.28)
-  ) !important;
+  background: linear-gradient(145deg,
+      rgba(255, 255, 255, 0.65),
+      rgba(255, 255, 255, 0.28)) !important;
   backdrop-filter: blur(32px) saturate(185%) !important;
   -webkit-backdrop-filter: blur(32px) saturate(185%) !important;
   border: 1px solid rgba(255, 255, 255, 0.55) !important;
@@ -805,12 +848,11 @@ input[type="checkbox"]:focus {
     inset 0 1.5px 0 rgba(255, 255, 255, 0.85) !important;
   border-radius: 18px !important;
 }
+
 [data-mode="liquidglass"][data-theme="dark"] .neu-card {
-  background: linear-gradient(
-    145deg,
-    rgba(255, 255, 255, 0.07),
-    rgba(255, 255, 255, 0.02)
-  ) !important;
+  background: linear-gradient(145deg,
+      rgba(255, 255, 255, 0.07),
+      rgba(255, 255, 255, 0.02)) !important;
   backdrop-filter: blur(32px) saturate(185%) !important;
   -webkit-backdrop-filter: blur(32px) saturate(185%) !important;
   border: 1px solid rgba(255, 255, 255, 0.09) !important;
@@ -821,11 +863,9 @@ input[type="checkbox"]:focus {
 }
 
 [data-mode="liquidglass"] .neu-btn {
-  background: linear-gradient(
-    145deg,
-    rgba(255, 255, 255, 0.75),
-    rgba(255, 255, 255, 0.4)
-  ) !important;
+  background: linear-gradient(145deg,
+      rgba(255, 255, 255, 0.75),
+      rgba(255, 255, 255, 0.4)) !important;
   backdrop-filter: blur(20px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
   border: 1px solid rgba(255, 255, 255, 0.6) !important;
@@ -835,17 +875,17 @@ input[type="checkbox"]:focus {
   border-radius: 12px !important;
   transition: all 0.2s ease !important;
 }
+
 [data-mode="liquidglass"] .neu-btn:hover {
-  background: linear-gradient(
-    145deg,
-    rgba(255, 255, 255, 0.85),
-    rgba(255, 255, 255, 0.52)
-  ) !important;
+  background: linear-gradient(145deg,
+      rgba(255, 255, 255, 0.85),
+      rgba(255, 255, 255, 0.52)) !important;
   box-shadow:
     0 4px 16px rgba(15, 23, 42, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
   transform: translateY(-1px) !important;
 }
+
 /* ═══════════════════════════════════════════════════════════════
    SECTION 7: UNIVERSAL CARD TRANSFORMATIONS & 3D ELEVATION
    ═══════════════════════════════════════════════════════════════ */
@@ -875,11 +915,9 @@ input[type="checkbox"]:focus {
 [data-mode="liquidglass"][data-theme="light"] .liquid-card,
 [data-mode="liquidglass"][data-theme="light"] .neu-card,
 [data-mode="liquidglass"][data-theme="light"] [class*="bg-white"] {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.9),
-    rgba(241, 245, 249, 0.65)
-  ) !important;
+  background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.9),
+      rgba(241, 245, 249, 0.65)) !important;
   backdrop-filter: blur(28px) saturate(190%) brightness(1.03) !important;
   -webkit-backdrop-filter: blur(28px) saturate(190%) brightness(1.03) !important;
   border: 1px solid rgba(255, 255, 255, 0.9) !important;
@@ -908,11 +946,9 @@ input[type="checkbox"]:focus {
 [data-mode="aurora"][data-theme="light"] .liquid-card,
 [data-mode="aurora"][data-theme="light"] .neu-card,
 [data-mode="aurora"][data-theme="light"] [class*="bg-white"] {
-  background: linear-gradient(
-    135deg,
-    rgba(238, 242, 255, 0.9),
-    rgba(245, 243, 255, 0.75)
-  ) !important;
+  background: linear-gradient(135deg,
+      rgba(238, 242, 255, 0.9),
+      rgba(245, 243, 255, 0.75)) !important;
   border: 1px solid rgba(99, 102, 241, 0.35) !important;
   box-shadow:
     0 20px 40px -10px rgba(99, 102, 241, 0.18),
@@ -968,18 +1004,16 @@ input[type="checkbox"]:focus {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
+
 [data-mode="liquidglass"][data-theme="dark"] .neu-btn:hover {
-  background: linear-gradient(
-    145deg,
-    rgba(255, 255, 255, 0.14),
-    rgba(255, 255, 255, 0.07)
-  ) !important;
+  background: linear-gradient(145deg,
+      rgba(255, 255, 255, 0.14),
+      rgba(255, 255, 255, 0.07)) !important;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
 }
 
 [data-mode="liquidglass"] .neu-input,
-[data-mode="liquidglass"]
-  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+[data-mode="liquidglass"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
 [data-mode="liquidglass"] select,
 [data-mode="liquidglass"] textarea {
   background: rgba(255, 255, 255, 0.95) !important;
@@ -992,9 +1026,9 @@ input[type="checkbox"]:focus {
   border-radius: 12px !important;
   color: #0f172a !important;
 }
+
 [data-mode="liquidglass"][data-theme="dark"] .neu-input,
-[data-mode="liquidglass"][data-theme="dark"]
-  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+[data-mode="liquidglass"][data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
 [data-mode="liquidglass"][data-theme="dark"] select,
 [data-mode="liquidglass"][data-theme="dark"] textarea {
   background: rgba(15, 23, 42, 0.8) !important;
@@ -1011,6 +1045,7 @@ input[type="checkbox"]:focus {
   border: 1px solid #cbd5e1 !important;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06) !important;
 }
+
 [data-mode="liquidglass"][data-theme="dark"] .neu-icon {
   background: rgba(255, 255, 255, 0.07) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -1024,6 +1059,7 @@ input[type="checkbox"]:focus {
   -webkit-backdrop-filter: blur(16px) !important;
   box-shadow: 0 2px 12px rgba(37, 99, 235, 0.12) !important;
 }
+
 [data-mode="liquidglass"][data-theme="dark"] .neu-nav-active {
   background: linear-gradient(135deg, rgba(37, 99, 235, 0.22), rgba(29, 78, 216, 0.12)) !important;
   border: 1px solid rgba(37, 99, 235, 0.3) !important;
@@ -1036,6 +1072,7 @@ input[type="checkbox"]:focus {
   -webkit-backdrop-filter: blur(16px) !important;
   border: 1px solid rgba(255, 255, 255, 0.5) !important;
 }
+
 [data-mode="liquidglass"][data-theme="dark"] .neu-flat {
   background: rgba(255, 255, 255, 0.05) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -1048,9 +1085,11 @@ input[type="checkbox"]:focus {
   0% {
     transform: translateX(0) translateZ(0) scaleY(1);
   }
+
   50% {
     transform: translateX(-25%) translateZ(0) scaleY(0.75);
   }
+
   100% {
     transform: translateX(-50%) translateZ(0) scaleY(1);
   }
@@ -1061,12 +1100,15 @@ input[type="checkbox"]:focus {
     transform: translateY(0) scale(0.2);
     opacity: 0;
   }
+
   20% {
     opacity: 0.7;
   }
+
   80% {
     opacity: 0.5;
   }
+
   100% {
     transform: translateY(-100vh) scale(1.2);
     opacity: 0;
@@ -1078,12 +1120,15 @@ input[type="checkbox"]:focus {
     transform: translateX(-100%) scaleY(0.5);
     opacity: 0;
   }
+
   30% {
     opacity: 0.4;
   }
+
   70% {
     opacity: 0.3;
   }
+
   100% {
     transform: translateX(100vw) scaleY(0.5);
     opacity: 0;
@@ -1094,9 +1139,11 @@ input[type="checkbox"]:focus {
   0% {
     background-position: 0% 50%;
   }
+
   50% {
     background-position: 100% 50%;
   }
+
   100% {
     background-position: 0% 50%;
   }
@@ -1149,18 +1196,22 @@ input[type="checkbox"]:focus {
 .login-card {
   animation: fade-in-up 0.7s ease-out forwards;
 }
+
 .login-card-delay-1 {
   animation-delay: 0.1s;
   opacity: 0;
 }
+
 .login-card-delay-2 {
   animation-delay: 0.2s;
   opacity: 0;
 }
+
 .login-card-delay-3 {
   animation-delay: 0.3s;
   opacity: 0;
 }
+
 .login-card-delay-4 {
   animation-delay: 0.4s;
   opacity: 0;
@@ -1187,12 +1238,15 @@ input[type="checkbox"]:focus {
   opacity: 0;
   animation: fade-in-up 0.5s ease-out forwards;
 }
+
 .login-form-field:nth-child(1) {
   animation-delay: 0.3s;
 }
+
 .login-form-field:nth-child(2) {
   animation-delay: 0.45s;
 }
+
 .login-form-field:nth-child(3) {
   animation-delay: 0.6s;
 }
@@ -1210,15 +1264,18 @@ input[type="checkbox"]:focus {
   @page {
     margin: 5mm;
   }
+
   body {
     background: #ffffff !important;
     color: #000000 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+
   body * {
     visibility: hidden;
   }
+
   aside,
   nav,
   header,
@@ -1227,11 +1284,13 @@ input[type="checkbox"]:focus {
   [role="dialog"] {
     display: none !important;
   }
+
   .printable-invoice-container,
   #printable-receipt,
   #printable-receipt * {
     visibility: visible !important;
   }
+
   .printable-invoice-container {
     position: absolute !important;
     left: 0 !important;
@@ -1244,6 +1303,7 @@ input[type="checkbox"]:focus {
     border: none !important;
     z-index: 999999 !important;
   }
+
   #printable-receipt {
     position: absolute !important;
     left: 0 !important;
