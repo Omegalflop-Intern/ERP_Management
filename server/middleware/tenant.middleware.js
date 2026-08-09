@@ -1,4 +1,4 @@
-import { Tenant } from '../modules/tenant/tenant.model.js';
+import { db } from '../config/db.knex.js';
 import { ApiError } from '../utils/http/ApiError.js';
 
 export const requireSuperAdmin = (req, res, next) => {
@@ -22,17 +22,16 @@ export const checkTenantStatus = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || req.headers['x-tenant-id'];
 
-    // Platform Super Admin without tenant restriction can proceed
     if (!tenantId && req.user?.roleName === 'ADMIN') {
       return next();
     }
 
     if (!tenantId) {
-      return next(); // Default single-tenant compatibility
+      return next();
     }
 
-    const tenant = await Tenant.findById(tenantId);
-    if (!tenant || tenant.isDeleted) {
+    const tenant = await db('tenants').where({ id: tenantId, is_deleted: false }).first();
+    if (!tenant) {
       throw ApiError.notFound('Shop account not found');
     }
 
@@ -45,7 +44,7 @@ export const checkTenantStatus = async (req, res, next) => {
     }
 
     req.tenant = tenant;
-    req.tenantId = tenant._id;
+    req.tenantId = tenant.id;
     next();
   } catch (error) {
     next(error);

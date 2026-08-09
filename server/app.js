@@ -8,16 +8,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { env } from './config/env.config.js';
 import { corsOptions } from './config/cors.config.js';
-import { connectDB } from './config/db.js';
-import { initMailer } from './config/mailer.js';
-import { errorHandler } from './middleware/errorHandler.middleware.js';
-import { renderServerLandingPage } from './utils/system/serverLandingHtml.js';
-import { apiLimiter, authLimiter } from './middleware/rateLimiter.middleware.js';
-import { authenticate } from './middleware/auth.middleware.js';
-import { authorize } from './middleware/role.middleware.js';
-import { requireSuperAdmin, checkTenantStatus } from './middleware/tenant.middleware.js';
-import { extractTenantFromHost } from './middleware/subdomain.middleware.js';
-import mongoose from 'mongoose';
+import { checkDbConnection, db } from './config/db.knex.js';
 import authRoutes from './modules/auth/auth.routes.js';
 import userRoutes from './modules/user/user.routes.js';
 import roleRoutes from './modules/role/role.routes.js';
@@ -49,12 +40,18 @@ import documentVaultRoutes from './modules/documentVault/documentVault.routes.js
 import tenantRoutes from './modules/tenant/tenant.routes.js';
 import plansRoutes from './modules/plans/plans.routes.js';
 import auditLogRoutes from './modules/audit/auditLog.routes.js';
+import contactRoutes from './modules/contact/contact.routes.js';
+import ticketRoutes from './modules/ticket/ticket.routes.js';
+import superAdminProfileRoutes from './modules/superAdmin/profile.routes.js';
 import { startLoanReminderJob } from './jobs/loanReminderCron.js';
 import { auditDiffInterceptor } from './middleware/auditInterceptor.middleware.js';
-import { Investor } from './modules/investor/investor.model.js';
-import { Loan } from './modules/loan/loan.model.js';
+import { apiLimiter, authLimiter } from './middleware/rateLimiter.middleware.js';
+import { extractTenantFromHost } from './middleware/subdomain.middleware.js';
+import { authenticate } from './middleware/auth.middleware.js';
+import { authorize } from './middleware/role.middleware.js';
+import { requireSuperAdmin } from './middleware/tenant.middleware.js';
+import { errorHandler } from './middleware/errorHandler.middleware.js';
 import { seedDefaultRoles } from './modules/role/role.service.js';
-import { Settings } from './modules/settings/settings.model.js';
 import { getAuditLogs } from './utils/auth/auditLog.js';
 import emitter, { EVENTS } from './events/index.js';
 import { setupSwagger } from './config/swagger.config.js';
@@ -186,10 +183,10 @@ app.get('/api/v1/health', (req, res) => {
 });
 
 app.get('/healthz', async (req, res) => {
-  const dbStatus = mongoose.connection.readyState === 1 ? 'UP' : 'DOWN';
-  const isHealthy = dbStatus === 'UP';
-  res.status(isHealthy ? 200 : 503).json({
-    status: isHealthy ? 'OK' : 'UNHEALTHY',
+  const connected = await checkDbConnection();
+  const dbStatus = connected ? 'UP' : 'DOWN';
+  res.status(connected ? 200 : 503).json({
+    status: connected ? 'OK' : 'UNHEALTHY',
     database: dbStatus,
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
@@ -227,37 +224,17 @@ app.get('/api/v1/system/analytics', authenticate, requireSuperAdmin, async (req,
     const loadAvg = os.loadavg();
 
     let dbStats = { collections: 0, documents: 0, storageSize: 0, dataSize: 0 };
-    try {
-      const admin = mongoose.connection.db.admin();
-      const stats = await admin.command({ dbStats: 1 });
-      dbStats = {
-        collections: stats.collections || 0,
-        documents: stats.objects || 0,
-        storageSize: stats.storageSize || 0,
-        dataSize: stats.dataSize || 0,
-        indexSize: stats.indexSize || 0,
-        avgObjSize: stats.avgObjSize || 0,
-      };
-    } catch (e) {}
-
     let collections = [];
     try {
-      const collList = await mongoose.connection.db.listCollections().toArray();
-      for (const coll of collList) {
-        try {
-          const collStats = await mongoose.connection.db.command({ collStats: coll.name });
-          collections.push({
-            name: coll.name,
-            count: collStats.count || 0,
-            size: collStats.size || 0,
-            storageSize: collStats.storageSize || 0,
-            avgObjSize: collStats.avgObjSize || 0,
-          });
-        } catch (e) {
-          collections.push({ name: coll.name, count: 0, size: 0, storageSize: 0, avgObjSize: 0 });
-        }
-      }
-      collections.sort((a, b) => b.size - a.size);
+      const tablesRes = await db.raw("SELECT table_name, table_rows FROM information_schema.tables WHERE table_schema = DATABASE()");
+      const tableRows = tablesRes[0] || [];
+      dbStats = {
+        collections: tableRows.length,
+        documents: tableRows.reduce((acc, t) => acc + Number(t.TABLE_ROWS || 0), 0),
+        storageSize: 0,
+        dataSize: 0,
+      };
+      collections = tableRows.map(t => ({ name: t.TABLE_NAME, count: Number(t.TABLE_ROWS || 0), size: 0 }));
     } catch (e) {}
 
     let uploadsSize = 0;
@@ -325,6 +302,7 @@ app.use('/api/v1/inventory', imeiRoutes);
 app.use('/api/v1/stock', stockRoutes);
 app.use('/api/v1/sales', saleRoutes);
 app.use('/api/v1/finance', reportRoutes);
+app.use('/api/v1/reports', reportRoutes);
 app.use('/api/v1/suppliers', supplierRoutes);
 app.use('/api/v1/purchase-orders', purchaseOrderRoutes);
 app.use('/api/v1/accounting', accountingRoutes);
@@ -341,13 +319,16 @@ app.use('/api/v1/wholesale', wholesaleRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/settings', settingsRoutes);
 app.use('/api/v1/documents', documentVaultRoutes);
-app.use('/api/v1/investors', auditDiffInterceptor('Investor', () => Investor), investorRoutes);
+app.use('/api/v1/investors', auditDiffInterceptor('Investor'), investorRoutes);
 app.use('/api/v1/expenses', expenseRoutes);
-app.use('/api/v1/loans', auditDiffInterceptor('Loan', () => Loan), loanRoutes);
+app.use('/api/v1/loans', auditDiffInterceptor('Loan'), loanRoutes);
 app.use('/api/v1/sse', sseRoutes);
 app.use('/api/v1/tenants', tenantRoutes);
 app.use('/api/v1/plans', plansRoutes);
+app.use('/api/v1/contact', contactRoutes);
+app.use('/api/v1/tickets', ticketRoutes);
 app.use('/api/v1/super-admin/audit-logs', auditLogRoutes);
+app.use('/api/v1/super-admin', superAdminProfileRoutes);
 
 // Production: Serve client build if CLIENT_DIST_PATH is set (e.g. when server + client on same host)
 // On separate deployments (Nginx + Node API), leave CLIENT_DIST_PATH empty — API-only mode

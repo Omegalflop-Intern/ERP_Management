@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import { User } from '../modules/user/user.model.js';
+import { db } from '../config/db.knex.js';
 
 let transporter;
 
@@ -32,14 +32,14 @@ export const initMailer = async () => {
   }
 };
 
-const SENDER_NAME = process.env.SMTP_SENDER_NAME || 'Brothers Mobile';
-const SENDER_EMAIL = process.env.SMTP_SENDER_EMAIL || process.env.SMTP_USER || 'no-reply@brothersmobile.com';
-const APP_NAME = process.env.APP_NAME || 'Brothers Mobile Shop ERP';
+const SENDER_NAME = process.env.SMTP_SENDER_NAME || 'OmniManage';
+const SENDER_EMAIL = process.env.SMTP_SENDER_EMAIL || process.env.SMTP_USER || 'no-reply@omnimanage.com';
+const APP_NAME = process.env.APP_NAME || 'OmniManage ERP';
 const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || SENDER_EMAIL;
 const COMPANY_ADDRESS = process.env.COMPANY_ADDRESS || '';
 
 const baseHeaders = {
-  'X-Mailer': 'BrothersERP-Mailer/1.0',
+  'X-Mailer': 'OmniManage-Mailer/1.0',
   'X-Priority': '3',
   'Precedence': 'bulk',
   'List-Unsubscribe': `<mailto:${SENDER_EMAIL}?subject=unsubscribe>`,
@@ -278,6 +278,104 @@ export const sendAdminNotificationEmail = async (subject, title, detailsHtml) =>
     return { success: false, error: err.message };
   }
 };
+
+export const sendTicketCreatedAdminEmail = async (ticketData) => {
+  if (!transporter) await initMailer();
+
+  let adminEmails = [];
+  try {
+    const adminUsers = await db('users')
+      .where({ is_deleted: false, is_active: true })
+      .whereNull('tenant_id')
+      .select('email');
+
+    if (adminUsers && adminUsers.length > 0) {
+      adminEmails = adminUsers.map((u) => u.email).filter(Boolean);
+    }
+  } catch (err) {
+    console.error('[Ticket Admin Mailer Lookup Error]:', err.message);
+  }
+
+  if (process.env.ADMIN_EMAIL && !adminEmails.includes(process.env.ADMIN_EMAIL)) {
+    adminEmails.push(process.env.ADMIN_EMAIL);
+  }
+
+  const recipientString = [...new Set(adminEmails)].filter(Boolean).join(', ');
+  if (!recipientString) return { success: false, reason: 'No admin email found' };
+
+  const { ticketNumber, shopName, shopSubdomain, subject, category, priority, description, createdByName } = ticketData;
+
+  const mailOptions = {
+    from: `"${SENDER_NAME}" <${SENDER_EMAIL}>`,
+    to: recipientString,
+    replyTo: SUPPORT_EMAIL,
+    subject: `[Support Ticket] New Ticket #${ticketNumber} from ${shopName || 'Shop'}`,
+    headers: { ...baseHeaders, 'X-Priority': priority === 'URGENT' ? '1' : '3' },
+    text: `New Support Ticket Submitted\n\nTicket #: ${ticketNumber}\nShop: ${shopName} (${shopSubdomain || 'N/A'})\nCategory: ${category}\nPriority: ${priority}\nSubject: ${subject}\n\nDescription:\n${description}\n\nSubmitted By: ${createdByName}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head><meta charset="utf-8"></head>
+      <body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:30px 0;">
+          <tr><td align="center">
+            <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #e0e0e0;border-radius:8px;overflow:hidden;">
+              <tr>
+                <td style="background:#1a1a2e;padding:24px 32px;">
+                  <h2 style="margin:0;color:#ffffff;font-size:18px;font-weight:700;">Support Ticket Submitted</h2>
+                  <p style="margin:6px 0 0;color:#3b82f6;font-size:13px;font-weight:600;">#${ticketNumber} &bull; ${priority} Priority</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:28px 32px;">
+                  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;border-collapse:collapse;">
+                    <tr style="background:#f8fafc;">
+                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#64748b;width:30%;">Shop Name:</td>
+                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#0f172a;font-weight:600;">${shopName || 'Unknown Shop'} (${shopSubdomain || 'main'})</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#64748b;">Category:</td>
+                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#0f172a;">${category}</td>
+                    </tr>
+                    <tr style="background:#f8fafc;">
+                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#64748b;">Subject:</td>
+                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#0f172a;font-weight:600;">${subject}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#64748b;">Submitted By:</td>
+                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#0f172a;">${createdByName || 'Staff User'}</td>
+                    </tr>
+                  </table>
+                  <div style="background:#f1f5f9;border-left:4px solid #2563eb;padding:16px;border-radius:4px;margin-bottom:20px;">
+                    <p style="margin:0 0 6px;font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;">Ticket Description:</p>
+                    <p style="margin:0;font-size:14px;color:#1e293b;line-height:1.6;white-space:pre-wrap;">${description}</p>
+                  </div>
+                  <p style="margin:0;font-size:12px;color:#64748b;">Please log in to the Super Admin Panel to review and resolve this ticket.</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:16px;text-align:center;color:#94a3b8;font-size:11px;">
+                  &copy; ${new Date().getFullYear()} ${APP_NAME}. System Automated Notification
+                </td>
+              </tr>
+            </table>
+          </td></tr>
+        </table>
+      </body>
+      </html>
+    `,
+  };
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`[Ticket Mailer] Alert sent to ${recipientString} for ticket #${ticketNumber}`);
+    return { success: true, messageId: info.messageId };
+  } catch (err) {
+    console.error(`[Ticket Mailer Error]: ${err.message}`);
+    return { success: false, error: err.message };
+  }
+};
+
 
 export const sendCustomerInvoiceEmail = async (toEmail, customerName, invoiceData) => {
   if (!toEmail) return;

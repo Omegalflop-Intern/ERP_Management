@@ -14,6 +14,8 @@ export const EVENTS = {
   USER_UPDATED: 'user:updated',
   LOW_STOCK_ALERT: 'lowStock:alert',
   WARRANTY_EXPIRING: 'warranty:expiring',
+  TICKET_CREATED: 'ticket:created',
+  TICKET_RESOLVED: 'ticket:resolved',
 };
 
 export default emitter;

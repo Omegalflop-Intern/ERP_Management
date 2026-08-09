@@ -1,92 +1,56 @@
-import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
-import { User } from '../../modules/user/user.model.js';
-import { Role } from '../../modules/role/role.model.js';
+import { db } from '../../config/db.knex.js';
 import { seedDefaultRoles } from '../../modules/role/role.service.js';
 import { seedSubscriptionPlans } from '../../modules/plans/plans.service.js';
-import { connectDB } from '../../config/db.js';
 
-const getEnvPassword = (role, defaultPassword) => {
-  const envKey = `SEED_PASSWORD_${role.toUpperCase()}`;
-  const envPass = process.env[envKey];
-  if (envPass) return envPass;
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error(`Environment variable ${envKey} is required in production`);
-  }
-  console.warn(`[SEED] Using default password for ${role}. Set ${envKey} env var in production.`);
-  return defaultPassword;
-};
+const SEED_PASSWORD = process.env.SEED_PASSWORD || 'admin123';
 
-const seedUsers = [
-  { username: 'admin', email: 'admin@brothers-erp.com', phone: '01700000000', roleName: 'ADMIN', isVerified: true },
-  { username: 'mamun', email: 'mamun@brothers-erp.com', phone: '01711111111', roleName: 'CASHIER', isVerified: true },
-  { username: 'manager', email: 'manager@brothers-erp.com', phone: '01722222222', roleName: 'MANAGER', isVerified: true },
-  { username: 'technician', email: 'tech@brothers-erp.com', phone: '01733333333', roleName: 'TECHNICIAN', isVerified: true },
+const admins = [
+  { username: 'salahuddin', email: 'salahuddin@erp.com', phone: '01710000001', fullName: 'Salahuddin' },
+  { username: 'admin2', email: 'admin2@erp.com', phone: '01710000002', fullName: 'Admin Two' },
+  { username: 'admin3', email: 'admin3@erp.com', phone: '01710000003', fullName: 'Admin Three' },
+  { username: 'admin4', email: 'admin4@erp.com', phone: '01710000004', fullName: 'Admin Four' },
+  { username: 'admin5', email: 'admin5@erp.com', phone: '01710000005', fullName: 'Admin Five' },
 ];
 
 const seed = async () => {
   try {
-    await connectDB();
-
-    const shouldClear = process.argv.includes('--clear') || process.env.CLEAR_DB === 'true';
-    if (shouldClear) {
-      console.log('[CLEAR] Dropping database / clearing all collections...');
-      const collections = await mongoose.connection.db.collections();
-      for (const collection of collections) {
-        await collection.deleteMany({});
-      }
-      console.log('[CLEAR] All collections cleared successfully!');
-    }
-
     console.log('[SEED] Seeding default system roles...');
     await seedDefaultRoles();
 
-    console.log('[SEED] Seeding subscription plans...');
+    console.log('[SEED] Seeding default subscription plans...');
     await seedSubscriptionPlans();
-    console.log('[SEED] Subscription plans seeded (FREE, STARTER, PRO, ENTERPRISE).');
 
-    for (const userData of seedUsers) {
-      const existing = await User.findOne({ username: userData.username });
-      if (existing) {
-        if (!existing.isVerified) {
-          existing.isVerified = true;
-          await existing.save();
-          console.log(`Updated user '${userData.username}' to isVerified: true`);
-        } else {
-          console.log(`User '${userData.username}' already exists and is verified, skipping...`);
-        }
-        continue;
+    const adminRole = await db('roles').where({ name: 'ADMIN' }).first();
+    const passwordHash = await bcrypt.hash(SEED_PASSWORD, 10);
+
+    for (const u of admins) {
+      const existing = await db('users').where({ username: u.username }).first();
+      if (!existing) {
+        await db('users').insert({
+          username: u.username,
+          email: u.email,
+          phone: u.phone,
+          full_name: u.fullName,
+          password_hash: passwordHash,
+          role_id: adminRole?.id || 1,
+          role_name: 'ADMIN',
+          is_active: true,
+          is_verified: true,
+          is_deleted: false,
+        });
+        console.log(`[SEED] Created admin '${u.username}' (password: ${SEED_PASSWORD})`);
+      } else {
+        console.log(`[SEED] User '${u.username}' already exists, skipping`);
       }
-
-      const role = await Role.findOne({ name: userData.roleName });
-      if (!role) {
-        console.log(`Role '${userData.roleName}' not found, skipping user '${userData.username}'...`);
-        continue;
-      }
-
-      const password = getEnvPassword(userData.roleName, userData.roleName.toLowerCase() + '123');
-      const passwordHash = await bcrypt.hash(password, 10);
-      await User.create({
-        username: userData.username,
-        email: userData.email,
-        phone: userData.phone,
-        fullName: userData.fullName || userData.username.toUpperCase(),
-        passwordHash,
-        role: role._id,
-        roleName: role.name,
-        isVerified: true,
-      });
-      console.log(`Created user: ${userData.username} (${role.name}) [isVerified: true]`);
     }
 
-    console.log('Seed completed successfully!');
+    console.log('✅ Seeding completed successfully!');
+    console.log(`[SEED] Login credentials — password: ${SEED_PASSWORD}`);
+    process.exit(0);
   } catch (error) {
-    console.error('Seed failed:', error);
-    process.exitCode = 1;
-  } finally {
-    if (mongoose.connection.readyState !== 0) {
-      await mongoose.connection.close();
-    }
+    console.error('❌ Seed failed:', error.message);
+    process.exit(1);
   }
 };
 

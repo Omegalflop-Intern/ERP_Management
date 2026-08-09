@@ -1,42 +1,30 @@
 import cron from 'node-cron';
-import { Tenant } from '../modules/tenant/tenant.model.js';
-import { TempAdmin } from '../modules/tenant/tempAdmin.model.js';
-import { User } from '../modules/user/user.model.js';
+import { db } from '../config/db.knex.js';
 
 export const startSubscriptionChecker = () => {
   cron.schedule('0 * * * *', async () => {
     try {
       const now = new Date();
 
-      const expiredShops = await Tenant.find({
-        status: 'ACTIVE',
-        expiresAt: { $lt: now },
-        isDeleted: false,
-      });
+      const expiredShops = await db('tenants')
+        .where({ status: 'ACTIVE', is_deleted: false })
+        .where('expires_at', '<', now);
 
       for (const shop of expiredShops) {
-        shop.status = 'PAUSED';
-        shop.pausedReason = 'SUBSCRIPTION_EXPIRED';
-        shop.pausedAt = now;
-        await shop.save();
+        await db('tenants').where({ id: shop.id }).update({
+          status: 'PAUSED',
+          paused_reason: 'SUBSCRIPTION_EXPIRED',
+          paused_at: now,
+        });
 
-        await User.updateMany(
-          { tenantId: shop._id, isActive: true },
-          { isActive: false }
-        );
+        await db('users').where({ tenant_id: shop.id }).update({ is_active: false });
       }
 
       const warningDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      await Tenant.updateMany(
-        {
-          status: 'ACTIVE',
-          expiresAt: { $gte: now, $lte: warningDate },
-          isDeleted: false,
-          lastWarningSent: { $lt: oneDayAgo },
-        },
-        { lastWarningSent: now }
-      );
+      await db('tenants')
+        .where({ status: 'ACTIVE', is_deleted: false })
+        .whereBetween('expires_at', [now, warningDate])
+        .update({ last_warning_sent: now });
     } catch (err) {
       console.error('[CRON] Subscription check failed:', err.message);
     }
@@ -46,15 +34,16 @@ export const startSubscriptionChecker = () => {
 export const startTempAdminCleanup = () => {
   cron.schedule('* * * * *', async () => {
     try {
-      const expired = await TempAdmin.find({
-        status: 'ACTIVE',
-        expiresAt: { $lt: new Date() },
-      });
+      const now = new Date();
+      const expired = await db('temp_admins')
+        .where({ status: 'ACTIVE' })
+        .where('expires_at', '<', now);
 
       for (const ta of expired) {
-        await User.findByIdAndUpdate(ta.userId, { isActive: false });
-        ta.status = 'EXPIRED';
-        await ta.save();
+        if (ta.user_id) {
+          await db('users').where({ id: ta.user_id }).update({ is_active: false });
+        }
+        await db('temp_admins').where({ id: ta.id }).update({ status: 'EXPIRED' });
       }
     } catch (err) {
       console.error('[CRON] Temp admin cleanup failed:', err.message);

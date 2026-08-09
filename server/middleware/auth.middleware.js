@@ -1,6 +1,5 @@
+import { db } from '../config/db.knex.js';
 import { verifyToken } from '../utils/auth/generateToken.js';
-import { User } from '../modules/user/user.model.js';
-import { TempAdmin } from '../modules/tenant/tempAdmin.model.js';
 import { ApiError } from '../utils/http/ApiError.js';
 
 export const authenticate = async (req, res, next) => {
@@ -14,48 +13,40 @@ export const authenticate = async (req, res, next) => {
     } else if (req.query?.token) {
       token = req.query.token;
     }
-    if (!token) {
-      throw ApiError.unauthorized('No token provided');
-    }
+    if (!token) throw ApiError.unauthorized('No token provided');
+
     const decoded = verifyToken(token);
+    const userId = decoded.id || decoded.userId;
 
-    const user = await User.findOne({ _id: decoded.userId, isDeleted: false, isActive: true })
-      .populate('role', 'name displayName permissions');
-    if (!user) throw ApiError.unauthorized('User not found or deactivated');
+    const row = await db('users')
+      .leftJoin('roles', 'users.role_id', 'roles.id')
+      .where({ 'users.id': userId, 'users.is_deleted': false, 'users.is_active': true })
+      .select('users.*', 'roles.name as role_name_val', 'roles.permissions as role_perms_val')
+      .first();
 
-    if (user.isTempAdmin) {
-      const tempAdmin = await TempAdmin.findOne({ userId: user._id, status: 'ACTIVE' });
-      if (!tempAdmin || tempAdmin.expiresAt < new Date()) {
-        user.isActive = false;
-        await user.save();
-        if (tempAdmin) {
-          tempAdmin.status = 'EXPIRED';
-          await tempAdmin.save();
-        }
-        throw ApiError.forbidden('Temporary access has expired');
-      }
+    if (!row) throw ApiError.unauthorized('User not found or deactivated');
+
+    let permissions = row.role_perms_val;
+    if (typeof permissions === 'string') {
+      try { permissions = JSON.parse(permissions); } catch { permissions = []; }
     }
 
     req.user = {
-      userId: user._id,
-      username: user.username,
-      email: user.email,
-      fullName: user.fullName || user.username,
-      phone: user.phone || '',
-      roleName: user.roleName || user.role?.name,
-      role: user.role?._id || user.role,
-      permissions: user.role?.permissions || [],
-      tenantId: user.tenantId || null,
+      _id: String(row.id),
+      id: row.id,
+      userId: String(row.id),
+      username: row.username,
+      email: row.email,
+      fullName: row.full_name || row.username,
+      phone: row.phone || '',
+      role: row.role_id,
+      roleName: row.role_name_val || row.role_name || '',
+      tenantId: row.tenant_id || null,
+      permissions: Array.isArray(permissions) ? permissions : [],
     };
 
     next();
   } catch (error) {
-    if (error.name === 'JsonWebTokenError') {
-      return next(ApiError.unauthorized('Invalid token'));
-    }
-    if (error.name === 'TokenExpiredError') {
-      return next(ApiError.unauthorized('Token expired'));
-    }
     next(error);
   }
 };

@@ -1,15 +1,14 @@
 import app from './app.js';
 import { env } from './config/env.config.js';
-import { connectDB } from './config/db.js';
+import { checkDbConnection } from './config/db.knex.js';
 import { initMailer, sendAdminNotificationEmail, sendCustomerInvoiceEmail, sendCustomerRepairEmail } from './config/mailer.js';
 import { sendAdminSMSNotification, sendCustomerInvoiceSMS } from './config/sms.js';
 import { seedDefaultRoles } from './modules/role/role.service.js';
-import { Settings } from './modules/settings/settings.model.js';
 import { initAutoBackup } from './modules/settings/settings.service.js';
 import emitter, { EVENTS } from './events/index.js';
 import { printAsciiBanner, printServerInfo, logStep } from './utils/system/banner.js';
 import { broadcastAll, broadcastToTenant } from './modules/sse/sse.controller.js';
-import { User } from './modules/user/user.model.js';
+import { db } from './config/db.knex.js';
 import { createBulkNotifications } from './modules/notification/notification.service.js';
 import fs from 'fs';
 import path from 'path';
@@ -45,13 +44,13 @@ server.listen(PORT, async () => {
   global.__serverStartTime = new Date();
   global.__serverProtocol = protocol;
 
-  await printAsciiBanner();
+  printAsciiBanner();
 
-  await logStep('Database Connection', connectDB);
-  await logStep('SMTP Mail Service', initMailer);
-  await logStep('Default System Roles', seedDefaultRoles);
-  await logStep('ERP System Settings', () => Settings.seedDefaults());
-  await logStep('Weekly Backup Scheduler', () => initAutoBackup());
+  await logStep('MySQL/MariaDB Database', checkDbConnection);
+  await logStep('SMTP Mailer & SMS Gateways', initMailer);
+  await logStep('System Roles & Subscription Plans', seedDefaultRoles);
+  await logStep('Automated Backup Scheduler', () => initAutoBackup());
+
   const { startSubscriptionChecker, startTempAdminCleanup } = await import('./jobs/subscriptionChecker.js');
   startSubscriptionChecker();
   startTempAdminCleanup();
@@ -109,18 +108,13 @@ server.listen(PORT, async () => {
     );
 
     try {
-      // Only notify users belonging to the same tenant as the sale.
-      // Super-admin users (tenantId = null) are excluded from per-tenant sale noise.
-      const userQuery = { isDeleted: false, isActive: true };
+      let query = db('users').where({ is_deleted: false, is_active: true });
       if (eventTenantId) {
-        userQuery.tenantId = eventTenantId;
-      } else {
-        // No tenantId on event → single-tenant fallback: notify users without a tenantId
-        userQuery.tenantId = { $exists: false };
+        query = query.where('tenant_id', eventTenantId);
       }
-      const activeUsers = await User.find(userQuery).select('_id tenantId').lean();
+      const activeUsers = await query.select('id', 'tenant_id');
       if (activeUsers.length) {
-        await createBulkNotifications(activeUsers.map((u) => ({ userId: u._id, tenantId: u.tenantId })), {
+        await createBulkNotifications(activeUsers.map((u) => ({ userId: u.id, tenantId: u.tenant_id })), {
           type: 'SALE_COMPLETED',
           title: `New Sale Recorded (${invoiceNo})`,
           message: `Sale invoice created for ৳${Number(amount).toLocaleString()}`,

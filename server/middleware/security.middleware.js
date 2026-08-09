@@ -1,4 +1,3 @@
-import { AuditLog } from '../models/AuditLog.js';
 import { logSecurityEvent } from '../utils/auth/auditLog.js';
 
 const failedAttempts = new Map();

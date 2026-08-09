@@ -1,23 +1,23 @@
-import { AuditLog } from '../../models/AuditLog.js';
-import { paginate, getPagination } from '../http/pagination.js';
+import { db } from '../../config/db.knex.js';
+import { getPagination } from '../http/pagination.js';
 
 export const logAction = async ({ userId, username, fullName, roleName, phone, action, module, entityId, entityType, details, req }) => {
   try {
     const u = req?.user;
-    await AuditLog.create({
-      userId: userId || u?.userId,
-      username: username || u?.username,
-      fullName: fullName || u?.fullName,
-      roleName: roleName || u?.roleName,
-      phone: phone || u?.phone,
-      tenantId: u?.tenantId || null,
-      action,
-      module,
-      entityId,
-      entityType,
-      details,
-      ipAddress: req?.ip || req?.headers?.['x-forwarded-for'],
-      userAgent: req?.headers?.['user-agent'],
+    await db('audit_logs').insert({
+      user_id: userId || u?.userId || u?.id || null,
+      username: username || u?.username || null,
+      full_name: fullName || u?.fullName || null,
+      role_name: roleName || u?.roleName || null,
+      phone: phone || u?.phone || null,
+      tenant_id: u?.tenantId || null,
+      action: action || 'ACTION',
+      module: module || null,
+      entity_id: entityId || null,
+      entity_type: entityType || null,
+      details: details ? JSON.stringify(details) : null,
+      ip_address: req?.ip || req?.headers?.['x-forwarded-for'] || '',
+      user_agent: req?.headers?.['user-agent'] || '',
     });
   } catch (e) {
     console.error('Audit log failed:', e.message);
@@ -25,37 +25,64 @@ export const logAction = async ({ userId, username, fullName, roleName, phone, a
 };
 
 export const getAuditLogs = async (page = 1, limit = 50, filters = {}, tenantId = null) => {
-  const query = {};
-  if (tenantId) query.tenantId = tenantId;
-  if (filters.module) query.module = filters.module;
-  if (filters.userId) query.userId = filters.userId;
-  if (filters.action) query.action = { $regex: filters.action, $options: 'i' };
-  if (filters.from || filters.to) {
-    query.createdAt = {};
-    if (filters.from) query.createdAt.$gte = new Date(filters.from);
-    if (filters.to) query.createdAt.$lte = new Date(filters.to);
-  }
+  const countQuery = db('audit_logs');
+  if (tenantId) countQuery.where('tenant_id', tenantId);
+  if (filters.module) countQuery.where('module', filters.module);
+  if (filters.userId) countQuery.where('user_id', filters.userId);
+  if (filters.action) countQuery.where('action', 'like', `%${filters.action}%`);
 
-  const total = await AuditLog.countDocuments(query);
-  const logs = await paginate(
-    AuditLog.find(query).populate('userId', 'username fullName phone roleName role'),
-    page, limit
-  ).sort({ createdAt: -1 });
+  const countRes = await countQuery.count({ total: '*' }).first();
+  const total = Number(countRes?.total || 0);
+
+  const offset = (page - 1) * limit;
+  const dataQuery = db('audit_logs');
+  if (tenantId) dataQuery.where('tenant_id', tenantId);
+  if (filters.module) dataQuery.where('module', filters.module);
+  if (filters.userId) dataQuery.where('user_id', filters.userId);
+  if (filters.action) dataQuery.where('action', 'like', `%${filters.action}%`);
+
+  const rows = await dataQuery.orderBy('created_at', 'desc').limit(limit).offset(offset);
+
+  const logs = rows.map((row) => {
+    let details = row.details;
+    if (typeof details === 'string') {
+      try { details = JSON.parse(details); } catch { details = {}; }
+    }
+    return {
+      _id: String(row.id),
+      id: row.id,
+      userId: row.user_id ? String(row.user_id) : null,
+      username: row.username || '',
+      fullName: row.full_name || '',
+      roleName: row.role_name || '',
+      phone: row.phone || '',
+      tenantId: row.tenant_id || null,
+      action: row.action,
+      module: row.module || '',
+      entityId: row.entity_id || null,
+      entityType: row.entity_type || null,
+      details: details || {},
+      ipAddress: row.ip_address || '',
+      userAgent: row.user_agent || '',
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  });
 
   return { logs, pagination: getPagination(total, page, limit) };
 };
 
 export const logSecurityEvent = async ({ action, userId, username, ipAddress, userAgent, details, severity = 'medium' }) => {
   try {
-    await AuditLog.create({
-      userId,
-      username,
-      action,
+    await db('audit_logs').insert({
+      user_id: userId || null,
+      username: username || null,
+      action: action || 'SECURITY_EVENT',
       module: 'security',
-      entityType: 'SecurityEvent',
-      details: { ...details, severity },
-      ipAddress: ipAddress || '',
-      userAgent: userAgent || '',
+      entity_type: 'SecurityEvent',
+      details: JSON.stringify({ ...details, severity }),
+      ip_address: ipAddress || '',
+      user_agent: userAgent || '',
     });
   } catch (e) {
     console.error('Security log failed:', e.message);

@@ -1,10 +1,10 @@
 import axios from 'axios';
-import { User } from '../modules/user/user.model.js';
+import { db } from './db.knex.js';
 
 const SMS_API_URL = process.env.SMS_API_URL || '';
 const SMS_API_KEY = process.env.SMS_API_KEY || '';
 const SMS_SENDER_ID = process.env.SMS_SENDER_ID || '';
-const APP_NAME = process.env.APP_NAME || 'Brothers Mobile';
+const APP_NAME = process.env.APP_NAME || 'OmniManage';
 
 /**
  * Low-level SMS Sender function
@@ -25,37 +25,31 @@ export const sendSMS = async (toPhone, textMessage) => {
       if (SMS_SENDER_ID) {
         payload.sender_id = SMS_SENDER_ID;
       }
-      const response = await axios.post(SMS_API_URL, payload, { timeout: 8000 });
 
-      console.log(`[SMS Gateway] SMS successfully sent to ${phone}. Provider Response:`, response.data);
-      return { success: true, data: response.data };
+      const res = await axios.post(SMS_API_URL, payload, { timeout: 8000 });
+      console.log(`[SMS Sent] to: ${phone} | Status:`, res.status);
+      return { success: true, data: res.data };
     } catch (err) {
-      console.error(`[SMS Gateway Error] Failed to send SMS to ${phone}:`, err.message);
-      return { success: false, error: err.message };
+      console.error(`[SMS Error] to: ${phone} |`, err.message);
+      return { success: false, reason: err.message };
     }
-  } else {
-    // Development / Fallback Mock Mode
-    console.log(`\x1b[33m[SMS Mock Gateway]\x1b[0m To: \x1b[1m${phone}\x1b[0m | Message: "${textMessage}"`);
-    return { success: true, mock: true };
   }
+
+  // Fallback: console log in development / test mode
+  console.log(`\n=================== [DEV SMS MOCK] ===================`);
+  console.log(`TO: ${phone}`);
+  console.log(`MESSAGE:\n${textMessage}`);
+  console.log(`======================================================\n`);
+  return { success: true, mock: true };
 };
 
 /**
- * Send SMS Alert to all Active System Administrators
+ * Helper: Send SMS alert to all System Admins
  */
 export const sendAdminSMSNotification = async (messageText) => {
   let adminPhones = [];
   try {
-    const adminUsers = await User.find({
-      isDeleted: false,
-      isActive: true,
-      $or: [
-        { roleName: { $regex: /^admin$/i } },
-        { roleName: 'System Administrator' }
-      ],
-      phone: { $exists: true, $ne: '' }
-    }).select('phone username').lean();
-
+    const adminUsers = await db('users').where({ is_deleted: false, is_active: true }).select('phone');
     if (adminUsers && adminUsers.length > 0) {
       adminPhones = adminUsers.map(u => u.phone).filter(Boolean);
     }

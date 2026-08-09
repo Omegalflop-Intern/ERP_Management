@@ -1,10 +1,5 @@
-import { Tenant } from '../modules/tenant/tenant.model.js';
+import { db } from '../config/db.knex.js';
 
-/**
- * Extracts tenant context from the Host header (subdomain or custom domain).
- * Sets req.tenantContext if a matching tenant is found.
- * Does NOT replace JWT auth — supplements it with URL-based tenant identification.
- */
 export const extractTenantFromHost = async (req, res, next) => {
   try {
     const host = req.headers.host?.split(':')[0];
@@ -12,36 +7,56 @@ export const extractTenantFromHost = async (req, res, next) => {
 
     const baseDomain = process.env.BASE_DOMAIN || 'erp.com';
 
-    // Skip if already authenticated with JWT tenant
     if (req.user?.tenantId) return next();
 
-    // Check subdomain: mamum.erp.com → "mamum"
     if (host.endsWith(`.${baseDomain}`)) {
       const subdomain = host.replace(`.${baseDomain}`, '');
       if (subdomain && subdomain !== 'www' && subdomain !== 'api') {
-        const tenant = await Tenant.findOne({ subdomain, isDeleted: false, status: 'ACTIVE' })
-          .select('_id shopName subdomain customDomain plan status')
-          .lean();
+        const tenant = await db('tenants')
+          .where({ subdomain, is_deleted: false, status: 'ACTIVE' })
+          .select('id', 'shop_name', 'subdomain', 'custom_domain', 'plan', 'status')
+          .first();
         if (tenant) {
-          req.tenantContext = { tenantId: tenant._id, tenant };
+          req.tenantContext = {
+            tenantId: tenant.id,
+            tenant: {
+              _id: String(tenant.id),
+              id: tenant.id,
+              shopName: tenant.shop_name,
+              subdomain: tenant.subdomain,
+              customDomain: tenant.custom_domain,
+              plan: tenant.plan,
+              status: tenant.status,
+            },
+          };
           return next();
         }
       }
     }
 
-    // Check custom domain: mamumerp.com
     if (!host.endsWith(`.${baseDomain}`) && host !== baseDomain) {
-      const tenant = await Tenant.findOne({ customDomain: host, isDeleted: false, status: 'ACTIVE' })
-        .select('_id shopName subdomain customDomain plan status')
-        .lean();
+      const tenant = await db('tenants')
+        .where({ custom_domain: host, is_deleted: false, status: 'ACTIVE' })
+        .select('id', 'shop_name', 'subdomain', 'custom_domain', 'plan', 'status')
+        .first();
       if (tenant) {
-        req.tenantContext = { tenantId: tenant._id, tenant };
+        req.tenantContext = {
+          tenantId: tenant.id,
+          tenant: {
+            _id: String(tenant.id),
+            id: tenant.id,
+            shopName: tenant.shop_name,
+            subdomain: tenant.subdomain,
+            customDomain: tenant.custom_domain,
+            plan: tenant.plan,
+            status: tenant.status,
+          },
+        };
       }
     }
 
     next();
   } catch (err) {
-    // Don't break the request on middleware errors
     console.error('[Subdomain Middleware Error]:', err.message);
     next();
   }
