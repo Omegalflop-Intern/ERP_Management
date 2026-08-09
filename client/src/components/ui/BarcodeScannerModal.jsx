@@ -117,7 +117,9 @@ export default function BarcodeScannerModal({ open, onScan, onClose }) {
                   <div className="absolute top-3 left-3 right-3 flex items-center justify-center gap-2 pointer-events-none">
                     <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-sm rounded-full px-3 py-1">
                       <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                      <span className="text-[10px] font-semibold text-white uppercase tracking-wide">Scanning</span>
+                      <span className="text-[10px] font-semibold text-white uppercase tracking-wide">
+                        Scanning
+                      </span>
                     </div>
                   </div>
                 )}

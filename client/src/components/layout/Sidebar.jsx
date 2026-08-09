@@ -1,25 +1,28 @@
 import { useQuery } from '@tanstack/react-query';
 import { ChevronDown, ChevronRight, Smartphone, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { menuItems } from '../../config/sidebar.config';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../lib/api';
 
-function SidebarLink({ item, isCollapsed, isActive }) {
+function SidebarLink({ item, isCollapsed }) {
   return (
     <NavLink
       to={item.path}
+      end={item.path === '/dashboard'}
       title={isCollapsed ? item.label : undefined}
-      className={`w-full flex items-center gap-3 rounded-xl font-medium text-sm transition-all mb-1
-        ${isCollapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5'}
-        ${
+      className={({ isActive }) =>
+        `w-full flex items-center gap-3 rounded-xl font-medium text-sm transition-all duration-200 mb-1 ${
+          isCollapsed ? 'justify-center px-2 py-2.5' : 'px-3.5 py-2.5'
+        } ${
           isActive
-            ? 'bg-blue-50/80 dark:bg-blue-900/20 text-[#2563EB] dark:text-blue-400 font-semibold border border-blue-200/60 dark:border-blue-800/50'
-            : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700/60'
-        }`}
+            ? 'bg-[#2563EB] text-white font-bold shadow-md shadow-[#2563EB]/25'
+            : 'text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80'
+        }`
+      }
     >
-      <item.icon className="w-4 h-4 shrink-0" />
+      <item.icon className="w-4 h-4 shrink-0 stroke-[2.2]" />
       {!isCollapsed && <span className="truncate">{item.label}</span>}
     </NavLink>
   );
@@ -27,23 +30,25 @@ function SidebarLink({ item, isCollapsed, isActive }) {
 
 function SubmenuGroup({ item, isCollapsed, openSubmenus, toggleSubmenu, location }) {
   const isOpen = !!openSubmenus[item.label];
-  const hasActiveChild = item.children.some((c) => location.pathname === c.path);
+  const hasActiveChild = item.children.some(
+    (c) => location.pathname === c.path || (c.path !== '/' && location.pathname.startsWith(c.path))
+  );
 
   return (
     <div className="mb-1">
       <button
         type="button"
         onClick={() => toggleSubmenu(item.label)}
-        className={`w-full flex items-center justify-between rounded-xl font-medium text-sm transition-all
-          ${isCollapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5'}
-          ${
-            hasActiveChild
-              ? 'bg-blue-50/80 dark:bg-blue-900/20 text-[#2563EB] dark:text-blue-400 font-semibold'
-              : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700/60'
-          }`}
+        className={`w-full flex items-center justify-between rounded-xl font-medium text-sm transition-all duration-200 ${
+          isCollapsed ? 'justify-center px-2 py-2.5' : 'px-3.5 py-2.5'
+        } ${
+          hasActiveChild
+            ? 'bg-blue-50 dark:bg-blue-950/50 text-[#2563EB] dark:text-blue-400 font-bold border border-blue-200/80 dark:border-blue-800/50'
+            : 'text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80'
+        }`}
       >
         <div className="flex items-center gap-3">
-          <item.icon className="w-4 h-4 shrink-0 text-[#2563EB] dark:text-blue-400" />
+          <item.icon className="w-4 h-4 shrink-0 text-[#2563EB] dark:text-blue-400 stroke-[2.2]" />
           {!isCollapsed && <span className="truncate">{item.label}</span>}
         </div>
         {!isCollapsed &&
@@ -55,21 +60,20 @@ function SubmenuGroup({ item, isCollapsed, openSubmenus, toggleSubmenu, location
       </button>
 
       {!isCollapsed && isOpen && (
-        <div className="pl-4 mt-1 space-y-0.5 border-l-2 border-[#2563EB]/20 ml-5">
+        <div className="pl-4 mt-1 space-y-1 border-l-2 border-[#2563EB]/30 ml-5">
           {item.children.map((child) => (
             <NavLink
               key={child.path}
               to={child.path}
-              className={({
-                isActive,
-              }) => `w-full flex items-center gap-2.5 px-3 py-2 rounded-lg font-medium text-xs transition-all
-                ${
+              className={({ isActive }) =>
+                `w-full flex items-center gap-2.5 px-3 py-2 rounded-xl font-medium text-xs transition-all duration-200 ${
                   isActive
                     ? 'bg-[#2563EB] text-white font-bold shadow-sm'
-                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700/70'
-                }`}
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/70'
+                }`
+              }
             >
-              <child.icon className="w-3.5 h-3.5 shrink-0" />
+              <child.icon className="w-3.5 h-3.5 shrink-0 stroke-[2]" />
               <span className="truncate">{child.label}</span>
             </NavLink>
           ))}
@@ -87,7 +91,13 @@ function SidebarMenu({ isCollapsed, location }) {
     const next = {};
     menuItems.forEach((group) => {
       group.items.forEach((item) => {
-        if (item.children?.some((c) => location.pathname === c.path)) {
+        if (
+          item.children?.some(
+            (c) =>
+              location.pathname === c.path ||
+              (c.path !== '/' && location.pathname.startsWith(c.path))
+          )
+        ) {
           next[item.label] = true;
         }
       });
@@ -109,14 +119,14 @@ function SidebarMenu({ isCollapsed, location }) {
         if (!visible.length) return null;
 
         return (
-          <div key={group.section} className="mb-1.5">
+          <div key={group.section} className="mb-2">
             {!isCollapsed && (
-              <div className="px-3 pt-3 pb-1 text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">
+              <div className="px-3 pt-3 pb-1 text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest">
                 {group.section}
               </div>
             )}
             {isCollapsed && (
-              <div className="mx-2 mb-1 border-t border-gray-200 dark:border-gray-800" />
+              <div className="mx-2 mb-1 border-t border-slate-200 dark:border-slate-800" />
             )}
 
             {visible.map((item) =>
@@ -167,7 +177,7 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
         <img src={settings.companyLogo} alt="Shop Logo" className="w-5 h-5 rounded object-cover" />
       );
     }
-    return <Smartphone className="w-5 h-5 text-[#2563EB]" />;
+    return <Smartphone className="w-5 h-5 text-[#2563EB] dark:text-blue-400" />;
   };
 
   return (
@@ -194,15 +204,15 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
           {!isCollapsed && (
             <div className="flex items-center gap-2">
               <Logo />
-              <span className="font-bold text-gray-900 dark:text-gray-100">Menu</span>
+              <span className="font-bold text-slate-900 dark:text-slate-100">Menu</span>
             </div>
           )}
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 ml-auto"
+            className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 ml-auto"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-slate-500" />
           </button>
         </div>
 
@@ -216,7 +226,7 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
                 className="w-10 h-10 rounded-xl object-cover"
               />
             ) : (
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50 dark:bg-blue-900/20">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50 dark:bg-blue-950/30">
                 <Smartphone className="w-5 h-5 text-[#2563EB] dark:text-blue-400" />
               </div>
             )}

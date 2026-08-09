@@ -16,7 +16,18 @@ import {
 } from 'recharts';
 import { useTheme } from '../../context/ThemeContext';
 
-const COLORS = ['#991B1B', '#DC2626', '#F87171', '#FCA5A5', '#7F1D1D', '#B91C1C'];
+const COLORS = [
+  '#F97316', // orange
+  '#3B82F6', // blue
+  '#10B981', // emerald
+  '#8B5CF6', // violet
+  '#F59E0B', // amber
+  '#EC4899', // pink
+  '#06B6D4', // cyan
+  '#84CC16', // lime
+  '#6366F1', // indigo
+  '#14B8A6', // teal
+];
 
 const PERIOD_OPTIONS = [
   { label: '24 Hours', value: '24h' },
@@ -66,7 +77,34 @@ export default function DashboardCharts({
     );
   };
 
-  if (!salesTrendData.length && !dueTrendData.length && !brandDistribution.length) return null;
+  const hasData =
+    salesTrendData.length > 0 || dueTrendData.length > 0 || brandDistribution.length > 0;
+
+  const EmptyChart = ({ title }) => (
+    <div className="flex flex-col items-center justify-center h-[260px] gap-3">
+      <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800/60 flex items-center justify-center">
+        <svg
+          className="w-6 h-6 text-slate-400 dark:text-slate-500"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+          />
+        </svg>
+      </div>
+      <div className="text-center">
+        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">No data yet</p>
+        <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+          Data will appear once activity starts
+        </p>
+      </div>
+    </div>
+  );
 
   const currentLabel = PERIOD_LABELS[period] || 'Last 7 Days';
 
@@ -100,11 +138,12 @@ export default function DashboardCharts({
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {salesTrendData.length > 0 && (
-          <div className="bg-gradient-to-br from-white/60 to-white/30 dark:from-white/[0.08] dark:to-white/[0.02] backdrop-blur-[24px] saturate-[1.7] border border-white/40 dark:border-white/[0.08] rounded-xl p-5 shadow-[0_2px_16px_rgba(15,23,42,0.04)] dark:shadow-[0_2px_16px_rgba(0,0,0,0.2)]">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              Sales Trend ({currentLabel})
-            </h3>
+        {/* Sales Trend */}
+        <div className="glass-secondary rounded-[20px] p-5">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            Sales Trend ({currentLabel})
+          </h3>
+          {salesTrendData.length > 0 ? (
             <ResponsiveContainer width="100%" height={260}>
               <LineChart data={salesTrendData}>
                 <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
@@ -120,15 +159,15 @@ export default function DashboardCharts({
                 />
                 <Tooltip
                   content={<CustomTooltip />}
-                  cursor={{ stroke: '#DC2626', strokeWidth: 1, strokeDasharray: '4 4' }}
+                  cursor={{ stroke: '#F97316', strokeWidth: 1, strokeDasharray: '4 4' }}
                 />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
                 <Line
                   type="monotone"
                   dataKey="revenue"
-                  stroke="#991B1B"
+                  stroke="#F97316"
                   strokeWidth={2.5}
-                  dot={salesTrendData.length > 30 ? false : { fill: '#991B1B', r: 3 }}
+                  dot={salesTrendData.length > 30 ? false : { fill: '#F97316', r: 3 }}
                   name="Revenue"
                 />
                 {salesTrendData[0]?.sales !== undefined && (
@@ -143,14 +182,17 @@ export default function DashboardCharts({
                 )}
               </LineChart>
             </ResponsiveContainer>
-          </div>
-        )}
+          ) : (
+            <EmptyChart title="Sales Trend" />
+          )}
+        </div>
 
-        {dueTrendData.length > 0 && (
-          <div className="bg-gradient-to-br from-white/60 to-white/30 dark:from-white/[0.08] dark:to-white/[0.02] backdrop-blur-[24px] saturate-[1.7] border border-white/40 dark:border-white/[0.08] rounded-xl p-5 shadow-[0_2px_16px_rgba(15,23,42,0.04)] dark:shadow-[0_2px_16px_rgba(0,0,0,0.2)]">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              Due vs Paid Collection ({currentLabel})
-            </h3>
+        {/* Due vs Paid Collection */}
+        <div className="glass-secondary rounded-[20px] p-5">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            Due vs Paid Collection ({currentLabel})
+          </h3>
+          {dueTrendData.length > 0 ? (
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={dueTrendData}>
                 <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
@@ -166,10 +208,7 @@ export default function DashboardCharts({
                 />
                 <Tooltip
                   content={<CustomTooltip />}
-                  cursor={{
-                    fill: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.03)',
-                    rx: 6,
-                  }}
+                  cursor={{ fill: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', rx: 6 }}
                 />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
                 <Bar
@@ -181,14 +220,17 @@ export default function DashboardCharts({
                 <Bar dataKey="dueAmount" fill="#DC2626" radius={[4, 4, 0, 0]} name="Due Balance" />
               </BarChart>
             </ResponsiveContainer>
-          </div>
-        )}
+          ) : (
+            <EmptyChart title="Due Collection" />
+          )}
+        </div>
 
-        {brandDistribution.length > 0 && (
-          <div className="bg-gradient-to-br from-white/60 to-white/30 dark:from-white/[0.08] dark:to-white/[0.02] backdrop-blur-[24px] saturate-[1.7] border border-white/40 dark:border-white/[0.08] rounded-xl p-5 shadow-[0_2px_16px_rgba(15,23,42,0.04)] dark:shadow-[0_2px_16px_rgba(0,0,0,0.2)]">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              Stock by Brand
-            </h3>
+        {/* Brand Distribution */}
+        <div className="glass-secondary rounded-[20px] p-5">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            Stock by Brand
+          </h3>
+          {brandDistribution.length > 0 ? (
             <ResponsiveContainer width="100%" height={260}>
               <PieChart>
                 <Pie
@@ -216,8 +258,10 @@ export default function DashboardCharts({
                 />
               </PieChart>
             </ResponsiveContainer>
-          </div>
-        )}
+          ) : (
+            <EmptyChart title="Brand Distribution" />
+          )}
+        </div>
       </div>
     </div>
   );

@@ -138,7 +138,8 @@ export default function WholesaleOrders() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-            <ShoppingCart className="w-6 h-6 text-[#2563EB] dark:text-blue-400" /> Wholesale Sales & Orders
+            <ShoppingCart className="w-6 h-6 text-[#2563EB] dark:text-blue-400" /> Wholesale Sales &
+            Orders
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Track B2B dealer sales, revenue, paid collections, and outstanding dues
@@ -498,20 +499,24 @@ export default function WholesaleOrders() {
                 const wsSubTotal = returnOrder.subTotal || 0;
                 const wsGrandTotal = returnOrder.grandTotal || 0;
                 const hasWsDiscount = wsSubTotal > 0 && wsGrandTotal < wsSubTotal;
-                const wsDiscountFactor = hasWsDiscount ? (wsGrandTotal / wsSubTotal) : 1;
+                const wsDiscountFactor = hasWsDiscount ? wsGrandTotal / wsSubTotal : 1;
 
                 return (
                   <>
                     {hasWsDiscount && (
                       <div className="text-[10px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-3 py-1.5 rounded-lg border border-amber-200 dark:border-amber-800">
-                        Global discount: {Math.round(((wsSubTotal - wsGrandTotal) / wsSubTotal) * 100)}% off — refund uses discounted price
+                        Global discount:{' '}
+                        {Math.round(((wsSubTotal - wsGrandTotal) / wsSubTotal) * 100)}% off — refund
+                        uses discounted price
                       </div>
                     )}
                     <div className="space-y-3">
                       {(returnOrder.items || []).map((item) => {
                         const maxReturn = item.quantity || item.qty || 1;
                         const itemKey = item._id || item.productId;
-                        const effectiveUnitPrice = Math.round((item.unitPrice || 0) * wsDiscountFactor);
+                        const effectiveUnitPrice = Math.round(
+                          (item.unitPrice || 0) * wsDiscountFactor
+                        );
                         return (
                           <div
                             key={itemKey}
@@ -520,9 +525,13 @@ export default function WholesaleOrders() {
                             <div className="flex justify-between font-medium text-gray-900 dark:text-gray-100">
                               <span>{item.product?.name || item.description || 'Item'}</span>
                               <div className="text-right">
-                                <span className="text-emerald-600 dark:text-emerald-400">৳{effectiveUnitPrice.toLocaleString()} / unit</span>
+                                <span className="text-emerald-600 dark:text-emerald-400">
+                                  ৳{effectiveUnitPrice.toLocaleString()} / unit
+                                </span>
                                 {hasWsDiscount && (
-                                  <span className="text-[10px] text-gray-400 ml-1 line-through">৳{(item.unitPrice || 0).toLocaleString()}</span>
+                                  <span className="text-[10px] text-gray-400 ml-1 line-through">
+                                    ৳{(item.unitPrice || 0).toLocaleString()}
+                                  </span>
                                 )}
                               </div>
                             </div>
@@ -542,7 +551,10 @@ export default function WholesaleOrders() {
                                   max={maxReturn}
                                   value={returnItems[itemKey] || 0}
                                   onChange={(e) =>
-                                    setReturnItems({ ...returnItems, [itemKey]: Number(e.target.value) })
+                                    setReturnItems({
+                                      ...returnItems,
+                                      [itemKey]: Number(e.target.value),
+                                    })
                                   }
                                   className="w-20 px-2 py-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-center font-bold"
                                 />

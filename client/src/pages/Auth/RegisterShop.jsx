@@ -113,33 +113,40 @@ export default function RegisterShop() {
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100 flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background orbs */}
       <div className="absolute w-[500px] h-[500px] -top-40 -left-40 rounded-full blur-[120px] bg-blue-500/10 animate-drift pointer-events-none" />
-      <div className="absolute w-[400px] h-[400px] -bottom-32 -right-32 rounded-full blur-[100px] bg-cyan-500/8 animate-drift pointer-events-none" style={{ animationDelay: '3s' }} />
+      <div
+        className="absolute w-[400px] h-[400px] -bottom-32 -right-32 rounded-full blur-[100px] bg-cyan-500/8 animate-drift pointer-events-none"
+        style={{ animationDelay: '3s' }}
+      />
       <div className="w-full max-w-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/[0.1] rounded-2xl shadow-2xl p-6 sm:p-8 space-y-6 backdrop-blur-[36px] saturate-[1.9] relative z-10">
-        
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500/25 to-cyan-500/10 border border-blue-400/30 flex items-center justify-center mx-auto text-[#2563EB] backdrop-blur-xl shadow-lg shadow-blue-500/10">
             <Smartphone className="w-6 h-6" />
           </div>
           <h1 className="text-2xl font-bold text-white">Register Your Mobile Shop</h1>
-          <p className="text-xs text-slate-400">Onboard your shop to the Enterprise Mobile Shop ERP SaaS Platform</p>
+          <p className="text-xs text-slate-400">
+            Onboard your shop to the Enterprise Mobile Shop ERP SaaS Platform
+          </p>
         </div>
 
         {/* Step Indicator */}
         <div className="flex items-center justify-between border-b border-white/10 pb-4 text-xs font-semibold text-slate-400">
           <span className={step >= 1 ? 'text-[#2563EB] font-bold' : ''}>1. Shop Info</span>
           <span className={step >= 2 ? 'text-[#2563EB] font-bold' : ''}>2. Owner & NID</span>
-          <span className={step >= 3 ? 'text-[#2563EB] font-bold' : ''}>3. Trade License & KYC</span>
+          <span className={step >= 3 ? 'text-[#2563EB] font-bold' : ''}>
+            3. Trade License & KYC
+          </span>
         </div>
 
         {/* Form Wizard */}
         <form onSubmit={handleRegister} className="space-y-4 text-xs">
-          
           {/* Step 1: Shop Info */}
           {step === 1 && (
             <div className="space-y-3">
               <div>
-                <label className="block font-semibold mb-1 text-slate-300">Mobile Shop Name *</label>
+                <label className="block font-semibold mb-1 text-slate-300">
+                  Mobile Shop Name *
+                </label>
                 <div className="relative">
                   <Building2 className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
@@ -154,7 +161,9 @@ export default function RegisterShop() {
               </div>
 
               <div>
-                <label className="block font-semibold mb-1 text-slate-300">Shop Logo (Optional)</label>
+                <label className="block font-semibold mb-1 text-slate-300">
+                  Shop Logo (Optional)
+                </label>
                 <div className="flex items-center gap-3">
                   <input
                     type="file"
@@ -170,7 +179,9 @@ export default function RegisterShop() {
                     />
                   )}
                 </div>
-                <p className="text-[10px] text-slate-500 mt-1">Your shop logo will appear on receipts and invoices</p>
+                <p className="text-[10px] text-slate-500 mt-1">
+                  Your shop logo will appear on receipts and invoices
+                </p>
               </div>
 
               <div className="pt-4 flex justify-end">
@@ -196,7 +207,9 @@ export default function RegisterShop() {
             <div className="space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold mb-1 text-slate-300">Owner Full Name *</label>
+                  <label className="block font-semibold mb-1 text-slate-300">
+                    Owner Full Name *
+                  </label>
                   <input
                     type="text"
                     required
@@ -223,7 +236,12 @@ export default function RegisterShop() {
                     type="text"
                     required
                     value={form.username}
-                    onChange={(e) => setForm({ ...form, username: e.target.value.toLowerCase().replace(/\s+/g, '') })}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        username: e.target.value.toLowerCase().replace(/\s+/g, ''),
+                      })
+                    }
                     placeholder="e.g. rahim_owner"
                     className="w-full px-3 py-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white"
                   />
@@ -240,7 +258,9 @@ export default function RegisterShop() {
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold mb-1 text-slate-300">National ID (NID) Number</label>
+                  <label className="block font-semibold mb-1 text-slate-300">
+                    National ID (NID) Number
+                  </label>
                   <input
                     type="text"
                     value={form.nidNumber}
@@ -301,7 +321,9 @@ export default function RegisterShop() {
           {step === 3 && (
             <div className="space-y-3">
               <div>
-                <label className="block font-semibold mb-1 text-slate-300">Trade License Number</label>
+                <label className="block font-semibold mb-1 text-slate-300">
+                  Trade License Number
+                </label>
                 <input
                   type="text"
                   value={form.tradeLicenseNumber}
@@ -313,7 +335,9 @@ export default function RegisterShop() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold mb-1 text-slate-300">Trade License Scanned Document</label>
+                  <label className="block font-semibold mb-1 text-slate-300">
+                    Trade License Scanned Document
+                  </label>
                   <input
                     type="file"
                     accept="image/*,.pdf"
@@ -322,7 +346,9 @@ export default function RegisterShop() {
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold mb-1 text-slate-300">TIN / BIN Certificate Document</label>
+                  <label className="block font-semibold mb-1 text-slate-300">
+                    TIN / BIN Certificate Document
+                  </label>
                   <input
                     type="file"
                     accept="image/*,.pdf"
@@ -344,7 +370,9 @@ export default function RegisterShop() {
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold mb-1 text-slate-300">Confirm Password *</label>
+                  <label className="block font-semibold mb-1 text-slate-300">
+                    Confirm Password *
+                  </label>
                   <PasswordInput
                     required
                     value={form.confirmPassword}
@@ -373,7 +401,6 @@ export default function RegisterShop() {
               </div>
             </div>
           )}
-
         </form>
 
         <div className="text-center pt-2 border-t border-slate-700/60 text-xs text-slate-400">
@@ -382,7 +409,6 @@ export default function RegisterShop() {
             Sign In Here
           </Link>
         </div>
-
       </div>
     </div>
   );

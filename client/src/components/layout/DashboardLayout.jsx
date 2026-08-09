@@ -26,8 +26,9 @@ export default function DashboardLayout() {
   }, [collapsed]);
 
   return (
-    <div className="relative h-screen bg-[#F8FAFC] dark:bg-[#111010] flex flex-col overflow-hidden text-slate-900 dark:text-slate-100 font-sans">
-      {/* 60 FPS Subtle Animated Global Background */}
+    <div className="relative h-screen bg-slate-50 dark:bg-[#0B0F17] flex flex-col overflow-hidden text-slate-900 dark:text-slate-100 font-sans">
+      {/* Elegant Enterprise Royal Blue Spotlight Backdrop */}
+      <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[300px] bg-blue-600/10 rounded-full blur-3xl z-0" />
       <AnimatedBackground />
 
       <div className="relative z-10 flex flex-col h-full">

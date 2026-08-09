@@ -34,7 +34,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import { detectSubdomain } from '../../utils/subdomain';
+import { detectSubdomain, getBaseDomain } from '../../utils/subdomain';
 import ThemeToggle from '../ui/ThemeToggle';
 import api, { getAssetUrl } from '../../lib/api';
 
@@ -220,9 +220,9 @@ function GlobalSearch() {
           setIsOpen(true);
           inputRef.current?.focus();
         }}
-        className={`relative flex items-center w-full px-3.5 py-2 rounded-xl border text-xs cursor-text transition-all bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm ${
+        className={`relative flex items-center w-full px-3.5 py-2 rounded-xl border text-xs cursor-text transition-all bg-slate-50 dark:bg-slate-900 border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 shadow-sm ${
           isOpen
-            ? 'ring-2 ring-[#2563EB]/30 border-[#2563EB]/50 dark:border-red-500/50 bg-white dark:bg-slate-900'
+            ? 'ring-2 ring-[#2563EB]/30 border-[#2563EB] dark:border-blue-500 bg-white dark:bg-slate-900'
             : ''
         }`}
       >
@@ -264,7 +264,7 @@ function GlobalSearch() {
           {filteredPages.length > 0 && (
             <div className="p-2">
               <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-                <Sparkles className="w-3 h-3 text-red-500" /> Navigation & Features
+                <Sparkles className="w-3 h-3 text-[#2563EB]" /> Navigation & Features
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 mt-1">
                 {filteredPages.map((page, idx) => {
@@ -477,7 +477,7 @@ function getNotificationIcon(type) {
 }
 
 export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed }) {
-  const { user, logout } = useAuth();
+  const { user, logout, setUser } = useAuth();
   const { theme, toggleTheme, designMode, toggleDesignMode } = useTheme();
   const styled = designMode === 'glass';
   const navigate = useNavigate();
@@ -488,6 +488,29 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
   const [showMobileSettings, setShowMobileSettings] = useState(false);
   const [online, setOnline] = useState(navigator.onLine);
   const notifRef = useRef(null);
+
+  // Fetch fresh profile on mount to ensure avatar & latest data is shown
+  useEffect(() => {
+    if (!user) return;
+    api
+      .get('/users/me')
+      .then((r) => {
+        const fresh = r.data?.data;
+        if (fresh) setUser((prev) => ({ ...(prev || {}), ...fresh }));
+      })
+      .catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fetch tenant info (shop name + plan) for the logged-in shop user
+  const { data: tenantInfo } = useQuery({
+    queryKey: ['my-tenant-info', user?.tenantId],
+    queryFn: async () => {
+      const r = await api.get('/tenants/me');
+      return r.data?.data;
+    },
+    enabled: !!user?.tenantId,
+    staleTime: 5 * 60 * 1000,
+  });
   const userMenuRef = useRef(null);
   const mobileSettingsRef = useRef(null);
 
@@ -539,25 +562,23 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
   };
 
   return (
-    <header
-      className="h-14 glass-primary rounded-[20px] m-2 px-3 md:px-6 flex items-center justify-between sticky top-2 z-30 shadow-sm"
-    >
+    <header className="h-14 glass-primary rounded-[20px] m-2 px-3 md:px-6 flex items-center justify-between sticky top-2 z-30 shadow-sm">
       {/* Left: menu + brand */}
       <div className="flex items-center gap-2">
         <button
           onClick={onToggleSidebar}
           className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors lg:hidden ${styled ? 'neu-btn !p-2' : ''}`}
         >
-          <PanelLeftOpen className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          <PanelLeftOpen className="w-5 h-5 text-gray-600 dark:text-gray-300" />
         </button>
         <button
           onClick={onToggleCollapse}
           className={`hidden lg:flex p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${styled ? 'neu-btn !p-2' : ''}`}
         >
           {collapsed ? (
-            <PanelLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <PanelLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
           ) : (
-            <PanelLeftClose className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <PanelLeftClose className="w-5 h-5 text-gray-600 dark:text-gray-300" />
           )}
         </button>
         <div className="flex items-center gap-2 font-bold text-xl text-[#2563EB] dark:text-blue-400">
@@ -566,19 +587,23 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
           >
             <Building2 className="w-5 h-5" />
           </div>
-          <span className="hidden md:inline bg-gradient-to-r from-[#2563EB] to-blue-500 dark:from-blue-400 dark:to-blue-300 bg-clip-text text-transparent font-extrabold text-base tracking-tight">
-            {user?.tenant?.shopName || user?.shopName || (user?.tenantId ? 'Mobile Shop ERP' : 'Super Admin Portal')}{' '}
+          <span className="hidden md:inline font-extrabold text-base tracking-tight text-slate-800 dark:text-slate-100">
+            {tenantInfo?.shopName ||
+              user?.tenant?.shopName ||
+              user?.shopName ||
+              (user?.tenantId ? 'OmniManage' : 'Super Admin Portal')}{' '}
             <span
-              className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/40 text-[#2563EB] dark:text-blue-400 ${styled ? '' : 'border border-blue-200 dark:border-blue-800/40'}`}
+              className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ml-1 ${
+                user?.tenantId
+                  ? 'bg-blue-500/10 text-[#2563EB] dark:text-blue-400 border border-blue-300/40 dark:border-blue-500/30'
+                  : 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-300/40 dark:border-violet-500/30'
+              }`}
             >
-              {user?.tenant?.plan || (user?.tenantId ? 'STARTER' : 'SUPER ADMIN')}
+              {tenantInfo?.plan ||
+                user?.tenant?.plan ||
+                (user?.tenantId ? 'STARTER' : 'SUPER ADMIN')}
             </span>
           </span>
-          {(subdomain || user?.subdomain) && (
-            <span className="hidden lg:inline text-[10px] font-mono text-indigo-500 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800/40">
-              {subdomain || user?.subdomain}.erp.com
-            </span>
-          )}
         </div>
       </div>
 
@@ -602,7 +627,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
             }}
             className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${styled ? 'neu-btn !p-2' : ''}`}
           >
-            <Palette className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            <Palette className="w-5 h-5 text-gray-500 dark:text-gray-300" />
           </button>
           {showMobileSettings && (
             <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-50 overflow-hidden">
@@ -657,7 +682,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
             }}
             className={`relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${styled ? 'neu-btn !p-2' : ''}`}
           >
-            <Bell className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            <Bell className="w-5 h-5 text-gray-500 dark:text-gray-300" />
             {notifData?.unreadCount > 0 && (
               <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#2563EB] text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
                 {notifData.unreadCount > 9 ? '9+' : notifData.unreadCount}
@@ -780,6 +805,18 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
                     </div>
                   </div>
                 </div>
+                {!user.tenantId && user.roleName === 'ADMIN' && (
+                  <button
+                    onClick={() => {
+                      navigate('/super-admin/dashboard');
+                      setShowUserMenu(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-sm text-[#2563EB] dark:text-blue-400 font-bold transition-colors border-b border-gray-100 dark:border-gray-800/60"
+                  >
+                    <ShieldCheck className="w-4 h-4 text-[#2563EB] dark:text-blue-400" />
+                    Super Admin Console
+                  </button>
+                )}
                 <button
                   onClick={() => {
                     navigate('/profile');

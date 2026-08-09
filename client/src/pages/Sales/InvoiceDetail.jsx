@@ -81,8 +81,6 @@ export default function InvoiceDetail() {
     },
   });
 
-
-
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -178,7 +176,7 @@ export default function InvoiceDetail() {
   // Calculate effective refund price accounting for global discount
   const getEffectiveReturnUnitPrice = (item) => {
     const hasGlobalDiscount = sale.subTotal > 0 && sale.netTotal < sale.subTotal;
-    const globalDiscountFactor = hasGlobalDiscount ? (sale.netTotal / sale.subTotal) : 1;
+    const globalDiscountFactor = hasGlobalDiscount ? sale.netTotal / sale.subTotal : 1;
     const baseEffective = item.unitPrice;
     return Math.round(baseEffective * globalDiscountFactor);
   };
@@ -299,7 +297,9 @@ export default function InvoiceDetail() {
                 <div className="fixed inset-0 z-40" onClick={() => setShowDownload(false)} />
                 <div className="absolute right-0 top-full mt-2 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl shadow-gray-300/40 dark:shadow-gray-900/60 py-2 min-w-[220px] animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-800">
-                    <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Export Options</span>
+                    <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                      Export Options
+                    </span>
                   </div>
                   {[
                     {
@@ -352,7 +352,9 @@ export default function InvoiceDetail() {
                       className="w-full text-left px-4 py-2.5 text-xs font-semibold text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors flex flex-col gap-0.5"
                     >
                       <span>{opt.label}</span>
-                      <span className="text-[10px] text-gray-400 dark:text-gray-500 font-normal">{opt.desc}</span>
+                      <span className="text-[10px] text-gray-400 dark:text-gray-500 font-normal">
+                        {opt.desc}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -533,7 +535,10 @@ export default function InvoiceDetail() {
                           </div>
                           <div className="text-xs text-muted-foreground font-mono">
                             {item.imeiOrSerial ? `IMEI: ${item.imeiOrSerial}` : 'Bulk Product'} |
-                            Unit: ৳{getEffectiveReturnUnitPrice({ unitPrice: item.unitPrice })?.toLocaleString()}
+                            Unit: ৳
+                            {getEffectiveReturnUnitPrice({
+                              unitPrice: item.unitPrice,
+                            })?.toLocaleString()}
                             {sale.subTotal > 0 && sale.netTotal < sale.subTotal && (
                               <span className="text-[10px] text-gray-400 ml-1">
                                 (original: ৳{item.unitPrice?.toLocaleString()})
@@ -619,7 +624,9 @@ export default function InvoiceDetail() {
               </div>
               {sale.subTotal > 0 && sale.netTotal < sale.subTotal && (
                 <div className="text-[10px] text-amber-600 dark:text-amber-400">
-                  Discount applied: {Math.round(((sale.subTotal - sale.netTotal) / sale.subTotal) * 100)}% off original price
+                  Discount applied:{' '}
+                  {Math.round(((sale.subTotal - sale.netTotal) / sale.subTotal) * 100)}% off
+                  original price
                 </div>
               )}
             </div>

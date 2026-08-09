@@ -277,7 +277,9 @@ function UserFormModal({ user, onClose, onSuccess }) {
         onClose();
       } else {
         const createdObj = res.data?.data;
-        setCreatedUser(createdObj || { email: form.email, fullName: form.fullName || form.username });
+        setCreatedUser(
+          createdObj || { email: form.email, fullName: form.fullName || form.username }
+        );
         setStep('otp');
         toast.info(`User created! Verification OTP sent to ${form.email}`);
       }
@@ -530,7 +532,8 @@ function OtpFormContent({ email, onSuccess }) {
         </div>
         <p className="text-slate-600 dark:text-slate-400">
           A 6-digit OTP security code has been sent to{' '}
-          <strong className="font-semibold text-slate-900 dark:text-slate-100">{email}</strong>. Please check inbox/spam and enter it below to activate the account.
+          <strong className="font-semibold text-slate-900 dark:text-slate-100">{email}</strong>.
+          Please check inbox/spam and enter it below to activate the account.
         </p>
       </div>
 

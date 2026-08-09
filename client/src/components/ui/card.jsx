@@ -26,7 +26,10 @@ function CardTitle({ className, ...props }) {
   return (
     <div
       data-slot="card-title"
-      className={cn('leading-snug tracking-tight font-semibold text-lg text-slate-900 dark:text-slate-100', className)}
+      className={cn(
+        'leading-snug tracking-tight font-semibold text-lg text-slate-900 dark:text-slate-100',
+        className
+      )}
       {...props}
     />
   );
@@ -54,4 +57,3 @@ function CardFooter({ className, ...props }) {
 }
 
 export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle };
-

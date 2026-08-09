@@ -145,7 +145,8 @@ export default function Returns() {
         </button>
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-            <RotateCcw className="w-6 h-6 text-[#2563EB] dark:text-blue-400" /> Sales Return Processing
+            <RotateCcw className="w-6 h-6 text-[#2563EB] dark:text-blue-400" /> Sales Return
+            Processing
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Search sale by invoice number, IMEI / Serial, customer name, or phone number
@@ -380,13 +381,21 @@ export default function Returns() {
                             Refund
                           </label>
                           <span className="text-sm font-mono font-bold text-red-600 dark:text-red-400">
-                            ৳
-                            {(() => {
+                            ৳{(() => {
                               // Calculate effective refund price considering discounts
-                              const hasGlobalDiscount = selectedSale.subTotal > 0 && selectedSale.netTotal < selectedSale.subTotal;
-                              const globalDiscountFactor = hasGlobalDiscount ? (selectedSale.netTotal / selectedSale.subTotal) : 1;
-                              const baseEffectiveUnitPrice = lineItem?.qty > 0 ? ((lineItem.totalPrice || 0) / lineItem.qty) : (lineItem?.unitPrice || 0);
-                              const effectiveUnitPrice = Math.round(baseEffectiveUnitPrice * globalDiscountFactor);
+                              const hasGlobalDiscount =
+                                selectedSale.subTotal > 0 &&
+                                selectedSale.netTotal < selectedSale.subTotal;
+                              const globalDiscountFactor = hasGlobalDiscount
+                                ? selectedSale.netTotal / selectedSale.subTotal
+                                : 1;
+                              const baseEffectiveUnitPrice =
+                                lineItem?.qty > 0
+                                  ? (lineItem.totalPrice || 0) / lineItem.qty
+                                  : lineItem?.unitPrice || 0;
+                              const effectiveUnitPrice = Math.round(
+                                baseEffectiveUnitPrice * globalDiscountFactor
+                              );
                               return (effectiveUnitPrice * item.quantity).toLocaleString();
                             })()}
                           </span>
@@ -410,20 +419,26 @@ export default function Returns() {
                     ৳
                     {returnItems
                       .filter((i) => i.selected)
-                      .reduce(
-                        (sum, item) => {
-                          const idx = returnItems.indexOf(item);
-                          const lineItem = selectedSale.lineItems[idx];
-                          if (!lineItem) return sum;
-                          // Calculate effective refund price considering discounts
-                          const hasGlobalDiscount = selectedSale.subTotal > 0 && selectedSale.netTotal < selectedSale.subTotal;
-                          const globalDiscountFactor = hasGlobalDiscount ? (selectedSale.netTotal / selectedSale.subTotal) : 1;
-                          const baseEffectiveUnitPrice = lineItem.qty > 0 ? ((lineItem.totalPrice || 0) / lineItem.qty) : (lineItem.unitPrice || 0);
-                          const effectiveUnitPrice = Math.round(baseEffectiveUnitPrice * globalDiscountFactor);
-                          return sum + (effectiveUnitPrice * item.quantity);
-                        },
-                        0
-                      )
+                      .reduce((sum, item) => {
+                        const idx = returnItems.indexOf(item);
+                        const lineItem = selectedSale.lineItems[idx];
+                        if (!lineItem) return sum;
+                        // Calculate effective refund price considering discounts
+                        const hasGlobalDiscount =
+                          selectedSale.subTotal > 0 &&
+                          selectedSale.netTotal < selectedSale.subTotal;
+                        const globalDiscountFactor = hasGlobalDiscount
+                          ? selectedSale.netTotal / selectedSale.subTotal
+                          : 1;
+                        const baseEffectiveUnitPrice =
+                          lineItem.qty > 0
+                            ? (lineItem.totalPrice || 0) / lineItem.qty
+                            : lineItem.unitPrice || 0;
+                        const effectiveUnitPrice = Math.round(
+                          baseEffectiveUnitPrice * globalDiscountFactor
+                        );
+                        return sum + effectiveUnitPrice * item.quantity;
+                      }, 0)
                       .toLocaleString()}
                   </div>
                 </div>

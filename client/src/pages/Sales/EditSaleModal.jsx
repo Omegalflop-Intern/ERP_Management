@@ -2,11 +2,18 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '../../components/ui/dialog';
 import api from '../../lib/api';
 
 export default function EditSaleModal({ saleId, onClose, onSuccess }) {
   const queryClient = useQueryClient();
+  const initializedRef = React.useRef(false);
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
@@ -30,7 +37,8 @@ export default function EditSaleModal({ saleId, onClose, onSuccess }) {
   });
 
   useEffect(() => {
-    if (saleData) {
+    if (saleData && !initializedRef.current) {
+      initializedRef.current = true;
       setCustomerName(saleData.customerName || '');
       setCustomerPhone(saleData.customerPhone || '');
       setCustomerEmail(saleData.customerEmail || '');
@@ -67,7 +75,10 @@ export default function EditSaleModal({ saleId, onClose, onSuccess }) {
   };
 
   const addItem = () => {
-    setItems([...items, { productId: '', description: '', imeiOrSerial: '', qty: 1, unitPrice: 0, unitCost: 0 }]);
+    setItems([
+      ...items,
+      { productId: '', description: '', imeiOrSerial: '', qty: 1, unitPrice: 0, unitCost: 0 },
+    ]);
   };
 
   const removeItem = (idx) => {
@@ -150,7 +161,9 @@ export default function EditSaleModal({ saleId, onClose, onSuccess }) {
           {/* Customer Info */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Customer Name</label>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                Customer Name
+              </label>
               <input
                 type="text"
                 value={customerName}
@@ -159,7 +172,9 @@ export default function EditSaleModal({ saleId, onClose, onSuccess }) {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Phone</label>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                Phone
+              </label>
               <input
                 type="text"
                 value={customerPhone}
@@ -168,7 +183,9 @@ export default function EditSaleModal({ saleId, onClose, onSuccess }) {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Sale Type</label>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                Sale Type
+              </label>
               <select
                 value={saleType}
                 onChange={(e) => setSaleType(e.target.value)}
@@ -184,7 +201,11 @@ export default function EditSaleModal({ saleId, onClose, onSuccess }) {
           <div>
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Items</h3>
-              <button type="button" onClick={addItem} className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-semibold">
+              <button
+                type="button"
+                onClick={addItem}
+                className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-semibold"
+              >
                 <Plus className="w-3.5 h-3.5" /> Add Item
               </button>
             </div>
@@ -250,7 +271,9 @@ export default function EditSaleModal({ saleId, onClose, onSuccess }) {
           {/* Discount / Tax */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Discount (৳)</label>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                Discount (৳)
+              </label>
               <input
                 type="number"
                 min="0"
@@ -260,7 +283,9 @@ export default function EditSaleModal({ saleId, onClose, onSuccess }) {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">Tax (৳)</label>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                Tax (৳)
+              </label>
               <input
                 type="number"
                 min="0"

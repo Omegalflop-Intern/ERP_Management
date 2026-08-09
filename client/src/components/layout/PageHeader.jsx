@@ -21,7 +21,13 @@ export default function PageHeader({
           {breadcrumbs.map((item, idx) => (
             <React.Fragment key={idx}>
               {idx > 0 && <span className="text-slate-300 dark:text-slate-600">/</span>}
-              <span className={idx === breadcrumbs.length - 1 ? 'text-slate-800 dark:text-slate-200 font-semibold' : ''}>
+              <span
+                className={
+                  idx === breadcrumbs.length - 1
+                    ? 'text-slate-800 dark:text-slate-200 font-semibold'
+                    : ''
+                }
+              >
                 {item}
               </span>
             </React.Fragment>

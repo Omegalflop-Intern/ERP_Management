@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import DatePicker from '../../components/ui/DatePicker';
 import api from '../../lib/api';
+import { confirmDelete } from '../../lib/confirm';
 
 import PageHeader from '../../components/layout/PageHeader';
 import EmptyState from '../../components/ui/EmptyState';
@@ -285,22 +286,36 @@ export default function SalesList() {
                         {new Date(s.createdAt).toLocaleDateString('en-BD')}
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-1.5">
                           <button
                             type="button"
                             onClick={() => setEditSaleId(s._id)}
-                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-amber-600 transition-colors"
-                            title="Edit Sale"
+                            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-amber-600 transition-colors"
+                            title="Edit Sale Details"
                           >
                             <Pencil className="w-4 h-4" />
                           </button>
                           <button
                             type="button"
                             onClick={() => navigate(`/sales/${s._id}`)}
-                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-blue-600 transition-colors"
-                            title="View / Print / Return"
+                            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-blue-600 transition-colors"
+                            title="View Invoice & Issue Returns"
                           >
                             <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              confirmDelete(
+                                `Delete sale #${s.invoiceNumber}?`,
+                                () => deleteMutation.mutate(s._id),
+                                'Stock and customer balances will be restored.'
+                              );
+                            }}
+                            className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/40 text-slate-400 hover:text-red-600 transition-colors"
+                            title="Delete / Void Sale"
+                          >
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </td>

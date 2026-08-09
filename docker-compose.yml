@@ -1,33 +1,116 @@
 version: '3.8'
 
 services:
+  # MongoDB Database
   mongodb:
     image: mongo:7
-    container_name: brothers-mongodb
+    container_name: erp-mongodb
+    restart: unless-stopped
     ports:
-      - "27017:27017"
+      - "${MONGODB_PORT:-27017}:27017"
     volumes:
       - mongo_data:/data/db
+      - mongo_config:/data/configdb
     environment:
-      MONGO_INITDB_DATABASE: mobile_shop_erp
+      MONGO_INITDB_DATABASE: ${MONGODB_DB:-mobile_shop_erp}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD:-password123}
+    networks:
+      - erp-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
+  # Node.js Backend Server
   server:
-    build: .
-    container_name: brothers-erp-server
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NODE_ENV=${NODE_ENV:-production}
+    container_name: erp-server
+    restart: unless-stopped
     ports:
-      - "5000:5000"
+      - "${SERVER_PORT:-5000}:5000"
     environment:
+      NODE_ENV: ${NODE_ENV:-production}
       PORT: 5000
-      NODE_ENV: production
-      MONGODB_URI: mongodb://mongodb:27017/mobile_shop_erp
-      JWT_SECRET: 4e0c96aeb7d5d412ac79a511c97ce6336482921538d0992671ce23de4593a033
-      APP_URL: http://localhost:3000
+      MONGODB_URI: mongodb://${MONGODB_USER:-admin}:${MONGODB_PASSWORD:-password123}@mongodb:27017/${MONGODB_DB:-mobile_shop_erp}?authSource=admin
+      JWT_SECRET: ${JWT_SECRET:-change-this-to-a-secure-random-string-min-32-chars}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      CLIENT_URL: ${CLIENT_URL:-http://localhost:3000}
+      APP_URL: ${APP_URL:-http://localhost:5000}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-noreply@erp.com}
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_healthy
     volumes:
       - uploads:/app/server/uploads
+      - logs:/app/server/logs
+    networks:
+      - erp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # Nginx Reverse Proxy (Production)
+  nginx:
+    image: nginx:alpine
+    container_name: erp-nginx
     restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nginx_cache:/var/cache/nginx
+    depends_on:
+      - server
+    networks:
+      - erp-network
+    profiles:
+      - production
+
+  # Redis Cache (Optional)
+  redis:
+    image: redis:7-alpine
+    container_name: erp-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
+    networks:
+      - erp-network
+    profiles:
+      - cache
 
 volumes:
   mongo_data:
+    driver: local
+  mongo_config:
+    driver: local
   uploads:
+    driver: local
+  logs:
+    driver: local
+  nginx_cache:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  erp-network:
+    driver: bridge

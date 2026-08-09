@@ -12,6 +12,7 @@ import {
   HandCoins,
   Landmark,
   LayoutDashboard,
+  LifeBuoy,
   Package,
   Receipt,
   RotateCcw,
@@ -22,6 +23,7 @@ import {
   ShoppingCart,
   Smartphone,
   Tags,
+  TrendingUp,
   Truck,
   User,
   UserCog,
@@ -222,6 +224,35 @@ export const menuItems = [
     ],
   },
   {
+    section: 'Analytics & Reports',
+    items: [
+      {
+        path: '/analytics',
+        label: 'Business Analytics',
+        icon: TrendingUp,
+        permissions: ['reports:view'],
+      },
+      {
+        path: '/analytics/inventory',
+        label: 'Inventory Analytics',
+        icon: Package,
+        permissions: ['inventory:view', 'reports:view'],
+      },
+      {
+        path: '/analytics/employees',
+        label: 'Employee Analytics',
+        icon: Users,
+        permissions: ['employees:view', 'reports:view'],
+      },
+      {
+        path: '/analytics/customers',
+        label: 'Customer Analytics',
+        icon: Users,
+        permissions: ['customers:view', 'reports:view'],
+      },
+    ],
+  },
+  {
     section: 'System Administration',
     items: [
       { path: '/profile', label: 'My Profile', icon: User, permissions: [] },
@@ -239,6 +270,7 @@ export const menuItems = [
         icon: ClipboardList,
         permissions: ['users:view'],
       },
+      { path: '/support', label: 'Support & Tickets', icon: LifeBuoy, permissions: [] },
       { path: '/settings', label: 'Settings', icon: Settings, permissions: ['settings:view'] },
     ],
   },

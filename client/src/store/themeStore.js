@@ -1,16 +1,22 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+const DESIGN_MODES = ['liquidglass', 'aurora', 'glassmorphismpro', 'neumorphism', 'flat'];
+
 export const useThemeStore = create(
   persist(
     (set) => ({
       theme: 'light',
-      designMode: 'flat',
+      designMode: 'liquidglass',
 
       toggleTheme: () => set((s) => ({ theme: s.theme === 'dark' ? 'light' : 'dark' })),
       setDesignMode: (mode) => set({ designMode: mode }),
       toggleDesignMode: () =>
-        set((s) => ({ designMode: s.designMode === 'flat' ? 'glass' : 'flat' })),
+        set((s) => {
+          const idx = DESIGN_MODES.indexOf(s.designMode);
+          const nextMode = DESIGN_MODES[(idx + 1) % DESIGN_MODES.length];
+          return { designMode: nextMode };
+        }),
     }),
     {
       name: 'theme-storage',
@@ -36,6 +42,6 @@ export const useTheme = () => {
     setDesignMode,
     toggleDesignMode,
     isDark: theme === 'dark',
-    styled: designMode === 'glass',
+    styled: designMode === 'glass' || designMode === 'liquidglass',
   };
 };

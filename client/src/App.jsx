@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import RoleBasedRoute from './components/auth/RoleBasedRoute';
@@ -55,16 +55,26 @@ const SystemAnalytics = lazy(() => import('./pages/Settings/SystemAnalytics'));
 const PublicInvoice = lazy(() => import('./pages/Sales/PublicInvoice'));
 const ResetPassword = lazy(() => import('./pages/Auth/ResetPassword'));
 const RegisterShop = lazy(() => import('./pages/Auth/RegisterShop'));
-const TenantManagement = lazy(() => import('./pages/SaaS/TenantManagement'));
-const PricingPage = lazy(() => import('./pages/SaaS/PricingPage'));
+const LandingPage = lazy(() => import('./pages/Public/LandingPage'));
+const DeveloperPage = lazy(() => import('./pages/Public/DeveloperPage'));
+const BusinessAnalytics = lazy(() => import('./pages/Analytics/BusinessAnalytics'));
+const InventoryAnalytics = lazy(() => import('./pages/Analytics/InventoryAnalytics'));
+const EmployeeAnalytics = lazy(() => import('./pages/Analytics/EmployeeAnalytics'));
+const CustomerAnalytics = lazy(() => import('./pages/Analytics/CustomerAnalytics'));
+
+const ShopTickets = lazy(() => import('./pages/Support/ShopTickets'));
 
 // Super Admin Panel
 const SuperAdminLayout = lazy(() => import('./layouts/SuperAdminLayout'));
 const SADashboard = lazy(() => import('./pages/SuperAdmin/SADashboard'));
+const SATickets = lazy(() => import('./pages/SuperAdmin/SATickets'));
 const SAShopManagement = lazy(() => import('./pages/SuperAdmin/SAShopManagement'));
 const SAKycVerification = lazy(() => import('./pages/SuperAdmin/SAKycVerification'));
 const SAAuditLogs = lazy(() => import('./pages/SuperAdmin/SAAuditLogs'));
 const SASubscriptionPlans = lazy(() => import('./pages/SuperAdmin/SASubscriptionPlans'));
+const SAContacts = lazy(() => import('./pages/SuperAdmin/SAContacts'));
+const SAProfile = lazy(() => import('./pages/SuperAdmin/SAProfile'));
+const SABackupManagement = lazy(() => import('./pages/SuperAdmin/SABackupManagement'));
 
 const PageSkeletonLoader = () => (
   <div className="p-6 space-y-6 animate-pulse">
@@ -137,17 +147,27 @@ const SuperAdminGuard = ({ children }) => {
 const SubdomainGuard = ({ children }) => {
   const subdomain = detectSubdomain();
   const { user } = useAuth();
-  if (subdomain && user && user.tenantId) {
-    // User is logged in but accessing wrong shop's subdomain
-    if (user.subdomain !== subdomain && user.customDomain !== subdomain) {
-      return <Navigate to="/login" replace />;
-    }
+
+  // No subdomain → main domain → pass through (super admin or unauthenticated)
+  if (!subdomain) return children;
+
+  // Not logged in → pass through
+  if (!user) return children;
+
+  // Super admin (no tenantId) accessing subdomain → allow (they manage all shops)
+  if (!user?.tenantId) return children;
+
+  // User belongs to this subdomain → pass through
+  if (!user.subdomain || user.subdomain === subdomain || user.customDomain === subdomain) {
+    return children;
   }
+
   return children;
 };
 
 export default function App() {
   const { isAuthenticated, user } = useAuth();
+  const subdomain = detectSubdomain();
   // Determine where to redirect after login
   const isSuperAdmin = isAuthenticated && !user?.tenantId && user?.roleName === 'ADMIN';
   const homeRedirect = isSuperAdmin ? '/super-admin/dashboard' : '/dashboard';
@@ -155,32 +175,55 @@ export default function App() {
   useSSE();
   useInactivityLogout();
 
+  // Only auto-redirect away from /login if user is not logged into a different shop's subdomain
+  const isMatchingShopSession =
+    isAuthenticated &&
+    (!subdomain ||
+      !user?.tenantId ||
+      !user?.subdomain ||
+      user?.subdomain === subdomain ||
+      user?.customDomain === subdomain);
+
   return (
     <Suspense fallback={<PageSkeletonLoader />}>
       <Routes>
         <Route
           path="/login"
-          element={isAuthenticated ? <Navigate to={homeRedirect} replace /> : <Login />}
+          element={isMatchingShopSession ? <Navigate to={homeRedirect} replace /> : <Login />}
         />
+        <Route path="/landing" element={<LandingPage />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/register-shop" element={<RegisterShop />} />
         <Route path="/invoice/:token" element={<PublicInvoice />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
-        <Route path="/pricing" element={<PricingPage />} />
+        <Route path="/pricing" element={<LandingPage />} />
+        <Route path="/developer" element={<DeveloperPage />} />
+
+        {/* Public Landing Page on main domain */}
+        {!isAuthenticated && !subdomain && <Route path="/" element={<LandingPage />} />}
 
         <Route
           path="/"
           element={
-            <ProtectedRoute>
-              <SubdomainGuard>
-                <DashboardLayout />
-              </SubdomainGuard>
-            </ProtectedRoute>
+            isAuthenticated ? (
+              <ProtectedRoute>
+                <SubdomainGuard>
+                  <DashboardLayout />
+                </SubdomainGuard>
+              </ProtectedRoute>
+            ) : (
+              <Navigate to="/login" replace />
+            )
           }
         >
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard" element={<Dashboard />} />
+          <Route index element={<Navigate to={homeRedirect} replace />} />
+          <Route
+            path="dashboard"
+            element={
+              isSuperAdmin ? <Navigate to="/super-admin/dashboard" replace /> : <Dashboard />
+            }
+          />
 
           {/* Sales — accessible with sales:view permission */}
           <Route
@@ -551,8 +594,43 @@ export default function App() {
           />
           <Route path="hr" element={<Navigate to="/hr/employees" replace />} />
 
+          {/* Analytics */}
+          <Route
+            path="analytics"
+            element={
+              <RoleBasedRoute permissions={['reports:view']}>
+                <BusinessAnalytics />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="analytics/inventory"
+            element={
+              <RoleBasedRoute permissions={['inventory:view', 'reports:view']}>
+                <InventoryAnalytics />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="analytics/employees"
+            element={
+              <RoleBasedRoute permissions={['employees:view', 'reports:view']}>
+                <EmployeeAnalytics />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="analytics/customers"
+            element={
+              <RoleBasedRoute permissions={['customers:view', 'reports:view']}>
+                <CustomerAnalytics />
+              </RoleBasedRoute>
+            }
+          />
+
           {/* Settings & Logs */}
           <Route path="profile" element={<MyProfile />} />
+          <Route path="support" element={<ShopTickets />} />
           <Route
             path="settings"
             element={
@@ -590,10 +668,15 @@ export default function App() {
         >
           <Route index element={<Navigate to="/super-admin/dashboard" replace />} />
           <Route path="dashboard" element={<SADashboard />} />
+          <Route path="tickets" element={<SATickets />} />
           <Route path="shops" element={<SAShopManagement />} />
           <Route path="kyc" element={<SAKycVerification />} />
+          <Route path="contacts" element={<SAContacts />} />
+          <Route path="analytics" element={<SystemAnalytics />} />
           <Route path="audit-logs" element={<SAAuditLogs />} />
           <Route path="subscriptions" element={<SASubscriptionPlans />} />
+          <Route path="backups" element={<SABackupManagement />} />
+          <Route path="profile" element={<SAProfile />} />
         </Route>
 
         <Route path="*" element={<Navigate to={homeRedirect} replace />} />

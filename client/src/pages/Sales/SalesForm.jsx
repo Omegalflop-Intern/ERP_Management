@@ -420,9 +420,7 @@ export default function SalesForm() {
         {/* Left: Product Search + Cart + Live Invoice Preview */}
         <div className="lg:col-span-2 space-y-4">
           {/* Fast IMEI / Barcode Scanner Input */}
-          <div
-            className={`${cardCls} p-3.5 border-l-[3px] border-l-[#2563EB]/50`}
-          >
+          <div className={`${cardCls} p-3.5 border-l-[3px] border-l-[#2563EB]/50`}>
             <form onSubmit={handleFastScanSubmit} className="flex items-center gap-2">
               <div className="relative flex-1">
                 <Smartphone className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#2563EB]" />

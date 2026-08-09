@@ -8,13 +8,16 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-[#2563EB] text-white shadow-xs hover:bg-[#1D4ED8] hover:-translate-y-0.5 hover:shadow-md hover:shadow-blue-500/20',
+        default:
+          'bg-[#2563EB] text-white shadow-xs hover:bg-[#1D4ED8] hover:-translate-y-0.5 hover:shadow-md hover:shadow-blue-500/20',
         destructive:
           'bg-[#DC2626] text-white shadow-xs hover:bg-red-700 hover:-translate-y-0.5 hover:shadow-md hover:shadow-red-500/20',
         outline:
           'border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 text-slate-800 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:-translate-y-0.5',
-        secondary: 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200/80 dark:hover:bg-slate-700/80 hover:-translate-y-0.5',
-        ghost: 'text-slate-700 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-800/80',
+        secondary:
+          'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200/80 dark:hover:bg-slate-700/80 hover:-translate-y-0.5',
+        ghost:
+          'text-slate-700 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-slate-800/80',
         link: 'text-[#2563EB] underline-offset-4 hover:underline font-normal',
       },
       size: {

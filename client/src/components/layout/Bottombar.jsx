@@ -3,9 +3,7 @@ import React from 'react';
 
 export default function Bottombar() {
   return (
-    <footer
-      className="mt-8 pt-3 pb-2 px-4 border-t border-gray-200 dark:border-gray-800/80 flex flex-col sm:flex-row items-center gap-2 text-xs text-gray-500 dark:text-gray-400 font-medium transition-all bg-white/40 dark:bg-gray-900/30 backdrop-blur-xs rounded-xl"
-    >
+    <footer className="mt-8 pt-3 pb-2 px-4 border-t border-gray-200 dark:border-gray-800/80 flex flex-col sm:flex-row items-center gap-2 text-xs text-gray-500 dark:text-gray-400 font-medium transition-all bg-white/40 dark:bg-gray-900/30 backdrop-blur-xs rounded-xl">
       <div className="flex items-center gap-2">
         <div className="w-6 h-6 rounded-lg bg-[#2563EB]/10 text-[#2563EB] flex items-center justify-center font-bold">
           <Smartphone className="w-3.5 h-3.5" />
