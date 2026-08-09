@@ -7,6 +7,7 @@ import {
   Package,
   Percent,
   Plus,
+  Receipt,
   RefreshCw,
   Search,
   ShoppingCart,
