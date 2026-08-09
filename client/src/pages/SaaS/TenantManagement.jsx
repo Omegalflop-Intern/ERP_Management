@@ -14,6 +14,7 @@ import {
   Phone,
   User,
   Key,
+  Calendar,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../../lib/api';
@@ -33,6 +34,8 @@ export default function TenantManagement() {
   const [otpVerified, setOtpVerified] = useState(false);
   const [credOtpInput, setCredOtpInput] = useState('');
   const [credVerifyingOtp, setCredVerifyingOtp] = useState(false);
+  const [durationDays, setDurationDays] = useState(30);
+  const PLAN_DEFAULTS = { FREE: 30, STARTER: 30, PRO: 90, ENTERPRISE: 365 };
   const [form, setForm] = useState({
     shopName: '',
     ownerName: '',
@@ -69,6 +72,8 @@ export default function TenantManagement() {
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
+      const expiry = new Date();
+      expiry.setDate(expiry.getDate() + (durationDays || 30));
       const trimmed = {
         ...data,
         shopName: data.shopName?.trim(),
@@ -77,6 +82,7 @@ export default function TenantManagement() {
         phone: data.phone?.trim(),
         username: data.username?.trim().toLowerCase(),
         password: data.password,
+        expiresAt: expiry.toISOString(),
       };
       const res = await api.post('/tenants', trimmed);
       return res.data;
@@ -105,6 +111,7 @@ export default function TenantManagement() {
         tradeLicenseNumber: '',
         password: '',
       });
+      setDurationDays(30);
       qc.invalidateQueries({ queryKey: ['tenants'] });
     },
     onError: (err) => toast.error(err.response?.data?.message || 'Failed to create tenant'),
@@ -204,8 +211,12 @@ export default function TenantManagement() {
       ) : tenants.length === 0 ? (
         <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
           <Building2 className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
-          <h3 className="font-bold text-slate-700 dark:text-slate-300 text-sm">No Shop Tenants Found</h3>
-          <p className="text-xs text-slate-400 mt-1">Get started by onboarding a mobile shop owner.</p>
+          <h3 className="font-bold text-slate-700 dark:text-slate-300 text-sm">
+            No Shop Tenants Found
+          </h3>
+          <p className="text-xs text-slate-400 mt-1">
+            Get started by onboarding a mobile shop owner.
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -227,8 +238,8 @@ export default function TenantManagement() {
                       t.status === 'ACTIVE'
                         ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400'
                         : t.status === 'PAUSED'
-                        ? 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400'
-                        : 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400'
+                          ? 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400'
+                          : 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400'
                     }`}
                   >
                     {t.status}
@@ -254,19 +265,41 @@ export default function TenantManagement() {
                 {/* SaaS Sales & Revenue Performance */}
                 <div className="grid grid-cols-2 gap-2 my-3 p-2.5 bg-blue-50/50 dark:bg-blue-950/20 rounded-xl border border-blue-100 dark:border-blue-900/40 text-xs">
                   <div>
-                    <div className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">Total Sales</div>
-                    <div className="font-bold text-slate-900 dark:text-white">{t.stats?.totalSales || 0} Orders</div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">
+                      Total Sales
+                    </div>
+                    <div className="font-bold text-slate-900 dark:text-white">
+                      {t.stats?.totalSales || 0} Orders
+                    </div>
                   </div>
                   <div>
-                    <div className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">Total Revenue</div>
-                    <div className="font-bold text-[#2563EB] dark:text-blue-400">৳{(t.stats?.totalRevenue || 0).toLocaleString()}</div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase">
+                      Total Revenue
+                    </div>
+                    <div className="font-bold text-[#2563EB] dark:text-blue-400">
+                      ৳{(t.stats?.totalRevenue || 0).toLocaleString()}
+                    </div>
                   </div>
                 </div>
 
                 {/* Plan Badges */}
                 <div className="flex items-center justify-between text-xs text-slate-500 mb-3">
-                  <span>Plan: <strong className="text-slate-900 dark:text-white font-bold">{t.plan}</strong></span>
-                  <span>KYC: <strong className={t.kycDocuments?.kycStatus === 'APPROVED' ? 'text-emerald-600 font-bold' : 'text-amber-600 font-bold'}>{t.kycDocuments?.kycStatus || 'PENDING'}</strong></span>
+                  <span>
+                    Plan:{' '}
+                    <strong className="text-slate-900 dark:text-white font-bold">{t.plan}</strong>
+                  </span>
+                  <span>
+                    KYC:{' '}
+                    <strong
+                      className={
+                        t.kycDocuments?.kycStatus === 'APPROVED'
+                          ? 'text-emerald-600 font-bold'
+                          : 'text-amber-600 font-bold'
+                      }
+                    >
+                      {t.kycDocuments?.kycStatus || 'PENDING'}
+                    </strong>
+                  </span>
                 </div>
               </div>
 
@@ -354,34 +387,39 @@ export default function TenantManagement() {
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
             <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <Key className="w-5 h-5 text-[#2563EB]" /> Verify OTP for {selectedTenantForOtp.shopName}
+              <Key className="w-5 h-5 text-[#2563EB]" /> Verify OTP for{' '}
+              {selectedTenantForOtp.shopName}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Enter the 6-digit OTP code sent to <strong>{selectedTenantForOtp.email}</strong> to verify the shop owner account.
+              Enter the 6-digit OTP code sent to <strong>{selectedTenantForOtp.email}</strong> to
+              verify the shop owner account.
             </p>
 
-            <form onSubmit={async (e) => {
-              e.preventDefault();
-              if (!otpCodeInput || otpCodeInput.length !== 6) {
-                toast.error('Please enter valid 6-digit OTP code');
-                return;
-              }
-              setVerifyingOtp(true);
-              try {
-                await api.post('/auth/verify-otp', {
-                  email: selectedTenantForOtp.email,
-                  otpCode: otpCodeInput,
-                });
-                toast.success(`Verified owner of "${selectedTenantForOtp.shopName}" with OTP!`);
-                qc.invalidateQueries({ queryKey: ['tenants'] });
-                setSelectedTenantForOtp(null);
-                setOtpCodeInput('');
-              } catch (err) {
-                toast.error(err.response?.data?.message || 'OTP Verification failed');
-              } finally {
-                setVerifyingOtp(false);
-              }
-            }} className="space-y-4">
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!otpCodeInput || otpCodeInput.length !== 6) {
+                  toast.error('Please enter valid 6-digit OTP code');
+                  return;
+                }
+                setVerifyingOtp(true);
+                try {
+                  await api.post('/auth/verify-otp', {
+                    email: selectedTenantForOtp.email,
+                    otpCode: otpCodeInput,
+                  });
+                  toast.success(`Verified owner of "${selectedTenantForOtp.shopName}" with OTP!`);
+                  qc.invalidateQueries({ queryKey: ['tenants'] });
+                  setSelectedTenantForOtp(null);
+                  setOtpCodeInput('');
+                } catch (err) {
+                  toast.error(err.response?.data?.message || 'OTP Verification failed');
+                } finally {
+                  setVerifyingOtp(false);
+                }
+              }}
+              className="space-y-4"
+            >
               <div>
                 <label className="block text-xs font-semibold mb-1">6-Digit OTP Code</label>
                 <input
@@ -419,7 +457,12 @@ export default function TenantManagement() {
                     disabled={verifyingOtp}
                     className="px-5 py-2.5 bg-[#2563EB] hover:bg-blue-700 text-white font-semibold text-xs rounded-xl flex items-center gap-1.5"
                   >
-                    {verifyingOtp ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />} Verify OTP
+                    {verifyingOtp ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="w-4 h-4" />
+                    )}{' '}
+                    Verify OTP
                   </button>
                 </div>
               </div>
@@ -476,7 +519,9 @@ export default function TenantManagement() {
                 <input
                   type="text"
                   value={form.username}
-                  onChange={(e) => setForm({ ...form, username: e.target.value.toLowerCase().replace(/\s+/g, '') })}
+                  onChange={(e) =>
+                    setForm({ ...form, username: e.target.value.toLowerCase().replace(/\s+/g, '') })
+                  }
                   placeholder="e.g. rahim_admin"
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
                 />
@@ -497,7 +542,11 @@ export default function TenantManagement() {
                 <label className="block font-semibold mb-1">Subscription Plan</label>
                 <select
                   value={form.plan}
-                  onChange={(e) => setForm({ ...form, plan: e.target.value })}
+                  onChange={(e) => {
+                    const p = e.target.value;
+                    setForm({ ...form, plan: p });
+                    setDurationDays(PLAN_DEFAULTS[p] || 30);
+                  }}
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
                 >
                   <option value="FREE">FREE</option>
@@ -505,6 +554,24 @@ export default function TenantManagement() {
                   <option value="PRO">PRO</option>
                   <option value="ENTERPRISE">ENTERPRISE</option>
                 </select>
+              </div>
+
+              <div>
+                <label className="block font-semibold mb-1">Duration (days)</label>
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-slate-400" />
+                  <input
+                    type="number"
+                    min={1}
+                    max={3650}
+                    value={durationDays}
+                    onChange={(e) => setDurationDays(Number(e.target.value) || 30)}
+                    className="flex-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                  />
+                </div>
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Expires: {new Date(Date.now() + durationDays * 86400000).toLocaleDateString()}
+                </p>
               </div>
 
               <div>
@@ -527,7 +594,9 @@ export default function TenantManagement() {
               </button>
               <button
                 onClick={() => createMutation.mutate(form)}
-                disabled={createMutation.isPending || !form.shopName || !form.email || !form.password}
+                disabled={
+                  createMutation.isPending || !form.shopName || !form.email || !form.password
+                }
                 className="px-5 py-2 bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold rounded-xl transition-all disabled:opacity-50"
               >
                 Create Shop Owner
@@ -545,43 +614,63 @@ export default function TenantManagement() {
               <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center mx-auto mb-3">
                 <CheckCircle2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
               </div>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Shop Created Successfully!</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Share these credentials with the shop owner</p>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                Shop Created Successfully!
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Share these credentials with the shop owner
+              </p>
             </div>
 
             <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-500 dark:text-slate-400">Shop Name:</span>
-                <span className="text-sm font-bold text-slate-900 dark:text-white">{createdCredentials.shopName}</span>
+                <span className="text-sm font-bold text-slate-900 dark:text-white">
+                  {createdCredentials.shopName}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-500 dark:text-slate-400">Username:</span>
-                <span className="text-sm font-mono font-bold text-[#2563EB] dark:text-blue-400">{createdCredentials.username}</span>
+                <span className="text-sm font-mono font-bold text-[#2563EB] dark:text-blue-400">
+                  {createdCredentials.username}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-500 dark:text-slate-400">Email:</span>
-                <span className="text-sm font-mono text-slate-700 dark:text-slate-300">{createdCredentials.email}</span>
+                <span className="text-sm font-mono text-slate-700 dark:text-slate-300">
+                  {createdCredentials.email}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-500 dark:text-slate-400">Password:</span>
-                <span className="text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400">{createdCredentials.password}</span>
+                <span className="text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                  {createdCredentials.password}
+                </span>
               </div>
             </div>
 
             <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl p-3 text-xs text-amber-700 dark:text-amber-400">
-              <strong>Important:</strong> OTP has been sent to <strong>{createdCredentials.email}</strong>. Verify the OTP below so the shop owner can login without re-verification.
+              <strong>Important:</strong> OTP has been sent to{' '}
+              <strong>{createdCredentials.email}</strong>. Verify the OTP below so the shop owner
+              can login without re-verification.
             </div>
 
             {!otpVerified && (
-              <form onSubmit={async (e) => {
-                e.preventDefault();
-                if (!credOtpInput || credOtpInput.length !== 6) {
-                  toast.error('Please enter valid 6-digit OTP code');
-                  return;
-                }
-                setCredVerifyingOtp(true);
-                otpVerifyMutation.mutate({ email: createdCredentials.email, otpCode: credOtpInput });
-              }} className="space-y-3">
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!credOtpInput || credOtpInput.length !== 6) {
+                    toast.error('Please enter valid 6-digit OTP code');
+                    return;
+                  }
+                  setCredVerifyingOtp(true);
+                  otpVerifyMutation.mutate({
+                    email: createdCredentials.email,
+                    otpCode: credOtpInput,
+                  });
+                }}
+                className="space-y-3"
+              >
                 <div>
                   <label className="block text-xs font-semibold mb-1">6-Digit OTP Code</label>
                   <input
@@ -599,7 +688,12 @@ export default function TenantManagement() {
                   disabled={credVerifyingOtp || otpVerifyMutation.isPending}
                   className="w-full py-2.5 bg-[#2563EB] hover:bg-blue-700 text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors"
                 >
-                  {credVerifyingOtp || otpVerifyMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />} Verify OTP
+                  {credVerifyingOtp || otpVerifyMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="w-4 h-4" />
+                  )}{' '}
+                  Verify OTP
                 </button>
                 <div className="flex justify-end">
                   <button
@@ -616,7 +710,8 @@ export default function TenantManagement() {
 
             {otpVerified && (
               <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl p-3 text-xs text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4" /> OTP verified! Shop owner can now login directly.
+                <CheckCircle2 className="w-4 h-4" /> OTP verified! Shop owner can now login
+                directly.
               </div>
             )}
 

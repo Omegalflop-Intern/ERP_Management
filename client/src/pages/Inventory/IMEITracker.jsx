@@ -100,9 +100,7 @@ export default function IMEITracker() {
       }
     } catch {
       // Fallback: search in units array or search API
-      const match = units.find(
-        (u) => u.imeiOrSerial?.toLowerCase() === queryTerm.toLowerCase()
-      );
+      const match = units.find((u) => u.imeiOrSerial?.toLowerCase() === queryTerm.toLowerCase());
       if (match) {
         setViewPassport(match);
         toast.success(`IMEI Found: ${queryTerm}`);
@@ -326,11 +324,16 @@ export default function IMEITracker() {
       </div>
 
       {/* Camera Barcode Scanner Modal */}
-      {showCameraScan && <CameraScannerModal onClose={() => setShowCameraScan(false)} onScan={(scannedImei) => {
-        setScanInput(scannedImei);
-        setShowCameraScan(false);
-        handleQuickScanSubmit();
-      }} />}
+      {showCameraScan && (
+        <CameraScannerModal
+          onClose={() => setShowCameraScan(false)}
+          onScan={(scannedImei) => {
+            setScanInput(scannedImei);
+            setShowCameraScan(false);
+            handleQuickScanSubmit();
+          }}
+        />
+      )}
 
       {/* View Unit Passport Modal */}
       {viewPassport && (
@@ -448,7 +451,9 @@ function IMEIPassportModal({ passport, onClose }) {
             <div className="grid grid-cols-3 gap-2 pt-2 text-xs border-t border-slate-200/60 dark:border-slate-800/60">
               <div>
                 <span className="text-slate-400">Color:</span>{' '}
-                <span className="font-semibold text-slate-800 dark:text-slate-200">{unit.color || '-'}</span>
+                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  {unit.color || '-'}
+                </span>
               </div>
               <div>
                 <span className="text-slate-400">RAM/Storage:</span>{' '}
@@ -458,7 +463,9 @@ function IMEIPassportModal({ passport, onClose }) {
               </div>
               <div>
                 <span className="text-slate-400">Purchase Cost:</span>{' '}
-                <span className="font-mono font-bold text-emerald-600">৳{(unit.purchasePrice || 0).toLocaleString()}</span>
+                <span className="font-mono font-bold text-emerald-600">
+                  ৳{(unit.purchasePrice || 0).toLocaleString()}
+                </span>
               </div>
             </div>
           </div>
@@ -471,7 +478,8 @@ function IMEIPassportModal({ passport, onClose }) {
 
             {timeline.length === 0 ? (
               <div className="p-4 text-xs text-slate-400 text-center glass-light rounded-xl">
-                Unit recorded in inventory stock on {new Date(unit.createdAt || Date.now()).toLocaleDateString('en-BD')}
+                Unit recorded in inventory stock on{' '}
+                {new Date(unit.createdAt || Date.now()).toLocaleDateString('en-BD')}
               </div>
             ) : (
               <div className="space-y-2">
@@ -492,7 +500,9 @@ function IMEIPassportModal({ passport, onClose }) {
                           {new Date(evt.timestamp).toLocaleDateString('en-BD')}
                         </span>
                       </div>
-                      <p className="text-slate-600 dark:text-slate-400 mt-0.5">{evt.details || `Invoice #${evt.invoiceNumber || '-'}`}</p>
+                      <p className="text-slate-600 dark:text-slate-400 mt-0.5">
+                        {evt.details || `Invoice #${evt.invoiceNumber || '-'}`}
+                      </p>
                     </div>
                   </div>
                 ))}

@@ -4,6 +4,7 @@ import {
   Calendar,
   DollarSign,
   Download,
+  FileText,
   RotateCcw,
   ShoppingCart,
   TrendingUp,
@@ -23,6 +24,77 @@ import {
 } from 'recharts';
 import DatePicker from '../../components/ui/DatePicker';
 import api from '../../lib/api';
+
+const COLORS = ['#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e'];
+
+const exportToCSV = (data, filename) => {
+  if (!data.length) return;
+  const headers = Object.keys(data[0]);
+  const csvContent = [
+    headers.join(','),
+    ...data.map((row) => headers.map((h) => `"${row[h] || ''}"`).join(',')),
+  ].join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `${filename}.csv`;
+  link.click();
+};
+
+const exportToPDF = (data, title) => {
+  const printWindow = window.open('', '_blank');
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>${title}</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        h1 { color: #1f2937; font-size: 24px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #e5e7eb; padding: 10px; text-align: left; }
+        th { background: #f3f4f6; font-weight: bold; }
+        tr:nth-child(even) { background: #f9fafb; }
+        .total { font-weight: bold; margin-top: 20px; }
+      </style>
+    </head>
+    <body>
+      <h1>${title}</h1>
+      <p>Generated: ${new Date().toLocaleDateString()}</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Invoice</th>
+            <th>Customer</th>
+            <th>Amount</th>
+            <th>Payment Method</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data
+            .map(
+              (s) => `
+            <tr>
+              <td>${s.invoiceNumber}</td>
+              <td>${s.customerName || 'Walk-in'}</td>
+              <td>৳${s.netTotal?.toLocaleString()}</td>
+              <td>${s.paymentMethod || 'Cash'}</td>
+              <td>${new Date(s.createdAt).toLocaleDateString()}</td>
+            </tr>
+          `
+            )
+            .join('')}
+        </tbody>
+      </table>
+      <p class="total">Total Sales: ${data.length} | Total Revenue: ৳${data.reduce((sum, s) => sum + (s.netTotal || 0), 0).toLocaleString()}</p>
+    </body>
+    </html>
+  `;
+  printWindow.document.write(html);
+  printWindow.document.close();
+  printWindow.print();
+};
 
 const PERIODS = ['today', 'thisWeek', 'thisMonth', 'thisYear', 'custom'];
 
@@ -47,6 +119,11 @@ export default function SalesReport() {
         params.to = now.toISOString().split('T')[0];
       } else if (period === 'thisMonth') {
         params.from = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+        params.to = now.toISOString().split('T')[0];
+      } else if (period === 'thisQuarter') {
+        const quarter = Math.floor(now.getMonth() / 3);
+        const quarterStart = new Date(now.getFullYear(), quarter * 3, 1);
+        params.from = quarterStart.toISOString().split('T')[0];
         params.to = now.toISOString().split('T')[0];
       } else if (period === 'thisYear') {
         params.from = `${now.getFullYear()}-01-01`;
@@ -220,6 +297,22 @@ export default function SalesReport() {
             Analyze performance across Retail (B2C) and Wholesale (B2B) sales
           </p>
         </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => exportToCSV(sales, `sales-report-${period}`)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors"
+          >
+            <Download className="h-4 w-4" />
+            Export CSV
+          </button>
+          <button
+            onClick={() => exportToPDF(sales, `Sales Report - ${period}`)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium transition-colors"
+          >
+            <FileText className="h-4 w-4" />
+            Export PDF
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
@@ -228,6 +321,7 @@ export default function SalesReport() {
             { key: 'today', label: 'Today' },
             { key: 'thisWeek', label: 'This Week' },
             { key: 'thisMonth', label: 'This Month' },
+            { key: 'thisQuarter', label: 'This Quarter' },
             { key: 'thisYear', label: 'This Year' },
             { key: 'custom', label: 'Custom' },
           ].map((p) => (

@@ -152,7 +152,7 @@ const FAQS = [
   },
   {
     q: 'Is my data secure?',
-    a: 'All data is encrypted at rest and in transit. Each shop\'s data is fully isolated — no cross-tenant access is possible.',
+    a: "All data is encrypted at rest and in transit. Each shop's data is fully isolated — no cross-tenant access is possible.",
   },
   {
     q: 'Can I add more users or branches?',
@@ -203,9 +203,10 @@ function PlanCard({ plan, billing, onSelect }) {
   return (
     <div
       className={`relative flex flex-col rounded-2xl border transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl
-        ${cfg.highlight
-          ? 'border-blue-500 shadow-blue-500/20 shadow-xl dark:bg-blue-950/10 bg-blue-50/50'
-          : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900'
+        ${
+          cfg.highlight
+            ? 'border-blue-500 shadow-blue-500/20 shadow-xl dark:bg-blue-950/10 bg-blue-50/50'
+            : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900'
         }`}
     >
       {/* Popular badge */}
@@ -230,7 +231,9 @@ function PlanCard({ plan, billing, onSelect }) {
             <p className="text-xs text-gray-500 dark:text-gray-400">
               {plan.maxUsers >= 999 ? 'Unlimited users' : `Up to ${plan.maxUsers} users`}
               {' · '}
-              {plan.maxBranches >= 999 ? 'Unlimited branches' : `${plan.maxBranches} branch${plan.maxBranches > 1 ? 'es' : ''}`}
+              {plan.maxBranches >= 999
+                ? 'Unlimited branches'
+                : `${plan.maxBranches} branch${plan.maxBranches > 1 ? 'es' : ''}`}
             </p>
           </div>
         </div>
@@ -240,12 +243,16 @@ function PlanCard({ plan, billing, onSelect }) {
           {isEnterprise ? (
             <div>
               <span className="text-3xl font-bold text-gray-900 dark:text-white">Custom</span>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Tailored to your needs</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Tailored to your needs
+              </p>
             </div>
           ) : displayPrice === 0 ? (
             <div>
               <span className="text-3xl font-bold text-gray-900 dark:text-white">Free</span>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Forever, no credit card</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Forever, no credit card
+              </p>
             </div>
           ) : (
             <div>
@@ -274,7 +281,10 @@ function PlanCard({ plan, billing, onSelect }) {
         {/* Features */}
         <ul className="flex flex-col gap-2.5 flex-1">
           {plan.features.map((f, i) => (
-            <li key={i} className="flex items-start gap-2.5 text-sm text-gray-700 dark:text-gray-300">
+            <li
+              key={i}
+              className="flex items-start gap-2.5 text-sm text-gray-700 dark:text-gray-300"
+            >
               <Check size={15} className="text-emerald-500 mt-0.5 shrink-0" />
               <span>{f}</span>
             </li>
@@ -285,11 +295,12 @@ function PlanCard({ plan, billing, onSelect }) {
         <button
           onClick={() => onSelect(plan)}
           className={`mt-4 w-full py-3 px-5 rounded-xl font-semibold text-sm transition-all duration-200
-            ${cfg.highlight
-              ? `bg-gradient-to-r ${cfg.gradient} text-white hover:shadow-lg hover:shadow-blue-500/30 hover:scale-[1.02]`
-              : isEnterprise
-                ? `bg-gradient-to-r ${cfg.gradient} text-white hover:shadow-lg hover:scale-[1.02]`
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700'
+            ${
+              cfg.highlight
+                ? `bg-gradient-to-r ${cfg.gradient} text-white hover:shadow-lg hover:shadow-blue-500/30 hover:scale-[1.02]`
+                : isEnterprise
+                  ? `bg-gradient-to-r ${cfg.gradient} text-white hover:shadow-lg hover:scale-[1.02]`
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700'
             }`}
         >
           <span className="flex items-center justify-center gap-2">
@@ -304,9 +315,7 @@ function PlanCard({ plan, billing, onSelect }) {
 
 function ComparisonTable({ plans }) {
   const order = ['FREE', 'STARTER', 'PRO', 'ENTERPRISE'];
-  const sorted = [...plans].sort(
-    (a, b) => order.indexOf(a.name) - order.indexOf(b.name)
-  );
+  const sorted = [...plans].sort((a, b) => order.indexOf(a.name) - order.indexOf(b.name));
 
   return (
     <div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-700">
@@ -421,7 +430,10 @@ export default function PricingPage() {
       {/* ── Nav bar ── */}
       <nav className="sticky top-0 z-50 border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <Link to="/login" className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
+          <Link
+            to="/login"
+            className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white"
+          >
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
               <Smartphone size={14} className="text-white" />
             </div>
@@ -458,8 +470,7 @@ export default function PricingPage() {
             </span>
           </h1>
           <p className="text-gray-500 dark:text-gray-400 text-lg leading-relaxed">
-            Start free. Upgrade as you grow. No hidden fees, no contracts.
-            Cancel anytime.
+            Start free. Upgrade as you grow. No hidden fees, no contracts. Cancel anytime.
           </p>
 
           {/* Billing toggle */}
@@ -562,8 +573,8 @@ export default function PricingPage() {
         <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 p-10 text-center text-white space-y-5">
           <h2 className="text-3xl font-bold">Ready to get started?</h2>
           <p className="text-blue-100 max-w-md mx-auto">
-            Join hundreds of mobile shops already running on Brothers ERP.
-            Start free today — no credit card required.
+            Join hundreds of mobile shops already running on Brothers ERP. Start free today — no
+            credit card required.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
@@ -588,13 +599,22 @@ export default function PricingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500 dark:text-gray-400">
           <p>© {new Date().getFullYear()} Brothers Mobile ERP. All rights reserved.</p>
           <div className="flex items-center gap-5">
-            <Link to="/login" className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+            <Link
+              to="/login"
+              className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+            >
               Login
             </Link>
-            <Link to="/register-shop" className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+            <Link
+              to="/register-shop"
+              className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+            >
               Register
             </Link>
-            <a href="mailto:sales@brothersmobile.bd" className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+            <a
+              href="mailto:sales@brothersmobile.bd"
+              className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+            >
               Contact
             </a>
           </div>

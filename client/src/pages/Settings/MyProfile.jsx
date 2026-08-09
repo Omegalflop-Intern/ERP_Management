@@ -115,7 +115,8 @@ export default function MyProfile() {
             username: updated.username ?? base.username,
             avatar: updated.avatar ?? base.avatar,
             roleName: updated.roleName || updated.role?.name || base.roleName,
-            roleDisplayName: updated.roleDisplayName || updated.role?.displayName || base.roleDisplayName,
+            roleDisplayName:
+              updated.roleDisplayName || updated.role?.displayName || base.roleDisplayName,
             permissions: updated.role?.permissions || updated.permissions || base.permissions || [],
           };
           localStorage.setItem('user', JSON.stringify(merged));

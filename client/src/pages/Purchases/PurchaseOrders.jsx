@@ -1,5 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Camera, Eye, Minus, Package, Pencil, Plus, RefreshCw, Search, Trash2, Truck, X } from 'lucide-react';
+import {
+  Camera,
+  Eye,
+  Minus,
+  Package,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Search,
+  Trash2,
+  Truck,
+  X,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import api from '../../lib/api';
@@ -200,15 +212,17 @@ export default function PurchaseOrders() {
                             <Pencil className="w-4 h-4" />
                           </button>
                         )}
-                        {po.status !== 'RECEIVED' && po.status !== 'PARTIALLY_RECEIVED' && po.status !== 'CANCELLED' && (
-                          <button
-                            onClick={() => setDeletePO(po)}
-                            className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                            title="Delete Order"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
+                        {po.status !== 'RECEIVED' &&
+                          po.status !== 'PARTIALLY_RECEIVED' &&
+                          po.status !== 'CANCELLED' && (
+                            <button
+                              onClick={() => setDeletePO(po)}
+                              className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                              title="Delete Order"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         <button
                           onClick={() => setViewPO(po)}
                           className="p-1.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
@@ -554,7 +568,8 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
                 <option value="CREDIT">Credit (Udhar)</option>
               </select>
               <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
-                Paid amount auto-calculated: {paymentMethod === 'CREDIT' ? '৳0 (due stays on order)' : 'Full amount paid'}
+                Paid amount auto-calculated:{' '}
+                {paymentMethod === 'CREDIT' ? '৳0 (due stays on order)' : 'Full amount paid'}
               </p>
             </div>
           </div>
@@ -1125,7 +1140,11 @@ function GRNModal({ order, onClose, onSuccess }) {
     setEntries(updated);
     // Clear lookup state for removed item
     const key = `${idx}-${itemIdx}`;
-    setImeiLookupState((prev) => { const n = { ...prev }; delete n[key]; return n; });
+    setImeiLookupState((prev) => {
+      const n = { ...prev };
+      delete n[key];
+      return n;
+    });
   };
   const updateEntry = (idx, itemIdx, field, value) => {
     const updated = [...entries];
@@ -1142,7 +1161,11 @@ function GRNModal({ order, onClose, onSuccess }) {
     if (lookupTimers.current[key]) clearTimeout(lookupTimers.current[key]);
 
     if (!value || value.trim().length < 6) {
-      setImeiLookupState((prev) => { const n = { ...prev }; delete n[key]; return n; });
+      setImeiLookupState((prev) => {
+        const n = { ...prev };
+        delete n[key];
+        return n;
+      });
       return;
     }
 
@@ -1162,8 +1185,12 @@ function GRNModal({ order, onClose, onSuccess }) {
           updated[idx].items[itemIdx] = {
             ...updated[idx].items[itemIdx],
             purchasePrice: result.unit.purchasePrice || updated[idx].items[itemIdx].purchasePrice,
-            sellingPrice: result.unit.currentSellingPrice || prod.sellingPrice || updated[idx].items[itemIdx].sellingPrice,
-            warrantyMonths: result.unit.warrantyMonths || updated[idx].items[itemIdx].warrantyMonths,
+            sellingPrice:
+              result.unit.currentSellingPrice ||
+              prod.sellingPrice ||
+              updated[idx].items[itemIdx].sellingPrice,
+            warrantyMonths:
+              result.unit.warrantyMonths || updated[idx].items[itemIdx].warrantyMonths,
           };
           setEntries(updated);
           toast.info(`🔍 Found: ${prod.name} (${result.unit.status})`);
@@ -1275,8 +1302,8 @@ function GRNModal({ order, onClose, onSuccess }) {
                             lookupResult?.found
                               ? 'border-emerald-400 dark:border-emerald-600 focus:border-emerald-500'
                               : lookupResult?.found === false
-                              ? 'border-gray-300 dark:border-gray-700 focus:border-[#2563EB]'
-                              : 'border-gray-300 dark:border-gray-700 focus:border-[#2563EB]'
+                                ? 'border-gray-300 dark:border-gray-700 focus:border-[#2563EB]'
+                                : 'border-gray-300 dark:border-gray-700 focus:border-[#2563EB]'
                           }`}
                         />
                         {ls?.loading && (
@@ -1317,18 +1344,24 @@ function GRNModal({ order, onClose, onSuccess }) {
                           {lookupResult.unit.product.name}
                         </span>
                         {lookupResult.unit.product.brand && (
-                          <span className="text-emerald-600 dark:text-emerald-500">{lookupResult.unit.product.brand}</span>
+                          <span className="text-emerald-600 dark:text-emerald-500">
+                            {lookupResult.unit.product.brand}
+                          </span>
                         )}
                         {lookupResult.unit.product.model && (
-                          <span className="text-emerald-600 dark:text-emerald-500">· {lookupResult.unit.product.model}</span>
+                          <span className="text-emerald-600 dark:text-emerald-500">
+                            · {lookupResult.unit.product.model}
+                          </span>
                         )}
-                        <span className={`ml-auto px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                          lookupResult.unit.status === 'Available'
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400'
-                            : lookupResult.unit.status === 'Sold'
-                            ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'
-                            : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400'
-                        }`}>
+                        <span
+                          className={`ml-auto px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                            lookupResult.unit.status === 'Available'
+                              ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400'
+                              : lookupResult.unit.status === 'Sold'
+                                ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'
+                                : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400'
+                          }`}
+                        >
                           {lookupResult.unit.status}
                         </span>
                       </div>
@@ -1368,7 +1401,10 @@ function GRNModal({ order, onClose, onSuccess }) {
       <BarcodeScannerModal
         open={showCameraScanner}
         onScan={handleCameraScan}
-        onClose={() => { setShowCameraScanner(false); setScanTarget(null); }}
+        onClose={() => {
+          setShowCameraScanner(false);
+          setScanTarget(null);
+        }}
       />
     </div>
   );

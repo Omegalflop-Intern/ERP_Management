@@ -2,31 +2,50 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import api from '../lib/api';
 import { useAuthStore } from '../store/authStore';
+import { detectSubdomain } from '../utils/subdomain';
 
 export function useDocumentTitle(pageTitle) {
   const { user } = useAuthStore();
+  const isSuperAdmin = !!user && !user.tenantId;
+  const isShopUser = !!user && !!user.tenantId;
+  const subdomain = detectSubdomain();
 
-  const { data: settings } = useQuery({
-    queryKey: ['settings'],
+  // Fetch real tenant/shop name from /tenants/me for logged in shop users
+  const { data: tenantInfo } = useQuery({
+    queryKey: ['my-tenant-info-title', user?.tenantId],
     queryFn: async () => {
-      const res = await api.get('/settings');
-      return res.data?.data || res.data;
+      const res = await api.get('/tenants/me');
+      return res.data?.data;
     },
-    staleTime: 5 * 60 * 1000,
-    enabled: !!user && !!user.tenantId,
+    staleTime: 10 * 60 * 1000,
+    enabled: isShopUser,
+  });
+
+  // Fetch public tenant info for visitors on a subdomain (e.g. login page)
+  const { data: publicTenant } = useQuery({
+    queryKey: ['public-tenant-title', subdomain],
+    queryFn: async () => {
+      const res = await api.get(`/tenants/public/by-subdomain/${subdomain}`);
+      return res.data?.data;
+    },
+    staleTime: 10 * 60 * 1000,
+    enabled: !!subdomain && !user,
   });
 
   useEffect(() => {
-    let brand = 'Omni-Manage';
-    if (user) {
-      if (!user.tenantId && user.roleName === 'ADMIN') {
-        brand = 'Super Admin | Omni-Manage';
-      } else {
-        const shop = user.tenant?.shopName || user.shopName || settings?.companyName || 'Shop ERP';
-        brand = `${shop} | Omni-Manage`;
-      }
+    let brand = 'OmniManage';
+    if (isSuperAdmin) {
+      brand = 'Super Admin | OmniManage';
+    } else if (isShopUser) {
+      const shop = tenantInfo?.shopName || user?.tenant?.shopName || user?.shopName || 'My Shop';
+      brand = `${shop} | OmniManage`;
+    } else if (publicTenant?.shopName) {
+      brand = `${publicTenant.shopName} | OmniManage`;
+    } else if (subdomain) {
+      const formattedSub = subdomain.charAt(0).toUpperCase() + subdomain.slice(1);
+      brand = `${formattedSub} Store | OmniManage`;
     }
 
-    document.title = pageTitle ? `${pageTitle} - ${brand}` : brand;
-  }, [user, settings, pageTitle]);
+    document.title = pageTitle ? `${pageTitle} — ${brand}` : brand;
+  }, [user, tenantInfo, publicTenant, pageTitle, isSuperAdmin, isShopUser, subdomain]);
 }

@@ -843,7 +843,8 @@ function ProductFormModal({ product, onClose, onSuccess }) {
         costPrice: Number(data.costPrice),
         sellingPrice: Number(data.sellingPrice),
         wholesalePrice: Number(data.wholesalePrice) || undefined,
-        stockQuantity: isPhone && imeiLinesCount > 0 ? imeiLinesCount : Number(data.stockQuantity) || 0,
+        stockQuantity:
+          isPhone && imeiLinesCount > 0 ? imeiLinesCount : Number(data.stockQuantity) || 0,
         warrantyMonths: Number(data.warrantyMonths) || 0,
         vatRate: Number(data.vatRate) || 0,
         minStockAlert: Number(data.minStockAlert),
@@ -1079,10 +1080,14 @@ function ProductFormModal({ product, onClose, onSuccess }) {
                 <div className="flex items-center justify-between mb-1">
                   <label
                     className={`block text-xs font-bold uppercase tracking-wider ${
-                      isPhone ? 'text-[#2563EB] dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'
+                      isPhone
+                        ? 'text-[#2563EB] dark:text-blue-400'
+                        : 'text-slate-600 dark:text-slate-400'
                     }`}
                   >
-                    {isPhone ? 'IMEI List * (15 Digits Per Line)' : 'IMEI / Serial Numbers (Optional)'}
+                    {isPhone
+                      ? 'IMEI List * (15 Digits Per Line)'
+                      : 'IMEI / Serial Numbers (Optional)'}
                   </label>
                   {imeiLinesCount > 0 && (
                     <span className="px-2 py-0.5 rounded-full bg-blue-50 text-[#2563EB] dark:bg-blue-950/40 dark:text-blue-400 text-xs font-mono font-bold">
@@ -1102,7 +1107,8 @@ function ProductFormModal({ product, onClose, onSuccess }) {
                   className={`${inputCls} font-mono text-xs`}
                 />
                 <p className="text-[11px] text-slate-400 mt-1">
-                  For phone categories, each line represents one inventory unit. Stock quantity will automatically update.
+                  For phone categories, each line represents one inventory unit. Stock quantity will
+                  automatically update.
                 </p>
               </div>
 
@@ -1193,7 +1199,9 @@ function ProductFormModal({ product, onClose, onSuccess }) {
                 <div className="p-2.5 rounded-xl bg-blue-50/80 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-800/40 flex items-center justify-between text-xs">
                   <span className="text-slate-600 dark:text-slate-400">Estimated Unit Profit:</span>
                   <div className="flex items-center gap-3 font-mono font-bold">
-                    <span className="text-emerald-600 dark:text-emerald-400">৳{profit.toLocaleString()}</span>
+                    <span className="text-emerald-600 dark:text-emerald-400">
+                      ৳{profit.toLocaleString()}
+                    </span>
                     <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
                       {marginPct}% Margin
                     </span>
@@ -1276,7 +1284,11 @@ function ProductFormModal({ product, onClose, onSuccess }) {
               disabled={mutation.isPending}
               className="flex-1 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white font-semibold rounded-xl text-xs transition-all shadow-xs"
             >
-              {mutation.isPending ? 'Saving Product...' : product ? 'Update Product' : 'Create Product'}
+              {mutation.isPending
+                ? 'Saving Product...'
+                : product
+                  ? 'Update Product'
+                  : 'Create Product'}
             </button>
           </div>
         </form>

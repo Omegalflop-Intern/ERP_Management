@@ -8,6 +8,7 @@ import {
   MemoryStick,
   RefreshCw,
   Server,
+  Shield,
   Upload,
 } from 'lucide-react';
 import React from 'react';
@@ -69,14 +70,29 @@ function ProgressBar({ value, max, color = 'bg-red-600' }) {
 export default function SystemAnalytics() {
   const { styled } = useTheme();
 
-  const { data, isLoading, refetch, isFetching } = useQuery({
+  const { data, isLoading, refetch, isFetching, error } = useQuery({
     queryKey: ['system-analytics'],
     queryFn: async () => {
       const { data } = await api.get('/system/analytics');
       return data.data;
     },
     refetchInterval: 30000,
+    retry: false,
   });
+
+  if (error?.response?.status === 403) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <Shield className="w-16 h-16 text-gray-300 dark:text-gray-600" />
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Access Restricted</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            System Analytics is only available to the platform super administrator.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const cardCls = styled
     ? 'neu-card rounded-xl'
