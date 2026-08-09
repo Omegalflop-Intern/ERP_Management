@@ -653,128 +653,156 @@ export default function SalesForm() {
             )}
           </div>
 
-          {/* Real-time Live Invoice Preview */}
-          <div
-            className={`${cardCls} p-5 space-y-4 shadow-sm border border-slate-200 dark:border-slate-800`}
-          >
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-              <div className="flex items-center gap-2">
-                <ShoppingCart className="w-4 h-4 text-[#2563EB] dark:text-blue-400" />
-                <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">
-                  Live Invoice Preview
-                </h3>
+          {/* Real-time Authentic Live Invoice Preview Card */}
+          <div className="bg-white dark:bg-[#111827] rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-lg space-y-4">
+            {/* Invoice Top Header */}
+            <div className="flex items-start justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-blue-600/10 text-[#2563EB] dark:text-blue-400 flex items-center justify-center font-bold text-sm">
+                    <Receipt className="w-4.5 h-4.5" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-base text-slate-900 dark:text-slate-100 tracking-tight">
+                      {tenantInfo?.shopName || user?.tenant?.shopName || user?.shopName || 'Mobile Shop ERP'}
+                    </h3>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      {tenantInfo?.address || 'Official Retail Sales Invoice'}
+                    </p>
+                  </div>
+                </div>
               </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 font-semibold uppercase">
-                Realtime Draft
-              </span>
+              <div className="text-right">
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-400 border border-blue-200 dark:border-blue-800/60 uppercase tracking-wider">
+                  Realtime Draft Invoice
+                </span>
+                <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400 mt-1">
+                  INV-DRAFT-{Date.now().toString().slice(-4)}
+                </p>
+              </div>
             </div>
 
-            <div className="space-y-3 font-sans">
-              {/* Customer & Order Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 text-xs">
-                <div>
-                  <div className="font-bold text-slate-900 dark:text-slate-100">
-                    Customer: {customerName || 'Walk-in Customer'}
-                  </div>
-                  {customerPhone && (
-                    <div className="text-slate-500 font-mono">Phone: {customerPhone}</div>
-                  )}
-                </div>
-                <div className="sm:text-right">
-                  <div className="font-semibold text-slate-700 dark:text-slate-300">
-                    Date: {new Date().toLocaleDateString()}
-                  </div>
-                  <div className="text-slate-500 font-mono uppercase">
-                    Type:{' '}
-                    {selectedCustomerObj?.customerType === 'B2B' ? 'Wholesale (B2B)' : 'Retail'}
-                  </div>
-                </div>
+            {/* Customer & Order Metadata Box */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800 text-xs">
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Billed To (Customer):
+                </span>
+                <p className="font-bold text-slate-900 dark:text-slate-100 text-sm">
+                  {customerName || 'Walk-in Customer'}
+                </p>
+                {customerPhone && (
+                  <p className="text-slate-600 dark:text-slate-300 font-mono text-[11px]">
+                    Phone: {customerPhone}
+                  </p>
+                )}
+                {customerEmail && (
+                  <p className="text-slate-600 dark:text-slate-300 text-[11px]">
+                    {customerEmail}
+                  </p>
+                )}
               </div>
 
-              {/* Itemized Table */}
-              {cart.length === 0 ? (
-                <div className="text-center py-6 text-xs text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
-                  Cart is empty. Add products or scan IMEIs to preview draft invoice.
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-400 text-left uppercase text-[10px] font-bold">
-                        <th className="py-2">Item Description</th>
-                        <th className="py-2 text-center">Qty</th>
-                        <th className="py-2 text-right">Unit Price</th>
-                        <th className="py-2 text-right">Line Total</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono">
-                      {cart.map((item, idx) => (
-                        <tr key={idx}>
-                          <td className="py-2 font-sans">
-                            <div className="font-semibold text-slate-900 dark:text-slate-100">
-                              {item.description}
+              <div className="space-y-1 sm:text-right">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Invoice Details:
+                </span>
+                <p className="font-semibold text-slate-800 dark:text-slate-200">
+                  Date: {new Date().toLocaleDateString('en-BD', { day: '2-digit', month: 'short', year: 'numeric' })}
+                </p>
+                <p className="text-slate-600 dark:text-slate-300 font-mono text-[11px] uppercase">
+                  Type: <span className="font-bold text-blue-600 dark:text-blue-400">{selectedCustomerObj?.customerType === 'B2B' ? 'Wholesale (B2B)' : 'Retail (B2C)'}</span>
+                </p>
+              </div>
+            </div>
+
+            {/* Itemized Table */}
+            {cart.length === 0 ? (
+              <div className="text-center py-8 text-xs text-slate-400 dark:text-slate-500 border-2 border-dashed border-slate-200 dark:border-slate-800/80 rounded-xl space-y-1">
+                <ShoppingCart className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-700" />
+                <p className="font-semibold text-slate-600 dark:text-slate-400">Your POS Sales Cart is empty</p>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500">Scan barcodes/IMEIs or select items from catalog above to preview invoice</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-left uppercase text-[10px] font-extrabold">
+                      <th className="py-2.5 px-3">#</th>
+                      <th className="py-2.5 px-3">Item Description</th>
+                      <th className="py-2.5 px-3 text-center">Qty</th>
+                      <th className="py-2.5 px-3 text-right">Unit Price</th>
+                      <th className="py-2.5 px-3 text-right">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 font-mono">
+                    {cart.map((item, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                        <td className="py-2.5 px-3 text-slate-400 text-[11px] font-sans">{idx + 1}</td>
+                        <td className="py-2.5 px-3 font-sans">
+                          <div className="font-bold text-slate-900 dark:text-slate-100">
+                            {item.description}
+                          </div>
+                          {item.imeiOrSerial && (
+                            <div className="text-[11px] text-blue-600 dark:text-blue-400 font-mono font-semibold">
+                              IMEI: {item.imeiOrSerial}
                             </div>
-                            {item.imeiOrSerial && (
-                              <div className="text-[10px] text-slate-400 font-mono">
-                                IMEI: {item.imeiOrSerial}
-                              </div>
-                            )}
-                          </td>
-                          <td className="py-2 text-center text-slate-700 dark:text-slate-300">
-                            {item.qty}
-                          </td>
-                          <td className="py-2 text-right text-slate-700 dark:text-slate-300">
-                            ৳{item.unitPrice?.toLocaleString()}
-                          </td>
-                          <td className="py-2 text-right font-bold text-slate-900 dark:text-slate-100">
-                            ৳{(item.unitPrice * item.qty).toLocaleString()}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-3 text-center text-slate-800 dark:text-slate-200 font-bold">
+                          {item.qty}
+                        </td>
+                        <td className="py-2.5 px-3 text-right text-slate-700 dark:text-slate-300">
+                          ৳{item.unitPrice?.toLocaleString()}
+                        </td>
+                        <td className="py-2.5 px-3 text-right font-extrabold text-slate-900 dark:text-slate-100">
+                          ৳{(item.unitPrice * item.qty).toLocaleString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Financial Summary Box */}
+            <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
+              <div className="flex justify-between text-slate-600 dark:text-slate-300">
+                <span>Subtotal</span>
+                <span className="font-mono font-bold text-slate-900 dark:text-slate-100">৳{subTotal.toLocaleString()}</span>
+              </div>
+              {discountAmount > 0 && (
+                <div className="flex justify-between text-red-600 dark:text-red-400 font-bold">
+                  <span>
+                    Discount ({discountType === 'PERCENT' ? `${discount}%` : 'Fixed ৳'})
+                  </span>
+                  <span className="font-mono">-৳{discountAmount.toLocaleString()}</span>
                 </div>
               )}
-
-              {/* Financial Totals Summary */}
-              <div className="border-t border-slate-200 dark:border-slate-800 pt-3 space-y-1 text-xs">
-                <div className="flex justify-between text-slate-500">
-                  <span>Subtotal</span>
-                  <span className="font-mono">৳{subTotal.toLocaleString()}</span>
+              {vatAmount > 0 && (
+                <div className="flex justify-between text-blue-600 dark:text-blue-400 font-bold">
+                  <span>VAT / Tax ({vatRate}%)</span>
+                  <span className="font-mono">+৳{Math.round(vatAmount).toLocaleString()}</span>
                 </div>
-                {discountAmount > 0 && (
-                  <div className="flex justify-between text-red-600 font-semibold">
-                    <span>
-                      Discount ({discountType === 'PERCENT' ? `${discount}%` : 'Fixed ৳'})
-                    </span>
-                    <span className="font-mono">-৳{discountAmount.toLocaleString()}</span>
-                  </div>
-                )}
-                {vatAmount > 0 && (
-                  <div className="flex justify-between text-blue-600 font-semibold">
-                    <span>VAT / Tax ({vatRate}%)</span>
-                    <span className="font-mono">+৳{Math.round(vatAmount).toLocaleString()}</span>
-                  </div>
-                )}
-                <div className="flex justify-between text-sm font-extrabold text-slate-900 dark:text-slate-100 border-t border-slate-200 dark:border-slate-800 pt-2">
-                  <span>Net Total Payable</span>
-                  <span className="font-mono text-emerald-600 dark:text-emerald-400">
-                    ৳{Math.round(netTotal).toLocaleString()}
-                  </span>
-                </div>
-                {paidAmount > 0 && (
-                  <div className="flex justify-between text-slate-600 dark:text-slate-400 font-semibold">
-                    <span>Paid</span>
-                    <span className="font-mono">৳{paidAmount.toLocaleString()}</span>
-                  </div>
-                )}
-                {dueAmount > 0 && (
-                  <div className="flex justify-between text-xs font-bold text-red-600">
-                    <span>Remaining Customer Due</span>
-                    <span className="font-mono">৳{Math.round(dueAmount).toLocaleString()}</span>
-                  </div>
-                )}
+              )}
+              <div className="flex justify-between items-center text-base font-extrabold text-slate-900 dark:text-slate-100 border-t border-slate-200 dark:border-slate-800 pt-2.5">
+                <span>Net Total Payable:</span>
+                <span className="font-mono text-emerald-600 dark:text-emerald-400 text-lg">
+                  ৳{Math.round(netTotal).toLocaleString()}
+                </span>
               </div>
+              {paidAmount > 0 && (
+                <div className="flex justify-between text-slate-700 dark:text-slate-300 font-semibold pt-1 border-t border-slate-200/60 dark:border-slate-800/60">
+                  <span>Amount Paid ({paymentMethod.toUpperCase()})</span>
+                  <span className="font-mono text-slate-900 dark:text-slate-100">৳{paidAmount.toLocaleString()}</span>
+                </div>
+              )}
+              {dueAmount > 0 && (
+                <div className="flex justify-between text-red-600 dark:text-red-400 font-bold">
+                  <span>Remaining Customer Due</span>
+                  <span className="font-mono">৳{dueAmount.toLocaleString()}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
