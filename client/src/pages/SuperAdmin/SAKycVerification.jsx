@@ -1,14 +1,25 @@
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { FileCheck, Loader2, CheckCircle2, XCircle, Clock, AlertTriangle, Building2 } from 'lucide-react';
+import {
+  FileCheck,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  AlertTriangle,
+  Building2,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../../lib/api';
 import { format } from 'date-fns';
 
 const KYC_STATUS_COLORS = {
-  APPROVED: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800',
-  REJECTED: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800',
-  PENDING: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800',
+  APPROVED:
+    'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800',
+  REJECTED:
+    'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800',
+  PENDING:
+    'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800',
 };
 
 export default function SAKycVerification() {
@@ -53,7 +64,9 @@ export default function SAKycVerification() {
       ) : tenants.length === 0 ? (
         <div className="py-16 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
           <CheckCircle2 className="w-12 h-12 mx-auto text-emerald-400 mb-3" />
-          <p className="font-semibold text-slate-700 dark:text-slate-300">All KYC submissions reviewed!</p>
+          <p className="font-semibold text-slate-700 dark:text-slate-300">
+            All KYC submissions reviewed!
+          </p>
           <p className="text-xs text-slate-400 mt-1">No pending verifications at this time.</p>
         </div>
       ) : (
@@ -68,14 +81,21 @@ export default function SAKycVerification() {
             ].filter((d) => d.url);
 
             return (
-              <div key={t._id} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-4">
+              <div
+                key={t._id}
+                className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-4"
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h3 className="font-bold text-slate-900 dark:text-white">{t.shopName}</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">{t.ownerName} · {t.email}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {t.ownerName} · {t.email}
+                    </p>
                     <p className="text-xs text-slate-400">{t.phone}</p>
                   </div>
-                  <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold border ${KYC_STATUS_COLORS[kyc.kycStatus] || KYC_STATUS_COLORS.PENDING}`}>
+                  <span
+                    className={`text-[10px] px-2.5 py-1 rounded-full font-bold border ${KYC_STATUS_COLORS[kyc.kycStatus] || KYC_STATUS_COLORS.PENDING}`}
+                  >
                     <Clock className="w-2.5 h-2.5 inline mr-1" />
                     {kyc.kycStatus || 'PENDING'}
                   </span>
@@ -85,14 +105,22 @@ export default function SAKycVerification() {
                 <div className="grid grid-cols-2 gap-3 text-xs">
                   {kyc.nidNumber && (
                     <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-2.5">
-                      <div className="text-[10px] text-slate-400 font-semibold uppercase mb-0.5">NID Number</div>
-                      <div className="font-mono font-semibold text-slate-800 dark:text-white">{kyc.nidNumber}</div>
+                      <div className="text-[10px] text-slate-400 font-semibold uppercase mb-0.5">
+                        NID Number
+                      </div>
+                      <div className="font-mono font-semibold text-slate-800 dark:text-white">
+                        {kyc.nidNumber}
+                      </div>
                     </div>
                   )}
                   {kyc.tradeLicenseNumber && (
                     <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-2.5">
-                      <div className="text-[10px] text-slate-400 font-semibold uppercase mb-0.5">Trade License</div>
-                      <div className="font-mono font-semibold text-slate-800 dark:text-white">{kyc.tradeLicenseNumber}</div>
+                      <div className="text-[10px] text-slate-400 font-semibold uppercase mb-0.5">
+                        Trade License
+                      </div>
+                      <div className="font-mono font-semibold text-slate-800 dark:text-white">
+                        {kyc.tradeLicenseNumber}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -100,7 +128,9 @@ export default function SAKycVerification() {
                 {/* Documents */}
                 {docs.length > 0 && (
                   <div>
-                    <div className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">Uploaded Documents</div>
+                    <div className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">
+                      Uploaded Documents
+                    </div>
                     <div className="flex flex-wrap gap-2">
                       {docs.map((doc) => (
                         <a
@@ -136,7 +166,11 @@ export default function SAKycVerification() {
                   <button
                     onClick={() => {
                       const reason = window.prompt('Rejection reason (optional):');
-                      kycMutation.mutate({ id: t._id, status: 'REJECTED', rejectionReason: reason || 'Documents rejected by administrator' });
+                      kycMutation.mutate({
+                        id: t._id,
+                        status: 'REJECTED',
+                        rejectionReason: reason || 'Documents rejected by administrator',
+                      });
                     }}
                     disabled={kycMutation.isPending}
                     className="flex-1 flex items-center justify-center gap-2 py-2 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 font-semibold rounded-xl text-xs border border-red-200 dark:border-red-800 transition-colors"

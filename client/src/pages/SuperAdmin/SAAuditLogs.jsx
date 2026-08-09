@@ -130,7 +130,9 @@ export default function SAAuditLogs() {
               </div>
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Total Logs</p>
-                <p className="text-lg font-bold text-gray-900 dark:text-white">{stats.totalLogs?.toLocaleString()}</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                  {stats.totalLogs?.toLocaleString()}
+                </p>
               </div>
             </div>
           </div>
@@ -141,7 +143,9 @@ export default function SAAuditLogs() {
               </div>
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Today</p>
-                <p className="text-lg font-bold text-gray-900 dark:text-white">{stats.todayLogs?.toLocaleString()}</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                  {stats.todayLogs?.toLocaleString()}
+                </p>
               </div>
             </div>
           </div>
@@ -152,7 +156,9 @@ export default function SAAuditLogs() {
               </div>
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">This Week</p>
-                <p className="text-lg font-bold text-gray-900 dark:text-white">{stats.weekLogs?.toLocaleString()}</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                  {stats.weekLogs?.toLocaleString()}
+                </p>
               </div>
             </div>
           </div>
@@ -163,7 +169,9 @@ export default function SAAuditLogs() {
               </div>
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Login Events</p>
-                <p className="text-lg font-bold text-gray-900 dark:text-white">{stats.loginAttempts?.toLocaleString()}</p>
+                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                  {stats.loginAttempts?.toLocaleString()}
+                </p>
               </div>
             </div>
           </div>
@@ -195,7 +203,9 @@ export default function SAAuditLogs() {
         {showFilters && (
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Module</label>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                Module
+              </label>
               <select
                 value={filters.module}
                 onChange={(e) => setFilters({ ...filters, module: e.target.value })}
@@ -203,12 +213,16 @@ export default function SAAuditLogs() {
               >
                 <option value="">All Modules</option>
                 {Object.entries(MODULE_LABELS).map(([key, label]) => (
-                  <option key={key} value={key}>{label}</option>
+                  <option key={key} value={key}>
+                    {label}
+                  </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Action</label>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                Action
+              </label>
               <select
                 value={filters.action}
                 onChange={(e) => setFilters({ ...filters, action: e.target.value })}
@@ -226,7 +240,9 @@ export default function SAAuditLogs() {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Date Range</label>
+              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                Date Range
+              </label>
               <div className="flex gap-2">
                 <input
                   type="date"
@@ -263,18 +279,35 @@ export default function SAAuditLogs() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Timestamp</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">User</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Shop</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Action</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Module</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">Details</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">IP Address</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">
+                    Timestamp
+                  </th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">
+                    User
+                  </th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">
+                    Shop
+                  </th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">
+                    Action
+                  </th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">
+                    Module
+                  </th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">
+                    Details
+                  </th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-500 dark:text-gray-400">
+                    IP Address
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {filteredLogs.map((log) => (
-                  <tr key={log._id} className="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30">
+                  <tr
+                    key={log._id}
+                    className="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30"
+                  >
                     <td className="px-4 py-3 text-gray-600 dark:text-gray-300 whitespace-nowrap">
                       {format(new Date(log.createdAt), 'MMM dd, yyyy HH:mm:ss')}
                     </td>
@@ -284,8 +317,12 @@ export default function SAAuditLogs() {
                           <User className="w-3.5 h-3.5 text-gray-500" />
                         </div>
                         <div>
-                          <div className="font-medium text-gray-900 dark:text-white">{log.username || 'N/A'}</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">{log.roleName || ''}</div>
+                          <div className="font-medium text-gray-900 dark:text-white">
+                            {log.username || 'N/A'}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            {log.roleName || ''}
+                          </div>
                         </div>
                       </div>
                     </td>
@@ -293,14 +330,20 @@ export default function SAAuditLogs() {
                       {log.tenantId?.shopName ? (
                         <div className="flex items-center gap-1.5">
                           <Building2 className="w-3.5 h-3.5 text-gray-400" />
-                          <span className="text-gray-700 dark:text-gray-300">{log.tenantId.shopName}</span>
+                          <span className="text-gray-700 dark:text-gray-300">
+                            {log.tenantId.shopName}
+                          </span>
                         </div>
                       ) : (
-                        <span className="text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 px-2 py-0.5 rounded">Platform</span>
+                        <span className="text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 px-2 py-0.5 rounded">
+                          Platform
+                        </span>
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${ACTION_COLORS[log.action] || 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'}`}>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${ACTION_COLORS[log.action] || 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'}`}
+                      >
                         {log.action}
                       </span>
                     </td>
@@ -325,7 +368,9 @@ export default function SAAuditLogs() {
         {pagination.totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-800">
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total.toLocaleString()} logs
+              Showing {(pagination.page - 1) * pagination.limit + 1} to{' '}
+              {Math.min(pagination.page * pagination.limit, pagination.total)} of{' '}
+              {pagination.total.toLocaleString()} logs
             </p>
             <div className="flex items-center gap-2">
               <button

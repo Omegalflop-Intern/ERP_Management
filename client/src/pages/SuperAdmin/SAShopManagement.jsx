@@ -25,6 +25,7 @@ import {
   Clock,
   Copy,
   Check,
+  Database,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../../lib/api';
@@ -32,6 +33,7 @@ import { format } from 'date-fns';
 import { confirmDelete } from '../../lib/confirm';
 import PasswordInput from '../../components/ui/PasswordInput';
 import { DocumentVaultModal } from '../SaaS/DocumentVaultModal';
+import { getBaseDomain } from '../../utils/subdomain';
 
 const PLAN_COLORS = {
   FREE: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
@@ -41,9 +43,12 @@ const PLAN_COLORS = {
 };
 
 const STATUS_COLORS = {
-  ACTIVE: 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800',
-  PAUSED: 'bg-red-50 text-red-600 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800',
-  PENDING_KYC: 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800',
+  ACTIVE:
+    'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800',
+  PAUSED:
+    'bg-red-50 text-red-600 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800',
+  PENDING_KYC:
+    'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800',
 };
 
 const DURATION_OPTIONS = [
@@ -86,7 +91,10 @@ function TempAdminModal({ tenant, onClose }) {
           <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <Clock className="w-4 h-4 text-indigo-500" /> Create Temporary Admin
           </h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -99,7 +107,9 @@ function TempAdminModal({ tenant, onClose }) {
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 block">Duration</label>
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2 block">
+                Duration
+              </label>
               <div className="grid grid-cols-4 gap-2">
                 {DURATION_OPTIONS.map((opt) => (
                   <button
@@ -118,7 +128,9 @@ function TempAdminModal({ tenant, onClose }) {
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 block">Reason (optional)</label>
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 block">
+                Reason (optional)
+              </label>
               <input
                 type="text"
                 value={reason}
@@ -132,35 +144,55 @@ function TempAdminModal({ tenant, onClose }) {
           <div className="p-6 space-y-4">
             <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4 text-center">
               <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
-              <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">Temp Admin Created!</p>
+              <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+                Temp Admin Created!
+              </p>
             </div>
 
             <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-4 space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-slate-500">Username:</span>
-                <code className="font-mono text-slate-900 dark:text-white bg-white dark:bg-slate-900 px-2 py-0.5 rounded">{credentials.username}</code>
+                <code className="font-mono text-slate-900 dark:text-white bg-white dark:bg-slate-900 px-2 py-0.5 rounded">
+                  {credentials.username}
+                </code>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-500">Password:</span>
                 <div className="flex items-center gap-1">
-                  <code className="font-mono text-slate-900 dark:text-white bg-white dark:bg-slate-900 px-2 py-0.5 rounded">{credentials.password}</code>
-                  <button onClick={() => copyToClipboard(credentials.password)} className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded">
-                    {copied ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3 text-slate-400" />}
+                  <code className="font-mono text-slate-900 dark:text-white bg-white dark:bg-slate-900 px-2 py-0.5 rounded">
+                    {credentials.password}
+                  </code>
+                  <button
+                    onClick={() => copyToClipboard(credentials.password)}
+                    className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded"
+                  >
+                    {copied ? (
+                      <Check className="w-3 h-3 text-emerald-500" />
+                    ) : (
+                      <Copy className="w-3 h-3 text-slate-400" />
+                    )}
                   </button>
                 </div>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Expires:</span>
-                <span className="text-amber-600 dark:text-amber-400 font-medium">{new Date(credentials.expiresAt).toLocaleString()}</span>
+                <span className="text-amber-600 dark:text-amber-400 font-medium">
+                  {new Date(credentials.expiresAt).toLocaleString()}
+                </span>
               </div>
             </div>
 
-            <p className="text-xs text-slate-500 text-center">Share these credentials with the shop owner for support access.</p>
+            <p className="text-xs text-slate-500 text-center">
+              Share these credentials with the shop owner for support access.
+            </p>
           </div>
         )}
 
         <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+          >
             {credentials ? 'Close' : 'Cancel'}
           </button>
           {!credentials && (
@@ -169,7 +201,11 @@ function TempAdminModal({ tenant, onClose }) {
               disabled={createMutation.isPending}
               className="px-4 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white rounded-lg transition-colors flex items-center gap-2"
             >
-              {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Clock className="w-4 h-4" />}
+              {createMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Clock className="w-4 h-4" />
+              )}
               Create Access
             </button>
           )}
@@ -192,10 +228,13 @@ function EditTenantModal({ tenant, onClose, onSuccess }) {
     customDomain: tenant.customDomain || '',
     durationDays: tenant.expiresAt
       ? Math.max(1, Math.ceil((new Date(tenant.expiresAt) - new Date()) / 86400000))
-      : (PLAN_DEFAULTS[tenant.plan || 'STARTER'] || 30),
+      : PLAN_DEFAULTS[tenant.plan || 'STARTER'] || 30,
     expiresAt: tenant.expiresAt ? new Date(tenant.expiresAt).toISOString().slice(0, 10) : '',
     notes: tenant.notes || '',
   });
+  const [isCustomDays, setIsCustomDays] = useState(
+    ![30, 60, 90, 180, 300, 365].includes(form.durationDays)
+  );
   const qc = useQueryClient();
 
   const calcExpiry = (days) => {
@@ -205,9 +244,25 @@ function EditTenantModal({ tenant, onClose, onSuccess }) {
     return d.toISOString().slice(0, 10);
   };
 
+  const PLAN_LIMITS = {
+    FREE: { branches: 1, users: 2 },
+    STARTER: { branches: 2, users: 5 },
+    PRO: { branches: 5, users: 20 },
+    ENTERPRISE: { branches: 50, users: 500 },
+  };
+
   const handlePlanChange = (newPlan) => {
     const days = PLAN_DEFAULTS[newPlan] || 30;
-    setForm((f) => ({ ...f, plan: newPlan, durationDays: days, expiresAt: calcExpiry(days) }));
+    const limits = PLAN_LIMITS[newPlan] || { branches: 2, users: 5 };
+    setIsCustomDays(false);
+    setForm((f) => ({
+      ...f,
+      plan: newPlan,
+      durationDays: days,
+      expiresAt: calcExpiry(days),
+      maxBranches: limits.branches,
+      maxUsers: limits.users,
+    }));
   };
 
   const handleDurationChange = (days) => {
@@ -235,175 +290,226 @@ function EditTenantModal({ tenant, onClose, onSuccess }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg border border-slate-200 dark:border-slate-800 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-3xl border border-slate-200 dark:border-slate-800 shadow-2xl max-h-[90vh] overflow-y-auto">
         <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Pencil className="w-4 h-4 text-indigo-500" /> Edit Shop — {tenant.shopName}
+            <Pencil className="w-4 h-4 text-orange-500" /> Edit Shop — {tenant.shopName}
           </h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="p-6 space-y-4">
-          {/* Basic Info */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Shop Name</label>
-            <input
-              value={form.shopName}
-              onChange={(e) => setForm({ ...form, shopName: e.target.value })}
-              className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Owner Name</label>
-              <input
-                value={form.ownerName}
-                onChange={(e) => setForm({ ...form, ownerName: e.target.value })}
-                className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Phone</label>
-              <input
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-          </div>
-
-          {/* Subscription */}
-          <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-            <div className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5">
-              <CreditCard className="w-3.5 h-3.5 text-indigo-500" /> Subscription Settings
-            </div>
-            <div className="grid grid-cols-2 gap-3">
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Left Column: Basic Info & Domain */}
+            <div className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Plan</label>
-                <select
-                  value={form.plan}
-                  onChange={(e) => handlePlanChange(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  {['FREE', 'STARTER', 'PRO', 'ENTERPRISE'].map((p) => (
-                    <option key={p} value={p}>{p}</option>
-                  ))}
-                </select>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                  Shop Name *
+                </label>
+                <input
+                  value={form.shopName}
+                  onChange={(e) => setForm({ ...form, shopName: e.target.value })}
+                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Duration</label>
-                <div className="flex items-center gap-2">
-                  <select
-                    value={[30, 60, 90, 180, 300, 365].includes(form.durationDays) ? form.durationDays : 'custom'}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val !== 'custom') {
-                        handleDurationChange(Number(val));
-                      }
-                    }}
-                    className="flex-1 px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    <option value={30}>30 Days (1 Mo)</option>
-                    <option value={60}>60 Days (2 Mos)</option>
-                    <option value={90}>90 Days (3 Mos)</option>
-                    <option value={180}>180 Days (6 Mos)</option>
-                    <option value={300}>300 Days (10 Mos)</option>
-                    <option value={365}>365 Days (1 Yr)</option>
-                    <option value="custom">Custom Days</option>
-                  </select>
-                  {![30, 60, 90, 180, 300, 365].includes(form.durationDays) && (
-                    <input
-                      type="number"
-                      min="1"
-                      max="3650"
-                      value={form.durationDays}
-                      onChange={(e) => handleDurationChange(Number(e.target.value))}
-                      placeholder="Days"
-                      className="w-20 px-2 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                  )}
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                    Owner Name
+                  </label>
+                  <input
+                    value={form.ownerName}
+                    onChange={(e) => setForm({ ...form, ownerName: e.target.value })}
+                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                    Phone
+                  </label>
+                  <input
+                    value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
                 </div>
               </div>
-              <div className="col-span-2">
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Expiry Date</label>
-                <input
-                  type="date"
-                  value={form.expiresAt}
-                  onChange={(e) => setForm({ ...form, expiresAt: e.target.value })}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Max Branches</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="50"
-                  value={form.maxBranches}
-                  onChange={(e) => setForm({ ...form, maxBranches: e.target.value })}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Max Users</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="500"
-                  value={form.maxUsers}
-                  onChange={(e) => setForm({ ...form, maxUsers: e.target.value })}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
-            </div>
-          </div>
 
-          {/* Domain */}
-          <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-            <div className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5">
-              <Globe className="w-3.5 h-3.5 text-indigo-500" /> Domain Settings
-            </div>
-            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Subdomain</label>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                  Subdomain
+                </label>
                 <div className="flex items-center gap-0">
                   <input
                     value={form.subdomain}
-                    onChange={(e) => setForm({ ...form, subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''),
+                      })
+                    }
                     placeholder="shop-name"
-                    className="flex-1 px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-l-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="flex-1 px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-l-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                   />
-                  <span className="px-2 py-2 text-xs text-slate-400 bg-slate-100 dark:bg-slate-800 border border-l-0 border-slate-200 dark:border-slate-700 rounded-r-xl whitespace-nowrap">.erp.com</span>
+                  <span className="px-2 py-2 text-xs text-slate-400 bg-slate-100 dark:bg-slate-800 border border-l-0 border-slate-200 dark:border-slate-700 rounded-r-xl whitespace-nowrap">
+                    .erp.com
+                  </span>
                 </div>
+                {form.subdomain && (
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Preview:{' '}
+                    <span className="font-mono text-orange-500">{form.subdomain}.erp.com</span>
+                  </p>
+                )}
               </div>
+
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Custom Domain</label>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                  Custom Domain
+                </label>
                 <input
                   value={form.customDomain}
                   onChange={(e) => setForm({ ...form, customDomain: e.target.value.toLowerCase() })}
                   placeholder="optional — e.g. mystore.com"
-                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
             </div>
-            {form.subdomain && (
-              <p className="text-[11px] text-slate-400 mt-1.5">
-                Preview: <span className="font-mono text-indigo-500">{form.subdomain}.erp.com</span>
-              </p>
-            )}
-          </div>
 
-          {/* Notes */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Internal Notes</label>
-            <textarea
-              value={form.notes}
-              onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              rows={2}
-              placeholder="Notes for internal reference..."
-              className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
-            />
+            {/* Right Column: Subscription & Limits & Notes */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                    Plan
+                  </label>
+                  <select
+                    value={form.plan}
+                    onChange={(e) => handlePlanChange(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  >
+                    {['FREE', 'STARTER', 'PRO', 'ENTERPRISE'].map((p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                    Duration
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={
+                        isCustomDays
+                          ? 'custom'
+                          : [30, 60, 90, 180, 300, 365].includes(form.durationDays)
+                            ? form.durationDays
+                            : 'custom'
+                      }
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'custom') {
+                          setIsCustomDays(true);
+                        } else {
+                          setIsCustomDays(false);
+                          handleDurationChange(Number(val));
+                        }
+                      }}
+                      className="flex-1 px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    >
+                      <option value={30}>30 Days (1 Mo)</option>
+                      <option value={60}>60 Days (2 Mos)</option>
+                      <option value={90}>90 Days (3 Mos)</option>
+                      <option value={180}>180 Days (6 Mos)</option>
+                      <option value={300}>300 Days (10 Mos)</option>
+                      <option value={365}>365 Days (1 Yr)</option>
+                      <option value="custom">Custom Days</option>
+                    </select>
+                    {(isCustomDays || ![30, 60, 90, 180, 300, 365].includes(form.durationDays)) && (
+                      <input
+                        type="number"
+                        min="1"
+                        max="3650"
+                        value={form.durationDays}
+                        onChange={(e) => handleDurationChange(Number(e.target.value))}
+                        placeholder="Days"
+                        className="w-24 px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                    Max Branches
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="50"
+                    value={form.maxBranches}
+                    onChange={(e) => setForm({ ...form, maxBranches: e.target.value })}
+                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                    Max Users
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="500"
+                    value={form.maxUsers}
+                    onChange={(e) => setForm({ ...form, maxUsers: e.target.value })}
+                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                  Expiry Date
+                </label>
+                <input
+                  type="date"
+                  value={form.expiresAt}
+                  onChange={(e) => {
+                    const d = e.target.value;
+                    setForm({
+                      ...form,
+                      expiresAt: d,
+                      durationDays: d
+                        ? Math.max(1, Math.ceil((new Date(d) - new Date()) / 86400000))
+                        : form.durationDays,
+                    });
+                  }}
+                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                  Internal Notes
+                </label>
+                <textarea
+                  value={form.notes}
+                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                  rows={2}
+                  placeholder="Notes for internal reference..."
+                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+                />
+              </div>
+            </div>
           </div>
         </div>
         <div className="px-6 pb-6 flex gap-3">
@@ -418,7 +524,11 @@ function EditTenantModal({ tenant, onClose, onSuccess }) {
             disabled={mutation.isPending}
             className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-medium rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
           >
-            {mutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            {mutation.isPending ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Save className="w-4 h-4" />
+            )}
             Save Changes
           </button>
         </div>
@@ -434,10 +544,18 @@ export default function SAShopManagement() {
   const [kycTenant, setKycTenant] = useState(null);
   const [tempAdminTenant, setTempAdminTenant] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [isCreateCustomDays, setIsCreateCustomDays] = useState(false);
   const PLAN_DEFAULTS = { FREE: 30, STARTER: 30, PRO: 90, ENTERPRISE: 365 };
   const [createForm, setCreateForm] = useState({
-    shopName: '', ownerName: '', username: '', email: '', phone: '',
-    plan: 'STARTER', durationDays: 30, subdomain: '', password: '',
+    shopName: '',
+    ownerName: '',
+    username: '',
+    email: '',
+    phone: '',
+    plan: 'STARTER',
+    durationDays: 30,
+    subdomain: '',
+    password: '',
   });
 
   const { data: tenants = [], isLoading } = useQuery({
@@ -453,6 +571,15 @@ export default function SAShopManagement() {
       const expiry = new Date();
       expiry.setDate(expiry.getDate() + (createForm.durationDays || 30));
       const body = { ...createForm, expiresAt: expiry.toISOString() };
+      if (!body.subdomain || !body.subdomain.trim()) {
+        delete body.subdomain;
+      } else {
+        body.subdomain = body.subdomain
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9-]/g, '');
+      }
+      if (!body.username || !body.username.trim()) delete body.username;
       const res = await api.post('/tenants', body);
       return res.data;
     },
@@ -461,7 +588,17 @@ export default function SAShopManagement() {
       qc.invalidateQueries({ queryKey: ['sa-shops'] });
       qc.invalidateQueries({ queryKey: ['sa-stats'] });
       setShowCreate(false);
-      setCreateForm({ shopName: '', ownerName: '', username: '', email: '', phone: '', plan: 'STARTER', durationDays: 30, subdomain: '', password: '' });
+      setCreateForm({
+        shopName: '',
+        ownerName: '',
+        username: '',
+        email: '',
+        phone: '',
+        plan: 'STARTER',
+        durationDays: 30,
+        subdomain: '',
+        password: '',
+      });
     },
     onError: (e) => toast.error(e.response?.data?.message || 'Create failed'),
   });
@@ -476,6 +613,29 @@ export default function SAShopManagement() {
     onError: (e) => toast.error(e.response?.data?.message || 'Failed'),
   });
 
+  const [selectedTenants, setSelectedTenants] = useState([]);
+  const [backupLoading, setBackupLoading] = useState(false);
+
+  const handleDownloadBackup = async () => {
+    setBackupLoading(true);
+    try {
+      const res = await api.get('/settings/backup');
+      const jsonStr = JSON.stringify(res.data, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `omnimanage_system_backup_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('System database backup downloaded');
+    } catch (e) {
+      toast.error('Failed to download database backup');
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
   const deleteMutation = useMutation({
     mutationFn: async (id) => api.patch(`/tenants/${id}/status`, { status: 'DELETED' }),
     onSuccess: () => {
@@ -486,9 +646,44 @@ export default function SAShopManagement() {
     onError: (e) => toast.error(e.response?.data?.message || 'Delete failed'),
   });
 
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids) => api.delete('/tenants/bulk', { data: { ids } }),
+    onSuccess: (res) => {
+      toast.success(res.data?.message || 'Selected shops deleted');
+      setSelectedTenants([]);
+      qc.invalidateQueries({ queryKey: ['sa-shops'] });
+      qc.invalidateQueries({ queryKey: ['sa-stats'] });
+    },
+    onError: (e) => toast.error(e.response?.data?.message || 'Bulk delete failed'),
+  });
+
   const handleDelete = async (t) => {
-    const confirmed = await confirmDelete(`Delete "${t.shopName}"? This will permanently remove all associated data.`);
+    const confirmed = await confirmDelete(
+      `Delete "${t.shopName}"? This will permanently remove all associated data.`
+    );
     if (confirmed) deleteMutation.mutate(t._id);
+  };
+
+  const handleBulkDelete = async () => {
+    if (!selectedTenants.length) return;
+    const confirmed = await confirmDelete(
+      `Delete ${selectedTenants.length} selected shop(s)? All shop data will be removed.`
+    );
+    if (confirmed) bulkDeleteMutation.mutate(selectedTenants);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedTenants.length === tenants.length && tenants.length > 0) {
+      setSelectedTenants([]);
+    } else {
+      setSelectedTenants(tenants.map((t) => t._id));
+    }
+  };
+
+  const toggleSelectTenant = (id) => {
+    setSelectedTenants((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
   };
 
   return (
@@ -500,15 +695,52 @@ export default function SAShopManagement() {
             <Building2 className="w-6 h-6 text-indigo-500" /> Shop Management
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Create, edit, manage subscriptions and delete shops
+            Create, edit, manage subscriptions, bulk delete and inspect shops
           </p>
         </div>
-        <button
-          onClick={() => setShowCreate(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors shadow-md"
-        >
-          <Plus className="w-4 h-4" /> Create New Shop
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {tenants.length > 0 && (
+            <button
+              onClick={toggleSelectAll}
+              className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl transition-all border border-slate-200 dark:border-slate-700"
+            >
+              <input
+                type="checkbox"
+                checked={selectedTenants.length === tenants.length && tenants.length > 0}
+                onChange={toggleSelectAll}
+                className="w-3.5 h-3.5 rounded text-indigo-600 cursor-pointer pointer-events-none"
+              />
+              {selectedTenants.length === tenants.length && tenants.length > 0
+                ? 'Deselect All'
+                : 'Select All'}
+            </button>
+          )}
+
+          <button
+            onClick={handleDownloadBackup}
+            disabled={backupLoading}
+            className="flex items-center gap-2 px-3.5 py-2 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm border border-slate-700/50"
+          >
+            <Database className="w-3.5 h-3.5 text-emerald-400" />
+            {backupLoading ? 'Exporting...' : 'System Backup'}
+          </button>
+
+          {selectedTenants.length > 0 && (
+            <button
+              onClick={handleBulkDelete}
+              disabled={bulkDeleteMutation.isPending}
+              className="flex items-center gap-2 px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl transition-all shadow-sm"
+            >
+              <Trash2 className="w-3.5 h-3.5" /> Bulk Delete ({selectedTenants.length})
+            </button>
+          )}
+          <button
+            onClick={() => setShowCreate(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-colors shadow-sm"
+          >
+            <Plus className="w-4 h-4" /> Create New Shop
+          </button>
+        </div>
       </div>
 
       {/* Search */}
@@ -532,40 +764,60 @@ export default function SAShopManagement() {
         <div className="py-16 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
           <Building2 className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-700 mb-3" />
           <p className="font-semibold text-slate-600 dark:text-slate-400">No shops found</p>
-          <p className="text-xs text-slate-400 mt-1">Create your first shop using the button above</p>
+          <p className="text-xs text-slate-400 mt-1">
+            Create your first shop using the button above
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {tenants.map((t) => (
             <div
               key={t._id}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col gap-3"
+              className={`bg-white dark:bg-slate-900 border rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col gap-3 ${
+                selectedTenants.includes(t._id)
+                  ? 'border-indigo-500 ring-2 ring-indigo-500/20 dark:border-indigo-500'
+                  : 'border-slate-200 dark:border-slate-800'
+              }`}
             >
               {/* Top row */}
               <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <h3 className="font-bold text-slate-900 dark:text-white text-sm leading-tight truncate">{t.shopName}</h3>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${STATUS_COLORS[t.status] || ''}`}>
-                      {t.status}
-                    </span>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${PLAN_COLORS[t.plan] || ''}`}>
-                      {t.plan}
-                    </span>
-                  </div>
-                  {t.subdomain && (
-                    <div className="flex items-center gap-1 mt-1">
-                      <span className="text-[10px] font-mono text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-1.5 py-0.5 rounded">
-                        {t.subdomain}.erp.com
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <input
+                    type="checkbox"
+                    checked={selectedTenants.includes(t._id)}
+                    onChange={() => toggleSelectTenant(t._id)}
+                    className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer flex-shrink-0"
+                  />
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-slate-900 dark:text-white text-sm leading-tight truncate">
+                      {t.shopName}
+                    </h3>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <span
+                        className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${STATUS_COLORS[t.status] || ''}`}
+                      >
+                        {t.status}
                       </span>
-                      {t.customDomain && (
-                        <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">
-                          {t.customDomain}
-                        </span>
-                      )}
+                      <span
+                        className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${PLAN_COLORS[t.plan] || ''}`}
+                      >
+                        {t.plan}
+                      </span>
                     </div>
-                  )}
+                  </div>
                 </div>
+                {t.subdomain && (
+                  <div className="flex items-center gap-1 mt-1">
+                    <span className="text-[10px] font-mono text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-1.5 py-0.5 rounded">
+                      {t.subdomain}.{getBaseDomain()}
+                    </span>
+                    {t.customDomain && (
+                      <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">
+                        {t.customDomain}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Owner info */}
@@ -599,13 +851,23 @@ export default function SAShopManagement() {
                 <div className="col-span-2 flex items-center gap-1.5">
                   <Calendar className="w-3 h-3 text-slate-400" />
                   <span className="text-slate-500">Expires:</span>
-                  <strong className={t.expiresAt ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'}>
+                  <strong
+                    className={
+                      t.expiresAt ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'
+                    }
+                  >
                     {t.expiresAt ? format(new Date(t.expiresAt), 'MMM d, yyyy') : 'No expiry set'}
                   </strong>
                 </div>
                 <div className="col-span-2 flex items-center gap-1.5">
                   <span className="text-slate-500">KYC:</span>
-                  <strong className={t.kycDocuments?.kycStatus === 'APPROVED' ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}>
+                  <strong
+                    className={
+                      t.kycDocuments?.kycStatus === 'APPROVED'
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : 'text-amber-600 dark:text-amber-400'
+                    }
+                  >
                     {t.kycDocuments?.kycStatus || 'PENDING'}
                   </strong>
                 </div>
@@ -616,11 +878,17 @@ export default function SAShopManagement() {
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="bg-blue-50 dark:bg-blue-950/20 rounded-lg p-2">
                     <div className="text-[10px] text-blue-500 font-semibold uppercase">Sales</div>
-                    <div className="font-bold text-slate-800 dark:text-white">{t.stats.totalSales} orders</div>
+                    <div className="font-bold text-slate-800 dark:text-white">
+                      {t.stats.totalSales} orders
+                    </div>
                   </div>
                   <div className="bg-violet-50 dark:bg-violet-950/20 rounded-lg p-2">
-                    <div className="text-[10px] text-violet-500 font-semibold uppercase">Revenue</div>
-                    <div className="font-bold text-slate-800 dark:text-white">৳{(t.stats.totalRevenue || 0).toLocaleString()}</div>
+                    <div className="text-[10px] text-violet-500 font-semibold uppercase">
+                      Revenue
+                    </div>
+                    <div className="font-bold text-slate-800 dark:text-white">
+                      ৳{(t.stats.totalRevenue || 0).toLocaleString()}
+                    </div>
                   </div>
                 </div>
               )}
@@ -682,9 +950,7 @@ export default function SAShopManagement() {
       )}
 
       {/* KYC Modal */}
-      {kycTenant && (
-        <DocumentVaultModal tenant={kycTenant} onClose={() => setKycTenant(null)} />
-      )}
+      {kycTenant && <DocumentVaultModal tenant={kycTenant} onClose={() => setKycTenant(null)} />}
 
       {/* Temp Admin Modal */}
       {tempAdminTenant && (
@@ -699,14 +965,19 @@ export default function SAShopManagement() {
               <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Plus className="w-4 h-4 text-indigo-500" /> Create New Shop
               </h3>
-              <button onClick={() => setShowCreate(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+              <button
+                onClick={() => setShowCreate(false)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Shop Name *</label>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                    Shop Name *
+                  </label>
                   <input
                     type="text"
                     value={createForm.shopName}
@@ -716,7 +987,9 @@ export default function SAShopManagement() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Owner Name *</label>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                    Owner Name *
+                  </label>
                   <input
                     type="text"
                     value={createForm.ownerName}
@@ -726,7 +999,9 @@ export default function SAShopManagement() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Username</label>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                    Username
+                  </label>
                   <input
                     type="text"
                     value={createForm.username}
@@ -736,7 +1011,9 @@ export default function SAShopManagement() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Email *</label>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                    Email *
+                  </label>
                   <input
                     type="email"
                     value={createForm.email}
@@ -746,7 +1023,9 @@ export default function SAShopManagement() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Phone</label>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                    Phone
+                  </label>
                   <input
                     type="text"
                     value={createForm.phone}
@@ -756,32 +1035,52 @@ export default function SAShopManagement() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Plan</label>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                    Plan
+                  </label>
                   <select
                     value={createForm.plan}
                     onChange={(e) => {
                       const p = e.target.value;
-                      setCreateForm({ ...createForm, plan: p, durationDays: PLAN_DEFAULTS[p] || 30 });
+                      setIsCreateCustomDays(false);
+                      setCreateForm({
+                        ...createForm,
+                        plan: p,
+                        durationDays: PLAN_DEFAULTS[p] || 30,
+                      });
                     }}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                   >
                     {['FREE', 'STARTER', 'PRO', 'ENTERPRISE'].map((p) => (
-                      <option key={p} value={p}>{p}</option>
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Duration</label>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                    Duration
+                  </label>
                   <div className="flex items-center gap-2">
                     <select
-                      value={[30, 60, 90, 180, 300, 365].includes(createForm.durationDays) ? createForm.durationDays : 'custom'}
+                      value={
+                        isCreateCustomDays
+                          ? 'custom'
+                          : [30, 60, 90, 180, 300, 365].includes(createForm.durationDays)
+                            ? createForm.durationDays
+                            : 'custom'
+                      }
                       onChange={(e) => {
                         const val = e.target.value;
-                        if (val !== 'custom') {
+                        if (val === 'custom') {
+                          setIsCreateCustomDays(true);
+                        } else {
+                          setIsCreateCustomDays(false);
                           setCreateForm({ ...createForm, durationDays: Number(val) });
                         }
                       }}
-                      className="flex-1 px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="flex-1 px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                     >
                       <option value={30}>30 Days (1 Month)</option>
                       <option value={60}>60 Days (2 Months)</option>
@@ -791,38 +1090,65 @@ export default function SAShopManagement() {
                       <option value={365}>365 Days (1 Year)</option>
                       <option value="custom">Custom Days</option>
                     </select>
-                    {![30, 60, 90, 180, 300, 365].includes(createForm.durationDays) && (
+                    {(isCreateCustomDays ||
+                      ![30, 60, 90, 180, 300, 365].includes(createForm.durationDays)) && (
                       <input
                         type="number"
                         min="1"
                         max="3650"
                         value={createForm.durationDays}
-                        onChange={(e) => setCreateForm({ ...createForm, durationDays: Number(e.target.value) })}
+                        onChange={(e) =>
+                          setCreateForm({ ...createForm, durationDays: Number(e.target.value) })
+                        }
                         placeholder="Days"
-                        className="w-20 px-2 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        className="w-24 px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                       />
                     )}
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Subdomain</label>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                    Subdomain
+                  </label>
                   <div className="flex items-center gap-0">
                     <input
                       value={createForm.subdomain}
-                      onChange={(e) => setCreateForm({ ...createForm, subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })}
-                      placeholder={createForm.shopName ? createForm.shopName.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 30) : 'auto from shop name'}
+                      onChange={(e) =>
+                        setCreateForm({
+                          ...createForm,
+                          subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''),
+                        })
+                      }
+                      placeholder={
+                        createForm.shopName
+                          ? createForm.shopName
+                              .toLowerCase()
+                              .replace(/[^a-z0-9\s-]/g, '')
+                              .replace(/\s+/g, '-')
+                              .replace(/-+/g, '-')
+                              .replace(/^-|-$/g, '')
+                              .slice(0, 30)
+                          : 'auto from shop name'
+                      }
                       className="flex-1 px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-l-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
-                    <span className="px-2 py-2 text-xs text-slate-400 bg-slate-100 dark:bg-slate-800 border border-l-0 border-slate-200 dark:border-slate-700 rounded-r-xl whitespace-nowrap">.erp.com</span>
+                    <span className="px-2 py-2 text-xs text-slate-400 bg-slate-100 dark:bg-slate-800 border border-l-0 border-slate-200 dark:border-slate-700 rounded-r-xl whitespace-nowrap">
+                      .erp.com
+                    </span>
                   </div>
                   {createForm.subdomain && (
                     <p className="text-[11px] text-slate-400 mt-1">
-                      Preview: <span className="font-mono text-indigo-500">{createForm.subdomain}.erp.com</span>
+                      Preview:{' '}
+                      <span className="font-mono text-indigo-500">
+                        {createForm.subdomain}.erp.com
+                      </span>
                     </p>
                   )}
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Owner Password *</label>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                    Owner Password *
+                  </label>
                   <PasswordInput
                     value={createForm.password}
                     onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
@@ -841,10 +1167,19 @@ export default function SAShopManagement() {
               </button>
               <button
                 onClick={() => createMutation.mutate()}
-                disabled={createMutation.isPending || !createForm.shopName || !createForm.email || !createForm.password}
+                disabled={
+                  createMutation.isPending ||
+                  !createForm.shopName ||
+                  !createForm.email ||
+                  !createForm.password
+                }
                 className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-medium rounded-xl text-sm transition-colors flex items-center justify-center gap-2"
               >
-                {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                {createMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Plus className="w-4 h-4" />
+                )}
                 Create Shop
               </button>
             </div>

@@ -30,7 +30,9 @@ const STATUS_COLORS = {
 function StatCard({ icon: Icon, label, value, sub, color }) {
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
-      <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${color}`}>
+      <div
+        className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${color}`}
+      >
         <Icon className="w-5 h-5" />
       </div>
       <div>
@@ -64,7 +66,9 @@ export default function SADashboard() {
     return (
       <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 text-center">
         <AlertTriangle className="w-8 h-8 text-red-500 mx-auto mb-2" />
-        <p className="text-sm text-red-700 dark:text-red-400">Failed to load dashboard stats. Make sure you have super admin access.</p>
+        <p className="text-sm text-red-700 dark:text-red-400">
+          Failed to load dashboard stats. Make sure you have super admin access.
+        </p>
       </div>
     );
   }
@@ -122,19 +126,32 @@ export default function SADashboard() {
           </span>
         </div>
         {expiringSoonList.length === 0 ? (
-          <p className="text-xs text-slate-400 text-center py-4">No subscriptions expiring within 30 days 🎉</p>
+          <p className="text-xs text-slate-400 text-center py-4">
+            No subscriptions expiring within 30 days 🎉
+          </p>
         ) : (
           <div className="space-y-2 max-h-48 overflow-y-auto">
             {expiringSoonList.map((t) => (
-              <div key={t._id} className="flex items-center justify-between text-xs py-1.5 border-b border-slate-100 dark:border-slate-800 last:border-0">
+              <div
+                key={t._id}
+                className="flex items-center justify-between text-xs py-1.5 border-b border-slate-100 dark:border-slate-800 last:border-0"
+              >
                 <div>
-                  <div className="font-semibold text-slate-800 dark:text-slate-200">{t.shopName}</div>
+                  <div className="font-semibold text-slate-800 dark:text-slate-200">
+                    {t.shopName}
+                  </div>
                   <div className="text-slate-500">{t.email}</div>
                 </div>
                 <div className="text-right">
-                  <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold ${PLAN_COLORS[t.plan] || ''}`}>{t.plan}</span>
+                  <span
+                    className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold ${PLAN_COLORS[t.plan] || ''}`}
+                  >
+                    {t.plan}
+                  </span>
                   <div className="text-amber-600 dark:text-amber-400 font-medium mt-0.5">
-                    {t.expiresAt ? formatDistanceToNow(new Date(t.expiresAt), { addSuffix: true }) : 'No expiry'}
+                    {t.expiresAt
+                      ? formatDistanceToNow(new Date(t.expiresAt), { addSuffix: true })
+                      : 'No expiry'}
                   </div>
                 </div>
               </div>
@@ -147,7 +164,9 @@ export default function SADashboard() {
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
         <div className="flex items-center gap-2 mb-4">
           <Users className="w-4 h-4 text-indigo-500" />
-          <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Recent Sign-ups</h2>
+          <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+            Recent Sign-ups
+          </h2>
         </div>
         {recentTenants.length === 0 ? (
           <p className="text-xs text-slate-400 text-center py-6">No shops registered yet.</p>
@@ -165,14 +184,27 @@ export default function SADashboard() {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {recentTenants.map((t) => (
-                  <tr key={t._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                    <td className="py-2.5 font-semibold text-slate-800 dark:text-slate-200">{t.shopName}</td>
+                  <tr
+                    key={t._id}
+                    className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                  >
+                    <td className="py-2.5 font-semibold text-slate-800 dark:text-slate-200">
+                      {t.shopName}
+                    </td>
                     <td className="py-2.5 text-slate-600 dark:text-slate-400">{t.ownerName}</td>
                     <td className="py-2.5">
-                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${PLAN_COLORS[t.plan] || ''}`}>{t.plan}</span>
+                      <span
+                        className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${PLAN_COLORS[t.plan] || ''}`}
+                      >
+                        {t.plan}
+                      </span>
                     </td>
                     <td className="py-2.5">
-                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${STATUS_COLORS[t.status] || ''}`}>{t.status}</span>
+                      <span
+                        className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${STATUS_COLORS[t.status] || ''}`}
+                      >
+                        {t.status}
+                      </span>
                     </td>
                     <td className="py-2.5 text-slate-500 text-right">
                       <div className="flex items-center justify-end gap-1">
