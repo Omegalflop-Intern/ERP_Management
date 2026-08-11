@@ -1,14 +1,24 @@
-const allowedOrigins = [
+const rawOrigins = [
   process.env.CLIENT_URL,
   process.env.APP_URL,
   process.env.ALLOWED_ORIGIN,
   'http://localhost:3000',
+  'https://localhost:3000',
   'http://127.0.0.1:3000',
+  'https://127.0.0.1:3000',
   'http://localhost:5173',
+  'https://localhost:5173',
   'http://127.0.0.1:5173',
-].filter(Boolean);
+  'https://127.0.0.1:5173',
+];
 
-const baseDomain = process.env.BASE_DOMAIN || 'erp.com';
+const allowedOrigins = rawOrigins
+  .filter(Boolean)
+  .flatMap((item) => item.split(','))
+  .map((o) => o.trim().replace(/\/+$/, ''))
+  .filter(Boolean);
+
+const baseDomain = process.env.BASE_DOMAIN || 'respawnalley.com';
 
 if (allowedOrigins.length === 0) {
   console.warn('[CORS] No allowed origins configured. Set CLIENT_URL, APP_URL, or ALLOWED_ORIGIN env vars.');
@@ -28,7 +38,7 @@ export const corsOptions = {
       if (allowedOrigins.some((o) => origin.startsWith(o))) {
         callback(null, true);
       } else {
-        callback(new Error('Not allowed by CORS'));
+        callback(new Error(`Not allowed by CORS: ${origin}`));
       }
     } else {
       callback(null, true);

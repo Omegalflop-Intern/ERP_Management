@@ -64,6 +64,10 @@ app.set('trust proxy', 1);
 
 if (process.env.NODE_ENV === 'production') {
   app.use((req, res, next) => {
+    const host = req.headers.host || '';
+    if (host.includes('127.0.0.1') || host.includes('localhost')) {
+      return next();
+    }
     if (req.headers['x-forwarded-proto'] === 'http') {
       return res.redirect(301, `https://${req.headers.host}${req.url}`);
     }
@@ -118,7 +122,7 @@ app.use('/uploads', (req, res, next) => {
     const referer = req.headers.referer || req.headers.origin || '';
     const allowedReferers = [process.env.CLIENT_URL, process.env.APP_URL, process.env.ALLOWED_ORIGIN].filter(Boolean);
     if (allowedReferers.length === 0) {
-      console.warn('[Uploads] No CLIENT_URL/APP_URL set — /uploads requests are unprotected in production.');
+      return next();
     }
     if (referer && !allowedReferers.some((r) => referer.startsWith(r))) {
       return res.status(403).json({ success: false, message: 'Forbidden' });
@@ -131,12 +135,10 @@ app.use('/uploads', (req, res, next) => {
 app.use('/api', apiLimiter);
 
 app.get('/', (req, res) => {
-  if (req.accepts('html')) {
-    return res.send(renderServerLandingPage(env.NODE_ENV || 'development'));
-  }
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.json({
     success: true,
-    message: 'Mobile Shop ERP API Server is running',
+    message: 'OmniManage API Server is running',
     version: '1.0.0',
     documentation: '/api-docs',
     health: '/api/v1/health',

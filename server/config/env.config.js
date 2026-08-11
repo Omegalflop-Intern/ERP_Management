@@ -12,7 +12,6 @@ dotenv.config({ path: resolve(__dirname, '../.env') });
 const envSchema = z.object({
   PORT: z.string().default('5000'),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  MONGODB_URI: z.string().default('mongodb://127.0.0.1:27017/mobile_shop_erp'),
   DB_HOST: z.string().default(''),
   DB_PORT: z.string().default(''),
   DB_USER: z.string().default(''),
