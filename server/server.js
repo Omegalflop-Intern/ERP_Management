@@ -37,21 +37,22 @@ const server = hasCerts
   ? createHttpsServer({ cert: fs.readFileSync(certPath), key: fs.readFileSync(keyPath) }, app)
   : createHttpServer(app);
 
-const protocol = hasCerts ? 'https' : 'http';
+// Phusion Passenger (cPanel) support: process.env.PORT can be a socket path (e.g. /tmp/passenger.xxx/socket)
+const listenTarget = process.env.PORT || env.PORT || 5000;
 
-const startServer = (portToTry) => {
+const startServer = (target) => {
   server.removeAllListeners('error');
   
   server.on('error', (err) => {
-    if (err.code === 'EADDRINUSE') {
-      console.warn(`[SERVER] ⚠️ Port ${portToTry} is in use. Trying port ${portToTry + 1}...`);
-      setTimeout(() => startServer(portToTry + 1), 200);
+    if (err.code === 'EADDRINUSE' && typeof target === 'number') {
+      console.warn(`[SERVER] ⚠️ Port ${target} is in use. Trying port ${target + 1}...`);
+      setTimeout(() => startServer(target + 1), 200);
     } else {
       console.error('[SERVER] ❌ Fatal server error:', err.message);
     }
   });
 
-  server.listen(portToTry, async () => {
+  server.listen(target, async () => {
     global.__serverStartTime = new Date();
     global.__serverProtocol = protocol;
 
@@ -67,11 +68,11 @@ const startServer = (portToTry) => {
     startTempAdminCleanup();
 
     console.log('');
-    printServerInfo(portToTry, env.NODE_ENV || 'development', protocol);
+    printServerInfo(target, env.NODE_ENV || 'development', protocol);
   });
 };
 
-startServer(PORT);
+startServer(listenTarget);
 
   emitter.on(EVENTS.STOCK_UPDATED, (data) => {
     console.log('\x1b[36m[EVENT:STOCK]\x1b[0m Stock updated:', data?.name || data?.sku);
@@ -150,3 +151,5 @@ startServer(PORT);
     console.log('\x1b[35m[EVENT:NOTIF]\x1b[0m Notification triggered:', data?.title);
     broadcastToTenant(data?.tenantId || null, { type: 'NOTIFICATION', data });
   });
+
+export default app;
