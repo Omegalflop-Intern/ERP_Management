@@ -122,7 +122,15 @@ export function getAssetUrl(path) {
     return path;
   }
 
-  return path.startsWith('/') ? path : `/${path}`;
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+
+  // Uploaded files live on the API server, not the client origin.
+  // Prepend SERVER_URL so production correctly loads from api.respawnalley.com/uploads/...
+  if (normalizedPath.startsWith('/uploads') && SERVER_URL) {
+    return `${SERVER_URL}${normalizedPath}`;
+  }
+
+  return normalizedPath;
 }
 
 export { API_URL, SERVER_URL };

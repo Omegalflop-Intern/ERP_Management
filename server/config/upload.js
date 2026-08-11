@@ -1,13 +1,18 @@
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
 import { ApiError } from '../utils/http/ApiError.js';
 import { fileTypeFromBuffer } from 'file-type';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const UPLOADS_ROOT = path.resolve(__dirname, '../uploads');
 
 const ensureDir = (dir) => { if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); };
 
 const avatarStorage = multer.diskStorage({
-  destination: (req, file, cb) => { const dir = 'uploads/avatars'; ensureDir(dir); cb(null, dir); },
+  destination: (req, file, cb) => { const dir = path.join(UPLOADS_ROOT, 'avatars'); ensureDir(dir); cb(null, dir); },
   filename: (req, file, cb) => {
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
     const ext = path.extname(file.originalname);
@@ -16,7 +21,7 @@ const avatarStorage = multer.diskStorage({
 });
 
 const productStorage = multer.diskStorage({
-  destination: (req, file, cb) => { const dir = 'uploads/products'; ensureDir(dir); cb(null, dir); },
+  destination: (req, file, cb) => { const dir = path.join(UPLOADS_ROOT, 'products'); ensureDir(dir); cb(null, dir); },
   filename: (req, file, cb) => {
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
     const ext = path.extname(file.originalname);
@@ -36,7 +41,7 @@ const fileFilter = (req, file, cb) => {
 };
 
 const logoStorage = multer.diskStorage({
-  destination: (req, file, cb) => { const dir = 'uploads/logos'; ensureDir(dir); cb(null, dir); },
+  destination: (req, file, cb) => { const dir = path.join(UPLOADS_ROOT, 'logos'); ensureDir(dir); cb(null, dir); },
   filename: (req, file, cb) => {
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
     const ext = path.extname(file.originalname);
@@ -57,7 +62,7 @@ export const uploadProductImage = multer({
 }).single('image');
 
 const documentStorage = multer.diskStorage({
-  destination: (req, file, cb) => { const dir = 'uploads/documents'; ensureDir(dir); cb(null, dir); },
+  destination: (req, file, cb) => { const dir = path.join(UPLOADS_ROOT, 'documents'); ensureDir(dir); cb(null, dir); },
   filename: (req, file, cb) => {
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
     const ext = path.extname(file.originalname);
