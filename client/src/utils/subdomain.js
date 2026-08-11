@@ -1,4 +1,4 @@
-export const baseDomain = import.meta.env.VITE_BASE_DOMAIN || 'omegaflop.com';
+export const baseDomain = import.meta.env.VITE_BASE_DOMAIN || 'respawnalley.com';
 
 export function getBaseDomain() {
   const host = window.location.hostname;
@@ -9,11 +9,11 @@ export function getBaseDomain() {
 /**
  * Detect subdomain from current URL.
  * salah.localhost → "salah"
- * mamum.erp.com → "mamum"
- * erp.com → null (main domain / super admin)
+ * shop.respawnalley.com → "shop"
+ * respawnalley.com / www.respawnalley.com → null (main domain)
  */
 export function detectSubdomain() {
-  const host = window.location.hostname;
+  const host = window.location.hostname.toLowerCase();
 
   // Localhost subdomain: salah.localhost
   if (host.endsWith('.localhost')) {
@@ -22,21 +22,27 @@ export function detectSubdomain() {
     return null;
   }
 
-  // Subdomain: mamum.erp.com
+  // Exact main domain or www/api subdomains -> return null (main domain)
+  if (host === baseDomain || host === `www.${baseDomain}` || host === `api.${baseDomain}`) {
+    return null;
+  }
+
+  // Subdomain: shop.respawnalley.com
   if (host.endsWith(`.${baseDomain}`)) {
     const sub = host.replace(`.${baseDomain}`, '');
     if (sub && sub !== 'www' && sub !== 'api') return sub;
     return null;
   }
 
-  // Custom domain: anything that's not the base domain itself
-  if (
-    host !== baseDomain &&
-    !host.startsWith('www.') &&
-    host !== 'localhost' &&
-    host !== '127.0.0.1'
-  ) {
-    return host;
+  // Localhost / IP check
+  if (host === 'localhost' || host === '127.0.0.1') {
+    return null;
+  }
+
+  // Custom domain: e.g. custombrand.com
+  const cleanHost = host.startsWith('www.') ? host.slice(4) : host;
+  if (cleanHost !== baseDomain) {
+    return cleanHost;
   }
 
   return null;
