@@ -33,17 +33,17 @@ export function useDocumentTitle(pageTitle) {
   });
 
   useEffect(() => {
-    let brand = 'OmniManage';
+    let brand = 'Omegaflop';
     if (isSuperAdmin) {
-      brand = 'Super Admin | OmniManage';
+      brand = 'Super Admin | Omegaflop';
     } else if (isShopUser) {
       const shop = tenantInfo?.shopName || user?.tenant?.shopName || user?.shopName || 'My Shop';
-      brand = `${shop} | OmniManage`;
+      brand = `${shop} | Omegaflop`;
     } else if (publicTenant?.shopName) {
-      brand = `${publicTenant.shopName} | OmniManage`;
+      brand = `${publicTenant.shopName} | Omegaflop`;
     } else if (subdomain) {
       const formattedSub = subdomain.charAt(0).toUpperCase() + subdomain.slice(1);
-      brand = `${formattedSub} Store | OmniManage`;
+      brand = `${formattedSub} Store | Omegaflop`;
     }
 
     document.title = pageTitle ? `${pageTitle} — ${brand}` : brand;

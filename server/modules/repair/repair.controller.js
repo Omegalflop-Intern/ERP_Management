@@ -2,7 +2,6 @@ import * as repairService from './repair.service.js';
 import { ApiResponse } from '../../utils/http/ApiResponse.js';
 import { logAction } from '../../utils/auth/auditLog.js';
 import { sendAdminNotificationEmail, sendCustomerRepairEmail } from '../../config/mailer.js';
-import { sendAdminSMSNotification, sendCustomerRepairSMS } from '../../config/sms.js';
 
 export const getAllRepairs = async (req, res, next) => {
   try {
@@ -30,16 +29,11 @@ export const createRepair = async (req, res, next) => {
     if (ticket.customerEmail) {
       sendCustomerRepairEmail(ticket.customerEmail, ticket.customerName, ticket).catch(e => console.error('[Customer Repair Mail Error]:', e.message));
     }
-    if (ticket.customerPhone) {
-      sendCustomerRepairSMS(ticket.customerPhone, ticket.customerName, ticket.ticketNumber, ticket.status, ticket.deviceModel).catch(e => console.error('[Customer Repair SMS Error]:', e.message));
-    }
     sendAdminNotificationEmail(
       `New Device Repair Sheet #${ticket.ticketNumber}`,
       `New Repair Ticket (${ticket.ticketNumber})`,
       `<p>New repair ticket created for device <strong>${ticket.deviceModel || 'Device'}</strong> (Customer: ${ticket.customerName || 'N/A'}). Status: <strong>${ticket.status}</strong></p>`
     ).catch(e => console.error('[Admin Repair Mail Error]:', e.message));
-
-    sendAdminSMSNotification(`New Repair Ticket #${ticket.ticketNumber} created for ${ticket.deviceModel || 'Device'}`).catch(e => console.error('[Admin Repair SMS Error]:', e.message));
 
     return ApiResponse.created(res, ticket, 'Repair ticket created');
   } catch (error) { next(error); }
@@ -53,9 +47,6 @@ export const updateRepairStatus = async (req, res, next) => {
 
     if (ticket.customerEmail) {
       sendCustomerRepairEmail(ticket.customerEmail, ticket.customerName, ticket).catch(e => console.error('[Customer Repair Mail Error]:', e.message));
-    }
-    if (ticket.customerPhone) {
-      sendCustomerRepairSMS(ticket.customerPhone, ticket.customerName, ticket.ticketNumber, ticket.status, ticket.deviceModel).catch(e => console.error('[Customer Repair SMS Error]:', e.message));
     }
     sendAdminNotificationEmail(
       `Repair Status Changed #${ticket.ticketNumber} (${ticket.status})`,

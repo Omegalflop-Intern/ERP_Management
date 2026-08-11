@@ -1,25 +1,16 @@
 /**
- * Super Admin Seed Script
- * -------------------------
- * Creates a platform-level Super Admin user that has NO tenantId —
+ * Super Admin Seed Script (MySQL/Knex)
+ * -----------------------------------
+ * Creates a platform-level Super Admin user that has NO tenant_id —
  * meaning they can access all tenant data and manage the SaaS platform.
  *
  * Usage:
  *   cd server
  *   node scripts/seedSuperAdmin.js
- *
- * Environment variables:
- *   SUPER_ADMIN_USERNAME   (default: superadmin)
- *   SUPER_ADMIN_EMAIL      (default: superadmin@platform.com)
- *   SUPER_ADMIN_PASSWORD   (required in production, default: SuperAdmin@123 in dev)
- *   SUPER_ADMIN_PHONE      (default: 01999999999)
  */
 
-import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
-import { connectDB } from '../config/db.js';
-import { User } from '../modules/user/user.model.js';
-import { Role } from '../modules/role/role.model.js';
+import { db } from '../config/db.knex.js';
 import { seedDefaultRoles } from '../modules/role/role.service.js';
 
 const SUPER_ADMIN_USERNAME = process.env.SUPER_ADMIN_USERNAME || 'superadmin';
@@ -32,72 +23,60 @@ const getPassword = () => {
   }
   if (process.env.NODE_ENV === 'production') {
     throw new Error(
-      '[SEED] SUPER_ADMIN_PASSWORD environment variable is required in production. ' +
-        'Set it in server/.env before running this script.'
+      '[SEED] SUPER_ADMIN_PASSWORD environment variable is required in production. Set it in server/.env.'
     );
   }
   const defaultPassword = 'SuperAdmin@123';
   console.warn(`[SEED] ⚠️  Using default password "${defaultPassword}" for super admin.`);
-  console.warn('[SEED] Set SUPER_ADMIN_PASSWORD in server/.env for production use.');
   return defaultPassword;
 };
 
 const seedSuperAdmin = async () => {
   try {
-    await connectDB();
-
     console.log('[SEED] Ensuring default system roles exist...');
     await seedDefaultRoles();
 
-    // Super Admin must have ADMIN role with wildcard permissions
-    let adminRole = await Role.findOne({ name: 'ADMIN', isDeleted: false });
+    let adminRole = await db('roles').where({ name: 'ADMIN', is_deleted: false }).first();
     if (!adminRole) {
-      adminRole = await Role.create({
+      const [id] = await db('roles').insert({
         name: 'ADMIN',
-        displayName: 'Administrator',
-        permissions: ['*'],
-        isSystem: true,
+        display_name: 'Administrator',
+        permissions: JSON.stringify(['*']),
+        is_system: true,
       });
-      console.log('[SEED] Created ADMIN role with wildcard permissions.');
+      adminRole = { id, name: 'ADMIN' };
+      console.log('[SEED] Created ADMIN role.');
     }
 
-    // Check if super admin already exists
-    const existing = await User.findOne({
-      $or: [{ username: SUPER_ADMIN_USERNAME }, { email: SUPER_ADMIN_EMAIL }],
-    });
+    const existing = await db('users')
+      .where({ username: SUPER_ADMIN_USERNAME })
+      .orWhere({ email: SUPER_ADMIN_EMAIL })
+      .first();
 
     if (existing) {
-      // Ensure existing super admin has no tenantId (must be platform-level)
-      if (existing.tenantId) {
-        console.warn(
-          `[SEED] ⚠️  User "${existing.username}" exists but has a tenantId. ` +
-            'Super Admins must NOT have a tenantId. Removing it...'
-        );
-        existing.tenantId = undefined;
-        await existing.save();
-        console.log(`[SEED] ✅ Removed tenantId from "${existing.username}".`);
+      if (existing.tenant_id !== null) {
+        await db('users').where({ id: existing.id }).update({ tenant_id: null });
+        console.log(`[SEED] ✅ Removed tenant_id from super admin "${existing.username}".`);
       } else {
-        console.log(
-          `[SEED] ✅ Super Admin "${existing.username}" already exists and is correctly configured.`
-        );
+        console.log(`[SEED] ✅ Super Admin "${existing.username}" already exists.`);
       }
-      return;
+      process.exit(0);
     }
 
     const password = getPassword();
     const passwordHash = await bcrypt.hash(password, 10);
 
-    await User.create({
+    await db('users').insert({
       username: SUPER_ADMIN_USERNAME,
       email: SUPER_ADMIN_EMAIL,
       phone: SUPER_ADMIN_PHONE,
-      fullName: 'Platform Super Admin',
-      passwordHash,
-      role: adminRole._id,
-      roleName: 'ADMIN',
-      isVerified: true,
-      isActive: true,
-      // tenantId intentionally omitted — this is the platform super admin
+      full_name: 'Platform Super Admin',
+      password_hash: passwordHash,
+      role_id: adminRole.id,
+      role_name: 'ADMIN',
+      is_verified: true,
+      is_active: true,
+      tenant_id: null,
     });
 
     console.log('');
@@ -110,14 +89,10 @@ const seedSuperAdmin = async () => {
     console.log('║  TenantId : none (platform-level super admin)          ║');
     console.log('╚═══════════════════════════════════════════════════════╝');
     console.log('');
-    console.log('[SEED] ⚠️  Change the password immediately after first login!');
+    process.exit(0);
   } catch (error) {
     console.error('[SEED] ❌ Super Admin seed failed:', error.message);
-    process.exitCode = 1;
-  } finally {
-    if (mongoose.connection.readyState !== 0) {
-      await mongoose.connection.close();
-    }
+    process.exit(1);
   }
 };
 

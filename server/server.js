@@ -2,7 +2,6 @@ import app from './app.js';
 import { env } from './config/env.config.js';
 import { checkDbConnection } from './config/db.knex.js';
 import { initMailer, sendAdminNotificationEmail, sendCustomerInvoiceEmail, sendCustomerRepairEmail } from './config/mailer.js';
-import { sendAdminSMSNotification, sendCustomerInvoiceSMS } from './config/sms.js';
 import { seedDefaultRoles } from './modules/role/role.service.js';
 import { initAutoBackup } from './modules/settings/settings.service.js';
 import emitter, { EVENTS } from './events/index.js';
@@ -47,7 +46,7 @@ server.listen(PORT, async () => {
   printAsciiBanner();
 
   await logStep('MySQL/MariaDB Database', checkDbConnection);
-  await logStep('SMTP Mailer & SMS Gateways', initMailer);
+  await logStep('SMTP Mailer Service', initMailer);
   await logStep('System Roles & Subscription Plans', seedDefaultRoles);
   await logStep('Automated Backup Scheduler', () => initAutoBackup());
 
@@ -67,10 +66,6 @@ server.listen(PORT, async () => {
       'Product Stock Updated',
       `<p>Inventory updated for product: <strong>${data?.name || 'Item'}</strong></p>`
     ).catch((err) => console.error('[Admin Mail Error]:', err.message));
-
-    sendAdminSMSNotification(`Stock updated for ${data?.name || data?.sku || 'Product'}`).catch((err) =>
-      console.error('[Admin SMS Error]:', err.message)
-    );
   });
 
   emitter.on(EVENTS.SALE_COMPLETED, async (data) => {
@@ -82,17 +77,11 @@ server.listen(PORT, async () => {
     const invoiceNo = data?.invoiceNo || data?.sale?.invoiceNo || 'Invoice';
     const amount = data?.grandTotal || data?.sale?.grandTotal || 0;
     const customerEmail = data?.customerEmail || data?.sale?.customer?.email || data?.customer?.email;
-    const customerPhone = data?.customerPhone || data?.sale?.customer?.phone || data?.customer?.phone;
     const customerName = data?.customerName || data?.sale?.customer?.name || data?.customer?.name;
 
     if (customerEmail) {
       sendCustomerInvoiceEmail(customerEmail, customerName, data?.sale || data).catch((err) =>
         console.error('[Customer Mail Error]:', err.message)
-      );
-    }
-    if (customerPhone) {
-      sendCustomerInvoiceSMS(customerPhone, customerName, invoiceNo, amount).catch((err) =>
-        console.error('[Customer SMS Error]:', err.message)
       );
     }
 
@@ -102,10 +91,6 @@ server.listen(PORT, async () => {
       `<p>Sale invoice <strong>#${invoiceNo}</strong> processed for <strong>৳${Number(amount).toLocaleString()}</strong>.</p>
        <p>Customer: ${customerName || 'Walk-in Customer'} ${customerEmail ? `(${customerEmail})` : ''}</p>`
     ).catch((err) => console.error('[Admin Mail Error]:', err.message));
-
-    sendAdminSMSNotification(`New Sale #${invoiceNo} processed for ৳${Number(amount).toLocaleString()}`).catch((err) =>
-      console.error('[Admin SMS Error]:', err.message)
-    );
 
     try {
       let query = db('users').where({ is_deleted: false, is_active: true });
@@ -135,10 +120,6 @@ server.listen(PORT, async () => {
       'New User Account Created',
       `<p>New system user <strong>${data?.username}</strong> (${data?.roleName || 'Staff'}) was added.</p>`
     ).catch((err) => console.error('[Admin Mail Error]:', err.message));
-
-    sendAdminSMSNotification(`New user created: ${data?.username || 'User'} (${data?.roleName || 'Staff'})`).catch((err) =>
-      console.error('[Admin SMS Error]:', err.message)
-    );
   });
 
   emitter.on(EVENTS.LOW_STOCK_ALERT, (data) => {
@@ -147,10 +128,6 @@ server.listen(PORT, async () => {
       'Low Stock Warning Alert',
       `<p>Product <strong>${data?.name}</strong> has reached low stock (Remaining: ${data?.stockQuantity}). Please restock.</p>`
     ).catch((err) => console.error('[Admin Mail Error]:', err.message));
-
-    sendAdminSMSNotification(`Low stock: ${data?.name || 'Product'} (Remaining: ${data?.stockQuantity || 0})`).catch((err) =>
-      console.error('[Admin SMS Error]:', err.message)
-    );
   });
 
   emitter.on(EVENTS.NOTIFICATION_NEW, (data) => {

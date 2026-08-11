@@ -210,7 +210,7 @@ export default function Login() {
 
   const displayShopName =
     publicShop?.shopName ||
-    (subdomain ? `${subdomain.charAt(0).toUpperCase() + subdomain.slice(1)} Store` : 'OmniManage');
+    (subdomain ? `${subdomain.charAt(0).toUpperCase() + subdomain.slice(1)} Store` : 'Omegaflop Business Suite');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -429,7 +429,7 @@ export default function Login() {
         </form>
 
         <p className="text-center text-xs font-bold text-slate-300 dark:text-slate-400 mt-6 drop-shadow">
-          &copy; {new Date().getFullYear()} OmniManage ERP Platform. All rights reserved.
+          &copy; {new Date().getFullYear()} Omegaflop Business Suite. All rights reserved.
         </p>
       </div>
     </div>

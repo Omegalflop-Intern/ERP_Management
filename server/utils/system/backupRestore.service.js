@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import { db } from '../../config/db.knex.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -12,12 +12,16 @@ export const createDatabaseDump = async () => {
     fs.mkdirSync(backupDir, { recursive: true });
   }
 
-  const collections = await mongoose.connection.db.listCollections().toArray();
+  // Fetch all tables from MySQL database
+  const tablesResult = await db.raw('SHOW TABLES');
+  const tableKey = Object.keys(tablesResult[0][0] || {})[0];
+  const tables = tablesResult[0].map(row => row[tableKey]);
+
   const dumpData = {};
 
-  for (const coll of collections) {
-    const docs = await mongoose.connection.db.collection(coll.name).find({}).toArray();
-    dumpData[coll.name] = docs;
+  for (const tableName of tables) {
+    const rows = await db(tableName).select('*');
+    dumpData[tableName] = rows;
   }
 
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -29,7 +33,7 @@ export const createDatabaseDump = async () => {
     success: true,
     fileName: `dump_${timestamp}.json`,
     filePath,
-    collectionCount: collections.length,
+    collectionCount: tables.length,
   };
 };
 

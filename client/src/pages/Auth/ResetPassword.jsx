@@ -186,7 +186,7 @@ export default function ResetPassword() {
         </div>
 
         <p className="text-center text-xs font-medium text-slate-500 dark:text-slate-400 mt-6">
-          &copy; {new Date().getFullYear()} OmniManage ERP Platform. All rights reserved.
+          &copy; {new Date().getFullYear()} Omegaflop Business Suite. All rights reserved.
         </p>
       </div>
     </div>

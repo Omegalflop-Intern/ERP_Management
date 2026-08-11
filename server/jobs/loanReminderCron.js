@@ -1,5 +1,4 @@
 import { db } from '../config/db.knex.js';
-import { sendSMS, sendAdminSMSNotification } from '../config/sms.js';
 import { createNotification } from '../modules/notification/notification.service.js';
 
 export const checkLoanInstallmentReminders = async () => {
@@ -36,12 +35,6 @@ export const checkLoanInstallmentReminders = async () => {
         const msg = `[Loan Alert] ${partyLabel}: ${loan.provider_name} — Due Amount: ৳${remainingDue}. Status: ${alertReason}.`;
 
         console.log(`[Loan Reminder Job] Alert for Loan #${loan.id}: ${msg}`);
-
-        if (loan.phone) {
-          await sendSMS(loan.phone, msg);
-        }
-
-        await sendAdminSMSNotification(msg);
 
         try {
           const adminQuery = db('users').where({ is_active: true, is_deleted: false, role_name: 'ADMIN' });

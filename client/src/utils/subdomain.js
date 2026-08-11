@@ -1,4 +1,4 @@
-export const baseDomain = import.meta.env.VITE_BASE_DOMAIN || 'omnimanage.com';
+export const baseDomain = import.meta.env.VITE_BASE_DOMAIN || 'omegaflop.com';
 
 export function getBaseDomain() {
   const host = window.location.hostname;

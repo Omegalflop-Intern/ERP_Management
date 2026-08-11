@@ -27,16 +27,13 @@ const envSchema = z.object({
   SMTP_PASS: z.string().optional(),
   ADMIN_EMAIL: z.string().optional(),
   ADMIN_PHONE: z.string().optional(),
-  SMS_API_URL: z.string().optional(),
-  SMS_API_KEY: z.string().optional(),
-  SMS_SENDER_ID: z.string().optional(),
-  APP_NAME: z.string().default('OmniManage ERP'),
-  APP_URL: z.string().default('http://localhost:3000'),
+  APP_NAME: z.string().default('Omegaflop Business Suite'),
+  APP_URL: z.string().default('https://omegaflop.com'),
   CLIENT_URL: z.string().optional(),
   CLIENT_DIST_PATH: z.string().optional(),
   TLS_CERT_PATH: z.string().optional(),
   TLS_KEY_PATH: z.string().optional(),
-  BASE_DOMAIN: z.string().default('erp.com'),
+  BASE_DOMAIN: z.string().default('omegaflop.com'),
 });
 
 const parsed = envSchema.safeParse(process.env);
