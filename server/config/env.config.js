@@ -27,13 +27,13 @@ const envSchema = z.object({
   SMTP_PASS: z.string().optional(),
   ADMIN_EMAIL: z.string().optional(),
   ADMIN_PHONE: z.string().optional(),
-  APP_NAME: z.string().default('Omegaflop Business Suite'),
-  APP_URL: z.string().default('https://omegaflop.com'),
+  APP_NAME: z.string().default('OmniManage'),
+  APP_URL: z.string().default('https://respawnalley.com'),
   CLIENT_URL: z.string().optional(),
   CLIENT_DIST_PATH: z.string().optional(),
   TLS_CERT_PATH: z.string().optional(),
   TLS_KEY_PATH: z.string().optional(),
-  BASE_DOMAIN: z.string().default('omegaflop.com'),
+  BASE_DOMAIN: z.string().default('respawnalley.com'),
 });
 
 const parsed = envSchema.safeParse(process.env);

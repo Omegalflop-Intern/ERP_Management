@@ -177,7 +177,7 @@ export default function SuperAdminLayout() {
             <div className="flex items-center gap-2">
               <Shield className="w-4 h-4 text-[#2563EB] dark:text-blue-400" />
               <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
-                Omegaflop Business Suite
+                OmniManage
               </span>
               <span className="hidden sm:inline text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/50 text-[#2563EB] dark:text-blue-400 font-medium border border-blue-200 dark:border-blue-800/60">
                 Central Management

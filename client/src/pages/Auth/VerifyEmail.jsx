@@ -121,7 +121,7 @@ export default function VerifyEmail() {
                 Email Verified Successfully!
               </h3>
               <p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-6">
-                You can now sign in to your Omegaflop Business Suite account.
+                You can now sign in to your OmniManage account.
               </p>
               <button
                 onClick={() => navigate('/login')}
@@ -189,7 +189,7 @@ export default function VerifyEmail() {
         </div>
 
         <p className="text-center text-xs font-medium text-slate-500 dark:text-slate-400 mt-6">
-          &copy; {new Date().getFullYear()} Omegaflop Business Suite. All rights reserved.
+          &copy; {new Date().getFullYear()} OmniManage. All rights reserved.
         </p>
       </div>
     </div>

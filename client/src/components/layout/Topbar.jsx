@@ -598,7 +598,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
             {tenantInfo?.shopName ||
               user?.tenant?.shopName ||
               user?.shopName ||
-              (user?.tenantId ? 'Omegaflop Business Suite' : 'Super Admin Portal')}{' '}
+              (user?.tenantId ? 'OmniManage' : 'Super Admin Portal')}{' '}
             <span
               className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ml-1 ${
                 user?.tenantId

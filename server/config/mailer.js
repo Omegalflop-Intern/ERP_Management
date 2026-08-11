@@ -32,14 +32,14 @@ export const initMailer = async () => {
   }
 };
 
-const SENDER_NAME = process.env.SMTP_SENDER_NAME || 'Omegaflop Business Suite';
-const SENDER_EMAIL = process.env.SMTP_SENDER_EMAIL || process.env.SMTP_USER || 'no-reply@omegaflop.com';
-const APP_NAME = process.env.APP_NAME || 'Omegaflop Business Suite';
+const SENDER_NAME = process.env.SMTP_SENDER_NAME || 'OmniManage';
+const SENDER_EMAIL = process.env.SMTP_SENDER_EMAIL || process.env.SMTP_USER || 'no-reply@respawnalley.com';
+const APP_NAME = process.env.APP_NAME || 'OmniManage';
 const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || SENDER_EMAIL;
 const COMPANY_ADDRESS = process.env.COMPANY_ADDRESS || '';
 
 const baseHeaders = {
-  'X-Mailer': 'Omegaflop-Mailer/1.0',
+  'X-Mailer': 'OmniManage-Mailer/1.0',
   'X-Priority': '3',
   'Precedence': 'bulk',
   'List-Unsubscribe': `<mailto:${SENDER_EMAIL}?subject=unsubscribe>`,
