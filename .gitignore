@@ -32,3 +32,14 @@ server/tests
 server/certs
 server/backups
 server/.agent
+
+
+client/dist.zip
+
+CPANEL_DEPLOYMENT.md 
+mobile_shop_erp.sql 
+database-import.zip
+MULTI_TENANT_SETUP.md
+Omni-Manage-Super-Admin-Dashboard-Plan.pdf
+Subdomain-Multi-Tenant-Plan-Mobile-Shop-ERP.pdf
+SYSTEM_FLOW.md
