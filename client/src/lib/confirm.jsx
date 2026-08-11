@@ -2,31 +2,51 @@ import { AlertTriangle, Trash2 } from 'lucide-react';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
-export function confirmDelete(
-  title = 'Delete Item?',
-  description = 'This action cannot be undone.'
-) {
-  return showConfirmModal({
-    title,
-    description,
-    confirmText: 'Delete',
-    cancelText: 'Cancel',
-    type: 'danger',
-  });
+/**
+ * confirmDelete — supports both usage patterns:
+ *   1. Promise-based (await):  const ok = await confirmDelete(title, description?)
+ *   2. Callback-based (legacy): confirmDelete(title, () => doSomething(), description?)
+ */
+export function confirmDelete(title = 'Delete Item?', onConfirmOrDescription, description) {
+  const isCallback = typeof onConfirmOrDescription === 'function';
+  const desc = isCallback ? (description || 'This action cannot be undone.') : (onConfirmOrDescription || 'This action cannot be undone.');
+  const onConfirm = isCallback ? onConfirmOrDescription : undefined;
+
+  const promise = showConfirmModal({ title, description: desc, confirmText: 'Delete', cancelText: 'Cancel', type: 'danger' });
+
+  if (onConfirm) {
+    promise.then((confirmed) => { if (confirmed) onConfirm(); });
+  }
+
+  return promise;
 }
 
-export function confirmAction(
-  title = 'Confirm Action?',
-  actionLabel = 'Confirm',
-  description = 'Are you sure you want to proceed?'
-) {
-  return showConfirmModal({
-    title,
-    description,
-    confirmText: actionLabel,
-    cancelText: 'Cancel',
-    type: 'warning',
-  });
+/**
+ * confirmAction — supports both usage patterns:
+ *   1. Promise-based (await):  const ok = await confirmAction(title, label?, description?)
+ *   2. Callback-based (legacy): confirmAction(title, () => doSomething(), label?, description?)
+ */
+export function confirmAction(title = 'Confirm Action?', onConfirmOrLabel, labelOrDescription, description) {
+  const isCallback = typeof onConfirmOrLabel === 'function';
+  let onConfirm, actionLabel, desc;
+
+  if (isCallback) {
+    onConfirm = onConfirmOrLabel;
+    actionLabel = labelOrDescription || 'Confirm';
+    desc = description || 'Are you sure you want to proceed?';
+  } else {
+    onConfirm = undefined;
+    actionLabel = onConfirmOrLabel || 'Confirm';
+    desc = labelOrDescription || 'Are you sure you want to proceed?';
+  }
+
+  const promise = showConfirmModal({ title, description: desc, confirmText: actionLabel, cancelText: 'Cancel', type: 'warning' });
+
+  if (onConfirm) {
+    promise.then((confirmed) => { if (confirmed) onConfirm(); });
+  }
+
+  return promise;
 }
 
 function showConfirmModal({ title, description, confirmText, cancelText, type }) {
