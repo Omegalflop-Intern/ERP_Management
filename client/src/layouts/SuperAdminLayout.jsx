@@ -17,6 +17,7 @@ import {
   Shield,
   Sun,
   User,
+  UserCog,
   X,
 } from 'lucide-react';
 import React, { Suspense, useState } from 'react';
@@ -35,6 +36,7 @@ const NAV_ITEMS = [
   { to: '/super-admin/audit-logs', icon: Activity, label: 'Audit Logs' },
   { to: '/super-admin/subscriptions', icon: CreditCard, label: 'Subscriptions' },
   { to: '/super-admin/backups', icon: Database, label: 'System Backups' },
+  { to: '/super-admin/system-admins', icon: UserCog, label: 'System Admins' },
   { to: '/super-admin/profile', icon: User, label: 'My Profile' },
 ];
 

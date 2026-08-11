@@ -43,6 +43,7 @@ import auditLogRoutes from './modules/audit/auditLog.routes.js';
 import contactRoutes from './modules/contact/contact.routes.js';
 import ticketRoutes from './modules/ticket/ticket.routes.js';
 import superAdminProfileRoutes from './modules/superAdmin/profile.routes.js';
+import superAdminAdminsRoutes from './modules/superAdmin/admins.routes.js';
 import { startLoanReminderJob } from './jobs/loanReminderCron.js';
 import { auditDiffInterceptor } from './middleware/auditInterceptor.middleware.js';
 import { apiLimiter, authLimiter } from './middleware/rateLimiter.middleware.js';
@@ -330,6 +331,7 @@ app.use('/api/v1/plans', plansRoutes);
 app.use('/api/v1/contact', contactRoutes);
 app.use('/api/v1/tickets', ticketRoutes);
 app.use('/api/v1/super-admin/audit-logs', auditLogRoutes);
+app.use('/api/v1/super-admin/admins', superAdminAdminsRoutes);
 app.use('/api/v1/super-admin', superAdminProfileRoutes);
 
 // Production: Serve client build if CLIENT_DIST_PATH is set (e.g. when server + client on same host)
