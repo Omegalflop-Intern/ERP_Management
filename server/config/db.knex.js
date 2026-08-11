@@ -4,8 +4,8 @@ import { env } from './env.config.js';
 export const db = knex({
   client: 'mysql2',
   connection: {
-    host: env.DB_HOST,
-    port: Number(env.DB_PORT),
+    host: env.DB_HOST || 'localhost',
+    port: env.DB_PORT && Number(env.DB_PORT) ? Number(env.DB_PORT) : 3306,
     user: env.DB_USER,
     password: env.DB_PASSWORD,
     database: env.DB_NAME,

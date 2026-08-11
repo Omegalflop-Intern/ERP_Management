@@ -37,6 +37,8 @@ const server = hasCerts
   ? createHttpsServer({ cert: fs.readFileSync(certPath), key: fs.readFileSync(keyPath) }, app)
   : createHttpServer(app);
 
+const protocol = hasCerts ? 'https' : 'http';
+
 // Phusion Passenger (cPanel) support: process.env.PORT can be a socket path (e.g. /tmp/passenger.xxx/socket)
 const listenTarget = process.env.PORT || env.PORT || 5000;
 
