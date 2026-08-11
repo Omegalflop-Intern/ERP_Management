@@ -39,23 +39,39 @@ const server = hasCerts
 
 const protocol = hasCerts ? 'https' : 'http';
 
-server.listen(PORT, async () => {
-  global.__serverStartTime = new Date();
-  global.__serverProtocol = protocol;
+const startServer = (portToTry) => {
+  server.removeAllListeners('error');
+  
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.warn(`[SERVER] ⚠️ Port ${portToTry} is in use. Trying port ${portToTry + 1}...`);
+      setTimeout(() => startServer(portToTry + 1), 200);
+    } else {
+      console.error('[SERVER] ❌ Fatal server error:', err.message);
+    }
+  });
 
-  printAsciiBanner();
+  server.listen(portToTry, async () => {
+    global.__serverStartTime = new Date();
+    global.__serverProtocol = protocol;
 
-  await logStep('MySQL/MariaDB Database', checkDbConnection);
-  await logStep('SMTP Mailer Service', initMailer);
-  await logStep('System Roles & Subscription Plans', seedDefaultRoles);
-  await logStep('Automated Backup Scheduler', () => initAutoBackup());
+    printAsciiBanner();
 
-  const { startSubscriptionChecker, startTempAdminCleanup } = await import('./jobs/subscriptionChecker.js');
-  startSubscriptionChecker();
-  startTempAdminCleanup();
+    await logStep('MySQL/MariaDB Database', checkDbConnection);
+    await logStep('SMTP Mailer Service', initMailer);
+    await logStep('System Roles & Subscription Plans', seedDefaultRoles);
+    await logStep('Automated Backup Scheduler', () => initAutoBackup());
 
-  console.log('');
-  printServerInfo(PORT, env.NODE_ENV || 'development', protocol);
+    const { startSubscriptionChecker, startTempAdminCleanup } = await import('./jobs/subscriptionChecker.js');
+    startSubscriptionChecker();
+    startTempAdminCleanup();
+
+    console.log('');
+    printServerInfo(portToTry, env.NODE_ENV || 'development', protocol);
+  });
+};
+
+startServer(PORT);
 
   emitter.on(EVENTS.STOCK_UPDATED, (data) => {
     console.log('\x1b[36m[EVENT:STOCK]\x1b[0m Stock updated:', data?.name || data?.sku);
@@ -134,4 +150,3 @@ server.listen(PORT, async () => {
     console.log('\x1b[35m[EVENT:NOTIF]\x1b[0m Notification triggered:', data?.title);
     broadcastToTenant(data?.tenantId || null, { type: 'NOTIFICATION', data });
   });
-});
