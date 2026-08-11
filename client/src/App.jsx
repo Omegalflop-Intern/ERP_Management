@@ -166,6 +166,22 @@ const SubdomainGuard = ({ children }) => {
   return children;
 };
 
+// Helper component to resolve root URL (/) based on auth state and subdomain
+const RootIndex = () => {
+  const { isAuthenticated, user } = useAuth();
+  const subdomain = detectSubdomain();
+
+  if (!isAuthenticated) {
+    if (subdomain) {
+      return <Navigate to="/login" replace />;
+    }
+    return <LandingPage />;
+  }
+
+  const isSuperAdmin = !user?.tenantId && user?.roleName === 'ADMIN';
+  return <Navigate to={isSuperAdmin ? '/super-admin/dashboard' : '/dashboard'} replace />;
+};
+
 export default function App() {
   const { isAuthenticated, user } = useAuth();
   const subdomain = detectSubdomain();
@@ -201,24 +217,19 @@ export default function App() {
         <Route path="/pricing" element={<LandingPage />} />
         <Route path="/developer" element={<DeveloperPage />} />
 
-        {/* Public Landing Page on main domain */}
-        {!isAuthenticated && !subdomain && <Route path="/" element={<LandingPage />} />}
+        {/* Public / Root Route */}
+        <Route path="/" element={<RootIndex />} />
 
+        {/* Dashboard & App Routes */}
         <Route
-          path="/"
           element={
-            isAuthenticated ? (
-              <ProtectedRoute>
-                <SubdomainGuard>
-                  <DashboardLayout />
-                </SubdomainGuard>
-              </ProtectedRoute>
-            ) : (
-              <Navigate to="/login" replace />
-            )
+            <ProtectedRoute>
+              <SubdomainGuard>
+                <DashboardLayout />
+              </SubdomainGuard>
+            </ProtectedRoute>
           }
         >
-          <Route index element={<Navigate to={homeRedirect} replace />} />
           <Route
             path="dashboard"
             element={
