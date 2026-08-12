@@ -154,4 +154,10 @@ startServer(listenTarget);
     broadcastToTenant(data?.tenantId || null, { type: 'NOTIFICATION', data });
   });
 
+  emitter.on(EVENTS.TENANT_UPDATED, (data) => {
+    console.log('\x1b[33m[EVENT:TENANT]\x1b[0m Tenant updated:', data?.id || data?.shopName);
+    broadcastToTenant(data?.id || null, { type: 'TENANT_UPDATED', data });
+    broadcastAll({ type: 'TENANT_UPDATED', data });
+  });
+
 export default app;

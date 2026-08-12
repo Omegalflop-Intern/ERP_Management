@@ -224,118 +224,208 @@ function CreateTransferModal({ onClose, onSuccess }) {
     notes: '',
   });
 
-  const { data: products } = useQuery({
-    queryKey: ['products-select'],
+  // Fetch branches
+  const { data: branches = [] } = useQuery({
+    queryKey: ['branches-select-transfer'],
+    queryFn: async () => {
+      const res = await api.get('/branches');
+      return res.data?.data || [];
+    },
+  });
+
+  // Fetch products
+  const { data: products = [] } = useQuery({
+    queryKey: ['products-select-transfer'],
     queryFn: async () => {
       const res = await api.get('/products', { params: { limit: 100 } });
       return res.data?.data || [];
     },
   });
 
+  // Fetch available IMEIs for selected product & branch
+  const { data: imeiUnits = [] } = useQuery({
+    queryKey: ['imeis-select-transfer', form.productId, form.fromBranchId],
+    queryFn: async () => {
+      if (!form.productId) return [];
+      const res = await api.get('/inventory', {
+        params: { productId: form.productId, branchId: form.fromBranchId || undefined, status: 'Available', limit: 100 },
+      });
+      return res.data?.data || [];
+    },
+    enabled: !!form.productId,
+  });
+
   const mutation = useMutation({
     mutationFn: async (data) => api.post('/stock', data),
     onSuccess: () => {
-      toast.success('Transfer created');
+      toast.success('Stock transfer initiated successfully');
       onSuccess();
     },
-    onError: (e) => toast.error(e.response?.data?.message || 'Failed'),
+    onError: (e) => toast.error(e.response?.data?.message || 'Failed to create transfer'),
   });
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-[#111827] rounded-2xl w-full max-w-md border border-gray-200 dark:border-gray-800 shadow-xl">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
-          <h3 className="font-bold text-gray-900 dark:text-gray-100">New Stock Transfer</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-[#111827] rounded-2xl w-full max-w-lg border border-gray-200 dark:border-gray-800 shadow-2xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-900/50">
+          <h3 className="font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <ArrowRightLeft className="w-5 h-5 text-blue-600 dark:text-blue-400" /> New Stock Transfer
+          </h3>
+          <button
+            onClick={onClose}
+            className="p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+          >
             ✕
           </button>
         </div>
+
         <form
           onSubmit={(e) => {
             e.preventDefault();
+            if (!form.fromBranchId) return toast.error('Please select source branch (From Branch)');
+            if (!form.toBranchId) return toast.error('Please select destination branch (To Branch)');
+            if (form.fromBranchId === form.toBranchId) return toast.error('Source and destination branches cannot be the same');
+            if (!form.productId) return toast.error('Please select a product');
+
             mutation.mutate(form);
           }}
           className="p-6 space-y-4"
         >
-          <div className="grid grid-cols-2 gap-4">
+          {/* Branch Selectors */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
-                From Branch ID
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                From Branch (Source) *
               </label>
-              <input
+              <select
                 required
                 value={form.fromBranchId}
-                onChange={(e) => setForm({ ...form, fromBranchId: e.target.value })}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]"
-                placeholder="Branch ID"
-              />
+                onChange={(e) => setForm({ ...form, fromBranchId: e.target.value, imeiOrSerial: '' })}
+                className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              >
+                <option value="">Select Source Outlet</option>
+                {branches.map((b) => (
+                  <option key={b._id || b.id} value={b._id || b.id}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
             </div>
+
             <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
-                To Branch ID
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                To Branch (Destination) *
               </label>
-              <input
+              <select
                 required
                 value={form.toBranchId}
                 onChange={(e) => setForm({ ...form, toBranchId: e.target.value })}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]"
-                placeholder="Branch ID"
-              />
+                className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              >
+                <option value="">Select Destination Outlet</option>
+                {branches
+                  .filter((b) => String(b._id || b.id) !== String(form.fromBranchId))
+                  .map((b) => (
+                    <option key={b._id || b.id} value={b._id || b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+              </select>
             </div>
           </div>
+
+          {/* Product Select */}
           <div>
-            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
-              Product
+            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+              Select Product *
             </label>
             <select
               required
               value={form.productId}
-              onChange={(e) => setForm({ ...form, productId: e.target.value })}
-              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]"
+              onChange={(e) => setForm({ ...form, productId: e.target.value, imeiOrSerial: '' })}
+              className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:outline-none"
             >
-              <option value="">Select product</option>
-              {(Array.isArray(products) ? products : []).map((p) => (
-                <option key={p._id} value={p._id}>
-                  {p.brand} {p.name}
+              <option value="">Choose a product to transfer...</option>
+              {products.map((p) => (
+                <option key={p._id || p.id} value={p._id || p.id}>
+                  {p.brand ? `[${p.brand}] ` : ''}{p.name} {p.sku ? `(SKU: ${p.sku})` : ''} - Stock: {p.stockQuantity ?? 0}
                 </option>
               ))}
             </select>
           </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
-              IMEI (optional)
-            </label>
-            <input
-              value={form.imeiOrSerial}
-              onChange={(e) => setForm({ ...form, imeiOrSerial: e.target.value })}
-              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB] font-mono"
-            />
+
+          {/* IMEI or Serial Selector (Dropdown if available, else manual input) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                Select IMEI / Serial (Optional)
+              </label>
+              {imeiUnits.length > 0 ? (
+                <select
+                  value={form.imeiOrSerial}
+                  onChange={(e) => setForm({ ...form, imeiOrSerial: e.target.value })}
+                  className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-gray-100 font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                >
+                  <option value="">Select IMEI from stock ({imeiUnits.length} Available)</option>
+                  {imeiUnits.map((u) => (
+                    <option key={u._id || u.id} value={u.imeiOrSerial || u.imei_or_serial}>
+                      {u.imeiOrSerial || u.imei_or_serial} ({u.color || 'Default'} - {u.ram}/{u.storage})
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  value={form.imeiOrSerial}
+                  onChange={(e) => setForm({ ...form, imeiOrSerial: e.target.value })}
+                  placeholder="Enter 15-digit IMEI or Serial"
+                  className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-gray-100 font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                />
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                Quantity
+              </label>
+              <input
+                type="number"
+                min="1"
+                disabled={!!form.imeiOrSerial}
+                value={form.quantity}
+                onChange={(e) => setForm({ ...form, quantity: Math.max(1, parseInt(e.target.value) || 1) })}
+                className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50"
+              />
+            </div>
           </div>
+
+          {/* Notes */}
           <div>
-            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
-              Notes
+            <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+              Transfer Notes / Remark
             </label>
             <textarea
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
               rows={2}
-              className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]"
+              placeholder="Add optional dispatch details..."
+              className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:outline-none"
             />
           </div>
-          <div className="flex gap-3 pt-2">
+
+          <div className="flex gap-3 pt-3 border-t border-gray-100 dark:border-gray-800">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-lg text-sm"
+              className="flex-1 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-semibold rounded-xl text-sm transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={mutation.isPending}
-              className="flex-1 py-2 bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white font-medium rounded-lg text-sm"
+              className="flex-1 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-all shadow-sm"
             >
-              {mutation.isPending ? 'Creating...' : 'Create Transfer'}
+              {mutation.isPending ? 'Initiating Transfer...' : 'Confirm & Create Transfer'}
             </button>
           </div>
         </form>

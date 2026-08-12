@@ -4,6 +4,19 @@ import { ApiError } from '../../utils/http/ApiError.js';
 
 export function formatTenant(row) {
   if (!row) return null;
+
+  const planName = (row.plan || 'STARTER').toUpperCase();
+  let defaultBranches = 3;
+  let defaultUsers = 5;
+
+  if (planName === 'ENTERPRISE') {
+    defaultBranches = 11;
+    defaultUsers = 999;
+  } else if (planName === 'PRO' || planName === 'BUSINESS') {
+    defaultBranches = 6;
+    defaultUsers = 25;
+  }
+
   return {
     _id: String(row.id),
     id: row.id,
@@ -14,8 +27,8 @@ export function formatTenant(row) {
     phone: row.phone,
     plan: row.plan || 'STARTER',
     status: row.status || 'PENDING_KYC',
-    maxBranches: Number(row.max_branches || 2),
-    maxUsers: Number(row.max_users || 5),
+    maxBranches: Number(row.max_branches ?? defaultBranches),
+    maxUsers: Number(row.max_users ?? defaultUsers),
     expiresAt: row.expires_at,
     kycDocuments: {
       nidNumber: row.nid_number || '',
@@ -255,6 +268,20 @@ export const createTenant = async (data) => {
 
   // Automatically provision shop owner ADMIN account
   await createShopOwnerAdminUser(insertedId, data);
+
+  // Automatically provision default Main Outlet branch for the new shop
+  const [mainBranchId] = await db('branches').insert({
+    tenant_id: insertedId,
+    name: `${data.shopName} Main Outlet`,
+    address: data.platformAddress || 'Main Shop Outlet',
+    phone: data.phone || '',
+    email: emailLower,
+    is_active: true,
+    is_deleted: false,
+  });
+
+  // Link owner user to default main branch
+  await db('users').where({ tenant_id: insertedId }).update({ branch_id: mainBranchId });
 
   return getTenantById(insertedId);
 };

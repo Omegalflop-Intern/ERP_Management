@@ -612,6 +612,7 @@ function getNotificationIcon(type) {
 export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed }) {
   const { user, logout, setUser } = useAuth();
   const { theme, toggleTheme, designMode, toggleDesignMode } = useTheme();
+  const { activeBranchId, branches = [], maxBranches = 2, setActiveBranchId } = useBranchStore();
   const styled = designMode === 'glass';
   const location = useLocation();
   const navigate = useNavigate();
@@ -727,13 +728,22 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
           >
             <Building2 className="w-5 h-5" />
           </div>
-          <span className="hidden md:inline font-extrabold text-base tracking-tight text-slate-800 dark:text-slate-100">
-            {tenantInfo?.shopName ||
-              user?.tenant?.shopName ||
-              user?.shopName ||
-              (user?.tenantId ? 'OmniManage' : 'Super Admin Portal')}{' '}
+          <span className="hidden md:inline-flex items-center gap-1.5 font-extrabold text-base tracking-tight text-slate-800 dark:text-slate-100">
+            <span>
+              {tenantInfo?.shopName ||
+                user?.tenant?.shopName ||
+                user?.shopName ||
+                (user?.tenantId ? 'OmniManage' : 'Super Admin Portal')}
+            </span>
+            {user?.tenantId && (
+              <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-md border border-blue-200/60 dark:border-blue-800/40">
+                {activeBranchId === 'all'
+                  ? 'All Outlets'
+                  : branches.find((b) => String(b.id || b._id) === String(activeBranchId))?.name || 'Active Outlet'}
+              </span>
+            )}
             <span
-              className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ml-1 ${
+              className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${
                 user?.tenantId
                   ? 'bg-blue-500/10 text-[#2563EB] dark:text-blue-400 border border-blue-300/40 dark:border-blue-500/30'
                   : 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-300/40 dark:border-violet-500/30'
@@ -948,6 +958,36 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
                     </div>
                   </div>
                 </div>
+
+                {/* Active Branch Switcher Inside Profile Menu */}
+                <div className="px-3 py-2.5 border-b border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-900/50">
+                  <div className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1 flex items-center justify-between">
+                    <span className="flex items-center gap-1"><Building2 className="w-3 h-3 text-blue-500" /> Active Outlet</span>
+                    <span className="text-[9px] font-bold text-blue-600 dark:text-blue-400">({branches.length}/{maxBranches === 999 ? '∞' : maxBranches})</span>
+                  </div>
+                  <select
+                    value={activeBranchId}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === 'all') {
+                        setActiveBranchId('all');
+                      } else {
+                        const selected = branches.find((b) => String(b.id || b._id) === val);
+                        setActiveBranchId(val, selected?.name);
+                      }
+                      setShowUserMenu(false);
+                    }}
+                    className="w-full text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                  >
+                    <option value="all">All Outlets (Main Shop)</option>
+                    {branches.map((b) => (
+                      <option key={b._id || b.id} value={String(b.id || b._id)}>
+                        {b.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 {!user.tenantId && user.roleName === 'ADMIN' && (
                   <button
                     onClick={() => {

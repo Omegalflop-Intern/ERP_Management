@@ -16,6 +16,7 @@ export const EVENTS = {
   WARRANTY_EXPIRING: 'warranty:expiring',
   TICKET_CREATED: 'ticket:created',
   TICKET_RESOLVED: 'ticket:resolved',
+  TENANT_UPDATED: 'tenant:updated',
 };
 
 export default emitter;

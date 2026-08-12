@@ -168,3 +168,52 @@ export const getClaimsByIMEI = async (imeiId, tenantId = null) => {
   const rows = await dataQuery.orderBy('created_at', 'desc');
   return rows.map(r => formatWarrantyClaim(r));
 };
+
+export const getWarrantyReport = async ({ type = 'expiring', search = '', status = 'Sold' }, tenantId = null) => {
+  let query = db('inventory_units')
+    .leftJoin('products', 'inventory_units.product_id', 'products.id')
+    .leftJoin('branches', 'inventory_units.branch_id', 'branches.id')
+    .where({ 'inventory_units.is_deleted': false });
+
+  if (tenantId) {
+    query.where('inventory_units.tenant_id', tenantId);
+  }
+
+  if (status && status !== 'ALL') {
+    query.where('inventory_units.status', status);
+  }
+
+  if (search) {
+    const term = `%${search}%`;
+    query.where((q) => {
+      q.where('inventory_units.imei_or_serial', 'like', term)
+       .orWhere('products.name', 'like', term);
+    });
+  }
+
+  const now = new Date();
+  if (type === 'expiring') {
+    const thirtyDays = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    query.whereBetween('inventory_units.warranty_expiry', [now, thirtyDays]);
+  } else if (type === 'expired') {
+    query.where('inventory_units.warranty_expiry', '<', now);
+  }
+
+  const rows = await query.select(
+    'inventory_units.*',
+    'products.name as product_name',
+    'branches.name as branch_name'
+  ).orderBy('inventory_units.warranty_expiry', 'asc');
+
+  return rows.map((r) => ({
+    _id: String(r.id),
+    id: r.id,
+    imeiOrSerial: r.imei_or_serial,
+    productName: r.product_name || 'Product',
+    branchName: r.branch_name || 'Main Outlet',
+    status: r.status,
+    warrantyMonths: r.warranty_months,
+    warrantyExpiry: r.warranty_expiry,
+    createdAt: r.created_at,
+  }));
+};

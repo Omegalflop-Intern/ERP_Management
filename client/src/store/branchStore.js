@@ -37,7 +37,7 @@ export const useBranchStore = create(
 
           // Attempt to fetch current tenant plan info if available
           try {
-            const tenantRes = await api.get('/tenant/my-tenant');
+            const tenantRes = await api.get('/tenants/me');
             const tenantData = tenantRes.data?.data;
             if (tenantData) {
               set({

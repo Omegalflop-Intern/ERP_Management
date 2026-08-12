@@ -143,6 +143,10 @@ export const updateTransferStatus = async (id, status, performedBy = 'system', t
   const updateFields = { status };
 
   if (status === 'DELIVERED') {
+    const toBranchId = transfer.toBranchId?.id || transfer.toBranchId;
+    const fromBranchId = transfer.fromBranchId?.id || transfer.fromBranchId;
+    const productId = transfer.productId?.id || transfer.productId;
+
     if (transfer.imeiOrSerial) {
       const unitQuery = db('inventory_units').where({ imei_or_serial: transfer.imeiOrSerial, is_deleted: false });
       if (tenantId) unitQuery.where('tenant_id', tenantId);
@@ -159,10 +163,24 @@ export const updateTransferStatus = async (id, status, performedBy = 'system', t
         const uq2 = db('inventory_units').where({ id: unit.id });
         if (tenantId) uq2.andWhere('tenant_id', tenantId);
         await uq2.update({
-          branch_id: transfer.toBranchId.id || transfer.toBranchId,
+          branch_id: toBranchId,
           status: 'Available',
           passport_history: JSON.stringify(history),
         });
+      }
+    } else if (productId) {
+      // General quantity transfer: move inventory units from source branch to destination branch
+      const availUnits = await db('inventory_units')
+        .where({ product_id: productId, is_deleted: false })
+        .where((b) => b.where({ branch_id: fromBranchId }).orWhereNull('branch_id'))
+        .whereIn('status', ['Available', 'Transferred'])
+        .limit(transfer.quantity || 1);
+
+      if (availUnits.length > 0) {
+        const unitIds = availUnits.map((u) => u.id);
+        await db('inventory_units')
+          .whereIn('id', unitIds)
+          .update({ branch_id: toBranchId, status: 'Available' });
       }
     }
     updateFields.delivered_at = new Date();

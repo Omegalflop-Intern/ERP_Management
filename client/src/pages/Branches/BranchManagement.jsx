@@ -39,14 +39,23 @@ export default function BranchManagement() {
     },
   });
 
+  const { data: usersList = [] } = useQuery({
+    queryKey: ['users-list-for-branch-modal'],
+    queryFn: async () => {
+      const r = await api.get('/users', { params: { limit: 100 } });
+      return r.data?.data || [];
+    },
+  });
+
   const mutation = useMutation({
     mutationFn: async (data) => {
-      if (editing) return api.put(`/branches/${editing._id}`, data);
+      if (editing) return api.put(`/branches/${editing._id || editing.id}`, data);
       return api.post('/branches', data);
     },
     onSuccess: () => {
       toast.success(editing ? 'Branch updated' : 'Branch created');
       qc.invalidateQueries({ queryKey: ['branches'] });
+      qc.invalidateQueries({ queryKey: ['users-list-for-branch-modal'] });
       setShowModal(false);
       setEditing(null);
       setForm(emptyForm);
@@ -82,7 +91,7 @@ export default function BranchManagement() {
       address: b.address || '',
       phone: b.phone || '',
       email: b.email || '',
-      manager: b.manager?._id || '',
+      manager: b.manager?._id || b.manager?.id || (typeof b.manager === 'string' ? b.manager : ''),
       isActive: b.isActive,
     });
     setShowModal(true);
@@ -327,6 +336,25 @@ export default function BranchManagement() {
                   />
                 </div>
               </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                  Assign Branch Manager / User
+                </label>
+                <select
+                  value={form.manager}
+                  onChange={(e) => setForm({ ...form, manager: e.target.value })}
+                  className={inputCls}
+                >
+                  <option value="">Select Manager / Assigned User (Optional)</option>
+                  {usersList.map((u) => (
+                    <option key={u._id || u.id} value={u._id || u.id}>
+                      {u.fullName || u.full_name || u.username} ({u.roleName || u.role_name || 'Staff'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"

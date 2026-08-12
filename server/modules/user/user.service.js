@@ -158,6 +158,23 @@ export const createUser = async (data, tenantId = null) => {
           `Your plan (${tenant.plan || 'STARTER'}) allows a maximum of ${userLimit} user${userLimit === 1 ? '' : 's'}. Please upgrade subscription.`
         );
       }
+
+      // Check per-branch user limit (5 users per branch for STARTER / BASIC plans)
+      const targetBranchId = data.branchId || data.branch_id || data.branch;
+      if (targetBranchId) {
+        const branchUserCountRes = await db('users')
+          .where({ branch_id: targetBranchId, is_deleted: false })
+          .count({ count: '*' })
+          .first();
+        const branchUserCount = Number(branchUserCountRes?.count || 0);
+        const planName = (tenant.plan || 'STARTER').toUpperCase();
+        const perBranchUserLimit = planName === 'STARTER' ? 5 : 999;
+        if (branchUserCount >= perBranchUserLimit) {
+          throw ApiError.forbidden(
+            `This branch has reached the limit of ${perBranchUserLimit} users per outlet for the ${planName} plan. Upgrade to expand limits.`
+          );
+        }
+      }
     }
   }
 

@@ -246,9 +246,9 @@ function EditTenantModal({ tenant, onClose, onSuccess }) {
 
   const PLAN_LIMITS = {
     FREE: { branches: 1, users: 2 },
-    STARTER: { branches: 2, users: 5 },
-    PRO: { branches: 5, users: 20 },
-    ENTERPRISE: { branches: 50, users: 500 },
+    STARTER: { branches: 3, users: 5 },
+    PRO: { branches: 6, users: 25 },
+    ENTERPRISE: { branches: 11, users: 999 },
   };
 
   const handlePlanChange = (newPlan) => {

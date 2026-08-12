@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { useAuthStore } from '../store/authStore';
+import { useBranchStore } from '../store/branchStore';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
 
@@ -84,6 +85,14 @@ export function useSSE() {
 
             case 'NOTIFICATION':
               qc.invalidateQueries({ queryKey: ['notifications'] });
+              break;
+
+            case 'TENANT_UPDATED':
+              qc.invalidateQueries({ queryKey: ['my-tenant-info'] });
+              qc.invalidateQueries({ queryKey: ['tenants'] });
+              qc.invalidateQueries({ queryKey: ['branches'] });
+              qc.invalidateQueries({ queryKey: ['sa-shops'] });
+              useBranchStore.getState().fetchBranches();
               break;
 
             default:

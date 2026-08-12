@@ -106,16 +106,22 @@ export const createBranch = async (data, tenantId = null) => {
   const existing = await existingQuery.first();
   if (existing) throw ApiError.conflict(`Branch "${data.name}" already exists`);
 
+  const mgrId = data.manager || data.managerId || null;
+
   const [insertedId] = await db('branches').insert({
     tenant_id: effectiveTenantId,
     name: data.name,
     address: data.address || '',
     phone: data.phone || '',
     email: data.email || '',
-    manager_id: data.manager || data.managerId || null,
+    manager_id: mgrId,
     is_active: data.isActive !== undefined ? Boolean(data.isActive) : true,
     is_deleted: false,
   });
+
+  if (mgrId) {
+    await db('users').where({ id: mgrId }).update({ branch_id: insertedId });
+  }
 
   return getBranchById(insertedId, effectiveTenantId);
 };
@@ -129,8 +135,15 @@ export const updateBranch = async (id, data, tenantId = null) => {
   if (data.address !== undefined) updateFields.address = data.address;
   if (data.phone !== undefined) updateFields.phone = data.phone;
   if (data.email !== undefined) updateFields.email = data.email;
-  if (data.manager !== undefined) updateFields.manager_id = data.manager;
-  if (data.managerId !== undefined) updateFields.manager_id = data.managerId;
+
+  const mgrId = data.manager !== undefined ? data.manager : data.managerId;
+  if (mgrId !== undefined) {
+    updateFields.manager_id = mgrId || null;
+    if (mgrId) {
+      await db('users').where({ id: mgrId }).update({ branch_id: id });
+    }
+  }
+
   if (data.isActive !== undefined) updateFields.is_active = Boolean(data.isActive);
 
   if (Object.keys(updateFields).length > 0) {
