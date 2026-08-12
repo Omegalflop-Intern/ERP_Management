@@ -15,6 +15,8 @@ import * as createPhase7SystemTables from '../migrations/20260807000011_create_p
 import * as createContactMessagesTable from '../migrations/20260807000012_create_contact_messages_table.js';
 import * as addBranchIdToOperationsTables from '../migrations/20260811000014_add_branch_id_to_operations_tables.js';
 import * as addBranchIdToHrAndWarrantyTables from '../migrations/20260812000015_add_branch_id_to_hr_and_warranty_tables.js';
+import * as addNotesToTenantsTable from '../migrations/20260812000016_add_notes_to_tenants_table.js';
+import * as addNotesToTransactionsTable from '../migrations/20260812000017_add_notes_to_transactions_table.js';
 
 async function ensureDatabase() {
   try {
@@ -63,6 +65,10 @@ async function main() {
   await addBranchIdToOperationsTables.up(db);
   console.log('🔄 Running migration: add branch_id to HR & warranty tables...');
   await addBranchIdToHrAndWarrantyTables.up(db);
+  console.log('🔄 Running migration: add notes column to tenants table...');
+  await addNotesToTenantsTable.up(db);
+  console.log('🔄 Running migration: add notes column to transactions table...');
+  await addNotesToTransactionsTable.up(db);
   console.log('✅ All migrations completed successfully!');
   process.exit(0);
 }

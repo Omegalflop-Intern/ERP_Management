@@ -15,6 +15,10 @@ export const createSaleSchema = z.object({
   customerEmail: z.string().optional(),
   customerAddress: z.string().optional(),
   customerId: z.string().optional(),
+  saleType: z.enum(['RETAIL', 'WHOLESALE']).optional(),
+  branchId: z.string().optional(),
+  sellerName: z.string().optional(),
+  sellerId: z.string().optional(),
   items: z.array(lineItemSchema).min(1, 'At least one item required'),
   discount: z.number().min(0).default(0),
   tax: z.number().min(0).default(0),
@@ -26,6 +30,7 @@ export const createSaleSchema = z.object({
     bank: z.number().min(0).default(0),
     dueAmount: z.number().min(0).default(0),
   }).default({ cash: 0, bkash: 0, rocket: 0, nagad: 0, bank: 0, dueAmount: 0 }),
+  notes: z.string().optional(),
 });
 
 export const updateSaleSchema = z.object({

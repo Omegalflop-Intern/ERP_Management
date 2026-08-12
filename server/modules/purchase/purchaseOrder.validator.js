@@ -9,6 +9,7 @@ const lineItemSchema = z.object({
 
 export const createPurchaseOrderSchema = z.object({
   supplierId: z.string().min(1),
+  branchId: z.string().optional(),
   lineItems: z.array(lineItemSchema).min(1),
   discount: z.number().min(0).default(0),
   tax: z.number().min(0).default(0),

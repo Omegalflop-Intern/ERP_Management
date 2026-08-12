@@ -210,6 +210,7 @@ export const createSale = async (data, createdBy = 'system') => {
     cashier_username: createdBy,
     seller_name: data.sellerName || createdBy,
     seller_id: data.sellerId || null,
+    notes: data.notes || null,
     public_token: crypto.randomBytes(24).toString('hex'),
     token_expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     is_deleted: false,

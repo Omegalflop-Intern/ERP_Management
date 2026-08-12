@@ -19,6 +19,7 @@ export const createProductSchema = z.object({
   stockQuantity: z.number().min(0).optional(),
   warrantyMonths: z.number().min(0).optional(),
   imeiOrSerial: z.string().optional(),
+  image: z.string().optional(),
   isActive: z.boolean().optional(),
   description: z.string().optional(),
 });
@@ -42,6 +43,7 @@ export const updateProductSchema = z.object({
   stockQuantity: z.number().min(0).optional(),
   warrantyMonths: z.number().min(0).optional(),
   imeiOrSerial: z.string().optional(),
+  image: z.string().optional(),
   isActive: z.boolean().optional(),
   description: z.string().optional(),
 });
