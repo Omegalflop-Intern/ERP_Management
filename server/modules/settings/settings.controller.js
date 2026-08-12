@@ -2,6 +2,21 @@ import * as settingsService from './settings.service.js';
 import { ApiResponse } from '../../utils/http/ApiResponse.js';
 import { logAction } from '../../utils/auth/auditLog.js';
 
+export const getPublicSettings = async (req, res, next) => {
+  try {
+    const settings = await settingsService.getPublicSettings();
+    return ApiResponse.success(res, settings, 'Public platform settings retrieved');
+  } catch (error) { next(error); }
+};
+
+export const updatePlatformSettings = async (req, res, next) => {
+  try {
+    const settings = await settingsService.updatePlatformSettings(req.body);
+    logAction({ userId: req.user?.userId, username: req.user?.username, action: 'UPDATE_PLATFORM_SETTINGS', module: 'settings', entityType: 'PlatformSettings', details: { keys: Object.keys(req.body) }, req });
+    return ApiResponse.success(res, settings, 'Platform settings updated successfully');
+  } catch (error) { next(error); }
+};
+
 export const getAllSettings = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;

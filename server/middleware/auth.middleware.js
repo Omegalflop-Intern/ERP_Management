@@ -31,6 +31,10 @@ export const authenticate = async (req, res, next) => {
       try { permissions = JSON.parse(permissions); } catch { permissions = []; }
     }
 
+    const userBranchId = row.branch_id ? String(row.branch_id) : null;
+    const roleName = row.role_name_val || row.role_name || '';
+    const isSuperAdmin = Boolean(row.is_super_admin);
+
     req.user = {
       _id: String(row.id),
       id: row.id,
@@ -40,10 +44,25 @@ export const authenticate = async (req, res, next) => {
       fullName: row.full_name || row.username,
       phone: row.phone || '',
       role: row.role_id,
-      roleName: row.role_name_val || row.role_name || '',
+      roleName,
+      isSuperAdmin,
       tenantId: row.tenant_id || null,
+      branchId: userBranchId,
       permissions: Array.isArray(permissions) ? permissions : [],
     };
+
+    // Extract requested branch from header or query parameter
+    const headerBranchId = req.headers['x-branch-id'] || req.headers['X-Branch-Id'] || req.query.branchId || null;
+
+    // Enforce role-based branch locking: non-admin users assigned to a specific branch are locked to that branch
+    const isAdmin = roleName.toUpperCase() === 'ADMIN' || isSuperAdmin;
+    if (!isAdmin && userBranchId) {
+      req.selectedBranchId = userBranchId;
+    } else if (headerBranchId && headerBranchId !== 'all') {
+      req.selectedBranchId = String(headerBranchId);
+    } else {
+      req.selectedBranchId = null;
+    }
 
     next();
   } catch (error) {

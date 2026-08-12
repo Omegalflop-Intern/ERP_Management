@@ -47,9 +47,232 @@ import {
   Landmark,
   BookOpen,
   Contact,
+  Facebook,
+  Twitter,
+  Linkedin,
+  Youtube,
+  Instagram,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
 import api from '../../lib/api';
+
+function AnimatedCounter({ end, suffix = '', prefix = '', duration = 2000 }) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    let startTimestamp = null;
+    const target = typeof end === 'number' ? end : parseInt(end, 10) || 0;
+
+    const step = (timestamp) => {
+      if (!startTimestamp) startTimestamp = timestamp;
+      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+      setCount(Math.floor(progress * target));
+      if (progress < 1) {
+        window.requestAnimationFrame(step);
+      }
+    };
+    window.requestAnimationFrame(step);
+  }, [end, duration]);
+
+  return (
+    <span>
+      {prefix}
+      {count.toLocaleString()}
+      {suffix}
+    </span>
+  );
+}
+
+function TypewriterText({ words = [], typingSpeed = 90, deletingSpeed = 45, pauseDuration = 2200 }) {
+  const [index, setIndex] = useState(0);
+  const [subIndex, setSubIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [blink, setBlink] = useState(true);
+
+  useEffect(() => {
+    const cursorInterval = setInterval(() => {
+      setBlink((prev) => !prev);
+    }, 500);
+    return () => clearInterval(cursorInterval);
+  }, []);
+
+  useEffect(() => {
+    if (!words.length) return;
+    const currentWord = words[index];
+
+    if (isDeleting) {
+      if (subIndex === 0) {
+        setIsDeleting(false);
+        setIndex((prev) => (prev + 1) % words.length);
+        return;
+      }
+      const timeout = setTimeout(() => {
+        setSubIndex((prev) => prev - 1);
+      }, deletingSpeed);
+      return () => clearTimeout(timeout);
+    }
+
+    if (subIndex === currentWord.length) {
+      const timeout = setTimeout(() => {
+        setIsDeleting(true);
+      }, pauseDuration);
+      return () => clearTimeout(timeout);
+    }
+
+    const timeout = setTimeout(() => {
+      setSubIndex((prev) => prev + 1);
+    }, typingSpeed);
+
+    return () => clearTimeout(timeout);
+  }, [subIndex, index, isDeleting, words, typingSpeed, deletingSpeed, pauseDuration]);
+
+  const currentWord = words[index] || '';
+
+  return (
+    <span className="inline-block">
+      <span className="bg-gradient-to-r from-blue-400 via-cyan-300 to-indigo-300 bg-clip-text text-transparent font-black drop-shadow-[0_4px_20px_rgba(56,189,248,0.4)]">
+        {currentWord.substring(0, subIndex)}
+      </span>
+      <span
+        className={`inline-block w-1.5 h-8 sm:h-12 lg:h-16 ml-1.5 align-middle bg-cyan-400 shadow-[0_0_12px_#38bdf8] rounded-full transition-opacity ${
+          blink ? 'opacity-100' : 'opacity-0'
+        }`}
+      />
+    </span>
+  );
+}
+
+const sampleSalesData = [
+  { day: 'Mon', revenue: 42000, sales: 28 },
+  { day: 'Tue', revenue: 58000, sales: 36 },
+  { day: 'Wed', revenue: 51000, sales: 31 },
+  { day: 'Thu', revenue: 79000, sales: 48 },
+  { day: 'Fri', revenue: 94000, sales: 62 },
+  { day: 'Sat', revenue: 112000, sales: 79 },
+  { day: 'Sun', revenue: 86000, sales: 54 },
+];
+
+function HeroDashboardMockup() {
+  return (
+    <div className="relative w-full rounded-2xl md:rounded-[28px] bg-slate-900/90 border border-white/10 p-4 md:p-6 shadow-2xl backdrop-blur-2xl overflow-hidden text-left">
+      <div className="absolute -top-32 -right-32 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
+        <div className="flex items-center gap-3">
+          <div className="flex gap-1.5">
+            <span className="w-3 h-3 rounded-full bg-rose-500/80 inline-block"></span>
+            <span className="w-3 h-3 rounded-full bg-amber-500/80 inline-block"></span>
+            <span className="w-3 h-3 rounded-full bg-emerald-500/80 inline-block"></span>
+          </div>
+          <span className="text-xs font-mono text-slate-400 font-semibold hidden sm:inline">
+            OmniManage ERP v4.2 • Multi-Branch Outlet Dashboard
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> Live Stock Sync
+          </span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+        <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10">
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Today's Revenue</div>
+          <div className="text-base sm:text-lg font-black text-white mt-0.5">৳ 94,250</div>
+          <div className="text-[10px] text-emerald-400 font-bold mt-0.5">↑ +18.4% vs yesterday</div>
+        </div>
+        <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10">
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Active Outlets</div>
+          <div className="text-base sm:text-lg font-black text-indigo-400 mt-0.5">5 Outlets</div>
+          <div className="text-[10px] text-indigo-300 font-bold mt-0.5">100% Operational</div>
+        </div>
+        <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10">
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">IMEI Items In Stock</div>
+          <div className="text-base sm:text-lg font-black text-amber-400 mt-0.5">1,420 Pcs</div>
+          <div className="text-[10px] text-amber-300/80 font-bold mt-0.5">Passport Tracked</div>
+        </div>
+        <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10">
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Active Repairs</div>
+          <div className="text-base sm:text-lg font-black text-emerald-400 mt-0.5">14 Jobs</div>
+          <div className="text-[10px] text-slate-400 font-bold mt-0.5">Avg turn: 24 hrs</div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 p-4 rounded-xl bg-white/[0.03] border border-white/10">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-xs font-bold text-white uppercase tracking-wider">Weekly Revenue Curve</h4>
+            <span className="text-[10px] text-indigo-400 font-bold">Real-time Sales</span>
+          </div>
+          <div className="h-44 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={sampleSalesData}>
+                <defs>
+                  <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.6}/>
+                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0}/>
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="day" stroke="#64748b" fontSize={10} tickLine={false} />
+                <YAxis stroke="#64748b" fontSize={10} tickLine={false} tickFormatter={(val) => `৳${val/1000}k`} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px', fontSize: '11px' }}
+                  formatter={(val) => [`৳${val.toLocaleString()}`, 'Revenue']}
+                />
+                <Area type="monotone" dataKey="revenue" stroke="#818cf8" strokeWidth={2.5} fillOpacity={1} fill="url(#colorRev)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10 space-y-3">
+          <h4 className="text-xs font-bold text-white uppercase tracking-wider">Branch Stock Health</h4>
+
+          <div>
+            <div className="flex justify-between text-[11px] mb-1">
+              <span className="text-slate-300 font-medium">Dhanmondi Main</span>
+              <span className="text-emerald-400 font-bold">92%</span>
+            </div>
+            <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+              <div className="bg-emerald-500 h-full rounded-full" style={{ width: '92%' }}></div>
+            </div>
+          </div>
+
+          <div>
+            <div className="flex justify-between text-[11px] mb-1">
+              <span className="text-slate-300 font-medium">Mirpur Outlet</span>
+              <span className="text-blue-400 font-bold">78%</span>
+            </div>
+            <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+              <div className="bg-blue-500 h-full rounded-full" style={{ width: '78%' }}></div>
+            </div>
+          </div>
+
+          <div>
+            <div className="flex justify-between text-[11px] mb-1">
+              <span className="text-slate-300 font-medium">Uttara Outlet</span>
+              <span className="text-amber-400 font-bold">64%</span>
+            </div>
+            <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+              <div className="bg-amber-500 h-full rounded-full" style={{ width: '64%' }}></div>
+            </div>
+          </div>
+
+          <div>
+            <div className="flex justify-between text-[11px] mb-1">
+              <span className="text-slate-300 font-medium">Chittagong Outlet</span>
+              <span className="text-indigo-400 font-bold">85%</span>
+            </div>
+            <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+              <div className="bg-indigo-500 h-full rounded-full" style={{ width: '85%' }}></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const BRAND = {
   primary: 'indigo',
@@ -82,6 +305,32 @@ export default function LandingPage() {
   const [contactSubmitting, setContactSubmitting] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+
+  const [platformSettings, setPlatformSettings] = useState({
+    platformName: 'OmniManage ERP',
+    platformPhone: '+880 1700-000000',
+    platformEmail: 'support@omnimanage.bd',
+    platformAddress: 'Dhanmondi, Dhaka, Bangladesh',
+    platformSocials: {
+      facebook: 'https://facebook.com/omnimanage',
+      twitter: 'https://x.com/omnimanage',
+      linkedin: 'https://linkedin.com/company/omnimanage',
+      youtube: 'https://youtube.com/@omnimanage',
+      instagram: 'https://instagram.com/omnimanage',
+    },
+  });
+
+  useEffect(() => {
+    const fetchPublicSettings = async () => {
+      try {
+        const res = await api.get('/settings/public');
+        if (res.data?.data) {
+          setPlatformSettings((prev) => ({ ...prev, ...res.data.data }));
+        }
+      } catch {}
+    };
+    fetchPublicSettings();
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => setShowScrollTop(window.scrollY > 300);
@@ -208,31 +457,31 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a1a] text-slate-200 font-sans selection:bg-indigo-500 selection:text-white">
-      {/* ─── NAVBAR ──────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 bg-[#0a0a1a]/80 backdrop-blur-xl border-b border-white/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <button onClick={() => scrollTo('home')} className="flex items-center gap-2.5 group">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-indigo-600/20 group-hover:shadow-indigo-600/40 transition-shadow">
+      {/* ─── FLOATING ROUNDED NAVBAR ──────────────────────────────────────── */}
+      <header className="sticky top-3 sm:top-5 z-50 max-w-7xl mx-3 sm:mx-auto px-4 sm:px-6 rounded-2xl md:rounded-full bg-[#0a0a1a]/85 backdrop-blur-2xl border border-white/10 shadow-2xl shadow-indigo-600/10 transition-all">
+        <div className="h-14 sm:h-16 flex items-center justify-between">
+          <button onClick={() => scrollTo('home')} className="flex items-center gap-2 sm:gap-2.5 group text-left">
+            <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-indigo-600/20 group-hover:shadow-indigo-600/40 transition-shadow shrink-0">
               O
             </div>
-            <div className="hidden sm:block">
-              <span className="font-black text-lg tracking-tight text-white">
+            <div className="flex flex-col text-left">
+              <span className="font-black text-base sm:text-lg tracking-tight text-white leading-tight">
                 Omni<span className="text-indigo-400">Manage</span>
               </span>
-              <span className="block text-[9px] font-bold text-slate-500 tracking-widest uppercase">
+              <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 tracking-widest uppercase">
                 Enterprise ERP
               </span>
             </div>
           </button>
 
-          <nav className="hidden lg:flex items-center gap-1 p-1 bg-white/5 border border-white/5 rounded-2xl">
+          <nav className="hidden lg:flex items-center gap-1 p-1 bg-white/5 border border-white/5 rounded-full">
             {navLinks.map((tab) => {
               const Icon = tab.icon;
               return (
                 <button
                   key={tab.id}
                   onClick={() => scrollTo(tab.id)}
-                  className={`px-3.5 py-1.5 rounded-xl font-bold text-[11px] transition-all flex items-center gap-1.5 ${
+                  className={`px-4 py-1.5 rounded-full font-bold text-[11px] transition-all flex items-center gap-1.5 ${
                     activeTab === tab.id
                       ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
                       : 'text-slate-400 hover:text-white hover:bg-white/5'
@@ -248,43 +497,63 @@ export default function LandingPage() {
           <div className="flex items-center gap-2">
             <Link
               to="/login"
-              className="px-3 sm:px-4 py-2 rounded-xl font-bold text-[11px] sm:text-xs text-slate-300 bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
+              className="px-3 sm:px-4 py-2 rounded-xl sm:rounded-full font-bold text-[11px] sm:text-xs text-slate-300 bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
             >
               Sign In
             </Link>
             <Link
               to="/register-shop"
-              className="px-3 sm:px-4 py-2 rounded-xl font-bold text-[11px] sm:text-xs text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 shadow-lg shadow-indigo-600/20 transition-all flex items-center gap-1.5"
+              className="px-3 sm:px-4 py-2 rounded-xl sm:rounded-full font-bold text-[11px] sm:text-xs text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 shadow-lg shadow-indigo-600/20 transition-all flex items-center gap-1.5"
             >
               <span className="hidden sm:inline">Register Shop</span>
               <span className="sm:hidden">Register</span>
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
             <button
+              type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-xl text-slate-400 hover:text-white bg-white/5 border border-white/10 transition-colors"
+              className="lg:hidden relative px-3 py-2 rounded-full bg-gradient-to-r from-indigo-500/20 via-violet-500/20 to-sky-500/20 border border-indigo-400/30 text-white shadow-lg shadow-indigo-500/10 hover:border-indigo-400/60 active:scale-95 transition-all duration-300 flex items-center justify-center gap-1.5"
+              aria-label="Toggle mobile navigation menu"
             >
-              {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+              {mobileMenuOpen ? (
+                <X className="h-4 w-4 text-rose-400 stroke-[2.5] rotate-90 transition-transform duration-300" />
+              ) : (
+                <div className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
+                </div>
+              )}
             </button>
           </div>
         </div>
 
         {mobileMenuOpen && (
-          <div className="lg:hidden bg-[#0a0a1a] border-t border-white/5 p-4 space-y-1">
+          <div className="lg:hidden pt-3 pb-2 border-t border-white/10 space-y-1 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 pb-1.5 flex items-center justify-between">
+              <span>Navigation Menu</span>
+              <span className="text-[9px] text-indigo-400 font-extrabold">OmniManage ERP</span>
+            </div>
             {navLinks.map((tab) => {
               const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
                   onClick={() => scrollTo(tab.id)}
-                  className={`w-full p-3 rounded-xl font-bold text-xs flex items-center gap-3 transition-all ${
-                    activeTab === tab.id
-                      ? 'bg-indigo-600 text-white'
-                      : 'text-slate-300 hover:bg-white/5'
+                  className={`w-full p-2.5 rounded-xl font-bold text-xs flex items-center justify-between transition-all ${
+                    isActive
+                      ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-600/20'
+                      : 'text-slate-300 hover:bg-white/5 hover:text-white'
                   }`}
                 >
-                  <Icon className="h-4 w-4 text-indigo-400" />
-                  {tab.label}
+                  <div className="flex items-center gap-2.5">
+                    <div className={`p-1.5 rounded-lg ${isActive ? 'bg-white/20' : 'bg-white/5 text-indigo-400'}`}>
+                      <Icon className="h-3.5 w-3.5" />
+                    </div>
+                    <span>{tab.label}</span>
+                  </div>
+                  {isActive && <ChevronRight className="h-3.5 w-3.5 text-white/80" />}
                 </button>
               );
             })}
@@ -305,9 +574,15 @@ export default function LandingPage() {
 
           <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black tracking-tight max-w-5xl mx-auto leading-[1.1] text-white">
             Unified Management for{' '}
-            <span className="bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
-              Inventory, IMEIs & Sales
-            </span>
+            <TypewriterText
+              words={[
+                'Inventory, IMEIs & Sales',
+                'Multi-Branch Outlets & POS',
+                'Double-Entry Accounting',
+                'Warranty Claims & Repair Sheets',
+                'Wholesale Tiers & Serial Tracking',
+              ]}
+            />
           </h1>
 
           <p className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
@@ -350,13 +625,7 @@ export default function LandingPage() {
           </div>
 
           <div className="pt-10 max-w-5xl mx-auto">
-            <div className="rounded-2xl p-2 bg-white/5 border border-white/10 shadow-2xl shadow-indigo-600/10">
-              <img
-                src="/images/dashboard_mockup.png"
-                alt="OmniManage ERP Dashboard"
-                className="w-full rounded-xl border border-white/5 object-cover"
-              />
-            </div>
+            <HeroDashboardMockup />
           </div>
         </div>
       </section>
@@ -551,14 +820,45 @@ export default function LandingPage() {
                         {plan.displayName || plan.name}
                       </h3>
                       <p className="text-xs text-slate-400 leading-relaxed">{plan.description}</p>
-                      <div className="pt-1">
-                        <span className="text-3xl font-black text-white">
-                          {typeof monthlyPrice === 'number'
-                            ? `৳${billingCycle === 'yearly' && yearlyPrice ? Math.round(yearlyPrice / 12) : monthlyPrice}`
-                            : monthlyPrice}
-                        </span>
-                        {typeof monthlyPrice === 'number' && (
-                          <span className="text-xs text-slate-500"> / month</span>
+                      <div className="pt-1 min-h-[58px] flex flex-col justify-center">
+                        {billingCycle === 'yearly' ? (
+                          <div>
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-3xl font-black text-white">
+                                {typeof yearlyPrice === 'number'
+                                  ? `৳${yearlyPrice.toLocaleString()}`
+                                  : typeof monthlyPrice === 'number'
+                                    ? `৳${(monthlyPrice * 12).toLocaleString()}`
+                                    : monthlyPrice}
+                              </span>
+                              {typeof (yearlyPrice || monthlyPrice) === 'number' && (
+                                <span className="text-xs font-bold text-indigo-400"> / year</span>
+                              )}
+                            </div>
+                            {typeof yearlyPrice === 'number' && yearlyPrice > 0 && (
+                              <div className="text-[11px] font-semibold text-emerald-400 mt-0.5">
+                                ৳{Math.round(yearlyPrice / 12).toLocaleString()}/mo • Billed annually (Save 20%)
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div>
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-3xl font-black text-white">
+                                {typeof monthlyPrice === 'number'
+                                  ? `৳${monthlyPrice.toLocaleString()}`
+                                  : monthlyPrice}
+                              </span>
+                              {typeof monthlyPrice === 'number' && (
+                                <span className="text-xs font-semibold text-slate-400"> / month</span>
+                              )}
+                            </div>
+                            {typeof monthlyPrice === 'number' && monthlyPrice > 0 && (
+                              <div className="text-[11px] font-medium text-slate-400 mt-0.5">
+                                Billed monthly (No lock-in contract)
+                              </div>
+                            )}
+                          </div>
                         )}
                       </div>
                       <ul className="space-y-2 pt-3 border-t border-white/5 text-xs text-slate-300">
@@ -614,19 +914,19 @@ export default function LandingPage() {
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4">
                 {[
-                  { val: '500+', label: 'Shops Registered' },
-                  { val: '5Lakh+', label: 'Invoices Issued' },
-                  { val: '99.9%', label: 'Uptime SLA' },
-                  { val: '24/7', label: 'Local Support' },
-                ].map(({ val, label }) => (
+                  { count: 10000, suffix: '+', label: 'Outlets Tracked' },
+                  { count: 500000, suffix: '+', label: 'Invoices Issued' },
+                  { count: 99.9, suffix: '%', label: 'Uptime SLA' },
+                  { count: 50000, suffix: '+', label: 'Repairs Managed' },
+                ].map(({ count, suffix, label }) => (
                   <div
                     key={label}
-                    className="p-3 rounded-xl bg-white/[0.02] border border-white/5 text-center"
+                    className="p-3.5 rounded-xl bg-white/[0.03] border border-white/10 text-center"
                   >
                     <div className="text-xl font-black bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
-                      {val}
+                      <AnimatedCounter end={count} suffix={suffix} />
                     </div>
-                    <div className="text-[9px] font-bold text-slate-500 uppercase mt-1">
+                    <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-1">
                       {label}
                     </div>
                   </div>
@@ -692,19 +992,19 @@ export default function LandingPage() {
                 {
                   icon: PhoneCall,
                   label: 'Call Us',
-                  value: '+880 1700-000000',
+                  value: platformSettings.platformPhone,
                   sub: 'Sat - Thu, 9 AM - 8 PM',
                 },
                 {
                   icon: Mail,
                   label: 'Email Support',
-                  value: 'support@omnimanage.com',
+                  value: platformSettings.platformEmail,
                   sub: 'Monitored 24/7',
                 },
                 {
                   icon: MapPin,
                   label: 'Headquarters',
-                  value: 'Dhanmondi, Dhaka, Bangladesh',
+                  value: platformSettings.platformAddress,
                   sub: '',
                 },
               ].map(({ icon: Icon, label, value, sub }) => (
@@ -808,34 +1108,34 @@ export default function LandingPage() {
       </section>
 
       {/* ─── FOOTER ──────────────────────────────────────────────── */}
-      <footer className="border-t border-white/5 bg-[#06060f]">
+      <footer className="border-t border-white/10 bg-[#06060f] relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white font-black text-xs shadow-lg shadow-indigo-600/20">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-indigo-600/20">
                   O
                 </div>
-                <span className="font-black text-lg text-white">
+                <span className="font-black text-xl text-white tracking-tight">
                   Omni<span className="text-indigo-400">Manage</span>
                 </span>
               </div>
-              <p className="text-xs text-slate-500 leading-relaxed">
+              <p className="text-xs text-slate-400 leading-relaxed font-medium">
                 The leading enterprise cloud ERP & POS platform for retail stores, mobile shops,
                 repair centers & wholesale distributors in Bangladesh.
               </p>
             </div>
 
             <div className="space-y-3">
-              <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-300">
                 Navigation
               </h4>
-              <ul className="space-y-2 text-xs text-slate-500">
+              <ul className="space-y-2 text-xs font-semibold text-slate-400">
                 {['home', 'features', 'modules', 'pricing', 'about', 'contact'].map((id) => (
                   <li key={id}>
                     <button
                       onClick={() => scrollTo(id)}
-                      className="hover:text-indigo-400 transition-colors capitalize"
+                      className="hover:text-indigo-400 hover:translate-x-1 transition-all capitalize"
                     >
                       {id}
                     </button>
@@ -845,10 +1145,10 @@ export default function LandingPage() {
             </div>
 
             <div className="space-y-3">
-              <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                Account
+              <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-300">
+                Account & Systems
               </h4>
-              <ul className="space-y-2 text-xs text-slate-500">
+              <ul className="space-y-2 text-xs font-semibold text-slate-400">
                 <li>
                   <Link to="/login" className="hover:text-indigo-400 transition-colors">
                     Sign In to Shop
@@ -864,46 +1164,106 @@ export default function LandingPage() {
                     Super Admin Panel
                   </Link>
                 </li>
+                <li>
+                  <Link to="/developer" className="hover:text-indigo-400 transition-colors">
+                    Developer Portfolio
+                  </Link>
+                </li>
               </ul>
             </div>
 
             <div className="space-y-3">
-              <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                Contact
+              <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-300">
+                Contact & Socials
               </h4>
-              <ul className="space-y-2 text-xs text-slate-500">
+              <ul className="space-y-2.5 text-xs text-slate-400 font-medium">
                 <li className="flex items-center gap-2">
-                  <MapPin className="h-3 w-3 text-indigo-400" /> Dhanmondi, Dhaka, Bangladesh
+                  <MapPin className="h-4 w-4 text-indigo-400 shrink-0 stroke-[2.2]" /> {platformSettings.platformAddress}
                 </li>
                 <li className="flex items-center gap-2">
-                  <PhoneCall className="h-3 w-3 text-indigo-400" /> +880 1700-000000
+                  <PhoneCall className="h-4 w-4 text-indigo-400 shrink-0 stroke-[2.2]" /> {platformSettings.platformPhone}
                 </li>
                 <li className="flex items-center gap-2">
-                  <Mail className="h-3 w-3 text-indigo-400" /> support@omnimanage.com
+                  <Mail className="h-4 w-4 text-indigo-400 shrink-0 stroke-[2.2]" /> {platformSettings.platformEmail}
                 </li>
               </ul>
+
+              <div className="pt-3 flex items-center gap-2.5">
+                {platformSettings.platformSocials?.facebook && (
+                  <a
+                    href={platformSettings.platformSocials.facebook}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 rounded-xl bg-white/5 border border-white/10 hover:border-indigo-500/50 hover:bg-indigo-500/20 text-slate-300 hover:text-white transition-all shadow-sm"
+                    title="Facebook"
+                  >
+                    <Facebook className="w-4 h-4" />
+                  </a>
+                )}
+                {platformSettings.platformSocials?.twitter && (
+                  <a
+                    href={platformSettings.platformSocials.twitter}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 rounded-xl bg-white/5 border border-white/10 hover:border-indigo-500/50 hover:bg-indigo-500/20 text-slate-300 hover:text-white transition-all shadow-sm"
+                    title="Twitter / X"
+                  >
+                    <Twitter className="w-4 h-4" />
+                  </a>
+                )}
+                {platformSettings.platformSocials?.linkedin && (
+                  <a
+                    href={platformSettings.platformSocials.linkedin}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 rounded-xl bg-white/5 border border-white/10 hover:border-indigo-500/50 hover:bg-indigo-500/20 text-slate-300 hover:text-white transition-all shadow-sm"
+                    title="LinkedIn"
+                  >
+                    <Linkedin className="w-4 h-4" />
+                  </a>
+                )}
+                {platformSettings.platformSocials?.youtube && (
+                  <a
+                    href={platformSettings.platformSocials.youtube}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 rounded-xl bg-white/5 border border-white/10 hover:border-indigo-500/50 hover:bg-indigo-500/20 text-slate-300 hover:text-white transition-all shadow-sm"
+                    title="YouTube"
+                  >
+                    <Youtube className="w-4 h-4" />
+                  </a>
+                )}
+                {platformSettings.platformSocials?.instagram && (
+                  <a
+                    href={platformSettings.platformSocials.instagram}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 rounded-xl bg-white/5 border border-white/10 hover:border-indigo-500/50 hover:bg-indigo-500/20 text-slate-300 hover:text-white transition-all shadow-sm"
+                    title="Instagram"
+                  >
+                    <Instagram className="w-4 h-4" />
+                  </a>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600">
+          <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400 font-semibold">
             <div className="flex items-center gap-1.5">
               &copy; {new Date().getFullYear()} OmniManage ERP. Built with
-              <Heart className="h-3 w-3 text-indigo-500 fill-indigo-500" />
+              <Heart className="h-3.5 w-3.5 text-rose-500 fill-rose-500" />
               by
               <Link
                 to="/developer"
-                className="font-bold text-slate-400 hover:text-indigo-400 transition-colors inline-flex items-center gap-1"
+                className="font-extrabold text-white hover:text-indigo-400 transition-colors inline-flex items-center gap-1"
               >
                 Salah Uddin Kader
-                <ArrowUpRight className="h-3 w-3" />
+                <ArrowUpRight className="h-3.5 w-3.5 text-indigo-400" />
               </Link>
             </div>
-            <button
-              onClick={scrollToTop}
-              className="hover:text-indigo-400 font-bold flex items-center gap-1 transition-colors"
-            >
-              Back to Top <ChevronUp className="h-3 w-3" />
-            </button>
+            <div className="text-slate-500 text-[11px]">
+              Enterprise Mobile Shop Multi-Tenant Cloud ERP
+            </div>
           </div>
         </div>
       </footer>

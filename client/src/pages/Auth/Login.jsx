@@ -312,38 +312,41 @@ export default function Login() {
       <div className="relative z-20 w-full max-w-md mx-4 py-8">
         {/* Brand Header */}
         <div className="flex justify-center mb-5">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-white/90 dark:bg-slate-800/90 border border-white/80 dark:border-slate-700/80 shadow-2xl shadow-blue-600/10">
-            <Smartphone className="w-8 h-8 text-[#2563EB] dark:text-blue-400 stroke-[2.2]" />
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-white/30 dark:bg-white/10 backdrop-blur-2xl border border-white/50 dark:border-white/20 shadow-2xl shadow-blue-500/20">
+            <Smartphone className="w-8 h-8 text-blue-600 dark:text-blue-400 stroke-[2.2]" />
           </div>
         </div>
 
-        <h1 className="text-3xl font-black text-white tracking-tight text-center mb-1 drop-shadow-md">
+        <h1 className="text-3xl font-black text-white tracking-tight text-center mb-1 drop-shadow-lg">
           {displayShopName}
         </h1>
-        <p className="text-sm font-semibold text-slate-200 dark:text-slate-300 text-center mb-8 drop-shadow">
-          Enterprise ERP System — Sign in to continue
+        <p className="text-xs font-bold uppercase tracking-widest text-blue-200/90 dark:text-blue-300/80 text-center mb-8 drop-shadow">
+          Enterprise ERP Suite — Apple macOS Liquid Glass
         </p>
 
-        {/* High-Contrast Glass Card */}
+        {/* Apple macOS / iOS Liquid Glass Form Card */}
         <form
           onSubmit={handleSubmit}
-          className="bg-white/95 dark:bg-slate-900/90 backdrop-blur-2xl border border-white/90 dark:border-slate-800/80 shadow-2xl shadow-black/30 rounded-3xl p-8 md:p-10 relative overflow-hidden"
+          className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-3xl border border-white/60 dark:border-white/15 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] rounded-[32px] p-8 md:p-10 relative overflow-hidden"
         >
-          <div className="space-y-5">
+          {/* Internal Liquid Shine Highlight */}
+          <div className="absolute -top-24 -left-24 w-48 h-48 bg-white/30 dark:bg-blue-400/10 rounded-full blur-2xl pointer-events-none" />
+
+          <div className="space-y-5 relative z-10">
             {/* Login Field */}
             <div>
-              <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-extrabold text-slate-800 dark:text-slate-200 uppercase tracking-wider mb-2">
                 Username / Email / Phone
               </label>
               <div className="relative">
-                <User className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#2563EB] dark:text-blue-400 stroke-[2.2]" />
+                <User className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400 stroke-[2.5]" />
                 <input
                   type="text"
                   required
                   value={loginField}
                   onChange={(e) => setLoginField(e.target.value)}
                   placeholder="Enter username, email or phone"
-                  className="w-full pl-10 pr-4 py-3.5 rounded-xl text-sm font-semibold transition-all duration-200 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-800 focus:border-[#2563EB] focus:ring-4 focus:ring-[#2563EB]/20 shadow-sm outline-none"
+                  className="w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm font-semibold transition-all duration-200 bg-white/60 dark:bg-slate-800/80 border border-slate-300/80 dark:border-slate-700/80 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-400 focus:bg-white dark:focus:bg-slate-800 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/25 shadow-xs outline-none"
                   autoComplete="username"
                 />
               </div>
@@ -352,35 +355,35 @@ export default function Login() {
             {/* Password Field */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                <label className="text-xs font-extrabold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
                   Password
                 </label>
                 <Link
                   to="/forgot-password"
-                  className="text-xs font-bold text-[#2563EB] dark:text-blue-400 hover:underline transition-colors"
+                  className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline transition-colors"
                 >
                   Forgot Password?
                 </Link>
               </div>
               <div className="relative">
-                <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#2563EB] dark:text-blue-400 stroke-[2.2]" />
+                <Lock className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400 stroke-[2.5]" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className="w-full pl-10 pr-10 py-3.5 rounded-xl text-sm font-semibold transition-all duration-200 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-800 focus:border-[#2563EB] focus:ring-4 focus:ring-[#2563EB]/20 shadow-sm outline-none"
+                  className="w-full pl-11 pr-11 py-3.5 rounded-2xl text-sm font-semibold transition-all duration-200 bg-white/60 dark:bg-slate-800/80 border border-slate-300/80 dark:border-slate-700/80 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-400 focus:bg-white dark:focus:bg-slate-800 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/25 shadow-xs outline-none"
                   autoComplete="current-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors p-1"
                   tabIndex={-1}
                 >
                   {showPassword ? (
-                    <EyeOff className="w-4 h-4 text-[#2563EB] dark:text-blue-400" />
+                    <EyeOff className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                   ) : (
                     <Eye className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                   )}
@@ -395,7 +398,7 @@ export default function Login() {
                 id="rememberMe"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 rounded cursor-pointer accent-[#2563EB]"
+                className="w-4 h-4 rounded-md cursor-pointer accent-blue-600"
               />
               <label
                 htmlFor="rememberMe"
@@ -410,7 +413,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 px-6 rounded-xl font-bold text-sm text-white bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1E40AF] shadow-lg shadow-[#2563EB]/30 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75 disabled:cursor-wait"
+                className="w-full py-3.5 px-6 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.98] shadow-xl shadow-blue-600/30 border border-white/20 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75 disabled:cursor-wait"
               >
                 {loading ? (
                   <>

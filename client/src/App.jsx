@@ -76,6 +76,7 @@ const SAContacts = lazy(() => import('./pages/SuperAdmin/SAContacts'));
 const SAProfile = lazy(() => import('./pages/SuperAdmin/SAProfile'));
 const SABackupManagement = lazy(() => import('./pages/SuperAdmin/SABackupManagement'));
 const SASystemAdmins = lazy(() => import('./pages/SuperAdmin/SASystemAdmins'));
+const SAPlatformSettings = lazy(() => import('./pages/SuperAdmin/SAPlatformSettings'));
 
 const PageSkeletonLoader = () => (
   <div className="p-6 space-y-6 animate-pulse">
@@ -689,6 +690,7 @@ export default function App() {
           <Route path="subscriptions" element={<SASubscriptionPlans />} />
           <Route path="backups" element={<SABackupManagement />} />
           <Route path="system-admins" element={<SASystemAdmins />} />
+          <Route path="settings" element={<SAPlatformSettings />} />
           <Route path="profile" element={<SAProfile />} />
         </Route>
 

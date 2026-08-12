@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import {
   Building2,
   Smartphone,
@@ -14,15 +14,94 @@ import {
   ArrowLeft,
   ShieldCheck,
   FileText,
+  MessageSquare,
+  Sparkles,
+  Check,
+  Copy,
+  ExternalLink,
+  X,
+  HelpCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../../lib/api';
 import PasswordInput from '../../components/ui/PasswordInput';
 
+const PLANS = [
+  {
+    id: 'free',
+    name: 'Free',
+    monthlyPrice: 0,
+    yearlyPrice: 0,
+    branches: '1 Branch',
+    users: '2 Staff Users',
+    features: ['1 Branch / Outlet', '2 Staff Users', 'Up to 500 Products', 'Basic POS Billing'],
+  },
+  {
+    id: 'starter',
+    name: 'Starter',
+    monthlyPrice: 999,
+    yearlyPrice: 9990,
+    branches: '2 Branches',
+    users: '5 Staff Users',
+    features: ['2 Branches', '5 Staff Users', '2,000 Products & IMEIs', 'IMEI History Passport', 'Customer Due SMS'],
+    isPopular: false,
+  },
+  {
+    id: 'pro',
+    name: 'Pro',
+    monthlyPrice: 2499,
+    yearlyPrice: 24990,
+    branches: '5 Branches',
+    users: '20 Staff Users',
+    features: ['5 Branches', '20 Staff Users', '10,000 IMEIs', 'Double-Entry Accounting', 'HR & Payroll', 'Wholesale Tiers'],
+    isPopular: true,
+  },
+  {
+    id: 'enterprise',
+    name: 'Enterprise',
+    monthlyPrice: 'Custom',
+    yearlyPrice: 'Custom',
+    branches: 'Unlimited',
+    users: 'Unlimited',
+    features: ['Unlimited Branches', 'Unlimited Users', 'Dedicated Account Manager', 'Custom Domain', '24/7 SLA Uptime'],
+  },
+];
+
 export default function RegisterShop() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const defaultPlanParam = searchParams.get('plan') || 'pro';
+
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(defaultPlanParam.toLowerCase());
+  const [billingCycle, setBillingCycle] = useState('yearly');
+
+  const [registeredTenantData, setRegisteredTenantData] = useState(null);
+  const [showActivationModal, setShowActivationModal] = useState(false);
+
+  const [platformSettings, setPlatformSettings] = useState({
+    platformName: 'OmniManage ERP',
+    platformPhone: '+880 1700-000000',
+    platformWhatsApp: '+880 1700-000000',
+    platformEmail: 'support@omnimanage.bd',
+    activationInstructions:
+      'Thank you for registering your shop! Please contact our platform support team to verify your payment and activate your shop account.',
+    bkashNumber: '01700000000',
+    nagadNumber: '01700000000',
+  });
+
+  useEffect(() => {
+    const fetchPublicSettings = async () => {
+      try {
+        const res = await api.get('/settings/public');
+        if (res.data?.data) {
+          setPlatformSettings((prev) => ({ ...prev, ...res.data.data }));
+        }
+      } catch {}
+    };
+    fetchPublicSettings();
+  }, []);
 
   const [form, setForm] = useState({
     shopName: '',
@@ -74,9 +153,12 @@ export default function RegisterShop() {
         nidNumber: form.nidNumber,
         tradeLicenseNumber: form.tradeLicenseNumber,
         password: form.password,
+        selectedPlan,
+        billingCycle,
       });
 
-      const tenantId = res.data?.data?._id;
+      const tenantData = res.data?.data;
+      const tenantId = tenantData?._id;
 
       // Upload Shop Logo if provided
       if (tenantId && files.logo) {
@@ -100,14 +182,35 @@ export default function RegisterShop() {
         });
       }
 
-      toast.success('Registration successful! Please verify your email OTP.');
-      navigate(`/verify-email?email=${encodeURIComponent(form.email)}`);
+      const shopRefCode = `SHOP-${Math.floor(100000 + Math.random() * 900000)}`;
+
+      setRegisteredTenantData({
+        ...tenantData,
+        shopRefCode,
+        selectedPlan,
+        billingCycle,
+        email: form.email,
+        phone: form.phone,
+        shopName: form.shopName,
+      });
+
+      setShowActivationModal(true);
+      toast.success('Shop registration submitted successfully!');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Registration failed');
     } finally {
       setLoading(false);
     }
   };
+
+  const currentPlanObj = PLANS.find((p) => p.id === selectedPlan) || PLANS[2];
+  const whatsappMsg = registeredTenantData
+    ? encodeURIComponent(
+        `Hello Support, I just registered my shop "${registeredTenantData.shopName}" (Ref: ${registeredTenantData.shopRefCode}) on ${registeredTenantData.selectedPlan.toUpperCase()} plan (${registeredTenantData.billingCycle}). Please activate my shop account.`
+      )
+    : '';
+
+  const whatsappCleanNumber = platformSettings.platformWhatsApp.replace(/[^0-9]/g, '');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100 flex items-center justify-center p-4 relative overflow-hidden">
@@ -117,7 +220,8 @@ export default function RegisterShop() {
         className="absolute w-[400px] h-[400px] -bottom-32 -right-32 rounded-full blur-[100px] bg-cyan-500/8 animate-drift pointer-events-none"
         style={{ animationDelay: '3s' }}
       />
-      <div className="w-full max-w-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/[0.1] rounded-2xl shadow-2xl p-6 sm:p-8 space-y-6 backdrop-blur-[36px] saturate-[1.9] relative z-10">
+
+      <div className="w-full max-w-3xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/[0.1] rounded-2xl shadow-2xl p-6 sm:p-8 space-y-6 backdrop-blur-[36px] saturate-[1.9] relative z-10">
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500/25 to-cyan-500/10 border border-blue-400/30 flex items-center justify-center mx-auto text-[#2563EB] backdrop-blur-xl shadow-lg shadow-blue-500/10">
@@ -131,17 +235,119 @@ export default function RegisterShop() {
 
         {/* Step Indicator */}
         <div className="flex items-center justify-between border-b border-white/10 pb-4 text-xs font-semibold text-slate-400">
-          <span className={step >= 1 ? 'text-[#2563EB] font-bold' : ''}>1. Shop Info</span>
-          <span className={step >= 2 ? 'text-[#2563EB] font-bold' : ''}>2. Owner & NID</span>
-          <span className={step >= 3 ? 'text-[#2563EB] font-bold' : ''}>
-            3. Trade License & KYC
-          </span>
+          <span className={step >= 1 ? 'text-[#2563EB] font-bold' : ''}>1. Select Plan</span>
+          <span className={step >= 2 ? 'text-[#2563EB] font-bold' : ''}>2. Shop Info</span>
+          <span className={step >= 3 ? 'text-[#2563EB] font-bold' : ''}>3. Owner & NID</span>
+          <span className={step >= 4 ? 'text-[#2563EB] font-bold' : ''}>4. License & Password</span>
         </div>
 
         {/* Form Wizard */}
         <form onSubmit={handleRegister} className="space-y-4 text-xs">
-          {/* Step 1: Shop Info */}
+          {/* Step 1: Select Plan */}
           {step === 1 && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-300">Choose Subscription Plan *</span>
+                <div className="flex items-center gap-2 bg-white/5 border border-white/10 p-1 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => setBillingCycle('monthly')}
+                    className={`px-3 py-1 rounded-lg font-bold text-[10px] transition-all ${
+                      billingCycle === 'monthly' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400'
+                    }`}
+                  >
+                    Monthly
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBillingCycle('yearly')}
+                    className={`px-3 py-1 rounded-lg font-bold text-[10px] transition-all flex items-center gap-1 ${
+                      billingCycle === 'yearly' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400'
+                    }`}
+                  >
+                    <span>Yearly</span>
+                    <span className="px-1 py-0.5 rounded text-[8px] bg-emerald-500/20 text-emerald-400 font-extrabold uppercase">
+                      Save 20%
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {PLANS.map((plan) => {
+                  const isSel = selectedPlan === plan.id;
+                  const price =
+                    billingCycle === 'yearly' && typeof plan.yearlyPrice === 'number'
+                      ? plan.yearlyPrice
+                      : plan.monthlyPrice;
+
+                  return (
+                    <div
+                      key={plan.id}
+                      onClick={() => setSelectedPlan(plan.id)}
+                      className={`relative cursor-pointer rounded-xl p-4 border transition-all ${
+                        isSel
+                          ? 'bg-blue-600/20 border-blue-500 shadow-lg shadow-blue-600/20'
+                          : 'bg-white/[0.03] border-white/10 hover:border-white/20'
+                      }`}
+                    >
+                      {plan.isPopular && (
+                        <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-[8px] font-black uppercase text-white shadow-md">
+                          Popular
+                        </span>
+                      )}
+
+                      <div className="flex items-center justify-between mb-1">
+                        <h3 className="font-extrabold text-sm text-white">{plan.name}</h3>
+                        <div
+                          className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                            isSel ? 'bg-blue-600 border-blue-500' : 'border-slate-600'
+                          }`}
+                        >
+                          {isSel && <Check className="w-2.5 h-2.5 text-white" />}
+                        </div>
+                      </div>
+
+                      <div className="text-lg font-black text-white my-1">
+                        {typeof price === 'number' ? `৳${price.toLocaleString()}` : price}
+                        {typeof price === 'number' && (
+                          <span className="text-[10px] text-slate-400 font-normal">
+                            /{billingCycle === 'yearly' ? 'yr' : 'mo'}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="text-[10px] text-blue-300 font-bold mb-2">
+                        {plan.branches} • {plan.users}
+                      </div>
+
+                      <ul className="space-y-1 text-[10px] text-slate-300 border-t border-white/5 pt-2">
+                        {plan.features.slice(0, 3).map((f, fIdx) => (
+                          <li key={fIdx} className="flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-blue-400 shrink-0" />
+                            <span className="truncate">{f}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="pt-4 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setStep(2)}
+                  className="px-6 py-2.5 bg-[#2563EB] hover:bg-blue-700 text-white font-bold rounded-xl flex items-center gap-1.5 shadow-lg shadow-blue-600/20"
+                >
+                  Next Step: Shop Info <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Step 2: Shop Info */}
+          {step === 2 && (
             <div className="space-y-3">
               <div>
                 <label className="block font-semibold mb-1 text-slate-300">
@@ -184,7 +390,14 @@ export default function RegisterShop() {
                 </p>
               </div>
 
-              <div className="pt-4 flex justify-end">
+              <div className="pt-4 flex justify-between">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="px-4 py-2.5 bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-white font-semibold rounded-xl flex items-center gap-1.5"
+                >
+                  <ArrowLeft className="w-4 h-4" /> Back
+                </button>
                 <button
                   type="button"
                   onClick={() => {
@@ -192,7 +405,7 @@ export default function RegisterShop() {
                       toast.error('Please enter Mobile Shop Name');
                       return;
                     }
-                    setStep(2);
+                    setStep(3);
                   }}
                   className="px-5 py-2.5 bg-[#2563EB] hover:bg-blue-700 text-white font-semibold rounded-xl flex items-center gap-1.5"
                 >
@@ -202,8 +415,8 @@ export default function RegisterShop() {
             </div>
           )}
 
-          {/* Step 2: Owner Info & NID */}
-          {step === 2 && (
+          {/* Step 3: Owner Info & NID */}
+          {step === 3 && (
             <div className="space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
@@ -295,8 +508,8 @@ export default function RegisterShop() {
               <div className="pt-4 flex justify-between">
                 <button
                   type="button"
-                  onClick={() => setStep(1)}
-                  className="px-4 py-2.5 bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-white font-semibold rounded-xl flex items-center gap-1.5 backdrop-blur-md transition-all"
+                  onClick={() => setStep(2)}
+                  className="px-4 py-2.5 bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-white font-semibold rounded-xl flex items-center gap-1.5"
                 >
                   <ArrowLeft className="w-4 h-4" /> Back
                 </button>
@@ -307,7 +520,7 @@ export default function RegisterShop() {
                       toast.error('Please enter Owner Name, Email, and Phone');
                       return;
                     }
-                    setStep(3);
+                    setStep(4);
                   }}
                   className="px-5 py-2.5 bg-[#2563EB] hover:bg-blue-700 text-white font-semibold rounded-xl flex items-center gap-1.5"
                 >
@@ -317,8 +530,8 @@ export default function RegisterShop() {
             </div>
           )}
 
-          {/* Step 3: Trade License & Password */}
-          {step === 3 && (
+          {/* Step 4: Trade License & Password */}
+          {step === 4 && (
             <div className="space-y-3">
               <div>
                 <label className="block font-semibold mb-1 text-slate-300">
@@ -336,7 +549,7 @@ export default function RegisterShop() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block font-semibold mb-1 text-slate-300">
-                    Trade License Scanned Document
+                    Trade License Document
                   </label>
                   <input
                     type="file"
@@ -386,17 +599,17 @@ export default function RegisterShop() {
               <div className="pt-4 flex justify-between">
                 <button
                   type="button"
-                  onClick={() => setStep(2)}
-                  className="px-4 py-2.5 bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-white font-semibold rounded-xl flex items-center gap-1.5 backdrop-blur-md transition-all"
+                  onClick={() => setStep(3)}
+                  className="px-4 py-2.5 bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-white font-semibold rounded-xl flex items-center gap-1.5"
                 >
                   <ArrowLeft className="w-4 h-4" /> Back
                 </button>
                 <button
                   type="submit"
                   disabled={loading || !form.password}
-                  className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-semibold rounded-xl flex items-center gap-1.5 disabled:opacity-50 shadow-lg shadow-blue-500/20 backdrop-blur-md transition-all"
+                  className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl flex items-center gap-1.5 disabled:opacity-50 shadow-lg shadow-blue-500/20 transition-all cursor-pointer"
                 >
-                  Complete Registration & Verify OTP
+                  {loading ? 'Submitting Registration...' : 'Complete Registration & Apply Plan'}
                 </button>
               </div>
             </div>
@@ -410,6 +623,126 @@ export default function RegisterShop() {
           </Link>
         </div>
       </div>
+
+      {/* ─── SHOP ACTIVATION & SUPPORT POPUP MODAL ──────────────────────── */}
+      {showActivationModal && registeredTenantData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+          <div className="relative w-full max-w-lg bg-slate-900 border border-slate-700/80 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 text-slate-100 overflow-hidden">
+            {/* Top Shine */}
+            <div className="absolute -top-24 -left-24 w-48 h-48 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center">
+                  <CheckCircle2 className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-lg text-white">Registration Submitted!</h3>
+                  <p className="text-xs text-slate-400">Contact Support to Activate Your Shop</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Shop Details Card */}
+            <div className="p-4 rounded-2xl bg-white/[0.04] border border-white/10 space-y-2">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-400 font-semibold">Shop Name:</span>
+                <span className="font-bold text-white">{registeredTenantData.shopName}</span>
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-400 font-semibold">Reference ID:</span>
+                <span className="font-mono font-bold text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded border border-yellow-400/30">
+                  {registeredTenantData.shopRefCode}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-400 font-semibold">Selected Plan:</span>
+                <span className="font-bold text-emerald-400 uppercase">
+                  {registeredTenantData.selectedPlan} ({registeredTenantData.billingCycle})
+                </span>
+              </div>
+            </div>
+
+            {/* Instruction Notice */}
+            <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-medium leading-relaxed">
+              <p className="font-bold mb-1 flex items-center gap-1.5">
+                <HelpCircle className="w-4 h-4 text-amber-400" /> Account Activation Pending
+              </p>
+              {platformSettings.activationInstructions}
+            </div>
+
+            {/* Direct Support Actions */}
+            <div className="space-y-2.5">
+              <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Contact Support Directly:
+              </div>
+
+              {whatsappCleanNumber && (
+                <a
+                  href={`https://wa.me/${whatsappCleanNumber}?text=${whatsappMsg}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3 px-4 rounded-xl font-bold text-xs text-white bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2"
+                >
+                  <MessageSquare className="w-4 h-4 fill-white" />
+                  <span>WhatsApp Support ({platformSettings.platformWhatsApp})</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <a
+                  href={`tel:${platformSettings.platformPhone}`}
+                  className="py-2.5 px-3 rounded-xl font-bold text-xs text-slate-200 bg-white/5 hover:bg-white/10 border border-white/10 transition-all flex items-center justify-center gap-2"
+                >
+                  <Phone className="w-3.5 h-3.5 text-blue-400" />
+                  <span>Call: {platformSettings.platformPhone}</span>
+                </a>
+
+                <a
+                  href={`mailto:${platformSettings.platformEmail}?subject=Shop Activation Request (${registeredTenantData.shopRefCode})`}
+                  className="py-2.5 px-3 rounded-xl font-bold text-xs text-slate-200 bg-white/5 hover:bg-white/10 border border-white/10 transition-all flex items-center justify-center gap-2"
+                >
+                  <Mail className="w-3.5 h-3.5 text-blue-400" />
+                  <span>Email Support</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Payment Numbers */}
+            {(platformSettings.bkashNumber || platformSettings.nagadNumber) && (
+              <div className="pt-2 border-t border-slate-800 grid grid-cols-2 gap-2 text-[11px]">
+                {platformSettings.bkashNumber && (
+                  <div className="p-2 rounded-lg bg-pink-500/10 border border-pink-500/20 text-center">
+                    <span className="text-pink-400 font-bold block">bKash Merchant</span>
+                    <span className="font-mono text-white font-bold">{platformSettings.bkashNumber}</span>
+                  </div>
+                )}
+                {platformSettings.nagadNumber && (
+                  <div className="p-2 rounded-lg bg-orange-500/10 border border-orange-500/20 text-center">
+                    <span className="text-orange-400 font-bold block">Nagad Merchant</span>
+                    <span className="font-mono text-white font-bold">{platformSettings.nagadNumber}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Bottom Actions */}
+            <div className="pt-3 border-t border-slate-800 flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowActivationModal(false);
+                  navigate(`/verify-email?email=${encodeURIComponent(registeredTenantData.email)}`);
+                }}
+                className="px-6 py-2.5 rounded-xl font-bold text-xs text-white bg-blue-600 hover:bg-blue-500 transition-all shadow-md"
+              >
+                Proceed to Verify Email OTP & Sign In
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

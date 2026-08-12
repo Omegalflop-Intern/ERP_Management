@@ -9,6 +9,7 @@ export function formatCustomer(row) {
     _id: String(row.id),
     id: row.id,
     tenantId: row.tenant_id || null,
+    branchId: row.branch_id ? String(row.branch_id) : null,
     name: row.name,
     phone: row.phone,
     phoneHash: row.phone_hash || null,
@@ -32,9 +33,10 @@ function applyTenantScope(query, tenantId) {
   }
 }
 
-export const getAllCustomers = async (page = 1, limit = 20, search = '', tenantId = null) => {
+export const getAllCustomers = async (page = 1, limit = 20, search = '', tenantId = null, branchId = null) => {
   const countQuery = db('customers').where('is_deleted', false);
   applyTenantScope(countQuery, tenantId);
+  if (branchId) countQuery.where('branch_id', branchId);
 
   if (search) {
     const term = `%${search}%`;
@@ -53,6 +55,7 @@ export const getAllCustomers = async (page = 1, limit = 20, search = '', tenantI
   const offset = (page - 1) * limit;
   const dataQuery = db('customers').where('is_deleted', false);
   applyTenantScope(dataQuery, tenantId);
+  if (branchId) dataQuery.where('branch_id', branchId);
 
   if (search) {
     const term = `%${search}%`;
@@ -88,6 +91,7 @@ export const createCustomer = async (data, tenantId = null) => {
 
   const [insertedId] = await db('customers').insert({
     tenant_id: tenantId || data.tenantId || null,
+    branch_id: data.branchId || null,
     name: data.name,
     phone: data.phone,
     phone_hash: pHash,

@@ -12,6 +12,20 @@ export const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken');
   if (token) config.headers.Authorization = `Bearer ${token}`;
+
+  try {
+    const rawBranchStorage = localStorage.getItem('branch-storage');
+    if (rawBranchStorage) {
+      const parsed = JSON.parse(rawBranchStorage);
+      const activeBranchId = parsed?.state?.activeBranchId;
+      if (activeBranchId && activeBranchId !== 'all') {
+        config.headers['X-Branch-Id'] = activeBranchId;
+      }
+    }
+  } catch {
+    // Ignore storage parse errors
+  }
+
   return config;
 });
 

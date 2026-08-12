@@ -15,6 +15,7 @@ import {
   MessageSquare,
   Moon,
   Shield,
+  Settings,
   Sun,
   User,
   UserCog,
@@ -36,6 +37,7 @@ const NAV_ITEMS = [
   { to: '/super-admin/audit-logs', icon: Activity, label: 'Audit Logs' },
   { to: '/super-admin/subscriptions', icon: CreditCard, label: 'Subscriptions' },
   { to: '/super-admin/backups', icon: Database, label: 'System Backups' },
+  { to: '/super-admin/settings', icon: Settings, label: 'Platform Settings' },
   { to: '/super-admin/system-admins', icon: UserCog, label: 'System Admins' },
   { to: '/super-admin/profile', icon: User, label: 'My Profile' },
 ];
@@ -134,10 +136,10 @@ export default function SuperAdminLayout() {
   );
 
   return (
-    <div className="flex h-screen bg-slate-50 dark:bg-[#08080c] text-slate-900 dark:text-slate-100 font-sans overflow-hidden">
+    <div className="super-admin-scope flex h-screen bg-slate-50 dark:bg-[#08080c] text-slate-900 dark:text-slate-100 font-sans overflow-hidden">
       <aside
         className={`hidden lg:flex flex-col flex-shrink-0 relative bg-white dark:bg-slate-900 border-r border-slate-200/80 dark:border-slate-800 transition-all duration-300 ${
-          collapsed ? 'w-16' : 'w-56'
+          collapsed ? 'w-16' : 'w-64'
         }`}
       >
         <SidebarContent />

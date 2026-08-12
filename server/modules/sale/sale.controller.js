@@ -9,6 +9,7 @@ export const createSale = async (req, res, next) => {
     const saleData = {
       ...req.body,
       tenantId: req.user?.tenantId || null,
+      branchId: req.body.branchId || req.selectedBranchId || req.user?.branchId || null,
       sellerName: req.body.sellerName || cashierName,
       sellerId: req.user?._id || req.user?.id || null,
     };
@@ -33,9 +34,10 @@ export const createSale = async (req, res, next) => {
 
 export const getAllSales = async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, from, to, customer, status, paymentMethod, saleType } = req.query;
+    const { page = 1, limit = 20, from, to, customer, status, paymentMethod, saleType, branchId } = req.query;
     const tenantId = req.user?.tenantId || null;
-    const result = await saleService.getAllSales(Number(page), Number(limit), { from, to, customer, status, paymentMethod, saleType, tenantId });
+    const effectiveBranchId = req.selectedBranchId || branchId || null;
+    const result = await saleService.getAllSales(Number(page), Number(limit), { from, to, customer, status, paymentMethod, saleType, tenantId, branchId: effectiveBranchId });
     return ApiResponse.paginated(res, result.sales, result.pagination.total, result.pagination.page, result.pagination.limit);
   } catch (error) { next(error); }
 };

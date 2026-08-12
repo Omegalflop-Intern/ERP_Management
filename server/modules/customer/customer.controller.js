@@ -4,9 +4,10 @@ import { logAction } from '../../utils/auth/auditLog.js';
 
 export const getAllCustomers = async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, search = '' } = req.query;
+    const { page = 1, limit = 20, search = '', branchId } = req.query;
     const tenantId = req.user?.tenantId || null;
-    const result = await customerService.getAllCustomers(Number(page), Number(limit), search, tenantId);
+    const effectiveBranchId = req.selectedBranchId || branchId || null;
+    const result = await customerService.getAllCustomers(Number(page), Number(limit), search, tenantId, effectiveBranchId);
     return ApiResponse.paginated(res, result.customers, result.pagination.total, result.pagination.page, result.pagination.limit);
   } catch (error) { next(error); }
 };
@@ -22,7 +23,8 @@ export const getCustomerById = async (req, res, next) => {
 export const createCustomer = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const customer = await customerService.createCustomer(req.body, tenantId);
+    const branchId = req.body.branchId || req.selectedBranchId || req.user?.branchId || null;
+    const customer = await customerService.createCustomer({ ...req.body, branchId }, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'CREATE', module: 'customer', entityId: customer._id, entityType: 'Customer', details: { name: customer.name }, req });
     return ApiResponse.created(res, customer, 'Customer created');
   } catch (error) { next(error); }

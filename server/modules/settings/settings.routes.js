@@ -7,8 +7,16 @@ import { authorize } from '../../middleware/role.middleware.js';
 import { uploadCompanyLogo } from '../../config/upload.js';
 
 const router = Router();
+
+// Unauthenticated public route for Landing Page, Footer, and Shop Registration Activation
+router.get('/public', settingsController.getPublicSettings);
+
 router.use(authenticate);
 router.use(checkTenantStatus);
+
+// Super-Admin platform settings route
+router.put('/platform', requireSuperAdmin, settingsController.updatePlatformSettings);
+
 router.use(authorize('ADMIN'));
 
 router.get('/', settingsController.getAllSettings);

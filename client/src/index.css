@@ -894,9 +894,7 @@ input[type="checkbox"]:focus {
 [data-mode="liquidglass"] .glass-primary,
 [data-mode="liquidglass"] .glass-secondary,
 [data-mode="liquidglass"] .liquid-card,
-[data-mode="liquidglass"] .neu-card,
-[data-mode="liquidglass"] [class*="bg-white"],
-[data-mode="liquidglass"][data-theme="dark"] [class*="dark:bg-"] {
+[data-mode="liquidglass"] .neu-card {
   background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.65)) !important;
   backdrop-filter: blur(28px) saturate(190%) brightness(0.95) !important;
   -webkit-backdrop-filter: blur(28px) saturate(190%) brightness(0.95) !important;
@@ -913,8 +911,7 @@ input[type="checkbox"]:focus {
 [data-mode="liquidglass"][data-theme="light"] .glass-primary,
 [data-mode="liquidglass"][data-theme="light"] .glass-secondary,
 [data-mode="liquidglass"][data-theme="light"] .liquid-card,
-[data-mode="liquidglass"][data-theme="light"] .neu-card,
-[data-mode="liquidglass"][data-theme="light"] [class*="bg-white"] {
+[data-mode="liquidglass"][data-theme="light"] .neu-card {
   background: linear-gradient(135deg,
       rgba(255, 255, 255, 0.9),
       rgba(241, 245, 249, 0.65)) !important;
@@ -931,8 +928,7 @@ input[type="checkbox"]:focus {
 [data-mode="aurora"][data-theme="dark"] .glass-primary,
 [data-mode="aurora"][data-theme="dark"] .glass-secondary,
 [data-mode="aurora"][data-theme="dark"] .liquid-card,
-[data-mode="aurora"][data-theme="dark"] .neu-card,
-[data-mode="aurora"][data-theme="dark"] [class*="dark:bg-"] {
+[data-mode="aurora"][data-theme="dark"] .neu-card {
   background: linear-gradient(135deg, rgba(30, 27, 75, 0.8), rgba(15, 23, 42, 0.7)) !important;
   border: 1px solid rgba(129, 140, 248, 0.35) !important;
   box-shadow:
@@ -944,8 +940,7 @@ input[type="checkbox"]:focus {
 [data-mode="aurora"][data-theme="light"] .glass-primary,
 [data-mode="aurora"][data-theme="light"] .glass-secondary,
 [data-mode="aurora"][data-theme="light"] .liquid-card,
-[data-mode="aurora"][data-theme="light"] .neu-card,
-[data-mode="aurora"][data-theme="light"] [class*="bg-white"] {
+[data-mode="aurora"][data-theme="light"] .neu-card {
   background: linear-gradient(135deg,
       rgba(238, 242, 255, 0.9),
       rgba(245, 243, 255, 0.75)) !important;
@@ -959,8 +954,7 @@ input[type="checkbox"]:focus {
 [data-mode="neumorphism"][data-theme="dark"] .glass-primary,
 [data-mode="neumorphism"][data-theme="dark"] .glass-secondary,
 [data-mode="neumorphism"][data-theme="dark"] .liquid-card,
-[data-mode="neumorphism"][data-theme="dark"] .neu-card,
-[data-mode="neumorphism"][data-theme="dark"] [class*="dark:bg-"] {
+[data-mode="neumorphism"][data-theme="dark"] .neu-card {
   background: #111827 !important;
   border: 1px solid rgba(255, 255, 255, 0.06) !important;
   box-shadow:
@@ -972,8 +966,7 @@ input[type="checkbox"]:focus {
 [data-mode="neumorphism"][data-theme="light"] .glass-primary,
 [data-mode="neumorphism"][data-theme="light"] .glass-secondary,
 [data-mode="neumorphism"][data-theme="light"] .liquid-card,
-[data-mode="neumorphism"][data-theme="light"] .neu-card,
-[data-mode="neumorphism"][data-theme="light"] [class*="bg-white"] {
+[data-mode="neumorphism"][data-theme="light"] .neu-card {
   background: #eaeff8 !important;
   border: none !important;
   box-shadow:
@@ -986,8 +979,7 @@ input[type="checkbox"]:focus {
 [data-mode="glassmorphismpro"][data-theme="dark"] .glass-primary,
 [data-mode="glassmorphismpro"][data-theme="dark"] .glass-secondary,
 [data-mode="glassmorphismpro"][data-theme="dark"] .liquid-card,
-[data-mode="glassmorphismpro"][data-theme="dark"] .neu-card,
-[data-mode="glassmorphismpro"][data-theme="dark"] [class*="dark:bg-"] {
+[data-mode="glassmorphismpro"][data-theme="dark"] .neu-card {
   background: rgba(17, 24, 39, 0.55) !important;
   backdrop-filter: blur(16px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
@@ -1314,4 +1306,57 @@ input[type="checkbox"]:focus {
     font-size: 11px !important;
     padding: 10px !important;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SUPER ADMIN SIDE FONT-SIZE ENHANCEMENT (+2px to +4px)
+   ═══════════════════════════════════════════════════════════════ */
+.super-admin-scope {
+  font-size: 15px;
+}
+.super-admin-scope .text-\[9px\] {
+  font-size: 11px !important;
+}
+.super-admin-scope .text-\[10px\] {
+  font-size: 12px !important;
+}
+.super-admin-scope .text-\[11px\] {
+  font-size: 13px !important;
+}
+.super-admin-scope .text-xs {
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+}
+.super-admin-scope .text-sm {
+  font-size: 16px !important;
+  line-height: 1.45 !important;
+}
+.super-admin-scope .text-base {
+  font-size: 18px !important;
+  line-height: 1.5 !important;
+}
+.super-admin-scope .text-lg {
+  font-size: 20px !important;
+  line-height: 1.5 !important;
+}
+.super-admin-scope .text-xl {
+  font-size: 22px !important;
+}
+.super-admin-scope .text-2xl {
+  font-size: 26px !important;
+}
+.super-admin-scope .text-3xl {
+  font-size: 32px !important;
+}
+.super-admin-scope table th,
+.super-admin-scope table td {
+  font-size: 14px !important;
+  padding-top: 0.75rem !important;
+  padding-bottom: 0.75rem !important;
+}
+.super-admin-scope input,
+.super-admin-scope select,
+.super-admin-scope textarea,
+.super-admin-scope button {
+  font-size: 14px !important;
 }

@@ -29,7 +29,59 @@ export const defaultSettings = [
   { key: 'approvalRules', value: { maxExpenseWithoutApproval: 5000, maxDiscountWithoutApproval: 1000 }, category: 'security' },
   { key: 'timezone', value: 'Asia/Dhaka', category: 'system' },
   { key: 'dateFormat', value: 'YYYY-MM-DD', category: 'system' },
+  { key: 'platformName', value: 'OmniManage ERP', category: 'platform' },
+  { key: 'platformPhone', value: '+880 1700-000000', category: 'platform' },
+  { key: 'platformWhatsApp', value: '+880 1700-000000', category: 'platform' },
+  { key: 'platformEmail', value: 'support@omnimanage.bd', category: 'platform' },
+  { key: 'platformAddress', value: 'Dhanmondi, Dhaka - 1209, Bangladesh', category: 'platform' },
+  { key: 'platformSocials', value: { facebook: 'https://facebook.com/omnimanage', twitter: 'https://x.com/omnimanage', linkedin: 'https://linkedin.com/company/omnimanage', youtube: 'https://youtube.com/@omnimanage', instagram: 'https://instagram.com/omnimanage' }, category: 'platform' },
 ];
+
+export const getPublicSettings = async () => {
+  const globalRows = await db('settings').where({ tenant_id: null });
+  const result = {
+    platformName: 'OmniManage ERP',
+    platformPhone: '+880 1700-000000',
+    platformWhatsApp: '+880 1700-000000',
+    platformEmail: 'support@omnimanage.bd',
+    platformAddress: 'Dhanmondi, Dhaka - 1209, Bangladesh',
+    platformSocials: {
+      facebook: 'https://facebook.com/omnimanage',
+      twitter: 'https://x.com/omnimanage',
+      linkedin: 'https://linkedin.com/company/omnimanage',
+      youtube: 'https://youtube.com/@omnimanage',
+      instagram: 'https://instagram.com/omnimanage',
+    },
+    activationInstructions: 'Thank you for registering your shop! Please contact our platform support team to activate your shop outlet.',
+    bkashNumber: '01700000000',
+    nagadNumber: '01700000000',
+  };
+
+  globalRows.forEach((s) => {
+    result[s.key] = parseValue(s.value);
+  });
+  return result;
+};
+
+export const updatePlatformSettings = async (updates) => {
+  for (const [key, value] of Object.entries(updates)) {
+    const existing = await db('settings').where({ key, tenant_id: null }).first();
+    if (existing) {
+      await db('settings').where({ id: existing.id }).update({
+        value: JSON.stringify(value),
+        updated_at: db.fn.now(),
+      });
+    } else {
+      await db('settings').insert({
+        tenant_id: null,
+        key,
+        value: JSON.stringify(value),
+        category: 'platform',
+      });
+    }
+  }
+  return getPublicSettings();
+};
 
 export const seedDefaults = async () => {
   for (const s of defaultSettings) {

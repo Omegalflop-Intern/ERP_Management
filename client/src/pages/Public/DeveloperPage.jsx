@@ -1,20 +1,28 @@
 import {
   ArrowLeft,
+  Award,
+  BookOpen,
+  CheckCircle2,
   ChevronUp,
   Code2,
+  Cpu,
   Database,
   ExternalLink,
   Github,
   Globe,
   Heart,
+  Layers,
   Linkedin,
   Mail,
   MapPin,
-  Phone,
+  Rocket,
   Server,
-  Shield,
-  Smartphone,
+  Sparkles,
+  Star,
+  Terminal,
+  Zap,
 } from 'lucide-react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 
 export default function DeveloperPage() {
@@ -22,275 +30,349 @@ export default function DeveloperPage() {
 
   const skills = [
     {
-      icon: Code2,
-      name: 'Full-Stack Development',
-      description: 'React, Node.js, Express, MongoDB, MySQL',
+      category: 'Frontend & UI Core',
+      bgColor: 'bg-amber-300',
+      skills: ['React.js 18', 'Vite 5', 'TailwindCSS v3', 'Neo-Brutalism UI', 'Zustand State', 'TanStack Query'],
     },
     {
-      icon: Database,
-      name: 'Database Design',
-      description: 'Schema design, optimization, migrations',
+      category: 'Backend & APIs',
+      bgColor: 'bg-lime-400',
+      skills: ['Node.js (ESM)', 'Express.js', 'Python 3', 'Django Framework', 'RESTful APIs', 'SSE Real-time'],
     },
     {
-      icon: Server,
-      name: 'Backend Architecture',
-      description: 'REST APIs, Authentication, Real-time systems',
+      category: 'Databases & ORM',
+      bgColor: 'bg-cyan-300',
+      skills: ['MongoDB', 'MySQL / MariaDB', 'PostgreSQL', 'Knex.js Query Builder', 'Mongoose', 'Schema Migrations'],
     },
     {
-      icon: Smartphone,
-      name: 'Mobile-First Design',
-      description: 'Responsive UI, Progressive Web Apps',
+      category: 'Architecture & DevOps',
+      bgColor: 'bg-pink-400',
+      skills: ['Multi-Tenancy SaaS', 'JWT & MFA TOTP', 'Docker', 'Git & GitHub', 'Linux Server Admin', 'Clean Architecture'],
     },
-    { icon: Globe, name: 'Cloud Deployment', description: 'Docker, CI/CD, AWS, DigitalOcean' },
-    { icon: Shield, name: 'Security', description: 'JWT, OAuth, Data encryption, Best practices' },
   ];
 
-  const projects = [
+  const featuredProjects = [
     {
-      name: 'OmniManage ERP',
+      title: 'OmniManage ERP & Multi-Branch POS',
+      category: 'Flagship Enterprise SaaS',
+      badgeColor: 'bg-yellow-300',
       description:
-        'A comprehensive Mobile Shop ERP system with multi-tenant architecture, real-time updates, and advanced reporting capabilities.',
-      tech: ['React', 'Node.js', 'Express', 'MySQL', 'MongoDB', 'Tailwind CSS'],
-      features: [
-        'Multi-tenant SaaS',
-        'Real-time SSE',
-        'POS System',
-        'Accounting Module',
-        'HR Management',
+        'A multi-tenant Mobile Shop ERP system featuring real-time IMEI lifetime passport tracking, thermal billing, inter-branch stock transfers, double-entry accounting, and workforce management.',
+      tech: ['MERN Stack', 'Node.js', 'Express', 'React 18', 'MongoDB', 'MySQL', 'TailwindCSS'],
+      highlights: [
+        'Multi-tenant Subdomain Scoping',
+        'IMEI Lifetime History Passport',
+        'Inter-Branch Stock Transfer Engine',
+        'Double-Entry Chart of Accounts',
       ],
+      link: '/',
+    },
+    {
+      title: 'School Management ERP System',
+      category: 'Educational Platform',
+      badgeColor: 'bg-lime-300',
+      description:
+        'An all-in-one educational ERP platform managing student enrollment, attendance tracking, fee collection, examination grading, teacher payroll, and parent portal notifications.',
+      tech: ['Python', 'Django', 'React', 'PostgreSQL', 'Redis', 'TailwindCSS'],
+      highlights: [
+        'Automated Fee Invoice Generation',
+        'Student Attendance Analytics',
+        'Report Card Generation Engine',
+        'Role-Based Staff Access',
+      ],
+      link: '#',
+    },
+    {
+      title: 'Enterprise Custom SaaS Solutions',
+      category: 'Bespoke Web Systems',
+      badgeColor: 'bg-cyan-300',
+      description:
+        'Custom web applications engineered with modular architecture, high-performance database indexing, audit logging, and responsive neo-brutalist & glassmorphism design modes.',
+      tech: ['Node.js', 'Python', 'React', 'PostgreSQL', 'MongoDB', 'REST APIs'],
+      highlights: [
+        'High-Concurrency API Endpoints',
+        'Audit-Grade Security Protocols',
+        'Custom Design Theme Engines',
+      ],
+      link: 'https://salahuddin.codes',
     },
   ];
 
   const stats = [
-    { label: 'Projects Completed', value: '10+' },
-    { label: 'Years Experience', value: '5+' },
-    { label: 'Happy Clients', value: '50+' },
-    { label: 'Lines of Code', value: '100K+' },
+    { label: 'Featured ERP Projects', value: '15+', bg: 'bg-yellow-300' },
+    { label: 'Core Tech Stack Packs', value: 'MERN + Django', bg: 'bg-lime-300' },
+    { label: 'Relational DBs', value: 'MySQL & Postgres', bg: 'bg-cyan-300' },
+    { label: 'GitHub Handle', value: '@salahuddingfx', bg: 'bg-pink-300' },
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0a1a] text-white">
-      {/* ─── NAVIGATION ──────────────────────────────────────── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0a0a1a]/80 backdrop-blur-xl border-b border-white/5">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+    <div className="min-h-screen bg-[#fffbeb] text-black font-sans selection:bg-yellow-300 selection:text-black">
+      {/* ─── NEO-BRUTALIST NAVBAR ────────────────────────────────────────── */}
+      <header className="sticky top-0 z-50 bg-yellow-300 border-b-4 border-black px-4 sm:px-8 py-3 shadow-[0_4px_0_0_#000]">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Link
             to="/"
-            className="flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors"
+            className="flex items-center gap-2 font-black text-sm uppercase bg-white border-2 border-black px-3.5 py-1.5 rounded-lg shadow-[3px_3px_0px_0px_#000] hover:bg-lime-300 hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
           >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Home
+            <ArrowLeft className="h-4 w-4 stroke-[3]" />
+            Back to App
           </Link>
-          <div className="flex items-center gap-4">
+
+          <div className="flex items-center gap-2">
             <a
-              href="https://github.com"
+              href="https://salahuddin.codes"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-slate-400 hover:text-white transition-colors"
+              className="flex items-center gap-1.5 font-black text-xs uppercase bg-pink-400 border-2 border-black px-3.5 py-1.5 rounded-lg shadow-[3px_3px_0px_0px_#000] hover:bg-pink-300 hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
             >
-              <Github className="h-5 w-5" />
-            </a>
-            <a
-              href="https://linkedin.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-slate-400 hover:text-white transition-colors"
-            >
-              <Linkedin className="h-5 w-5" />
-            </a>
-            <a
-              href="mailto:salahuddin@example.com"
-              className="text-slate-400 hover:text-white transition-colors"
-            >
-              <Mail className="h-5 w-5" />
+              <Globe className="h-3.5 w-3.5 stroke-[3]" />
+              salahuddin.codes
             </a>
           </div>
         </div>
-      </nav>
+      </header>
 
-      {/* ─── HERO SECTION ────────────────────────────────────── */}
-      <section className="pt-32 pb-20 px-4 sm:px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-sm mb-8">
-            <Code2 className="h-4 w-4" />
-            Full-Stack Developer
+      {/* ─── HERO SECTION ────────────────────────────────────────────────── */}
+      <section className="py-16 sm:py-24 px-4 sm:px-8 border-b-4 border-black bg-[#faf5ff] relative overflow-hidden">
+        <div className="max-w-5xl mx-auto">
+          <div className="inline-block bg-lime-400 border-3 border-black px-4 py-1.5 rounded-full font-black text-xs uppercase tracking-wider shadow-[4px_4px_0px_0px_#000] mb-6">
+            ⚡ Neo-Brutalist Architect & Full-Stack Engineer
           </div>
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
-            Salah Uddin Kader
-          </h1>
-          <p className="text-lg sm:text-xl text-slate-400 mb-8 max-w-2xl mx-auto leading-relaxed">
-            Passionate full-stack developer crafting scalable web applications with modern
-            technologies. Specializing in React, Node.js, and cloud-native solutions.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <div className="flex items-center gap-2 text-slate-400">
-              <MapPin className="h-4 w-4 text-indigo-400" />
-              Bangladesh
-            </div>
-            <div className="flex items-center gap-2 text-slate-400">
-              <Phone className="h-4 w-4 text-indigo-400" />
-              +880 1700-000000
-            </div>
-            <div className="flex items-center gap-2 text-slate-400">
-              <Mail className="h-4 w-4 text-indigo-400" />
-              salahuddin@example.com
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* ─── STATS ───────────────────────────────────────────── */}
-      <section className="py-16 px-4 sm:px-6 border-y border-white/5">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, i) => (
-              <div key={i} className="text-center">
-                <div className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent mb-2">
-                  {stat.value}
-                </div>
-                <div className="text-sm text-slate-500">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+            <div className="space-y-5 text-left flex-1">
+              <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black uppercase tracking-tight text-black leading-none drop-shadow-[4px_4px_0px_#facc15]">
+                Salah Uddin Kader <span className="bg-cyan-300 border-2 border-black px-2 py-0.5 shadow-[3px_3px_0px_0px_#000]">.codes</span>
+              </h1>
+              
+              <p className="text-base sm:text-lg font-bold text-black max-w-2xl leading-relaxed bg-white border-3 border-black p-4 rounded-xl shadow-[5px_5px_0px_0px_#000]">
+                Passionate software developer building enterprise ERP systems, school management suites, and SaaS platforms. Specializing in 
+                <span className="bg-yellow-300 border border-black px-1 mx-1">MERN Stack</span>,
+                <span className="bg-lime-300 border border-black px-1 mx-1">Python & Django</span>, and
+                <span className="bg-cyan-300 border border-black px-1 mx-1">MySQL & PostgreSQL</span>.
+              </p>
 
-      {/* ─── SKILLS ──────────────────────────────────────────── */}
-      <section className="py-20 px-4 sm:px-6">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-12">Skills & Expertise</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {skills.map((skill, i) => (
-              <div
-                key={i}
-                className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-indigo-500/30 transition-all duration-300 group"
-              >
-                <div className="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-4 group-hover:bg-indigo-500/20 transition-colors">
-                  <skill.icon className="h-6 w-6 text-indigo-400" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">{skill.name}</h3>
-                <p className="text-sm text-slate-400">{skill.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+              {/* Badges and Links */}
+              <div className="flex flex-wrap items-center gap-3 pt-2">
+                <a
+                  href="https://salahuddin.codes"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 font-black text-xs uppercase bg-yellow-300 border-3 border-black px-4 py-2.5 rounded-xl shadow-[4px_4px_0px_0px_#000] hover:bg-yellow-400 hover:-translate-x-1 hover:-translate-y-1 transition-all"
+                >
+                  <Globe className="h-4 w-4 stroke-[2.5]" />
+                  Portfolio: salahuddin.codes
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
 
-      {/* ─── PROJECTS ────────────────────────────────────────── */}
-      <section className="py-20 px-4 sm:px-6 border-t border-white/5">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl sm:text-3xl font-bold text-center mb-12">Featured Project</h2>
-          {projects.map((project, i) => (
-            <div
-              key={i}
-              className="p-8 rounded-2xl bg-gradient-to-br from-white/[0.03] to-white/[0.01] border border-white/5"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <h3 className="text-2xl font-bold">{project.name}</h3>
-                <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors">
-                  <ExternalLink className="h-5 w-5" />
+                <a
+                  href="https://github.com/salahuddingfx"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 font-black text-xs uppercase bg-lime-400 border-3 border-black px-4 py-2.5 rounded-xl shadow-[4px_4px_0px_0px_#000] hover:bg-lime-300 hover:-translate-x-1 hover:-translate-y-1 transition-all"
+                >
+                  <Github className="h-4 w-4 stroke-[2.5]" />
+                  GitHub: @salahuddingfx
+                </a>
+
+                <a
+                  href="mailto:info.salahuddindev@gmail.com"
+                  className="flex items-center gap-2 font-black text-xs uppercase bg-pink-400 border-3 border-black px-4 py-2.5 rounded-xl shadow-[4px_4px_0px_0px_#000] hover:bg-pink-300 hover:-translate-x-1 hover:-translate-y-1 transition-all text-black"
+                >
+                  <Mail className="h-4 w-4 stroke-[2.5]" />
+                  info.salahuddindev@gmail.com
                 </a>
               </div>
-              <p className="text-slate-400 mb-6 leading-relaxed">{project.description}</p>
-              <div className="mb-6">
-                <h4 className="text-sm font-semibold text-slate-300 mb-3">Tech Stack</h4>
-                <div className="flex flex-wrap gap-2">
-                  {project.tech.map((t, j) => (
-                    <span
-                      key={j}
-                      className="px-3 py-1 text-xs rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"
-                    >
-                      {t}
-                    </span>
-                  ))}
+            </div>
+
+            {/* Profile Avatar Card */}
+            <div className="relative shrink-0">
+              <div className="w-48 h-48 sm:w-56 sm:h-56 rounded-2xl bg-cyan-300 border-4 border-black p-3 shadow-[8px_8px_0px_0px_#000] flex flex-col items-center justify-center text-center">
+                <div className="w-24 h-24 rounded-xl bg-white border-3 border-black flex items-center justify-center font-black text-3xl shadow-[4px_4px_0px_0px_#000] mb-3">
+                  SD
+                </div>
+                <div className="font-black text-sm uppercase tracking-wider">Salahuddin</div>
+                <div className="font-bold text-xs bg-yellow-300 border border-black px-2 py-0.5 rounded-md mt-1">
+                  @salahuddingfx
                 </div>
               </div>
-              <div>
-                <h4 className="text-sm font-semibold text-slate-300 mb-3">Key Features</h4>
-                <div className="flex flex-wrap gap-2">
-                  {project.features.map((f, j) => (
-                    <span
-                      key={j}
-                      className="px-3 py-1 text-xs rounded-full bg-violet-500/10 text-violet-400 border border-violet-500/20"
-                    >
-                      {f}
-                    </span>
-                  ))}
-                </div>
-              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── STATS BAR ───────────────────────────────────────────────────── */}
+      <section className="py-10 px-4 sm:px-8 border-b-4 border-black bg-white">
+        <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+          {stats.map((s, i) => (
+            <div
+              key={i}
+              className={`${s.bg} border-3 border-black p-4 rounded-xl shadow-[5px_5px_0px_0px_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all text-center`}
+            >
+              <div className="font-black text-lg sm:text-xl text-black truncate">{s.value}</div>
+              <div className="font-bold text-xs uppercase text-black tracking-wider mt-1">{s.label}</div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* ─── ABOUT ───────────────────────────────────────────── */}
-      <section className="py-20 px-4 sm:px-6 border-t border-white/5">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-6">About Me</h2>
-          <p className="text-slate-400 leading-relaxed mb-6">
-            I'm a dedicated full-stack developer with a passion for building efficient, scalable,
-            and user-friendly applications. With expertise in modern web technologies, I transform
-            complex problems into elegant solutions.
-          </p>
-          <p className="text-slate-400 leading-relaxed">
-            When I'm not coding, you'll find me exploring new technologies, contributing to
-            open-source projects, and sharing knowledge with the developer community.
-          </p>
+      {/* ─── SKILLS MATRIX ───────────────────────────────────────────────── */}
+      <section className="py-16 sm:py-20 px-4 sm:px-8 border-b-4 border-black bg-[#f0fdf4]">
+        <div className="max-w-6xl mx-auto space-y-10">
+          <div className="text-center space-y-2">
+            <span className="bg-yellow-300 border-2 border-black px-3 py-1 font-black text-xs uppercase tracking-wider shadow-[3px_3px_0px_0px_#000]">
+              Technology Arsenal
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-black">
+              Skills Pack & Core Expertise
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {skills.map((item, idx) => (
+              <div
+                key={idx}
+                className="bg-white border-4 border-black p-6 rounded-2xl shadow-[6px_6px_0px_0px_#000] hover:shadow-[8px_8px_0px_0px_#000] transition-all space-y-4"
+              >
+                <div className="flex items-center justify-between border-b-3 border-black pb-3">
+                  <h3 className="font-black text-lg uppercase tracking-tight text-black">{item.category}</h3>
+                  <span className={`${item.bgColor} border-2 border-black text-xs font-black px-2.5 py-0.5 rounded-md shadow-[2px_2px_0px_0px_#000]`}>
+                    Verified
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {item.skills.map((sk, sIdx) => (
+                    <span
+                      key={sIdx}
+                      className="bg-slate-100 border-2 border-black px-3 py-1 text-xs font-bold rounded-lg shadow-[2px_2px_0px_0px_#000] hover:bg-yellow-300 transition-colors"
+                    >
+                      {sk}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* ─── CONTACT ─────────────────────────────────────────── */}
-      <section className="py-20 px-4 sm:px-6 border-t border-white/5">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-4">Let's Connect</h2>
-          <p className="text-slate-400 mb-8">
-            Have a project in mind or want to collaborate? Feel free to reach out!
+      {/* ─── FEATURED PROJECTS ────────────────────────────────────────────── */}
+      <section className="py-16 sm:py-20 px-4 sm:px-8 border-b-4 border-black bg-[#fef2f2]">
+        <div className="max-w-6xl mx-auto space-y-12">
+          <div className="text-center space-y-2">
+            <span className="bg-cyan-300 border-2 border-black px-3 py-1 font-black text-xs uppercase tracking-wider shadow-[3px_3px_0px_0px_#000]">
+              Built with Precision
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-black">
+              Featured ERP & SaaS Solutions
+            </h2>
+          </div>
+
+          <div className="space-y-8">
+            {featuredProjects.map((proj, i) => (
+              <div
+                key={i}
+                className="bg-white border-4 border-black p-6 sm:p-8 rounded-2xl shadow-[8px_8px_0px_0px_#000] hover:-translate-x-1 hover:-translate-y-1 transition-all space-y-5"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-3 border-black pb-4">
+                  <div>
+                    <span className={`${proj.badgeColor} border-2 border-black text-xs font-black px-2.5 py-0.5 rounded-md shadow-[2px_2px_0px_0px_#000] uppercase inline-block mb-2`}>
+                      {proj.category}
+                    </span>
+                    <h3 className="text-2xl font-black uppercase tracking-tight text-black">{proj.title}</h3>
+                  </div>
+                  {proj.link && (
+                    <a
+                      href={proj.link}
+                      target={proj.link.startsWith('http') ? '_blank' : '_self'}
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 font-black text-xs uppercase bg-yellow-300 border-2 border-black px-4 py-2 rounded-xl shadow-[3px_3px_0px_0px_#000] hover:bg-yellow-400 transition-all self-start sm:self-auto"
+                    >
+                      <span>Explore</span>
+                      <ExternalLink className="h-3.5 w-3.5 stroke-[3]" />
+                    </a>
+                  )}
+                </div>
+
+                <p className="font-bold text-sm text-slate-800 leading-relaxed">{proj.description}</p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                  <div>
+                    <div className="font-black text-xs uppercase text-slate-500 mb-2">Tech Stack Used:</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {proj.tech.map((t, tIdx) => (
+                        <span key={tIdx} className="bg-lime-200 border border-black text-[11px] font-bold px-2.5 py-0.5 rounded-md">
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="font-black text-xs uppercase text-slate-500 mb-2">Key Highlights:</div>
+                    <div className="space-y-1">
+                      {proj.highlights.map((h, hIdx) => (
+                        <div key={hIdx} className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                          <span>{h}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── CONTACT & CONNECT ────────────────────────────────────────────── */}
+      <section className="py-16 sm:py-20 px-4 sm:px-8 bg-yellow-300">
+        <div className="max-w-4xl mx-auto text-center space-y-6">
+          <span className="bg-white border-2 border-black px-3 py-1 font-black text-xs uppercase tracking-wider shadow-[3px_3px_0px_0px_#000]">
+            Let's Collaborate
+          </span>
+          <h2 className="text-3xl sm:text-5xl font-black uppercase tracking-tight text-black">
+            Ready to Build Your Next Big Solution?
+          </h2>
+          <p className="font-bold text-base text-slate-900 max-w-xl mx-auto">
+            Looking for a custom ERP solution, School Management suite, or specialized SaaS system? Let's connect!
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+
+          <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
             <a
-              href="mailto:salahuddin@example.com"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-medium transition-all duration-300 hover:scale-105 active:scale-95"
+              href="mailto:info.salahuddindev@gmail.com"
+              className="inline-flex items-center gap-2 font-black text-sm uppercase bg-black text-white border-3 border-black px-6 py-3.5 rounded-xl shadow-[5px_5px_0px_0px_#fff] hover:bg-slate-900 hover:-translate-x-1 hover:-translate-y-1 transition-all"
             >
               <Mail className="h-4 w-4" />
-              Send Email
+              Email: info.salahuddindev@gmail.com
             </a>
             <a
-              href="https://github.com"
+              href="https://salahuddin.codes"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white font-medium transition-all duration-300"
+              className="inline-flex items-center gap-2 font-black text-sm uppercase bg-white text-black border-3 border-black px-6 py-3.5 rounded-xl shadow-[5px_5px_0px_0px_#000] hover:bg-lime-300 hover:-translate-x-1 hover:-translate-y-1 transition-all"
             >
-              <Github className="h-4 w-4" />
-              View GitHub
+              <Globe className="h-4 w-4" />
+              Visit Portfolio: salahuddin.codes
             </a>
           </div>
         </div>
       </section>
 
-      {/* ─── FOOTER ──────────────────────────────────────────── */}
-      <footer className="py-8 px-4 sm:px-6 border-t border-white/5">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500">
-          <div className="flex items-center gap-1.5">
-            &copy; {new Date().getFullYear()} Salah Uddin Kader. Built with
-            <Heart className="h-3 w-3 text-indigo-500 fill-indigo-500" />
-            using React & Node.js
+      {/* ─── FOOTER ───────────────────────────────────────────────────────── */}
+      <footer className="py-6 px-4 sm:px-8 bg-black text-white border-t-4 border-black">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold">
+          <div>
+            &copy; {new Date().getFullYear()} Salah Uddin Kader (@salahuddingfx) • All Rights Reserved.
           </div>
           <button
             onClick={scrollToTop}
-            className="hover:text-indigo-400 font-bold flex items-center gap-1 transition-colors"
+            className="flex items-center gap-1 bg-yellow-300 text-black border-2 border-white px-3 py-1.5 rounded-lg font-black hover:bg-yellow-400 transition-colors"
           >
-            Back to Top <ChevronUp className="h-3 w-3" />
+            Top <ChevronUp className="h-4 w-4" />
           </button>
         </div>
       </footer>
-
-      {/* ─── SCROLL TO TOP ───────────────────────────────────── */}
-      <button
-        onClick={scrollToTop}
-        aria-label="Scroll to top"
-        className="fixed bottom-5 right-5 z-50 p-3 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-xl shadow-indigo-600/30 transition-all duration-300 hover:scale-110 active:scale-95"
-      >
-        <ChevronUp className="h-4 w-4" />
-      </button>
     </div>
   );
 }

@@ -93,7 +93,7 @@ export default function UserList() {
                   User Info
                 </th>
                 <th className="px-4 py-3.5 text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-                  System Role
+                  Assigned Outlet
                 </th>
                 <th className="px-4 py-3.5 text-center text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   Verification Status
@@ -150,6 +150,13 @@ export default function UserList() {
                     <td className="px-4 py-3.5">
                       <span className="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold border border-slate-200 dark:border-slate-700">
                         {u.role?.displayName || u.roleName || u.role?.name || 'Staff'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${
+                        u.branchId ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800' : 'bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                      }`}>
+                        {u.branchId ? 'Specific Outlet' : 'All Outlets (Owner)'}
                       </span>
                     </td>
                     <td className="px-4 py-3.5 text-center">
@@ -243,6 +250,7 @@ function UserFormModal({ user, onClose, onSuccess }) {
     phone: user?.phone || '',
     fullName: user?.fullName || '',
     role: user?.role?._id || user?.role || '',
+    branchId: user?.branchId || '',
     password: '',
   });
 
@@ -250,6 +258,14 @@ function UserFormModal({ user, onClose, onSuccess }) {
     queryKey: ['roles'],
     queryFn: async () => {
       const { data } = await api.get('/roles');
+      return data.data || [];
+    },
+  });
+
+  const { data: branches = [] } = useQuery({
+    queryKey: ['branches-flat'],
+    queryFn: async () => {
+      const { data } = await api.get('/branches/flat');
       return data.data || [];
     },
   });
@@ -367,16 +383,35 @@ function UserFormModal({ user, onClose, onSuccess }) {
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                Full Name
-              </label>
-              <input
-                value={form.fullName}
-                onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-                placeholder="e.g. John Doe"
-                className={inputCls}
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                  Full Name
+                </label>
+                <input
+                  value={form.fullName}
+                  onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+                  placeholder="e.g. John Doe"
+                  className={inputCls}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                  Assigned Outlet (Branch)
+                </label>
+                <select
+                  value={form.branchId}
+                  onChange={(e) => setForm({ ...form, branchId: e.target.value })}
+                  className={inputCls}
+                >
+                  <option value="">All Outlets (Owner / Unrestricted)</option>
+                  {branches.map((b) => (
+                    <option key={b._id || b.id} value={b._id || b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div>

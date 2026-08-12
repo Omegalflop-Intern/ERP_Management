@@ -27,6 +27,7 @@ export function formatTransaction(row, customerRow = null) {
     _id: String(row.id),
     id: row.id,
     tenantId: row.tenant_id || null,
+    branchId: row.branch_id ? String(row.branch_id) : null,
     invoiceNumber: row.invoice_number,
     txType: row.tx_type,
     saleType: row.sale_type || 'RETAIL',
@@ -188,6 +189,7 @@ export const createSale = async (data, createdBy = 'system') => {
 
   const [insertedId] = await db('transactions').insert({
     tenant_id: tenantId,
+    branch_id: data.branchId || null,
     invoice_number: invoiceNumber,
     tx_type: 'SALE',
     sale_type: data.saleType || 'RETAIL',
@@ -231,6 +233,7 @@ export const getAllSales = async (page = 1, limit = 20, filters = {}) => {
   const countQuery = db('transactions').where({ 'transactions.is_deleted': false, 'transactions.tx_type': 'SALE' });
   applyTenantScope(countQuery, filters.tenantId, 'transactions');
   if (filters.status) countQuery.where('transactions.status', filters.status);
+  if (filters.branchId) countQuery.where('transactions.branch_id', filters.branchId);
 
   const countRes = await countQuery.count({ total: '*' }).first();
   const total = Number(countRes?.total || 0);
@@ -246,6 +249,7 @@ export const getAllSales = async (page = 1, limit = 20, filters = {}) => {
     );
   applyTenantScope(dataQuery, filters.tenantId, 'transactions');
   if (filters.status) dataQuery.where('transactions.status', filters.status);
+  if (filters.branchId) dataQuery.where('transactions.branch_id', filters.branchId);
 
   const rows = await dataQuery.orderBy('transactions.created_at', 'desc').limit(limit).offset(offset);
 
