@@ -37,7 +37,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <ThemeProvider>
           <AuthProvider>
             <App />
-            <Toaster position="top-center" richColors />
+            <Toaster position="top-right" duration={1800} closeButton richColors expand={false} />
           </AuthProvider>
         </ThemeProvider>
       </QueryClientProvider>
