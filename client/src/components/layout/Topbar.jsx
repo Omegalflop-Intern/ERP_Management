@@ -703,7 +703,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
   };
 
   return (
-    <header className="h-14 glass-primary rounded-[20px] m-2 px-3 md:px-6 flex items-center justify-between sticky top-2 z-[100] shadow-sm">
+    <header className="h-14 glass-primary rounded-[20px] m-2 px-3 md:px-6 flex items-center justify-between sticky top-2 z-30 shadow-sm">
       {/* Left: menu + brand */}
       <div className="flex items-center gap-2">
         <button

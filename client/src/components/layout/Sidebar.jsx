@@ -110,8 +110,8 @@ function SidebarMenu({ isCollapsed, location, onNavigate }) {
   const toggle = (label) => setOpenSubmenus((p) => ({ ...p, [label]: !p[label] }));
 
   return (
-    <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 pb-12 overscroll-contain sidebar-scrollbar">
-      {menuItems.map((group) => {
+    <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 pb-14 overscroll-contain sidebar-scrollbar">
+      {menuItems.map((group, idx) => {
         const visible = group.items.filter((item) => {
           const perms = item.children
             ? item.children.flatMap((c) => c.permissions || [])
@@ -120,8 +120,10 @@ function SidebarMenu({ isCollapsed, location, onNavigate }) {
         });
         if (!visible.length) return null;
 
+        const isLastGroup = idx === menuItems.length - 1;
+
         return (
-          <div key={group.section} className="mb-2">
+          <div key={group.section} className={isLastGroup ? 'mb-4' : 'mb-2'}>
             {!isCollapsed && (
               <div className="px-3 pt-3 pb-1 text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest">
                 {group.section}
@@ -209,7 +211,7 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
       {/* ── Sidebar ── */}
       <aside
         className={`
-          z-[120] flex flex-col
+          z-30 flex flex-col
           transition-transform duration-300 ease-in-out
           ${isMobile
             ? /* Mobile: floating rounded glass card */

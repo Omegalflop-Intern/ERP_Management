@@ -13,6 +13,7 @@ export const createAccountSchema = z.object({
   ]),
   parentId: z.string().optional().nullable(),
   description: z.string().optional(),
+  isActive: z.boolean().optional().default(true),
 });
 
 export const updateAccountSchema = z.object({

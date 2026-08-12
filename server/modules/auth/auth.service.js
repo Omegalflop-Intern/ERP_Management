@@ -70,7 +70,9 @@ export const findUserByLogin = async (identifier, tenantId = null) => {
       'roles.display_name as role_display_name_val',
       'roles.permissions as role_permissions',
       'tenants.subdomain as tenant_subdomain',
-      'tenants.custom_domain as tenant_custom_domain'
+      'tenants.custom_domain as tenant_custom_domain',
+      'tenants.status as tenant_status',
+      'tenants.is_deleted as tenant_is_deleted'
     );
 
   if (tenantId) {
@@ -80,6 +82,14 @@ export const findUserByLogin = async (identifier, tenantId = null) => {
   const row = await query.first();
 
   if (!row) return null;
+
+  // Enforce tenant active check for non-SuperAdmin users
+  if (row.tenant_id && !row.is_super_admin) {
+    if (Boolean(row.tenant_is_deleted) || (row.tenant_status && row.tenant_status !== 'ACTIVE')) {
+      throw ApiError.forbidden(`Shop account is ${row.tenant_status === 'SUSPENDED' ? 'suspended' : 'deleted or inactive'}. Access denied.`);
+    }
+  }
+
   row.role_name = row.role_name_val || row.role_name;
   row.role_display_name = row.role_display_name_val || row.role_display_name;
   row.subdomain = row.tenant_subdomain || null;

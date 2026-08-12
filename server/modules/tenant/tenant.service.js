@@ -292,21 +292,29 @@ export const updateTenantStatus = async (id, status, rejectionReason) => {
 
   if (status === 'DELETED') {
     await db('tenants').where({ id }).update({ is_deleted: true, status: 'DELETED' });
+    await db('users').where({ tenant_id: id }).update({ is_active: false, is_deleted: true });
+    const tenantUserIds = await db('users').where({ tenant_id: id }).pluck('id');
+    if (tenantUserIds.length > 0) {
+      await db('sessions').whereIn('user_id', tenantUserIds).delete();
+    }
     return { _id: String(id), id, isDeleted: true };
   }
 
   const updateFields = { status };
-  if (status === 'DELETED') {
-    updateFields.is_deleted = true;
-    await db('users').where({ tenant_id: id }).update({ is_active: false });
-  }
   if (rejectionReason) {
     updateFields.rejection_reason = rejectionReason;
   }
   await db('tenants').where({ id }).update(updateFields);
 
   if (status === 'ACTIVE') {
-    await db('users').where({ tenant_id: id }).update({ is_active: true, is_verified: true });
+    await db('users').where({ tenant_id: id }).update({ is_active: true, is_verified: true, is_deleted: false });
+  } else {
+    // If PAUSED, SUSPENDED, PENDING_KYC, disable users
+    await db('users').where({ tenant_id: id }).update({ is_active: false });
+    const tenantUserIds = await db('users').where({ tenant_id: id }).pluck('id');
+    if (tenantUserIds.length > 0) {
+      await db('sessions').whereIn('user_id', tenantUserIds).delete();
+    }
   }
 
   return { ...formatTenant(row), ...updateFields };
@@ -329,7 +337,7 @@ export const getPublicTenantBySubdomain = async (subdomain) => {
   const clean = subdomain?.toLowerCase().trim();
   if (!clean) return null;
   const row = await db('tenants')
-    .where({ is_deleted: false })
+    .where({ is_deleted: false, status: 'ACTIVE' })
     .andWhere((b) => {
       b.where({ subdomain: clean }).orWhere({ custom_domain: clean });
     })
@@ -348,7 +356,11 @@ export const bulkDeleteTenants = async (ids = []) => {
   const numericIds = ids.map((id) => Number(id)).filter((id) => !isNaN(id));
   if (numericIds.length > 0) {
     await db('tenants').whereIn('id', numericIds).update({ is_deleted: true, status: 'DELETED' });
-    await db('users').whereIn('tenant_id', numericIds).update({ is_active: false });
+    await db('users').whereIn('tenant_id', numericIds).update({ is_active: false, is_deleted: true });
+    const tenantUserIds = await db('users').whereIn('tenant_id', numericIds).pluck('id');
+    if (tenantUserIds.length > 0) {
+      await db('sessions').whereIn('user_id', numericIds).delete();
+    }
   }
   return { deletedCount: numericIds.length };
 };

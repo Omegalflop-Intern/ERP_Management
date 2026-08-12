@@ -30,17 +30,19 @@ export const checkTenantStatus = async (req, res, next) => {
       return next();
     }
 
-    const tenant = await db('tenants').where({ id: tenantId, is_deleted: false }).first();
-    if (!tenant) {
-      throw ApiError.notFound('Shop account not found');
+    const tenant = await db('tenants').where({ id: tenantId }).first();
+    if (!tenant || Boolean(tenant.is_deleted)) {
+      throw ApiError.forbidden('Shop account has been deleted or does not exist. Access denied.');
     }
 
-    if (tenant.status === 'PAUSED') {
-      throw ApiError.forbidden('Your shop account has been suspended by system administrator. Please contact billing support.');
-    }
-
-    if (tenant.status === 'PENDING_KYC') {
-      throw ApiError.forbidden('Your shop account is pending KYC & document verification approval by administrator.');
+    if (tenant.status !== 'ACTIVE') {
+      if (tenant.status === 'PAUSED' || tenant.status === 'SUSPENDED') {
+        throw ApiError.forbidden('Your shop account has been suspended by system administrator. Please contact support.');
+      }
+      if (tenant.status === 'PENDING_KYC') {
+        throw ApiError.forbidden('Your shop account is pending KYC & document verification approval by administrator.');
+      }
+      throw ApiError.forbidden(`Shop account status is "${tenant.status}". Access denied.`);
     }
 
     req.tenant = tenant;

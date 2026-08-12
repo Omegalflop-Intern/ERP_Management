@@ -20,11 +20,26 @@ export const authenticate = async (req, res, next) => {
 
     const row = await db('users')
       .leftJoin('roles', 'users.role_id', 'roles.id')
+      .leftJoin('tenants', 'users.tenant_id', 'tenants.id')
       .where({ 'users.id': userId, 'users.is_deleted': false, 'users.is_active': true })
-      .select('users.*', 'roles.name as role_name_val', 'roles.permissions as role_perms_val')
+      .select(
+        'users.*',
+        'roles.name as role_name_val',
+        'roles.permissions as role_perms_val',
+        'tenants.status as tenant_status',
+        'tenants.is_deleted as tenant_is_deleted'
+      )
       .first();
 
     if (!row) throw ApiError.unauthorized('User not found or deactivated');
+
+    const isSuperAdmin = Boolean(row.is_super_admin);
+
+    if (row.tenant_id && !isSuperAdmin) {
+      if (Boolean(row.tenant_is_deleted) || (row.tenant_status && row.tenant_status !== 'ACTIVE')) {
+        throw ApiError.forbidden(`Shop account is ${row.tenant_status === 'SUSPENDED' ? 'suspended' : 'deleted or inactive'}. Access denied.`);
+      }
+    }
 
     let permissions = row.role_perms_val;
     if (typeof permissions === 'string') {
@@ -33,7 +48,6 @@ export const authenticate = async (req, res, next) => {
 
     const userBranchId = row.branch_id ? String(row.branch_id) : null;
     const roleName = row.role_name_val || row.role_name || '';
-    const isSuperAdmin = Boolean(row.is_super_admin);
 
     req.user = {
       _id: String(row.id),
