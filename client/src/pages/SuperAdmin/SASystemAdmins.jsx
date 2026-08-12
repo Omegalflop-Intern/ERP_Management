@@ -173,7 +173,7 @@ export default function SASystemAdmins() {
                   <th className="text-left text-xs font-bold text-slate-500 dark:text-slate-400 px-4 py-3.5 hidden md:table-cell">Contact</th>
                   <th className="text-left text-xs font-bold text-slate-500 dark:text-slate-400 px-4 py-3.5 hidden sm:table-cell">Status</th>
                   <th className="text-left text-xs font-bold text-slate-500 dark:text-slate-400 px-4 py-3.5 hidden lg:table-cell">Created</th>
-                  <th className="px-4 py-3.5 w-10" />
+                  <th className="text-right text-xs font-bold text-slate-500 dark:text-slate-400 px-5 py-3.5">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -185,7 +185,7 @@ export default function SASystemAdmins() {
                         <div>
                           <div className="text-sm font-bold text-slate-900 dark:text-white">{admin.fullName || admin.full_name || admin.username}</div>
                           <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                            <ShieldCheck className="w-3 h-3 text-blue-400" />
+                            <ShieldCheck className="w-3.5 h-3.5 text-blue-500" />
                             @{admin.username}
                           </div>
                         </div>
@@ -213,40 +213,40 @@ export default function SASystemAdmins() {
                         {admin.created_at ? format(new Date(admin.created_at), 'MMM d, yyyy') : '—'}
                       </span>
                     </td>
-                    <td className="px-4 py-3.5 relative">
-                      <button
-                        id={`admin-menu-${admin.id}`}
-                        onClick={() => setMenuOpen(menuOpen === admin.id ? null : admin.id)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors opacity-0 group-hover:opacity-100"
-                      >
-                        <MoreVertical className="w-4 h-4" />
-                      </button>
-                      {menuOpen === admin.id && (
-                        <>
-                          <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(null)} />
-                          <div className="absolute right-4 top-full mt-1 z-20 w-48 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden">
-                            <button
-                              onClick={() => openEdit(admin)}
-                              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" /> Edit Info
-                            </button>
-                            <button
-                              onClick={() => toggleMutation.mutate(admin.id)}
-                              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                            >
-                              {admin.is_active ? <PowerOff className="w-3.5 h-3.5 text-amber-500" /> : <Power className="w-3.5 h-3.5 text-emerald-500" />}
-                              {admin.is_active ? 'Deactivate' : 'Activate'}
-                            </button>
-                            <button
-                              onClick={() => confirmDelete(`Remove "${admin.username}"?`, () => deleteMutation.mutate(admin.id), 'Are you sure you want to remove this admin?')}
-                              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors border-t border-slate-100 dark:border-slate-800"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" /> Remove Admin
-                            </button>
-                          </div>
-                        </>
-                      )}
+                    <td className="px-5 py-3.5 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => openEdit(admin)}
+                          className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                          title="Edit Admin Info"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => toggleMutation.mutate(admin.id)}
+                          className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                          title={admin.is_active ? 'Deactivate Account' : 'Activate Account'}
+                        >
+                          {admin.is_active ? (
+                            <PowerOff className="w-4 h-4 text-amber-500" />
+                          ) : (
+                            <Power className="w-4 h-4 text-emerald-500" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() =>
+                            confirmDelete(
+                              `Remove "${admin.username}"?`,
+                              () => deleteMutation.mutate(admin.id),
+                              'Are you sure you want to remove this system admin?'
+                            )
+                          }
+                          className="p-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                          title="Remove System Admin"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
