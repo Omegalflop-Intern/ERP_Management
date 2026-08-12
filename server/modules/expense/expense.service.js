@@ -84,9 +84,10 @@ export const createExpense = async (data, recordedBy = 'system', tenantId = null
   return formatExpense(row);
 };
 
-export const updateExpense = async (id, data, tenantId = null) => {
+export const updateExpense = async (id, data, tenantId = null, branchId = null) => {
   const query = db('expenses').where({ id, is_deleted: false });
   applyTenantScope(query, tenantId);
+  if (branchId) query.where('branch_id', branchId);
   const expense = await query.first();
   if (!expense) throw ApiError.notFound('Expense entry not found');
 
@@ -112,9 +113,10 @@ export const updateExpense = async (id, data, tenantId = null) => {
   return formatExpense(updated);
 };
 
-export const deleteExpense = async (id, tenantId = null) => {
+export const deleteExpense = async (id, tenantId = null, branchId = null) => {
   const query = db('expenses').where({ id, is_deleted: false });
   applyTenantScope(query, tenantId);
+  if (branchId) query.where('branch_id', branchId);
   const expense = await query.first();
   if (!expense) throw ApiError.notFound('Expense entry not found');
 

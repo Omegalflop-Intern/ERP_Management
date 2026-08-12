@@ -202,7 +202,8 @@ app.get('/api/v1/audit-logs', authenticate, authorize('ADMIN', 'MANAGER'), async
   try {
     const { page = 1, limit = 50, module, userId, action, from, to } = req.query;
     const tenantId = req.user?.tenantId || null;
-    const result = await getAuditLogs(Number(page), Number(limit), { module, userId, action, from, to }, tenantId);
+    const branchId = req.selectedBranchId || null;
+    const result = await getAuditLogs(Number(page), Number(limit), { module, userId, action, from, to }, tenantId, branchId);
     res.json({ success: true, data: result.logs, pagination: result.pagination });
   } catch (error) { next(error); }
 });

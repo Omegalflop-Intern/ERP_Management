@@ -99,7 +99,7 @@ export const getAllEmployees = async (page = 1, limit = 20, search = '', branch 
   return { employees, pagination: getPagination(total, page, limit) };
 };
 
-export const getEmployeeById = async (id, tenantId = null) => {
+export const getEmployeeById = async (id, tenantId = null, branchId = null) => {
   const dataQuery = db('employees')
     .leftJoin('users', 'employees.user_id', 'users.id')
     .where({ 'employees.id': id, 'employees.is_deleted': false })
@@ -110,6 +110,7 @@ export const getEmployeeById = async (id, tenantId = null) => {
       'users.email as u_email'
     );
   applyTenantScope(dataQuery, tenantId);
+  if (branchId) dataQuery.where('employees.branch_id', branchId);
 
   const row = await dataQuery.first();
   if (!row) throw ApiError.notFound('Employee not found');
@@ -151,8 +152,8 @@ export const createEmployee = async (data, tenantId = null) => {
   return getEmployeeById(insertedId, tenantId || data.tenantId || null);
 };
 
-export const updateEmployee = async (id, data, tenantId = null) => {
-  const employee = await getEmployeeById(id, tenantId);
+export const updateEmployee = async (id, data, tenantId = null, branchId = null) => {
+  const employee = await getEmployeeById(id, tenantId, branchId);
   if (!employee) throw ApiError.notFound('Employee not found');
 
   const updateFields = {};
@@ -187,29 +188,33 @@ export const updateEmployee = async (id, data, tenantId = null) => {
   if (Object.keys(updateFields).length > 0) {
     const q = db('employees').where({ id });
     if (tenantId) q.andWhere('tenant_id', tenantId);
+    if (branchId) q.andWhere('branch_id', branchId);
     await q.update(updateFields);
   }
 
-  return getEmployeeById(id, tenantId);
+  return getEmployeeById(id, tenantId, branchId);
 };
 
-export const deleteEmployee = async (id, tenantId = null) => {
-  const employee = await getEmployeeById(id, tenantId);
+export const deleteEmployee = async (id, tenantId = null, branchId = null) => {
+  const employee = await getEmployeeById(id, tenantId, branchId);
   if (!employee) throw ApiError.notFound('Employee not found');
 
   const q1 = db('employees').where({ id });
   if (tenantId) q1.andWhere('tenant_id', tenantId);
+  if (branchId) q1.andWhere('branch_id', branchId);
   await q1.update({ is_deleted: true });
   return { ...employee, isDeleted: true };
 };
 
-export const getEmployeeStats = async (tenantId = null) => {
+export const getEmployeeStats = async (tenantId = null, branchId = null) => {
   const countQuery = db('employees').where({ is_deleted: false });
   applyTenantScope(countQuery, tenantId);
+  if (branchId) countQuery.where('employees.branch_id', branchId);
   const totalRes = await countQuery.count({ count: '*' }).first();
 
   const activeQuery = db('employees').where({ is_deleted: false, is_active: true });
   applyTenantScope(activeQuery, tenantId);
+  if (branchId) activeQuery.where('employees.branch_id', branchId);
   const activeRes = await activeQuery.count({ count: '*' }).first();
 
   const total = Number(totalRes?.count || 0);
@@ -218,10 +223,12 @@ export const getEmployeeStats = async (tenantId = null) => {
 
   const deptQuery = db('employees').where({ is_deleted: false });
   applyTenantScope(deptQuery, tenantId);
+  if (branchId) deptQuery.where('employees.branch_id', branchId);
   const departments = await deptQuery.select('department').count({ count: '*' }).groupBy('department').orderBy('count', 'desc');
 
   const salaryQuery = db('employees').where({ is_deleted: false });
   applyTenantScope(salaryQuery, tenantId);
+  if (branchId) salaryQuery.where('employees.branch_id', branchId);
   const salaryRes = await salaryQuery.avg({ avg: 'salary' }).sum({ total: 'salary' }).first();
 
   return {

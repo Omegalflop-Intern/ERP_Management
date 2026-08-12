@@ -17,7 +17,8 @@ export const checkOut = async (req, res, next) => {
   try {
     const { employeeId, location } = req.body;
     const tenantId = req.user?.tenantId || null;
-    const attendance = await attendanceService.checkOut(employeeId, location, tenantId);
+    const effectiveBranchId = req.selectedBranchId || null;
+    const attendance = await attendanceService.checkOut(employeeId, location, tenantId, effectiveBranchId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'CHECK_OUT', module: 'attendance', entityId: attendance._id, entityType: 'Attendance', details: { employeeId, location }, req });
     return ApiResponse.success(res, attendance, 'Checked out successfully');
   } catch (error) { next(error); }
@@ -37,7 +38,8 @@ export const getTodayStatus = async (req, res, next) => {
   try {
     const { employeeId } = req.params;
     const tenantId = req.user?.tenantId || null;
-    const attendance = await attendanceService.getTodayStatus(employeeId, tenantId);
+    const effectiveBranchId = req.selectedBranchId || null;
+    const attendance = await attendanceService.getTodayStatus(employeeId, tenantId, effectiveBranchId);
     return ApiResponse.success(res, attendance);
   } catch (error) { next(error); }
 };
@@ -45,7 +47,8 @@ export const getTodayStatus = async (req, res, next) => {
 export const updateAttendance = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const attendance = await attendanceService.updateAttendance(req.params.id, req.body, tenantId);
+    const effectiveBranchId = req.selectedBranchId || null;
+    const attendance = await attendanceService.updateAttendance(req.params.id, req.body, tenantId, effectiveBranchId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'UPDATE', module: 'attendance', entityId: attendance._id, entityType: 'Attendance', req });
     return ApiResponse.success(res, attendance, 'Attendance updated');
   } catch (error) { next(error); }

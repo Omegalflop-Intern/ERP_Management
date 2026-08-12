@@ -208,10 +208,11 @@ export const seedDefaultAccounts = async (tenantId = null) => {
 };
 
 // Journal Entries
-export const getAllJournalEntries = async (page = 1, limit = 20, search = '', status = '', from = '', to = '', tenantId = null) => {
+export const getAllJournalEntries = async (page = 1, limit = 20, search = '', status = '', from = '', to = '', tenantId = null, branchId = null) => {
   const countQuery = db('journal_entries').where({ is_deleted: false });
   applyTenantScope(countQuery, tenantId, 'journal_entries');
   if (status && status !== 'ALL') countQuery.where({ status });
+  if (branchId) countQuery.where('branch_id', branchId);
 
   const countRes = await countQuery.count({ total: '*' }).first();
   const total = Number(countRes?.total || 0);
@@ -220,6 +221,7 @@ export const getAllJournalEntries = async (page = 1, limit = 20, search = '', st
   const dataQuery = db('journal_entries').where({ is_deleted: false });
   applyTenantScope(dataQuery, tenantId, 'journal_entries');
   if (status && status !== 'ALL') dataQuery.where({ status });
+  if (branchId) dataQuery.where('branch_id', branchId);
 
   const rows = await dataQuery.orderBy('created_at', 'desc').limit(limit).offset(offset);
   const entries = rows.map(formatJournalEntry);
@@ -316,13 +318,19 @@ export const getBalanceSheet = async (asOf = '', tenantId = null) => {
   };
 };
 
-export const getProfitLoss = async (from = '', to = '', tenantId = null) => {
+export const getProfitLoss = async (from = '', to = '', tenantId = null, branchId = null) => {
   const revQuery = db('transactions').where({ tx_type: 'SALE', is_deleted: false });
   applyTenantScope(revQuery, tenantId, 'transactions');
+  if (branchId) revQuery.where('branch_id', branchId);
+  if (from) revQuery.where('created_at', '>=', new Date(from));
+  if (to) revQuery.where('created_at', '<=', new Date(to + 'T23:59:59'));
   const revRes = await revQuery.sum({ total: 'net_total' }).first();
 
   const expQuery = db('expenses').where({ is_deleted: false });
   applyTenantScope(expQuery, tenantId, 'expenses');
+  if (branchId) expQuery.where('branch_id', branchId);
+  if (from) expQuery.where('created_at', '>=', new Date(from));
+  if (to) expQuery.where('created_at', '<=', new Date(to + 'T23:59:59'));
   const expRes = await expQuery.sum({ total: 'amount' }).first();
 
   const totalRevenue = Number(revRes?.total || 0);

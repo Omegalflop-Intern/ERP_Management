@@ -90,9 +90,10 @@ export const getAllRepairs = async (page = 1, limit = 50, status = '', search = 
   return { repairs, pagination: getPagination(total, page, limit) };
 };
 
-export const getRepairById = async (id, tenantId = null) => {
+export const getRepairById = async (id, tenantId = null, branchId = null) => {
   const query = db('repair_tickets').where({ id, is_deleted: false });
   applyTenantScope(query, tenantId);
+  if (branchId) query.where('branch_id', branchId);
   const row = await query.first();
   if (!row) throw ApiError.notFound('Repair ticket not found');
   return formatRepairTicket(row);
@@ -117,21 +118,21 @@ export const createRepair = async (data, tenantId = null) => {
     is_deleted: false,
   });
 
-  return getRepairById(insertedId, tenantId);
+  return getRepairById(insertedId, tenantId, data.branchId);
 };
 
-export const updateRepairStatus = async (id, status, tenantId = null) => {
-  const ticket = await getRepairById(id, tenantId);
+export const updateRepairStatus = async (id, status, tenantId = null, branchId = null) => {
+  const ticket = await getRepairById(id, tenantId, branchId);
   if (!ticket) throw ApiError.notFound('Repair ticket not found');
 
   const q1 = db('repair_tickets').where({ id });
   if (tenantId) q1.andWhere('tenant_id', tenantId);
   await q1.update({ status });
-  return getRepairById(id, tenantId);
+  return getRepairById(id, tenantId, branchId);
 };
 
-export const updateRepair = async (id, data, tenantId = null) => {
-  const ticket = await getRepairById(id, tenantId);
+export const updateRepair = async (id, data, tenantId = null, branchId = null) => {
+  const ticket = await getRepairById(id, tenantId, branchId);
   if (!ticket) throw ApiError.notFound('Repair ticket not found');
 
   const updateFields = {};
@@ -151,11 +152,11 @@ export const updateRepair = async (id, data, tenantId = null) => {
     await q.update(updateFields);
   }
 
-  return getRepairById(id, tenantId);
+  return getRepairById(id, tenantId, branchId);
 };
 
-export const deleteRepair = async (id, tenantId = null) => {
-  const ticket = await getRepairById(id, tenantId);
+export const deleteRepair = async (id, tenantId = null, branchId = null) => {
+  const ticket = await getRepairById(id, tenantId, branchId);
   if (!ticket) throw ApiError.notFound('Repair ticket not found');
 
   const q2 = db('repair_tickets').where({ id });
@@ -164,21 +165,25 @@ export const deleteRepair = async (id, tenantId = null) => {
   return { ...ticket, isDeleted: true };
 };
 
-export const getRepairStats = async (tenantId = null) => {
+export const getRepairStats = async (tenantId = null, branchId = null) => {
   const countQuery = db('repair_tickets').where({ is_deleted: false });
   applyTenantScope(countQuery, tenantId);
+  if (branchId) countQuery.where('branch_id', branchId);
   const totalRes = await countQuery.count({ total: '*' }).first();
 
   const activeQuery = db('repair_tickets').where({ is_deleted: false }).whereNotIn('status', ['DELIVERED', 'CANCELLED']);
   applyTenantScope(activeQuery, tenantId);
+  if (branchId) activeQuery.where('branch_id', branchId);
   const activeRes = await activeQuery.count({ count: '*' }).first();
 
   const deliveredQuery = db('repair_tickets').where({ is_deleted: false, status: 'DELIVERED' });
   applyTenantScope(deliveredQuery, tenantId);
+  if (branchId) deliveredQuery.where('branch_id', branchId);
   const deliveredRes = await deliveredQuery.count({ count: '*' }).first();
 
   const revQuery = db('repair_tickets').where({ is_deleted: false, status: 'DELIVERED' });
   applyTenantScope(revQuery, tenantId);
+  if (branchId) revQuery.where('branch_id', branchId);
   const revRes = await revQuery.sum({ total: 'estimated_cost' }).sum({ collected: 'advance_paid' }).first();
 
   return {

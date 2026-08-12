@@ -27,7 +27,8 @@ export const createExpense = async (req, res, next) => {
 export const updateExpense = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const expense = await expenseService.updateExpense(req.params.id, req.body, tenantId);
+    const branchId = req.selectedBranchId || null;
+    const expense = await expenseService.updateExpense(req.params.id, req.body, tenantId, branchId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'UPDATE', module: 'expense', entityId: expense._id, entityType: 'Expense', details: { title: expense.title, amount: expense.amount }, req });
     return ApiResponse.success(res, expense, 'Expense updated successfully');
   } catch (error) { next(error); }
@@ -36,7 +37,8 @@ export const updateExpense = async (req, res, next) => {
 export const deleteExpense = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    await expenseService.deleteExpense(req.params.id, tenantId);
+    const branchId = req.selectedBranchId || null;
+    await expenseService.deleteExpense(req.params.id, tenantId, branchId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'DELETE', module: 'expense', entityId: req.params.id, entityType: 'Expense', req });
     return ApiResponse.success(res, null, 'Expense deleted');
   } catch (error) { next(error); }

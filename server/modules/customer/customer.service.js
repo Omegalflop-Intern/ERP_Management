@@ -74,9 +74,10 @@ export const getAllCustomers = async (page = 1, limit = 20, search = '', tenantI
   return { customers, pagination: getPagination(total, page, limit) };
 };
 
-export const getCustomerById = async (id, tenantId = null) => {
+export const getCustomerById = async (id, tenantId = null, branchId = null) => {
   const query = db('customers').where({ id, is_deleted: false });
   applyTenantScope(query, tenantId);
+  if (branchId) query.where('branch_id', branchId);
   const row = await query.first();
   if (!row) throw ApiError.notFound('Customer not found');
   return formatCustomer(row);
@@ -154,8 +155,8 @@ export const deleteCustomer = async (id, tenantId = null) => {
   return { ...customer, isDeleted: true };
 };
 
-export const getCustomerHistory = async (id, tenantId = null) => {
-  const customer = await getCustomerById(id, tenantId);
+export const getCustomerHistory = async (id, tenantId = null, branchId = null) => {
+  const customer = await getCustomerById(id, tenantId, branchId);
   if (!customer) throw ApiError.notFound('Customer not found');
 
   return {
@@ -171,8 +172,8 @@ export const getCustomerHistory = async (id, tenantId = null) => {
   };
 };
 
-export const collectDue = async (id, amount, paymentMethod, userId, tenantId = null) => {
-  const customer = await getCustomerById(id, tenantId);
+export const collectDue = async (id, amount, paymentMethod, userId, tenantId = null, branchId = null) => {
+  const customer = await getCustomerById(id, tenantId, branchId);
   if (!customer) throw ApiError.notFound('Customer not found');
   if (customer.dueBalance <= 0) throw ApiError.badRequest('No pending due for this customer');
   if (amount > customer.dueBalance) throw ApiError.badRequest(`Due amount exceeds balance of ৳${customer.dueBalance}`);
@@ -186,18 +187,21 @@ export const collectDue = async (id, amount, paymentMethod, userId, tenantId = n
   return { customer: updated, collected: amount };
 };
 
-export const getCustomerStats = async (tenantId = null) => {
+export const getCustomerStats = async (tenantId = null, branchId = null) => {
   const query = db('customers').where({ is_deleted: false });
   applyTenantScope(query, tenantId);
+  if (branchId) query.where('branch_id', branchId);
   const countRes = await query.count({ count: '*' }).first();
   const total = Number(countRes?.count || 0);
 
   const dueQuery = db('customers').where({ is_deleted: false }).where('due_balance', '>', 0);
   applyTenantScope(dueQuery, tenantId);
+  if (branchId) dueQuery.where('branch_id', branchId);
   const dueRes = await dueQuery.count({ count: '*' }).sum({ totalDue: 'due_balance' }).first();
 
   const purchaseQuery = db('customers').where({ is_deleted: false });
   applyTenantScope(purchaseQuery, tenantId);
+  if (branchId) purchaseQuery.where('branch_id', branchId);
   const purchaseRes = await purchaseQuery.sum({ totalPurchases: 'total_purchases' }).first();
 
   return {

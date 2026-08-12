@@ -6,12 +6,13 @@ import { menuItems } from '../../config/sidebar.config';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../lib/api';
 
-function SidebarLink({ item, isCollapsed }) {
+function SidebarLink({ item, isCollapsed, onNavigate }) {
   return (
     <NavLink
       to={item.path}
       end={item.path === '/dashboard'}
       title={isCollapsed ? item.label : undefined}
+      onClick={onNavigate}
       className={({ isActive }) =>
         `w-full flex items-center gap-3 rounded-xl font-medium text-sm transition-all duration-200 mb-1 ${
           isCollapsed ? 'justify-center px-2 py-2.5' : 'px-3.5 py-2.5'
@@ -28,7 +29,7 @@ function SidebarLink({ item, isCollapsed }) {
   );
 }
 
-function SubmenuGroup({ item, isCollapsed, openSubmenus, toggleSubmenu, location }) {
+function SubmenuGroup({ item, isCollapsed, openSubmenus, toggleSubmenu, location, onNavigate }) {
   const isOpen = !!openSubmenus[item.label];
   const hasActiveChild = item.children.some(
     (c) => location.pathname === c.path || (c.path !== '/' && location.pathname.startsWith(c.path))
@@ -65,6 +66,7 @@ function SubmenuGroup({ item, isCollapsed, openSubmenus, toggleSubmenu, location
             <NavLink
               key={child.path}
               to={child.path}
+              onClick={onNavigate}
               className={({ isActive }) =>
                 `w-full flex items-center gap-2.5 px-3 py-2 rounded-xl font-medium text-xs transition-all duration-200 ${
                   isActive
@@ -83,7 +85,7 @@ function SubmenuGroup({ item, isCollapsed, openSubmenus, toggleSubmenu, location
   );
 }
 
-function SidebarMenu({ isCollapsed, location }) {
+function SidebarMenu({ isCollapsed, location, onNavigate }) {
   const { hasAnyPermission } = useAuth();
   const [openSubmenus, setOpenSubmenus] = useState({});
 
@@ -138,9 +140,10 @@ function SidebarMenu({ isCollapsed, location }) {
                   openSubmenus={openSubmenus}
                   toggleSubmenu={toggle}
                   location={location}
+                  onNavigate={onNavigate}
                 />
               ) : (
-                <SidebarLink key={item.path} item={item} isCollapsed={isCollapsed} />
+                <SidebarLink key={item.path} item={item} isCollapsed={isCollapsed} onNavigate={onNavigate} />
               )
             )}
           </div>
@@ -159,6 +162,18 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
+
+  // Lock body scroll when mobile sidebar is open so background doesn't scroll
+  useEffect(() => {
+    if (isMobile && isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobile, isOpen]);
 
   const isCollapsed = collapsed && !isMobile;
 
@@ -182,35 +197,45 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
 
   return (
     <>
-      {isOpen && (
-        <button
-          type="button"
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={onClose}
-        />
-      )}
+      {/* ── Mobile backdrop ── */}
+      <div
+        aria-hidden="true"
+        onClick={onClose}
+        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] lg:hidden transition-opacity duration-300 ease-in-out ${
+          isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+      />
 
+      {/* ── Sidebar ── */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50
-          h-[calc(100vh-1rem)] lg:h-auto my-2 ml-2 lg:my-0 lg:ml-0 glass-primary rounded-[24px]
-          flex flex-col justify-between py-4
-          transform transition-all duration-250 ease-in-out
-          ${isCollapsed ? 'lg:w-[68px]' : 'lg:w-64'}
-          ${isOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full lg:translate-x-0'}
+        className={`
+          z-[120] flex flex-col
+          transition-transform duration-300 ease-in-out
+          ${isMobile
+            ? /* Mobile: full-height flush slide-in drawer */
+              `fixed inset-y-0 left-0 w-72 h-full py-4
+               bg-white dark:bg-[#0d1117]
+               border-r border-slate-200 dark:border-slate-800
+               shadow-2xl shadow-black/40
+               ${isOpen ? 'translate-x-0' : '-translate-x-full'}`
+            : /* Desktop: static floating glass card */
+              `static h-[calc(100vh-1rem)] my-2 ml-2 glass-primary rounded-[24px] py-4
+               translate-x-0
+               ${isCollapsed ? 'w-[68px]' : 'w-64'}`
+          }
         `}
       >
-        {/* Mobile header */}
-        <div className="flex items-center justify-between px-3 mb-4 lg:hidden">
-          {!isCollapsed && (
-            <div className="flex items-center gap-2">
-              <Logo />
-              <span className="font-bold text-slate-900 dark:text-slate-100">Menu</span>
-            </div>
-          )}
+        {/* Mobile header with close button */}
+        <div className="flex items-center justify-between px-4 mb-4 lg:hidden">
+          <div className="flex items-center gap-2">
+            <Logo />
+            <span className="font-bold text-slate-900 dark:text-slate-100 text-base">Menu</span>
+          </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 ml-auto"
+            aria-label="Close sidebar"
+            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <X className="w-5 h-5 text-slate-500" />
           </button>
@@ -233,7 +258,11 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
           </div>
         )}
 
-        <SidebarMenu isCollapsed={isCollapsed} location={location} />
+        <SidebarMenu
+          isCollapsed={isCollapsed}
+          location={location}
+          onNavigate={isMobile ? onClose : undefined}
+        />
       </aside>
     </>
   );

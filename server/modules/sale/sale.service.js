@@ -225,7 +225,7 @@ export const createSale = async (data, createdBy = 'system') => {
     });
   }
 
-  const sale = await getSaleById(insertedId, tenantId);
+  const sale = await getSaleById(insertedId, tenantId, data.branchId || null);
   emitter.emit(EVENTS.SALE_COMPLETED, { ...sale, tenantId });
   return sale;
 };
@@ -262,7 +262,7 @@ export const getAllSales = async (page = 1, limit = 20, filters = {}) => {
   return { sales, pagination: getPagination(total, page, limit) };
 };
 
-export const getSaleById = async (id, tenantId = null) => {
+export const getSaleById = async (id, tenantId = null, branchId = null) => {
   const dataQuery = db('transactions')
     .leftJoin('customers', 'transactions.customer_id', 'customers.id')
     .where({ 'transactions.id': id, 'transactions.is_deleted': false })
@@ -272,6 +272,7 @@ export const getSaleById = async (id, tenantId = null) => {
       'customers.email as c_email', 'customers.address as c_address'
     );
   applyTenantScope(dataQuery, tenantId, 'transactions');
+  if (branchId) dataQuery.where('transactions.branch_id', branchId);
 
   const row = await dataQuery.first();
   if (!row) throw ApiError.notFound('Sale not found');
@@ -280,7 +281,7 @@ export const getSaleById = async (id, tenantId = null) => {
   return formatTransaction(row, cRow);
 };
 
-export const getSaleByInvoice = async (invoiceQuery, tenantId = null) => {
+export const getSaleByInvoice = async (invoiceQuery, tenantId = null, branchId = null) => {
   const dataQuery = db('transactions')
     .leftJoin('customers', 'transactions.customer_id', 'customers.id')
     .where({ 'transactions.invoice_number': invoiceQuery, 'transactions.is_deleted': false })
@@ -289,6 +290,7 @@ export const getSaleByInvoice = async (invoiceQuery, tenantId = null) => {
       'customers.id as c_id', 'customers.name as c_name', 'customers.phone as c_phone'
     );
   applyTenantScope(dataQuery, tenantId, 'transactions');
+  if (branchId) dataQuery.where('transactions.branch_id', branchId);
 
   const row = await dataQuery.first();
   if (!row) throw ApiError.notFound(`No sale found matching "${invoiceQuery}"`);
@@ -303,8 +305,8 @@ export const getSaleByPublicToken = async (token) => {
   return formatTransaction(row);
 };
 
-export const updateSale = async (id, data, tenantId = null) => {
-  const existing = await getSaleById(id, tenantId);
+export const updateSale = async (id, data, tenantId = null, branchId = null) => {
+  const existing = await getSaleById(id, tenantId, branchId);
   if (!existing) throw ApiError.notFound('Sale not found');
 
   const updateFields = {};
@@ -374,13 +376,14 @@ export const updateSale = async (id, data, tenantId = null) => {
   updateFields.updated_at = new Date();
   const txUpdate = db('transactions').where({ id });
   if (tenantId) txUpdate.andWhere('tenant_id', tenantId);
+  if (branchId) txUpdate.andWhere('branch_id', branchId);
   await txUpdate.update(updateFields);
 
-  return getSaleById(id, tenantId);
+  return getSaleById(id, tenantId, branchId);
 };
 
-export const deleteSale = async (id, tenantId = null) => {
-  const sale = await getSaleById(id, tenantId);
+export const deleteSale = async (id, tenantId = null, branchId = null) => {
+  const sale = await getSaleById(id, tenantId, branchId);
   if (!sale) throw ApiError.notFound('Sale not found');
 
   // 1. Restore product stock & inventory units (IMEIs)
@@ -406,10 +409,54 @@ export const deleteSale = async (id, tenantId = null) => {
     await custQuery.decrement('due_balance', dueAmount);
   }
 
-  // 3. Mark transaction as deleted & cancelled
   const txDel = db('transactions').where({ id });
   if (tenantId) txDel.andWhere('tenant_id', tenantId);
+  if (branchId) txDel.andWhere('branch_id', branchId);
   await txDel.update({ is_deleted: true, status: 'CANCELLED', updated_at: new Date() });
 
   return { ...sale, isDeleted: true, status: 'CANCELLED' };
+};
+
+export const processReturn = async (id, data, tenantId = null, branchId = null) => {
+  const sale = await getSaleById(id, tenantId, branchId);
+
+  const returnItems = data.items || [];
+  let refundAmount = 0;
+
+  for (const ri of returnItems) {
+    const lineItem = sale.lineItems.find(li => li.productId === ri.productId);
+    if (!lineItem) throw ApiError.badRequest(`Line item not found for product ${ri.productId}`);
+    const qty = Math.abs(ri.qty || 1);
+    refundAmount += (lineItem.unitPrice * qty);
+  }
+
+  refundAmount = Number(refundAmount.toFixed(2));
+  const newReturnedAmount = (sale.returnedAmount || 0) + refundAmount;
+
+  const returnLog = {
+    date: new Date().toISOString(),
+    items: returnItems,
+    refundAmount,
+    reason: data.reason || '',
+  };
+
+  const existingLogs = sale.returnLogs || [];
+  const txUpdate = db('transactions').where({ id });
+  if (tenantId) txUpdate.andWhere('tenant_id', tenantId);
+  if (branchId) txUpdate.andWhere('branch_id', branchId);
+  await txUpdate.update({
+    returned_amount: newReturnedAmount,
+    return_logs: JSON.stringify([...existingLogs, returnLog]),
+    status: newReturnedAmount >= sale.netTotal ? 'RETURNED' : 'PARTIAL_RETURN',
+    updated_at: new Date(),
+  });
+
+  if (sale.customerId && refundAmount > 0) {
+    const custId = typeof sale.customerId === 'object' ? sale.customerId.id : sale.customerId;
+    const custQuery = db('customers').where({ id: custId });
+    if (tenantId) custQuery.andWhere('tenant_id', tenantId);
+    await custQuery.decrement('due_balance', refundAmount);
+  }
+
+  return { ...sale, returnedAmount: newReturnedAmount, refundAmount };
 };

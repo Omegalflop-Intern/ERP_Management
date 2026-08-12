@@ -45,7 +45,7 @@ export const getAllSales = async (req, res, next) => {
 export const getSaleById = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const sale = await saleService.getSaleById(req.params.id, tenantId);
+    const sale = await saleService.getSaleById(req.params.id, tenantId, req.selectedBranchId);
     return ApiResponse.success(res, sale);
   } catch (error) { next(error); }
 };
@@ -53,7 +53,7 @@ export const getSaleById = async (req, res, next) => {
 export const getSalePdf = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const sale = await saleService.getSaleById(req.params.id, tenantId);
+    const sale = await saleService.getSaleById(req.params.id, tenantId, req.selectedBranchId);
     const pdfBuffer = await generateInvoicePdfBuffer(sale);
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `inline; filename="${sale.invoiceNumber}.pdf"`);
@@ -65,7 +65,7 @@ export const getSalePdf = async (req, res, next) => {
 export const getSaleByInvoice = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const sale = await saleService.getSaleByInvoice(req.params.invoiceNumber, tenantId);
+    const sale = await saleService.getSaleByInvoice(req.params.invoiceNumber, tenantId, req.selectedBranchId);
     return ApiResponse.success(res, sale);
   } catch (error) { next(error); }
 };
@@ -73,7 +73,7 @@ export const getSaleByInvoice = async (req, res, next) => {
 export const processReturn = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const result = await saleService.processReturn(req.params.id, req.body, req.user?.username || 'system', tenantId);
+    const result = await saleService.processReturn(req.params.id, req.body, tenantId, req.selectedBranchId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'RETURN', module: 'sale', entityId: req.params.id, entityType: 'Transaction', details: { refundAmount: result.refundAmount }, req });
     return ApiResponse.success(res, result, `Return processed — ৳${result.refundAmount.toLocaleString()} refunded`);
   } catch (error) { next(error); }
@@ -82,7 +82,7 @@ export const processReturn = async (req, res, next) => {
 export const deleteSale = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    await saleService.deleteSale(req.params.id, tenantId);
+    await saleService.deleteSale(req.params.id, tenantId, req.selectedBranchId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'DELETE', module: 'sale', entityId: req.params.id, entityType: 'Transaction', req });
     return ApiResponse.success(res, null, 'Sale deleted');
   } catch (error) { next(error); }
@@ -91,7 +91,7 @@ export const deleteSale = async (req, res, next) => {
 export const updateSale = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const sale = await saleService.updateSale(req.params.id, req.body, tenantId);
+    const sale = await saleService.updateSale(req.params.id, req.body, tenantId, req.selectedBranchId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'UPDATE', module: 'sale', entityId: sale._id, entityType: 'Transaction', details: { invoiceNumber: sale.invoiceNumber }, req });
     return ApiResponse.success(res, sale, 'Sale updated');
   } catch (error) { next(error); }

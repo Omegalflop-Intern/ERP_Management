@@ -85,6 +85,7 @@ export const createLeave = async (data, currentUser = null, tenantId = null) => 
 
   const [insertedId] = await db('leaves').insert({
     tenant_id: tenantId || data.tenantId || null,
+    branch_id: data.branchId || null,
     employee_id: empId,
     type: data.type,
     from_date: from,
@@ -101,15 +102,17 @@ export const createLeave = async (data, currentUser = null, tenantId = null) => 
   return formatLeave(row, employee);
 };
 
-export const updateLeaveStatus = async (id, status, approvedBy, rejectionReason, tenantId = null) => {
+export const updateLeaveStatus = async (id, status, approvedBy, rejectionReason, tenantId = null, branchId = null) => {
   const leaveQuery = db('leaves').where({ id, is_deleted: false });
   applyTenantScope(leaveQuery, tenantId, 'leaves');
+  if (branchId) leaveQuery.where('leaves.branch_id', branchId);
   const leave = await leaveQuery.first();
   if (!leave) throw ApiError.notFound('Leave not found');
   if (leave.status !== 'pending') throw ApiError.badRequest('Only pending leaves can be updated');
 
   const uq = db('leaves').where({ id });
   if (tenantId) uq.andWhere('tenant_id', tenantId);
+  if (branchId) uq.andWhere('branch_id', branchId);
   await uq.update({
     status,
     approved_by: approvedBy || null,
@@ -118,6 +121,7 @@ export const updateLeaveStatus = async (id, status, approvedBy, rejectionReason,
 
   const rq = db('leaves').where({ id });
   if (tenantId) rq.andWhere('tenant_id', tenantId);
+  if (branchId) rq.andWhere('branch_id', branchId);
   const row = await rq.first();
   const empQuery = db('employees').where({ id: leave.employee_id, is_deleted: false });
   if (tenantId) empQuery.where('tenant_id', tenantId);
@@ -125,9 +129,10 @@ export const updateLeaveStatus = async (id, status, approvedBy, rejectionReason,
   return formatLeave(row, employee);
 };
 
-export const getEmployeeLeaves = async (employeeId, year, tenantId = null) => {
+export const getEmployeeLeaves = async (employeeId, year, tenantId = null, branchId = null) => {
   const query = db('leaves').where({ employee_id: employeeId, is_deleted: false });
   applyTenantScope(query, tenantId, 'leaves');
+  if (branchId) query.where('leaves.branch_id', branchId);
   const rows = await query.orderBy('from_date', 'desc');
 
   const leaves = rows.map(r => formatLeave(r));
@@ -142,15 +147,17 @@ export const getEmployeeLeaves = async (employeeId, year, tenantId = null) => {
   return { leaves, summary };
 };
 
-export const deleteLeave = async (id, tenantId = null) => {
+export const deleteLeave = async (id, tenantId = null, branchId = null) => {
   const query = db('leaves').where({ id, is_deleted: false });
   applyTenantScope(query, tenantId, 'leaves');
+  if (branchId) query.where('leaves.branch_id', branchId);
   const leave = await query.first();
   if (!leave) throw ApiError.notFound('Leave not found');
   if (leave.status === 'approved') throw ApiError.badRequest('Cannot delete approved leave');
 
   const dq = db('leaves').where({ id });
   if (tenantId) dq.andWhere('tenant_id', tenantId);
+  if (branchId) dq.andWhere('branch_id', branchId);
   await dq.update({ is_deleted: true });
   return { ...formatLeave(leave), isDeleted: true };
 };

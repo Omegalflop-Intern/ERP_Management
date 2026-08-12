@@ -16,7 +16,8 @@ export const getAllRepairs = async (req, res, next) => {
 export const getRepairById = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const ticket = await repairService.getRepairById(req.params.id, tenantId);
+    const branchId = req.selectedBranchId || null;
+    const ticket = await repairService.getRepairById(req.params.id, tenantId, branchId);
     return ApiResponse.success(res, ticket);
   } catch (error) { next(error); }
 };
@@ -45,7 +46,8 @@ export const createRepair = async (req, res, next) => {
 export const updateRepairStatus = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const ticket = await repairService.updateRepairStatus(req.params.id, req.body.status, tenantId);
+    const branchId = req.selectedBranchId || null;
+    const ticket = await repairService.updateRepairStatus(req.params.id, req.body.status, tenantId, branchId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'UPDATE_STATUS', module: 'repair', entityId: ticket._id, entityType: 'RepairTicket', details: { status: ticket.status }, req });
 
     if (ticket.customerEmail) {
@@ -66,7 +68,8 @@ export const updateRepairStatus = async (req, res, next) => {
 export const updateRepair = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const ticket = await repairService.updateRepair(req.params.id, req.body, tenantId);
+    const branchId = req.selectedBranchId || null;
+    const ticket = await repairService.updateRepair(req.params.id, req.body, tenantId, branchId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'UPDATE', module: 'repair', entityId: ticket._id, entityType: 'RepairTicket', req });
     return ApiResponse.success(res, ticket, 'Repair ticket updated');
   } catch (error) { next(error); }
@@ -75,7 +78,8 @@ export const updateRepair = async (req, res, next) => {
 export const deleteRepair = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    await repairService.deleteRepair(req.params.id, tenantId);
+    const branchId = req.selectedBranchId || null;
+    await repairService.deleteRepair(req.params.id, tenantId, branchId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'DELETE', module: 'repair', entityId: req.params.id, entityType: 'RepairTicket', req });
     return ApiResponse.success(res, null, 'Repair ticket deleted');
   } catch (error) { next(error); }
@@ -84,7 +88,8 @@ export const deleteRepair = async (req, res, next) => {
 export const getRepairStats = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const stats = await repairService.getRepairStats(tenantId);
+    const branchId = req.selectedBranchId || null;
+    const stats = await repairService.getRepairStats(tenantId, branchId);
     return ApiResponse.success(res, stats);
   } catch (error) { next(error); }
 };

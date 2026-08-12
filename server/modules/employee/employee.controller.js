@@ -15,7 +15,8 @@ export const getAllEmployees = async (req, res, next) => {
 export const getEmployeeById = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const employee = await employeeService.getEmployeeById(req.params.id, tenantId);
+    const effectiveBranchId = req.selectedBranchId || null;
+    const employee = await employeeService.getEmployeeById(req.params.id, tenantId, effectiveBranchId);
     return ApiResponse.success(res, employee);
   } catch (error) { next(error); }
 };
@@ -34,7 +35,8 @@ export const createEmployee = async (req, res, next) => {
 export const updateEmployee = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const employee = await employeeService.updateEmployee(req.params.id, req.body, tenantId);
+    const effectiveBranchId = req.selectedBranchId || null;
+    const employee = await employeeService.updateEmployee(req.params.id, req.body, tenantId, effectiveBranchId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'UPDATE', module: 'employee', entityId: employee._id, entityType: 'Employee', details: { name: employee.fullName || employee.name }, req });
     return ApiResponse.success(res, employee, 'Employee updated');
   } catch (error) { next(error); }
@@ -43,7 +45,8 @@ export const updateEmployee = async (req, res, next) => {
 export const deleteEmployee = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    await employeeService.deleteEmployee(req.params.id, tenantId);
+    const effectiveBranchId = req.selectedBranchId || null;
+    await employeeService.deleteEmployee(req.params.id, tenantId, effectiveBranchId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'DELETE', module: 'employee', entityId: req.params.id, entityType: 'Employee', req });
     return ApiResponse.success(res, null, 'Employee deleted');
   } catch (error) { next(error); }
@@ -52,7 +55,8 @@ export const deleteEmployee = async (req, res, next) => {
 export const getEmployeeStats = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const stats = await employeeService.getEmployeeStats(tenantId);
+    const effectiveBranchId = req.selectedBranchId || null;
+    const stats = await employeeService.getEmployeeStats(tenantId, effectiveBranchId);
     return ApiResponse.success(res, stats);
   } catch (error) { next(error); }
 };

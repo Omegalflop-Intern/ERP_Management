@@ -167,9 +167,10 @@ export const deletePrice = async (id, tenantId = null) => {
 };
 
 // Orders
-export const getAllOrders = async (page = 1, limit = 20, filters = {}, tenantId = null) => {
+export const getAllOrders = async (page = 1, limit = 20, filters = {}, tenantId = null, branchId = null) => {
   const countQuery = db('wholesale_orders').where('wholesale_orders.is_deleted', false);
   applyTenantScope(countQuery, tenantId, 'wholesale_orders');
+  if (branchId) countQuery.where('wholesale_orders.branch_id', branchId);
   if (filters.status) countQuery.where('wholesale_orders.status', filters.status);
 
   const countRes = await countQuery.count({ total: '*' }).first();
@@ -186,6 +187,7 @@ export const getAllOrders = async (page = 1, limit = 20, filters = {}, tenantId 
       'users.id as u_id', 'users.username as u_username'
     );
   applyTenantScope(dataQuery, tenantId, 'wholesale_orders');
+  if (branchId) dataQuery.where('wholesale_orders.branch_id', branchId);
   if (filters.status) dataQuery.where('wholesale_orders.status', filters.status);
 
   const rows = await dataQuery.orderBy('wholesale_orders.created_at', 'desc').limit(limit).offset(offset);
@@ -230,6 +232,7 @@ export const createOrder = async (data, userId, tenantId = null) => {
 
   const [insertedId] = await db('wholesale_orders').insert({
     tenant_id: tenantId || data.tenantId || null,
+    branch_id: data.branchId || null,
     order_number: orderNumber,
     customer_id: data.customer || data.customerId,
     items: JSON.stringify(items),

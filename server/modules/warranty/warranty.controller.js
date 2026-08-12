@@ -15,7 +15,8 @@ export const getAllClaims = async (req, res, next) => {
 export const getClaimById = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const claim = await warrantyService.getClaimById(req.params.id, tenantId);
+    const branchId = req.selectedBranchId || null;
+    const claim = await warrantyService.getClaimById(req.params.id, tenantId, branchId);
     return ApiResponse.success(res, claim);
   } catch (error) { next(error); }
 };
@@ -37,7 +38,8 @@ export const createClaim = async (req, res, next) => {
 export const updateClaim = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const claim = await warrantyService.updateClaim(req.params.id, req.body, req.user._id, tenantId);
+    const branchId = req.selectedBranchId || null;
+    const claim = await warrantyService.updateClaim(req.params.id, req.body, req.user._id, tenantId, branchId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'UPDATE', module: 'warranty', entityId: claim._id, entityType: 'WarrantyClaim', details: { status: claim.status }, req });
     return ApiResponse.success(res, claim, 'Warranty claim updated');
   } catch (error) { next(error); }
@@ -46,7 +48,8 @@ export const updateClaim = async (req, res, next) => {
 export const getClaimsByIMEI = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const claims = await warrantyService.getClaimsByIMEI(req.params.imeiId, tenantId);
+    const branchId = req.selectedBranchId || null;
+    const claims = await warrantyService.getClaimsByIMEI(req.params.imeiId, tenantId, branchId);
     return ApiResponse.success(res, claims);
   } catch (error) { next(error); }
 };
@@ -55,7 +58,8 @@ export const getWarrantyReport = async (req, res, next) => {
   try {
     const { type = 'expiring', search = '', status = 'Sold' } = req.query;
     const tenantId = req.user?.tenantId || null;
-    const report = await warrantyService.getWarrantyReport({ type, search, status }, tenantId);
+    const branchId = req.selectedBranchId || null;
+    const report = await warrantyService.getWarrantyReport({ type, search, status }, tenantId, branchId);
     return ApiResponse.success(res, report);
   } catch (error) { next(error); }
 };

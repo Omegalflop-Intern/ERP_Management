@@ -27,7 +27,8 @@ export const updateLeaveStatus = async (req, res, next) => {
   try {
     const { status, rejectionReason } = req.body;
     const tenantId = req.user?.tenantId || null;
-    const leave = await leaveService.updateLeaveStatus(req.params.id, status, req.user._id, rejectionReason, tenantId);
+    const effectiveBranchId = req.selectedBranchId || null;
+    const leave = await leaveService.updateLeaveStatus(req.params.id, status, req.user._id, rejectionReason, tenantId, effectiveBranchId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'UPDATE_STATUS', module: 'leave', entityId: leave._id, entityType: 'Leave', details: { status }, req });
     return ApiResponse.success(res, leave, `Leave ${status}`);
   } catch (error) { next(error); }
@@ -38,7 +39,8 @@ export const getEmployeeLeaves = async (req, res, next) => {
     const { employeeId } = req.params;
     const { year } = req.query;
     const tenantId = req.user?.tenantId || null;
-    const result = await leaveService.getEmployeeLeaves(employeeId, year, tenantId);
+    const effectiveBranchId = req.selectedBranchId || null;
+    const result = await leaveService.getEmployeeLeaves(employeeId, year, tenantId, effectiveBranchId);
     return ApiResponse.success(res, result);
   } catch (error) { next(error); }
 };
@@ -46,7 +48,8 @@ export const getEmployeeLeaves = async (req, res, next) => {
 export const deleteLeave = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    await leaveService.deleteLeave(req.params.id, tenantId);
+    const effectiveBranchId = req.selectedBranchId || null;
+    await leaveService.deleteLeave(req.params.id, tenantId, effectiveBranchId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'DELETE', module: 'leave', entityId: req.params.id, entityType: 'Leave', req });
     return ApiResponse.success(res, null, 'Leave deleted');
   } catch (error) { next(error); }

@@ -106,7 +106,7 @@ export const getAllPurchaseOrders = async (page = 1, limit = 20, search = '', st
   return { orders, pagination: getPagination(total, page, limit) };
 };
 
-export const getPurchaseOrderById = async (id, tenantId = null) => {
+export const getPurchaseOrderById = async (id, tenantId = null, branchId = null) => {
   const dataQuery = db('purchase_orders')
     .leftJoin('suppliers', 'purchase_orders.supplier_id', 'suppliers.id')
     .where({ 'purchase_orders.id': id, 'purchase_orders.is_deleted': false })
@@ -121,6 +121,7 @@ export const getPurchaseOrderById = async (id, tenantId = null) => {
       'suppliers.credit_balance as s_credit_balance'
     );
   applyTenantScope(dataQuery, tenantId);
+  if (branchId) dataQuery.where('purchase_orders.branch_id', branchId);
 
   const row = await dataQuery.first();
   if (!row) throw ApiError.notFound('Purchase order not found');
@@ -178,8 +179,8 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
   return getPurchaseOrderById(insertedId, tenantId);
 };
 
-export const updatePurchaseOrder = async (id, data, tenantId = null) => {
-  const order = await getPurchaseOrderById(id, tenantId);
+export const updatePurchaseOrder = async (id, data, tenantId = null, branchId = null) => {
+  const order = await getPurchaseOrderById(id, tenantId, branchId);
   if (!order) throw ApiError.notFound('Purchase order not found');
 
   if (order.status === 'RECEIVED' || order.status === 'CANCELLED') {
@@ -194,14 +195,15 @@ export const updatePurchaseOrder = async (id, data, tenantId = null) => {
   if (Object.keys(updateFields).length > 0) {
     const poUpdate = db('purchase_orders').where({ id });
     if (tenantId) poUpdate.andWhere('tenant_id', tenantId);
+    if (branchId) poUpdate.andWhere('branch_id', branchId);
     await poUpdate.update(updateFields);
   }
 
-  return getPurchaseOrderById(id, tenantId);
+  return getPurchaseOrderById(id, tenantId, branchId);
 };
 
-export const receiveGoods = async (id, grnEntries, receivedBy = 'system', tenantId = null) => {
-  const order = await getPurchaseOrderById(id, tenantId);
+export const receiveGoods = async (id, grnEntries, receivedBy = 'system', tenantId = null, branchId = null) => {
+  const order = await getPurchaseOrderById(id, tenantId, branchId);
   if (!order) throw ApiError.notFound('Purchase order not found');
 
   if (order.status !== 'APPROVED' && order.status !== 'PARTIALLY_RECEIVED') {
@@ -259,6 +261,7 @@ export const receiveGoods = async (id, grnEntries, receivedBy = 'system', tenant
 
   const poReceiveUpdate = db('purchase_orders').where({ id });
   if (tenantId) poReceiveUpdate.andWhere('tenant_id', tenantId);
+  if (branchId) poReceiveUpdate.andWhere('branch_id', branchId);
   await poReceiveUpdate.update({
     status,
     line_items: JSON.stringify(currentLineItems),
@@ -278,11 +281,11 @@ export const receiveGoods = async (id, grnEntries, receivedBy = 'system', tenant
     });
   }
 
-  return getPurchaseOrderById(id, tenantId);
+  return getPurchaseOrderById(id, tenantId, branchId);
 };
 
-export const deletePurchaseOrder = async (id, tenantId = null) => {
-  const order = await getPurchaseOrderById(id, tenantId);
+export const deletePurchaseOrder = async (id, tenantId = null, branchId = null) => {
+  const order = await getPurchaseOrderById(id, tenantId, branchId);
   if (!order) throw ApiError.notFound('Purchase order not found');
   if (order.status === 'RECEIVED' || order.status === 'PARTIALLY_RECEIVED' || order.status === 'CANCELLED') {
     throw ApiError.badRequest('Only un-received orders can be deleted');
@@ -290,6 +293,7 @@ export const deletePurchaseOrder = async (id, tenantId = null) => {
 
   const poDel = db('purchase_orders').where({ id });
   if (tenantId) poDel.andWhere('tenant_id', tenantId);
+  if (branchId) poDel.andWhere('branch_id', branchId);
   await poDel.update({ is_deleted: true });
   return { ...order, isDeleted: true };
 };

@@ -15,7 +15,8 @@ export const getAllCustomers = async (req, res, next) => {
 export const getCustomerById = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const customer = await customerService.getCustomerById(req.params.id, tenantId);
+    const branchId = req.selectedBranchId || null;
+    const customer = await customerService.getCustomerById(req.params.id, tenantId, branchId);
     return ApiResponse.success(res, customer);
   } catch (error) { next(error); }
 };
@@ -51,7 +52,8 @@ export const deleteCustomer = async (req, res, next) => {
 export const getCustomerHistory = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const result = await customerService.getCustomerHistory(req.params.id, tenantId);
+    const branchId = req.selectedBranchId || null;
+    const result = await customerService.getCustomerHistory(req.params.id, tenantId, branchId);
     return ApiResponse.success(res, result);
   } catch (error) { next(error); }
 };
@@ -60,7 +62,8 @@ export const collectDue = async (req, res, next) => {
   try {
     const { amount, paymentMethod } = req.body;
     const tenantId = req.user?.tenantId || null;
-    const result = await customerService.collectDue(req.params.id, amount, paymentMethod, req.user._id, tenantId);
+    const branchId = req.selectedBranchId || null;
+    const result = await customerService.collectDue(req.params.id, amount, paymentMethod, req.user._id, tenantId, branchId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'COLLECT_DUE', module: 'customer', entityId: req.params.id, entityType: 'Customer', details: { amount, paymentMethod }, req });
     return ApiResponse.success(res, result, `৳${result.collected} collected`);
   } catch (error) { next(error); }
@@ -69,7 +72,8 @@ export const collectDue = async (req, res, next) => {
 export const getCustomerStats = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const stats = await customerService.getCustomerStats(tenantId);
+    const branchId = req.selectedBranchId || null;
+    const stats = await customerService.getCustomerStats(tenantId, branchId);
     return ApiResponse.success(res, stats);
   } catch (error) { next(error); }
 };

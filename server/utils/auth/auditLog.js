@@ -11,6 +11,7 @@ export const logAction = async ({ userId, username, fullName, roleName, phone, a
       role_name: roleName || u?.roleName || null,
       phone: phone || u?.phone || null,
       tenant_id: u?.tenantId || null,
+      branch_id: req?.selectedBranchId || null,
       action: action || 'ACTION',
       module: module || null,
       entity_id: entityId || null,
@@ -24,9 +25,10 @@ export const logAction = async ({ userId, username, fullName, roleName, phone, a
   }
 };
 
-export const getAuditLogs = async (page = 1, limit = 50, filters = {}, tenantId = null) => {
+export const getAuditLogs = async (page = 1, limit = 50, filters = {}, tenantId = null, branchId = null) => {
   const countQuery = db('audit_logs');
   if (tenantId) countQuery.where('tenant_id', tenantId);
+  if (branchId) countQuery.where('branch_id', branchId);
   if (filters.module) countQuery.where('module', filters.module);
   if (filters.userId) countQuery.where('user_id', filters.userId);
   if (filters.action) countQuery.where('action', 'like', `%${filters.action}%`);
@@ -44,6 +46,7 @@ export const getAuditLogs = async (page = 1, limit = 50, filters = {}, tenantId 
       'users.id as u_id', 'users.username as u_username', 'users.full_name as u_full_name', 'users.phone as u_phone'
     );
   if (tenantId) dataQuery.where('audit_logs.tenant_id', tenantId);
+  if (branchId) dataQuery.where('audit_logs.branch_id', branchId);
   if (filters.module) dataQuery.where('audit_logs.module', filters.module);
   if (filters.userId) dataQuery.where('audit_logs.user_id', filters.userId);
   if (filters.action) dataQuery.where('audit_logs.action', 'like', `%${filters.action}%`);
@@ -66,6 +69,7 @@ export const getAuditLogs = async (page = 1, limit = 50, filters = {}, tenantId 
       roleName: row.role_name || '',
       phone: row.phone || '',
       tenantId: row.tenant_id || null,
+      branchId: row.branch_id ? String(row.branch_id) : null,
       action: row.action,
       module: row.module || '',
       entityId: row.entity_id || null,

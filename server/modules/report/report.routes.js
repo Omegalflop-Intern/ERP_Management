@@ -10,7 +10,6 @@ router.use(authenticate);
 router.use(checkTenantStatus);
 router.use(authorize('ADMIN', 'MANAGER', 'CASHIER', 'STAFF'));
 
-// Helper to scope queries by tenant
 const getTenantScope = (req) => {
   const tenantId = req.user?.tenantId || null;
   return (query, tablePrefix = null) => {
@@ -21,52 +20,67 @@ const getTenantScope = (req) => {
   };
 };
 
+const getBranchScope = (req) => {
+  const branchId = req.selectedBranchId || null;
+  return (query, column = 'branch_id') => {
+    if (branchId) {
+      query.where(column, branchId);
+    }
+  };
+};
+
 /**
  * GET /api/v1/reports/dashboard
  */
 router.get('/dashboard', async (req, res, next) => {
   try {
     const applyScope = getTenantScope(req);
+    const applyBranch = getBranchScope(req);
     const tenantId = req.user?.tenantId || null;
 
     let totalSalesCount = 0, totalRevenue = 0;
     let totalAvailableUnits = 0, totalStockValue = 0;
     let activeRepairsCount = 0, totalCustomers = 0, totalDueAmount = 0;
     let totalExpenses = 0, totalPurchasesCost = 0, totalCostAndExpenses = 0;
+    // Declare lowStockItems here so it is in scope for both the product loop and the final response
+    const lowStockItems = [];
 
-    // 1. Expenses & Purchases
     try {
       const expQuery = db('expenses').where({ is_deleted: false });
       applyScope(expQuery);
+      applyBranch(expQuery);
       const expRes = await expQuery.sum({ total: 'amount' }).first();
       totalExpenses = Number(expRes?.total || 0);
 
       const poQuery = db('purchase_orders').where({ is_deleted: false }).whereNot('status', 'CANCELLED');
       applyScope(poQuery);
+      applyBranch(poQuery);
       const poRes = await poQuery.sum({ total: 'net_total' }).first();
       totalPurchasesCost = Number(poRes?.total || 0);
 
       totalCostAndExpenses = totalExpenses + totalPurchasesCost;
     } catch {}
 
-    // 2. Sales & Revenue
     try {
       const txQuery = db('transactions').where({ is_deleted: false, tx_type: 'SALE' });
       applyScope(txQuery);
+      applyBranch(txQuery);
       const txCountRes = await txQuery.count({ count: '*' }).sum({ total: 'net_total' }).sum({ returned: 'returned_amount' }).first();
       totalSalesCount = Number(txCountRes?.count || 0);
       totalRevenue = Math.max(0, Number(txCountRes?.total || 0) - Number(txCountRes?.returned || 0));
     } catch {}
 
-    // 3. Stock & Inventory Value
-    let lowStockItems = [];
     try {
       const prodQuery = db('products').where({ is_deleted: false });
       applyScope(prodQuery);
       const activeProducts = await prodQuery;
 
       for (const p of activeProducts) {
-        const availUnits = Number(p.stock_quantity || 0);
+        const unitQ = db('inventory_units').where({ product_id: p.id, status: 'Available', is_deleted: false });
+        applyScope(unitQ);
+        applyBranch(unitQ);
+        const unitCount = await unitQ.count({ count: '*' }).first();
+        const availUnits = Number(unitCount?.count || 0);
         const costVal = availUnits * Number(p.cost_price || 0);
         totalAvailableUnits += availUnits;
         totalStockValue += costVal;
@@ -84,21 +98,21 @@ router.get('/dashboard', async (req, res, next) => {
       }
     } catch {}
 
-    // 4. Active Repairs & Customer Dues
     try {
       const repQuery = db('repair_tickets').where({ is_deleted: false }).whereNotIn('status', ['DELIVERED', 'CANCELLED']);
       applyScope(repQuery);
+      applyBranch(repQuery);
       const repRes = await repQuery.count({ count: '*' }).first();
       activeRepairsCount = Number(repRes?.count || 0);
 
       const custQuery = db('customers').where({ is_deleted: false });
       applyScope(custQuery);
+      applyBranch(custQuery);
       const custRes = await custQuery.count({ count: '*' }).sum({ due: 'due_balance' }).first();
       totalCustomers = Number(custRes?.count || 0);
       totalDueAmount = Number(custRes?.due || 0);
     } catch {}
 
-    // 5. Chart Data — Sales Trend, Due Trend, Brand Distribution
     let salesTrendData = [];
     let dueTrendData = [];
     let brandDistribution = [];
@@ -114,6 +128,7 @@ router.get('/dashboard', async (req, res, next) => {
         .orderBy('date_key', 'asc')
         .limit(14);
       applyScope(salesTrendQuery);
+      applyBranch(salesTrendQuery);
       const rawSales = await salesTrendQuery;
       salesTrendData = rawSales.map((r) => ({
         day: r.day,
@@ -123,15 +138,18 @@ router.get('/dashboard', async (req, res, next) => {
     } catch {}
 
     try {
-      const dueTrendQuery = db('customer_payments')
+      const dueTrendQuery = db('transactions')
+        .where({ is_deleted: false, tx_type: 'SALE' })
+        .where('payment_breakdown', 'like', '%"dueAmount"%')
         .select(db.raw('DATE_FORMAT(created_at, "%Y-%m-%d") as date_key'))
         .select(db.raw('DATE_FORMAT(created_at, "%a %d") as day'))
-        .sum({ paidAmount: 'amount' })
+        .sum({ paidAmount: 'net_total' })
         .count({ transactions: '*' })
         .groupBy('date_key', 'day')
         .orderBy('date_key', 'asc')
         .limit(14);
-      if (tenantId) dueTrendQuery.where({ tenant_id: tenantId });
+      applyScope(dueTrendQuery);
+      applyBranch(dueTrendQuery);
       const rawDue = await dueTrendQuery;
       dueTrendData = rawDue.map((r) => ({
         day: r.day,
@@ -182,17 +200,21 @@ router.get('/dashboard', async (req, res, next) => {
 router.get('/analytics', async (req, res, next) => {
   try {
     const applyScope = getTenantScope(req);
+    const applyBranch = getBranchScope(req);
 
     const txQuery = db('transactions').where({ is_deleted: false, tx_type: 'SALE' });
     applyScope(txQuery);
+    applyBranch(txQuery);
     const salesRes = await txQuery.count({ count: '*' }).sum({ revenue: 'net_total' }).first();
 
     const expQuery = db('expenses').where({ is_deleted: false });
     applyScope(expQuery);
+    applyBranch(expQuery);
     const expRes = await expQuery.sum({ total: 'amount' }).first();
 
     const poQuery = db('purchase_orders').where({ is_deleted: false }).whereNot('status', 'CANCELLED');
     applyScope(poQuery);
+    applyBranch(poQuery);
     const poRes = await poQuery.sum({ total: 'net_total' }).first();
 
     const totalSalesCount = Number(salesRes?.count || 0);
@@ -220,6 +242,7 @@ router.get('/analytics', async (req, res, next) => {
 router.get('/sales-trend', async (req, res, next) => {
   try {
     const applyScope = getTenantScope(req);
+    const applyBranch = getBranchScope(req);
     const query = db('transactions')
       .where({ is_deleted: false, tx_type: 'SALE' })
       .select(db.raw('DATE_FORMAT(created_at, "%Y-%m-%d") as date'))
@@ -231,6 +254,7 @@ router.get('/sales-trend', async (req, res, next) => {
       .limit(30);
 
     applyScope(query);
+    applyBranch(query);
     const rows = await query;
     const data = rows.map((r) => ({
       date: r.date,
@@ -251,22 +275,59 @@ router.get('/sales-trend', async (req, res, next) => {
 router.get('/top-products', async (req, res, next) => {
   try {
     const applyScope = getTenantScope(req);
+    const applyBranch = getBranchScope(req);
     const limit = Number(req.query.limit || 5);
 
-    const query = db('products')
-      .where({ is_deleted: false })
-      .orderBy('stock_quantity', 'desc')
-      .limit(limit);
-    applyScope(query);
+    // Pull completed sales, parse line_items JSON to aggregate per product
+    const txQuery = db('transactions')
+      .where({ is_deleted: false, tx_type: 'SALE' })
+      .whereNotIn('status', ['CANCELLED'])
+      .select('line_items', 'net_total');
+    applyScope(txQuery);
+    applyBranch(txQuery);
+    const transactions = await txQuery;
 
-    const products = await query;
-    const data = products.map((p) => ({
-      id: p.id,
-      name: p.name,
-      category: p.category || 'General',
-      soldQty: Math.floor(Math.random() * 20) + 5,
-      revenue: Number(p.selling_price || 0) * (Math.floor(Math.random() * 20) + 5),
-    }));
+    // Aggregate sold quantity and revenue per productId from line_items JSON
+    const productMap = {};
+    for (const tx of transactions) {
+      let items = tx.line_items;
+      if (typeof items === 'string') { try { items = JSON.parse(items); } catch { items = []; } }
+      if (!Array.isArray(items)) continue;
+      for (const item of items) {
+        const pid = String(item.productId || '');
+        if (!pid) continue;
+        if (!productMap[pid]) productMap[pid] = { productId: pid, soldQty: 0, revenue: 0, name: item.description || '' };
+        productMap[pid].soldQty += Math.abs(Number(item.qty || 0));
+        productMap[pid].revenue += Number(item.totalPrice || 0);
+      }
+    }
+
+    // Sort by revenue descending and take top N
+    const ranked = Object.values(productMap)
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, limit);
+
+    // Enrich with product details from the products table
+    const productIds = ranked.map((r) => r.productId).filter(Boolean);
+    let productDetails = {};
+    if (productIds.length > 0) {
+      const prodQuery = db('products').whereIn('id', productIds).where({ is_deleted: false });
+      applyScope(prodQuery);
+      const prods = await prodQuery.select('id', 'name', 'category', 'brand');
+      prods.forEach((p) => { productDetails[String(p.id)] = p; });
+    }
+
+    const data = ranked.map((r) => {
+      const p = productDetails[r.productId] || {};
+      return {
+        id: r.productId,
+        name: p.name || r.name || 'Unknown',
+        category: p.category || 'General',
+        brand: p.brand || '',
+        soldQty: r.soldQty,
+        revenue: Math.round(r.revenue),
+      };
+    });
 
     return ApiResponse.success(res, data);
   } catch (error) {
@@ -280,8 +341,10 @@ router.get('/top-products', async (req, res, next) => {
 router.get('/customers', async (req, res, next) => {
   try {
     const applyScope = getTenantScope(req);
+    const applyBranch = getBranchScope(req);
     const custQuery = db('customers').where({ is_deleted: false });
     applyScope(custQuery);
+    applyBranch(custQuery);
     const customers = await custQuery.orderBy('created_at', 'desc');
 
     const totalCustomers = customers.length;
@@ -320,8 +383,10 @@ router.get('/customers', async (req, res, next) => {
 router.get('/employees', async (req, res, next) => {
   try {
     const applyScope = getTenantScope(req);
+    const applyBranch = getBranchScope(req);
     const empQuery = db('employees').where({ is_deleted: false });
     applyScope(empQuery);
+    applyBranch(empQuery);
     const employees = await empQuery;
 
     const totalEmployees = employees.length;
@@ -331,6 +396,7 @@ router.get('/employees', async (req, res, next) => {
     try {
       const leaveQuery = db('leaves').where({ is_deleted: false, status: 'APPROVED' });
       applyScope(leaveQuery);
+      applyBranch(leaveQuery);
       const leaveRes = await leaveQuery.count({ count: '*' }).first();
       activeLeavesCount = Number(leaveRes?.count || 0);
     } catch {}
@@ -361,6 +427,9 @@ router.get('/employees', async (req, res, next) => {
 router.get('/inventory', async (req, res, next) => {
   try {
     const applyScope = getTenantScope(req);
+    const applyBranch = getBranchScope(req);
+    const branchId = req.selectedBranchId || null;
+
     const prodQuery = db('products').where({ is_deleted: false });
     applyScope(prodQuery);
     const products = await prodQuery;
@@ -371,8 +440,27 @@ router.get('/inventory', async (req, res, next) => {
     const categoryCounts = {};
     const lowStockItems = [];
 
+    // When a branch is selected, use per-branch inventory_units count instead of the
+    // denormalized global stock_quantity field on the product row.
+    let branchUnitCounts = null;
+    if (branchId && products.length > 0) {
+      const productIds = products.map((p) => p.id);
+      const unitRows = await db('inventory_units')
+        .whereIn('product_id', productIds)
+        .where({ status: 'Available', is_deleted: false })
+        .where('branch_id', branchId)
+        .select('product_id')
+        .count({ cnt: '*' })
+        .groupBy('product_id');
+      branchUnitCounts = {};
+      unitRows.forEach((r) => { branchUnitCounts[String(r.product_id)] = Number(r.cnt || 0); });
+    }
+
     for (const p of products) {
-      const qty = Number(p.stock_quantity || 0);
+      // Use per-branch unit count when available, otherwise fall back to global stock_quantity
+      const qty = branchUnitCounts !== null
+        ? (branchUnitCounts[String(p.id)] || 0)
+        : Number(p.stock_quantity || 0);
       const cost = Number(p.cost_price || 0);
       totalStockValue += qty * cost;
 

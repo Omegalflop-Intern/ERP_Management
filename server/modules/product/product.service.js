@@ -48,7 +48,7 @@ function applyTenantScope(query, tenantId) {
   }
 }
 
-export const getAllProducts = async (page = 1, limit = 50, search = '', category = '', tenantId = null) => {
+export const getAllProducts = async (page = 1, limit = 50, search = '', category = '', tenantId = null, branchId = null) => {
   const countQuery = db('products').where({ is_deleted: false });
   applyTenantScope(countQuery, tenantId);
 
@@ -94,6 +94,7 @@ export const getAllProducts = async (page = 1, limit = 50, search = '', category
   if (productIds.length > 0) {
     const unitQuery = db('inventory_units').whereIn('product_id', productIds).where({ status: 'Available', is_deleted: false });
     if (tenantId) unitQuery.where('tenant_id', tenantId);
+    if (branchId) unitQuery.where('inventory_units.branch_id', branchId);
     units = await unitQuery;
   }
 
@@ -105,7 +106,7 @@ export const getAllProducts = async (page = 1, limit = 50, search = '', category
   return { products, pagination: getPagination(total, page, limit) };
 };
 
-export const getProductById = async (id, tenantId = null) => {
+export const getProductById = async (id, tenantId = null, branchId = null) => {
   const query = db('products').where({ id, is_deleted: false });
   applyTenantScope(query, tenantId);
   const row = await query.first();
@@ -113,6 +114,7 @@ export const getProductById = async (id, tenantId = null) => {
 
   const unitQuery = db('inventory_units').where({ product_id: id, status: 'Available', is_deleted: false });
   if (tenantId) unitQuery.where('tenant_id', tenantId);
+  if (branchId) unitQuery.where('inventory_units.branch_id', branchId);
   const units = await unitQuery;
   const availIMEIs = units.map(u => u.imei_or_serial);
   return formatProduct(row, availIMEIs);

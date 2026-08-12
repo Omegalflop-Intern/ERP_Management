@@ -148,15 +148,17 @@ export const generatePayroll = async (month, year, employeeIds = [], tenantId = 
   return { processed: results, skipped };
 };
 
-export const markAsPaid = async (id, paidBy = null, tenantId = null) => {
+export const markAsPaid = async (id, paidBy = null, tenantId = null, branchId = null) => {
   const query = db('payrolls').where({ id, is_deleted: false });
   applyTenantScope(query, tenantId, 'payrolls');
+  if (branchId) query.where('payrolls.branch_id', branchId);
   const payroll = await query.first();
   if (!payroll) throw ApiError.notFound('Payroll record not found');
   if (payroll.status === 'paid') throw ApiError.badRequest('Already paid');
 
   const mq = db('payrolls').where({ id });
   if (tenantId) mq.andWhere('tenant_id', tenantId);
+  if (branchId) mq.andWhere('branch_id', branchId);
   await mq.update({
     status: 'paid',
     paid_date: new Date(),
@@ -165,6 +167,7 @@ export const markAsPaid = async (id, paidBy = null, tenantId = null) => {
 
   const urq = db('payrolls').where({ id });
   if (tenantId) urq.andWhere('tenant_id', tenantId);
+  if (branchId) urq.andWhere('branch_id', branchId);
   const updated = await urq.first();
   const empQuery = db('employees').where({ id: payroll.employee_id, is_deleted: false });
   applyTenantScope(empQuery, tenantId, 'employees');
@@ -172,9 +175,10 @@ export const markAsPaid = async (id, paidBy = null, tenantId = null) => {
   return formatPayroll(updated, employee);
 };
 
-export const getPayrollSummary = async (month, year, tenantId = null) => {
+export const getPayrollSummary = async (month, year, tenantId = null, branchId = null) => {
   const query = db('payrolls').where({ month: Number(month), year: Number(year), is_deleted: false });
   applyTenantScope(query, tenantId, 'payrolls');
+  if (branchId) query.where('payrolls.branch_id', branchId);
 
   const rows = await query;
   const records = rows.map(r => formatPayroll(r));
@@ -196,9 +200,10 @@ export const getPayrollSummary = async (month, year, tenantId = null) => {
   };
 };
 
-export const getPayslip = async (id, tenantId = null) => {
+export const getPayslip = async (id, tenantId = null, branchId = null) => {
   const query = db('payrolls').where({ id, is_deleted: false });
   applyTenantScope(query, tenantId, 'payrolls');
+  if (branchId) query.where('payrolls.branch_id', branchId);
   const row = await query.first();
   if (!row) throw ApiError.notFound('Payroll record not found');
   const empQuery = db('employees').where({ id: row.employee_id, is_deleted: false });
@@ -207,15 +212,17 @@ export const getPayslip = async (id, tenantId = null) => {
   return formatPayroll(row, employee);
 };
 
-export const deletePayroll = async (id, tenantId = null) => {
+export const deletePayroll = async (id, tenantId = null, branchId = null) => {
   const query = db('payrolls').where({ id, is_deleted: false });
   applyTenantScope(query, tenantId, 'payrolls');
+  if (branchId) query.where('payrolls.branch_id', branchId);
   const payroll = await query.first();
   if (!payroll) throw ApiError.notFound('Payroll record not found');
   if (payroll.status === 'paid') throw ApiError.badRequest('Cannot delete paid payroll');
 
   const dq = db('payrolls').where({ id });
   if (tenantId) dq.andWhere('tenant_id', tenantId);
+  if (branchId) dq.andWhere('branch_id', branchId);
   await dq.update({ is_deleted: true });
   return { ...formatPayroll(payroll), isDeleted: true };
 };

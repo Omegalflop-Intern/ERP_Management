@@ -31,10 +31,11 @@ function applyTenantScope(query, tenantId, tablePrefix = 'stock_transfers') {
   }
 }
 
-export const getAllTransfers = async (page = 1, limit = 20, status = '', tenantId = null) => {
+export const getAllTransfers = async (page = 1, limit = 20, status = '', tenantId = null, branchId = null) => {
   const countQuery = db('stock_transfers').where('stock_transfers.is_deleted', false);
   applyTenantScope(countQuery, tenantId);
   if (status && status !== 'ALL') countQuery.where('stock_transfers.status', status);
+  if (branchId) countQuery.where((b) => b.where('from_branch_id', branchId).orWhere('to_branch_id', branchId));
 
   const countRes = await countQuery.count({ total: '*' }).first();
   const total = Number(countRes?.total || 0);
@@ -53,6 +54,7 @@ export const getAllTransfers = async (page = 1, limit = 20, status = '', tenantI
     );
   applyTenantScope(dataQuery, tenantId);
   if (status && status !== 'ALL') dataQuery.where('stock_transfers.status', status);
+  if (branchId) dataQuery.where((b) => b.where('from_branch_id', branchId).orWhere('to_branch_id', branchId));
 
   const rows = await dataQuery.orderBy('stock_transfers.created_at', 'desc').limit(limit).offset(offset);
 
@@ -66,7 +68,7 @@ export const getAllTransfers = async (page = 1, limit = 20, status = '', tenantI
   return { transfers, pagination: getPagination(total, page, limit) };
 };
 
-export const getTransferById = async (id, tenantId = null) => {
+export const getTransferById = async (id, tenantId = null, branchId = null) => {
   const dataQuery = db('stock_transfers')
     .leftJoin('branches as fb', 'stock_transfers.from_branch_id', 'fb.id')
     .leftJoin('branches as tb', 'stock_transfers.to_branch_id', 'tb.id')
@@ -79,6 +81,7 @@ export const getTransferById = async (id, tenantId = null) => {
       'products.id as p_id', 'products.name as p_name', 'products.sku as p_sku'
     );
   applyTenantScope(dataQuery, tenantId);
+  if (branchId) dataQuery.where((b) => b.where('from_branch_id', branchId).orWhere('to_branch_id', branchId));
 
   const row = await dataQuery.first();
   if (!row) throw ApiError.notFound('Transfer not found');
@@ -90,7 +93,7 @@ export const getTransferById = async (id, tenantId = null) => {
   return formatStockTransfer(row, fb, tb, prod);
 };
 
-export const createTransfer = async (data, transferredBy = 'system', tenantId = null) => {
+export const createTransfer = async (data, transferredBy = 'system', tenantId = null, branchId = null) => {
   if (data.fromBranchId === data.toBranchId) throw ApiError.badRequest('Source and destination branches cannot be the same');
 
   const transferNumber = 'TRF-' + Date.now().toString(36).toUpperCase();
@@ -133,11 +136,11 @@ export const createTransfer = async (data, transferredBy = 'system', tenantId = 
     is_deleted: false,
   });
 
-  return getTransferById(insertedId, tenantId);
+  return getTransferById(insertedId, tenantId, branchId);
 };
 
-export const updateTransferStatus = async (id, status, performedBy = 'system', tenantId = null) => {
-  const transfer = await getTransferById(id, tenantId);
+export const updateTransferStatus = async (id, status, performedBy = 'system', tenantId = null, branchId = null) => {
+  const transfer = await getTransferById(id, tenantId, branchId);
   if (!transfer) throw ApiError.notFound('Transfer not found');
 
   const updateFields = { status };
@@ -211,13 +214,13 @@ export const updateTransferStatus = async (id, status, performedBy = 'system', t
   const tq = db('stock_transfers').where({ id });
   if (tenantId) tq.andWhere('tenant_id', tenantId);
   await tq.update(updateFields);
-  const updated = await getTransferById(id, tenantId);
+  const updated = await getTransferById(id, tenantId, branchId);
   emitter.emit(EVENTS.STOCK_UPDATED, { ...updated, tenantId });
   return updated;
 };
 
-export const deleteTransfer = async (id, tenantId = null) => {
-  const transfer = await getTransferById(id, tenantId);
+export const deleteTransfer = async (id, tenantId = null, branchId = null) => {
+  const transfer = await getTransferById(id, tenantId, branchId);
   if (!transfer) throw ApiError.notFound('Transfer not found');
 
   const delQ = db('stock_transfers').where({ id });

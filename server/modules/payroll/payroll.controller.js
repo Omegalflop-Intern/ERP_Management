@@ -26,7 +26,8 @@ export const processPayroll = async (req, res, next) => {
 export const markAsPaid = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const payroll = await payrollService.markAsPaid(req.params.id, req.user._id, tenantId);
+    const effectiveBranchId = req.selectedBranchId || null;
+    const payroll = await payrollService.markAsPaid(req.params.id, req.user._id, tenantId, effectiveBranchId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'MARK_PAID', module: 'payroll', entityId: payroll._id, entityType: 'Payroll', req });
     return ApiResponse.success(res, payroll, 'Marked as paid');
   } catch (error) { next(error); }
@@ -36,7 +37,8 @@ export const getPayrollSummary = async (req, res, next) => {
   try {
     const { month, year } = req.query;
     const tenantId = req.user?.tenantId || null;
-    const summary = await payrollService.getPayrollSummary(Number(month), Number(year), tenantId);
+    const effectiveBranchId = req.selectedBranchId || null;
+    const summary = await payrollService.getPayrollSummary(Number(month), Number(year), tenantId, effectiveBranchId);
     return ApiResponse.success(res, summary);
   } catch (error) { next(error); }
 };
@@ -44,7 +46,8 @@ export const getPayrollSummary = async (req, res, next) => {
 export const getPayslip = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const payslip = await payrollService.getPayslip(req.params.id, tenantId);
+    const effectiveBranchId = req.selectedBranchId || null;
+    const payslip = await payrollService.getPayslip(req.params.id, tenantId, effectiveBranchId);
     return ApiResponse.success(res, payslip);
   } catch (error) { next(error); }
 };
@@ -52,7 +55,8 @@ export const getPayslip = async (req, res, next) => {
 export const deletePayroll = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    await payrollService.deletePayroll(req.params.id, tenantId);
+    const effectiveBranchId = req.selectedBranchId || null;
+    await payrollService.deletePayroll(req.params.id, tenantId, effectiveBranchId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'DELETE', module: 'payroll', entityId: req.params.id, entityType: 'Payroll', req });
     return ApiResponse.success(res, null, 'Payroll record deleted');
   } catch (error) { next(error); }

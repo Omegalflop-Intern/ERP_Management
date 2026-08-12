@@ -69,16 +69,18 @@ export const checkIn = async (employeeId, location, notes, tenantId = null, bran
   return formatAttendance(row, employee);
 };
 
-export const checkOut = async (employeeId, location, tenantId = null) => {
+export const checkOut = async (employeeId, location, tenantId = null, branchId = null) => {
   const todayStr = new Date().toISOString().slice(0, 10);
   const attQuery = db('attendances').where({ employee_id: employeeId, date: todayStr, is_deleted: false });
   if (tenantId) attQuery.where('tenant_id', tenantId);
+  if (branchId) attQuery.where('branch_id', branchId);
   const attendance = await attQuery.first();
   if (!attendance) throw ApiError.badRequest('No check-in found for today');
   if (attendance.check_out) throw ApiError.badRequest('Already checked out today');
 
   const coQ = db('attendances').where({ id: attendance.id });
   if (tenantId) coQ.andWhere('tenant_id', tenantId);
+  if (branchId) coQ.andWhere('branch_id', branchId);
   await coQ.update({
     check_out: new Date(),
     lat: location?.lat || attendance.lat,
@@ -87,6 +89,7 @@ export const checkOut = async (employeeId, location, tenantId = null) => {
 
   const coRQ = db('attendances').where({ id: attendance.id });
   if (tenantId) coRQ.andWhere('tenant_id', tenantId);
+  if (branchId) coRQ.andWhere('branch_id', branchId);
   const row = await coRQ.first();
   const empQuery = db('employees').where({ id: employeeId, is_deleted: false });
   if (tenantId) empQuery.where('tenant_id', tenantId);
@@ -126,17 +129,19 @@ export const getAttendanceReport = async (page = 1, limit = 20, employeeId = '',
   return { records, pagination: getPagination(total, page, limit) };
 };
 
-export const getTodayStatus = async (employeeId, tenantId = null) => {
+export const getTodayStatus = async (employeeId, tenantId = null, branchId = null) => {
   const todayStr = new Date().toISOString().slice(0, 10);
   const query = db('attendances').where({ employee_id: employeeId, date: todayStr, is_deleted: false });
   if (tenantId) query.where('tenant_id', tenantId);
+  if (branchId) query.where('branch_id', branchId);
   const row = await query.first();
   return formatAttendance(row);
 };
 
-export const updateAttendance = async (id, data, tenantId = null) => {
+export const updateAttendance = async (id, data, tenantId = null, branchId = null) => {
   const query = db('attendances').where({ id, is_deleted: false });
   if (tenantId) query.where('tenant_id', tenantId);
+  if (branchId) query.where('branch_id', branchId);
   const attendance = await query.first();
   if (!attendance) throw ApiError.notFound('Attendance record not found');
 
@@ -147,11 +152,13 @@ export const updateAttendance = async (id, data, tenantId = null) => {
   if (Object.keys(updateFields).length > 0) {
     const q = db('attendances').where({ id });
     if (tenantId) q.andWhere('tenant_id', tenantId);
+    if (branchId) q.andWhere('branch_id', branchId);
     await q.update(updateFields);
   }
 
   const uq = db('attendances').where({ id });
   if (tenantId) uq.andWhere('tenant_id', tenantId);
+  if (branchId) uq.andWhere('branch_id', branchId);
   const updated = await uq.first();
   return formatAttendance(updated);
 };

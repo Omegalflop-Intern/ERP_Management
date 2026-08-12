@@ -59,7 +59,8 @@ export const getJournalEntries = async (req, res, next) => {
   try {
     const { page = 1, limit = 50, fromDate = '', toDate = '' } = req.query;
     const tenantId = req.user?.tenantId || null;
-    const result = await accountingService.getJournalEntries(Number(page), Number(limit), fromDate, toDate, tenantId);
+    const branchId = req.selectedBranchId || null;
+    const result = await accountingService.getAllJournalEntries(Number(page), Number(limit), '', '', fromDate, toDate, tenantId, branchId);
     return ApiResponse.paginated(res, result.entries, result.pagination.total, result.pagination.page, result.pagination.limit);
   } catch (error) { next(error); }
 };
@@ -130,7 +131,8 @@ export const getProfitLoss = async (req, res, next) => {
   try {
     const { startDate = '', endDate = '' } = req.query;
     const tenantId = req.user?.tenantId || null;
-    const data = await accountingService.getProfitLoss(startDate, endDate, tenantId);
+    const branchId = req.selectedBranchId || null;
+    const data = await accountingService.getProfitLoss(startDate, endDate, tenantId, branchId);
     return ApiResponse.success(res, data);
   } catch (error) { next(error); }
 };

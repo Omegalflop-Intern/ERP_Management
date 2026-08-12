@@ -10,7 +10,8 @@ export const getAllProducts = async (req, res, next) => {
   try {
     const { page = 1, limit = 20, search = '', category = '' } = req.query;
     const tenantId = req.user?.tenantId || null;
-    const result = await productService.getAllProducts(Number(page), Number(limit), search, category, tenantId);
+    const branchId = req.selectedBranchId || null;
+    const result = await productService.getAllProducts(Number(page), Number(limit), search, category, tenantId, branchId);
     return ApiResponse.paginated(res, result.products, result.pagination.total, result.pagination.page, result.pagination.limit);
   } catch (error) { next(error); }
 };
@@ -18,7 +19,8 @@ export const getAllProducts = async (req, res, next) => {
 export const getProductById = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const product = await productService.getProductById(req.params.id, tenantId);
+    const branchId = req.selectedBranchId || null;
+    const product = await productService.getProductById(req.params.id, tenantId, branchId);
     return ApiResponse.success(res, product);
   } catch (error) { next(error); }
 };
@@ -71,7 +73,8 @@ export const uploadImage = async (req, res, next) => {
 export const exportProducts = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const result = await productService.getAllProducts(1, 10000, '', '', tenantId);
+    const branchId = req.selectedBranchId || null;
+    const result = await productService.getAllProducts(1, 10000, '', '', tenantId, branchId);
     const products = result.products || [];
     const rows = products.map(p => ({
       Name: p.name,
@@ -159,7 +162,8 @@ export const getProductIMEIUnits = async (req, res, next) => {
   try {
     const { id } = req.params;
     const tenantId = req.user?.tenantId || null;
-    const result = await imeiService.getAllIMEIs(1, 100, '', '', '', tenantId);
+    const branchId = req.selectedBranchId || null;
+    const result = await imeiService.getAllIMEIs(1, 100, '', '', '', tenantId, branchId);
     const units = (result.units || []).filter(u => String(u.productId?.id || u.productId) === String(id));
     return ApiResponse.success(res, units);
   } catch (error) { next(error); }
