@@ -20,6 +20,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import api from '../../lib/api';
+import { confirmDelete } from '../../lib/confirm';
 
 export default function ShopTickets() {
   const queryClient = useQueryClient();
@@ -310,7 +311,7 @@ export default function ShopTickets() {
                           <ChevronRight className="w-3.5 h-3.5" />
                         </button>
                         <button
-                          onClick={() => { if (window.confirm('Are you sure you want to delete this ticket?')) deleteMutation.mutate(t.id); }}
+                          onClick={() => confirmDelete('Delete Ticket?', () => deleteMutation.mutate(t.id), 'Are you sure you want to delete this ticket?')}
                           className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                           title="Delete ticket"
                         >

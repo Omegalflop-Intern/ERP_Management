@@ -6,6 +6,7 @@ import {
   CheckCircle2, XCircle, User, Eye, EyeOff, Loader2
 } from 'lucide-react';
 import api from '@/lib/api';
+import { confirmDelete } from '@/lib/confirm';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -238,7 +239,7 @@ export default function SASystemAdmins() {
                               {admin.is_active ? 'Deactivate' : 'Activate'}
                             </button>
                             <button
-                              onClick={() => { if (confirm(`Remove "${admin.username}"?`)) deleteMutation.mutate(admin.id); }}
+                              onClick={() => confirmDelete(`Remove "${admin.username}"?`, () => deleteMutation.mutate(admin.id), 'Are you sure you want to remove this admin?')}
                               className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors border-t border-slate-100 dark:border-slate-800"
                             >
                               <Trash2 className="w-3.5 h-3.5" /> Remove Admin

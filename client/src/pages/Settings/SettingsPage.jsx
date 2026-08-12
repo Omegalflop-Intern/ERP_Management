@@ -18,6 +18,7 @@ import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { useTheme } from '../../context/ThemeContext';
 import api, { getAssetUrl } from '../../lib/api';
+import { confirmAction } from '../../lib/confirm';
 import { NumberInput } from '../../components/ui/NumberInput';
 
 const settingGroups = [
