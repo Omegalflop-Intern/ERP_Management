@@ -172,13 +172,8 @@ export default function SettingsPage() {
           toast.error('Invalid database backup JSON format');
           return;
         }
-        if (
-          !window.confirm(
-            'WARNING: Restoring will overwrite current database records with backup data. Are you sure?'
-          )
-        ) {
-          return;
-        }
+        const confirmed = await confirmAction('Restore Database?', 'Restore', 'WARNING: Restoring will overwrite current database records with backup data. Are you sure?');
+        if (!confirmed) return;
         toast.info('Restoring database...');
         const res = await api.post('/settings/restore', backupData);
         toast.success(res.data?.message || 'Database restored successfully!');
