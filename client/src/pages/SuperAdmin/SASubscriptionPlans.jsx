@@ -7,9 +7,8 @@ import {
   Check,
   X,
   Loader2,
-  CreditCard,
-  Users,
   Building2,
+  Users,
   Package,
   HardDrive,
   ToggleLeft,
@@ -45,6 +44,271 @@ const emptyPlan = {
   isPublic: true,
   sortOrder: 0,
 };
+
+function PlanForm({
+  plan,
+  form,
+  setForm,
+  featureInput,
+  setFeatureInput,
+  onAddFeature,
+  onRemoveFeature,
+  onSave,
+  onCancel,
+}) {
+  return (
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 space-y-5">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+          {plan._id ? 'Edit Plan' : 'Create New Plan'}
+        </h3>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+        >
+          <XCircle className="w-5 h-5 text-gray-400" />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+            Plan Name (ID)
+          </label>
+          <input
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            placeholder="e.g. STARTER"
+            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+            Display Name
+          </label>
+          <input
+            value={form.displayName}
+            onChange={(e) => setForm({ ...form, displayName: e.target.value })}
+            placeholder="e.g. Starter"
+            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
+          />
+        </div>
+        <div className="md:col-span-2">
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+            Description
+          </label>
+          <input
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            placeholder="Short description"
+            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+            Monthly Price (৳)
+          </label>
+          <input
+            type="number"
+            value={form.monthlyPrice ?? ''}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                monthlyPrice: e.target.value === '' ? '' : Number(e.target.value),
+              })
+            }
+            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+            Yearly Price (৳)
+          </label>
+          <input
+            type="number"
+            value={form.yearlyPrice ?? ''}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                yearlyPrice: e.target.value === '' ? '' : Number(e.target.value),
+              })
+            }
+            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+            Trial Days
+          </label>
+          <input
+            type="number"
+            value={form.trialDays ?? ''}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                trialDays: e.target.value === '' ? '' : Number(e.target.value),
+              })
+            }
+            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+            Sort Order
+          </label>
+          <input
+            type="number"
+            value={form.sortOrder ?? ''}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                sortOrder: e.target.value === '' ? '' : Number(e.target.value),
+              })
+            }
+            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+            Max Branches
+          </label>
+          <input
+            type="number"
+            value={form.maxBranches ?? ''}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                maxBranches: e.target.value === '' ? '' : Number(e.target.value),
+              })
+            }
+            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+            Max Users
+          </label>
+          <input
+            type="number"
+            value={form.maxUsers ?? ''}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                maxUsers: e.target.value === '' ? '' : Number(e.target.value),
+              })
+            }
+            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+            Max Products (-1 = unlimited)
+          </label>
+          <input
+            type="number"
+            value={form.maxProducts ?? ''}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                maxProducts: e.target.value === '' ? '' : Number(e.target.value),
+              })
+            }
+            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+            Max Customers (-1 = unlimited)
+          </label>
+          <input
+            type="number"
+            value={form.maxCustomers ?? ''}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                maxCustomers: e.target.value === '' ? '' : Number(e.target.value),
+              })
+            }
+            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+          Features
+        </label>
+        <div className="flex gap-2 mb-2">
+          <input
+            value={featureInput}
+            onChange={(e) => setFeatureInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && onAddFeature()}
+            placeholder="Add feature..."
+            className="flex-1 px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
+          />
+          <button
+            type="button"
+            onClick={onAddFeature}
+            className="px-3 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600"
+          >
+            Add
+          </button>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {(form.features || []).map((f, idx) => (
+            <span
+              key={idx}
+              className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs rounded-full"
+            >
+              {f}
+              <button type="button" onClick={() => onRemoveFeature(idx)} className="hover:text-red-500">
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={form.isPublic}
+            onChange={(e) => setForm({ ...form, isPublic: e.target.checked })}
+            className="rounded border-gray-300"
+          />
+          <span className="text-sm text-gray-700 dark:text-gray-300">
+            Public (shown on pricing page)
+          </span>
+        </label>
+      </div>
+
+      <div className="flex gap-3 pt-2">
+        <button
+          type="button"
+          onClick={onSave}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600"
+        >
+          <Save className="w-4 h-4" /> {plan._id ? 'Save Changes' : 'Create Plan'}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function SASubscriptionPlans() {
   const queryClient = useQueryClient();
@@ -113,15 +377,15 @@ export default function SASubscriptionPlans() {
     onError: (err) => toast.error(err.response?.data?.message || 'Failed to toggle plan'),
   });
 
-  const handleAddFeature = (target) => {
+  const handleAddFeature = () => {
     if (!featureInput.trim()) return;
-    const list = [...(target.features || []), featureInput.trim()];
+    const list = [...(form.features || []), featureInput.trim()];
     setForm({ ...form, features: list });
     setFeatureInput('');
   };
 
-  const handleRemoveFeature = (target, idx) => {
-    const list = target.features.filter((_, i) => i !== idx);
+  const handleRemoveFeature = (idx) => {
+    const list = (form.features || []).filter((_, i) => i !== idx);
     setForm({ ...form, features: list });
   };
 
@@ -157,216 +421,6 @@ export default function SASubscriptionPlans() {
     );
   }
 
-  const PlanForm = ({ plan, onSave, onCancel }) => (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 space-y-5">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-          {plan._id ? 'Edit Plan' : 'Create New Plan'}
-        </h3>
-        <button
-          onClick={onCancel}
-          className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
-        >
-          <XCircle className="w-5 h-5 text-gray-400" />
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-            Plan Name (ID)
-          </label>
-          <input
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            placeholder="e.g. STARTER"
-            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-            Display Name
-          </label>
-          <input
-            value={form.displayName}
-            onChange={(e) => setForm({ ...form, displayName: e.target.value })}
-            placeholder="e.g. Starter"
-            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
-          />
-        </div>
-        <div className="md:col-span-2">
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-            Description
-          </label>
-          <input
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-            placeholder="Short description"
-            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-            Monthly Price (৳)
-          </label>
-          <input
-            type="number"
-            value={form.monthlyPrice}
-            onChange={(e) => setForm({ ...form, monthlyPrice: Number(e.target.value) })}
-            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-            Yearly Price (৳)
-          </label>
-          <input
-            type="number"
-            value={form.yearlyPrice}
-            onChange={(e) => setForm({ ...form, yearlyPrice: Number(e.target.value) })}
-            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-            Trial Days
-          </label>
-          <input
-            type="number"
-            value={form.trialDays}
-            onChange={(e) => setForm({ ...form, trialDays: Number(e.target.value) })}
-            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-            Sort Order
-          </label>
-          <input
-            type="number"
-            value={form.sortOrder}
-            onChange={(e) => setForm({ ...form, sortOrder: Number(e.target.value) })}
-            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-            Max Branches
-          </label>
-          <input
-            type="number"
-            value={form.maxBranches}
-            onChange={(e) => setForm({ ...form, maxBranches: Number(e.target.value) })}
-            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-            Max Users
-          </label>
-          <input
-            type="number"
-            value={form.maxUsers}
-            onChange={(e) => setForm({ ...form, maxUsers: Number(e.target.value) })}
-            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-            Max Products (-1 = unlimited)
-          </label>
-          <input
-            type="number"
-            value={form.maxProducts}
-            onChange={(e) => setForm({ ...form, maxProducts: Number(e.target.value) })}
-            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-            Max Customers (-1 = unlimited)
-          </label>
-          <input
-            type="number"
-            value={form.maxCustomers}
-            onChange={(e) => setForm({ ...form, maxCustomers: Number(e.target.value) })}
-            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-          Features
-        </label>
-        <div className="flex gap-2 mb-2">
-          <input
-            value={featureInput}
-            onChange={(e) => setFeatureInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleAddFeature(form)}
-            placeholder="Add feature..."
-            className="flex-1 px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
-          />
-          <button
-            type="button"
-            onClick={() => handleAddFeature(form)}
-            className="px-3 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600"
-          >
-            Add
-          </button>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {(form.features || []).map((f, idx) => (
-            <span
-              key={idx}
-              className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs rounded-full"
-            >
-              {f}
-              <button onClick={() => handleRemoveFeature(form, idx)} className="hover:text-red-500">
-                <X className="w-3 h-3" />
-              </button>
-            </span>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex items-center gap-4">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={form.isPublic}
-            onChange={(e) => setForm({ ...form, isPublic: e.target.checked })}
-            className="rounded border-gray-300"
-          />
-          <span className="text-sm text-gray-700 dark:text-gray-300">
-            Public (shown on pricing page)
-          </span>
-        </label>
-      </div>
-
-      <div className="flex gap-3 pt-2">
-        <button
-          onClick={onSave}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600"
-        >
-          <Save className="w-4 h-4" /> {plan._id ? 'Save Changes' : 'Create Plan'}
-        </button>
-        <button
-          onClick={onCancel}
-          className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
-  );
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -385,11 +439,27 @@ export default function SASubscriptionPlans() {
       </div>
 
       {showCreate && (
-        <PlanForm plan={form} onSave={handleCreate} onCancel={() => setShowCreate(false)} />
+        <PlanForm
+          plan={form}
+          form={form}
+          setForm={setForm}
+          featureInput={featureInput}
+          setFeatureInput={setFeatureInput}
+          onAddFeature={handleAddFeature}
+          onRemoveFeature={handleRemoveFeature}
+          onSave={handleCreate}
+          onCancel={() => setShowCreate(false)}
+        />
       )}
       {editingId && (
         <PlanForm
           plan={form}
+          form={form}
+          setForm={setForm}
+          featureInput={featureInput}
+          setFeatureInput={setFeatureInput}
+          onAddFeature={handleAddFeature}
+          onRemoveFeature={handleRemoveFeature}
           onSave={() => handleUpdate(editingId)}
           onCancel={() => setEditingId(null)}
         />
@@ -472,22 +542,30 @@ export default function SASubscriptionPlans() {
             <div className="p-4 grid grid-cols-2 gap-3 text-xs">
               <div className="flex items-center gap-1.5 text-slate-800 dark:text-slate-200 font-medium">
                 <Building2 className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400 stroke-[2.2]" />{' '}
-                {(plan.maxBranches ?? 0) === 999 ? 'Unlimited' : (plan.maxBranches ?? 0)} branches
+                {Number(plan.maxBranches ?? 0) <= -1 || Number(plan.maxBranches ?? 0) >= 999
+                  ? 'Unlimited'
+                  : plan.maxBranches}{' '}
+                branches
               </div>
               <div className="flex items-center gap-1.5 text-slate-800 dark:text-slate-200 font-medium">
                 <Users className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400 stroke-[2.2]" />{' '}
-                {(plan.maxUsers ?? 0) === 999 ? 'Unlimited' : (plan.maxUsers ?? 0)} users
+                {Number(plan.maxUsers ?? 0) <= -1 || Number(plan.maxUsers ?? 0) >= 999
+                  ? 'Unlimited'
+                  : plan.maxUsers}{' '}
+                users
               </div>
               <div className="flex items-center gap-1.5 text-slate-800 dark:text-slate-200 font-medium">
                 <Package className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400 stroke-[2.2]" />{' '}
-                {(plan.maxProducts ?? 0) === -1
+                {Number(plan.maxProducts ?? 0) <= -1 || Number(plan.maxProducts ?? 0) >= 999
                   ? 'Unlimited'
-                  : Number(plan.maxProducts ?? 0).toLocaleString()}{' '}
+                  : Number(plan.maxProducts).toLocaleString()}{' '}
                 products
               </div>
               <div className="flex items-center gap-1.5 text-slate-800 dark:text-slate-200 font-medium">
                 <HardDrive className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400 stroke-[2.2]" />{' '}
-                {(plan.maxStorageMB ?? 0) === -1 ? 'Unlimited' : `${plan.maxStorageMB ?? 0}MB`}
+                {Number(plan.maxStorageMB ?? 0) <= -1 || Number(plan.maxStorageMB ?? 0) >= 999
+                  ? 'Unlimited'
+                  : `${plan.maxStorageMB}MB`}
               </div>
             </div>
 

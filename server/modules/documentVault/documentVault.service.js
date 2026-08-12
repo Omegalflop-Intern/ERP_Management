@@ -30,19 +30,23 @@ function applyTenantScope(query, tenantId) {
   }
 }
 
-export const getDocumentsByEntity = async (entityType, entityId, tenantId = null) => {
+export const getDocumentsByEntity = async (entityType, entityId, tenantId = null, branchId = null) => {
   if (!entityType || !entityId) throw ApiError.badRequest('entityType and entityId are required');
 
   const query = db('document_vaults').where({ entity_type: entityType, entity_id: entityId, is_deleted: false });
   applyTenantScope(query, tenantId);
+  if (branchId && branchId !== 'all') {
+    query.where((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+  }
 
   const rows = await query.orderBy('created_at', 'desc');
   return rows.map(formatDocumentVault);
 };
 
-export const createDocument = async (docData, username = 'system') => {
+export const createDocument = async (docData, username = 'system', branchId = null) => {
   const [insertedId] = await db('document_vaults').insert({
     tenant_id: docData.tenantId || null,
+    branch_id: docData.branchId || branchId || null,
     entity_type: docData.entityType,
     entity_id: docData.entityId,
     document_type: docData.documentType || 'Other',

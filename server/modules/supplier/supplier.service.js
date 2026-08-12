@@ -30,9 +30,12 @@ function applyTenantScope(query, tenantId) {
   }
 }
 
-export const getAllSuppliers = async (page = 1, limit = 20, search = '', tenantId = null) => {
+export const getAllSuppliers = async (page = 1, limit = 20, search = '', tenantId = null, branchId = null) => {
   const countQuery = db('suppliers').where('is_deleted', false);
   applyTenantScope(countQuery, tenantId);
+  if (branchId && branchId !== 'all') {
+    countQuery.where((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+  }
 
   if (search) {
     const term = `%${search}%`;
@@ -49,6 +52,9 @@ export const getAllSuppliers = async (page = 1, limit = 20, search = '', tenantI
   const offset = (page - 1) * limit;
   const dataQuery = db('suppliers').where('is_deleted', false);
   applyTenantScope(dataQuery, tenantId);
+  if (branchId && branchId !== 'all') {
+    dataQuery.where((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+  }
 
   if (search) {
     const term = `%${search}%`;
@@ -73,14 +79,15 @@ export const getSupplierById = async (id, tenantId = null) => {
   return formatSupplier(row);
 };
 
-export const createSupplier = async (data, tenantId = null) => {
+export const createSupplier = async (data, tenantId = null, branchId = null) => {
   const existingQuery = db('suppliers').where({ phone: data.phone, is_deleted: false });
   applyTenantScope(existingQuery, tenantId);
   const existing = await existingQuery.first();
   if (existing) throw ApiError.conflict('Supplier with this phone already exists');
 
   const [insertedId] = await db('suppliers').insert({
-    tenant_id: tenantId || data.tenantId || null,
+    tenant_id: tenantId,
+    branch_id: data.branchId || branchId || null,
     name: data.name,
     phone: data.phone,
     email: data.email || null,
@@ -94,7 +101,7 @@ export const createSupplier = async (data, tenantId = null) => {
     is_deleted: false,
   });
 
-  return getSupplierById(insertedId, tenantId || data.tenantId || null);
+  return getSupplierById(insertedId, tenantId);
 };
 
 export const updateSupplier = async (id, data, tenantId = null) => {

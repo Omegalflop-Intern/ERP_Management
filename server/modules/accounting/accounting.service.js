@@ -65,9 +65,12 @@ function applyTenantScope(query, tenantId, tablePrefix = 'accounts') {
   }
 }
 
-export const getAllAccounts = async (page = 1, limit = 100, search = '', type = '', tenantId = null) => {
+export const getAllAccounts = async (page = 1, limit = 100, search = '', type = '', tenantId = null, branchId = null) => {
   const countQuery = db('accounts').where('accounts.is_deleted', false);
   applyTenantScope(countQuery, tenantId, 'accounts');
+  if (branchId && branchId !== 'all') {
+    countQuery.where((b) => b.where('accounts.branch_id', branchId).orWhereNull('accounts.branch_id'));
+  }
   if (type && type !== 'ALL') countQuery.where('accounts.type', type);
   if (search) {
     const term = `%${search}%`;
@@ -88,6 +91,9 @@ export const getAllAccounts = async (page = 1, limit = 100, search = '', type = 
       'p.id as p_id', 'p.code as p_code', 'p.name as p_name'
     );
   applyTenantScope(dataQuery, tenantId, 'accounts');
+  if (branchId && branchId !== 'all') {
+    dataQuery.where((b) => b.where('accounts.branch_id', branchId).orWhereNull('accounts.branch_id'));
+  }
   if (type && type !== 'ALL') dataQuery.where('accounts.type', type);
   if (search) {
     const term = `%${search}%`;
@@ -99,38 +105,38 @@ export const getAllAccounts = async (page = 1, limit = 100, search = '', type = 
   const rows = await dataQuery.orderBy('accounts.code', 'asc').limit(limit).offset(offset);
 
   const accounts = rows.map((row) => {
-    const pRow = row.p_id ? { id: row.p_id, code: row.p_code, name: row.p_name } : null;
-    return formatAccount(row, pRow);
+    const parentRow = row.p_id ? { id: row.p_id, code: row.p_code, name: row.p_name } : null;
+    return formatAccount(row, parentRow);
   });
 
   return { accounts, pagination: getPagination(total, page, limit) };
 };
 
 export const getAccountById = async (id, tenantId = null) => {
-  const dataQuery = db('accounts')
+  const query = db('accounts')
     .leftJoin('accounts as p', 'accounts.parent_id', 'p.id')
     .where({ 'accounts.id': id, 'accounts.is_deleted': false })
     .select(
       'accounts.*',
       'p.id as p_id', 'p.code as p_code', 'p.name as p_name'
     );
-  applyTenantScope(dataQuery, tenantId, 'accounts');
-
-  const row = await dataQuery.first();
+  applyTenantScope(query, tenantId, 'accounts');
+  const row = await query.first();
   if (!row) throw ApiError.notFound('Account not found');
-
-  const pRow = row.p_id ? { id: row.p_id, code: row.p_code, name: row.p_name } : null;
-  return formatAccount(row, pRow);
+  const parentRow = row.p_id ? { id: row.p_id, code: row.p_code, name: row.p_name } : null;
+  return formatAccount(row, parentRow);
 };
 
 export const createAccount = async (data) => {
   const tenantId = data.tenantId || null;
+  const branchId = data.branchId || null;
   const existingQuery = db('accounts').where({ code: data.code, is_deleted: false });
   applyTenantScope(existingQuery, tenantId, 'accounts');
   if (await existingQuery.first()) throw ApiError.conflict('Account code already exists');
 
   const [insertedId] = await db('accounts').insert({
     tenant_id: tenantId,
+    branch_id: branchId,
     code: data.code,
     name: data.name,
     type: data.type,

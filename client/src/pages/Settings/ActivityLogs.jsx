@@ -239,6 +239,9 @@ export default function ActivityLogs() {
                 Module
               </th>
               <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 text-xs uppercase tracking-wider">
+                Outlet / Branch
+              </th>
+              <th className="text-left px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 text-xs uppercase tracking-wider">
                 Details
               </th>
             </tr>
@@ -246,13 +249,13 @@ export default function ActivityLogs() {
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-gray-400 animate-pulse">
+                <td colSpan={6} className="px-4 py-8 text-center text-gray-400 animate-pulse">
                   Loading...
                 </td>
               </tr>
             ) : filteredLogs.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-gray-400">
+                <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
                   No activity logs found
                 </td>
               </tr>
@@ -293,6 +296,11 @@ export default function ActivityLogs() {
                       className={`px-2 py-0.5 rounded text-[10px] font-bold ${MODULE_COLORS[log.module] || 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'}`}
                     >
                       {(log.module || '-').toUpperCase()}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50">
+                      {log.branchName || 'Main Outlet'}
                     </span>
                   </td>
                   <td className="px-4 py-3">

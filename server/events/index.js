@@ -17,6 +17,12 @@ export const EVENTS = {
   TICKET_CREATED: 'ticket:created',
   TICKET_RESOLVED: 'ticket:resolved',
   TENANT_UPDATED: 'tenant:updated',
+  PRODUCT_MUTATED: 'product:mutated',
+  EXPENSE_MUTATED: 'expense:mutated',
+  ACCOUNT_MUTATED: 'account:mutated',
+  CUSTOMER_MUTATED: 'customer:mutated',
+  REPAIR_MUTATED: 'repair:mutated',
+  WARRANTY_MUTATED: 'warranty:mutated',
 };
 
 export default emitter;

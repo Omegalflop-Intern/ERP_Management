@@ -63,9 +63,12 @@ function applyTenantScope(query, tenantId) {
   }
 }
 
-export const getAllLoans = async (type = 'LOAN_TAKEN', tenantId = null) => {
+export const getAllLoans = async (type = 'LOAN_TAKEN', tenantId = null, branchId = null) => {
   const query = db('loans').where({ is_deleted: false });
   applyTenantScope(query, tenantId);
+  if (branchId && branchId !== 'all') {
+    query.where((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+  }
   if (type) query.where({ type });
 
   const rows = await query.orderBy('created_at', 'desc');
@@ -73,21 +76,21 @@ export const getAllLoans = async (type = 'LOAN_TAKEN', tenantId = null) => {
 
   const totalAmount = loans.reduce((sum, l) => sum + l.loanAmount, 0);
   const totalRepaid = loans.reduce((sum, l) => sum + l.repaidAmount, 0);
-  const activeDueBalance = Math.max(0, totalAmount - totalRepaid);
-  const activeLoans = loans.filter(l => l.status === 'Active').length;
+  const totalRemaining = loans.reduce((sum, l) => sum + l.remainingDue, 0);
+  const activeCount = loans.filter((l) => l.remainingDue > 0).length;
 
   return {
     loans,
     summary: {
       totalAmount,
       totalRepaid,
-      activeDueBalance,
-      activeLoans,
+      totalRemaining,
+      activeCount,
     },
   };
 };
 
-export const createLoan = async (data, username = 'system', tenantId = null) => {
+export const createLoan = async (data, tenantId = null, branchId = null) => {
   if (!data.loanAmount || Number(data.loanAmount) <= 0) throw ApiError.badRequest('Loan amount must be greater than 0');
 
   const loanAmount = Number(data.loanAmount);

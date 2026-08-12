@@ -1,20 +1,35 @@
 import { db } from '../../config/db.knex.js';
 import { getPagination } from '../http/pagination.js';
 
-export const logAction = async ({ userId, username, fullName, roleName, phone, action, module, entityId, entityType, details, req }) => {
+export const logAction = async ({ userId, username, fullName, roleName, phone, tenantId, branchId, action, module, entityId, entityType, details, req }) => {
   try {
     const u = req?.user;
+    const targetUserId = userId || u?.userId || u?.id || null;
+    let computedTenantId = tenantId || u?.tenantId || null;
+    let computedBranchId = branchId || req?.selectedBranchId || u?.branchId || null;
+
+    if (targetUserId && (!computedTenantId || !computedBranchId)) {
+      const userRow = await db('users').where({ id: targetUserId }).select('tenant_id', 'branch_id', 'full_name', 'phone', 'username').first();
+      if (userRow) {
+        if (!computedTenantId) computedTenantId = userRow.tenant_id;
+        if (!computedBranchId) computedBranchId = userRow.branch_id;
+        if (!fullName && userRow.full_name) fullName = userRow.full_name;
+        if (!phone && userRow.phone) phone = userRow.phone;
+        if (!username && userRow.username) username = userRow.username;
+      }
+    }
+
     await db('audit_logs').insert({
-      user_id: userId || u?.userId || u?.id || null,
+      user_id: targetUserId,
       username: username || u?.username || null,
       full_name: fullName || u?.fullName || null,
       role_name: roleName || u?.roleName || null,
       phone: phone || u?.phone || null,
-      tenant_id: u?.tenantId || null,
-      branch_id: req?.selectedBranchId || null,
+      tenant_id: computedTenantId,
+      branch_id: computedBranchId,
       action: action || 'ACTION',
-      module: module || null,
-      entity_id: entityId || null,
+      module: module || 'system',
+      entity_id: entityId ? String(entityId) : null,
       entity_type: entityType || null,
       details: details ? JSON.stringify(details) : null,
       ip_address: req?.ip || req?.headers?.['x-forwarded-for'] || '',
@@ -28,7 +43,9 @@ export const logAction = async ({ userId, username, fullName, roleName, phone, a
 export const getAuditLogs = async (page = 1, limit = 50, filters = {}, tenantId = null, branchId = null) => {
   const countQuery = db('audit_logs');
   if (tenantId) countQuery.where('tenant_id', tenantId);
-  if (branchId) countQuery.where('branch_id', branchId);
+  if (branchId && branchId !== 'all') {
+    countQuery.where((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+  }
   if (filters.module) countQuery.where('module', filters.module);
   if (filters.userId) countQuery.where('user_id', filters.userId);
   if (filters.action) countQuery.where('action', 'like', `%${filters.action}%`);
@@ -41,13 +58,17 @@ export const getAuditLogs = async (page = 1, limit = 50, filters = {}, tenantId 
   const offset = (page - 1) * limit;
   const dataQuery = db('audit_logs')
     .leftJoin('users', 'audit_logs.user_id', 'users.id')
+    .leftJoin('branches', 'audit_logs.branch_id', 'branches.id')
     .select(
       'audit_logs.*',
-      'users.id as u_id', 'users.username as u_username', 'users.full_name as u_full_name', 'users.phone as u_phone'
+      'users.id as u_id', 'users.username as u_username', 'users.full_name as u_full_name', 'users.phone as u_phone',
+      'branches.name as branch_name'
     );
   if (tenantId) dataQuery.where('audit_logs.tenant_id', tenantId);
-  if (branchId) dataQuery.where('audit_logs.branch_id', branchId);
-  if (filters.module) dataQuery.where('audit_logs.module', filters.module);
+  if (branchId && branchId !== 'all') {
+    dataQuery.where((b) => b.where('audit_logs.branch_id', branchId).orWhereNull('audit_logs.branch_id'));
+  }
+  if (filters.module) dataQuery.where('module', filters.module);
   if (filters.userId) dataQuery.where('audit_logs.user_id', filters.userId);
   if (filters.action) dataQuery.where('audit_logs.action', 'like', `%${filters.action}%`);
   if (filters.from) dataQuery.where('audit_logs.created_at', '>=', new Date(filters.from));
@@ -64,12 +85,13 @@ export const getAuditLogs = async (page = 1, limit = 50, filters = {}, tenantId 
       _id: String(row.id),
       id: row.id,
       userId: row.u_id ? { _id: String(row.u_id), id: row.u_id, username: row.u_username, fullName: row.u_full_name || '', phone: row.u_phone || '' } : (row.user_id ? String(row.user_id) : null),
-      username: row.username || '',
-      fullName: row.full_name || '',
+      username: row.username || row.u_username || '',
+      fullName: row.full_name || row.u_full_name || '',
       roleName: row.role_name || '',
-      phone: row.phone || '',
+      phone: row.phone || row.u_phone || '',
       tenantId: row.tenant_id || null,
       branchId: row.branch_id ? String(row.branch_id) : null,
+      branchName: row.branch_name || 'Main / General',
       action: row.action,
       module: row.module || '',
       entityId: row.entity_id || null,

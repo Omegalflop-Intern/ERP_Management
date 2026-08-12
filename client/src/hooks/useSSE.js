@@ -70,17 +70,69 @@ export function useSSE() {
 
             case 'SALE_COMPLETED':
               qc.invalidateQueries({ queryKey: ['sales'] });
+              qc.invalidateQueries({ queryKey: ['sales-channel-balances'] });
               qc.invalidateQueries({ queryKey: ['dashboard'] });
               qc.invalidateQueries({ queryKey: ['stock'] });
               qc.invalidateQueries({ queryKey: ['products'] });
+              qc.invalidateQueries({ queryKey: ['accounts'] });
+              qc.invalidateQueries({ queryKey: ['audit-logs'] });
               break;
 
             case 'STOCK_UPDATED':
+            case 'PRODUCT_MUTATED':
               qc.invalidateQueries({ queryKey: ['products'] });
               qc.invalidateQueries({ queryKey: ['stock'] });
-              if (payload.data?.name) {
-                toast.warning(`Low stock: ${payload.data.name}`);
+              qc.invalidateQueries({ queryKey: ['stock-overview-products'] });
+              qc.invalidateQueries({ queryKey: ['categories'] });
+              qc.invalidateQueries({ queryKey: ['catalog'] });
+              qc.invalidateQueries({ queryKey: ['audit-logs'] });
+              if (payload.data?.name && payload.type === 'STOCK_UPDATED') {
+                toast.warning(`Stock update: ${payload.data.name}`);
               }
+              break;
+
+            case 'PURCHASE_COMPLETED':
+              qc.invalidateQueries({ queryKey: ['purchases'] });
+              qc.invalidateQueries({ queryKey: ['products'] });
+              qc.invalidateQueries({ queryKey: ['stock'] });
+              qc.invalidateQueries({ queryKey: ['stock-overview-products'] });
+              qc.invalidateQueries({ queryKey: ['suppliers'] });
+              qc.invalidateQueries({ queryKey: ['accounts'] });
+              qc.invalidateQueries({ queryKey: ['audit-logs'] });
+              break;
+
+            case 'EXPENSE_MUTATED':
+              qc.invalidateQueries({ queryKey: ['expenses'] });
+              qc.invalidateQueries({ queryKey: ['accounts'] });
+              qc.invalidateQueries({ queryKey: ['profit-loss'] });
+              qc.invalidateQueries({ queryKey: ['balance-sheet'] });
+              qc.invalidateQueries({ queryKey: ['audit-logs'] });
+              break;
+
+            case 'ACCOUNT_MUTATED':
+              qc.invalidateQueries({ queryKey: ['accounts'] });
+              qc.invalidateQueries({ queryKey: ['pos-active-accounts'] });
+              qc.invalidateQueries({ queryKey: ['sales-channel-balances'] });
+              qc.invalidateQueries({ queryKey: ['balance-sheet'] });
+              qc.invalidateQueries({ queryKey: ['profit-loss'] });
+              qc.invalidateQueries({ queryKey: ['journal-entries'] });
+              qc.invalidateQueries({ queryKey: ['audit-logs'] });
+              break;
+
+            case 'CUSTOMER_MUTATED':
+              qc.invalidateQueries({ queryKey: ['customers'] });
+              qc.invalidateQueries({ queryKey: ['due-collection'] });
+              qc.invalidateQueries({ queryKey: ['audit-logs'] });
+              break;
+
+            case 'REPAIR_MUTATED':
+              qc.invalidateQueries({ queryKey: ['repairs'] });
+              qc.invalidateQueries({ queryKey: ['audit-logs'] });
+              break;
+
+            case 'WARRANTY_MUTATED':
+              qc.invalidateQueries({ queryKey: ['warranties'] });
+              qc.invalidateQueries({ queryKey: ['audit-logs'] });
               break;
 
             case 'NOTIFICATION':
@@ -96,6 +148,7 @@ export function useSSE() {
               break;
 
             default:
+              qc.invalidateQueries({ queryKey: ['audit-logs'] });
               break;
           }
         } catch {

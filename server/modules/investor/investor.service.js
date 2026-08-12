@@ -59,9 +59,12 @@ function applyTenantScope(query, tenantId) {
   }
 }
 
-export const getAllInvestors = async (tenantId = null) => {
+export const getAllInvestors = async (tenantId = null, branchId = null) => {
   const query = db('investors').where({ is_deleted: false });
   applyTenantScope(query, tenantId);
+  if (branchId && branchId !== 'all') {
+    query.where((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+  }
   const rows = await query.orderBy('created_at', 'desc');
 
   const investors = rows.map(formatInvestor);
@@ -83,18 +86,15 @@ export const getAllInvestors = async (tenantId = null) => {
   };
 };
 
-export const createInvestor = async (data, username, tenantId = null) => {
+export const createInvestor = async (data, tenantId = null, branchId = null) => {
   const [insertedId] = await db('investors').insert({
-    tenant_id: tenantId || data.tenantId || null,
+    tenant_id: tenantId,
+    branch_id: data.branchId || branchId || null,
     name: data.name,
     phone: data.phone,
     email: data.email || null,
-    address: data.address || null,
     share_percentage: data.sharePercentage || 0,
-    total_invested: data.initialCapital ? Number(data.initialCapital) : 0,
-    total_withdrawn: 0,
-    total_profit_paid: 0,
-    profile_photo: data.profilePhoto || null,
+    agreed_return_rate: data.agreedReturnRate || 0,
     status: data.status || 'Active',
     notes: data.notes || null,
     is_deleted: false,

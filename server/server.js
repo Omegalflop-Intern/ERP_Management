@@ -160,4 +160,33 @@ startServer(listenTarget);
     broadcastAll({ type: 'TENANT_UPDATED', data });
   });
 
+  emitter.on(EVENTS.PURCHASE_RECEIVED, (data) => {
+    console.log('\x1b[36m[EVENT:PURCHASE]\x1b[0m Purchase completed:', data?.poNumber || data?.id);
+    broadcastToTenant(data?.tenantId || null, { type: 'PURCHASE_COMPLETED', data });
+  });
+
+  emitter.on(EVENTS.PRODUCT_MUTATED, (data) => {
+    broadcastToTenant(data?.tenantId || null, { type: 'PRODUCT_MUTATED', data });
+  });
+
+  emitter.on(EVENTS.EXPENSE_MUTATED, (data) => {
+    broadcastToTenant(data?.tenantId || null, { type: 'EXPENSE_MUTATED', data });
+  });
+
+  emitter.on(EVENTS.ACCOUNT_MUTATED, (data) => {
+    broadcastToTenant(data?.tenantId || null, { type: 'ACCOUNT_MUTATED', data });
+  });
+
+  emitter.on(EVENTS.CUSTOMER_MUTATED, (data) => {
+    broadcastToTenant(data?.tenantId || null, { type: 'CUSTOMER_MUTATED', data });
+  });
+
+  emitter.on(EVENTS.REPAIR_MUTATED, (data) => {
+    broadcastToTenant(data?.tenantId || null, { type: 'REPAIR_MUTATED', data });
+  });
+
+  emitter.on(EVENTS.WARRANTY_MUTATED, (data) => {
+    broadcastToTenant(data?.tenantId || null, { type: 'WARRANTY_MUTATED', data });
+  });
+
 export default app;
