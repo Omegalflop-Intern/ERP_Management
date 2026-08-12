@@ -340,6 +340,7 @@ export default function SalesForm() {
     (Number(payment.nagad) || 0) +
     (Number(payment.bank) || 0);
   const dueAmount = Math.max(0, netTotal - paidAmount);
+  const changeAmount = Math.max(0, paidAmount - netTotal);
 
   const [selectedCustomerObj, setSelectedCustomerObj] = useState(null);
 
@@ -1158,6 +1159,12 @@ export default function SalesForm() {
               <span>Paid</span>
               <span>৳{paidAmount.toLocaleString()}</span>
             </div>
+            {changeAmount > 0 && (
+              <div className="flex justify-between items-center text-sm font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 p-2.5 rounded-xl border border-emerald-200 dark:border-emerald-800">
+                <span>Cash Change to Return</span>
+                <span className="font-mono text-base font-extrabold text-emerald-600 dark:text-emerald-400">৳{Math.round(changeAmount).toLocaleString()}</span>
+              </div>
+            )}
             {dueAmount > 0 && (
               <div className="flex justify-between text-sm font-bold text-red-600">
                 <span>Due</span>

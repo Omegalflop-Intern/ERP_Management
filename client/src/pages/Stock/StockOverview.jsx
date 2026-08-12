@@ -38,7 +38,15 @@ export default function StockOverview() {
     },
   });
 
-  const CATEGORIES = ['ALL', ...(catList || []).map((c) => c.name)];
+  const CATEGORIES = [
+    'ALL',
+    ...Array.from(
+      new Set([
+        ...(catList || []).map((c) => c.name),
+        ...products.map((p) => p.category).filter(Boolean),
+      ])
+    ),
+  ];
 
   const { data: inventoryRes, isLoading: loadingInventory } = useQuery({
     queryKey: ['stock-overview-inventory'],

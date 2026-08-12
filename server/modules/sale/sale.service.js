@@ -117,16 +117,20 @@ export const createSale = async (data, createdBy = 'system') => {
   }
 
   const netTotal = subTotal - (data.discount || 0) + (data.tax || 0);
-  const paidAmount = (data.paymentBreakdown?.cash || 0) +
-    (data.paymentBreakdown?.bkash || 0) +
-    (data.paymentBreakdown?.rocket || 0) +
-    (data.paymentBreakdown?.nagad || 0) +
-    (data.paymentBreakdown?.bank || 0);
+  const rawCash = Number(data.paymentBreakdown?.cash || 0);
+  const rawDigital = (Number(data.paymentBreakdown?.bkash || 0)) +
+    (Number(data.paymentBreakdown?.rocket || 0)) +
+    (Number(data.paymentBreakdown?.nagad || 0)) +
+    (Number(data.paymentBreakdown?.bank || 0));
 
-  if (paidAmount > netTotal + 0.01) {
-    throw ApiError.badRequest(`Paid amount (৳${paidAmount}) exceeds sale total (৳${netTotal})`);
+  const totalPaidRaw = rawCash + rawDigital;
+
+  if (rawDigital > netTotal + 0.01) {
+    throw ApiError.badRequest(`Digital payment amount (৳${rawDigital}) exceeds sale net total (৳${netTotal})`);
   }
-  const dueAmount = netTotal - paidAmount;
+
+  const changeAmount = Math.max(0, totalPaidRaw - netTotal);
+  const dueAmount = Math.max(0, netTotal - totalPaidRaw);
 
   let customerId = data.customerId || null;
   let customerObj = null;
@@ -185,6 +189,7 @@ export const createSale = async (data, createdBy = 'system') => {
     nagad: data.paymentBreakdown?.nagad || 0,
     bank: data.paymentBreakdown?.bank || 0,
     dueAmount,
+    changeAmount,
   };
 
   const [insertedId] = await db('transactions').insert({

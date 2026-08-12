@@ -725,6 +725,8 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
               ]);
             }
             queryClient.invalidateQueries({ queryKey: ['products'] });
+            queryClient.invalidateQueries({ queryKey: ['categories'] });
+            queryClient.invalidateQueries({ queryKey: ['stock-overview'] });
           }}
         />
       )}

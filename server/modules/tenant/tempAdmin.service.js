@@ -1,6 +1,7 @@
 import { db } from '../../config/db.knex.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 
 const generatePassword = () => {
   const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
@@ -46,12 +47,28 @@ export const createTempAdmin = async ({ tenantId, duration, reason, createdBy })
 
   const username = generateUsername(tenant.shop_name);
   const password = generatePassword();
-
+  const passwordHash = await bcrypt.hash(password, 10);
   const expiresAt = new Date(Date.now() + Number(duration));
+
+  const adminRole = await db('roles').where({ name: 'ADMIN' }).first();
+
+  const [createdUserId] = await db('users').insert({
+    tenant_id: tenantId,
+    username,
+    email: `${username}@temp.omnimanage.local`,
+    phone: tenant.phone || '',
+    full_name: `Temp Admin (${reason || 'Support Access'})`,
+    password_hash: passwordHash,
+    role_id: adminRole?.id || 1,
+    role_name: 'ADMIN',
+    is_active: true,
+    is_verified: true,
+    is_deleted: false,
+  });
 
   const [insertedId] = await db('temp_admins').insert({
     tenant_id: tenantId,
-    user_id: 1, // placeholder until User module migration
+    user_id: createdUserId,
     created_by: createdBy || 1,
     reason: reason || '',
     duration: Number(duration),
@@ -95,6 +112,10 @@ export const revokeTempAdmin = async (tempAdminId, revokedBy) => {
     revoked_at: new Date(),
     revoked_by: revokedBy || null,
   });
+
+  if (row.user_id) {
+    await db('users').where({ id: row.user_id }).update({ is_active: false });
+  }
 
   const updated = await db('temp_admins').where({ id: tempAdminId }).first();
   return formatTempAdmin(updated);

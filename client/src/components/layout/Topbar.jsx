@@ -353,9 +353,9 @@ function GlobalSearch() {
           setIsOpen(true);
           inputRef.current?.focus();
         }}
-        className={`relative flex items-center w-full px-3.5 py-2 rounded-xl border text-xs cursor-text transition-all bg-slate-50 dark:bg-slate-900 border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 shadow-sm ${
+        className={`relative flex items-center w-full px-3.5 py-2 rounded-xl border text-xs cursor-text transition-all bg-white dark:bg-[#0d1117] border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 shadow-sm ${
           isOpen
-            ? 'ring-2 ring-[#2563EB]/30 border-[#2563EB] dark:border-blue-500 bg-white dark:bg-slate-900'
+            ? 'ring-2 ring-[#2563EB]/30 border-[#2563EB] dark:border-blue-500 bg-white dark:bg-[#0d1117]'
             : ''
         }`}
       >
@@ -378,7 +378,7 @@ function GlobalSearch() {
               e.stopPropagation();
               setQuery('');
             }}
-            className="p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -392,7 +392,7 @@ function GlobalSearch() {
 
       {/* Global Search Results Dropdown Overlay */}
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl z-50 max-h-[80vh] overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800/60">
+        <div className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-[#0d1117] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-[130] max-h-[80vh] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60">
           {/* Section: Pages / Quick Navigation */}
           {filteredPages.length > 0 && (
             <div className="p-2">
