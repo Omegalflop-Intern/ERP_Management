@@ -100,23 +100,22 @@ export default function SalesForm() {
       { key: 'bank', icon: CreditCard, color: 'text-blue-500', placeholder: 'Bank / Card' },
     ];
 
-    if (!activeAccountsRes || activeAccountsRes.length === 0) {
+    if (!activeAccountsRes || !Array.isArray(activeAccountsRes) || activeAccountsRes.length === 0) {
       return ALL_METHODS;
     }
 
     const activeList = activeAccountsRes.filter((a) => a.isActive !== false);
-    if (activeList.length === 0) return ALL_METHODS;
 
-    const names = activeList.map((a) => (a.name || '').toLowerCase() + ' ' + (a.code || ''));
+    const names = activeList.map((a) => `${(a.name || '').toLowerCase()} ${(a.code || '')}`);
 
-    const hasCash = names.some((n) => n.includes('cash') || n.includes('petty') || n.includes('1010'));
-    const hasBkash = names.some((n) => n.includes('bkash') || n.includes('b-kash'));
-    const hasRocket = names.some((n) => n.includes('rocket'));
-    const hasNagad = names.some((n) => n.includes('nagad') || n.includes('nogod'));
-    const hasBank = names.some((n) => n.includes('bank') || n.includes('card') || n.includes('checking'));
+    const hasCash = names.some((n) => n.includes('cash') || n.includes('petty') || n.includes('1000'));
+    const hasBkash = names.some((n) => n.includes('bkash') || n.includes('b-kash') || n.includes('1011'));
+    const hasRocket = names.some((n) => n.includes('rocket') || n.includes('1013'));
+    const hasNagad = names.some((n) => n.includes('nagad') || n.includes('nogod') || n.includes('1012'));
+    const hasBank = names.some((n) => n.includes('bank') || n.includes('card') || n.includes('checking') || n.includes('1010'));
 
     const filtered = ALL_METHODS.filter(({ key }) => {
-      if (key === 'cash') return hasCash || true;
+      if (key === 'cash') return hasCash;
       if (key === 'bkash') return hasBkash;
       if (key === 'rocket') return hasRocket;
       if (key === 'nagad') return hasNagad;
@@ -124,7 +123,7 @@ export default function SalesForm() {
       return true;
     });
 
-    return filtered.length > 0 ? filtered : ALL_METHODS;
+    return filtered.length > 0 ? filtered : [ALL_METHODS[0]];
   }, [activeAccountsRes]);
 
   const searching = searchingImei || searchingProducts;

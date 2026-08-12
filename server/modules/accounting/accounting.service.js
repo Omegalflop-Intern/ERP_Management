@@ -183,7 +183,10 @@ export const deleteAccount = async (id, tenantId = null) => {
 export const seedDefaultAccounts = async (tenantId = null) => {
   const defaults = [
     { code: '1000', name: 'Cash', type: 'ASSET', subType: 'CURRENT_ASSET', description: 'Cash on hand' },
-    { code: '1010', name: 'Bank Account', type: 'ASSET', subType: 'CURRENT_ASSET', description: 'Bank account balance' },
+    { code: '1010', name: 'Bank Account', type: 'ASSET', subType: 'CURRENT_ASSET', description: 'Bank / Card account balance' },
+    { code: '1011', name: 'bKash Account', type: 'ASSET', subType: 'CURRENT_ASSET', description: 'bKash mobile wallet' },
+    { code: '1012', name: 'Nagad Account', type: 'ASSET', subType: 'CURRENT_ASSET', description: 'Nagad mobile wallet' },
+    { code: '1013', name: 'Rocket Account', type: 'ASSET', subType: 'CURRENT_ASSET', description: 'Rocket mobile wallet' },
     { code: '1020', name: 'Accounts Receivable', type: 'ASSET', subType: 'CURRENT_ASSET', description: 'Money owed by customers' },
     { code: '1030', name: 'Inventory', type: 'ASSET', subType: 'CURRENT_ASSET', description: 'Product inventory value' },
     { code: '2000', name: 'Accounts Payable', type: 'LIABILITY', subType: 'CURRENT_LIABILITY', description: 'Money owed to suppliers' },
@@ -195,7 +198,9 @@ export const seedDefaultAccounts = async (tenantId = null) => {
 
   let count = 0;
   for (const def of defaults) {
-    const existing = await db('accounts').where({ code: def.code, is_deleted: false }).first();
+    const existingQuery = db('accounts').where({ code: def.code, is_deleted: false });
+    if (tenantId) existingQuery.andWhere('tenant_id', tenantId);
+    const existing = await existingQuery.first();
     if (!existing) {
       await db('accounts').insert({
         tenant_id: tenantId,
@@ -204,6 +209,7 @@ export const seedDefaultAccounts = async (tenantId = null) => {
         type: def.type,
         sub_type: def.subType,
         description: def.description,
+        is_active: true,
         is_deleted: false,
       });
       count++;
