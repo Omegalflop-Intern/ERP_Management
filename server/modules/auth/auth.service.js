@@ -24,6 +24,12 @@ export const verifyPassword = async (password, hash) => {
 
 export function formatUser(row) {
   if (!row) return null;
+  let permissions = [];
+  if (row.role_permissions) {
+    try {
+      permissions = typeof row.role_permissions === 'string' ? JSON.parse(row.role_permissions) : row.role_permissions;
+    } catch { permissions = []; }
+  }
   return {
     _id: String(row.id),
     id: row.id,
@@ -39,6 +45,7 @@ export function formatUser(row) {
     role: row.role_id,
     roleName: row.role_name || '',
     roleDisplayName: row.role_display_name || '',
+    permissions,
     isSuperAdmin: Boolean(row.is_super_admin),
     isActive: Boolean(row.is_active),
     isVerified: Boolean(row.is_verified),
@@ -61,6 +68,7 @@ export const findUserByLogin = async (identifier, tenantId = null) => {
       'users.*',
       'roles.name as role_name_val',
       'roles.display_name as role_display_name_val',
+      'roles.permissions as role_permissions',
       'tenants.subdomain as tenant_subdomain',
       'tenants.custom_domain as tenant_custom_domain'
     );
