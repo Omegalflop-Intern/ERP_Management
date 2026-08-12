@@ -19,7 +19,7 @@ export default function ThemeToggle({ className = '' }) {
     // Fetch next mode for instant toast feedback
     const modes = ['liquidglass', 'aurora', 'glassmorphismpro', 'neumorphism', 'flat'];
     const nextMode = modes[(modes.indexOf(designMode) + 1) % modes.length];
-    toast.info(`✨ UI Mode: ${modeLabels[nextMode] || nextMode}`, { duration: 1500 });
+    toast.info(`✨ UI Mode: ${modeLabels[nextMode] || nextMode}`, { duration: 1000 });
   };
 
   return (
