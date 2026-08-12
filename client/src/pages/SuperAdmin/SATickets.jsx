@@ -20,6 +20,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import api from '../../lib/api';
+import { confirmDelete } from '../../lib/confirm';
 
 export default function SATickets() {
   const queryClient = useQueryClient();
@@ -355,7 +356,7 @@ export default function SATickets() {
                           <ChevronRight className="w-3.5 h-3.5" />
                         </button>
                         <button
-                          onClick={() => { if (window.confirm('Are you sure you want to delete this ticket?')) deleteMutation.mutate(t.id); }}
+                          onClick={() => confirmDelete('Delete Ticket?', () => deleteMutation.mutate(t.id), 'Are you sure you want to delete this ticket?')}
                           className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                           title="Delete ticket"
                         >
@@ -517,7 +518,7 @@ export default function SATickets() {
               <div className="pt-2 flex justify-between">
                 <button
                   type="button"
-                  onClick={() => { if (window.confirm('Are you sure you want to delete this ticket?')) deleteMutation.mutate(activeTicket.id); }}
+                  onClick={() => confirmDelete('Delete Ticket?', () => deleteMutation.mutate(activeTicket.id), 'Are you sure you want to delete this ticket?')}
                   className="px-4 py-2 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
