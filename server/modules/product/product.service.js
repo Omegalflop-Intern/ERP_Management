@@ -153,6 +153,29 @@ export const getProductBySku = async (sku, tenantId = null) => {
   return row ? formatProduct(row) : null;
 };
 
+export async function ensureCategoryInCatalog(categoryName, tenantId = null) {
+  if (!categoryName || typeof categoryName !== 'string' || !categoryName.trim()) return;
+  const cleanName = categoryName.trim();
+  try {
+    const query = db('catalog').where({ type: 'CATEGORY', is_deleted: false })
+      .whereRaw('LOWER(name) = ?', [cleanName.toLowerCase()]);
+    if (tenantId) query.andWhere({ tenant_id: tenantId });
+    const exists = await query.first();
+    if (!exists) {
+      await db('catalog').insert({
+        tenant_id: tenantId,
+        type: 'CATEGORY',
+        name: cleanName,
+        description: 'Auto-created from Product / Purchase Entry',
+        is_active: true,
+        is_deleted: false,
+      });
+    }
+  } catch (err) {
+    console.error('Failed to auto-sync category into catalog:', err.message);
+  }
+}
+
 export const createProduct = async (data) => {
   const tenantId = data.tenantId || null;
 
@@ -163,6 +186,10 @@ export const createProduct = async (data) => {
   const skuQuery = db('products').where({ sku: data.sku, is_deleted: false });
   applyTenantScope(skuQuery, tenantId);
   if (await skuQuery.first()) throw ApiError.conflict(`SKU "${data.sku}" already exists`);
+
+  if (data.category) {
+    await ensureCategoryInCatalog(data.category, tenantId);
+  }
 
   const [insertedId] = await db('products').insert({
     tenant_id: tenantId,
@@ -245,7 +272,10 @@ export const updateProduct = async (id, data, tenantId = null) => {
 
   if (data.name !== undefined) updateFields.name = data.name;
   if (data.brand !== undefined) updateFields.brand = data.brand;
-  if (data.category !== undefined) updateFields.category = data.category;
+  if (data.category !== undefined) {
+    updateFields.category = data.category;
+    if (data.category) await ensureCategoryInCatalog(data.category, tenantId);
+  }
   if (data.model !== undefined) updateFields.model = data.model;
   if (data.costPrice !== undefined) updateFields.cost_price = data.costPrice;
   if (data.sellingPrice !== undefined) updateFields.selling_price = data.sellingPrice;

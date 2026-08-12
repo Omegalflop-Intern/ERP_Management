@@ -18,7 +18,7 @@ import {
   Wand2,
   X,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
@@ -77,6 +77,55 @@ export default function SalesForm() {
     },
     enabled: isFocused || searchQuery.length > 0,
   });
+
+  const { data: activeAccountsRes } = useQuery({
+    queryKey: ['pos-active-accounts'],
+    queryFn: async () => {
+      try {
+        const { data } = await api.get('/accounting/accounts');
+        return data?.data || [];
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const availablePaymentMethods = useMemo(() => {
+    const ALL_METHODS = [
+      { key: 'cash', icon: Banknote, color: 'text-green-500', placeholder: 'Cash' },
+      { key: 'bkash', icon: Smartphone, color: 'text-pink-500', placeholder: 'bKash' },
+      { key: 'rocket', icon: Smartphone, color: 'text-purple-500', placeholder: 'Rocket' },
+      { key: 'nagad', icon: Smartphone, color: 'text-yellow-500', placeholder: 'Nagad' },
+      { key: 'bank', icon: CreditCard, color: 'text-blue-500', placeholder: 'Bank / Card' },
+    ];
+
+    if (!activeAccountsRes || activeAccountsRes.length === 0) {
+      return ALL_METHODS;
+    }
+
+    const activeList = activeAccountsRes.filter((a) => a.isActive !== false);
+    if (activeList.length === 0) return ALL_METHODS;
+
+    const names = activeList.map((a) => (a.name || '').toLowerCase() + ' ' + (a.code || ''));
+
+    const hasCash = names.some((n) => n.includes('cash') || n.includes('petty') || n.includes('1010'));
+    const hasBkash = names.some((n) => n.includes('bkash') || n.includes('b-kash'));
+    const hasRocket = names.some((n) => n.includes('rocket'));
+    const hasNagad = names.some((n) => n.includes('nagad') || n.includes('nogod'));
+    const hasBank = names.some((n) => n.includes('bank') || n.includes('card') || n.includes('checking'));
+
+    const filtered = ALL_METHODS.filter(({ key }) => {
+      if (key === 'cash') return hasCash || true;
+      if (key === 'bkash') return hasBkash;
+      if (key === 'rocket') return hasRocket;
+      if (key === 'nagad') return hasNagad;
+      if (key === 'bank') return hasBank;
+      return true;
+    });
+
+    return filtered.length > 0 ? filtered : ALL_METHODS;
+  }, [activeAccountsRes]);
 
   const searching = searchingImei || searchingProducts;
   // Merge: IMEI units first, then stockQty products (exclude those already covered by IMEI units)
@@ -1105,20 +1154,16 @@ export default function SalesForm() {
 
           {/* Payment Breakdown */}
           <div className={`${cardCls} p-4 space-y-3`}>
-            <h3 className="font-semibold text-sm text-gray-900 dark:text-gray-100">Payment</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+                Payment Methods
+              </h3>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                Active Accounts
+              </span>
+            </div>
             <div className="space-y-2">
-              {[
-                { key: 'cash', icon: Banknote, color: 'text-green-500', placeholder: 'Cash' },
-                { key: 'bkash', icon: Smartphone, color: 'text-pink-500', placeholder: 'bKash' },
-                {
-                  key: 'rocket',
-                  icon: Smartphone,
-                  color: 'text-purple-500',
-                  placeholder: 'Rocket',
-                },
-                { key: 'nagad', icon: Smartphone, color: 'text-yellow-500', placeholder: 'Nagad' },
-                { key: 'bank', icon: CreditCard, color: 'text-blue-500', placeholder: 'Bank/Card' },
-              ].map(({ key, icon: Icon, color, placeholder }) => (
+              {availablePaymentMethods.map(({ key, icon: Icon, color, placeholder }) => (
                 <div key={key} className="flex items-center gap-2">
                   <Icon className={`w-4 h-4 ${color} flex-shrink-0`} />
                   <NumberInput
