@@ -339,7 +339,7 @@ export default function Login() {
                 Username / Email / Phone
               </label>
               <div className="relative">
-                <User className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400 stroke-[2.5]" />
+                <User className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400 stroke-[2.5] z-10 pointer-events-none" />
                 <input
                   type="text"
                   required
@@ -366,7 +366,7 @@ export default function Login() {
                 </Link>
               </div>
               <div className="relative">
-                <Lock className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400 stroke-[2.5]" />
+                <Lock className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400 stroke-[2.5] z-10 pointer-events-none" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
@@ -379,7 +379,7 @@ export default function Login() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors p-1"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors p-1 z-10"
                   tabIndex={-1}
                 >
                   {showPassword ? (
