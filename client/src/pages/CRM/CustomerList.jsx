@@ -15,7 +15,7 @@ import {
   Trash2,
   Users,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useTheme } from '../../context/ThemeContext';
@@ -198,11 +198,19 @@ export default function CustomerList() {
             </thead>
             <tbody>
               {isLoading ? (
-                <tr>
-                  <td colSpan="7" className="px-4 py-12 text-center text-gray-400">
-                    <RefreshCw className="w-6 h-6 animate-spin mx-auto" />
-                  </td>
-                </tr>
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="border-b border-gray-100 dark:border-gray-800/50">
+                    <td colSpan="7" className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" />
+                        <div className="space-y-2 flex-1">
+                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-1/3" />
+                          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-1/4" />
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                ))
               ) : customers.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="px-4 py-12 text-center text-gray-400">
@@ -324,6 +332,11 @@ export default function CustomerList() {
 
 function CustomerModal({ editCust, onClose }) {
   const queryClient = useQueryClient();
+  useEffect(() => {
+    const handler = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
   const [form, setForm] = useState({
     name: editCust?.name || '',
     phone: editCust?.phone || '',
@@ -498,7 +511,7 @@ function CustomerModal({ editCust, onClose }) {
             <button
               type="submit"
               disabled={mutation.isPending}
-              className="px-4 py-2 bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white font-medium rounded-lg text-sm transition-all flex items-center gap-2"
+              className="px-4 py-2 bg-[#2563EB] hover:bg-[#1d4ed8] disabled:opacity-50 text-white font-medium rounded-lg text-sm transition-all flex items-center gap-2"
             >
               {mutation.isPending && <RefreshCw className="w-4 h-4 animate-spin" />}
               {editCust ? 'Update' : 'Create'}

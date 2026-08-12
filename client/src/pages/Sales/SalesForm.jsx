@@ -806,7 +806,7 @@ export default function SalesForm() {
               </div>
               {paidAmount > 0 && (
                 <div className="flex justify-between text-slate-700 dark:text-slate-300 font-semibold pt-1 border-t border-slate-200/60 dark:border-slate-800/60">
-                  <span>Amount Paid ({paymentMethod.toUpperCase()})</span>
+                  <span>Amount Paid</span>
                   <span className="font-mono text-slate-900 dark:text-slate-100">৳{paidAmount.toLocaleString()}</span>
                 </div>
               )}

@@ -273,3 +273,13 @@ export const updateTicketStatus = async (id, { status, resolutionNotes }, adminU
 
   return updatedTicket;
 };
+
+export const deleteTicket = async (id, tenantId = null) => {
+  await ensureTicketsTableExists();
+  const query = db('tickets').where({ id });
+  if (tenantId) query.andWhere('tenant_id', tenantId);
+  const ticket = await query.first();
+  if (!ticket) throw ApiError.notFound('Support ticket not found');
+  await db('tickets').where({ id }).del();
+  return { success: true };
+};

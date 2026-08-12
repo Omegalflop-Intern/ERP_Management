@@ -17,6 +17,7 @@ import {
   ChevronRight,
   Loader2,
   ShieldAlert,
+  Trash2,
 } from 'lucide-react';
 import api from '../../lib/api';
 
@@ -46,7 +47,7 @@ export default function ShopTickets() {
       });
       return res.data;
     },
-    keepPreviousData: true,
+    placeholderData: (prev) => prev,
   });
 
   const tickets = responseData?.data || [];
@@ -65,6 +66,17 @@ export default function ShopTickets() {
     },
     onError: (err) => {
       setFormError(err.response?.data?.message || 'Failed to submit support ticket');
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id) => {
+      const res = await api.delete(`/tickets/${id}`);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['shop-tickets']);
+      setSelectedTicket(null);
     },
   });
 
@@ -289,13 +301,22 @@ export default function ShopTickets() {
                       })}
                     </td>
                     <td className="py-3.5 px-4 text-right">
-                      <button
-                        onClick={() => setSelectedTicket(t)}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-950/50 text-slate-700 dark:text-slate-200 hover:text-[#2563EB] dark:hover:text-blue-400 font-bold transition-all text-xs"
-                      >
-                        View Details
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => setSelectedTicket(t)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-950/50 text-slate-700 dark:text-slate-200 hover:text-[#2563EB] dark:hover:text-blue-400 font-bold transition-all text-xs"
+                        >
+                          View Details
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => { if (window.confirm('Are you sure you want to delete this ticket?')) deleteMutation.mutate(t.id); }}
+                          className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                          title="Delete ticket"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

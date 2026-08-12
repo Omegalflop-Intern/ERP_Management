@@ -30,18 +30,27 @@ export const getAuditLogs = async (page = 1, limit = 50, filters = {}, tenantId 
   if (filters.module) countQuery.where('module', filters.module);
   if (filters.userId) countQuery.where('user_id', filters.userId);
   if (filters.action) countQuery.where('action', 'like', `%${filters.action}%`);
+  if (filters.from) countQuery.where('created_at', '>=', new Date(filters.from));
+  if (filters.to) countQuery.where('created_at', '<=', new Date(filters.to + 'T23:59:59'));
 
   const countRes = await countQuery.count({ total: '*' }).first();
   const total = Number(countRes?.total || 0);
 
   const offset = (page - 1) * limit;
-  const dataQuery = db('audit_logs');
-  if (tenantId) dataQuery.where('tenant_id', tenantId);
-  if (filters.module) dataQuery.where('module', filters.module);
-  if (filters.userId) dataQuery.where('user_id', filters.userId);
-  if (filters.action) dataQuery.where('action', 'like', `%${filters.action}%`);
+  const dataQuery = db('audit_logs')
+    .leftJoin('users', 'audit_logs.user_id', 'users.id')
+    .select(
+      'audit_logs.*',
+      'users.id as u_id', 'users.username as u_username', 'users.full_name as u_full_name', 'users.phone as u_phone'
+    );
+  if (tenantId) dataQuery.where('audit_logs.tenant_id', tenantId);
+  if (filters.module) dataQuery.where('audit_logs.module', filters.module);
+  if (filters.userId) dataQuery.where('audit_logs.user_id', filters.userId);
+  if (filters.action) dataQuery.where('audit_logs.action', 'like', `%${filters.action}%`);
+  if (filters.from) dataQuery.where('audit_logs.created_at', '>=', new Date(filters.from));
+  if (filters.to) dataQuery.where('audit_logs.created_at', '<=', new Date(filters.to + 'T23:59:59'));
 
-  const rows = await dataQuery.orderBy('created_at', 'desc').limit(limit).offset(offset);
+  const rows = await dataQuery.orderBy('audit_logs.created_at', 'desc').limit(limit).offset(offset);
 
   const logs = rows.map((row) => {
     let details = row.details;
@@ -51,7 +60,7 @@ export const getAuditLogs = async (page = 1, limit = 50, filters = {}, tenantId 
     return {
       _id: String(row.id),
       id: row.id,
-      userId: row.user_id ? String(row.user_id) : null,
+      userId: row.u_id ? { _id: String(row.u_id), id: row.u_id, username: row.u_username, fullName: row.u_full_name || '', phone: row.u_phone || '' } : (row.user_id ? String(row.user_id) : null),
       username: row.username || '',
       fullName: row.full_name || '',
       roleName: row.role_name || '',

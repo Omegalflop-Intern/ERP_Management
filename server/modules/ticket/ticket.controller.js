@@ -99,3 +99,14 @@ export const httpUpdateTicketStatus = async (req, res, next) => {
     next(error);
   }
 };
+
+export const httpDeleteTicket = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const tenantId = req.user?.tenantId || null;
+    await ticketService.deleteTicket(id, tenantId);
+    return ApiResponse.success(res, null, 'Ticket deleted successfully');
+  } catch (error) {
+    next(error);
+  }
+};

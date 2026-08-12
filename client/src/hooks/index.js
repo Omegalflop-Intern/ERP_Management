@@ -1,1 +1,1 @@
-export { default as useInactivityLogout } from './useInactivityLogout';
+export { useInactivityLogout } from './useInactivityLogout';

@@ -12,6 +12,7 @@ router.use(authenticate);
 // Shop routes (for tenant staff/owner)
 router.post('/', validate(createTicketSchema), ticketController.httpCreateTicket);
 router.get('/', ticketController.httpGetShopTickets);
+router.delete('/:id', ticketController.httpDeleteTicket);
 
 // Super Admin route to view all tickets across shops
 router.get('/admin/all', requireSuperAdmin, ticketController.httpGetAllTicketsAdmin);
@@ -21,5 +22,8 @@ router.get('/:id', ticketController.httpGetTicketById);
 
 // Super Admin route to update status / resolve ticket
 router.patch('/:id/status', requireSuperAdmin, validate(updateTicketStatusSchema), ticketController.httpUpdateTicketStatus);
+
+// Delete ticket (super admin can delete any; shop users can delete their own)
+router.delete('/:id', ticketController.httpDeleteTicket);
 
 export default router;

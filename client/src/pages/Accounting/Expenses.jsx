@@ -13,7 +13,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import DatePicker from '../../components/ui/DatePicker';
 import { NumberInput } from '../../components/ui/NumberInput';
@@ -48,6 +48,18 @@ export default function Expenses() {
   const [editingExpense, setEditingExpense] = useState(null);
   const [categoryChoice, setCategoryChoice] = useState('Shop Rent');
   const [customCategoryInput, setCustomCategoryInput] = useState('');
+
+  useEffect(() => {
+    if (!showAddModal && !editingExpense) return;
+    const handler = (e) => {
+      if (e.key === 'Escape') {
+        setShowAddModal(false);
+        setEditingExpense(null);
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [showAddModal, editingExpense]);
 
   const { data: fetchedCategories = [] } = useQuery({
     queryKey: ['expense-categories'],
