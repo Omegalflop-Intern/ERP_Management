@@ -110,3 +110,14 @@ export const httpDeleteTicket = async (req, res, next) => {
     next(error);
   }
 };
+
+export const httpBulkDeleteTickets = async (req, res, next) => {
+  try {
+    const { ticketIds } = req.body;
+    const tenantId = req.user?.tenantId || null;
+    const result = await ticketService.bulkDeleteTickets(ticketIds, tenantId);
+    return ApiResponse.success(res, result, `${result.deletedCount} tickets deleted successfully`);
+  } catch (error) {
+    next(error);
+  }
+};

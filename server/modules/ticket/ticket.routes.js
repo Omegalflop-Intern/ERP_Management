@@ -24,6 +24,7 @@ router.get('/:id', ticketController.httpGetTicketById);
 router.patch('/:id/status', requireSuperAdmin, validate(updateTicketStatusSchema), ticketController.httpUpdateTicketStatus);
 
 // Delete ticket (super admin can delete any; shop users can delete their own)
+router.post('/bulk-delete', ticketController.httpBulkDeleteTickets);
 router.delete('/:id', ticketController.httpDeleteTicket);
 
 export default router;

@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import api from '../../lib/api';
 import { confirmDelete } from '../../lib/confirm';
+import { toast } from 'sonner';
 
 export default function SATickets() {
   const queryClient = useQueryClient();
@@ -30,6 +31,7 @@ export default function SATickets() {
   const [shopFilter, setShopFilter] = useState('');
   const [page, setPage] = useState(1);
   const [activeTicket, setActiveTicket] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
 
   // Form State for update status
   const [updateStatus, setUpdateStatus] = useState('RESOLVED');
@@ -94,6 +96,33 @@ export default function SATickets() {
       setActiveTicket(null);
     },
   });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ticketIds) => {
+      const res = await api.post('/tickets/bulk-delete', { ticketIds });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['sa-tickets']);
+      setSelectedIds([]);
+      toast.success('Selected tickets deleted successfully');
+    },
+    onError: (err) => toast.error(err.response?.data?.message || 'Bulk delete failed'),
+  });
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === tickets.length && tickets.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(tickets.map((t) => t.id));
+    }
+  };
+
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
 
   const handleOpenReview = (t) => {
     setActiveTicket(t);
@@ -273,6 +302,27 @@ export default function SATickets() {
           </div>
         </div>
 
+        {/* Bulk Action Bar */}
+        {selectedIds.length > 0 && (
+          <div className="flex items-center justify-between p-3.5 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 rounded-xl mb-4">
+            <span className="text-xs font-bold text-red-700 dark:text-red-300">
+              {selectedIds.length} ticket(s) selected
+            </span>
+            <button
+              onClick={() =>
+                confirmDelete(
+                  `Delete ${selectedIds.length} Ticket(s)?`,
+                  () => bulkDeleteMutation.mutate(selectedIds),
+                  'Are you sure you want to delete all selected tickets? This action cannot be undone.'
+                )
+              }
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm shadow-red-600/20"
+            >
+              <Trash2 className="w-3.5 h-3.5" /> Delete Selected ({selectedIds.length})
+            </button>
+          </div>
+        )}
+
         {/* Tickets Table */}
         {isLoading ? (
           <div className="py-16 text-center">
@@ -292,6 +342,14 @@ export default function SATickets() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                  <th className="py-3 px-4 w-10 text-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.length > 0 && selectedIds.length === tickets.length}
+                      onChange={toggleSelectAll}
+                      className="rounded border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                  </th>
                   <th className="py-3 px-4">Shop / Tenant</th>
                   <th className="py-3 px-4">Ticket #</th>
                   <th className="py-3 px-4">Subject & Category</th>
@@ -303,7 +361,15 @@ export default function SATickets() {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
                 {tickets.map((t) => (
-                  <tr key={t.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                  <tr key={t.id} className={`hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors ${selectedIds.includes(t.id) ? 'bg-blue-50/40 dark:bg-blue-950/20' : ''}`}>
+                    <td className="py-3.5 px-4 text-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(t.id)}
+                        onChange={() => toggleSelect(t.id)}
+                        className="rounded border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      />
+                    </td>
                     <td className="py-3.5 px-4">
                       <div className="flex items-center gap-2">
                         <Building2 className="w-4 h-4 text-blue-600 shrink-0" />

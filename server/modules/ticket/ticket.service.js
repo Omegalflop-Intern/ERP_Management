@@ -283,3 +283,12 @@ export const deleteTicket = async (id, tenantId = null) => {
   await db('tickets').where({ id }).del();
   return { success: true };
 };
+
+export const bulkDeleteTickets = async (ticketIds = [], tenantId = null) => {
+  await ensureTicketsTableExists();
+  if (!Array.isArray(ticketIds) || ticketIds.length === 0) return { deletedCount: 0 };
+  const query = db('tickets').whereIn('id', ticketIds);
+  if (tenantId) query.andWhere('tenant_id', tenantId);
+  const deletedCount = await query.del();
+  return { deletedCount };
+};
