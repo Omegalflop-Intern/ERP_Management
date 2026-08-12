@@ -110,7 +110,7 @@ function SidebarMenu({ isCollapsed, location, onNavigate }) {
   const toggle = (label) => setOpenSubmenus((p) => ({ ...p, [label]: !p[label] }));
 
   return (
-    <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 overscroll-contain sidebar-scrollbar">
+    <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 pb-12 overscroll-contain sidebar-scrollbar">
       {menuItems.map((group) => {
         const visible = group.items.filter((item) => {
           const perms = item.children
@@ -213,11 +213,11 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
           transition-transform duration-300 ease-in-out
           ${isMobile
             ? /* Mobile: floating rounded glass card */
-              `fixed top-2 bottom-2 left-2 w-72 h-[calc(100vh-1rem)] glass-primary rounded-[24px] py-4
+              `fixed top-2 bottom-2 left-2 w-72 h-[calc(100vh-1rem)] glass-primary rounded-[24px] pt-4 pb-2
                shadow-2xl shadow-black/50 border border-white/20 dark:border-slate-800/80
                ${isOpen ? 'translate-x-0' : '-translate-x-[calc(100%+1rem)]'}`
             : /* Desktop: static floating glass card */
-              `static h-[calc(100vh-1rem)] my-2 ml-2 glass-primary rounded-[24px] py-4
+              `static h-[calc(100vh-1rem)] my-2 ml-2 glass-primary rounded-[24px] pt-4 pb-2
                translate-x-0
                ${isCollapsed ? 'w-[68px]' : 'w-64'}`
           }
