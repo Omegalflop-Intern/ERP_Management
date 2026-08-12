@@ -4,9 +4,10 @@ import { logAction } from '../../utils/auth/auditLog.js';
 
 export const getAllLeaves = async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, search = '', status = '', employee: employeeId = '' } = req.query;
+    const { page = 1, limit = 20, search = '', status = '', employee: employeeId = '', branchId } = req.query;
     const tenantId = req.user?.tenantId || null;
-    const result = await leaveService.getAllLeaves(Number(page), Number(limit), search, status, employeeId, req.user, tenantId);
+    const effectiveBranchId = req.selectedBranchId || branchId || null;
+    const result = await leaveService.getAllLeaves(Number(page), Number(limit), search, status, employeeId, req.user, tenantId, effectiveBranchId);
     return ApiResponse.paginated(res, result.leaves, result.pagination.total, result.pagination.page, result.pagination.limit);
   } catch (error) { next(error); }
 };
@@ -14,7 +15,9 @@ export const getAllLeaves = async (req, res, next) => {
 export const createLeave = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const leave = await leaveService.createLeave(req.body, req.user, tenantId);
+    const effectiveBranchId = req.body.branchId || req.selectedBranchId || req.user?.branchId || null;
+    const leaveData = { ...req.body, branchId: effectiveBranchId };
+    const leave = await leaveService.applyForLeave(leaveData, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'CREATE', module: 'leave', entityId: leave._id, entityType: 'Leave', details: { employeeId: leave.employeeId, type: leave.type }, req });
     return ApiResponse.created(res, leave, 'Leave request submitted');
   } catch (error) { next(error); }

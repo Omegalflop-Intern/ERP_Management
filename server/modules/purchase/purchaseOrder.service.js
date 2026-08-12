@@ -17,6 +17,7 @@ export function formatPurchaseOrder(row, supplierRow = null) {
     _id: String(row.id),
     id: row.id,
     tenantId: row.tenant_id || null,
+    branchId: row.branch_id ? String(row.branch_id) : null,
     poNumber: row.po_number,
     supplierId: supplierRow ? {
       _id: String(supplierRow.id),
@@ -59,9 +60,10 @@ function applyTenantScope(query, tenantId) {
   }
 }
 
-export const getAllPurchaseOrders = async (page = 1, limit = 20, search = '', status = '', tenantId = null) => {
+export const getAllPurchaseOrders = async (page = 1, limit = 20, search = '', status = '', tenantId = null, branchId = null) => {
   const countQuery = db('purchase_orders').where('purchase_orders.is_deleted', false);
   applyTenantScope(countQuery, tenantId);
+  if (branchId) countQuery.where('purchase_orders.branch_id', branchId);
   if (status && status !== 'ALL') countQuery.where('purchase_orders.status', status);
   if (search) {
     const term = `%${search}%`;
@@ -85,6 +87,7 @@ export const getAllPurchaseOrders = async (page = 1, limit = 20, search = '', st
       'suppliers.company as s_company'
     );
   applyTenantScope(dataQuery, tenantId);
+  if (branchId) dataQuery.where('purchase_orders.branch_id', branchId);
   if (status && status !== 'ALL') dataQuery.where('purchase_orders.status', status);
   if (search) {
     const term = `%${search}%`;
@@ -151,6 +154,7 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
 
   const [insertedId] = await db('purchase_orders').insert({
     tenant_id: tenantId,
+    branch_id: data.branchId || null,
     po_number: generatePoNumber(),
     supplier_id: data.supplierId,
     status: 'APPROVED',

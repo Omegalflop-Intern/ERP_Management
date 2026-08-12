@@ -8,6 +8,7 @@ export function formatWarrantyClaim(row, imeiRow = null, customerRow = null, inv
     _id: String(row.id),
     id: row.id,
     tenantId: row.tenant_id || null,
+    branchId: row.branch_id ? String(row.branch_id) : null,
     imei: imeiRow ? {
       _id: String(imeiRow.id),
       id: imeiRow.id,
@@ -52,9 +53,10 @@ function applyTenantScope(query, tenantId, tablePrefix = 'warranty_claims') {
   }
 }
 
-export const getAllClaims = async (page = 1, limit = 20, status = '', search = '', tenantId = null) => {
+export const getAllClaims = async (page = 1, limit = 20, status = '', search = '', tenantId = null, branchId = null) => {
   const countQuery = db('warranty_claims').where({ 'warranty_claims.is_deleted': false });
   applyTenantScope(countQuery, tenantId, 'warranty_claims');
+  if (branchId) countQuery.where('warranty_claims.branch_id', branchId);
   if (status) countQuery.where('warranty_claims.status', status);
 
   const countRes = await countQuery.count({ total: '*' }).first();
@@ -75,6 +77,7 @@ export const getAllClaims = async (page = 1, limit = 20, status = '', search = '
       'users.id as u_id', 'users.username as u_username'
     );
   applyTenantScope(dataQuery, tenantId, 'warranty_claims');
+  if (branchId) dataQuery.where('warranty_claims.branch_id', branchId);
   if (status) dataQuery.where('warranty_claims.status', status);
 
   const rows = await dataQuery.orderBy('warranty_claims.created_at', 'desc').limit(limit).offset(offset);
@@ -120,6 +123,7 @@ export const getClaimById = async (id, tenantId = null) => {
 export const createClaim = async (data, tenantId = null) => {
   const [insertedId] = await db('warranty_claims').insert({
     tenant_id: tenantId || data.tenantId || null,
+    branch_id: data.branchId || null,
     imei_id: data.imei || data.imeiId,
     customer_id: data.customer || data.customerId,
     invoice_id: data.invoiceRef || data.invoiceId || null,

@@ -5,7 +5,7 @@ import { getPagination } from '../../utils/http/pagination.js';
 import { generateOTP, sendOTP } from '../auth/auth.service.js';
 import emitter, { EVENTS } from '../../events/index.js';
 
-export function formatUser(row, roleRow = null) {
+export function formatUser(row, roleRow = null, branchRow = null) {
   if (!row) return null;
   return {
     _id: String(row.id),
@@ -25,7 +25,13 @@ export function formatUser(row, roleRow = null) {
     roleName: row.role_name,
     isActive: Boolean(row.is_active),
     isVerified: Boolean(row.is_verified),
-    branchId: row.branch_id || null,
+    branchId: row.branch_id ? String(row.branch_id) : null,
+    branchName: branchRow?.name || row.branch_name || (row.branch_id ? `Branch #${row.branch_id}` : 'Main Branch (All Outlets)'),
+    branch: branchRow ? {
+      _id: String(branchRow.id),
+      id: branchRow.id,
+      name: branchRow.name,
+    } : (row.branch_id ? { _id: String(row.branch_id), id: row.branch_id, name: row.branch_name || `Branch #${row.branch_id}` } : null),
     tenantId: row.tenant_id || null,
     commissionRate: Number(row.commission_rate || 0),
     isMfaEnabled: Boolean(row.is_mfa_enabled),
@@ -45,9 +51,10 @@ function applyTenantScope(query, tenantId) {
   }
 }
 
-export const getAllUsers = async (page = 1, limit = 20, search = '', tenantId = null) => {
+export const getAllUsers = async (page = 1, limit = 20, search = '', tenantId = null, branchId = null) => {
   const countQuery = db('users').where('users.is_deleted', false);
   applyTenantScope(countQuery, tenantId);
+  if (branchId) countQuery.where('users.branch_id', branchId);
 
   if (search) {
     const term = `%${search}%`;
@@ -65,15 +72,19 @@ export const getAllUsers = async (page = 1, limit = 20, search = '', tenantId = 
   const offset = (page - 1) * limit;
   const dataQuery = db('users')
     .leftJoin('roles', 'users.role_id', 'roles.id')
+    .leftJoin('branches', 'users.branch_id', 'branches.id')
     .where('users.is_deleted', false)
     .select(
       'users.*',
       'roles.id as role_id_val',
       'roles.name as role_name_val',
       'roles.display_name as role_display_name_val',
-      'roles.permissions as role_permissions_val'
+      'roles.permissions as role_permissions_val',
+      'branches.id as branch_id_val',
+      'branches.name as branch_name'
     );
   applyTenantScope(dataQuery, tenantId);
+  if (branchId) dataQuery.where('users.branch_id', branchId);
 
   if (search) {
     const term = `%${search}%`;
@@ -94,7 +105,11 @@ export const getAllUsers = async (page = 1, limit = 20, search = '', tenantId = 
       display_name: row.role_display_name_val,
       permissions: row.role_permissions_val,
     } : null;
-    return formatUser(row, roleRow);
+    const branchRow = row.branch_id_val ? {
+      id: row.branch_id_val,
+      name: row.branch_name,
+    } : null;
+    return formatUser(row, roleRow, branchRow);
   });
 
   return { users, pagination: getPagination(total, page, limit) };

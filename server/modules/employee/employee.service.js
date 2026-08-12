@@ -8,6 +8,7 @@ export function formatEmployee(row, userRow = null) {
     _id: String(row.id),
     id: row.id,
     tenantId: row.tenant_id || null,
+    branchId: row.branch_id ? String(row.branch_id) : null,
     user: userRow ? {
       _id: String(userRow.id),
       id: userRow.id,
@@ -43,10 +44,11 @@ function applyTenantScope(query, tenantId) {
   }
 }
 
-export const getAllEmployees = async (page = 1, limit = 20, search = '', branch = '', tenantId = null) => {
+export const getAllEmployees = async (page = 1, limit = 20, search = '', branch = '', tenantId = null, branchId = null) => {
   const countQuery = db('employees').where('employees.is_deleted', false);
   applyTenantScope(countQuery, tenantId);
   if (branch) countQuery.where('employees.branch', branch);
+  if (branchId) countQuery.where('employees.branch_id', branchId);
 
   if (search) {
     const term = `%${search}%`;
@@ -74,6 +76,7 @@ export const getAllEmployees = async (page = 1, limit = 20, search = '', branch 
     );
   applyTenantScope(dataQuery, tenantId);
   if (branch) dataQuery.where('employees.branch', branch);
+  if (branchId) dataQuery.where('employees.branch_id', branchId);
 
   if (search) {
     const term = `%${search}%`;
@@ -126,6 +129,7 @@ export const createEmployee = async (data, tenantId = null) => {
 
   const [insertedId] = await db('employees').insert({
     tenant_id: tenantId || data.tenantId || null,
+    branch_id: data.branchId || null,
     user_id: data.user || data.userId || 1,
     employee_id: data.employeeId,
     name: data.name,

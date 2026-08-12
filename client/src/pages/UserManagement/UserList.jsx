@@ -26,15 +26,24 @@ import { confirmDelete } from '../../lib/confirm';
 
 export default function UserList() {
   const [search, setSearch] = useState('');
+  const [branchFilter, setBranchFilter] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editUser, setEditUser] = useState(null);
   const [verifyUserModal, setVerifyUserModal] = useState(null);
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['users', search],
+  const { data: branches = [] } = useQuery({
+    queryKey: ['branches-flat'],
     queryFn: async () => {
-      const { data } = await api.get('/users', { params: { search, limit: 50 } });
+      const { data } = await api.get('/branches/flat');
+      return data.data || [];
+    },
+  });
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['users', search, branchFilter],
+    queryFn: async () => {
+      const { data } = await api.get('/users', { params: { search, branchId: branchFilter || undefined, limit: 50 } });
       return data;
     },
   });
@@ -54,8 +63,8 @@ export default function UserList() {
     <div className="space-y-6">
       {/* Header */}
       <PageHeader
-        title="User Management & OTP Verification"
-        subtitle="Create system users. An OTP code is sent to the user's personal email to verify and activate their account."
+        title="User Management & Access Control"
+        subtitle="Create system users and assign specific branch access. Admin oversees all branches while Managers/Staff are locked to their assigned outlet."
         icon={UserCog}
         breadcrumbs={['Administration', 'User Management']}
         actions={
@@ -71,16 +80,33 @@ export default function UserList() {
         }
       />
 
-      {/* Search Filter */}
-      <div className="relative max-w-md">
-        <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-        <input
-          type="text"
-          placeholder="Search users by name, email, username..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-mono text-slate-900 dark:text-slate-100 placeholder:text-slate-400 outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-all"
-        />
+      {/* Filters Area */}
+      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+        <div className="relative flex-1 max-w-md">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search users by name, email, username..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-mono text-slate-900 dark:text-slate-100 placeholder:text-slate-400 outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-all"
+          />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <select
+            value={branchFilter}
+            onChange={(e) => setBranchFilter(e.target.value)}
+            className="px-3.5 py-2.5 bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-all"
+          >
+            <option value="">Filter by Branch: All Branches</option>
+            {branches.map((b, idx) => (
+              <option key={b._id || b.id || idx} value={b._id || b.id}>
+                {b.name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Users Table */}
@@ -91,6 +117,9 @@ export default function UserList() {
               <tr className="bg-slate-100/80 dark:bg-slate-900/80 border-b border-slate-200/80 dark:border-slate-800">
                 <th className="px-4 py-3.5 text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   User Info
+                </th>
+                <th className="px-4 py-3.5 text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                  System Role
                 </th>
                 <th className="px-4 py-3.5 text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                   Assigned Outlet
@@ -107,7 +136,7 @@ export default function UserList() {
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
-                    {Array.from({ length: 4 }).map((__, j) => (
+                    {Array.from({ length: 5 }).map((__, j) => (
                       <td key={j} className="px-4 py-3.5">
                         <div className="h-4 w-24 bg-slate-200/80 dark:bg-slate-800/80 rounded-lg" />
                       </td>
@@ -116,7 +145,7 @@ export default function UserList() {
                 ))
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="p-0">
+                  <td colSpan={5} className="p-0">
                     <EmptyState
                       icon={UserCog}
                       title="No Users Found"
@@ -129,7 +158,7 @@ export default function UserList() {
               ) : (
                 users.map((u) => (
                   <tr
-                    key={u._id}
+                    key={u._id || u.id}
                     className="transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
                   >
                     <td className="px-4 py-3.5">
@@ -156,7 +185,7 @@ export default function UserList() {
                       <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${
                         u.branchId ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800' : 'bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
                       }`}>
-                        {u.branchId ? 'Specific Outlet' : 'All Outlets (Owner)'}
+                        {u.branchName || u.branch?.name || (u.branchId ? `Branch #${u.branchId}` : 'Main Branch (All Outlets)')}
                       </span>
                     </td>
                     <td className="px-4 py-3.5 text-center">
@@ -374,8 +403,8 @@ function UserFormModal({ user, onClose, onSuccess }) {
                   className={inputCls}
                 >
                   <option value="">Select role</option>
-                  {(roles || []).map((r) => (
-                    <option key={r._id} value={r._id}>
+                  {(roles || []).map((r, idx) => (
+                    <option key={r._id || r.id || r.name || idx} value={r._id || r.id}>
                       {r.displayName || r.name}
                     </option>
                   ))}
@@ -405,8 +434,8 @@ function UserFormModal({ user, onClose, onSuccess }) {
                   className={inputCls}
                 >
                   <option value="">All Outlets (Owner / Unrestricted)</option>
-                  {branches.map((b) => (
-                    <option key={b._id || b.id} value={b._id || b.id}>
+                  {branches.map((b, idx) => (
+                    <option key={b._id || b.id || idx} value={b._id || b.id}>
                       {b.name}
                     </option>
                   ))}

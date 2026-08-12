@@ -4,9 +4,10 @@ import { logAction } from '../../utils/auth/auditLog.js';
 
 export const checkIn = async (req, res, next) => {
   try {
-    const { employeeId, location, notes } = req.body;
+    const { employeeId, location, notes, branchId } = req.body;
     const tenantId = req.user?.tenantId || null;
-    const attendance = await attendanceService.checkIn(employeeId, location, notes, tenantId);
+    const effectiveBranchId = branchId || req.selectedBranchId || req.user?.branchId || null;
+    const attendance = await attendanceService.checkIn(employeeId, location, notes, tenantId, effectiveBranchId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'CHECK_IN', module: 'attendance', entityId: attendance._id, entityType: 'Attendance', details: { employeeId, location }, req });
     return ApiResponse.created(res, attendance, 'Checked in successfully');
   } catch (error) { next(error); }
@@ -24,9 +25,10 @@ export const checkOut = async (req, res, next) => {
 
 export const getAttendanceReport = async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, employee: employeeId = '', branch = '', from = '', to = '' } = req.query;
+    const { page = 1, limit = 20, employee: employeeId = '', branch = '', from = '', to = '', branchId } = req.query;
     const tenantId = req.user?.tenantId || null;
-    const result = await attendanceService.getAttendanceReport(Number(page), Number(limit), employeeId, branch, from, to, tenantId);
+    const effectiveBranchId = req.selectedBranchId || branchId || null;
+    const result = await attendanceService.getAttendanceReport(Number(page), Number(limit), employeeId, branch, from, to, tenantId, effectiveBranchId);
     return ApiResponse.paginated(res, result.records, result.pagination.total, result.pagination.page, result.pagination.limit);
   } catch (error) { next(error); }
 };

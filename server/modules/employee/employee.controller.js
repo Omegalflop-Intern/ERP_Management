@@ -4,9 +4,10 @@ import { logAction } from '../../utils/auth/auditLog.js';
 
 export const getAllEmployees = async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, search = '', branch = '' } = req.query;
+    const { page = 1, limit = 20, search = '', branch = '', branchId } = req.query;
     const tenantId = req.user?.tenantId || null;
-    const result = await employeeService.getAllEmployees(Number(page), Number(limit), search, branch, tenantId);
+    const effectiveBranchId = req.selectedBranchId || branchId || null;
+    const result = await employeeService.getAllEmployees(Number(page), Number(limit), search, branch, tenantId, effectiveBranchId);
     return ApiResponse.paginated(res, result.employees, result.pagination.total, result.pagination.page, result.pagination.limit);
   } catch (error) { next(error); }
 };
@@ -22,7 +23,9 @@ export const getEmployeeById = async (req, res, next) => {
 export const createEmployee = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const employee = await employeeService.createEmployee(req.body, tenantId);
+    const effectiveBranchId = req.body.branchId || req.selectedBranchId || req.user?.branchId || null;
+    const empData = { ...req.body, branchId: effectiveBranchId };
+    const employee = await employeeService.createEmployee(empData, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'CREATE', module: 'employee', entityId: employee._id, entityType: 'Employee', details: { name: employee.fullName || employee.name }, req });
     return ApiResponse.created(res, employee, 'Employee created');
   } catch (error) { next(error); }

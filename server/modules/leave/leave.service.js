@@ -8,6 +8,7 @@ export function formatLeave(row, employeeRow = null) {
     _id: String(row.id),
     id: row.id,
     tenantId: row.tenant_id || null,
+    branchId: row.branch_id ? String(row.branch_id) : null,
     employee: employeeRow ? {
       _id: String(employeeRow.id),
       id: employeeRow.id,
@@ -36,11 +37,12 @@ function applyTenantScope(query, tenantId, tablePrefix = 'leaves') {
   }
 }
 
-export const getAllLeaves = async (page = 1, limit = 20, search = '', status = '', employeeId = '', currentUser = null, tenantId = null) => {
+export const getAllLeaves = async (page = 1, limit = 20, search = '', status = '', employeeId = '', currentUser = null, tenantId = null, branchId = null) => {
   const countQuery = db('leaves').where('leaves.is_deleted', false);
   applyTenantScope(countQuery, tenantId, 'leaves');
   if (status) countQuery.where('leaves.status', status);
   if (employeeId) countQuery.where('leaves.employee_id', employeeId);
+  if (branchId) countQuery.where('leaves.branch_id', branchId);
 
   const countRes = await countQuery.count({ total: '*' }).first();
   const total = Number(countRes?.total || 0);
@@ -57,6 +59,7 @@ export const getAllLeaves = async (page = 1, limit = 20, search = '', status = '
   applyTenantScope(dataQuery, tenantId, 'leaves');
   if (status) dataQuery.where('leaves.status', status);
   if (employeeId) dataQuery.where('leaves.employee_id', employeeId);
+  if (branchId) dataQuery.where('leaves.branch_id', branchId);
 
   const rows = await dataQuery.orderBy('leaves.created_at', 'desc').limit(limit).offset(offset);
 

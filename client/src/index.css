@@ -1309,54 +1309,54 @@ input[type="checkbox"]:focus {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SUPER ADMIN SIDE FONT-SIZE ENHANCEMENT (+2px to +4px)
+   SUPER ADMIN SIDE FONT-SIZE REFINEMENT (-1.5px to -2px)
    ═══════════════════════════════════════════════════════════════ */
 .super-admin-scope {
-  font-size: 15px;
+  font-size: 13.5px;
 }
 .super-admin-scope .text-\[9px\] {
-  font-size: 11px !important;
+  font-size: 9.5px !important;
 }
 .super-admin-scope .text-\[10px\] {
-  font-size: 12px !important;
+  font-size: 10.5px !important;
 }
 .super-admin-scope .text-\[11px\] {
-  font-size: 13px !important;
+  font-size: 11.5px !important;
 }
 .super-admin-scope .text-xs {
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+}
+.super-admin-scope .text-sm {
   font-size: 14px !important;
   line-height: 1.4 !important;
 }
-.super-admin-scope .text-sm {
+.super-admin-scope .text-base {
   font-size: 16px !important;
   line-height: 1.45 !important;
 }
-.super-admin-scope .text-base {
-  font-size: 18px !important;
-  line-height: 1.5 !important;
-}
 .super-admin-scope .text-lg {
-  font-size: 20px !important;
-  line-height: 1.5 !important;
+  font-size: 18px !important;
+  line-height: 1.45 !important;
 }
 .super-admin-scope .text-xl {
-  font-size: 22px !important;
+  font-size: 20px !important;
 }
 .super-admin-scope .text-2xl {
-  font-size: 26px !important;
+  font-size: 24px !important;
 }
 .super-admin-scope .text-3xl {
-  font-size: 32px !important;
+  font-size: 28px !important;
 }
 .super-admin-scope table th,
 .super-admin-scope table td {
-  font-size: 14px !important;
-  padding-top: 0.75rem !important;
-  padding-bottom: 0.75rem !important;
+  font-size: 13px !important;
+  padding-top: 0.65rem !important;
+  padding-bottom: 0.65rem !important;
 }
 .super-admin-scope input,
 .super-admin-scope select,
 .super-admin-scope textarea,
 .super-admin-scope button {
-  font-size: 14px !important;
+  font-size: 13px !important;
 }

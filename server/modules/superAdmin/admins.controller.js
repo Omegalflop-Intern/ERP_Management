@@ -16,27 +16,28 @@ export const listSystemAdmins = async (req, res, next) => {
     if (search) {
       query = query.where((q) =>
         q
-          .whereILike('username', `%${search}%`)
-          .orWhereILike('full_name', `%${search}%`)
-          .orWhereILike('email', `%${search}%`)
+          .where('username', 'like', `%${search}%`)
+          .orWhere('full_name', 'like', `%${search}%`)
+          .orWhere('email', 'like', `%${search}%`)
       );
     }
 
     const [{ total }] = await query.clone().count('id as total');
-    const admins = await query
+    const rows = await query
       .select('id', 'username', 'full_name', 'email', 'phone', 'avatar', 'is_active', 'is_verified', 'created_at', 'updated_at')
       .orderBy('created_at', 'asc')
       .limit(Number(limit))
       .offset(offset);
 
-    res.json(
-      new ApiResponse(true, 'System admins fetched', admins, {
-        total: Number(total),
-        page: Number(page),
-        limit: Number(limit),
-        pages: Math.ceil(Number(total) / Number(limit)),
-      })
-    );
+    const admins = rows.map((r) => ({
+      ...r,
+      _id: String(r.id),
+      fullName: r.full_name,
+      isActive: Boolean(r.is_active),
+      isVerified: Boolean(r.is_verified),
+    }));
+
+    return ApiResponse.paginated(res, admins, Number(total), Number(page), Number(limit), 'System admins fetched');
   } catch (err) {
     next(err);
   }
@@ -48,7 +49,7 @@ export const createSystemAdmin = async (req, res, next) => {
     const { username, email, phone, fullName, password } = req.body;
 
     if (!username || !email || !password) {
-      throw new ApiError(400, 'username, email, and password are required');
+      throw ApiError.badRequest('username, email, and password are required');
     }
 
     const existing = await db('users')
@@ -57,11 +58,11 @@ export const createSystemAdmin = async (req, res, next) => {
       .first();
 
     if (existing) {
-      throw new ApiError(409, 'Username or email already in use');
+      throw ApiError.conflict('Username or email already in use');
     }
 
     let adminRole = await db('roles').where({ name: 'ADMIN', is_deleted: false }).first();
-    if (!adminRole) throw new ApiError(500, 'ADMIN role not found. Run seed first.');
+    if (!adminRole) throw ApiError.internal('ADMIN role not found. Run seed first.');
 
     const passwordHash = await bcrypt.hash(password, 10);
 
@@ -83,7 +84,14 @@ export const createSystemAdmin = async (req, res, next) => {
       .select('id', 'username', 'full_name', 'email', 'phone', 'is_active', 'created_at')
       .first();
 
-    res.status(201).json(new ApiResponse(true, 'System admin created', created));
+    const formatted = {
+      ...created,
+      _id: String(created.id),
+      fullName: created.full_name,
+      isActive: Boolean(created.is_active),
+    };
+
+    return ApiResponse.created(res, formatted, 'System admin created');
   } catch (err) {
     next(err);
   }
@@ -96,9 +104,8 @@ export const updateSystemAdmin = async (req, res, next) => {
     const { fullName, email, phone } = req.body;
 
     const admin = await db('users').whereNull('tenant_id').where({ id, is_deleted: false }).first();
-    if (!admin) throw new ApiError(404, 'System admin not found');
+    if (!admin) throw ApiError.notFound('System admin not found');
 
-    // Prevent self-edit breaking things (allow basic info update)
     const updates = {};
     if (fullName) updates.full_name = fullName;
     if (email) updates.email = email;
@@ -111,7 +118,14 @@ export const updateSystemAdmin = async (req, res, next) => {
       .select('id', 'username', 'full_name', 'email', 'phone', 'is_active', 'updated_at')
       .first();
 
-    res.json(new ApiResponse(true, 'System admin updated', updated));
+    const formatted = {
+      ...updated,
+      _id: String(updated.id),
+      fullName: updated.full_name,
+      isActive: Boolean(updated.is_active),
+    };
+
+    return ApiResponse.success(res, formatted, 'System admin updated');
   } catch (err) {
     next(err);
   }
@@ -124,15 +138,15 @@ export const toggleAdminActive = async (req, res, next) => {
     const requesterId = req.user?.id;
 
     if (Number(id) === Number(requesterId)) {
-      throw new ApiError(400, 'You cannot deactivate your own account');
+      throw ApiError.badRequest('You cannot deactivate your own account');
     }
 
     const admin = await db('users').whereNull('tenant_id').where({ id, is_deleted: false }).first();
-    if (!admin) throw new ApiError(404, 'System admin not found');
+    if (!admin) throw ApiError.notFound('System admin not found');
 
     await db('users').where({ id }).update({ is_active: !admin.is_active });
 
-    res.json(new ApiResponse(true, `Admin ${admin.is_active ? 'deactivated' : 'activated'}`, { id: Number(id), isActive: !admin.is_active }));
+    return ApiResponse.success(res, { id: Number(id), isActive: !admin.is_active }, `Admin ${admin.is_active ? 'deactivated' : 'activated'}`);
   } catch (err) {
     next(err);
   }
@@ -145,15 +159,15 @@ export const deleteSystemAdmin = async (req, res, next) => {
     const requesterId = req.user?.id;
 
     if (Number(id) === Number(requesterId)) {
-      throw new ApiError(400, 'You cannot delete your own account');
+      throw ApiError.badRequest('You cannot delete your own account');
     }
 
     const admin = await db('users').whereNull('tenant_id').where({ id, is_deleted: false }).first();
-    if (!admin) throw new ApiError(404, 'System admin not found');
+    if (!admin) throw ApiError.notFound('System admin not found');
 
     await db('users').where({ id }).update({ is_deleted: true, is_active: false });
 
-    res.json(new ApiResponse(true, 'System admin removed'));
+    return ApiResponse.success(res, null, 'System admin removed');
   } catch (err) {
     next(err);
   }

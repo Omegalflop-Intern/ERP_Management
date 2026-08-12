@@ -15,6 +15,7 @@ export function formatPayroll(row, employeeRow = null, paidByRow = null) {
     _id: String(row.id),
     id: row.id,
     tenantId: row.tenant_id || null,
+    branchId: row.branch_id ? String(row.branch_id) : null,
     employee: employeeRow ? {
       _id: String(employeeRow.id),
       id: employeeRow.id,
@@ -52,12 +53,13 @@ function applyTenantScope(query, tenantId, tablePrefix = 'payrolls') {
   }
 }
 
-export const getAllPayroll = async (page = 1, limit = 20, branch = '', month = '', year = '', status = '', tenantId = null) => {
+export const getAllPayroll = async (page = 1, limit = 20, branch = '', month = '', year = '', status = '', tenantId = null, branchId = null) => {
   const countQuery = db('payrolls').where('payrolls.is_deleted', false);
   applyTenantScope(countQuery, tenantId, 'payrolls');
   if (status) countQuery.where('payrolls.status', status);
   if (month) countQuery.where('payrolls.month', Number(month));
   if (year) countQuery.where('payrolls.year', Number(year));
+  if (branchId) countQuery.where('payrolls.branch_id', branchId);
 
   const countRes = await countQuery.count({ total: '*' }).first();
   const total = Number(countRes?.total || 0);
@@ -77,50 +79,53 @@ export const getAllPayroll = async (page = 1, limit = 20, branch = '', month = '
   if (status) dataQuery.where('payrolls.status', status);
   if (month) dataQuery.where('payrolls.month', Number(month));
   if (year) dataQuery.where('payrolls.year', Number(year));
+  if (branchId) dataQuery.where('payrolls.branch_id', branchId);
 
-  const rows = await dataQuery.orderBy('payrolls.year', 'desc').orderBy('payrolls.month', 'desc').limit(limit).offset(offset);
+  const rows = await dataQuery.orderBy('payrolls.created_at', 'desc').limit(limit).offset(offset);
 
-  const records = rows.map((row) => {
+  const payrolls = rows.map((row) => {
     const eRow = row.emp_id ? { id: row.emp_id, name: row.emp_name, employee_id: row.emp_code, department: row.emp_dept, designation: row.emp_desig, salary: row.emp_salary } : null;
     const uRow = row.u_id ? { id: row.u_id, username: row.u_username } : null;
     return formatPayroll(row, eRow, uRow);
   });
 
-  return { records, pagination: getPagination(total, page, limit) };
+  return { payrolls, pagination: getPagination(total, page, limit) };
 };
 
-export const processPayroll = async (employeeIds, month, year, allowances = {}, deductions = {}, tenantId = null) => {
+export const generatePayroll = async (month, year, employeeIds = [], tenantId = null, branchId = null) => {
+  let empQuery = db('employees').where('employees.is_deleted', false).where('employees.is_active', true);
+  if (tenantId) empQuery.where((b) => b.where('employees.tenant_id', tenantId).orWhereNull('employees.tenant_id'));
+  if (branchId) empQuery.where('employees.branch_id', branchId);
+
+  if (Array.isArray(employeeIds) && employeeIds.length > 0) {
+    empQuery.whereIn('employees.id', employeeIds);
+  }
+
+  const employees = await empQuery;
   const results = [];
   const skipped = [];
 
-  for (const empId of employeeIds) {
-    const existQuery = db('payrolls').where({ employee_id: empId, month: Number(month), year: Number(year), is_deleted: false });
-    applyTenantScope(existQuery, tenantId, 'payrolls');
-    const existing = await existQuery.first();
+  for (const employee of employees) {
+    const empId = employee.id;
+    const existingQuery = db('payrolls').where({ employee_id: empId, month: Number(month), year: Number(year), is_deleted: false });
+    if (tenantId) existingQuery.where('tenant_id', tenantId);
+    const existing = await existingQuery.first();
+
     if (existing) {
-      skipped.push(empId);
+      skipped.push({ employeeId: empId, name: employee.name, reason: 'Already generated' });
       continue;
     }
 
-    const empQuery = db('employees').where({ id: empId, is_deleted: false });
-    if (tenantId) empQuery.where('tenant_id', tenantId);
-    const employee = await empQuery.first();
-    if (!employee) {
-      skipped.push(empId);
-      continue;
-    }
-    if (tenantId && employee.tenant_id && employee.tenant_id !== tenantId) {
-      skipped.push(empId);
-      continue;
-    }
-
-    const totalAllowances = Object.values(allowances).reduce((s, v) => s + (Number(v) || 0), 0);
-    const totalDeductions = Object.values(deductions).reduce((s, v) => s + (Number(v) || 0), 0);
     const basicSalary = Number(employee.salary || 0);
+    const allowances = { houseRent: Math.round(basicSalary * 0.1), medical: 1000 };
+    const deductions = { tax: Math.round(basicSalary * 0.02) };
+    const totalAllowances = Object.values(allowances).reduce((a, b) => a + b, 0);
+    const totalDeductions = Object.values(deductions).reduce((a, b) => a + b, 0);
     const netSalary = Math.max(0, basicSalary + totalAllowances - totalDeductions);
 
     const [insertedId] = await db('payrolls').insert({
       tenant_id: tenantId || employee.tenant_id || null,
+      branch_id: branchId || employee.branch_id || null,
       employee_id: empId,
       month: Number(month),
       year: Number(year),

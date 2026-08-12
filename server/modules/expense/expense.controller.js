@@ -4,9 +4,10 @@ import { logAction } from '../../utils/auth/auditLog.js';
 
 export const getAllExpenses = async (req, res, next) => {
   try {
-    const { category, from, to, search } = req.query;
+    const { category, from, to, search, branchId } = req.query;
     const tenantId = req.user?.tenantId || null;
-    const result = await expenseService.getAllExpenses({ category, from, to, search }, tenantId);
+    const effectiveBranchId = req.selectedBranchId || branchId || null;
+    const result = await expenseService.getAllExpenses({ category, from, to, search, branchId: effectiveBranchId }, tenantId);
     return ApiResponse.success(res, result);
   } catch (error) { next(error); }
 };
@@ -15,7 +16,9 @@ export const createExpense = async (req, res, next) => {
   try {
     const username = req.user?.username || 'system';
     const tenantId = req.user?.tenantId || null;
-    const expense = await expenseService.createExpense(req.body, username, tenantId);
+    const effectiveBranchId = req.body.branchId || req.selectedBranchId || req.user?.branchId || null;
+    const expenseData = { ...req.body, branchId: effectiveBranchId };
+    const expense = await expenseService.createExpense(expenseData, username, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'CREATE', module: 'expense', entityId: expense._id, entityType: 'Expense', details: { title: expense.title, amount: expense.amount }, req });
     return ApiResponse.created(res, expense, 'Expense recorded successfully');
   } catch (error) { next(error); }

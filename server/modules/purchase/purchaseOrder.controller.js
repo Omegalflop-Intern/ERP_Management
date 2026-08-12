@@ -4,9 +4,10 @@ import { logAction } from '../../utils/auth/auditLog.js';
 
 export const getAllPurchaseOrders = async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, search = '', status = '' } = req.query;
+    const { page = 1, limit = 20, search = '', status = '', branchId } = req.query;
     const tenantId = req.user?.tenantId || null;
-    const result = await purchaseOrderService.getAllPurchaseOrders(Number(page), Number(limit), search, status, tenantId);
+    const effectiveBranchId = req.selectedBranchId || branchId || null;
+    const result = await purchaseOrderService.getAllPurchaseOrders(Number(page), Number(limit), search, status, tenantId, effectiveBranchId);
     return ApiResponse.paginated(res, result.orders, result.pagination.total, result.pagination.page, result.pagination.limit);
   } catch (error) { next(error); }
 };
@@ -21,9 +22,11 @@ export const getPurchaseOrderById = async (req, res, next) => {
 
 export const createPurchaseOrder = async (req, res, next) => {
   try {
+    const effectiveBranchId = req.body.branchId || req.selectedBranchId || req.user?.branchId || null;
     const poData = {
       ...req.body,
       tenantId: req.user?.tenantId || null,
+      branchId: effectiveBranchId,
     };
     const order = await purchaseOrderService.createPurchaseOrder(poData, req.user?.username || 'system');
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'CREATE', module: 'purchase', entityId: order._id, entityType: 'PurchaseOrder', details: { orderNumber: order.orderNumber }, req });

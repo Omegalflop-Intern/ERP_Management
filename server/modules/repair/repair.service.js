@@ -25,6 +25,7 @@ export function formatRepairTicket(row) {
     _id: String(row.id),
     id: row.id,
     tenantId: row.tenant_id || null,
+    branchId: row.branch_id ? String(row.branch_id) : null,
     ticketNumber: row.ticket_number,
     customerName: row.customer_name,
     customerPhone: row.customer_phone,
@@ -48,9 +49,10 @@ function applyTenantScope(query, tenantId) {
   }
 }
 
-export const getAllRepairs = async (page = 1, limit = 50, status = '', search = '', tenantId = null) => {
+export const getAllRepairs = async (page = 1, limit = 50, status = '', search = '', tenantId = null, branchId = null) => {
   const countQuery = db('repair_tickets').where({ is_deleted: false });
   applyTenantScope(countQuery, tenantId);
+  if (branchId) countQuery.where({ branch_id: branchId });
   if (status) countQuery.where({ status });
   if (search) {
     const term = `%${search}%`;
@@ -69,6 +71,7 @@ export const getAllRepairs = async (page = 1, limit = 50, status = '', search = 
   const offset = (page - 1) * limit;
   const dataQuery = db('repair_tickets').where({ is_deleted: false });
   applyTenantScope(dataQuery, tenantId);
+  if (branchId) dataQuery.where({ branch_id: branchId });
   if (status) dataQuery.where({ status });
   if (search) {
     const term = `%${search}%`;
@@ -99,6 +102,7 @@ export const createRepair = async (data, tenantId = null) => {
   const ticketNumber = await generateTicketNumber(tenantId);
   const [insertedId] = await db('repair_tickets').insert({
     tenant_id: tenantId || data.tenantId || null,
+    branch_id: data.branchId || null,
     ticket_number: ticketNumber,
     customer_name: data.customerName,
     customer_phone: data.customerPhone,

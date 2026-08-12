@@ -59,11 +59,12 @@ function applyTenantScope(query, tenantId) {
   }
 }
 
-export const getAllIMEI = async (page = 1, limit = 20, search = '', status = '', category = '', tenantId = null) => {
+export const getAllIMEI = async (page = 1, limit = 20, search = '', status = '', category = '', tenantId = null, branchId = null) => {
   const countQuery = db('inventory_units')
     .leftJoin('products', 'inventory_units.product_id', 'products.id')
     .where('inventory_units.is_deleted', false);
   applyTenantScope(countQuery, tenantId);
+  if (branchId) countQuery.where('inventory_units.branch_id', branchId);
 
   if (search) {
     const term = `%${search}%`;
@@ -100,6 +101,7 @@ export const getAllIMEI = async (page = 1, limit = 20, search = '', status = '',
       'branches.name as b_name'
     );
   applyTenantScope(dataQuery, tenantId);
+  if (branchId) dataQuery.where('inventory_units.branch_id', branchId);
 
   if (search) {
     const term = `%${search}%`;

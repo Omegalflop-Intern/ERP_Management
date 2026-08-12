@@ -7,6 +7,7 @@ export function formatExpense(row) {
     _id: String(row.id),
     id: row.id,
     tenantId: row.tenant_id || null,
+    branchId: row.branch_id ? String(row.branch_id) : null,
     title: row.title,
     category: row.category || 'Miscellaneous',
     amount: Number(row.amount || 0),
@@ -28,9 +29,10 @@ function applyTenantScope(query, tenantId) {
 }
 
 export const getAllExpenses = async (params = {}, tenantId = null) => {
-  const { category, search } = params;
+  const { category, search, branchId } = params;
   const query = db('expenses').where({ is_deleted: false });
   applyTenantScope(query, tenantId);
+  if (branchId) query.where({ branch_id: branchId });
 
   if (category && category !== 'ALL') query.where({ category });
   if (search) {
@@ -64,6 +66,7 @@ export const createExpense = async (data, recordedBy = 'system', tenantId = null
 
   const [insertedId] = await db('expenses').insert({
     tenant_id: tenantId || data.tenantId || null,
+    branch_id: data.branchId || null,
     title: data.title,
     category: data.category || 'Miscellaneous',
     amount: Number(data.amount),

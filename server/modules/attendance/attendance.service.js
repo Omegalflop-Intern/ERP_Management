@@ -8,6 +8,7 @@ export function formatAttendance(row, employeeRow = null) {
     _id: String(row.id),
     id: row.id,
     tenantId: row.tenant_id || null,
+    branchId: row.branch_id ? String(row.branch_id) : null,
     employee: employeeRow ? {
       _id: String(employeeRow.id),
       id: employeeRow.id,
@@ -34,7 +35,7 @@ function applyTenantScope(query, tenantId, tablePrefix = 'attendances') {
   }
 }
 
-export const checkIn = async (employeeId, location, notes, tenantId = null) => {
+export const checkIn = async (employeeId, location, notes, tenantId = null, branchId = null) => {
   const empQuery = db('employees').where({ id: employeeId, is_deleted: false });
   if (tenantId) empQuery.where('tenant_id', tenantId);
   const employee = await empQuery.first();
@@ -51,6 +52,7 @@ export const checkIn = async (employeeId, location, notes, tenantId = null) => {
 
   const [insertedId] = await db('attendances').insert({
     tenant_id: tenantId || employee.tenant_id || null,
+    branch_id: branchId || employee.branch_id || null,
     employee_id: employeeId,
     date: todayStr,
     check_in: now,
@@ -92,10 +94,11 @@ export const checkOut = async (employeeId, location, tenantId = null) => {
   return formatAttendance(row, employee);
 };
 
-export const getAttendanceReport = async (page = 1, limit = 20, employeeId = '', branch = '', from = '', to = '', tenantId = null) => {
+export const getAttendanceReport = async (page = 1, limit = 20, employeeId = '', branch = '', from = '', to = '', tenantId = null, branchId = null) => {
   const countQuery = db('attendances').where('attendances.is_deleted', false);
   applyTenantScope(countQuery, tenantId, 'attendances');
   if (employeeId) countQuery.where('attendances.employee_id', employeeId);
+  if (branchId) countQuery.where('attendances.branch_id', branchId);
 
   const countRes = await countQuery.count({ total: '*' }).first();
   const total = Number(countRes?.total || 0);
@@ -111,6 +114,7 @@ export const getAttendanceReport = async (page = 1, limit = 20, employeeId = '',
     );
   applyTenantScope(dataQuery, tenantId, 'attendances');
   if (employeeId) dataQuery.where('attendances.employee_id', employeeId);
+  if (branchId) dataQuery.where('attendances.branch_id', branchId);
 
   const rows = await dataQuery.orderBy('attendances.date', 'desc').limit(limit).offset(offset);
 

@@ -5,9 +5,10 @@ import { sendAdminNotificationEmail, sendCustomerRepairEmail } from '../../confi
 
 export const getAllRepairs = async (req, res, next) => {
   try {
-    const { page = 1, limit = 50, status = '', search = '' } = req.query;
+    const { page = 1, limit = 50, status = '', search = '', branchId } = req.query;
     const tenantId = req.user?.tenantId || null;
-    const result = await repairService.getAllRepairs(Number(page), Number(limit), status, search, tenantId);
+    const effectiveBranchId = req.selectedBranchId || branchId || null;
+    const result = await repairService.getAllRepairs(Number(page), Number(limit), status, search, tenantId, effectiveBranchId);
     return ApiResponse.paginated(res, result.repairs, result.pagination.total, result.pagination.page, result.pagination.limit);
   } catch (error) { next(error); }
 };
@@ -23,7 +24,9 @@ export const getRepairById = async (req, res, next) => {
 export const createRepair = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const ticket = await repairService.createRepair(req.body, tenantId);
+    const effectiveBranchId = req.body.branchId || req.selectedBranchId || req.user?.branchId || null;
+    const repairData = { ...req.body, branchId: effectiveBranchId };
+    const ticket = await repairService.createRepair(repairData, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'CREATE', module: 'repair', entityId: ticket._id, entityType: 'RepairTicket', details: { ticketNumber: ticket.ticketNumber }, req });
 
     if (ticket.customerEmail) {

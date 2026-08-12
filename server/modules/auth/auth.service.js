@@ -66,7 +66,7 @@ export const findUserByLogin = async (identifier, tenantId = null) => {
     );
 
   if (tenantId) {
-    query.where('users.tenant_id', tenantId);
+    query.where((b) => b.where('users.tenant_id', tenantId).orWhereNull('users.tenant_id'));
   }
 
   const row = await query.first();

@@ -177,12 +177,12 @@ export default function SASystemAdmins() {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {admins.map((admin) => (
-                  <tr key={admin.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+                  <tr key={admin._id || admin.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
-                        <Avatar name={admin.full_name || admin.username} />
+                        <Avatar name={admin.fullName || admin.full_name || admin.username} />
                         <div>
-                          <div className="text-sm font-bold text-slate-900 dark:text-white">{admin.full_name || admin.username}</div>
+                          <div className="text-sm font-bold text-slate-900 dark:text-white">{admin.fullName || admin.full_name || admin.username}</div>
                           <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
                             <ShieldCheck className="w-3 h-3 text-blue-400" />
                             @{admin.username}
@@ -205,7 +205,7 @@ export default function SASystemAdmins() {
                       </div>
                     </td>
                     <td className="px-4 py-3.5 hidden sm:table-cell">
-                      <Badge active={admin.is_active} />
+                      <Badge active={admin.isActive ?? admin.is_active} />
                     </td>
                     <td className="px-4 py-3.5 hidden lg:table-cell">
                       <span className="text-xs text-slate-500 dark:text-slate-400">

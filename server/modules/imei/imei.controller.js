@@ -6,9 +6,10 @@ import XLSX from 'xlsx';
 
 export const getAllIMEI = async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, search = '', status = '', category = '' } = req.query;
+    const { page = 1, limit = 20, search = '', status = '', category = '', branchId } = req.query;
     const tenantId = req.user?.tenantId || null;
-    const result = await imeiService.getAllIMEI(Number(page), Number(limit), search, status, category, tenantId);
+    const effectiveBranchId = req.selectedBranchId || branchId || null;
+    const result = await imeiService.getAllIMEI(Number(page), Number(limit), search, status, category, tenantId, effectiveBranchId);
     return ApiResponse.paginated(res, result.units, result.pagination.total, result.pagination.page, result.pagination.limit);
   } catch (error) { next(error); }
 };
