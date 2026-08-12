@@ -232,6 +232,7 @@ export const receiveGoods = async (id, grnEntries, receivedBy = 'system', tenant
 
     await db('inventory_units').insert({
       tenant_id: tenantId || order.tenantId || null,
+      branch_id: order.branch_id || order.branchId || null,
       imei_or_serial: entry.imeiOrSerial,
       product_id: entry.productId,
       supplier_id: order.supplierId?.id || order.supplierId,

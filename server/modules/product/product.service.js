@@ -8,8 +8,20 @@ export function generateSKU(brandName) {
   return `${prefix}-${random6}`;
 }
 
-export function formatProduct(row, availableIMEIs = []) {
+export function formatProduct(row, availableIMEIs = [], branchId = null, totalUnitsGlobal = 0) {
   if (!row) return null;
+  const imeiCountInBranch = availableIMEIs.length;
+  const isSerialTracked = totalUnitsGlobal > 0 || imeiCountInBranch > 0;
+
+  let branchStock = 0;
+  if (isSerialTracked) {
+    branchStock = imeiCountInBranch;
+  } else {
+    branchStock = Number(row.stock_quantity || 0);
+  }
+
+  const globalStock = isSerialTracked ? totalUnitsGlobal : Number(row.stock_quantity || 0);
+
   return {
     _id: String(row.id),
     id: row.id,
@@ -29,7 +41,9 @@ export function formatProduct(row, availableIMEIs = []) {
     vatRate: Number(row.vat_rate || 0),
     unit: row.unit || 'piece',
     minStockAlert: Number(row.min_stock_alert || 2),
-    stockQuantity: Number(row.stock_quantity || 0),
+    stockQuantity: branchId ? branchStock : globalStock,
+    branchStockQuantity: branchStock,
+    globalStockQuantity: globalStock,
     warrantyMonths: Number(row.warranty_months || 12),
     image: row.image || null,
     description: row.description || '',
@@ -90,17 +104,24 @@ export const getAllProducts = async (page = 1, limit = 50, search = '', category
   const rows = await dataQuery.orderBy('created_at', 'desc').limit(limit).offset(offset);
 
   const productIds = rows.map(r => r.id);
-  let units = [];
+  let allUnits = [];
+  let branchUnits = [];
   if (productIds.length > 0) {
-    const unitQuery = db('inventory_units').whereIn('product_id', productIds).where({ status: 'Available', is_deleted: false });
-    if (tenantId) unitQuery.where('tenant_id', tenantId);
-    if (branchId) unitQuery.where('inventory_units.branch_id', branchId);
-    units = await unitQuery;
+    const allUnitQuery = db('inventory_units').whereIn('product_id', productIds).where({ status: 'Available', is_deleted: false });
+    if (tenantId) allUnitQuery.where('tenant_id', tenantId);
+    allUnits = await allUnitQuery;
+
+    if (branchId) {
+      branchUnits = allUnits.filter(u => String(u.branch_id) === String(branchId));
+    } else {
+      branchUnits = allUnits;
+    }
   }
 
   const products = rows.map((row) => {
-    const availIMEIs = units.filter(u => u.product_id === row.id).map(u => u.imei_or_serial);
-    return formatProduct(row, availIMEIs);
+    const availIMEIs = branchUnits.filter(u => u.product_id === row.id).map(u => u.imei_or_serial);
+    const globalCount = allUnits.filter(u => u.product_id === row.id).length;
+    return formatProduct(row, availIMEIs, branchId, globalCount);
   });
 
   return { products, pagination: getPagination(total, page, limit) };
@@ -112,12 +133,17 @@ export const getProductById = async (id, tenantId = null, branchId = null) => {
   const row = await query.first();
   if (!row) throw ApiError.notFound('Product not found');
 
-  const unitQuery = db('inventory_units').where({ product_id: id, status: 'Available', is_deleted: false });
-  if (tenantId) unitQuery.where('tenant_id', tenantId);
-  if (branchId) unitQuery.where('inventory_units.branch_id', branchId);
-  const units = await unitQuery;
-  const availIMEIs = units.map(u => u.imei_or_serial);
-  return formatProduct(row, availIMEIs);
+  const allUnitQuery = db('inventory_units').where({ product_id: id, status: 'Available', is_deleted: false });
+  if (tenantId) allUnitQuery.where('tenant_id', tenantId);
+  const allUnits = await allUnitQuery;
+
+  let branchUnits = allUnits;
+  if (branchId) {
+    branchUnits = allUnits.filter(u => String(u.branch_id) === String(branchId));
+  }
+
+  const availIMEIs = branchUnits.map(u => u.imei_or_serial);
+  return formatProduct(row, availIMEIs, branchId, allUnits.length);
 };
 
 export const getProductBySku = async (sku, tenantId = null) => {
@@ -176,6 +202,7 @@ export const createProduct = async (data) => {
       if (!existing) {
         await db('inventory_units').insert({
           tenant_id: tenantId,
+          branch_id: data.branchId || null,
           product_id: insertedId,
           imei_or_serial: imeiVal,
           color: parts[1]?.trim() || data.color || null,

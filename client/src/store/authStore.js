@@ -38,14 +38,24 @@ export const useAuthStore = create(
       },
 
       logout: async () => {
-        try {
-          await api.post('/auth/logout');
-        } catch {
-          // Ignore errors — clear locally regardless
-        }
+        const tokenToRevoke = get().token || localStorage.getItem('accessToken');
+
+        // 1. Immediately clear local storage and state synchronously to avoid route re-render flickering
         localStorage.removeItem('accessToken');
         localStorage.removeItem('user');
         set({ user: null, token: null });
+
+        // 2. Non-blocking call to backend to clear cookie/session
+        try {
+          if (tokenToRevoke) {
+            api.post('/auth/logout', {}, { headers: { Authorization: `Bearer ${tokenToRevoke}` } }).catch(() => {});
+          } else {
+            api.post('/auth/logout').catch(() => {});
+          }
+        } catch {
+          // Ignore background logout errors
+        }
+
         toast.info('Logged out successfully');
       },
 

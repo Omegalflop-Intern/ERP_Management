@@ -28,7 +28,8 @@ export const getProductById = async (req, res, next) => {
 export const createProduct = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const productData = { ...req.body, tenantId };
+    const branchId = req.selectedBranchId || null;
+    const productData = { ...req.body, tenantId, branchId };
     if (req.file) {
       await validateUploadedFile(req);
       productData.image = `/uploads/${req.file.filename}`;

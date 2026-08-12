@@ -53,7 +53,7 @@ export default function SuperAdminLayout() {
 
   const handleLogout = async () => {
     await logout();
-    navigate('/login');
+    navigate('/login', { replace: true });
   };
 
   const SidebarContent = () => (

@@ -74,13 +74,46 @@ router.get('/dashboard', async (req, res, next) => {
       const prodQuery = db('products').where({ is_deleted: false });
       applyScope(prodQuery);
       const activeProducts = await prodQuery;
+      const productIds = activeProducts.map((p) => p.id);
+
+      let branchUnitMap = {};
+      let totalUnitMap = {};
+
+      if (productIds.length > 0) {
+        const branchUnitQ = db('inventory_units')
+          .whereIn('product_id', productIds)
+          .where({ status: 'Available', is_deleted: false })
+          .groupBy('product_id')
+          .select('product_id')
+          .count({ cnt: '*' });
+        applyScope(branchUnitQ);
+        applyBranch(branchUnitQ);
+        const branchRows = await branchUnitQ;
+        branchRows.forEach((r) => { branchUnitMap[String(r.product_id)] = Number(r.cnt || 0); });
+
+        const totalUnitQ = db('inventory_units')
+          .whereIn('product_id', productIds)
+          .where({ status: 'Available', is_deleted: false })
+          .groupBy('product_id')
+          .select('product_id')
+          .count({ cnt: '*' });
+        applyScope(totalUnitQ);
+        const totalRows = await totalUnitQ;
+        totalRows.forEach((r) => { totalUnitMap[String(r.product_id)] = Number(r.cnt || 0); });
+      }
 
       for (const p of activeProducts) {
-        const unitQ = db('inventory_units').where({ product_id: p.id, status: 'Available', is_deleted: false });
-        applyScope(unitQ);
-        applyBranch(unitQ);
-        const unitCount = await unitQ.count({ count: '*' }).first();
-        const availUnits = Number(unitCount?.count || 0);
+        const pIdStr = String(p.id);
+        const branchUnits = branchUnitMap[pIdStr] || 0;
+        const totalUnitsAny = totalUnitMap[pIdStr] || 0;
+
+        let availUnits = 0;
+        if (totalUnitsAny > 0) {
+          availUnits = branchUnits;
+        } else {
+          availUnits = Number(p.stock_quantity || 0);
+        }
+
         const costVal = availUnits * Number(p.cost_price || 0);
         totalAvailableUnits += availUnits;
         totalStockValue += costVal;

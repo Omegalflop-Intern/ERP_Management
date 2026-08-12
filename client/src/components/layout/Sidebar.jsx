@@ -212,12 +212,10 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
           z-[120] flex flex-col
           transition-transform duration-300 ease-in-out
           ${isMobile
-            ? /* Mobile: full-height flush slide-in drawer */
-              `fixed inset-y-0 left-0 w-72 h-full py-4
-               bg-white dark:bg-[#0d1117]
-               border-r border-slate-200 dark:border-slate-800
-               shadow-2xl shadow-black/40
-               ${isOpen ? 'translate-x-0' : '-translate-x-full'}`
+            ? /* Mobile: floating rounded glass card */
+              `fixed top-2 bottom-2 left-2 w-72 h-[calc(100vh-1rem)] glass-primary rounded-[24px] py-4
+               shadow-2xl shadow-black/50 border border-white/20 dark:border-slate-800/80
+               ${isOpen ? 'translate-x-0' : '-translate-x-[calc(100%+1rem)]'}`
             : /* Desktop: static floating glass card */
               `static h-[calc(100vh-1rem)] my-2 ml-2 glass-primary rounded-[24px] py-4
                translate-x-0

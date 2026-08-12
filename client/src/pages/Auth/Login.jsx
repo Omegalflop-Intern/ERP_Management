@@ -33,15 +33,15 @@ function ParticleCanvas({ isDark }) {
     let w = (canvas.width = window.innerWidth);
     let h = (canvas.height = window.innerHeight);
 
-    const particleColor = isDark ? 'rgba(37, 99, 235, 0.5)' : 'rgba(37, 99, 235, 0.35)';
-    const lineColor = isDark ? '37, 99, 235' : '37, 99, 235';
+    const particleColor = isDark ? 'rgba(59, 130, 246, 0.65)' : 'rgba(37, 99, 235, 0.45)';
+    const lineColor = isDark ? '59, 130, 246' : '37, 99, 235';
 
-    const particles = Array.from({ length: 50 }, () => ({
+    const particles = Array.from({ length: 45 }, () => ({
       x: Math.random() * w,
       y: Math.random() * h,
-      r: 1.5 + Math.random() * 2.5,
-      dx: (Math.random() - 0.5) * 0.5,
-      dy: (Math.random() - 0.5) * 0.5,
+      r: 1.5 + Math.random() * 2,
+      dx: (Math.random() - 0.5) * 0.4,
+      dy: (Math.random() - 0.5) * 0.4,
     }));
 
     const draw = () => {
@@ -65,12 +65,12 @@ function ParticleCanvas({ isDark }) {
           const dx = particles[i].x - particles[j].x;
           const dy = particles[i].y - particles[j].y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 130) {
+          if (dist < 120) {
             ctx.beginPath();
             ctx.moveTo(particles[i].x, particles[i].y);
             ctx.lineTo(particles[j].x, particles[j].y);
-            ctx.strokeStyle = `rgba(${lineColor}, ${0.12 * (1 - dist / 130)})`;
-            ctx.lineWidth = 0.8;
+            ctx.strokeStyle = `rgba(${lineColor}, ${0.15 * (1 - dist / 120)})`;
+            ctx.lineWidth = 0.7;
             ctx.stroke();
           }
         }
@@ -94,7 +94,7 @@ function ParticleCanvas({ isDark }) {
 }
 
 // --- Multi-Image Slideshow Component ---
-function MultiImageSlideshow() {
+function MultiImageSlideshow({ opacity = 'opacity-35 dark:opacity-45' }) {
   const images = ['/auth-bg/waves.png', '/auth-bg/tech.png'];
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -111,7 +111,7 @@ function MultiImageSlideshow() {
         <div
           key={src}
           className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-            index === currentIndex ? 'opacity-35 dark:opacity-45 scale-105' : 'opacity-0 scale-100'
+            index === currentIndex ? `${opacity} scale-105` : 'opacity-0 scale-100'
           } transform transition-transform duration-7000`}
           style={{
             backgroundImage: `url(${src})`,
@@ -120,20 +120,20 @@ function MultiImageSlideshow() {
           }}
         />
       ))}
-      <div className="absolute inset-0 bg-gradient-to-b from-slate-900/30 via-transparent to-slate-900/40 dark:from-black/50 dark:to-black/70" />
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-slate-950/20 to-slate-950/60 dark:from-black/60 dark:via-black/30 dark:to-black/80" />
     </div>
   );
 }
 
-// --- 7-Layer Flowing Sea Waves Component ---
-function FlowingSeaWaves({ isDark }) {
-  const deepColor = isDark ? 'rgba(15,23,42,0.65)' : 'rgba(30,58,138,0.18)';
-  const midColor = isDark ? 'rgba(30,64,175,0.45)' : 'rgba(37,99,235,0.14)';
-  const lightColor = isDark ? 'rgba(96,165,250,0.25)' : 'rgba(96,165,250,0.1)';
-  const foamColor = isDark ? 'rgba(191,219,254,0.12)' : 'rgba(219,234,254,0.15)';
+// --- Flowing Sea Waves Component ---
+function FlowingSeaWaves({ isDark, isHybrid = false }) {
+  const deepColor = isDark ? 'rgba(30, 58, 138, 0.35)' : 'rgba(37, 99, 235, 0.2)';
+  const midColor = isDark ? 'rgba(37, 99, 235, 0.25)' : 'rgba(96, 165, 250, 0.15)';
+  const lightColor = isDark ? 'rgba(96, 165, 250, 0.15)' : 'rgba(191, 219, 254, 0.12)';
+  const heightClass = isHybrid ? 'h-[24%]' : 'h-[36%]';
 
   return (
-    <div className="absolute bottom-0 left-0 w-full pointer-events-none z-10 h-[38%] overflow-hidden">
+    <div className={`absolute bottom-0 left-0 w-full pointer-events-none z-10 ${heightClass} overflow-hidden transition-all duration-500`}>
       <svg
         className="absolute bottom-0 w-[200%] h-full"
         viewBox="0 0 1440 320"
@@ -167,17 +167,6 @@ function FlowingSeaWaves({ isDark }) {
           d="M0,288L48,277.3C96,267,192,245,288,234.7C384,224,480,224,576,234.7C672,245,768,267,864,261.3C960,256,1056,224,1152,213.3C1248,203,1344,213,1392,218.7L1440,224L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
         />
       </svg>
-      <svg
-        className="absolute bottom-0 w-[200%] h-[70%]"
-        viewBox="0 0 1440 320"
-        preserveAspectRatio="none"
-        style={{ animation: 'wave 8s linear -2s infinite' }}
-      >
-        <path
-          fill={foamColor}
-          d="M0,288L60,282.7C120,277,240,267,360,261.3C480,256,600,256,720,266.7C840,277,960,299,1080,293.3C1200,288,1320,256,1380,240L1440,224L1440,320L1380,320C1320,320,1200,320,1080,320C960,320,840,320,720,320C600,320,480,320,360,320C240,320,120,320,60,320L0,320Z"
-        />
-      </svg>
     </div>
   );
 }
@@ -189,7 +178,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(() => !!localStorage.getItem('rememberedLogin'));
   const [loading, setLoading] = useState(false);
-  const [bgMode, setBgMode] = useState('hybrid'); // 'waves' | 'particles' | 'slideshow' | 'hybrid'
+  const [bgMode, setBgMode] = useState('particles'); // Default clean mode ('particles' | 'waves' | 'slideshow' | 'hybrid')
 
   const { login } = useAuth();
   const navigate = useNavigate();
