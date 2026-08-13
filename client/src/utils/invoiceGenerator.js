@@ -9,22 +9,28 @@ import api from '../lib/api';
 const BDT = (n) => `Tk ${Number(n || 0).toLocaleString('en-BD', { minimumFractionDigits: 2 })}`;
 
 // Download PDF directly from backend PDFKit engine stream
-export const downloadBackendInvoicePdf = async (saleId, invoiceNumber) => {
+export const downloadBackendInvoicePdf = async (saleIdOrToken, invoiceNumber) => {
   try {
-    const response = await api.get(`/sales/${saleId}/pdf`, {
+    const isToken =
+      typeof saleIdOrToken === 'string' &&
+      (saleIdOrToken.length > 20 || saleIdOrToken.includes('-'));
+    const endpoint = isToken ? `/sales/public/${saleIdOrToken}/pdf` : `/sales/${saleIdOrToken}/pdf`;
+    const response = await api.get(endpoint, {
       responseType: 'blob',
     });
     const blob = new Blob([response.data], { type: 'application/pdf' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${invoiceNumber || 'Invoice'}-Backend.pdf`;
+    link.download = `${invoiceNumber || 'Invoice'}.pdf`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
+    return true;
   } catch (error) {
     console.error('Backend PDF download error:', error);
+    return false;
   }
 };
 

@@ -10,6 +10,7 @@ const router = Router();
 
 // Public route — no auth required (token-based access, 7-day expiry)
 router.get('/public/:token', saleController.getPublicInvoice);
+router.get('/public/:token/pdf', saleController.getPublicInvoicePdf);
 
 router.use(authenticate);
 router.use(checkTenantStatus);

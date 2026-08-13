@@ -391,6 +391,15 @@ export const sendCustomerInvoiceEmail = async (toEmail, customerName, invoiceDat
     replyTo: SUPPORT_EMAIL,
     subject: `Purchase Receipt ${invoiceNo} - ${SENDER_NAME}`,
     headers: baseHeaders,
+    attachments: invoiceData.pdfBuffer
+      ? [
+          {
+            filename: `${invoiceNo}.pdf`,
+            content: invoiceData.pdfBuffer,
+            contentType: 'application/pdf',
+          },
+        ]
+      : [],
     text: `Dear ${customer},\n\nThank you for your purchase at ${SENDER_NAME}.\n\nInvoice: ${invoiceNo}\nTotal: ${grandTotal}\nStatus: ${invoiceData.paymentStatus || 'Completed'}\n\n${invoiceData.invoiceLink || ''}\n\nThank you,\n${SENDER_NAME}\n${COMPANY_ADDRESS || ''}`,
     html: `
       <!DOCTYPE html>

@@ -32,6 +32,7 @@ export default function PublicInvoice() {
   const { token } = useParams();
   const printRef = useRef(null);
   const [printSize, setPrintSize] = useState('a4');
+  const [pdfDownloading, setPdfDownloading] = useState(false);
 
   const {
     data: sale,
@@ -46,6 +47,24 @@ export default function PublicInvoice() {
     enabled: !!token,
     retry: false,
   });
+
+  const handleDownloadPdf = async () => {
+    setPdfDownloading(true);
+    try {
+      const { downloadBackendInvoicePdf, generateA4Invoice } = await import(
+        '../../utils/invoiceGenerator'
+      );
+      const success = await downloadBackendInvoicePdf(token || sale._id, sale.invoiceNumber);
+      if (!success && sale) {
+        // Fallback to instant client-side PDF capture
+        await generateA4Invoice(sale, printRef.current);
+      }
+    } catch (e) {
+      console.error('PDF download error:', e);
+    } finally {
+      setPdfDownloading(false);
+    }
+  };
 
   const getPageStyle = () => {
     switch (printSize) {
@@ -95,10 +114,10 @@ export default function PublicInvoice() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-4">
-        <div className="w-full max-w-4xl space-y-4">
-          <div className="h-8 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mx-auto" />
-          <div className="h-96 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4">
+        <div className="w-full max-w-4xl space-y-4 text-center">
+          <div className="h-8 w-48 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse mx-auto" />
+          <div className="h-96 bg-slate-200 dark:bg-slate-800 rounded-2xl animate-pulse" />
         </div>
       </div>
     );
@@ -106,13 +125,13 @@ export default function PublicInvoice() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center p-4">
-        <div className="text-center max-w-md">
-          <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4">
+        <div className="text-center max-w-md bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl">
+          <AlertCircle className="w-16 h-16 text-rose-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
             Invoice Not Found
           </h1>
-          <p className="text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             {error?.response?.data?.message || 'This invoice link is invalid or has expired.'}
           </p>
         </div>
@@ -130,99 +149,120 @@ export default function PublicInvoice() {
     (sale.paymentBreakdown?.bank || 0);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
       {/* Top Bar */}
-      <div className="sticky top-0 z-10 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b border-gray-200 dark:border-gray-800">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+      <div className="sticky top-0 z-20 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">
-              Invoice {sale.invoiceNumber}
-            </h1>
-            <p className="text-xs text-gray-500">
-              {new Date(sale.createdAt).toLocaleString('en-BD')}
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-400 rounded-md">
+                Official Invoice
+              </span>
+              <h1 className="text-base font-bold text-slate-900 dark:text-white">
+                #{sale.invoiceNumber}
+              </h1>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Issued on {new Date(sale.createdAt).toLocaleString('en-BD')}
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Size Switchers */}
+            <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700/60">
               {INVOICE_SIZES.map((size) => (
                 <button
                   key={size.key}
                   onClick={() => setPrintSize(size.key)}
-                  className={`px-2 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1 ${
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
                     printSize === size.key
-                      ? 'bg-white dark:bg-gray-700 shadow text-gray-900 dark:text-gray-100'
-                      : 'text-gray-500'
+                      ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
                   }`}
                 >
-                  <size.icon className="w-3 h-3" />
+                  <size.icon className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">{size.label}</span>
                 </button>
               ))}
             </div>
-            <Button onClick={handlePrint} size="sm" className="gap-2">
-              <Printer className="w-4 h-4" /> Print
+
+            <Button
+              onClick={handlePrint}
+              size="sm"
+              className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm text-xs font-bold"
+            >
+              <Printer className="w-3.5 h-3.5" /> Print
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={async () => {
-                const { downloadBackendInvoicePdf } = await import('../../utils/invoiceGenerator');
-                downloadBackendInvoicePdf(sale._id, sale.invoiceNumber);
-              }}
-              className="gap-2"
+              disabled={pdfDownloading}
+              onClick={handleDownloadPdf}
+              className="gap-1.5 rounded-xl border-slate-300 dark:border-slate-700 text-xs font-bold"
             >
-              <Download className="w-4 h-4" /> PDF
+              <Download className="w-3.5 h-3.5" /> {pdfDownloading ? 'Downloading...' : 'PDF'}
             </Button>
           </div>
         </div>
       </div>
 
       {/* Summary Cards */}
-      <div className="max-w-6xl mx-auto px-4 py-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-4">
-            <div className="text-xs text-gray-500 dark:text-gray-400 uppercase">Grand Total</div>
-            <div className="text-xl font-bold text-gray-900 dark:text-gray-100">
+      <div className="max-w-6xl mx-auto px-4 pt-6 pb-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4 shadow-sm">
+            <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Grand Total
+            </div>
+            <div className="text-xl font-black text-slate-900 dark:text-white mt-1">
               ৳{sale.netTotal?.toLocaleString()}
             </div>
           </div>
-          <div className="bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-4">
-            <div className="text-xs text-gray-500 dark:text-gray-400 uppercase">Paid</div>
-            <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4 shadow-sm">
+            <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Paid Amount
+            </div>
+            <div className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
               ৳{paid.toLocaleString()}
             </div>
           </div>
-          <div className="bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-4">
-            <div className="text-xs text-gray-500 dark:text-gray-400 uppercase">Due</div>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4 shadow-sm">
+            <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Balance Due
+            </div>
             <div
-              className={`text-xl font-bold ${
+              className={`text-xl font-black mt-1 ${
                 sale.paymentBreakdown?.dueAmount > 0
-                  ? 'text-red-600 dark:text-red-400'
-                  : 'text-gray-400'
+                  ? 'text-rose-600 dark:text-rose-400'
+                  : 'text-slate-400'
               }`}
             >
               ৳{sale.paymentBreakdown?.dueAmount?.toLocaleString() || 0}
             </div>
           </div>
-          <div className="bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-4">
-            <div className="text-xs text-gray-500 dark:text-gray-400 uppercase">Customer</div>
-            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-              {sale.customerName}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4 shadow-sm">
+            <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Customer
             </div>
-            <div className="text-xs text-gray-500">{sale.customerPhone}</div>
+            <div className="text-sm font-bold text-slate-900 dark:text-white truncate mt-1">
+              {sale.customerName || 'Walk-in Customer'}
+            </div>
+            <div className="text-xs text-slate-400">{sale.customerPhone || 'N/A'}</div>
           </div>
         </div>
       </div>
 
-      {/* Invoice Renderer */}
-      <div className="max-w-6xl mx-auto px-4 pb-8">
-        <div className="bg-gray-200 dark:bg-gray-900 rounded-xl p-4 flex justify-center overflow-x-auto">
-          <div ref={printRef} className={`${getWidth()} flex-shrink-0 printable-invoice-container`}>
+      {/* Invoice Document Preview Container */}
+      <div className="max-w-6xl mx-auto px-4 py-4 pb-12">
+        <div className="bg-slate-200/70 dark:bg-slate-900/60 rounded-3xl p-4 sm:p-8 flex justify-center overflow-x-auto border border-slate-300/60 dark:border-slate-800 shadow-inner">
+          <div
+            ref={printRef}
+            className={`${getWidth()} flex-shrink-0 printable-invoice-container shadow-2xl rounded-lg overflow-hidden`}
+          >
             {renderInvoice()}
           </div>
         </div>
-        <p className="text-center text-xs text-gray-400 mt-4">
-          This invoice was shared via a secure link. Generated on{' '}
+        <p className="text-center text-xs text-slate-400 dark:text-slate-500 mt-4">
+          This digital invoice was verified and shared via a secure link. Generated on{' '}
           {new Date().toLocaleDateString('en-BD')}.
         </p>
       </div>

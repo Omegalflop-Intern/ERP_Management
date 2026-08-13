@@ -15,16 +15,34 @@ export const createSale = async (req, res, next) => {
     };
     const sale = await saleService.createSale(saleData, cashierName);
 
-    // Fire-and-forget email notification with public invoice link
+    // Fire-and-forget email notification with public invoice link AND attached PDF
     if (sale.customerEmail) {
-      import('../../config/mailer.js').then(({ sendCustomerInvoiceEmail }) =>
-        sendCustomerInvoiceEmail(sale.customerEmail, sale.customerName, {
-          invoiceNo: sale.invoiceNumber,
-          grandTotal: sale.netTotal,
-          paymentStatus: sale.paymentBreakdown?.dueAmount > 0 ? 'Due' : 'Paid',
-          invoiceLink: `${process.env.CLIENT_URL || process.env.APP_URL || ''}/invoice/${sale.publicToken}`,
+      generateInvoicePdfBuffer(sale)
+        .then((pdfBuffer) => {
+          import('../../config/mailer.js')
+            .then(({ sendCustomerInvoiceEmail }) =>
+              sendCustomerInvoiceEmail(sale.customerEmail, sale.customerName, {
+                invoiceNo: sale.invoiceNumber,
+                grandTotal: sale.netTotal,
+                paymentStatus: sale.paymentBreakdown?.dueAmount > 0 ? 'Due' : 'Paid',
+                invoiceLink: `${process.env.CLIENT_URL || process.env.APP_URL || ''}/invoice/${sale.publicToken}`,
+                pdfBuffer,
+              })
+            )
+            .catch(() => {});
         })
-      ).catch(() => {});
+        .catch(() => {
+          import('../../config/mailer.js')
+            .then(({ sendCustomerInvoiceEmail }) =>
+              sendCustomerInvoiceEmail(sale.customerEmail, sale.customerName, {
+                invoiceNo: sale.invoiceNumber,
+                grandTotal: sale.netTotal,
+                paymentStatus: sale.paymentBreakdown?.dueAmount > 0 ? 'Due' : 'Paid',
+                invoiceLink: `${process.env.CLIENT_URL || process.env.APP_URL || ''}/invoice/${sale.publicToken}`,
+              })
+            )
+            .catch(() => {});
+        });
     }
 
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'CREATE', module: 'sale', entityId: sale._id, entityType: 'Transaction', details: { invoiceNumber: sale.invoiceNumber, total: sale.netTotal }, req });
@@ -102,5 +120,18 @@ export const getPublicInvoice = async (req, res, next) => {
     const { token } = req.params;
     const sale = await saleService.getSaleByPublicToken(token);
     return ApiResponse.success(res, sale);
+  } catch (error) { next(error); }
+};
+
+export const getPublicInvoicePdf = async (req, res, next) => {
+  try {
+    const { token } = req.params;
+    const sale = await saleService.getSaleByPublicToken(token);
+    if (!sale) throw ApiError.notFound('Invoice not found or link has expired');
+    const pdfBuffer = await generateInvoicePdfBuffer(sale);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${sale.invoiceNumber}.pdf"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    return res.send(pdfBuffer);
   } catch (error) { next(error); }
 };
