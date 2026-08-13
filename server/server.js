@@ -31,24 +31,30 @@ if (env.NODE_ENV === 'development') {
 // TLS certs: check env vars first, fallback to server/certs/ directory
 const certPath = env.TLS_CERT_PATH || path.resolve(__dirname, 'certs/cert.pem');
 const keyPath = env.TLS_KEY_PATH || path.resolve(__dirname, 'certs/key.pem');
-const hasCerts = fs.existsSync(certPath) && fs.existsSync(keyPath);
 
-const server = hasCerts
+// In production or cPanel, SSL termination is handled by Apache/Nginx.
+// Node.js HTTPS server is only created in development mode if certs exist.
+const useHttps = env.NODE_ENV === 'development' && fs.existsSync(certPath) && fs.existsSync(keyPath);
+
+const server = useHttps
   ? createHttpsServer({ cert: fs.readFileSync(certPath), key: fs.readFileSync(keyPath) }, app)
   : createHttpServer(app);
 
-const protocol = hasCerts ? 'https' : 'http';
+const protocol = useHttps ? 'https' : 'http';
 
-// Phusion Passenger (cPanel) support: process.env.PORT can be a socket path (e.g. /tmp/passenger.xxx/socket)
-const listenTarget = process.env.PORT || env.PORT || 5000;
+// Phusion Passenger (cPanel) & local port fallback support
+const rawPort = process.env.PORT || env.PORT || 5000;
+const listenTarget = typeof rawPort === 'string' && rawPort.startsWith('/') ? rawPort : (Number(rawPort) || 5000);
 
 const startServer = (target) => {
   server.removeAllListeners('error');
   
   server.on('error', (err) => {
-    if (err.code === 'EADDRINUSE' && typeof target === 'number') {
-      console.warn(`[SERVER] ⚠️ Port ${target} is in use. Trying port ${target + 1}...`);
-      setTimeout(() => startServer(target + 1), 200);
+    const numericPort = Number(target);
+    if (err.code === 'EADDRINUSE' && !isNaN(numericPort) && numericPort > 0) {
+      const nextPort = numericPort + 1;
+      console.warn(`[SERVER] ⚠️ Port ${numericPort} is currently in use. Automatically trying port ${nextPort}...`);
+      setTimeout(() => startServer(nextPort), 300);
     } else {
       console.error('[SERVER] ❌ Fatal server error:', err.message);
     }
