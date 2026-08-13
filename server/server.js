@@ -43,24 +43,23 @@ const server = useHttps
 const protocol = useHttps ? 'https' : 'http';
 
 // Phusion Passenger (cPanel) & local port fallback support
-const rawPort = process.env.PORT || env.PORT || 5000;
-const listenTarget = typeof rawPort === 'string' && rawPort.startsWith('/') ? rawPort : (Number(rawPort) || 5000);
+const targetPort = process.env.PORT || env.PORT || 5000;
 
 const startServer = (target) => {
   server.removeAllListeners('error');
   
   server.on('error', (err) => {
-    const numericPort = Number(target);
-    if (err.code === 'EADDRINUSE' && !isNaN(numericPort) && numericPort > 0) {
-      const nextPort = numericPort + 1;
-      console.warn(`[SERVER] ⚠️ Port ${numericPort} is currently in use. Automatically trying port ${nextPort}...`);
-      setTimeout(() => startServer(nextPort), 300);
+    if (err.code === 'EADDRINUSE') {
+      console.warn(`[SERVER] ⚠️ Target port/socket ${target} is currently in use. Instantly binding to an available OS port (port 0)...`);
+      setTimeout(() => startServer(0), 100);
     } else {
       console.error('[SERVER] ❌ Fatal server error:', err.message);
     }
   });
 
   server.listen(target, async () => {
+    const boundAddress = server.address();
+    const actualPort = typeof boundAddress === 'object' && boundAddress !== null ? boundAddress.port : target;
     global.__serverStartTime = new Date();
     global.__serverProtocol = protocol;
 
@@ -76,11 +75,11 @@ const startServer = (target) => {
     startTempAdminCleanup();
 
     console.log('');
-    printServerInfo(target, env.NODE_ENV || 'development', protocol);
+    printServerInfo(actualPort, env.NODE_ENV || 'development', protocol);
   });
 };
 
-startServer(listenTarget);
+startServer(targetPort);
 
   emitter.on(EVENTS.STOCK_UPDATED, (data) => {
     console.log('\x1b[36m[EVENT:STOCK]\x1b[0m Stock updated:', data?.name || data?.sku);
