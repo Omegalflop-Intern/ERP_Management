@@ -305,7 +305,15 @@ export const getSaleByInvoice = async (invoiceQuery, tenantId = null, branchId =
 };
 
 export const getSaleByPublicToken = async (token) => {
-  const row = await db('transactions').where({ public_token: token, is_deleted: false }).first();
+  const query = db('transactions')
+    .where({ public_token: token, is_deleted: false });
+
+  // Optional expiry check if token_expires_at is populated
+  query.andWhere((builder) => {
+    builder.whereNull('token_expires_at').orWhere('token_expires_at', '>=', new Date());
+  });
+
+  const row = await query.first();
   if (!row) throw ApiError.notFound('Invoice not found or link has expired');
   return formatTransaction(row);
 };
