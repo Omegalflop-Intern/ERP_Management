@@ -1,17 +1,16 @@
 # DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION BEGIN
 # DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION END
 
-# Disable directory listing for security
+# Disable directory listing
 Options -Indexes
 
-# Security Header & File Protection
-<FilesMatch "^\.env|package\.json|package-lock\.json|\.git">
-    Order allow,deny
-    Deny from all
+# Protect sensitive environment & git files
+<FilesMatch "^\.env|\.git">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
 </FilesMatch>
-
-# Enable Rewrite Engine for Node.js Passenger Entry
-RewriteEngine On
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ server.js [QSA,L]

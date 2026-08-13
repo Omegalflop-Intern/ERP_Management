@@ -27,6 +27,8 @@ client/.env
 client/.env.local
 client/.env.production
 
+Invoice/
+invoice/
 
 server/tests
 server/certs
