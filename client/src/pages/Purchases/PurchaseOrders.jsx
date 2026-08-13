@@ -293,8 +293,8 @@ function ProductSearchInput({ products, value, onChange, onSelect, onCreateNew }
   const inputRef = useRef(null);
   const listRef = useRef(null);
 
-  const selectedProduct = products.find((p) => p._id === value);
-  const displayValue = selectedProduct ? `${selectedProduct.name} (${selectedProduct.sku})` : query;
+  const selectedProduct = products.find((p) => p._id === value || p.id === value);
+  const displayValue = selectedProduct ? `${selectedProduct.name} ${selectedProduct.sku ? `(${selectedProduct.sku})` : ''}` : query;
 
   const filtered = query.trim()
     ? products.filter(
@@ -302,9 +302,9 @@ function ProductSearchInput({ products, value, onChange, onSelect, onCreateNew }
           p.name.toLowerCase().includes(query.toLowerCase()) ||
           (p.sku && p.sku.toLowerCase().includes(query.toLowerCase()))
       )
-    : products.slice(0, 20);
+    : products.slice(0, 25);
 
-  const showCreateOption = query.trim().length >= 2 && filtered.length === 0;
+  const showCreateOption = query.trim().length >= 1;
   const totalItems = filtered.length + (showCreateOption ? 1 : 0);
 
   useEffect(() => {
@@ -334,7 +334,7 @@ function ProductSearchInput({ products, value, onChange, onSelect, onCreateNew }
       } else {
         const p = filtered[highlightIdx];
         if (p) {
-          onChange(p._id);
+          onChange(p._id || p.id);
           onSelect(p);
           setQuery('');
           setOpen(false);
@@ -354,7 +354,7 @@ function ProductSearchInput({ products, value, onChange, onSelect, onCreateNew }
   return (
     <div className="relative">
       <div className="relative">
-        <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
         <input
           ref={inputRef}
           type="text"
@@ -368,55 +368,32 @@ function ProductSearchInput({ products, value, onChange, onSelect, onCreateNew }
             setQuery('');
           }}
           onKeyDown={handleKeyDown}
-          placeholder="Search product by name or SKU..."
-          className="w-full pl-8 pr-7 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]"
+          placeholder="Type product name or scan SKU barcode..."
+          className="w-full pl-9 pr-8 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all shadow-xs"
         />
         {value && !open && (
           <button
             type="button"
             onClick={handleClear}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
           >
-            <X className="w-3.5 h-3.5" />
+            <X className="w-4 h-4" />
           </button>
         )}
       </div>
       {open && (
         <div
           ref={listRef}
-          className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg"
+          className="absolute z-[70] mt-1.5 w-full max-h-60 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-1.5 space-y-1"
         >
-          {filtered.length === 0 && !showCreateOption && (
-            <div className="px-3 py-2 text-xs text-gray-400">No products found</div>
-          )}
-          {filtered.map((p, idx) => (
-            <button
-              key={p._id}
-              type="button"
-              className={`w-full text-left px-3 py-2 text-sm hover:bg-blue-50 dark:hover:bg-blue-900/20 ${
-                idx === highlightIdx ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-              } ${p._id === value ? 'font-semibold text-[#2563EB] dark:text-blue-400' : 'text-gray-900 dark:text-gray-100'}`}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                onChange(p._id);
-                onSelect(p);
-                setQuery('');
-                setOpen(false);
-              }}
-              onMouseEnter={() => setHighlightIdx(idx)}
-            >
-              <div className="flex items-center justify-between">
-                <span>{p.name}</span>
-                <span className="text-[10px] text-gray-400 font-mono">{p.sku}</span>
-              </div>
-            </button>
-          ))}
           {showCreateOption && (
             <button
               type="button"
-              className={`w-full text-left px-3 py-2 text-sm hover:bg-emerald-50 dark:hover:bg-emerald-900/20 border-t border-gray-200 dark:border-gray-700 ${
-                highlightIdx === filtered.length ? 'bg-emerald-50 dark:bg-emerald-900/20' : ''
-              } text-emerald-700 dark:text-emerald-400 font-semibold`}
+              className={`w-full text-left px-3 py-2.5 text-xs rounded-xl transition-all border border-dashed border-emerald-500/40 ${
+                highlightIdx === filtered.length || filtered.length === 0
+                  ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-bold border-emerald-500'
+                  : 'bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 font-semibold'
+              }`}
               onMouseDown={(e) => {
                 e.preventDefault();
                 onCreateNew?.(query);
@@ -425,12 +402,49 @@ function ProductSearchInput({ products, value, onChange, onSelect, onCreateNew }
               }}
               onMouseEnter={() => setHighlightIdx(filtered.length)}
             >
-              <div className="flex items-center gap-2">
-                <Plus className="w-3.5 h-3.5" />
-                <span>Create "{query}"</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-md bg-emerald-600 text-white flex items-center justify-center">
+                    <Plus className="w-3.5 h-3.5" />
+                  </div>
+                  <span>+ Create New Product "{query || 'New Product'}"</span>
+                </div>
+                <span className="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-full font-bold uppercase">
+                  Instant Add
+                </span>
               </div>
             </button>
           )}
+
+          {filtered.length === 0 && !showCreateOption && (
+            <div className="px-3 py-3 text-xs text-center text-slate-400">No matching products found</div>
+          )}
+
+          {filtered.map((p, idx) => (
+            <button
+              key={p._id || p.id}
+              type="button"
+              className={`w-full text-left px-3 py-2 rounded-xl text-xs transition-all ${
+                idx === highlightIdx ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300' : ''
+              } ${ (p._id || p.id) === value ? 'bg-blue-50/80 dark:bg-blue-950/80 font-bold text-blue-600 dark:text-blue-400' : 'text-slate-700 dark:text-slate-200'}`}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                onChange(p._id || p.id);
+                onSelect(p);
+                setQuery('');
+                setOpen(false);
+              }}
+              onMouseEnter={() => setHighlightIdx(idx)}
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-slate-900 dark:text-white">{p.name}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono text-slate-400">Cost: ৳{(p.costPrice || 0).toLocaleString()}</span>
+                  {p.sku && <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded font-mono text-slate-500">{p.sku}</span>}
+                </div>
+              </div>
+            </button>
+          ))}
         </div>
       )}
     </div>
@@ -451,6 +465,7 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
   const [showAddSupplierModal, setShowAddSupplierModal] = useState(false);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [inlineProductName, setInlineProductName] = useState('');
+  const [targetLineIdx, setTargetLineIdx] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: suppliersData } = useQuery({
@@ -479,7 +494,7 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
     const updated = [...lineItems];
     updated[idx] = { ...updated[idx], [field]: value };
     if (field === 'productId') {
-      const product = products.find((p) => p._id === value);
+      const product = products.find((p) => (p._id || p.id) === value);
       if (product) {
         updated[idx].description = product.name;
         updated[idx].unitCost = product.costPrice || 0;
@@ -488,7 +503,7 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
     setLineItems(updated);
   };
 
-  const subTotal = lineItems.reduce((sum, item) => sum + item.qty * item.unitCost, 0);
+  const subTotal = lineItems.reduce((sum, item) => sum + (Number(item.qty) || 0) * (Number(item.unitCost) || 0), 0);
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -504,191 +519,243 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
       return api.post('/purchase-orders', payload);
     },
     onSuccess: () => {
-      toast.success(editPO ? 'Purchase order updated' : 'Purchase order created');
+      toast.success(editPO ? 'Purchase order updated successfully!' : 'Purchase order created successfully!');
       onSuccess();
     },
     onError: (e) => toast.error(e.response?.data?.message || 'Failed to save purchase order'),
   });
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-[#111827] rounded-2xl w-full max-w-3xl border border-gray-200 dark:border-gray-800 shadow-xl max-h-[90vh] overflow-y-auto">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
-          <h3 className="font-bold text-gray-900 dark:text-gray-100">
-            {editPO ? 'Edit Purchase Order' : 'New Purchase Order'}
-          </h3>
+    <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-4xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-6 py-4 text-white flex items-center justify-between shrink-0 shadow-md">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
+              <Truck className="w-5 h-5 text-blue-100" />
+            </div>
+            <div>
+              <h3 className="font-black text-lg text-white tracking-tight">
+                {editPO ? `Edit Purchase Order (${editPO.poNumber})` : 'New Inventory Purchase Order'}
+              </h3>
+              <p className="text-xs text-blue-100/90 font-medium">
+                Restock stock, select vendor supplier, or quickly create non-existing products on the fly.
+              </p>
+            </div>
+          </div>
           <button
+            type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl"
+            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all text-sm font-bold"
           >
             ✕
           </button>
         </div>
-        <div className="p-6 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
-                Supplier *
-              </label>
-              <div className="flex gap-2">
-                <select
-                  value={supplierId}
-                  onChange={(e) => setSupplierId(e.target.value)}
-                  className="flex-1 px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]"
-                >
-                  <option value="">Select Supplier</option>
-                  {suppliers.map((s) => (
-                    <option key={s._id} value={s._id}>
-                      {s.name} ({s.phone || 'No phone'})
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={() => setShowAddSupplierModal(true)}
-                  className="px-3 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1 flex-shrink-0"
-                  title="Add new supplier"
-                >
-                  <Plus className="w-3.5 h-3.5" /> Supplier
-                </button>
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
-                Payment Method
-              </label>
-              <select
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]"
-              >
-                <option value="CASH">Cash</option>
-                <option value="BANK">Bank</option>
-                <option value="BKASH">bKash</option>
-                <option value="CREDIT">Credit (Udhar)</option>
-              </select>
-              <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
-                Paid amount auto-calculated:{' '}
-                {paymentMethod === 'CREDIT' ? '৳0 (due stays on order)' : 'Full amount paid'}
-              </p>
-            </div>
-          </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
-                Line Items
-              </label>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAddProductModal(true)}
-                  className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors"
-                >
-                  <Plus className="w-3 h-3" /> New Product
-                </button>
-                <button
-                  type="button"
-                  onClick={addLineItem}
-                  className="flex items-center gap-1 text-xs font-medium text-[#2563EB] dark:text-blue-400 hover:underline"
-                >
-                  <Plus className="w-3 h-3" /> Add Item
-                </button>
-              </div>
-            </div>
-            {lineItems.map((item, idx) => (
-              <div
-                key={idx}
-                className="flex gap-2 items-start bg-gray-50 dark:bg-gray-900 rounded-lg p-3"
-              >
-                <div className="flex-1">
-                  <ProductSearchInput
-                    products={products}
-                    value={item.productId}
-                    onChange={(val) => updateLineItem(idx, 'productId', val)}
-                    onSelect={(product) => {
-                      const updated = [...lineItems];
-                      updated[idx] = {
-                        ...updated[idx],
-                        productId: product._id,
-                        description: product.name,
-                        unitCost: product.costPrice || 0,
-                      };
-                      setLineItems(updated);
-                    }}
-                    onCreateNew={(productName) => {
-                      setInlineProductName(productName);
-                      setShowAddProductModal(true);
-                    }}
-                  />
-                </div>
-                <div className="w-20">
-                  <NumberInput
-                    value={item.qty}
-                    onChange={(e) => updateLineItem(idx, 'qty', Number(e.target.value))}
-                    min={1}
-                    className="w-full px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]"
-                    placeholder="Qty"
-                  />
-                </div>
-                <div className="w-28">
-                  <NumberInput
-                    value={item.unitCost}
-                    onChange={(e) => updateLineItem(idx, 'unitCost', Number(e.target.value))}
-                    min={0}
-                    className="w-full px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]"
-                    placeholder="Unit Cost"
-                  />
-                </div>
-                <div className="w-28 text-right text-sm text-gray-700 dark:text-gray-300 pt-1.5">
-                  ৳{(item.qty * item.unitCost).toLocaleString()}
-                </div>
-                {lineItems.length > 1 && (
-                  <button
-                    onClick={() => removeLineItem(idx)}
-                    className="p-1 text-gray-400 hover:text-red-600 rounded"
+        {/* Scrollable Content */}
+        <div className="p-6 space-y-6 overflow-y-auto flex-1">
+          {/* Supplier & Payment Config Card */}
+          <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                  Supplier / Vendor *
+                </label>
+                <div className="flex gap-2">
+                  <select
+                    value={supplierId}
+                    onChange={(e) => setSupplierId(e.target.value)}
+                    className="flex-1 px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-blue-600 transition-all shadow-xs"
                   >
-                    <Minus className="w-4 h-4" />
+                    <option value="">Select Vendor Supplier</option>
+                    {suppliers.map((s) => (
+                      <option key={s._id || s.id} value={s._id || s.id}>
+                        {s.name} {s.company ? `(${s.company})` : ''} &middot; {s.phone || 'No phone'}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddSupplierModal(true)}
+                    className="px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5 shrink-0"
+                  >
+                    <Plus className="w-4 h-4" /> Supplier
                   </button>
-                )}
+                </div>
               </div>
-            ))}
-          </div>
 
-          <div className="flex justify-end">
-            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 space-y-2 w-64">
-              <div className="flex justify-between text-sm text-gray-700 dark:text-gray-300">
-                <span>Sub Total</span>
-                <span>৳{subTotal.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-sm font-bold text-gray-900 dark:text-gray-100 border-t border-gray-200 dark:border-gray-700 pt-2">
-                <span>Total</span>
-                <span>৳{subTotal.toLocaleString()}</span>
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                  Payment Terms
+                </label>
+                <div className="grid grid-cols-4 gap-1.5 bg-white dark:bg-slate-900 p-1 rounded-xl border border-slate-300 dark:border-slate-700">
+                  {[
+                    { id: 'CASH', label: 'Cash' },
+                    { id: 'BANK', label: 'Bank' },
+                    { id: 'BKASH', label: 'bKash' },
+                    { id: 'CREDIT', label: 'Credit (Due)' },
+                  ].map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setPaymentMethod(m.id)}
+                      className={`py-1.5 px-2 rounded-lg text-xs font-bold transition-all ${
+                        paymentMethod === m.id
+                          ? 'bg-blue-600 text-white shadow-sm'
+                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="flex gap-3 pt-2">
+          {/* Line Items Section */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Package className="w-4 h-4 text-blue-600" /> Products to Purchase ({lineItems.length})
+                </h4>
+                <p className="text-[11px] text-slate-500">
+                  Search existing catalog products or type a name to create a non-existing product instantly.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setTargetLineIdx(null);
+                  setInlineProductName('');
+                  setShowAddProductModal(true);
+                }}
+                className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition-all shadow-xs"
+              >
+                <Plus className="w-3.5 h-3.5" /> New Catalog Product
+              </button>
+            </div>
+
+            <div className="space-y-2.5">
+              {lineItems.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center bg-slate-50 dark:bg-slate-800/40 rounded-2xl p-3 border border-slate-200/80 dark:border-slate-800/80 hover:border-blue-300 dark:hover:border-blue-700/60 transition-all shadow-2xs"
+                >
+                  <div className="flex-1 min-w-[200px]">
+                    <ProductSearchInput
+                      products={products}
+                      value={item.productId}
+                      onChange={(val) => updateLineItem(idx, 'productId', val)}
+                      onSelect={(product) => {
+                        const updated = [...lineItems];
+                        updated[idx] = {
+                          ...updated[idx],
+                          productId: product._id || product.id,
+                          description: product.name,
+                          unitCost: product.costPrice || 0,
+                        };
+                        setLineItems(updated);
+                      }}
+                      onCreateNew={(productName) => {
+                        setTargetLineIdx(idx);
+                        setInlineProductName(productName);
+                        setShowAddProductModal(true);
+                      }}
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="w-24">
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-0.5 sm:hidden">Qty</label>
+                      <NumberInput
+                        value={item.qty}
+                        onChange={(e) => updateLineItem(idx, 'qty', Math.max(1, Number(e.target.value)))}
+                        min={1}
+                        className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-blue-600"
+                        placeholder="Qty"
+                      />
+                    </div>
+
+                    <div className="w-32">
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-0.5 sm:hidden">Unit Cost</label>
+                      <NumberInput
+                        value={item.unitCost}
+                        onChange={(e) => updateLineItem(idx, 'unitCost', Number(e.target.value))}
+                        min={0}
+                        className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-blue-600"
+                        placeholder="Unit Cost ৳"
+                      />
+                    </div>
+
+                    <div className="w-28 text-right font-black text-sm text-slate-900 dark:text-white px-2">
+                      ৳{((item.qty || 0) * (item.unitCost || 0)).toLocaleString()}
+                    </div>
+
+                    {lineItems.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeLineItem(idx)}
+                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl transition-all"
+                        title="Remove Item"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
             <button
               type="button"
-              onClick={onClose}
-              className="flex-1 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-lg text-sm transition-colors"
+              onClick={addLineItem}
+              className="w-full py-2.5 border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 rounded-2xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-blue-600 transition-all flex items-center justify-center gap-1.5 bg-slate-50/50 dark:bg-slate-900/50"
             >
-              Cancel
-            </button>
-            <button
-              onClick={() => mutation.mutate()}
-              disabled={mutation.isPending || !supplierId || lineItems.some((i) => !i.productId)}
-              className="flex-1 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white font-semibold rounded-lg text-sm transition-colors flex items-center justify-center gap-2"
-            >
-              {mutation.isPending ? (
-                <RefreshCw className="w-4 h-4 animate-spin" />
-              ) : (
-                <Plus className="w-4 h-4" />
-              )}
-              {editPO ? 'Update Order' : 'Create Order'}
+              <Plus className="w-4 h-4" /> Add Another Product Row
             </button>
           </div>
+
+          {/* Financial Calculation Summary */}
+          <div className="flex flex-col sm:flex-row items-end justify-between gap-4 bg-slate-900 text-white rounded-2xl p-5 border border-slate-800 shadow-xl">
+            <div className="space-y-1">
+              <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Payment Status Note</span>
+              <p className="text-xs text-slate-300 font-medium">
+                {paymentMethod === 'CREDIT'
+                  ? '৳0 paid now. Full order total will be added as supplier payable credit.'
+                  : `Full amount ৳${subTotal.toLocaleString()} will be marked as paid via ${paymentMethod}.`}
+              </p>
+            </div>
+            <div className="text-right space-y-1 shrink-0">
+              <div className="text-xs text-slate-400">Total Purchase Order Cost</div>
+              <div className="text-3xl font-black text-emerald-400 tracking-tight">৳{subTotal.toLocaleString()}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-200 dark:border-slate-800 flex gap-3 shrink-0">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 py-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition-all shadow-xs"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => mutation.mutate()}
+            disabled={mutation.isPending || !supplierId || lineItems.some((i) => !i.productId)}
+            className="flex-1 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 text-white font-bold rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2"
+          >
+            {mutation.isPending ? (
+              <RefreshCw className="w-4 h-4 animate-spin text-white" />
+            ) : (
+              <Truck className="w-4 h-4 text-white" />
+            )}
+            {editPO ? 'Update Purchase Order' : 'Save Purchase Order'}
+          </button>
         </div>
       </div>
 
@@ -709,24 +776,37 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
           onClose={() => {
             setShowAddProductModal(false);
             setInlineProductName('');
+            setTargetLineIdx(null);
           }}
           onSuccess={(newProd) => {
             setShowAddProductModal(false);
             setInlineProductName('');
-            if (newProd?._id) {
-              setLineItems((prev) => [
-                ...prev.filter((i) => i.productId),
-                {
-                  productId: newProd._id,
+            if (newProd?._id || newProd?.id) {
+              const createdId = newProd._id || newProd.id;
+              if (targetLineIdx !== null && targetLineIdx < lineItems.length) {
+                const updated = [...lineItems];
+                updated[targetLineIdx] = {
+                  productId: createdId,
                   description: newProd.name,
-                  qty: 1,
+                  qty: updated[targetLineIdx].qty || 1,
                   unitCost: newProd.costPrice || 0,
-                },
-              ]);
+                };
+                setLineItems(updated);
+              } else {
+                setLineItems((prev) => [
+                  ...prev.filter((i) => i.productId),
+                  {
+                    productId: createdId,
+                    description: newProd.name,
+                    qty: 1,
+                    unitCost: newProd.costPrice || 0,
+                  },
+                ]);
+              }
             }
+            setTargetLineIdx(null);
             queryClient.invalidateQueries({ queryKey: ['products'] });
-            queryClient.invalidateQueries({ queryKey: ['categories'] });
-            queryClient.invalidateQueries({ queryKey: ['stock-overview'] });
+            queryClient.invalidateQueries({ queryKey: ['catalog-categories'] });
           }}
         />
       )}

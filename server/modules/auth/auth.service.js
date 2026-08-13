@@ -41,6 +41,8 @@ export function formatUser(row) {
     email: row.email,
     phone: row.phone || '',
     avatar: row.avatar || null,
+    profilePhoto: row.avatar || null,
+    profile_photo: row.avatar || null,
     roleId: row.role_id,
     role: row.role_id,
     roleName: row.role_name || '',
@@ -140,6 +142,27 @@ export const invalidateAllUserSessions = async (userId) => {
 export const loginDirect = async (identifier, password, ipAddress = '', userAgent = '', tenantId = null) => {
   const userRow = await findUserByLogin(identifier, tenantId);
   if (!userRow) throw ApiError.unauthorized('Invalid username or password');
+
+  // Enforce tenant status and subscription expiration check
+  if (userRow.tenant_id && !userRow.is_super_admin) {
+    const tenant = await db('tenants').where({ id: userRow.tenant_id, is_deleted: false }).first();
+    if (!tenant) throw ApiError.forbidden('Associated shop account no longer exists');
+
+    if (tenant.expires_at && new Date(tenant.expires_at) < new Date()) {
+      await db('tenants').where({ id: tenant.id }).update({
+        status: 'PAUSED',
+        paused_reason: 'SUBSCRIPTION_EXPIRED',
+        paused_at: new Date(),
+      });
+      await db('users').where({ tenant_id: tenant.id }).update({ is_active: false });
+      throw ApiError.forbidden('Your shop subscription has expired. Please contact platform admin to renew.');
+    }
+
+    if (tenant.status !== 'ACTIVE') {
+      throw ApiError.forbidden(`Your shop account is currently ${tenant.status.toLowerCase()}. Access denied.`);
+    }
+  }
+
   if (!userRow.is_active) throw ApiError.forbidden('Account is deactivated');
 
   const isMatch = await bcrypt.compare(password, userRow.password_hash);

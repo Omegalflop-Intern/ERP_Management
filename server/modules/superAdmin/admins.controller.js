@@ -33,6 +33,9 @@ export const listSystemAdmins = async (req, res, next) => {
       ...r,
       _id: String(r.id),
       fullName: r.full_name,
+      avatar: r.avatar || null,
+      profilePhoto: r.avatar || null,
+      profile_photo: r.avatar || null,
       isActive: Boolean(r.is_active),
       isVerified: Boolean(r.is_verified),
     }));

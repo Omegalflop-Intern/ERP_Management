@@ -5,7 +5,7 @@ import {
   PowerOff, Power, ShieldCheck, Shield, Mail, Phone,
   CheckCircle2, XCircle, User, Eye, EyeOff, Loader2
 } from 'lucide-react';
-import api from '@/lib/api';
+import api, { getAssetUrl } from '@/lib/api';
 import { confirmDelete } from '@/lib/confirm';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -16,11 +16,23 @@ const fetchAdmins = async ({ queryKey }) => {
   return res.data;
 };
 
-const Avatar = ({ name, size = 'md' }) => {
+const Avatar = ({ name, src, size = 'md' }) => {
+  const photoUrl = src ? getAssetUrl(src) : null;
   const initials = (name || '?').split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
   const colors = ['bg-blue-500', 'bg-violet-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500', 'bg-cyan-500'];
   const color = colors[(name?.charCodeAt(0) || 0) % colors.length];
   const sz = size === 'lg' ? 'w-12 h-12 text-base' : 'w-9 h-9 text-xs';
+
+  if (photoUrl) {
+    return (
+      <img
+        src={photoUrl}
+        alt={name}
+        className={`${sz} rounded-xl object-cover border border-slate-200 dark:border-slate-700 flex-shrink-0 shadow-sm`}
+      />
+    );
+  }
+
   return (
     <div className={`${sz} ${color} rounded-xl flex items-center justify-center font-bold text-white flex-shrink-0`}>
       {initials}
@@ -181,7 +193,10 @@ export default function SASystemAdmins() {
                   <tr key={admin._id || admin.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
-                        <Avatar name={admin.fullName || admin.full_name || admin.username} />
+                        <Avatar
+                          name={admin.fullName || admin.full_name || admin.username}
+                          src={admin.avatar || admin.profilePhoto || admin.profile_photo}
+                        />
                         <div>
                           <div className="text-sm font-bold text-slate-900 dark:text-white">{admin.fullName || admin.full_name || admin.username}</div>
                           <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">

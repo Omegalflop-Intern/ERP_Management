@@ -14,7 +14,7 @@ import {
   Eye,
   EyeOff,
 } from 'lucide-react';
-import api from '../../lib/api';
+import api, { getAssetUrl } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 
 function Toast({ message, type }) {
@@ -39,7 +39,7 @@ function Toast({ message, type }) {
 
 export default function SAProfile() {
   const queryClient = useQueryClient();
-  const { user: authUser, updateAuthUser } = useAuth();
+  const { user: authUser, setUser } = useAuth();
   const [toast, setToast] = useState(null);
 
   const { data: profile, isLoading } = useQuery({
@@ -82,7 +82,8 @@ export default function SAProfile() {
     onSuccess: (data) => {
       setToast({ message: 'Profile updated successfully!', type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['super-admin-profile'] });
-      if (updateAuthUser) updateAuthUser(data);
+      queryClient.invalidateQueries({ queryKey: ['super-admin-layout-profile'] });
+      if (setUser) setUser((prev) => ({ ...prev, ...data }));
       setTimeout(() => setToast(null), 3000);
     },
     onError: (err) => {
@@ -191,9 +192,9 @@ export default function SAProfile() {
           <div className="flex items-center gap-4">
             <div className="relative">
               <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-2xl font-black overflow-hidden border-2 border-white dark:border-slate-700 shadow-lg">
-                {avatarPreview || profile?.avatar ? (
+                {avatarPreview || profile?.avatar || profile?.profilePhoto ? (
                   <img
-                    src={avatarPreview || profile?.avatar}
+                    src={avatarPreview || getAssetUrl(profile?.avatar || profile?.profilePhoto)}
                     alt="Avatar"
                     className="w-full h-full object-cover"
                   />

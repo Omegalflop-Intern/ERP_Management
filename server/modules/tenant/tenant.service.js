@@ -99,9 +99,40 @@ export const getTenantStats = async () => {
     .orderBy('expires_at', 'asc')
     .limit(10);
 
+  // Compute real monthly status history for the past 6 months
+  const monthlyTrend = [];
+  const currentMonthDate = new Date();
+
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth() - i, 1);
+    const endOfMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
+    const monthLabel = d.toLocaleString('en-US', { month: 'short' });
+
+    const activeCountRes = await db('tenants')
+      .where({ is_deleted: false })
+      .where('created_at', '<=', endOfMonth)
+      .where({ status: 'ACTIVE' })
+      .count('* as count')
+      .first();
+
+    const inactiveCountRes = await db('tenants')
+      .where({ is_deleted: false })
+      .where('created_at', '<=', endOfMonth)
+      .whereNot({ status: 'ACTIVE' })
+      .count('* as count')
+      .first();
+
+    monthlyTrend.push({
+      month: monthLabel,
+      activeShops: Number(activeCountRes?.count || 0),
+      inactiveShops: Number(inactiveCountRes?.count || 0),
+    });
+  }
+
   return {
     counts,
     totalRevenue: 0,
+    monthlyTrend,
     recentTenants: recentRows.map(formatTenant),
     expiringSoonList: expiringRows.map(formatTenant),
   };
@@ -250,6 +281,12 @@ export const createTenant = async (data) => {
     if (exists) throw ApiError.conflict(`Custom domain "${customDomain}" is already in use.`);
   }
 
+  let expiresAt = data.expiresAt ? new Date(data.expiresAt) : null;
+  if (!expiresAt) {
+    const durationDays = data.durationDays ? Number(data.durationDays) : 30;
+    expiresAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
+  }
+
   const [insertedId] = await db('tenants').insert({
     shop_name: data.shopName,
     owner_name: data.ownerName,
@@ -261,7 +298,7 @@ export const createTenant = async (data) => {
     status: 'ACTIVE',
     nid_number: data.nidNumber || '',
     trade_license_number: data.tradeLicenseNumber || '',
-    expires_at: data.expiresAt ? new Date(data.expiresAt) : null,
+    expires_at: expiresAt,
     kyc_status: 'APPROVED',
     is_deleted: false,
   });
@@ -286,17 +323,72 @@ export const createTenant = async (data) => {
   return getTenantById(insertedId);
 };
 
+export const purgeTenantData = async (tenantId) => {
+  const tId = Number(tenantId);
+  if (!tId || isNaN(tId)) return;
+
+  // 1. Delete all active user sessions for this tenant
+  const userIds = await db('users').where({ tenant_id: tId }).pluck('id');
+  if (userIds.length > 0) {
+    await db('sessions').whereIn('user_id', userIds).delete();
+  }
+
+  // 2. Cascade delete all tenant-specific records across all tables
+  const tenantTables = [
+    'accounts',
+    'attendances',
+    'audit_logs',
+    'branches',
+    'catalog_items',
+    'contact_messages',
+    'customers',
+    'document_vaults',
+    'employees',
+    'expenses',
+    'expense_categories',
+    'inventory_units',
+    'investors',
+    'investor_transactions',
+    'journal_entries',
+    'leaves',
+    'ledger_entries',
+    'loans',
+    'loan_repayments',
+    'notifications',
+    'payrolls',
+    'products',
+    'purchase_orders',
+    'repair_tickets',
+    'settings',
+    'stock_transfers',
+    'suppliers',
+    'temp_admins',
+    'tickets',
+    'transactions',
+    'users',
+    'warranty_claims',
+    'wholesale_orders',
+    'wholesale_prices',
+  ];
+
+  for (const table of tenantTables) {
+    try {
+      await db(table).where({ tenant_id: tId }).delete();
+    } catch (e) {
+      // Table might not exist or doesn't have tenant_id column
+    }
+  }
+
+  // 3. Finally hard delete the shop row from tenants table
+  await db('tenants').where({ id: tId }).delete();
+};
+
 export const updateTenantStatus = async (id, status, rejectionReason) => {
   const row = await db('tenants').where({ id }).first();
   if (!row) throw ApiError.notFound('Shop account not found');
 
   if (status === 'DELETED') {
-    await db('tenants').where({ id }).update({ is_deleted: true, status: 'DELETED' });
-    await db('users').where({ tenant_id: id }).update({ is_active: false, is_deleted: true });
-    const tenantUserIds = await db('users').where({ tenant_id: id }).pluck('id');
-    if (tenantUserIds.length > 0) {
-      await db('sessions').whereIn('user_id', tenantUserIds).delete();
-    }
+    await purgeTenantData(id);
     return { _id: String(id), id, isDeleted: true };
   }
 
@@ -354,13 +446,8 @@ export const getPublicTenantBySubdomain = async (subdomain) => {
 export const bulkDeleteTenants = async (ids = []) => {
   if (!Array.isArray(ids) || ids.length === 0) return { deletedCount: 0 };
   const numericIds = ids.map((id) => Number(id)).filter((id) => !isNaN(id));
-  if (numericIds.length > 0) {
-    await db('tenants').whereIn('id', numericIds).update({ is_deleted: true, status: 'DELETED' });
-    await db('users').whereIn('tenant_id', numericIds).update({ is_active: false, is_deleted: true });
-    const tenantUserIds = await db('users').whereIn('tenant_id', numericIds).pluck('id');
-    if (tenantUserIds.length > 0) {
-      await db('sessions').whereIn('user_id', numericIds).delete();
-    }
+  for (const tId of numericIds) {
+    await purgeTenantData(tId);
   }
   return { deletedCount: numericIds.length };
 };

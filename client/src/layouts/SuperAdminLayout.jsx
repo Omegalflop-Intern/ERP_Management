@@ -21,11 +21,13 @@ import {
   UserCog,
   X,
 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import React, { Suspense, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import api, { getAssetUrl } from '../lib/api';
 
 const NAV_ITEMS = [
   { to: '/super-admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -46,15 +48,43 @@ export default function SuperAdminLayout() {
   useDocumentTitle();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { user, logout } = useAuth();
+  const { user, setUser, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const isDark = theme === 'dark';
+
+  const { data: profileData } = useQuery({
+    queryKey: ['super-admin-layout-profile'],
+    queryFn: async () => {
+      try {
+        const res = await api.get('/super-admin/profile');
+        const data = res.data?.data || res.data;
+        if (data && setUser) {
+          setUser((prev) => ({ ...prev, ...data }));
+        }
+        return data;
+      } catch {
+        return null;
+      }
+    },
+    staleTime: 30 * 1000,
+  });
+
+  const currentUser = profileData || user;
 
   const handleLogout = async () => {
     await logout();
     navigate('/login', { replace: true });
   };
+
+  const rawPhoto = currentUser?.avatar || currentUser?.profilePhoto || currentUser?.profile_photo;
+  const photoUrl = rawPhoto ? getAssetUrl(rawPhoto) : null;
+  const initials = (currentUser?.fullName || currentUser?.full_name || currentUser?.username || 'A')
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
@@ -101,12 +131,25 @@ export default function SuperAdminLayout() {
         className={`px-3 py-4 border-t border-slate-200 dark:border-slate-800 space-y-2 ${collapsed ? 'flex flex-col items-center' : ''}`}
       >
         {!collapsed && (
-          <div className="px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 mb-2">
-            <div className="text-xs text-slate-900 dark:text-white font-bold truncate">
-              {user?.fullName || user?.username}
-            </div>
-            <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-              {user?.email}
+          <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 mb-2">
+            {photoUrl ? (
+              <img
+                src={photoUrl}
+                alt={user?.fullName || 'Admin Avatar'}
+                className="w-9 h-9 rounded-xl object-cover border border-blue-500/30 shrink-0 shadow-sm"
+              />
+            ) : (
+              <div className="w-9 h-9 rounded-xl bg-[#2563EB] text-white font-black text-xs flex items-center justify-center shrink-0 shadow-sm shadow-blue-600/20">
+                {initials}
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <div className="text-xs text-slate-900 dark:text-white font-bold truncate">
+                {user?.fullName || user?.username}
+              </div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                {user?.email}
+              </div>
             </div>
           </div>
         )}
@@ -188,11 +231,24 @@ export default function SuperAdminLayout() {
               </span>
             </div>
           </div>
-          <div className="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">
-            Logged in as{' '}
-            <strong className="text-slate-700 dark:text-slate-200">
-              {user?.fullName || user?.username}
-            </strong>
+          <div className="hidden sm:flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            {photoUrl ? (
+              <img
+                src={photoUrl}
+                alt={user?.fullName || 'Admin Avatar'}
+                className="w-7 h-7 rounded-lg object-cover border border-blue-500/30 shadow-sm"
+              />
+            ) : (
+              <div className="w-7 h-7 rounded-lg bg-[#2563EB] text-white font-bold text-[10px] flex items-center justify-center shadow-sm">
+                {initials}
+              </div>
+            )}
+            <span>
+              Logged in as{' '}
+              <strong className="text-slate-700 dark:text-slate-200">
+                {user?.fullName || user?.username}
+              </strong>
+            </span>
           </div>
         </header>
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
