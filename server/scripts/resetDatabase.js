@@ -14,10 +14,14 @@ import * as createPhase5AccountingAndFinanceTables from '../migrations/202608070
 import * as createPhase6WorkforceTables from '../migrations/20260807000010_create_phase6_workforce_tables.js';
 import * as createPhase7SystemTables from '../migrations/20260807000011_create_phase7_system_tables.js';
 import * as createContactMessagesTable from '../migrations/20260807000012_create_contact_messages_table.js';
+import * as createTicketsTable from '../migrations/20260807000013_create_tickets_table.js';
 import * as addBranchIdToOperationsTables from '../migrations/20260811000014_add_branch_id_to_operations_tables.js';
 import * as addBranchIdToHrAndWarrantyTables from '../migrations/20260812000015_add_branch_id_to_hr_and_warranty_tables.js';
 import * as addNotesToTenantsTable from '../migrations/20260812000016_add_notes_to_tenants_table.js';
 import * as addNotesToTransactionsTable from '../migrations/20260812000017_add_notes_to_transactions_table.js';
+import * as addBranchIdToWholesaleOrders from '../migrations/20260812000018_add_branch_id_to_wholesale_orders.js';
+import * as addBranchIdToAuditLogs from '../migrations/20260812000019_add_branch_id_to_audit_logs.js';
+import * as addBranchIdToSharedTables from '../migrations/20260812000020_add_branch_id_to_shared_tables.js';
 
 import { seedDefaultRoles } from '../modules/role/role.service.js';
 import { seedSubscriptionPlans } from '../modules/plans/plans.service.js';
@@ -64,10 +68,14 @@ async function resetDatabase() {
     await createPhase6WorkforceTables.up(db);
     await createPhase7SystemTables.up(db);
     await createContactMessagesTable.up(db);
+    await createTicketsTable.up(db);
     await addBranchIdToOperationsTables.up(db);
     await addBranchIdToHrAndWarrantyTables.up(db);
     await addNotesToTenantsTable.up(db);
     await addNotesToTransactionsTable.up(db);
+    await addBranchIdToWholesaleOrders.up(db);
+    await addBranchIdToAuditLogs.up(db);
+    await addBranchIdToSharedTables.up(db);
     console.log('✅ Schema created successfully!');
 
     // 3. Seed default roles, subscription plans, and super admins
@@ -94,7 +102,7 @@ async function resetDatabase() {
       console.log(`  👤 Created Super Admin: ${u.username}`);
     }
 
-    console.log('🎉 Database fully reset and freshly initialized!');
+    console.log('🎉 Database schema rebuilt & initialized cleanly (Super Admin credentials ready)!');
     console.log(`🔑 Login password for super admin: ${SEED_PASSWORD}`);
     process.exit(0);
   } catch (err) {

@@ -1,6 +1,7 @@
 import mysql from 'mysql2/promise';
 import { db } from '../config/db.knex.js';
 import { env } from '../config/env.config.js';
+
 import * as createRolesTable from '../migrations/20260807000001_create_roles_table.js';
 import * as createTenantsTables from '../migrations/20260807000002_create_tenants_tables.js';
 import * as createUsersTable from '../migrations/20260807000003_create_users_table.js';
@@ -13,10 +14,14 @@ import * as createPhase5AccountingAndFinanceTables from '../migrations/202608070
 import * as createPhase6WorkforceTables from '../migrations/20260807000010_create_phase6_workforce_tables.js';
 import * as createPhase7SystemTables from '../migrations/20260807000011_create_phase7_system_tables.js';
 import * as createContactMessagesTable from '../migrations/20260807000012_create_contact_messages_table.js';
+import * as createTicketsTable from '../migrations/20260807000013_create_tickets_table.js';
 import * as addBranchIdToOperationsTables from '../migrations/20260811000014_add_branch_id_to_operations_tables.js';
 import * as addBranchIdToHrAndWarrantyTables from '../migrations/20260812000015_add_branch_id_to_hr_and_warranty_tables.js';
 import * as addNotesToTenantsTable from '../migrations/20260812000016_add_notes_to_tenants_table.js';
 import * as addNotesToTransactionsTable from '../migrations/20260812000017_add_notes_to_transactions_table.js';
+import * as addBranchIdToWholesaleOrders from '../migrations/20260812000018_add_branch_id_to_wholesale_orders.js';
+import * as addBranchIdToAuditLogs from '../migrations/20260812000019_add_branch_id_to_audit_logs.js';
+import * as addBranchIdToSharedTables from '../migrations/20260812000020_add_branch_id_to_shared_tables.js';
 
 async function ensureDatabase() {
   try {
@@ -37,39 +42,48 @@ async function ensureDatabase() {
 async function main() {
   await ensureDatabase();
 
-  console.log('🔄 Running migration for roles table...');
+  console.log('🔄 Running migration 1: roles table...');
   await createRolesTable.up(db);
-  console.log('🔄 Running migration for tenants tables...');
+  console.log('🔄 Running migration 2: tenants tables...');
   await createTenantsTables.up(db);
-  console.log('🔄 Running migration for users table...');
+  console.log('🔄 Running migration 3: users table...');
   await createUsersTable.up(db);
-  console.log('🔄 Running migration for sessions table...');
+  console.log('🔄 Running migration 4: sessions table...');
   await createSessionsTable.up(db);
-  console.log('🔄 Running migration for branches and settings tables...');
+  console.log('🔄 Running migration 5: branches and settings tables...');
   await createBranchesAndSettingsTables.up(db);
-  console.log('🔄 Running migration for Phase 2 master data tables...');
+  console.log('🔄 Running migration 6: Phase 2 master data tables...');
   await createPhase2MasterDataTables.up(db);
-  console.log('🔄 Running migration for Phase 3 product & stock tables...');
+  console.log('🔄 Running migration 7: Phase 3 product & stock tables...');
   await createPhase3ProductAndStockTables.up(db);
-  console.log('🔄 Running migration for Phase 4 operations tables...');
+  console.log('🔄 Running migration 8: Phase 4 operations tables...');
   await createPhase4OperationsTables.up(db);
-  console.log('🔄 Running migration for Phase 5 accounting & finance tables...');
+  console.log('🔄 Running migration 9: Phase 5 accounting & finance tables...');
   await createPhase5AccountingAndFinanceTables.up(db);
-  console.log('🔄 Running migration for Phase 6 workforce tables...');
+  console.log('🔄 Running migration 10: Phase 6 workforce tables...');
   await createPhase6WorkforceTables.up(db);
-  console.log('🔄 Running migration for Phase 7 system tables...');
+  console.log('🔄 Running migration 11: Phase 7 system tables...');
   await createPhase7SystemTables.up(db);
-  console.log('🔄 Running migration for contact messages table...');
+  console.log('🔄 Running migration 12: contact messages table...');
   await createContactMessagesTable.up(db);
-  console.log('🔄 Running migration: add branch_id to operations tables...');
+  console.log('🔄 Running migration 13: support tickets table...');
+  await createTicketsTable.up(db);
+  console.log('🔄 Running migration 14: add branch_id to operations tables...');
   await addBranchIdToOperationsTables.up(db);
-  console.log('🔄 Running migration: add branch_id to HR & warranty tables...');
+  console.log('🔄 Running migration 15: add branch_id to HR & warranty tables...');
   await addBranchIdToHrAndWarrantyTables.up(db);
-  console.log('🔄 Running migration: add notes column to tenants table...');
+  console.log('🔄 Running migration 16: add notes column to tenants table...');
   await addNotesToTenantsTable.up(db);
-  console.log('🔄 Running migration: add notes column to transactions table...');
+  console.log('🔄 Running migration 17: add notes column to transactions table...');
   await addNotesToTransactionsTable.up(db);
-  console.log('✅ All migrations completed successfully!');
+  console.log('🔄 Running migration 18: add branch_id to wholesale orders...');
+  await addBranchIdToWholesaleOrders.up(db);
+  console.log('🔄 Running migration 19: add branch_id to audit logs...');
+  await addBranchIdToAuditLogs.up(db);
+  console.log('🔄 Running migration 20: add branch_id to shared tables...');
+  await addBranchIdToSharedTables.up(db);
+
+  console.log('✅ All 20 migrations completed successfully!');
   process.exit(0);
 }
 
