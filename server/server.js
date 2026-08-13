@@ -90,10 +90,10 @@ startServer(listenTarget);
   emitter.on(EVENTS.SALE_COMPLETED, async (data) => {
     console.log('\x1b[32m[EVENT:SALE]\x1b[0m Sale completed:', data?.invoiceNo || data?.sale?.invoiceNo);
 
-    const eventTenantId = data?.tenantId || data?.sale?.tenantId || null;
     broadcastToTenant(eventTenantId, { type: 'SALE_COMPLETED', data });
+    broadcastAll({ type: 'SALE_COMPLETED', data });
 
-    const invoiceNo = data?.invoiceNo || data?.sale?.invoiceNo || 'Invoice';
+    const invoiceNo = data?.invoiceNo || data?.sale?.invoiceNo || data?.invoiceNumber || 'Invoice';
     const amount = data?.grandTotal || data?.sale?.grandTotal || 0;
     const customerEmail = data?.customerEmail || data?.sale?.customer?.email || data?.customer?.email;
     const customerName = data?.customerName || data?.sale?.customer?.name || data?.customer?.name;
@@ -134,11 +134,19 @@ startServer(listenTarget);
 
   emitter.on(EVENTS.USER_CREATED, (data) => {
     console.log('\x1b[34m[EVENT:USER]\x1b[0m User created:', data?.username);
+    broadcastToTenant(data?.tenantId || null, { type: 'USER_MUTATED', data });
+    broadcastAll({ type: 'USER_MUTATED', data });
     sendAdminNotificationEmail(
       `New User Created (${data?.username || 'User'})`,
       'New User Account Created',
       `<p>New system user <strong>${data?.username}</strong> (${data?.roleName || 'Staff'}) was added.</p>`
     ).catch((err) => console.error('[Admin Mail Error]:', err.message));
+  });
+
+  emitter.on(EVENTS.USER_MUTATED, (data) => {
+    console.log('\x1b[34m[EVENT:USER]\x1b[0m User mutated:', data?.username || data?.id);
+    broadcastToTenant(data?.tenantId || null, { type: 'USER_MUTATED', data });
+    broadcastAll({ type: 'USER_MUTATED', data });
   });
 
   emitter.on(EVENTS.LOW_STOCK_ALERT, (data) => {
