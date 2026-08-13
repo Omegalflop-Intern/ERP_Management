@@ -14,10 +14,25 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { createServer as createHttpServer } from 'http';
 import { createServer as createHttpsServer } from 'https';
+import { execSync } from 'child_process';
 import { ensureSSLCerts } from './utils/system/ssl.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = env.PORT || 5000;
+
+// Helper to kill any process currently occupying the desired port
+const killPortProcess = (port) => {
+  const numericPort = Number(port);
+  if (isNaN(numericPort) || numericPort <= 0) return;
+  try {
+    if (process.platform === 'linux' || process.platform === 'darwin') {
+      execSync(`fuser -k -n tcp ${numericPort} 2>/dev/null || fuser -k ${numericPort}/tcp 2>/dev/null || kill -9 $(lsof -t -i:${numericPort}) 2>/dev/null || true`);
+      console.log(`[SERVER] 🧹 Auto-cleared lingering process on port ${numericPort}`);
+    }
+  } catch {
+    // Ignore permissions or process absence
+  }
+};
 
 // Auto-generate self-signed TLS certs in development if missing
 if (env.NODE_ENV === 'development') {
@@ -50,8 +65,17 @@ const startServer = (target) => {
   
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
-      console.warn(`[SERVER] ⚠️ Target port/socket ${target} is currently in use. Instantly binding to an available OS port (port 0)...`);
-      setTimeout(() => startServer(0), 100);
+      console.warn(`[SERVER] ⚠️ Target port/socket ${target} is currently in use. Attempting to kill existing process...`);
+      killPortProcess(target);
+      
+      setTimeout(() => {
+        server.removeAllListeners('error');
+        server.on('error', () => {
+          console.warn(`[SERVER] ⚠️ Could not free port ${target}. Binding to available OS port (port 0)...`);
+          startServer(0);
+        });
+        server.listen(target);
+      }, 300);
     } else {
       console.error('[SERVER] ❌ Fatal server error:', err.message);
     }
