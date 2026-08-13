@@ -329,7 +329,9 @@ export const updateUser = async (id, data, tenantId = null) => {
     await q.update(updateFields);
   }
 
-  return getUserById(id, tenantId);
+  const updatedUser = await getUserById(id, tenantId);
+  emitter.emit(EVENTS.USER_MUTATED, { ...updatedUser, tenantId: updatedUser?.tenantId || tenantId });
+  return updatedUser;
 };
 
 export const deleteUser = async (id, tenantId = null) => {
@@ -339,7 +341,9 @@ export const deleteUser = async (id, tenantId = null) => {
   const q1 = db('users').where({ id });
   if (tenantId) q1.andWhere('tenant_id', tenantId);
   await q1.update({ is_deleted: true });
-  return { ...user, isDeleted: true };
+  const result = { ...user, isDeleted: true };
+  emitter.emit(EVENTS.USER_MUTATED, { ...result, tenantId: user?.tenantId || tenantId });
+  return result;
 };
 
 export const toggleVerification = async (id, tenantId = null) => {
@@ -351,7 +355,9 @@ export const toggleVerification = async (id, tenantId = null) => {
   if (tenantId) q2.andWhere('tenant_id', tenantId);
   await q2.update({ is_verified: newStatus });
 
-  return getUserById(id, tenantId);
+  const updatedUser = await getUserById(id, tenantId);
+  emitter.emit(EVENTS.USER_MUTATED, { ...updatedUser, tenantId: updatedUser?.tenantId || tenantId });
+  return updatedUser;
 };
 
 export const changePassword = async (id, currentPassword, newPassword, tenantId = null) => {

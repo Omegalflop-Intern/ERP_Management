@@ -23,6 +23,7 @@ export const EVENTS = {
   CUSTOMER_MUTATED: 'customer:mutated',
   REPAIR_MUTATED: 'repair:mutated',
   WARRANTY_MUTATED: 'warranty:mutated',
+  USER_MUTATED: 'user:mutated',
 };
 
 export default emitter;
