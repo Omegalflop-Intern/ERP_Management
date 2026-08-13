@@ -294,7 +294,9 @@ function ProductSearchInput({ products, value, onChange, onSelect, onCreateNew }
   const listRef = useRef(null);
 
   const selectedProduct = products.find((p) => p._id === value || p.id === value);
-  const displayValue = selectedProduct ? `${selectedProduct.name} ${selectedProduct.sku ? `(${selectedProduct.sku})` : ''}` : query;
+  const displayValue = selectedProduct
+    ? `${selectedProduct.name} ${selectedProduct.sku ? `(${selectedProduct.sku})` : ''}`
+    : query;
 
   const filtered = query.trim()
     ? products.filter(
@@ -417,7 +419,9 @@ function ProductSearchInput({ products, value, onChange, onSelect, onCreateNew }
           )}
 
           {filtered.length === 0 && !showCreateOption && (
-            <div className="px-3 py-3 text-xs text-center text-slate-400">No matching products found</div>
+            <div className="px-3 py-3 text-xs text-center text-slate-400">
+              No matching products found
+            </div>
           )}
 
           {filtered.map((p, idx) => (
@@ -425,8 +429,10 @@ function ProductSearchInput({ products, value, onChange, onSelect, onCreateNew }
               key={p._id || p.id}
               type="button"
               className={`w-full text-left px-3 py-2 rounded-xl text-xs transition-all ${
-                idx === highlightIdx ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300' : ''
-              } ${ (p._id || p.id) === value ? 'bg-blue-50/80 dark:bg-blue-950/80 font-bold text-blue-600 dark:text-blue-400' : 'text-slate-700 dark:text-slate-200'}`}
+                idx === highlightIdx
+                  ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300'
+                  : ''
+              } ${(p._id || p.id) === value ? 'bg-blue-50/80 dark:bg-blue-950/80 font-bold text-blue-600 dark:text-blue-400' : 'text-slate-700 dark:text-slate-200'}`}
               onMouseDown={(e) => {
                 e.preventDefault();
                 onChange(p._id || p.id);
@@ -439,8 +445,14 @@ function ProductSearchInput({ products, value, onChange, onSelect, onCreateNew }
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-slate-900 dark:text-white">{p.name}</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-mono text-slate-400">Cost: ৳{(p.costPrice || 0).toLocaleString()}</span>
-                  {p.sku && <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded font-mono text-slate-500">{p.sku}</span>}
+                  <span className="text-[10px] font-mono text-slate-400">
+                    Cost: ৳{(p.costPrice || 0).toLocaleString()}
+                  </span>
+                  {p.sku && (
+                    <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded font-mono text-slate-500">
+                      {p.sku}
+                    </span>
+                  )}
                 </div>
               </div>
             </button>
@@ -503,7 +515,10 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
     setLineItems(updated);
   };
 
-  const subTotal = lineItems.reduce((sum, item) => sum + (Number(item.qty) || 0) * (Number(item.unitCost) || 0), 0);
+  const subTotal = lineItems.reduce(
+    (sum, item) => sum + (Number(item.qty) || 0) * (Number(item.unitCost) || 0),
+    0
+  );
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -519,7 +534,9 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
       return api.post('/purchase-orders', payload);
     },
     onSuccess: () => {
-      toast.success(editPO ? 'Purchase order updated successfully!' : 'Purchase order created successfully!');
+      toast.success(
+        editPO ? 'Purchase order updated successfully!' : 'Purchase order created successfully!'
+      );
       onSuccess();
     },
     onError: (e) => toast.error(e.response?.data?.message || 'Failed to save purchase order'),
@@ -536,10 +553,13 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
             </div>
             <div>
               <h3 className="font-black text-lg text-white tracking-tight">
-                {editPO ? `Edit Purchase Order (${editPO.poNumber})` : 'New Inventory Purchase Order'}
+                {editPO
+                  ? `Edit Purchase Order (${editPO.poNumber})`
+                  : 'New Inventory Purchase Order'}
               </h3>
               <p className="text-xs text-blue-100/90 font-medium">
-                Restock stock, select vendor supplier, or quickly create non-existing products on the fly.
+                Restock stock, select vendor supplier, or quickly create non-existing products on
+                the fly.
               </p>
             </div>
           </div>
@@ -570,7 +590,8 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
                     <option value="">Select Vendor Supplier</option>
                     {suppliers.map((s) => (
                       <option key={s._id || s.id} value={s._id || s.id}>
-                        {s.name} {s.company ? `(${s.company})` : ''} &middot; {s.phone || 'No phone'}
+                        {s.name} {s.company ? `(${s.company})` : ''} &middot;{' '}
+                        {s.phone || 'No phone'}
                       </option>
                     ))}
                   </select>
@@ -618,10 +639,12 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
             <div className="flex items-center justify-between">
               <div>
                 <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <Package className="w-4 h-4 text-blue-600" /> Products to Purchase ({lineItems.length})
+                  <Package className="w-4 h-4 text-blue-600" /> Products to Purchase (
+                  {lineItems.length})
                 </h4>
                 <p className="text-[11px] text-slate-500">
-                  Search existing catalog products or type a name to create a non-existing product instantly.
+                  Search existing catalog products or type a name to create a non-existing product
+                  instantly.
                 </p>
               </div>
               <button
@@ -668,10 +691,14 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
 
                   <div className="flex items-center gap-2 shrink-0">
                     <div className="w-24">
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-0.5 sm:hidden">Qty</label>
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-0.5 sm:hidden">
+                        Qty
+                      </label>
                       <NumberInput
                         value={item.qty}
-                        onChange={(e) => updateLineItem(idx, 'qty', Math.max(1, Number(e.target.value)))}
+                        onChange={(e) =>
+                          updateLineItem(idx, 'qty', Math.max(1, Number(e.target.value)))
+                        }
                         min={1}
                         className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-white focus:outline-none focus:border-blue-600"
                         placeholder="Qty"
@@ -679,7 +706,9 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
                     </div>
 
                     <div className="w-32">
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-0.5 sm:hidden">Unit Cost</label>
+                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-0.5 sm:hidden">
+                        Unit Cost
+                      </label>
                       <NumberInput
                         value={item.unitCost}
                         onChange={(e) => updateLineItem(idx, 'unitCost', Number(e.target.value))}
@@ -720,7 +749,9 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
           {/* Financial Calculation Summary */}
           <div className="flex flex-col sm:flex-row items-end justify-between gap-4 bg-slate-900 text-white rounded-2xl p-5 border border-slate-800 shadow-xl">
             <div className="space-y-1">
-              <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Payment Status Note</span>
+              <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
+                Payment Status Note
+              </span>
               <p className="text-xs text-slate-300 font-medium">
                 {paymentMethod === 'CREDIT'
                   ? '৳0 paid now. Full order total will be added as supplier payable credit.'
@@ -729,7 +760,9 @@ function CreatePOModal({ editPO, onClose, onSuccess }) {
             </div>
             <div className="text-right space-y-1 shrink-0">
               <div className="text-xs text-slate-400">Total Purchase Order Cost</div>
-              <div className="text-3xl font-black text-emerald-400 tracking-tight">৳{subTotal.toLocaleString()}</div>
+              <div className="text-3xl font-black text-emerald-400 tracking-tight">
+                ৳{subTotal.toLocaleString()}
+              </div>
             </div>
           </div>
         </div>

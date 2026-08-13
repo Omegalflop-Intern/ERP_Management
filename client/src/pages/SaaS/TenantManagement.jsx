@@ -253,6 +253,13 @@ export default function TenantManagement() {
                     <span className="font-semibold">{t.ownerName}</span>
                   </div>
                   <div className="flex items-center gap-2">
+                    <Key className="w-3.5 h-3.5 text-blue-500" />
+                    <span className="text-slate-500">Username:</span>
+                    <code className="font-mono font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded text-[11px]">
+                      {t.username || t.ownerUser?.username || '—'}
+                    </code>
+                  </div>
+                  <div className="flex items-center gap-2">
                     <Mail className="w-3.5 h-3.5 text-slate-400" />
                     <span>{t.email}</span>
                   </div>

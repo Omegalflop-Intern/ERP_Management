@@ -268,7 +268,11 @@ function PlanForm({
               className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs rounded-full"
             >
               {f}
-              <button type="button" onClick={() => onRemoveFeature(idx)} className="hover:text-red-500">
+              <button
+                type="button"
+                onClick={() => onRemoveFeature(idx)}
+                className="hover:text-red-500"
+              >
                 <X className="w-3 h-3" />
               </button>
             </span>

@@ -77,10 +77,14 @@ export default function DashboardCharts({
     const totalSalesCount = salesTrendData.reduce((acc, curr) => acc + (curr.sales || 0), 0);
     const totalPaid = dueTrendData.reduce((acc, curr) => acc + (curr.paidAmount || 0), 0);
     const totalDue = dueTrendData.reduce((acc, curr) => acc + (curr.dueAmount || 0), 0);
-    const collectionRate = totalPaid + totalDue > 0 ? Math.round((totalPaid / (totalPaid + totalDue)) * 100) : 100;
+    const collectionRate =
+      totalPaid + totalDue > 0 ? Math.round((totalPaid / (totalPaid + totalDue)) * 100) : 100;
 
     const totalBrandUnits = brandDistribution.reduce((acc, curr) => acc + (curr.value || 0), 0);
-    const topBrand = brandDistribution.length > 0 ? [...brandDistribution].sort((a, b) => b.value - a.value)[0] : null;
+    const topBrand =
+      brandDistribution.length > 0
+        ? [...brandDistribution].sort((a, b) => b.value - a.value)[0]
+        : null;
 
     return {
       totalRev,
@@ -114,7 +118,9 @@ export default function DashboardCharts({
                 <span className="font-semibold text-slate-300">{entry.name}</span>
               </div>
               <span className="font-extrabold text-white font-mono">
-                {typeof entry.value === 'number' && entry.name !== 'Sales Count' && entry.name !== 'Units'
+                {typeof entry.value === 'number' &&
+                entry.name !== 'Sales Count' &&
+                entry.name !== 'Units'
                   ? `৳${entry.value.toLocaleString()}`
                   : entry.value?.toLocaleString()}
               </span>
@@ -131,7 +137,9 @@ export default function DashboardCharts({
         <Icon className="w-6 h-6 stroke-[2]" />
       </div>
       <div className="text-center">
-        <p className="text-sm font-bold text-slate-700 dark:text-slate-300">No {title} Data Available</p>
+        <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+          No {title} Data Available
+        </p>
         <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
           Transactions will render automatically as sales & stock activities occur.
         </p>
@@ -203,7 +211,8 @@ export default function DashboardCharts({
                 Sales Completed
               </div>
               <div className="text-lg font-black text-slate-900 dark:text-white font-mono mt-0.5">
-                {summaryMetrics.totalSalesCount.toLocaleString()} <span className="text-xs text-slate-400 font-normal">units</span>
+                {summaryMetrics.totalSalesCount.toLocaleString()}{' '}
+                <span className="text-xs text-slate-400 font-normal">units</span>
               </div>
             </div>
             <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
@@ -217,7 +226,8 @@ export default function DashboardCharts({
                 Paid Collection
               </div>
               <div className="text-lg font-black text-slate-900 dark:text-white font-mono mt-0.5">
-                {summaryMetrics.collectionRate}% <span className="text-xs text-slate-400 font-normal">rate</span>
+                {summaryMetrics.collectionRate}%{' '}
+                <span className="text-xs text-slate-400 font-normal">rate</span>
               </div>
             </div>
             <div className="h-8 w-8 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0">
@@ -257,7 +267,10 @@ export default function DashboardCharts({
 
           {salesTrendData.length > 0 ? (
             <ResponsiveContainer width="100%" height={280}>
-              <AreaChart data={salesTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart
+                data={salesTrendData}
+                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+              >
                 <defs>
                   <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#6366F1" stopOpacity={0.4} />
@@ -340,7 +353,10 @@ export default function DashboardCharts({
                 />
                 <Tooltip
                   content={<CustomTooltip />}
-                  cursor={{ fill: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)', rx: 8 }}
+                  cursor={{
+                    fill: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)',
+                    rx: 8,
+                  }}
                 />
                 <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} />
                 <Bar

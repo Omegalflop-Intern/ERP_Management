@@ -144,7 +144,9 @@ export default function SATickets() {
   const totalCount = pagination.total || tickets.length;
   const openCount = tickets.filter((t) => t.status === 'OPEN').length;
   const inProgressCount = tickets.filter((t) => t.status === 'IN_PROGRESS').length;
-  const resolvedCount = tickets.filter((t) => t.status === 'RESOLVED' || t.status === 'CLOSED').length;
+  const resolvedCount = tickets.filter(
+    (t) => t.status === 'RESOLVED' || t.status === 'CLOSED'
+  ).length;
 
   const getPriorityBadge = (p) => {
     switch (p) {
@@ -183,9 +185,12 @@ export default function SATickets() {
             <LifeBuoy className="w-6 h-6 stroke-[2.2]" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-900 dark:text-white">Shop Support Tickets</h1>
+            <h1 className="text-xl font-bold text-slate-900 dark:text-white">
+              Shop Support Tickets
+            </h1>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Central helpdesk to review shop assistance requests, contact shop owners, and mark issues as resolved.
+              Central helpdesk to review shop assistance requests, contact shop owners, and mark
+              issues as resolved.
             </p>
           </div>
         </div>
@@ -196,7 +201,9 @@ export default function SATickets() {
         <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <div>
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Total Tickets</p>
-            <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1">{totalCount}</h3>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1">
+              {totalCount}
+            </h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center">
             <LifeBuoy className="w-5 h-5" />
@@ -206,7 +213,9 @@ export default function SATickets() {
         <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <div>
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Open</p>
-            <h3 className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">{openCount}</h3>
+            <h3 className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">
+              {openCount}
+            </h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
             <Clock className="w-5 h-5" />
@@ -216,7 +225,9 @@ export default function SATickets() {
         <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <div>
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400">In Progress</p>
-            <h3 className="text-2xl font-black text-blue-600 dark:text-blue-400 mt-1">{inProgressCount}</h3>
+            <h3 className="text-2xl font-black text-blue-600 dark:text-blue-400 mt-1">
+              {inProgressCount}
+            </h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
             <AlertTriangle className="w-5 h-5" />
@@ -226,7 +237,9 @@ export default function SATickets() {
         <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <div>
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Resolved</p>
-            <h3 className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">{resolvedCount}</h3>
+            <h3 className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
+              {resolvedCount}
+            </h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
             <CheckCircle2 className="w-5 h-5" />
@@ -332,7 +345,9 @@ export default function SATickets() {
         ) : tickets.length === 0 ? (
           <div className="py-16 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
             <LifeBuoy className="w-10 h-10 mx-auto text-slate-400 mb-2" />
-            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200">No support tickets found</h3>
+            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200">
+              No support tickets found
+            </h3>
             <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
               No support tickets match the selected filters.
             </p>
@@ -361,7 +376,10 @@ export default function SATickets() {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
                 {tickets.map((t) => (
-                  <tr key={t.id} className={`hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors ${selectedIds.includes(t.id) ? 'bg-blue-50/40 dark:bg-blue-950/20' : ''}`}>
+                  <tr
+                    key={t.id}
+                    className={`hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors ${selectedIds.includes(t.id) ? 'bg-blue-50/40 dark:bg-blue-950/20' : ''}`}
+                  >
                     <td className="py-3.5 px-4 text-center">
                       <input
                         type="checkbox"
@@ -387,16 +405,24 @@ export default function SATickets() {
                       {t.ticketNumber}
                     </td>
                     <td className="py-3.5 px-4 max-w-xs">
-                      <div className="font-semibold text-slate-900 dark:text-slate-100 truncate">{t.subject}</div>
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400">{t.category}</div>
+                      <div className="font-semibold text-slate-900 dark:text-slate-100 truncate">
+                        {t.subject}
+                      </div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                        {t.category}
+                      </div>
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${getPriorityBadge(t.priority)}`}>
+                      <span
+                        className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${getPriorityBadge(t.priority)}`}
+                      >
                         {t.priority}
                       </span>
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${getStatusBadge(t.status)}`}>
+                      <span
+                        className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${getStatusBadge(t.status)}`}
+                      >
                         {t.status.replace('_', ' ')}
                       </span>
                     </td>
@@ -422,7 +448,13 @@ export default function SATickets() {
                           <ChevronRight className="w-3.5 h-3.5" />
                         </button>
                         <button
-                          onClick={() => confirmDelete('Delete Ticket?', () => deleteMutation.mutate(t.id), 'Are you sure you want to delete this ticket?')}
+                          onClick={() =>
+                            confirmDelete(
+                              'Delete Ticket?',
+                              () => deleteMutation.mutate(t.id),
+                              'Are you sure you want to delete this ticket?'
+                            )
+                          }
                           className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                           title="Delete ticket"
                         >
@@ -479,11 +511,17 @@ export default function SATickets() {
                   </span>
                 </div>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="font-mono font-bold text-slate-500 text-xs">{activeTicket.ticketNumber}</span>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${getStatusBadge(activeTicket.status)}`}>
+                  <span className="font-mono font-bold text-slate-500 text-xs">
+                    {activeTicket.ticketNumber}
+                  </span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${getStatusBadge(activeTicket.status)}`}
+                  >
                     {activeTicket.status.replace('_', ' ')}
                   </span>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${getPriorityBadge(activeTicket.priority)}`}>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${getPriorityBadge(activeTicket.priority)}`}
+                  >
                     {activeTicket.priority} Priority
                   </span>
                 </div>
@@ -496,7 +534,10 @@ export default function SATickets() {
               </button>
             </div>
 
-            <form onSubmit={handleSaveStatus} className="p-5 space-y-4 max-h-[80vh] overflow-y-auto text-xs">
+            <form
+              onSubmit={handleSaveStatus}
+              className="p-5 space-y-4 max-h-[80vh] overflow-y-auto text-xs"
+            >
               {updateError && (
                 <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-600 text-xs rounded-xl">
                   {updateError}
@@ -506,24 +547,34 @@ export default function SATickets() {
               {/* Ticket Subject & Meta */}
               <div className="p-3.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200/80 dark:border-slate-700/60 space-y-2">
                 <div>
-                  <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px] block">Subject</span>
-                  <h4 className="font-bold text-slate-900 dark:text-white text-sm mt-0.5">{activeTicket.subject}</h4>
+                  <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px] block">
+                    Subject
+                  </span>
+                  <h4 className="font-bold text-slate-900 dark:text-white text-sm mt-0.5">
+                    {activeTicket.subject}
+                  </h4>
                 </div>
                 <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
                   <div>
                     <span className="text-slate-400 block">Category:</span>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200">{activeTicket.category}</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">
+                      {activeTicket.category}
+                    </span>
                   </div>
                   <div>
                     <span className="text-slate-400 block">Submitted By:</span>
                     <span className="font-semibold text-slate-800 dark:text-slate-200">
-                      {activeTicket.createdByName || 'Shop Staff'} ({activeTicket.createdByEmail || 'N/A'})
+                      {activeTicket.createdByName || 'Shop Staff'} (
+                      {activeTicket.createdByEmail || 'N/A'})
                     </span>
                   </div>
                   {activeTicket.contactPhone && (
                     <div>
                       <span className="text-slate-400 block">Contact Phone:</span>
-                      <a href={`tel:${activeTicket.contactPhone}`} className="font-bold text-blue-600 hover:underline">
+                      <a
+                        href={`tel:${activeTicket.contactPhone}`}
+                        className="font-bold text-blue-600 hover:underline"
+                      >
                         {activeTicket.contactPhone}
                       </a>
                     </div>
@@ -531,7 +582,10 @@ export default function SATickets() {
                   {activeTicket.contactEmail && (
                     <div>
                       <span className="text-slate-400 block">Contact Email:</span>
-                      <a href={`mailto:${activeTicket.contactEmail}`} className="font-bold text-blue-600 hover:underline">
+                      <a
+                        href={`mailto:${activeTicket.contactEmail}`}
+                        className="font-bold text-blue-600 hover:underline"
+                      >
                         {activeTicket.contactEmail}
                       </a>
                     </div>
@@ -584,7 +638,13 @@ export default function SATickets() {
               <div className="pt-2 flex justify-between">
                 <button
                   type="button"
-                  onClick={() => confirmDelete('Delete Ticket?', () => deleteMutation.mutate(activeTicket.id), 'Are you sure you want to delete this ticket?')}
+                  onClick={() =>
+                    confirmDelete(
+                      'Delete Ticket?',
+                      () => deleteMutation.mutate(activeTicket.id),
+                      'Are you sure you want to delete this ticket?'
+                    )
+                  }
                   className="px-4 py-2 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
                 >
                   <Trash2 className="w-3.5 h-3.5" />

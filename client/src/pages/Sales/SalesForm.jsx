@@ -106,13 +106,22 @@ export default function SalesForm() {
 
     const activeList = activeAccountsRes.filter((a) => a.isActive !== false);
 
-    const names = activeList.map((a) => `${(a.name || '').toLowerCase()} ${(a.code || '')}`);
+    const names = activeList.map((a) => `${(a.name || '').toLowerCase()} ${a.code || ''}`);
 
-    const hasCash = names.some((n) => n.includes('cash') || n.includes('petty') || n.includes('1000'));
-    const hasBkash = names.some((n) => n.includes('bkash') || n.includes('b-kash') || n.includes('1011'));
+    const hasCash = names.some(
+      (n) => n.includes('cash') || n.includes('petty') || n.includes('1000')
+    );
+    const hasBkash = names.some(
+      (n) => n.includes('bkash') || n.includes('b-kash') || n.includes('1011')
+    );
     const hasRocket = names.some((n) => n.includes('rocket') || n.includes('1013'));
-    const hasNagad = names.some((n) => n.includes('nagad') || n.includes('nogod') || n.includes('1012'));
-    const hasBank = names.some((n) => n.includes('bank') || n.includes('card') || n.includes('checking') || n.includes('1010'));
+    const hasNagad = names.some(
+      (n) => n.includes('nagad') || n.includes('nogod') || n.includes('1012')
+    );
+    const hasBank = names.some(
+      (n) =>
+        n.includes('bank') || n.includes('card') || n.includes('checking') || n.includes('1010')
+    );
 
     const filtered = ALL_METHODS.filter(({ key }) => {
       if (key === 'cash') return hasCash;
@@ -726,7 +735,10 @@ export default function SalesForm() {
                   </div>
                   <div>
                     <h3 className="font-extrabold text-base text-slate-900 dark:text-slate-100 tracking-tight">
-                      {tenantInfo?.shopName || user?.tenant?.shopName || user?.shopName || 'Mobile Shop ERP'}
+                      {tenantInfo?.shopName ||
+                        user?.tenant?.shopName ||
+                        user?.shopName ||
+                        'Mobile Shop ERP'}
                     </h3>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400">
                       {tenantInfo?.address || 'Official Retail Sales Invoice'}
@@ -759,9 +771,7 @@ export default function SalesForm() {
                   </p>
                 )}
                 {customerEmail && (
-                  <p className="text-slate-600 dark:text-slate-300 text-[11px]">
-                    {customerEmail}
-                  </p>
+                  <p className="text-slate-600 dark:text-slate-300 text-[11px]">{customerEmail}</p>
                 )}
               </div>
 
@@ -770,10 +780,20 @@ export default function SalesForm() {
                   Invoice Details:
                 </span>
                 <p className="font-semibold text-slate-800 dark:text-slate-200">
-                  Date: {new Date().toLocaleDateString('en-BD', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  Date:{' '}
+                  {new Date().toLocaleDateString('en-BD', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                  })}
                 </p>
                 <p className="text-slate-600 dark:text-slate-300 font-mono text-[11px] uppercase">
-                  Type: <span className="font-bold text-blue-600 dark:text-blue-400">{selectedCustomerObj?.customerType === 'B2B' ? 'Wholesale (B2B)' : 'Retail (B2C)'}</span>
+                  Type:{' '}
+                  <span className="font-bold text-blue-600 dark:text-blue-400">
+                    {selectedCustomerObj?.customerType === 'B2B'
+                      ? 'Wholesale (B2B)'
+                      : 'Retail (B2C)'}
+                  </span>
                 </p>
               </div>
             </div>
@@ -782,8 +802,12 @@ export default function SalesForm() {
             {cart.length === 0 ? (
               <div className="text-center py-8 text-xs text-slate-400 dark:text-slate-500 border-2 border-dashed border-slate-200 dark:border-slate-800/80 rounded-xl space-y-1">
                 <ShoppingCart className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-700" />
-                <p className="font-semibold text-slate-600 dark:text-slate-400">Your POS Sales Cart is empty</p>
-                <p className="text-[11px] text-slate-400 dark:text-slate-500">Scan barcodes/IMEIs or select items from catalog above to preview invoice</p>
+                <p className="font-semibold text-slate-600 dark:text-slate-400">
+                  Your POS Sales Cart is empty
+                </p>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                  Scan barcodes/IMEIs or select items from catalog above to preview invoice
+                </p>
               </div>
             ) : (
               <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
@@ -800,7 +824,9 @@ export default function SalesForm() {
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 font-mono">
                     {cart.map((item, idx) => (
                       <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
-                        <td className="py-2.5 px-3 text-slate-400 text-[11px] font-sans">{idx + 1}</td>
+                        <td className="py-2.5 px-3 text-slate-400 text-[11px] font-sans">
+                          {idx + 1}
+                        </td>
                         <td className="py-2.5 px-3 font-sans">
                           <div className="font-bold text-slate-900 dark:text-slate-100">
                             {item.description}
@@ -831,13 +857,13 @@ export default function SalesForm() {
             <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
               <div className="flex justify-between text-slate-600 dark:text-slate-300">
                 <span>Subtotal</span>
-                <span className="font-mono font-bold text-slate-900 dark:text-slate-100">৳{subTotal.toLocaleString()}</span>
+                <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
+                  ৳{subTotal.toLocaleString()}
+                </span>
               </div>
               {discountAmount > 0 && (
                 <div className="flex justify-between text-red-600 dark:text-red-400 font-bold">
-                  <span>
-                    Discount ({discountType === 'PERCENT' ? `${discount}%` : 'Fixed ৳'})
-                  </span>
+                  <span>Discount ({discountType === 'PERCENT' ? `${discount}%` : 'Fixed ৳'})</span>
                   <span className="font-mono">-৳{discountAmount.toLocaleString()}</span>
                 </div>
               )}
@@ -856,7 +882,9 @@ export default function SalesForm() {
               {paidAmount > 0 && (
                 <div className="flex justify-between text-slate-700 dark:text-slate-300 font-semibold pt-1 border-t border-slate-200/60 dark:border-slate-800/60">
                   <span>Amount Paid</span>
-                  <span className="font-mono text-slate-900 dark:text-slate-100">৳{paidAmount.toLocaleString()}</span>
+                  <span className="font-mono text-slate-900 dark:text-slate-100">
+                    ৳{paidAmount.toLocaleString()}
+                  </span>
                 </div>
               )}
               {dueAmount > 0 && (
@@ -1206,7 +1234,9 @@ export default function SalesForm() {
             {changeAmount > 0 && (
               <div className="flex justify-between items-center text-sm font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 p-2.5 rounded-xl border border-emerald-200 dark:border-emerald-800">
                 <span>Cash Change to Return</span>
-                <span className="font-mono text-base font-extrabold text-emerald-600 dark:text-emerald-400">৳{Math.round(changeAmount).toLocaleString()}</span>
+                <span className="font-mono text-base font-extrabold text-emerald-600 dark:text-emerald-400">
+                  ৳{Math.round(changeAmount).toLocaleString()}
+                </span>
               </div>
             )}
             {dueAmount > 0 && (

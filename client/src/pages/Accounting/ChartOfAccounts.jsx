@@ -62,8 +62,7 @@ export default function ChartOfAccounts() {
   });
 
   const toggleStatusMutation = useMutation({
-    mutationFn: async ({ id, isActive }) =>
-      api.put(`/accounting/accounts/${id}`, { isActive }),
+    mutationFn: async ({ id, isActive }) => api.put(`/accounting/accounts/${id}`, { isActive }),
     onSuccess: (_, variables) => {
       toast.success(
         `Account "${variables.name || 'Account'}" set to ${
@@ -377,7 +376,11 @@ export default function ChartOfAccounts() {
                             ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
                             : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-slate-700'
                         }`}
-                        title={a.isActive !== false ? 'Click to Disable in POS' : 'Click to Enable in POS'}
+                        title={
+                          a.isActive !== false
+                            ? 'Click to Disable in POS'
+                            : 'Click to Enable in POS'
+                        }
                       >
                         <span
                           className={`w-2 h-2 rounded-full ${
@@ -592,7 +595,9 @@ function AccountForm({ account, onClose, onSuccess }) {
                 POS Sales Payment Status
               </span>
               <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                {form.isActive ? 'Active (ON — Displays in POS)' : 'Disabled (OFF — Hidden from POS)'}
+                {form.isActive
+                  ? 'Active (ON — Displays in POS)'
+                  : 'Disabled (OFF — Hidden from POS)'}
               </span>
             </div>
             <button

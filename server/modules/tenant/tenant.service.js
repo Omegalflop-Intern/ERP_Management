@@ -23,6 +23,7 @@ export function formatTenant(row) {
     shopName: row.shop_name,
     logo: row.logo || null,
     ownerName: row.owner_name,
+    username: row.owner_username || row.username || '',
     email: row.email,
     phone: row.phone,
     plan: row.plan || 'STARTER',
@@ -30,6 +31,7 @@ export function formatTenant(row) {
     maxBranches: Number(row.max_branches ?? defaultBranches),
     maxUsers: Number(row.max_users ?? defaultUsers),
     expiresAt: row.expires_at,
+    notes: row.notes || '',
     kycDocuments: {
       nidNumber: row.nid_number || '',
       nidFront: row.nid_front || null,
@@ -151,13 +153,44 @@ export const getAllTenants = async (search = '') => {
   }
 
   const rows = await query.orderBy('created_at', 'desc');
-  return rows.map(formatTenant);
+  const tenantIds = rows.map((r) => r.id);
+
+  const ownerUsers =
+    tenantIds.length > 0
+      ? await db('users')
+          .whereIn('tenant_id', tenantIds)
+          .where({ is_deleted: false })
+          .orderBy('id', 'asc')
+      : [];
+
+  const userMap = {};
+  for (const u of ownerUsers) {
+    if (!userMap[u.tenant_id]) {
+      userMap[u.tenant_id] = u;
+    }
+  }
+
+  return rows.map((r) =>
+    formatTenant({
+      ...r,
+      owner_username: userMap[r.id]?.username || '',
+    })
+  );
 };
 
 export const getTenantById = async (id) => {
   const row = await db('tenants').where({ id, is_deleted: false }).first();
   if (!row) throw ApiError.notFound('Shop tenant account not found');
-  return formatTenant(row);
+
+  const ownerUser = await db('users')
+    .where({ tenant_id: id, is_deleted: false })
+    .orderBy('id', 'asc')
+    .first();
+
+  return formatTenant({
+    ...row,
+    owner_username: ownerUser?.username || '',
+  });
 };
 
 export const updateTenant = async (id, data) => {
@@ -192,15 +225,69 @@ export const updateTenant = async (id, data) => {
 
   if (data.shopName !== undefined) updateFields.shop_name = data.shopName;
   if (data.ownerName !== undefined) updateFields.owner_name = data.ownerName;
+
+  if (data.email !== undefined && data.email.trim()) {
+    const emailLower = data.email.trim().toLowerCase();
+    const emailExists = await db('tenants')
+      .where({ email: emailLower, is_deleted: false })
+      .whereNot({ id })
+      .first();
+    if (emailExists) throw ApiError.conflict(`Email "${emailLower}" is already used by another shop.`);
+    updateFields.email = emailLower;
+  }
+
   if (data.phone !== undefined) updateFields.phone = data.phone;
   if (data.plan !== undefined) updateFields.plan = data.plan;
   if (data.maxBranches !== undefined) updateFields.max_branches = data.maxBranches;
   if (data.maxUsers !== undefined) updateFields.max_users = data.maxUsers;
   if (data.expiresAt !== undefined) updateFields.expires_at = data.expiresAt ? new Date(data.expiresAt) : null;
   if (data.notes !== undefined) updateFields.notes = data.notes;
+  if (data.nidNumber !== undefined) updateFields.nid_number = data.nidNumber;
+  if (data.tradeLicenseNumber !== undefined) updateFields.trade_license_number = data.tradeLicenseNumber;
 
   if (Object.keys(updateFields).length > 0) {
     await db('tenants').where({ id }).update(updateFields);
+  }
+
+  // Sync associated primary owner user in users table
+  const ownerUser = await db('users')
+    .where({ tenant_id: id, is_deleted: false })
+    .orderBy('id', 'asc')
+    .first();
+
+  if (ownerUser) {
+    const userUpdate = {};
+
+    if (data.username !== undefined && data.username.trim()) {
+      const cleanUsername = data.username.trim().toLowerCase();
+      const userExists = await db('users')
+        .where({ username: cleanUsername, is_deleted: false })
+        .whereNot({ id: ownerUser.id })
+        .first();
+      if (userExists) throw ApiError.conflict(`Username "${cleanUsername}" is already taken by another account.`);
+      userUpdate.username = cleanUsername;
+    }
+
+    if (data.email !== undefined && data.email.trim()) {
+      userUpdate.email = data.email.trim().toLowerCase();
+    }
+
+    if (data.ownerName !== undefined) {
+      userUpdate.full_name = data.ownerName;
+    }
+
+    if (data.phone !== undefined) {
+      userUpdate.phone = data.phone;
+    }
+
+    if (data.password !== undefined && data.password.trim()) {
+      const passwordHash = await bcrypt.hash(data.password.trim(), 10);
+      userUpdate.password_hash = passwordHash;
+    }
+
+    if (Object.keys(userUpdate).length > 0) {
+      await db('users').where({ id: ownerUser.id }).update(userUpdate);
+    }
   }
 
   return getTenantById(id);

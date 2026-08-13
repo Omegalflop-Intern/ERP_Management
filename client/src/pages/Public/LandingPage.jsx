@@ -84,7 +84,12 @@ function AnimatedCounter({ end, suffix = '', prefix = '', duration = 2000 }) {
   );
 }
 
-function TypewriterText({ words = [], typingSpeed = 90, deletingSpeed = 45, pauseDuration = 2200 }) {
+function TypewriterText({
+  words = [],
+  typingSpeed = 90,
+  deletingSpeed = 45,
+  pauseDuration = 2200,
+}) {
   const [index, setIndex] = useState(0);
   const [subIndex, setSubIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -171,29 +176,38 @@ function HeroDashboardMockup() {
         </div>
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> Live Stock Sync
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span> Live
+            Stock Sync
           </span>
         </div>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
         <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10">
-          <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Today's Revenue</div>
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">
+            Today's Revenue
+          </div>
           <div className="text-base sm:text-lg font-black text-white mt-0.5">৳ 94,250</div>
           <div className="text-[10px] text-emerald-400 font-bold mt-0.5">↑ +18.4% vs yesterday</div>
         </div>
         <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10">
-          <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Active Outlets</div>
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">
+            Active Outlets
+          </div>
           <div className="text-base sm:text-lg font-black text-indigo-400 mt-0.5">5 Outlets</div>
           <div className="text-[10px] text-indigo-300 font-bold mt-0.5">100% Operational</div>
         </div>
         <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10">
-          <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">IMEI Items In Stock</div>
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">
+            IMEI Items In Stock
+          </div>
           <div className="text-base sm:text-lg font-black text-amber-400 mt-0.5">1,420 Pcs</div>
           <div className="text-[10px] text-amber-300/80 font-bold mt-0.5">Passport Tracked</div>
         </div>
         <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10">
-          <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Active Repairs</div>
+          <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">
+            Active Repairs
+          </div>
           <div className="text-base sm:text-lg font-black text-emerald-400 mt-0.5">14 Jobs</div>
           <div className="text-[10px] text-slate-400 font-bold mt-0.5">Avg turn: 24 hrs</div>
         </div>
@@ -202,7 +216,9 @@ function HeroDashboardMockup() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 p-4 rounded-xl bg-white/[0.03] border border-white/10">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider">Weekly Revenue Curve</h4>
+            <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+              Weekly Revenue Curve
+            </h4>
             <span className="text-[10px] text-indigo-400 font-bold">Real-time Sales</span>
           </div>
           <div className="h-44 w-full">
@@ -210,24 +226,43 @@ function HeroDashboardMockup() {
               <AreaChart data={sampleSalesData}>
                 <defs>
                   <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.6}/>
-                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0}/>
+                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.6} />
+                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="day" stroke="#64748b" fontSize={10} tickLine={false} />
-                <YAxis stroke="#64748b" fontSize={10} tickLine={false} tickFormatter={(val) => `৳${val/1000}k`} />
+                <YAxis
+                  stroke="#64748b"
+                  fontSize={10}
+                  tickLine={false}
+                  tickFormatter={(val) => `৳${val / 1000}k`}
+                />
                 <Tooltip
-                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '8px', fontSize: '11px' }}
+                  contentStyle={{
+                    backgroundColor: '#0f172a',
+                    borderColor: '#334155',
+                    borderRadius: '8px',
+                    fontSize: '11px',
+                  }}
                   formatter={(val) => [`৳${val.toLocaleString()}`, 'Revenue']}
                 />
-                <Area type="monotone" dataKey="revenue" stroke="#818cf8" strokeWidth={2.5} fillOpacity={1} fill="url(#colorRev)" />
+                <Area
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="#818cf8"
+                  strokeWidth={2.5}
+                  fillOpacity={1}
+                  fill="url(#colorRev)"
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10 space-y-3">
-          <h4 className="text-xs font-bold text-white uppercase tracking-wider">Branch Stock Health</h4>
+          <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+            Branch Stock Health
+          </h4>
 
           <div>
             <div className="flex justify-between text-[11px] mb-1">
@@ -460,7 +495,10 @@ export default function LandingPage() {
       {/* ─── FLOATING ROUNDED NAVBAR ──────────────────────────────────────── */}
       <header className="sticky top-3 sm:top-5 z-50 max-w-7xl mx-3 sm:mx-auto px-4 sm:px-6 rounded-2xl md:rounded-full bg-[#0a0a1a]/85 backdrop-blur-2xl border border-white/10 shadow-2xl shadow-indigo-600/10 transition-all">
         <div className="h-14 sm:h-16 flex items-center justify-between">
-          <button onClick={() => scrollTo('home')} className="flex items-center gap-2 sm:gap-2.5 group text-left">
+          <button
+            onClick={() => scrollTo('home')}
+            className="flex items-center gap-2 sm:gap-2.5 group text-left"
+          >
             <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-indigo-600/20 group-hover:shadow-indigo-600/40 transition-shadow shrink-0">
               O
             </div>
@@ -548,7 +586,9 @@ export default function LandingPage() {
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <div className={`p-1.5 rounded-lg ${isActive ? 'bg-white/20' : 'bg-white/5 text-indigo-400'}`}>
+                    <div
+                      className={`p-1.5 rounded-lg ${isActive ? 'bg-white/20' : 'bg-white/5 text-indigo-400'}`}
+                    >
                       <Icon className="h-3.5 w-3.5" />
                     </div>
                     <span>{tab.label}</span>
@@ -837,7 +877,8 @@ export default function LandingPage() {
                             </div>
                             {typeof yearlyPrice === 'number' && yearlyPrice > 0 && (
                               <div className="text-[11px] font-semibold text-emerald-400 mt-0.5">
-                                ৳{Math.round(yearlyPrice / 12).toLocaleString()}/mo • Billed annually (Save 20%)
+                                ৳{Math.round(yearlyPrice / 12).toLocaleString()}/mo • Billed
+                                annually (Save 20%)
                               </div>
                             )}
                           </div>
@@ -850,7 +891,10 @@ export default function LandingPage() {
                                   : monthlyPrice}
                               </span>
                               {typeof monthlyPrice === 'number' && (
-                                <span className="text-xs font-semibold text-slate-400"> / month</span>
+                                <span className="text-xs font-semibold text-slate-400">
+                                  {' '}
+                                  / month
+                                </span>
                               )}
                             </div>
                             {typeof monthlyPrice === 'number' && monthlyPrice > 0 && (
@@ -1178,13 +1222,16 @@ export default function LandingPage() {
               </h4>
               <ul className="space-y-2.5 text-xs text-slate-400 font-medium">
                 <li className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-indigo-400 shrink-0 stroke-[2.2]" /> {platformSettings.platformAddress}
+                  <MapPin className="h-4 w-4 text-indigo-400 shrink-0 stroke-[2.2]" />{' '}
+                  {platformSettings.platformAddress}
                 </li>
                 <li className="flex items-center gap-2">
-                  <PhoneCall className="h-4 w-4 text-indigo-400 shrink-0 stroke-[2.2]" /> {platformSettings.platformPhone}
+                  <PhoneCall className="h-4 w-4 text-indigo-400 shrink-0 stroke-[2.2]" />{' '}
+                  {platformSettings.platformPhone}
                 </li>
                 <li className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-indigo-400 shrink-0 stroke-[2.2]" /> {platformSettings.platformEmail}
+                  <Mail className="h-4 w-4 text-indigo-400 shrink-0 stroke-[2.2]" />{' '}
+                  {platformSettings.platformEmail}
                 </li>
               </ul>
 

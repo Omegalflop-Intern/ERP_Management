@@ -48,7 +48,9 @@ export const useAuthStore = create(
         // 2. Non-blocking call to backend to clear cookie/session
         try {
           if (tokenToRevoke) {
-            api.post('/auth/logout', {}, { headers: { Authorization: `Bearer ${tokenToRevoke}` } }).catch(() => {});
+            api
+              .post('/auth/logout', {}, { headers: { Authorization: `Bearer ${tokenToRevoke}` } })
+              .catch(() => {});
           } else {
             api.post('/auth/logout').catch(() => {});
           }

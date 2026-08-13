@@ -220,7 +220,10 @@ function EditTenantModal({ tenant, onClose, onSuccess }) {
   const [form, setForm] = useState({
     shopName: tenant.shopName || '',
     ownerName: tenant.ownerName || '',
+    username: tenant.username || '',
+    email: tenant.email || '',
     phone: tenant.phone || '',
+    password: '',
     plan: tenant.plan || 'STARTER',
     maxBranches: tenant.maxBranches ?? 2,
     maxUsers: tenant.maxUsers ?? 5,
@@ -231,6 +234,8 @@ function EditTenantModal({ tenant, onClose, onSuccess }) {
       : PLAN_DEFAULTS[tenant.plan || 'STARTER'] || 30,
     expiresAt: tenant.expiresAt ? new Date(tenant.expiresAt).toISOString().slice(0, 10) : '',
     notes: tenant.notes || '',
+    nidNumber: tenant.kycDocuments?.nidNumber || '',
+    tradeLicenseNumber: tenant.kycDocuments?.tradeLicenseNumber || '',
   });
   const [isCustomDays, setIsCustomDays] = useState(
     ![30, 60, 90, 180, 300, 365].includes(form.durationDays)
@@ -277,6 +282,7 @@ function EditTenantModal({ tenant, onClose, onSuccess }) {
         maxUsers: Number(form.maxUsers),
         expiresAt: form.expiresAt ? new Date(form.expiresAt).toISOString() : null,
       };
+      if (!body.password || !body.password.trim()) delete body.password;
       const res = await api.put(`/tenants/${tenant._id}`, body);
       return res.data;
     },
@@ -302,202 +308,290 @@ function EditTenantModal({ tenant, onClose, onSuccess }) {
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Left Column: Basic Info & Domain */}
-            <div className="space-y-4">
+        <div className="p-6 space-y-6">
+          {/* Section 1: Shop & Account Credentials */}
+          <div>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-3 flex items-center gap-1.5">
+              <User className="w-3.5 h-3.5" /> Shop Owner & Login Credentials
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                  Shop Name *
+                  Owner Name *
                 </label>
                 <input
-                  value={form.shopName}
-                  onChange={(e) => setForm({ ...form, shopName: e.target.value })}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  value={form.ownerName}
+                  onChange={(e) => setForm({ ...form, ownerName: e.target.value })}
+                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                    Owner Name
-                  </label>
-                  <input
-                    value={form.ownerName}
-                    onChange={(e) => setForm({ ...form, ownerName: e.target.value })}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                    Phone
-                  </label>
-                  <input
-                    value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  />
-                </div>
-              </div>
-
               <div>
                 <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                  Subdomain
-                </label>
-                <div className="flex items-center gap-0">
-                  <input
-                    value={form.subdomain}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''),
-                      })
-                    }
-                    placeholder="shop-name"
-                    className="flex-1 px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-l-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  />
-                  <span className="px-2 py-2 text-xs text-slate-400 bg-slate-100 dark:bg-slate-800 border border-l-0 border-slate-200 dark:border-slate-700 rounded-r-xl whitespace-nowrap">
-                    .erp.com
-                  </span>
-                </div>
-                {form.subdomain && (
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    Preview:{' '}
-                    <span className="font-mono text-orange-500">{form.subdomain}.erp.com</span>
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                  Custom Domain
+                  Admin Username *
                 </label>
                 <input
-                  value={form.customDomain}
-                  onChange={(e) => setForm({ ...form, customDomain: e.target.value.toLowerCase() })}
-                  placeholder="optional — e.g. mystore.com"
-                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  value={form.username}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''),
+                    })
+                  }
+                  placeholder="admin_username"
+                  className="w-full px-3 py-2 text-sm font-mono border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                  Owner Email *
+                </label>
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                  Phone Number
+                </label>
+                <input
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                  Reset Password{' '}
+                  <span className="font-normal text-slate-400">(leave blank to keep current)</span>
+                </label>
+                <PasswordInput
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  placeholder="Enter new password to reset"
+                  className="w-full"
                 />
               </div>
             </div>
+          </div>
 
-            {/* Right Column: Subscription & Limits & Notes */}
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+          <hr className="border-slate-100 dark:border-slate-800" />
+
+          {/* Section 2: Shop & Subscription Settings */}
+          <div>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-3 flex items-center gap-1.5">
+              <Building2 className="w-3.5 h-3.5" /> Shop & Subscription Settings
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Left Column */}
+              <div className="space-y-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                    Plan
+                    Shop Name *
                   </label>
-                  <select
-                    value={form.plan}
-                    onChange={(e) => handlePlanChange(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  >
-                    {['FREE', 'STARTER', 'PRO', 'ENTERPRISE'].map((p) => (
-                      <option key={p} value={p}>
-                        {p}
-                      </option>
-                    ))}
-                  </select>
+                  <input
+                    value={form.shopName}
+                    onChange={(e) => setForm({ ...form, shopName: e.target.value })}
+                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
                 </div>
+
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                    Duration
+                    Subdomain
                   </label>
-                  <div className="flex items-center gap-2">
-                    <select
-                      value={
-                        isCustomDays
-                          ? 'custom'
-                          : [30, 60, 90, 180, 300, 365].includes(form.durationDays)
-                            ? form.durationDays
-                            : 'custom'
+                  <div className="flex items-center gap-0">
+                    <input
+                      value={form.subdomain}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''),
+                        })
                       }
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === 'custom') {
-                          setIsCustomDays(true);
-                        } else {
-                          setIsCustomDays(false);
-                          handleDurationChange(Number(val));
-                        }
-                      }}
-                      className="flex-1 px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      placeholder="shop-name"
+                      className="flex-1 px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-l-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                    <span className="px-2 py-2 text-xs text-slate-400 bg-slate-100 dark:bg-slate-800 border border-l-0 border-slate-200 dark:border-slate-700 rounded-r-xl whitespace-nowrap">
+                      .erp.com
+                    </span>
+                  </div>
+                  {form.subdomain && (
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      Preview:{' '}
+                      <span className="font-mono text-indigo-500">{form.subdomain}.erp.com</span>
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                    Custom Domain
+                  </label>
+                  <input
+                    value={form.customDomain}
+                    onChange={(e) =>
+                      setForm({ ...form, customDomain: e.target.value.toLowerCase() })
+                    }
+                    placeholder="optional — e.g. mystore.com"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+              </div>
+
+              {/* Right Column */}
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                      Plan
+                    </label>
+                    <select
+                      value={form.plan}
+                      onChange={(e) => handlePlanChange(e.target.value)}
+                      className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
-                      <option value={30}>30 Days (1 Mo)</option>
-                      <option value={60}>60 Days (2 Mos)</option>
-                      <option value={90}>90 Days (3 Mos)</option>
-                      <option value={180}>180 Days (6 Mos)</option>
-                      <option value={300}>300 Days (10 Mos)</option>
-                      <option value={365}>365 Days (1 Yr)</option>
-                      <option value="custom">Custom Days</option>
+                      {['FREE', 'STARTER', 'PRO', 'ENTERPRISE'].map((p) => (
+                        <option key={p} value={p}>
+                          {p}
+                        </option>
+                      ))}
                     </select>
-                    {(isCustomDays || ![30, 60, 90, 180, 300, 365].includes(form.durationDays)) && (
-                      <input
-                        type="number"
-                        min="1"
-                        max="3650"
-                        value={form.durationDays}
-                        onChange={(e) => handleDurationChange(Number(e.target.value))}
-                        placeholder="Days"
-                        className="w-24 px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
-                      />
-                    )}
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                      Duration
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={
+                          isCustomDays
+                            ? 'custom'
+                            : [30, 60, 90, 180, 300, 365].includes(form.durationDays)
+                              ? form.durationDays
+                              : 'custom'
+                        }
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === 'custom') {
+                            setIsCustomDays(true);
+                          } else {
+                            setIsCustomDays(false);
+                            handleDurationChange(Number(val));
+                          }
+                        }}
+                        className="flex-1 px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      >
+                        <option value={30}>30 Days (1 Mo)</option>
+                        <option value={60}>60 Days (2 Mos)</option>
+                        <option value={90}>90 Days (3 Mos)</option>
+                        <option value={180}>180 Days (6 Mos)</option>
+                        <option value={300}>300 Days (10 Mos)</option>
+                        <option value={365}>365 Days (1 Yr)</option>
+                        <option value="custom">Custom Days</option>
+                      </select>
+                      {(isCustomDays ||
+                        ![30, 60, 90, 180, 300, 365].includes(form.durationDays)) && (
+                        <input
+                          type="number"
+                          min="1"
+                          max="3650"
+                          value={form.durationDays}
+                          onChange={(e) => handleDurationChange(Number(e.target.value))}
+                          placeholder="Days"
+                          className="w-24 px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        />
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                      Max Branches
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="50"
+                      value={form.maxBranches}
+                      onChange={(e) => setForm({ ...form, maxBranches: e.target.value })}
+                      className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                      Max Users
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="500"
+                      value={form.maxUsers}
+                      onChange={(e) => setForm({ ...form, maxUsers: e.target.value })}
+                      className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                    Max Branches
+                    Expiry Date
                   </label>
                   <input
-                    type="number"
-                    min="1"
-                    max="50"
-                    value={form.maxBranches}
-                    onChange={(e) => setForm({ ...form, maxBranches: e.target.value })}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                    Max Users
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="500"
-                    value={form.maxUsers}
-                    onChange={(e) => setForm({ ...form, maxUsers: e.target.value })}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    type="date"
+                    value={form.expiresAt}
+                    onChange={(e) => {
+                      const d = e.target.value;
+                      setForm({
+                        ...form,
+                        expiresAt: d,
+                        durationDays: d
+                          ? Math.max(1, Math.ceil((new Date(d) - new Date()) / 86400000))
+                          : form.durationDays,
+                      });
+                    }}
+                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
               </div>
+            </div>
+          </div>
 
+          <hr className="border-slate-100 dark:border-slate-800" />
+
+          {/* Section 3: Identity Documents & Internal Notes */}
+          <div>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-3 flex items-center gap-1.5">
+              <FileText className="w-3.5 h-3.5" /> Identity Documents & Notes
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                  Expiry Date
+                  NID Number
                 </label>
                 <input
-                  type="date"
-                  value={form.expiresAt}
-                  onChange={(e) => {
-                    const d = e.target.value;
-                    setForm({
-                      ...form,
-                      expiresAt: d,
-                      durationDays: d
-                        ? Math.max(1, Math.ceil((new Date(d) - new Date()) / 86400000))
-                        : form.durationDays,
-                    });
-                  }}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  value={form.nidNumber}
+                  onChange={(e) => setForm({ ...form, nidNumber: e.target.value })}
+                  placeholder="e.g. 1990123456789"
+                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
-
               <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+                  Trade License Number
+                </label>
+                <input
+                  value={form.tradeLicenseNumber}
+                  onChange={(e) => setForm({ ...form, tradeLicenseNumber: e.target.value })}
+                  placeholder="e.g. TRAD/DNCC/012345/2026"
+                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              <div className="sm:col-span-2">
                 <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
                   Internal Notes
                 </label>
@@ -506,7 +600,7 @@ function EditTenantModal({ tenant, onClose, onSuccess }) {
                   onChange={(e) => setForm({ ...form, notes: e.target.value })}
                   rows={2}
                   placeholder="Notes for internal reference..."
-                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+                  className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
                 />
               </div>
             </div>
@@ -825,6 +919,13 @@ export default function SAShopManagement() {
                 <div className="flex items-center gap-2">
                   <User className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
                   <span className="font-medium">{t.ownerName}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Key className="w-3.5 h-3.5 text-indigo-500 flex-shrink-0" />
+                  <span className="text-slate-500">Username:</span>
+                  <code className="font-mono font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-1.5 py-0.5 rounded text-[11px]">
+                    {t.username || '—'}
+                  </code>
                 </div>
                 <div className="flex items-center gap-2">
                   <Mail className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />

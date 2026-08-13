@@ -43,7 +43,9 @@ export default function UserList() {
   const { data, isLoading } = useQuery({
     queryKey: ['users', search, branchFilter],
     queryFn: async () => {
-      const { data } = await api.get('/users', { params: { search, branchId: branchFilter || undefined, limit: 50 } });
+      const { data } = await api.get('/users', {
+        params: { search, branchId: branchFilter || undefined, limit: 50 },
+      });
       return data;
     },
   });
@@ -182,10 +184,16 @@ export default function UserList() {
                       </span>
                     </td>
                     <td className="px-4 py-3.5">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${
-                        u.branchId ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800' : 'bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
-                      }`}>
-                        {u.branchName || u.branch?.name || (u.branchId ? `Branch #${u.branchId}` : 'Main Branch (All Outlets)')}
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-xs font-semibold border ${
+                          u.branchId
+                            ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+                            : 'bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                        }`}
+                      >
+                        {u.branchName ||
+                          u.branch?.name ||
+                          (u.branchId ? `Branch #${u.branchId}` : 'Main Branch (All Outlets)')}
                       </span>
                     </td>
                     <td className="px-4 py-3.5 text-center">

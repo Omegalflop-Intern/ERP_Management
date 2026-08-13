@@ -40,7 +40,11 @@ export default function ShopTickets() {
   const [formError, setFormError] = useState('');
 
   // Fetch shop tickets
-  const { data: responseData, isLoading, refetch } = useQuery({
+  const {
+    data: responseData,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ['shop-tickets', page, statusFilter, search],
     queryFn: async () => {
       const res = await api.get('/tickets', {
@@ -116,7 +120,9 @@ export default function ShopTickets() {
 
   const openCount = tickets.filter((t) => t.status === 'OPEN').length;
   const inProgressCount = tickets.filter((t) => t.status === 'IN_PROGRESS').length;
-  const resolvedCount = tickets.filter((t) => t.status === 'RESOLVED' || t.status === 'CLOSED').length;
+  const resolvedCount = tickets.filter(
+    (t) => t.status === 'RESOLVED' || t.status === 'CLOSED'
+  ).length;
 
   const getPriorityBadge = (p) => {
     switch (p) {
@@ -155,9 +161,12 @@ export default function ShopTickets() {
             <LifeBuoy className="w-6 h-6 stroke-[2.2]" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-900 dark:text-white">Support & Help Desk</h1>
+            <h1 className="text-xl font-bold text-slate-900 dark:text-white">
+              Support & Help Desk
+            </h1>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Need assistance? Submit a support ticket to central administration and track updates in real-time.
+              Need assistance? Submit a support ticket to central administration and track updates
+              in real-time.
             </p>
           </div>
         </div>
@@ -179,7 +188,9 @@ export default function ShopTickets() {
         <div className="bg-white dark:bg-[#111827] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <div>
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Open Tickets</p>
-            <h3 className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">{openCount}</h3>
+            <h3 className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">
+              {openCount}
+            </h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
             <Clock className="w-5 h-5" />
@@ -189,7 +200,9 @@ export default function ShopTickets() {
         <div className="bg-white dark:bg-[#111827] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <div>
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400">In Progress</p>
-            <h3 className="text-2xl font-black text-blue-600 dark:text-blue-400 mt-1">{inProgressCount}</h3>
+            <h3 className="text-2xl font-black text-blue-600 dark:text-blue-400 mt-1">
+              {inProgressCount}
+            </h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
             <AlertTriangle className="w-5 h-5" />
@@ -198,8 +211,12 @@ export default function ShopTickets() {
 
         <div className="bg-white dark:bg-[#111827] p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <div>
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Resolved / Closed</p>
-            <h3 className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">{resolvedCount}</h3>
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+              Resolved / Closed
+            </p>
+            <h3 className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
+              {resolvedCount}
+            </h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
             <CheckCircle2 className="w-5 h-5" />
@@ -252,7 +269,9 @@ export default function ShopTickets() {
         ) : tickets.length === 0 ? (
           <div className="py-16 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
             <MessageSquare className="w-10 h-10 mx-auto text-slate-400 mb-2" />
-            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200">No support tickets found</h3>
+            <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200">
+              No support tickets found
+            </h3>
             <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
               {search || statusFilter !== 'ALL'
                 ? 'Try adjusting your filters or search term.'
@@ -274,21 +293,32 @@ export default function ShopTickets() {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
                 {tickets.map((t) => (
-                  <tr key={t.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                  <tr
+                    key={t.id}
+                    className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors"
+                  >
                     <td className="py-3.5 px-4 font-mono font-bold text-[#2563EB] dark:text-blue-400">
                       {t.ticketNumber}
                     </td>
                     <td className="py-3.5 px-4">
-                      <div className="font-semibold text-slate-900 dark:text-slate-100">{t.subject}</div>
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400">{t.category}</div>
+                      <div className="font-semibold text-slate-900 dark:text-slate-100">
+                        {t.subject}
+                      </div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                        {t.category}
+                      </div>
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${getPriorityBadge(t.priority)}`}>
+                      <span
+                        className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${getPriorityBadge(t.priority)}`}
+                      >
                         {t.priority}
                       </span>
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${getStatusBadge(t.status)}`}>
+                      <span
+                        className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${getStatusBadge(t.status)}`}
+                      >
                         {t.status.replace('_', ' ')}
                       </span>
                     </td>
@@ -311,7 +341,13 @@ export default function ShopTickets() {
                           <ChevronRight className="w-3.5 h-3.5" />
                         </button>
                         <button
-                          onClick={() => confirmDelete('Delete Ticket?', () => deleteMutation.mutate(t.id), 'Are you sure you want to delete this ticket?')}
+                          onClick={() =>
+                            confirmDelete(
+                              'Delete Ticket?',
+                              () => deleteMutation.mutate(t.id),
+                              'Are you sure you want to delete this ticket?'
+                            )
+                          }
                           className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                           title="Delete ticket"
                         >
@@ -359,7 +395,9 @@ export default function ShopTickets() {
             <div className="flex items-center justify-between p-5 border-b border-slate-100 dark:border-slate-800">
               <div className="flex items-center gap-2.5">
                 <LifeBuoy className="w-5 h-5 text-[#2563EB]" />
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">Create Support Ticket</h3>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  Create Support Ticket
+                </h3>
               </div>
               <button
                 onClick={() => setIsCreateModalOpen(false)}
@@ -369,7 +407,10 @@ export default function ShopTickets() {
               </button>
             </div>
 
-            <form onSubmit={handleCreateSubmit} className="p-5 space-y-4 max-h-[80vh] overflow-y-auto">
+            <form
+              onSubmit={handleCreateSubmit}
+              className="p-5 space-y-4 max-h-[80vh] overflow-y-auto"
+            >
               {formError && (
                 <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs rounded-xl flex items-center gap-2">
                   <ShieldAlert className="w-4 h-4 shrink-0" />
@@ -499,7 +540,9 @@ export default function ShopTickets() {
                   <span className="font-mono font-bold text-[#2563EB] dark:text-blue-400 text-sm">
                     {selectedTicket.ticketNumber}
                   </span>
-                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${getStatusBadge(selectedTicket.status)}`}>
+                  <span
+                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${getStatusBadge(selectedTicket.status)}`}
+                  >
                     {selectedTicket.status.replace('_', ' ')}
                   </span>
                 </div>
@@ -519,11 +562,15 @@ export default function ShopTickets() {
               <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 dark:bg-slate-900/70 rounded-xl border border-slate-100 dark:border-slate-800">
                 <div>
                   <span className="text-slate-400 font-medium block">Category:</span>
-                  <span className="font-bold text-slate-800 dark:text-slate-200">{selectedTicket.category}</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">
+                    {selectedTicket.category}
+                  </span>
                 </div>
                 <div>
                   <span className="text-slate-400 font-medium block">Priority:</span>
-                  <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold border ${getPriorityBadge(selectedTicket.priority)}`}>
+                  <span
+                    className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold border ${getPriorityBadge(selectedTicket.priority)}`}
+                  >
                     {selectedTicket.priority}
                   </span>
                 </div>

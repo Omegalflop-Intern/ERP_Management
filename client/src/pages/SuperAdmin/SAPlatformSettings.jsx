@@ -116,7 +116,8 @@ export default function SAPlatformSettings() {
             Platform & Footer Settings
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Manage public platform contacts, shop activation support details, and landing page footer social media links.
+            Manage public platform contacts, shop activation support details, and landing page
+            footer social media links.
           </p>
         </div>
         <button
@@ -140,7 +141,9 @@ export default function SAPlatformSettings() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Platform Name</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                Platform Name
+              </label>
               <input
                 type="text"
                 value={form.platformName}
@@ -150,7 +153,9 @@ export default function SAPlatformSettings() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Support Phone Number</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                Support Phone Number
+              </label>
               <input
                 type="text"
                 value={form.platformPhone}
@@ -161,7 +166,9 @@ export default function SAPlatformSettings() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">WhatsApp Support Number</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                WhatsApp Support Number
+              </label>
               <input
                 type="text"
                 value={form.platformWhatsApp}
@@ -172,7 +179,9 @@ export default function SAPlatformSettings() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Support Email Address</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                Support Email Address
+              </label>
               <input
                 type="email"
                 value={form.platformEmail}
@@ -183,7 +192,9 @@ export default function SAPlatformSettings() {
             </div>
 
             <div className="sm:col-span-2">
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Office Address</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                Office Address
+              </label>
               <input
                 type="text"
                 value={form.platformAddress}
@@ -216,7 +227,9 @@ export default function SAPlatformSettings() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">bKash Merchant / Personal Number</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  bKash Merchant / Personal Number
+                </label>
                 <input
                   type="text"
                   value={form.bkashNumber}
@@ -226,7 +239,9 @@ export default function SAPlatformSettings() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Nagad Merchant / Personal Number</label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Nagad Merchant / Personal Number
+                </label>
                 <input
                   type="text"
                   value={form.nagadNumber}

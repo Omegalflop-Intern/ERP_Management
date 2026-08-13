@@ -43,7 +43,13 @@ const PLANS = [
     yearlyPrice: 9990,
     branches: '2 Branches',
     users: '5 Staff Users',
-    features: ['2 Branches', '5 Staff Users', '2,000 Products & IMEIs', 'IMEI History Passport', 'Customer Due SMS'],
+    features: [
+      '2 Branches',
+      '5 Staff Users',
+      '2,000 Products & IMEIs',
+      'IMEI History Passport',
+      'Customer Due SMS',
+    ],
     isPopular: false,
   },
   {
@@ -53,7 +59,14 @@ const PLANS = [
     yearlyPrice: 24990,
     branches: '5 Branches',
     users: '20 Staff Users',
-    features: ['5 Branches', '20 Staff Users', '10,000 IMEIs', 'Double-Entry Accounting', 'HR & Payroll', 'Wholesale Tiers'],
+    features: [
+      '5 Branches',
+      '20 Staff Users',
+      '10,000 IMEIs',
+      'Double-Entry Accounting',
+      'HR & Payroll',
+      'Wholesale Tiers',
+    ],
     isPopular: true,
   },
   {
@@ -63,7 +76,13 @@ const PLANS = [
     yearlyPrice: 'Custom',
     branches: 'Unlimited',
     users: 'Unlimited',
-    features: ['Unlimited Branches', 'Unlimited Users', 'Dedicated Account Manager', 'Custom Domain', '24/7 SLA Uptime'],
+    features: [
+      'Unlimited Branches',
+      'Unlimited Users',
+      'Dedicated Account Manager',
+      'Custom Domain',
+      '24/7 SLA Uptime',
+    ],
   },
 ];
 
@@ -253,7 +272,9 @@ export default function RegisterShop() {
                     type="button"
                     onClick={() => setBillingCycle('monthly')}
                     className={`px-3 py-1 rounded-lg font-bold text-[10px] transition-all ${
-                      billingCycle === 'monthly' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400'
+                      billingCycle === 'monthly'
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : 'text-slate-400'
                     }`}
                   >
                     Monthly
@@ -262,7 +283,9 @@ export default function RegisterShop() {
                     type="button"
                     onClick={() => setBillingCycle('yearly')}
                     className={`px-3 py-1 rounded-lg font-bold text-[10px] transition-all flex items-center gap-1 ${
-                      billingCycle === 'yearly' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-400'
+                      billingCycle === 'yearly'
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : 'text-slate-400'
                     }`}
                   >
                     <span>Yearly</span>
@@ -715,13 +738,17 @@ export default function RegisterShop() {
                 {platformSettings.bkashNumber && (
                   <div className="p-2 rounded-lg bg-pink-500/10 border border-pink-500/20 text-center">
                     <span className="text-pink-400 font-bold block">bKash Merchant</span>
-                    <span className="font-mono text-white font-bold">{platformSettings.bkashNumber}</span>
+                    <span className="font-mono text-white font-bold">
+                      {platformSettings.bkashNumber}
+                    </span>
                   </div>
                 )}
                 {platformSettings.nagadNumber && (
                   <div className="p-2 rounded-lg bg-orange-500/10 border border-orange-500/20 text-center">
                     <span className="text-orange-400 font-bold block">Nagad Merchant</span>
-                    <span className="font-mono text-white font-bold">{platformSettings.nagadNumber}</span>
+                    <span className="font-mono text-white font-bold">
+                      {platformSettings.nagadNumber}
+                    </span>
                   </div>
                 )}
               </div>

@@ -91,7 +91,15 @@ function UserAvatar({ user, size = 'md', online = true }) {
 }
 
 function BranchSwitcher({ user }) {
-  const { activeBranchId, branches, fetchBranches, setActiveBranchId, syncUserBranch, tenantPlan, maxBranches } = useBranchStore();
+  const {
+    activeBranchId,
+    branches,
+    fetchBranches,
+    setActiveBranchId,
+    syncUserBranch,
+    tenantPlan,
+    maxBranches,
+  } = useBranchStore();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
@@ -119,7 +127,8 @@ function BranchSwitcher({ user }) {
   const isBranchLocked = !isAdmin && !!user?.branchId;
 
   const currentBranch = branches.find((b) => String(b.id || b._id) === String(activeBranchId));
-  const activeLabel = activeBranchId === 'all' ? 'All Outlets' : currentBranch?.name || 'Selected Branch';
+  const activeLabel =
+    activeBranchId === 'all' ? 'All Outlets' : currentBranch?.name || 'Selected Branch';
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -136,14 +145,22 @@ function BranchSwitcher({ user }) {
         }`}
       >
         <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold">
-          {isBranchLocked ? <Lock className="w-3 h-3 text-amber-500" /> : <Building2 className="w-3.5 h-3.5" />}
+          {isBranchLocked ? (
+            <Lock className="w-3 h-3 text-amber-500" />
+          ) : (
+            <Building2 className="w-3.5 h-3.5" />
+          )}
         </div>
         <div className="text-left hidden sm:block max-w-[130px] truncate">
           <div className="text-[10px] text-gray-400 dark:text-gray-500 font-medium uppercase tracking-wider flex items-center gap-1">
             <span>Outlet</span>
-            {isBranchLocked && <span className="text-[9px] text-amber-500 font-bold">(Assigned)</span>}
+            {isBranchLocked && (
+              <span className="text-[9px] text-amber-500 font-bold">(Assigned)</span>
+            )}
           </div>
-          <div className="font-semibold text-gray-900 dark:text-gray-100 truncate">{activeLabel}</div>
+          <div className="font-semibold text-gray-900 dark:text-gray-100 truncate">
+            {activeLabel}
+          </div>
         </div>
         {!isBranchLocked && <ChevronDown className="w-3.5 h-3.5 text-gray-400 ml-0.5" />}
       </button>
@@ -166,14 +183,18 @@ function BranchSwitcher({ user }) {
                 setIsOpen(false);
               }}
               className={`w-full flex items-center justify-between px-3 py-2.5 text-xs text-left hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors ${
-                activeBranchId === 'all' ? 'bg-blue-50/80 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-bold' : 'text-gray-700 dark:text-gray-300'
+                activeBranchId === 'all'
+                  ? 'bg-blue-50/80 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-bold'
+                  : 'text-gray-700 dark:text-gray-300'
               }`}
             >
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-blue-500"></span>
                 <span>All Outlets (Main Shop)</span>
               </div>
-              {activeBranchId === 'all' && <Check className="w-4 h-4 text-blue-600 dark:text-blue-400" />}
+              {activeBranchId === 'all' && (
+                <Check className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              )}
             </button>
 
             {branches.map((b) => {
@@ -187,14 +208,18 @@ function BranchSwitcher({ user }) {
                     setIsOpen(false);
                   }}
                   className={`w-full flex items-center justify-between px-3 py-2.5 text-xs text-left hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors ${
-                    isSelected ? 'bg-blue-50/80 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-bold' : 'text-gray-700 dark:text-gray-300'
+                    isSelected
+                      ? 'bg-blue-50/80 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-bold'
+                      : 'text-gray-700 dark:text-gray-300'
                   }`}
                 >
                   <div className="flex items-center gap-2 truncate">
                     <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                     <span className="truncate">{b.name}</span>
                   </div>
-                  {isSelected && <Check className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />}
+                  {isSelected && (
+                    <Check className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                  )}
                 </button>
               );
             })}
@@ -739,7 +764,8 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
               <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-md border border-blue-200/60 dark:border-blue-800/40">
                 {activeBranchId === 'all'
                   ? 'All Outlets'
-                  : branches.find((b) => String(b.id || b._id) === String(activeBranchId))?.name || 'Active Outlet'}
+                  : branches.find((b) => String(b.id || b._id) === String(activeBranchId))?.name ||
+                    'Active Outlet'}
               </span>
             )}
             <span
@@ -962,8 +988,12 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
                 {/* Active Branch Switcher Inside Profile Menu */}
                 <div className="px-3 py-2.5 border-b border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-900/50">
                   <div className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1 flex items-center justify-between">
-                    <span className="flex items-center gap-1"><Building2 className="w-3 h-3 text-blue-500" /> Active Outlet</span>
-                    <span className="text-[9px] font-bold text-blue-600 dark:text-blue-400">({branches.length}/{maxBranches === 999 ? '∞' : maxBranches})</span>
+                    <span className="flex items-center gap-1">
+                      <Building2 className="w-3 h-3 text-blue-500" /> Active Outlet
+                    </span>
+                    <span className="text-[9px] font-bold text-blue-600 dark:text-blue-400">
+                      ({branches.length}/{maxBranches === 999 ? '∞' : maxBranches})
+                    </span>
                   </div>
                   <select
                     value={activeBranchId}

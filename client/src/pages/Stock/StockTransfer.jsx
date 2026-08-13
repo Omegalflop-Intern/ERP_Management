@@ -248,7 +248,12 @@ function CreateTransferModal({ onClose, onSuccess }) {
     queryFn: async () => {
       if (!form.productId) return [];
       const res = await api.get('/inventory', {
-        params: { productId: form.productId, branchId: form.fromBranchId || undefined, status: 'Available', limit: 100 },
+        params: {
+          productId: form.productId,
+          branchId: form.fromBranchId || undefined,
+          status: 'Available',
+          limit: 100,
+        },
       });
       return res.data?.data || [];
     },
@@ -269,7 +274,8 @@ function CreateTransferModal({ onClose, onSuccess }) {
       <div className="bg-white dark:bg-[#111827] rounded-2xl w-full max-w-lg border border-gray-200 dark:border-gray-800 shadow-2xl overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-900/50">
           <h3 className="font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-            <ArrowRightLeft className="w-5 h-5 text-blue-600 dark:text-blue-400" /> New Stock Transfer
+            <ArrowRightLeft className="w-5 h-5 text-blue-600 dark:text-blue-400" /> New Stock
+            Transfer
           </h3>
           <button
             onClick={onClose}
@@ -283,8 +289,10 @@ function CreateTransferModal({ onClose, onSuccess }) {
           onSubmit={(e) => {
             e.preventDefault();
             if (!form.fromBranchId) return toast.error('Please select source branch (From Branch)');
-            if (!form.toBranchId) return toast.error('Please select destination branch (To Branch)');
-            if (form.fromBranchId === form.toBranchId) return toast.error('Source and destination branches cannot be the same');
+            if (!form.toBranchId)
+              return toast.error('Please select destination branch (To Branch)');
+            if (form.fromBranchId === form.toBranchId)
+              return toast.error('Source and destination branches cannot be the same');
             if (!form.productId) return toast.error('Please select a product');
 
             mutation.mutate(form);
@@ -300,7 +308,9 @@ function CreateTransferModal({ onClose, onSuccess }) {
               <select
                 required
                 value={form.fromBranchId}
-                onChange={(e) => setForm({ ...form, fromBranchId: e.target.value, imeiOrSerial: '' })}
+                onChange={(e) =>
+                  setForm({ ...form, fromBranchId: e.target.value, imeiOrSerial: '' })
+                }
                 className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:outline-none"
               >
                 <option value="">Select Source Outlet</option>
@@ -348,7 +358,8 @@ function CreateTransferModal({ onClose, onSuccess }) {
               <option value="">Choose a product to transfer...</option>
               {products.map((p) => (
                 <option key={p._id || p.id} value={p._id || p.id}>
-                  {p.brand ? `[${p.brand}] ` : ''}{p.name} {p.sku ? `(SKU: ${p.sku})` : ''} - Stock: {p.stockQuantity ?? 0}
+                  {p.brand ? `[${p.brand}] ` : ''}
+                  {p.name} {p.sku ? `(SKU: ${p.sku})` : ''} - Stock: {p.stockQuantity ?? 0}
                 </option>
               ))}
             </select>
@@ -369,7 +380,8 @@ function CreateTransferModal({ onClose, onSuccess }) {
                   <option value="">Select IMEI from stock ({imeiUnits.length} Available)</option>
                   {imeiUnits.map((u) => (
                     <option key={u._id || u.id} value={u.imeiOrSerial || u.imei_or_serial}>
-                      {u.imeiOrSerial || u.imei_or_serial} ({u.color || 'Default'} - {u.ram}/{u.storage})
+                      {u.imeiOrSerial || u.imei_or_serial} ({u.color || 'Default'} - {u.ram}/
+                      {u.storage})
                     </option>
                   ))}
                 </select>
@@ -392,7 +404,9 @@ function CreateTransferModal({ onClose, onSuccess }) {
                 min="1"
                 disabled={!!form.imeiOrSerial}
                 value={form.quantity}
-                onChange={(e) => setForm({ ...form, quantity: Math.max(1, parseInt(e.target.value) || 1) })}
+                onChange={(e) =>
+                  setForm({ ...form, quantity: Math.max(1, parseInt(e.target.value) || 1) })
+                }
                 className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50"
               />
             </div>

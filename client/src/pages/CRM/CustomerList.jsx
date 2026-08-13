@@ -333,7 +333,9 @@ export default function CustomerList() {
 function CustomerModal({ editCust, onClose }) {
   const queryClient = useQueryClient();
   useEffect(() => {
-    const handler = (e) => { if (e.key === 'Escape') onClose(); };
+    const handler = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, [onClose]);

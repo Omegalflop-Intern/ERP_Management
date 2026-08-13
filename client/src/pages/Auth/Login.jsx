@@ -133,7 +133,9 @@ function FlowingSeaWaves({ isDark, isHybrid = false }) {
   const heightClass = isHybrid ? 'h-[24%]' : 'h-[36%]';
 
   return (
-    <div className={`absolute bottom-0 left-0 w-full pointer-events-none z-10 ${heightClass} overflow-hidden transition-all duration-500`}>
+    <div
+      className={`absolute bottom-0 left-0 w-full pointer-events-none z-10 ${heightClass} overflow-hidden transition-all duration-500`}
+    >
       <svg
         className="absolute bottom-0 w-[200%] h-full"
         viewBox="0 0 1440 320"

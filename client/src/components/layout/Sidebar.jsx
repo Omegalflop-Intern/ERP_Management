@@ -145,7 +145,12 @@ function SidebarMenu({ isCollapsed, location, onNavigate }) {
                   onNavigate={onNavigate}
                 />
               ) : (
-                <SidebarLink key={item.path} item={item} isCollapsed={isCollapsed} onNavigate={onNavigate} />
+                <SidebarLink
+                  key={item.path}
+                  item={item}
+                  isCollapsed={isCollapsed}
+                  onNavigate={onNavigate}
+                />
               )
             )}
           </div>
@@ -213,13 +218,14 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
         className={`
           z-50 lg:z-30 flex flex-col
           transition-transform duration-300 ease-in-out
-          ${isMobile
-            ? /* Mobile: floating rounded glass card */
-              `fixed top-2 bottom-2 left-2 w-72 h-[calc(100vh-1rem)] glass-primary rounded-[24px] pt-4 pb-2
+          ${
+            isMobile
+              ? /* Mobile: floating rounded glass card */
+                `fixed top-2 bottom-2 left-2 w-72 h-[calc(100vh-1rem)] glass-primary rounded-[24px] pt-4 pb-2
                shadow-2xl shadow-black/50 border border-white/20 dark:border-slate-800/80
                ${isOpen ? 'translate-x-0' : '-translate-x-[calc(100%+1rem)]'}`
-            : /* Desktop: static floating glass card */
-              `static h-[calc(100vh-1rem)] my-2 ml-2 glass-primary rounded-[24px] pt-4 pb-2
+              : /* Desktop: static floating glass card */
+                `static h-[calc(100vh-1rem)] my-2 ml-2 glass-primary rounded-[24px] pt-4 pb-2
                translate-x-0
                ${isCollapsed ? 'w-[68px]' : 'w-64'}`
           }

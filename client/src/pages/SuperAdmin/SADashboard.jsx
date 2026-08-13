@@ -38,15 +38,20 @@ import { format, formatDistanceToNow } from 'date-fns';
 
 const PLAN_COLORS = {
   FREE: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700',
-  STARTER: 'bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-400 border-blue-200 dark:border-blue-800/60',
+  STARTER:
+    'bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-400 border-blue-200 dark:border-blue-800/60',
   PRO: 'bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-400 border-purple-200 dark:border-purple-800/60',
-  ENTERPRISE: 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border-amber-200 dark:border-amber-800/60',
+  ENTERPRISE:
+    'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border-amber-200 dark:border-amber-800/60',
 };
 
 const STATUS_COLORS = {
-  ACTIVE: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60',
-  PAUSED: 'bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-400 border-red-200 dark:border-red-800/60',
-  PENDING_KYC: 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border-amber-200 dark:border-amber-800/60',
+  ACTIVE:
+    'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60',
+  PAUSED:
+    'bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-400 border-red-200 dark:border-red-800/60',
+  PENDING_KYC:
+    'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border-amber-200 dark:border-amber-800/60',
 };
 
 const PIE_COLORS = ['#3B82F6', '#8B5CF6', '#F59E0B', '#10B981'];
@@ -65,9 +70,17 @@ function StatCard({ icon: Icon, label, value, sub, color, trend }) {
         )}
       </div>
       <div>
-        <div className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{value}</div>
-        <div className="text-xs text-slate-500 dark:text-slate-400 font-semibold mt-0.5">{label}</div>
-        {sub && <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 font-medium">{sub}</div>}
+        <div className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+          {value}
+        </div>
+        <div className="text-xs text-slate-500 dark:text-slate-400 font-semibold mt-0.5">
+          {label}
+        </div>
+        {sub && (
+          <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 font-medium">
+            {sub}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -79,7 +92,11 @@ const CustomTooltip = ({ active, payload, label }) => {
       <div className="bg-slate-900 text-white p-3 rounded-xl shadow-xl text-xs border border-slate-800 space-y-1.5">
         <p className="font-bold text-slate-300">{label}</p>
         {payload.map((entry, index) => (
-          <p key={index} style={{ color: entry.color }} className="font-semibold flex items-center justify-between gap-4">
+          <p
+            key={index}
+            style={{ color: entry.color }}
+            className="font-semibold flex items-center justify-between gap-4"
+          >
             <span>{entry.name}:</span>
             <span className="font-extrabold">{entry.value} shop(s)</span>
           </p>
@@ -123,9 +140,10 @@ export default function SADashboard() {
   const { counts = {}, recentTenants = [], expiringSoonList = [], monthlyTrend = [] } = data || {};
 
   // Active vs Inactive shops monthly comparison trend from real database
-  const shopStatusTrend = monthlyTrend.length > 0 ? monthlyTrend : [
-    { month: 'Current', activeShops: counts.active || 0, inactiveShops: counts.paused || 0 },
-  ];
+  const shopStatusTrend =
+    monthlyTrend.length > 0
+      ? monthlyTrend
+      : [{ month: 'Current', activeShops: counts.active || 0, inactiveShops: counts.paused || 0 }];
 
   // Plan distribution dataset calculated from database tenants
   const starterCount = recentTenants.filter((t) => t.plan === 'STARTER').length;
@@ -140,10 +158,13 @@ export default function SADashboard() {
     { name: 'Free Trial', value: freeCount },
   ].filter((p) => p.value > 0);
 
-  const planDistribution = planDistributionRaw.length > 0 ? planDistributionRaw : [
-    { name: 'Active Shops', value: counts.active || 0 },
-    { name: 'Inactive Shops', value: counts.paused || 0 },
-  ];
+  const planDistribution =
+    planDistributionRaw.length > 0
+      ? planDistributionRaw
+      : [
+          { name: 'Active Shops', value: counts.active || 0 },
+          { name: 'Inactive Shops', value: counts.paused || 0 },
+        ];
 
   return (
     <div className="space-y-6">
@@ -155,7 +176,8 @@ export default function SADashboard() {
           </div>
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Platform Overview</h1>
           <p className="text-xs text-blue-100/90 mt-1 max-w-xl">
-            Real-time multi-tenant monitoring, Active vs Inactive shop comparison, and onboarding analytics.
+            Real-time multi-tenant monitoring, Active vs Inactive shop comparison, and onboarding
+            analytics.
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -226,7 +248,10 @@ export default function SADashboard() {
 
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={shopStatusTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart
+                data={shopStatusTrend}
+                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+              >
                 <defs>
                   <linearGradient id="colorActive" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#10B981" stopOpacity={0.4} />
@@ -237,11 +262,32 @@ export default function SADashboard() {
                     <stop offset="95%" stopColor="#EF4444" stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#94A3B8' }} />
+                <XAxis
+                  dataKey="month"
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fontSize: 11, fill: '#94A3B8' }}
+                />
                 <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#94A3B8' }} />
                 <Tooltip content={<CustomTooltip />} />
-                <Area type="monotone" dataKey="activeShops" name="Active Shops" stroke="#10B981" strokeWidth={3} fillOpacity={1} fill="url(#colorActive)" />
-                <Area type="monotone" dataKey="inactiveShops" name="Inactive / Paused Shops" stroke="#EF4444" strokeWidth={2} fillOpacity={1} fill="url(#colorInactive)" />
+                <Area
+                  type="monotone"
+                  dataKey="activeShops"
+                  name="Active Shops"
+                  stroke="#10B981"
+                  strokeWidth={3}
+                  fillOpacity={1}
+                  fill="url(#colorActive)"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="inactiveShops"
+                  name="Inactive / Paused Shops"
+                  stroke="#EF4444"
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill="url(#colorInactive)"
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -282,8 +328,13 @@ export default function SADashboard() {
           <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-100 dark:border-slate-800">
             {planDistribution.map((item, idx) => (
               <div key={item.name} className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: PIE_COLORS[idx % PIE_COLORS.length] }} />
-                <span className="text-slate-600 dark:text-slate-400 font-medium truncate">{item.name}</span>
+                <span
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: PIE_COLORS[idx % PIE_COLORS.length] }}
+                />
+                <span className="text-slate-600 dark:text-slate-400 font-medium truncate">
+                  {item.name}
+                </span>
               </div>
             ))}
           </div>
@@ -299,15 +350,22 @@ export default function SADashboard() {
               <AlertTriangle className="w-4 h-4 text-amber-500" />
               Expiring Soon ({counts.expiringSoon ?? 0})
             </span>
-            <Link to="/super-admin/subscriptions" className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-0.5">
+            <Link
+              to="/super-admin/subscriptions"
+              className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-0.5"
+            >
               View All <ArrowUpRight className="w-3 h-3" />
             </Link>
           </div>
           {expiringSoonList.length === 0 ? (
             <div className="py-8 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-xl my-auto">
               <ShieldCheck className="w-8 h-8 text-emerald-500 mx-auto mb-1.5 opacity-80" />
-              <p className="text-xs font-bold text-slate-700 dark:text-slate-300">All Accounts Active</p>
-              <p className="text-[11px] text-slate-400 mt-0.5">No subscriptions expiring within 30 days</p>
+              <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                All Accounts Active
+              </p>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                No subscriptions expiring within 30 days
+              </p>
             </div>
           ) : (
             <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
@@ -321,11 +379,15 @@ export default function SADashboard() {
                     <div className="text-[11px] text-slate-500">{t.email}</div>
                   </div>
                   <div className="text-right">
-                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-extrabold border ${PLAN_COLORS[t.plan] || ''}`}>
+                    <span
+                      className={`inline-block px-2 py-0.5 rounded text-[10px] font-extrabold border ${PLAN_COLORS[t.plan] || ''}`}
+                    >
                       {t.plan}
                     </span>
                     <div className="text-[11px] text-amber-600 dark:text-amber-400 font-bold mt-0.5">
-                      {t.expiresAt ? formatDistanceToNow(new Date(t.expiresAt), { addSuffix: true }) : 'No expiry'}
+                      {t.expiresAt
+                        ? formatDistanceToNow(new Date(t.expiresAt), { addSuffix: true })
+                        : 'No expiry'}
                     </div>
                   </div>
                 </div>
@@ -340,14 +402,19 @@ export default function SADashboard() {
             <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <Users className="w-4 h-4 text-blue-600" /> Recent Registered Shops
             </h2>
-            <Link to="/super-admin/shops" className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-0.5">
+            <Link
+              to="/super-admin/shops"
+              className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-0.5"
+            >
               Manage Shops <ArrowUpRight className="w-3 h-3" />
             </Link>
           </div>
           {recentTenants.length === 0 ? (
             <div className="py-12 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
               <Building2 className="w-8 h-8 text-slate-400 mx-auto mb-1.5 opacity-60" />
-              <p className="text-xs font-bold text-slate-600 dark:text-slate-300">No shops registered yet</p>
+              <p className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                No shops registered yet
+              </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -363,23 +430,34 @@ export default function SADashboard() {
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
                   {recentTenants.map((t) => (
-                    <tr key={t._id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                    <tr
+                      key={t._id}
+                      className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors"
+                    >
                       <td className="py-3 px-3">
                         <div className="flex items-center gap-2">
                           <div className="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xs shrink-0">
                             {t.shopName?.[0]?.toUpperCase() || 'S'}
                           </div>
-                          <span className="font-bold text-slate-900 dark:text-white">{t.shopName}</span>
+                          <span className="font-bold text-slate-900 dark:text-white">
+                            {t.shopName}
+                          </span>
                         </div>
                       </td>
-                      <td className="py-3 px-3 text-slate-600 dark:text-slate-300 font-medium">{t.ownerName}</td>
+                      <td className="py-3 px-3 text-slate-600 dark:text-slate-300 font-medium">
+                        {t.ownerName}
+                      </td>
                       <td className="py-3 px-3">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold border ${PLAN_COLORS[t.plan] || ''}`}>
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-extrabold border ${PLAN_COLORS[t.plan] || ''}`}
+                        >
                           {t.plan}
                         </span>
                       </td>
                       <td className="py-3 px-3">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold border ${STATUS_COLORS[t.status] || ''}`}>
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-extrabold border ${STATUS_COLORS[t.status] || ''}`}
+                        >
                           {t.status}
                         </span>
                       </td>

@@ -39,7 +39,18 @@ export const createTenantSchema = z.object({
 export const updateTenantSchema = z.object({
   shopName: z.string().min(2).max(100).trim().optional(),
   ownerName: z.string().min(2).max(100).trim().optional(),
+  email: z.string().trim().toLowerCase().email('Please provide a valid email address').optional(),
+  username: z
+    .string()
+    .min(3)
+    .max(30)
+    .trim()
+    .toLowerCase()
+    .regex(/^[a-z0-9_]+$/, 'Username can only contain lowercase letters, numbers, and underscores')
+    .optional()
+    .or(z.literal('')),
   phone: z.string().min(6).max(20).trim().optional(),
+  password: z.string().min(6, 'Password must be at least 6 characters').optional().or(z.literal('')),
   plan: z.enum(['FREE', 'STARTER', 'PRO', 'ENTERPRISE']).optional(),
   subdomain: z
     .string()
@@ -59,6 +70,8 @@ export const updateTenantSchema = z.object({
   maxUsers: z.number().int().min(1).max(500).optional(),
   expiresAt: z.string().datetime({ offset: true }).or(z.null()).optional(),
   notes: z.string().max(500).optional(),
+  nidNumber: z.string().optional(),
+  tradeLicenseNumber: z.string().optional(),
 });
 
 export const updateTenantStatusSchema = z.object({

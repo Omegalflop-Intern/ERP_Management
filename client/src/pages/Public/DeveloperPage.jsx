@@ -32,22 +32,50 @@ export default function DeveloperPage() {
     {
       category: 'Frontend & UI Core',
       bgColor: 'bg-amber-300',
-      skills: ['React.js 18', 'Vite 5', 'TailwindCSS v3', 'Neo-Brutalism UI', 'Zustand State', 'TanStack Query'],
+      skills: [
+        'React.js 18',
+        'Vite 5',
+        'TailwindCSS v3',
+        'Neo-Brutalism UI',
+        'Zustand State',
+        'TanStack Query',
+      ],
     },
     {
       category: 'Backend & APIs',
       bgColor: 'bg-lime-400',
-      skills: ['Node.js (ESM)', 'Express.js', 'Python 3', 'Django Framework', 'RESTful APIs', 'SSE Real-time'],
+      skills: [
+        'Node.js (ESM)',
+        'Express.js',
+        'Python 3',
+        'Django Framework',
+        'RESTful APIs',
+        'SSE Real-time',
+      ],
     },
     {
       category: 'Databases & ORM',
       bgColor: 'bg-cyan-300',
-      skills: ['MongoDB', 'MySQL / MariaDB', 'PostgreSQL', 'Knex.js Query Builder', 'Mongoose', 'Schema Migrations'],
+      skills: [
+        'MongoDB',
+        'MySQL / MariaDB',
+        'PostgreSQL',
+        'Knex.js Query Builder',
+        'Mongoose',
+        'Schema Migrations',
+      ],
     },
     {
       category: 'Architecture & DevOps',
       bgColor: 'bg-pink-400',
-      skills: ['Multi-Tenancy SaaS', 'JWT & MFA TOTP', 'Docker', 'Git & GitHub', 'Linux Server Admin', 'Clean Architecture'],
+      skills: [
+        'Multi-Tenancy SaaS',
+        'JWT & MFA TOTP',
+        'Docker',
+        'Git & GitHub',
+        'Linux Server Admin',
+        'Clean Architecture',
+      ],
     },
   ];
 
@@ -142,14 +170,22 @@ export default function DeveloperPage() {
           <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
             <div className="space-y-5 text-left flex-1">
               <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black uppercase tracking-tight text-black leading-none drop-shadow-[4px_4px_0px_#facc15]">
-                Salah Uddin Kader <span className="bg-cyan-300 border-2 border-black px-2 py-0.5 shadow-[3px_3px_0px_0px_#000]">.codes</span>
+                Salah Uddin Kader{' '}
+                <span className="bg-cyan-300 border-2 border-black px-2 py-0.5 shadow-[3px_3px_0px_0px_#000]">
+                  .codes
+                </span>
               </h1>
-              
+
               <p className="text-base sm:text-lg font-bold text-black max-w-2xl leading-relaxed bg-white border-3 border-black p-4 rounded-xl shadow-[5px_5px_0px_0px_#000]">
-                Passionate software developer building enterprise ERP systems, school management suites, and SaaS platforms. Specializing in 
+                Passionate software developer building enterprise ERP systems, school management
+                suites, and SaaS platforms. Specializing in
                 <span className="bg-yellow-300 border border-black px-1 mx-1">MERN Stack</span>,
-                <span className="bg-lime-300 border border-black px-1 mx-1">Python & Django</span>, and
-                <span className="bg-cyan-300 border border-black px-1 mx-1">MySQL & PostgreSQL</span>.
+                <span className="bg-lime-300 border border-black px-1 mx-1">Python & Django</span>,
+                and
+                <span className="bg-cyan-300 border border-black px-1 mx-1">
+                  MySQL & PostgreSQL
+                </span>
+                .
               </p>
 
               {/* Badges and Links */}
@@ -210,7 +246,9 @@ export default function DeveloperPage() {
               className={`${s.bg} border-3 border-black p-4 rounded-xl shadow-[5px_5px_0px_0px_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all text-center`}
             >
               <div className="font-black text-lg sm:text-xl text-black truncate">{s.value}</div>
-              <div className="font-bold text-xs uppercase text-black tracking-wider mt-1">{s.label}</div>
+              <div className="font-bold text-xs uppercase text-black tracking-wider mt-1">
+                {s.label}
+              </div>
             </div>
           ))}
         </div>
@@ -235,8 +273,12 @@ export default function DeveloperPage() {
                 className="bg-white border-4 border-black p-6 rounded-2xl shadow-[6px_6px_0px_0px_#000] hover:shadow-[8px_8px_0px_0px_#000] transition-all space-y-4"
               >
                 <div className="flex items-center justify-between border-b-3 border-black pb-3">
-                  <h3 className="font-black text-lg uppercase tracking-tight text-black">{item.category}</h3>
-                  <span className={`${item.bgColor} border-2 border-black text-xs font-black px-2.5 py-0.5 rounded-md shadow-[2px_2px_0px_0px_#000]`}>
+                  <h3 className="font-black text-lg uppercase tracking-tight text-black">
+                    {item.category}
+                  </h3>
+                  <span
+                    className={`${item.bgColor} border-2 border-black text-xs font-black px-2.5 py-0.5 rounded-md shadow-[2px_2px_0px_0px_#000]`}
+                  >
                     Verified
                   </span>
                 </div>
@@ -276,10 +318,14 @@ export default function DeveloperPage() {
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-3 border-black pb-4">
                   <div>
-                    <span className={`${proj.badgeColor} border-2 border-black text-xs font-black px-2.5 py-0.5 rounded-md shadow-[2px_2px_0px_0px_#000] uppercase inline-block mb-2`}>
+                    <span
+                      className={`${proj.badgeColor} border-2 border-black text-xs font-black px-2.5 py-0.5 rounded-md shadow-[2px_2px_0px_0px_#000] uppercase inline-block mb-2`}
+                    >
                       {proj.category}
                     </span>
-                    <h3 className="text-2xl font-black uppercase tracking-tight text-black">{proj.title}</h3>
+                    <h3 className="text-2xl font-black uppercase tracking-tight text-black">
+                      {proj.title}
+                    </h3>
                   </div>
                   {proj.link && (
                     <a
@@ -294,24 +340,36 @@ export default function DeveloperPage() {
                   )}
                 </div>
 
-                <p className="font-bold text-sm text-slate-800 leading-relaxed">{proj.description}</p>
+                <p className="font-bold text-sm text-slate-800 leading-relaxed">
+                  {proj.description}
+                </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                   <div>
-                    <div className="font-black text-xs uppercase text-slate-500 mb-2">Tech Stack Used:</div>
+                    <div className="font-black text-xs uppercase text-slate-500 mb-2">
+                      Tech Stack Used:
+                    </div>
                     <div className="flex flex-wrap gap-1.5">
                       {proj.tech.map((t, tIdx) => (
-                        <span key={tIdx} className="bg-lime-200 border border-black text-[11px] font-bold px-2.5 py-0.5 rounded-md">
+                        <span
+                          key={tIdx}
+                          className="bg-lime-200 border border-black text-[11px] font-bold px-2.5 py-0.5 rounded-md"
+                        >
                           {t}
                         </span>
                       ))}
                     </div>
                   </div>
                   <div>
-                    <div className="font-black text-xs uppercase text-slate-500 mb-2">Key Highlights:</div>
+                    <div className="font-black text-xs uppercase text-slate-500 mb-2">
+                      Key Highlights:
+                    </div>
                     <div className="space-y-1">
                       {proj.highlights.map((h, hIdx) => (
-                        <div key={hIdx} className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
+                        <div
+                          key={hIdx}
+                          className="flex items-center gap-1.5 text-xs font-bold text-slate-900"
+                        >
                           <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
                           <span>{h}</span>
                         </div>
@@ -335,7 +393,8 @@ export default function DeveloperPage() {
             Ready to Build Your Next Big Solution?
           </h2>
           <p className="font-bold text-base text-slate-900 max-w-xl mx-auto">
-            Looking for a custom ERP solution, School Management suite, or specialized SaaS system? Let's connect!
+            Looking for a custom ERP solution, School Management suite, or specialized SaaS system?
+            Let's connect!
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
@@ -363,7 +422,8 @@ export default function DeveloperPage() {
       <footer className="py-6 px-4 sm:px-8 bg-black text-white border-t-4 border-black">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold">
           <div>
-            &copy; {new Date().getFullYear()} Salah Uddin Kader (@salahuddingfx) • All Rights Reserved.
+            &copy; {new Date().getFullYear()} Salah Uddin Kader (@salahuddingfx) • All Rights
+            Reserved.
           </div>
           <button
             onClick={scrollToTop}
