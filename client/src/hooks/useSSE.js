@@ -70,12 +70,16 @@ export function useSSE() {
 
             case 'SALE_COMPLETED':
               qc.invalidateQueries({ queryKey: ['sales'] });
-              qc.invalidateQueries({ queryKey: ['sales-channel-balances'] });
+              qc.invalidateQueries({ queryKey: ['recent-sales-dashboard'] });
               qc.invalidateQueries({ queryKey: ['dashboard'] });
+              qc.invalidateQueries({ queryKey: ['sa-stats'] });
+              qc.invalidateQueries({ queryKey: ['sa-shops'] });
               qc.invalidateQueries({ queryKey: ['stock'] });
               qc.invalidateQueries({ queryKey: ['products'] });
               qc.invalidateQueries({ queryKey: ['accounts'] });
               qc.invalidateQueries({ queryKey: ['audit-logs'] });
+              qc.refetchQueries({ queryKey: ['dashboard'] });
+              qc.refetchQueries({ queryKey: ['sa-stats'] });
               break;
 
             case 'STOCK_UPDATED':
@@ -86,6 +90,7 @@ export function useSSE() {
               qc.invalidateQueries({ queryKey: ['categories'] });
               qc.invalidateQueries({ queryKey: ['catalog'] });
               qc.invalidateQueries({ queryKey: ['audit-logs'] });
+              qc.invalidateQueries({ queryKey: ['sa-stats'] });
               if (payload.data?.name && payload.type === 'STOCK_UPDATED') {
                 toast.warning(`Stock update: ${payload.data.name}`);
               }
@@ -99,6 +104,8 @@ export function useSSE() {
               qc.invalidateQueries({ queryKey: ['suppliers'] });
               qc.invalidateQueries({ queryKey: ['accounts'] });
               qc.invalidateQueries({ queryKey: ['audit-logs'] });
+              qc.invalidateQueries({ queryKey: ['dashboard'] });
+              qc.invalidateQueries({ queryKey: ['sa-stats'] });
               break;
 
             case 'EXPENSE_MUTATED':
@@ -107,36 +114,17 @@ export function useSSE() {
               qc.invalidateQueries({ queryKey: ['profit-loss'] });
               qc.invalidateQueries({ queryKey: ['balance-sheet'] });
               qc.invalidateQueries({ queryKey: ['audit-logs'] });
+              qc.invalidateQueries({ queryKey: ['dashboard'] });
+              qc.invalidateQueries({ queryKey: ['sa-stats'] });
               break;
 
-            case 'ACCOUNT_MUTATED':
-              qc.invalidateQueries({ queryKey: ['accounts'] });
-              qc.invalidateQueries({ queryKey: ['pos-active-accounts'] });
-              qc.invalidateQueries({ queryKey: ['sales-channel-balances'] });
-              qc.invalidateQueries({ queryKey: ['balance-sheet'] });
-              qc.invalidateQueries({ queryKey: ['profit-loss'] });
-              qc.invalidateQueries({ queryKey: ['journal-entries'] });
+            case 'USER_MUTATED':
+              qc.invalidateQueries({ queryKey: ['users'] });
+              qc.invalidateQueries({ queryKey: ['my-profile'] });
+              qc.invalidateQueries({ queryKey: ['tenants'] });
+              qc.invalidateQueries({ queryKey: ['sa-shops'] });
+              qc.invalidateQueries({ queryKey: ['sa-stats'] });
               qc.invalidateQueries({ queryKey: ['audit-logs'] });
-              break;
-
-            case 'CUSTOMER_MUTATED':
-              qc.invalidateQueries({ queryKey: ['customers'] });
-              qc.invalidateQueries({ queryKey: ['due-collection'] });
-              qc.invalidateQueries({ queryKey: ['audit-logs'] });
-              break;
-
-            case 'REPAIR_MUTATED':
-              qc.invalidateQueries({ queryKey: ['repairs'] });
-              qc.invalidateQueries({ queryKey: ['audit-logs'] });
-              break;
-
-            case 'WARRANTY_MUTATED':
-              qc.invalidateQueries({ queryKey: ['warranties'] });
-              qc.invalidateQueries({ queryKey: ['audit-logs'] });
-              break;
-
-            case 'NOTIFICATION':
-              qc.invalidateQueries({ queryKey: ['notifications'] });
               break;
 
             case 'TENANT_UPDATED':
@@ -144,6 +132,8 @@ export function useSSE() {
               qc.invalidateQueries({ queryKey: ['tenants'] });
               qc.invalidateQueries({ queryKey: ['branches'] });
               qc.invalidateQueries({ queryKey: ['sa-shops'] });
+              qc.invalidateQueries({ queryKey: ['sa-stats'] });
+              qc.invalidateQueries({ queryKey: ['users'] });
               useBranchStore.getState().fetchBranches();
               break;
 
