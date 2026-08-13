@@ -59,6 +59,16 @@ export default function UserList() {
     onError: (e) => toast.error(e.response?.data?.message || 'Failed'),
   });
 
+  const toggleVerifyMutation = useMutation({
+    mutationFn: async (id) => api.patch(`/users/${id}/toggle-verification`),
+    onSuccess: (res) => {
+      const isVerified = res.data?.data?.isVerified;
+      toast.success(isVerified ? 'User verified manually by Admin' : 'User marked as unverified');
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+    onError: (e) => toast.error(e.response?.data?.message || 'Verification status update failed'),
+  });
+
   const users = data?.data || [];
 
   return (
@@ -198,20 +208,40 @@ export default function UserList() {
                     </td>
                     <td className="px-4 py-3.5 text-center">
                       {u.isVerified ? (
-                        <Badge variant="success" className="gap-1">
-                          <CheckCircle2 className="w-3 h-3" /> Verified
-                        </Badge>
-                      ) : (
                         <div className="inline-flex flex-col items-center gap-1">
+                          <Badge variant="success" className="gap-1">
+                            <CheckCircle2 className="w-3 h-3" /> Verified
+                          </Badge>
+                          <button
+                            onClick={() => toggleVerifyMutation.mutate(u._id || u.id)}
+                            className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:underline"
+                            title="Click to unverify user"
+                          >
+                            Mark Unverified
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="inline-flex flex-col items-center gap-1.5">
                           <Badge variant="warning" className="gap-1">
                             <ShieldOff className="w-3 h-3" /> Unverified
                           </Badge>
-                          <button
-                            onClick={() => setVerifyUserModal(u)}
-                            className="text-[11px] text-[#2563EB] dark:text-blue-400 hover:underline font-bold flex items-center gap-1"
-                          >
-                            <KeyRound className="w-3 h-3" /> Enter OTP Code
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => toggleVerifyMutation.mutate(u._id || u.id)}
+                              disabled={toggleVerifyMutation.isPending}
+                              className="px-2 py-0.5 text-[11px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-md transition-all shadow-xs flex items-center gap-1"
+                              title="Bypass OTP & Verify User Manually"
+                            >
+                              <UserCheck className="w-3 h-3" /> Verify Manually
+                            </button>
+                            <button
+                              onClick={() => setVerifyUserModal(u)}
+                              className="text-[11px] text-[#2563EB] dark:text-blue-400 hover:underline font-semibold flex items-center gap-0.5"
+                              title="Enter OTP manually"
+                            >
+                              <KeyRound className="w-3 h-3" /> OTP
+                            </button>
+                          </div>
                         </div>
                       )}
                     </td>
