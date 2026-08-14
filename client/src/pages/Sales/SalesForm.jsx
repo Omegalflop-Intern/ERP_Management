@@ -738,7 +738,7 @@ export default function SalesForm() {
                       {tenantInfo?.shopName ||
                         user?.tenant?.shopName ||
                         user?.shopName ||
-                        'Mobile Shop ERP'}
+                        'Omni-Manage'}
                     </h3>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400">
                       {tenantInfo?.address || 'Official Retail Sales Invoice'}

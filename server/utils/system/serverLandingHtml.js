@@ -4,7 +4,7 @@ export const renderServerLandingPage = (envName = 'development') => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mobile Shop ERP - API Server</title>
+  <title>Omni-Manage - API Server</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -154,8 +154,8 @@ export const renderServerLandingPage = (envName = 'development') => {
       </div>
     </div>
     
-    <h1>Brothers Mobile Shop ERP</h1>
-    <p class="subtitle">Enterprise Grade Multi-Branch Point of Sale & Management Backend System</p>
+    <h1>Omni-Manage</h1>
+    <p class="subtitle">Enterprise Grade Gadget & Retail Management Backend System</p>
     
     <div class="links-grid">
       <a href="/api-docs" class="link-card">

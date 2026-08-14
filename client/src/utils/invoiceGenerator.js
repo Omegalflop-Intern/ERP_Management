@@ -397,7 +397,7 @@ export const generateA4Invoice = async (sale, element = null) => {
   doc.setFontSize(6);
   doc.setTextColor(148, 163, 184);
   doc.text(
-    `Printed on: ${new Date().toLocaleString('en-BD')} | Mobile Shop ERP System`,
+    `Printed on: ${new Date().toLocaleString('en-BD')} | Omni-Manage`,
     14,
     pageHeight - 6
   );

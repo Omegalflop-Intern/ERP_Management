@@ -5,12 +5,12 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'Brothers Mobile Shop ERP — API Reference',
+      title: 'Omni-Manage — API Reference',
       version: '1.0.0',
       description: `
-## Brothers Mobile Shop ERP
+## Omni-Manage — Gadget Shop ERP Solutions
 
-A comprehensive Enterprise Resource Planning REST API for mobile shop management.
+A comprehensive Enterprise Resource Planning REST API for gadget & mobile shop management.
 
 ### Authentication
 All protected endpoints require a **Bearer JWT token**.
@@ -230,9 +230,9 @@ All responses follow the standard shape:
           type: 'object',
           properties: {
             _id: { type: 'string' },
-            name: { type: 'string', example: 'Brothers Mobile' },
-            subdomain: { type: 'string', example: 'brothers' },
-            customDomain: { type: 'string', example: 'brothers.example.com' },
+            name: { type: 'string', example: 'Omni Gadgets' },
+            subdomain: { type: 'string', example: 'omnigadgets' },
+            customDomain: { type: 'string', example: 'omnigadgets.example.com' },
             plan: { type: 'string', example: 'PRO' },
             status: { type: 'string', enum: ['ACTIVE', 'SUSPENDED', 'TRIAL'], example: 'ACTIVE' },
             expiresAt: { type: 'string', format: 'date-time' },
@@ -305,7 +305,7 @@ const CUSTOM_CSS = `
   .swagger-ui .topbar .download-url-wrapper { display: none; }
   .swagger-ui .topbar-wrapper img { display: none; }
   .swagger-ui .topbar-wrapper::before {
-    content: '🔴 Brothers Mobile Shop — API Docs';
+    content: '🔴 Omni-Manage — API Docs';
     color: #fff;
     font-size: 18px;
     font-weight: 700;
@@ -526,7 +526,7 @@ const CUSTOM_CSS = `
 const SWAGGER_OPTIONS = {
   explorer: false,
   customCss: CUSTOM_CSS,
-  customSiteTitle: 'Brothers Mobile Shop — API Docs',
+  customSiteTitle: 'Omni-Manage — API Docs',
   customfavIcon: '/favicon.ico',
   swaggerOptions: {
     persistAuthorization: true,

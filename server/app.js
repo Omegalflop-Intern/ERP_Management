@@ -152,7 +152,7 @@ app.get(['/api', '/api/v1'], (req, res) => {
   }
   res.json({
     success: true,
-    message: 'Mobile Shop ERP API Base Endpoint',
+    message: 'Omni-Manage API Base Endpoint',
     documentation: '/api-docs',
     health: '/api/v1/health',
   });

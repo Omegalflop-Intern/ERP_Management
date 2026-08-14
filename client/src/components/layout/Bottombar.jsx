@@ -8,7 +8,7 @@ export default function Bottombar() {
         <div className="w-6 h-6 rounded-lg bg-[#2563EB]/10 text-[#2563EB] flex items-center justify-center font-bold">
           <Smartphone className="w-3.5 h-3.5" />
         </div>
-        <span className="font-bold text-gray-900 dark:text-gray-200">Mobile Shop ERP</span>
+        <span className="font-bold text-gray-900 dark:text-gray-200">Omni-Manage</span>
         <span className="px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-[#2563EB] dark:text-blue-400 font-mono font-bold text-[10px] border border-blue-200 dark:border-blue-500/20">
           v2.4.5
         </span>

@@ -1,6 +1,6 @@
-# Multi-Tenant SaaS Architecture Plan for Mobile Shop ERP
+# Multi-Tenant SaaS Architecture Plan for Omni-Manage
 
-Translating the current single-shop ERP into a scalable **Multi-Tenant SaaS (Software-as-a-Service) Platform** so you can sell and onboard multiple mobile shop owners seamlessly.
+Translating the current single-shop ERP into a scalable **Multi-Tenant SaaS (Software-as-a-Service) Platform** so you can sell and onboard multiple gadget & mobile shop owners seamlessly.
 
 ---
 

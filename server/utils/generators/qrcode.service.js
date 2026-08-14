@@ -2,7 +2,7 @@ import QRCode from 'qrcode';
 
 export async function generateQRCodeBuffer(text) {
   try {
-    const pngBuffer = await QRCode.toBuffer(text || 'https://brothersmobile.bd', {
+    const pngBuffer = await QRCode.toBuffer(text || 'https://omnimanage.bd', {
       type: 'png',
       width: 150,
       margin: 1,
