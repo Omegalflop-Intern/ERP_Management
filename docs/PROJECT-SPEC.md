@@ -1,7 +1,6 @@
-# Brothers Mobile Shop ERP — Full Project Specification
+# Omni-Manage — Full Project Specification
 
 > **Client Side + Server Side Phase-by-Phase Development Plan**
-> Reference: https://brothers.developitltd.com/
 > Stack: **Vite + React.js (JavaScript) + Node.js/Express + MongoDB**
 
 ---
@@ -30,7 +29,7 @@
 | Email | Nodemailer | Password reset, notifications |
 | SMS | SMS Gateway API (future) | OTP, notifications to mobile |
 | Offline | Service Worker + IndexedDB | Offline/online data sync |
-| Deployment | Docker + PM2 + Nginx | Server deployment |
+| Deployment | Node.js / Vite Cloud Deployment | Application hosting |
 
 ---
 
@@ -302,8 +301,8 @@ Form Card:
 
 Logo:
   - Company logo at top of form
-  - "Brothers" text
-  - Subtitle: "Mobile Shop ERP"
+  - "Omni-Manage" text
+  - Subtitle: "Gadget Shop ERP Solutions"
 ```
 
 ### Auth Page Color Scheme
@@ -889,7 +888,7 @@ Settings      → Single column on mobile, multi on desktop
 ## API Base URL Structure
 
 ```
-Production:  https://api.brothers-erp.com/api/v1
+Production:  https://api.omnimanage.com/api/v1
 Development: http://localhost:5000/api/v1
 
 Full URL example:
@@ -934,7 +933,7 @@ POST /api/v1/auth/login
 
 Body:
 {
-  "login": "admin@brothers.com",   // username, email, or phone — anything works
+  "login": "admin@omnimanage.com",   // username, email, or phone — anything works
   "password": "123456"
 }
 ```
@@ -1611,8 +1610,7 @@ mobile-shop-erp/
 │   └── server.js                   # Entry point
 │
 ├── .gitignore
-├── docker-compose.yml
-├── package.json                      # Root (scripts for both)
+├── README.md
 └── PROJECT-SPEC.md
 ```
 
@@ -2090,7 +2088,7 @@ npm packages:
 ### Phase 10: Security & Deploy (Week 22–24)
 - 2FA, audit logs
 - Backup system
-- Docker deployment
+- Production deployment
 - UAT & Go-Live
 
 ---

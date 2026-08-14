@@ -1,4 +1,4 @@
-# Product Requirement Document (PRD) — Brothers Mobile Shop ERP
+# Product Requirement Document (PRD) — Omni-Manage
 
 > **Document Version:** 1.0.0 (Production Specification)  
 > **Date:** July 2026  
@@ -12,7 +12,7 @@
 1. [Executive Summary & Product Vision](#1-executive-summary--product-vision)
 2. [User Personas & Role-Based Access Control (RBAC)](#2-user-personas--role-based-access-control-rbac)
 3. [System Architecture & Technology Stack](#3-system-architecture--technology-stack)
-4. [Comprehensive Functional Specifications (28 Modules)](#4-comprehensive-functional-specifications-28-modules)
+4. [Comprehensive Functional Specifications (32 Modules)](#4-comprehensive-functional-specifications-32-modules)
 5. [Data Models & Entity Schemas](#5-data-models--entity-schemas)
 6. [UI/UX Design System & 7 Custom Themes](#6-uiux-design-system--7-custom-themes)
 7. [Integrations, SSE Real-Time Engine & Service Specs](#7-integrations-sse-real-time-engine--service-specs)
@@ -24,7 +24,7 @@
 
 ## 1. Executive Summary & Product Vision
 
-**Brothers Mobile Shop ERP** is an enterprise-grade ERP system built specifically for mobile phone retailers, authorized service centers, and electronics wholesalers. 
+**Omni-Manage** is an enterprise-grade ERP system built specifically for gadget & mobile phone retailers, authorized service centers, and electronics wholesalers. 
 
 Mobile phone retail operations face unique challenges:
 - Individual device tracking via 15-digit serial numbers (IMEI)
@@ -152,8 +152,11 @@ The application includes 7 built-in design modes configured in `client/src/store
 ## 9. DevOps & Deployment Architecture
 
 ```bash
-# Docker Compose stack
-docker compose up -d --build
+# Server Setup
+cd server && npm install && npm run dev
+
+# Client Setup
+cd client && npm install && npm run dev
 ```
 Includes MongoDB 7, Node.js 20 Express REST API server, and Vite React client frontend.
 
