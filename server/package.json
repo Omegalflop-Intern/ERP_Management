@@ -1,7 +1,7 @@
 {
-  "name": "mobile-shop-erp-server",
+  "name": "omni-manage-server",
   "version": "1.0.0",
-  "description": "Backend API for Mobile Shop Management System",
+  "description": "Backend API for Omni-Manage - Gadget Shop ERP Solutions",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

@@ -2,7 +2,7 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability within Brothers Mobile Shop ERP, please send an email to [your-security-email@example.com]. All security vulnerabilities will be addressed promptly.
+If you discover a security vulnerability within Omni-Manage, please send an email to [your-security-email@example.com]. All security vulnerabilities will be addressed promptly.
 
 **Please do NOT report security vulnerabilities through public GitHub issues.**
 
@@ -124,14 +124,6 @@ CLIENT_URL=https://your-domain.com
 - Enable TLS for connections
 - Restrict network access (firewall rules)
 - Regular backups with encryption
-
-### Docker
-
-- Never run containers as root
-- Use multi-stage builds to reduce attack surface
-- Scan images for vulnerabilities (`docker scan`)
-- Use specific image tags (not `latest`)
-- Mount volumes as read-only where possible
 
 ### Network
 

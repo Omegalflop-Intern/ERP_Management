@@ -1,6 +1,6 @@
 import { openDB } from 'idb';
 
-const DB_NAME = 'brothers-mobile-erp';
+const DB_NAME = 'omni-manage-erp';
 const DB_VERSION = 1;
 
 const STORES = {

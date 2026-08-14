@@ -419,7 +419,7 @@ export default function PricingPage() {
   const handleSelect = (plan) => {
     if (plan.name === 'ENTERPRISE') {
       // Scroll to contact / show toast for now
-      toast.info('Please contact us at sales@brothersmobile.bd for Enterprise pricing.');
+      toast.info('Please contact us at sales@omnimanage.bd for Enterprise pricing.');
       return;
     }
     navigate('/register-shop', { state: { selectedPlan: plan.name } });
@@ -437,7 +437,7 @@ export default function PricingPage() {
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
               <Smartphone size={14} className="text-white" />
             </div>
-            Brothers ERP
+            Omni-Manage
           </Link>
           <div className="flex items-center gap-3">
             <Link
@@ -573,7 +573,7 @@ export default function PricingPage() {
         <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 p-10 text-center text-white space-y-5">
           <h2 className="text-3xl font-bold">Ready to get started?</h2>
           <p className="text-blue-100 max-w-md mx-auto">
-            Join hundreds of mobile shops already running on Brothers ERP. Start free today — no
+            Join hundreds of mobile &amp; gadget shops already running on Omni-Manage. Start free today — no
             credit card required.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -597,7 +597,7 @@ export default function PricingPage() {
       {/* ── Footer ── */}
       <footer className="border-t border-gray-200 dark:border-gray-800 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500 dark:text-gray-400">
-          <p>© {new Date().getFullYear()} Brothers Mobile ERP. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Omni-Manage. All rights reserved.</p>
           <div className="flex items-center gap-5">
             <Link
               to="/login"
@@ -612,7 +612,7 @@ export default function PricingPage() {
               Register
             </Link>
             <a
-              href="mailto:sales@brothersmobile.bd"
+              href="mailto:sales@omnimanage.bd"
               className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
             >
               Contact

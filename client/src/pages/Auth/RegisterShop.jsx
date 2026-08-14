@@ -246,9 +246,9 @@ export default function RegisterShop() {
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500/25 to-cyan-500/10 border border-blue-400/30 flex items-center justify-center mx-auto text-[#2563EB] backdrop-blur-xl shadow-lg shadow-blue-500/10">
             <Smartphone className="w-6 h-6" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Register Your Mobile Shop</h1>
+          <h1 className="text-2xl font-bold text-white">Register Your Shop</h1>
           <p className="text-xs text-slate-400">
-            Onboard your shop to the Enterprise Mobile Shop ERP SaaS Platform
+            Onboard your shop to the Omni-Manage SaaS Platform
           </p>
         </div>
 

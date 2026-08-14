@@ -585,7 +585,7 @@ function GlobalSearch() {
               <kbd className="px-1 py-0.5 bg-gray-200 dark:bg-gray-800 rounded font-mono">Esc</kbd>{' '}
               to close
             </span>
-            <span className="text-[#2563EB] font-medium">Brothers ERP Quick Search</span>
+            <span className="text-[#2563EB] font-medium">Omni-Manage Quick Search</span>
           </div>
         </div>
       )}

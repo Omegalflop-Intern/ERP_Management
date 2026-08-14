@@ -126,11 +126,11 @@ export function QRCodeCanvas({ value, size = 64 }) {
 export const QRCodeSVG = QRCodeCanvas;
 
 export const fallbackCompanyInfo = {
-  name: 'BROTHERS MOBILE',
-  slogan: 'Your Trusted Mobile & Electronics Partner',
+  name: 'OMNI-MANAGE',
+  slogan: 'Your Trusted Gadget & Electronics Partner',
   address: 'Level 3, Shop 304, Multiplan Center, New Elephant Road, Dhaka-1205',
   phone: '+880 1700-000000, +880 1800-000000',
-  email: 'sales@brothersmobile.bd',
+  email: 'sales@omnimanage.bd',
   binVat: 'BIN: 004829103-0101',
   invoiceFooter: 'Thank you for shopping with us!',
 };

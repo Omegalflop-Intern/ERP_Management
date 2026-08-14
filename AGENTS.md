@@ -41,7 +41,7 @@ No root-level scripts. Run client/server from their own directories.
 
 - **Server env**: `server/.env` (loaded via `server/config/env.config.js`, validated with Zod). Required: `JWT_SECRET` (min 10 chars). Optional: SMTP vars for OTP emails.
 - **Client env**: `client/.env` with `VITE_API_URL` (default `http://localhost:5000/api/v1`). Vite exposes only `VITE_*` vars.
-- **MongoDB**: `MONGODB_URI` in server env. Defaults to `mongodb://127.0.0.1:27017/mobile_shop_erp`. Docker compose uses service name `mongodb`.
+- **MongoDB**: `MONGODB_URI` in server env. Defaults to `mongodb://127.0.0.1:27017/omni_manage`.
 - **CORS**: Allows `APP_URL`, `CLIENT_URL`, `ALLOWED_ORIGIN`, `localhost:3000`, `localhost:5173`. Permissive in dev; strict in production.
 
 ## Frontend Conventions
@@ -63,7 +63,6 @@ No root-level scripts. Run client/server from their own directories.
 - User model stores password in `passwordHash` (with `select: false`); you must explicitly `.select('+passwordHash')` when needed.
 - Tests exist in `server/tests/` but no CI or pre-commit hooks. Run `npm run test` in server dir to verify.
 - Lockfiles: client has both `package-lock.json` and `pnpm-lock.yaml`. Use npm unless pnpm is explicitly needed.
-- `docker-compose.yml` contains a hardcoded `JWT_SECRET` — replace with env var for real deployments.
 
 ## Server Modules (32)
 

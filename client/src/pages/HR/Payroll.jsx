@@ -468,7 +468,7 @@ function PayslipModal({ payroll: r, onClose }) {
         </div>
         <div className="p-6 space-y-4">
           <div className="text-center mb-4">
-            <h3 className="text-xl font-bold text-red-700 dark:text-red-400">Brothers Mobile</h3>
+            <h3 className="text-xl font-bold text-red-700 dark:text-red-400">Omni-Manage</h3>
             <p className="text-xs text-gray-500">
               Payslip for {MONTHS[r.month - 1]} {r.year}
             </p>

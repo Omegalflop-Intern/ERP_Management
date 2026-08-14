@@ -85,7 +85,7 @@ export default function DeveloperPage() {
       category: 'Flagship Enterprise SaaS',
       badgeColor: 'bg-yellow-300',
       description:
-        'A multi-tenant Mobile Shop ERP system featuring real-time IMEI lifetime passport tracking, thermal billing, inter-branch stock transfers, double-entry accounting, and workforce management.',
+        'A multi-tenant Gadget & Mobile Shop ERP system featuring real-time IMEI lifetime passport tracking, thermal billing, inter-branch stock transfers, double-entry accounting, and workforce management.',
       tech: ['MERN Stack', 'Node.js', 'Express', 'React 18', 'MongoDB', 'MySQL', 'TailwindCSS'],
       highlights: [
         'Multi-tenant Subdomain Scoping',

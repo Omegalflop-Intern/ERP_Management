@@ -1,6 +1,6 @@
 <div align="center">
 
-![Brothers Mobile Shop ERP Banner](docs/assets/banner_header.svg)
+![Omni-Manage Banner](docs/assets/banner_header.svg)
 
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=white)](https://react.dev)
 [![Node.js](https://img.shields.io/badge/Node.js-20-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org)
@@ -15,11 +15,11 @@
 
 ## 🚀 Overview
 
-**Brothers Mobile Shop ERP** is a full-stack, enterprise-grade Resource Planning and Point-of-Sale (POS) system engineered specifically for mobile phone retailers, device service repair shops, and mobile electronics wholesalers.
+**Omni-Manage** is a full-stack, enterprise-grade Resource Planning and Point-of-Sale (POS) system engineered specifically for mobile phone & gadget retailers, device service repair shops, and electronics wholesalers.
 
-Unlike generic retail software, Mobile Shop ERP manages **individual 15-digit serial numbers (IMEI tracking)** throughout every operational stage: purchase intake, multi-branch stock allocation, retail checkout, wholesale distribution, warranty claim processing, and technician repair job sheets.
+Unlike generic retail software, Omni-Manage manages **individual 15-digit serial numbers (IMEI tracking)** throughout every operational stage: purchase intake, multi-branch stock allocation, retail checkout, wholesale distribution, warranty claim processing, and technician repair job sheets.
 
-> 📄 **Complete System Documentation & PRD:** Access full offline specifications, architecture diagrams, and end-to-end API guides in the [`docs/`](docs/) directory or download **[PRODUCT_REQUIREMENT_DOCUMENT.pdf](docs/PRODUCT_REQUIREMENT_DOCUMENT.pdf)** and **[MOBILE_SHOP_ERP_SYSTEM_GUIDE.pdf](docs/MOBILE_SHOP_ERP_SYSTEM_GUIDE.pdf)**.
+> 📄 **Complete System Documentation & PRD:** Access full offline specifications, architecture diagrams, and end-to-end API guides in the [`docs/`](docs/) directory or review **[PRODUCT_REQUIREMENT_DOCUMENT.md](docs/PRODUCT_REQUIREMENT_DOCUMENT.md)** and **[PROJECT-SPEC.md](docs/PROJECT-SPEC.md)**.
 
 ---
 
@@ -97,7 +97,7 @@ The frontend features 7 customizable design modes powered by Zustand (`client/sr
 | **Client Frontend Application** | `http://localhost:3000` | React 18 + Vite 5 Dashboard |
 | **Backend REST API** | `http://localhost:5000/api/v1` | Node.js 20 + Express 4 ESM Server |
 | **Interactive Swagger API Docs** | `http://localhost:5000/api-docs` | Live Swagger UI Documentation |
-| **Database** | `mongodb://127.0.0.1:27017/mobile_shop_erp` | MongoDB 7 Connection |
+| **Database** | `mongodb://127.0.0.1:27017/omni_manage` | MongoDB 7 Connection |
 
 ### Seeded Credentials
 - **Admin Username:** `admin` (Password set via `SEED_PASSWORD_ADMIN` in `server/.env`)
@@ -105,7 +105,7 @@ The frontend features 7 customizable design modes powered by Zustand (`client/sr
 
 ---
 
-## 🛠️ Complete REST API Modules (28 Modules)
+## 🛠️ Complete REST API Modules (32 Modules)
 
 All API endpoints are prefix-routed under `http://localhost:5000/api/v1`:
 
@@ -137,8 +137,11 @@ All API endpoints are prefix-routed under `http://localhost:5000/api/v1`:
 | **Settings** | `/settings` | Store configuration, receipt headers/footers, design mode |
 | **Notification** | `/notifications` | Live notification feeds, stock alerts, audit events |
 | **SSE Stream** | `/sse` | Server-Sent Events stream for real-time push updates |
-| **Audit Logs** | `AuditLog` Model | Immutable security audit trail capturing user IP, action, diffs |
+| **Audit Logs** | `/audit` | Immutable security audit trail capturing user IP, action, diffs |
 | **Reports** | `/reports` | Analytics, profit margin reports, data exports |
+| **Tenant** | `/tenants` | Multi-tenant shop registration, subscription & subdomain management |
+| **Plans** | `/plans` | SaaS tier pricing plans & quota limits |
+| **Contact** | `/contacts` | Public inquiry contact submissions |
 
 ---
 
@@ -146,16 +149,10 @@ All API endpoints are prefix-routed under `http://localhost:5000/api/v1`:
 
 ### Prerequisites
 - **Node.js**: v20+ LTS
-- **MongoDB**: v7+ (running locally or via Docker)
+- **MongoDB**: v7+ (running locally)
 - **npm**: v10+
 
-### 1. Repository Setup
-```bash
-git clone https://github.com/Omegalflop-Intern/ERP_Management.git
-cd ERP_Management
-```
-
-### 2. Backend Setup (Terminal 1)
+### 1. Backend Setup (Terminal 1)
 ```bash
 cd server
 npm install
@@ -171,7 +168,7 @@ npm run dev
 ```
 *Backend server runs at `http://localhost:5000`*
 
-### 3. Frontend Setup (Terminal 2)
+### 2. Frontend Setup (Terminal 2)
 ```bash
 cd client
 npm install
@@ -180,20 +177,6 @@ npm install
 npm run dev
 ```
 *Frontend client runs at `http://localhost:3000`*
-
----
-
-## 🐳 Docker Deployment
-
-To launch all services (MongoDB, Server API, and Client Frontend) via Docker Compose:
-
-```bash
-# Build and run containers in detached mode
-docker compose up -d --build
-
-# View container logs
-docker compose logs -f
-```
 
 ---
 
@@ -212,6 +195,6 @@ Licensed under the [AGPL v3 License](LICENSE).
 
 <div align="center">
 
-![Brothers Mobile Shop ERP Footer](docs/assets/banner_footer.svg)
+![Omni-Manage Footer](docs/assets/banner_footer.svg)
 
 </div>

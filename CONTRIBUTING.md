@@ -1,6 +1,6 @@
-# Contributing to Brothers Mobile Shop ERP
+# Contributing to Omni-Manage
 
-Thank you for considering contributing to Brothers Mobile Shop ERP! This document provides guidelines and information for contributors.
+Thank you for considering contributing to Omni-Manage! This document provides guidelines and information for contributors.
 
 ## Table of Contents
 
@@ -55,16 +55,16 @@ Feature suggestions are welcome. Please include:
 
 ### Prerequisites
 
-- Node.js 18+ (recommended: 20)
-- MongoDB 6+ (local or Docker)
+- Node.js 20+
+- MongoDB 7+ (local)
 - Git
 
 ### Setup Steps
 
 ```bash
 # Fork and clone
-git clone https://github.com/your-username/mobile-shop-erp.git
-cd mobile-shop-erp
+git clone https://github.com/Omegalflop-Intern/ERP_Management.git
+cd ERP_Management
 
 # Install server dependencies
 cd server
