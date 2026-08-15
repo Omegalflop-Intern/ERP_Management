@@ -7,7 +7,9 @@ export default function DatePicker({
   onChange,
   placeholder = 'Select date',
   className = '',
+  wrapperClassName = '',
   disabled = false,
+  required = false,
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const { styled } = useTheme();
@@ -107,15 +109,20 @@ export default function DatePicker({
     ? 'neu-card shadow-xl rounded-2xl'
     : 'bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl';
 
+  const isFullWidth = className.includes('w-full') || wrapperClassName.includes('w-full');
+
   return (
-    <div ref={containerRef} className="relative inline-block text-left">
+    <div
+      ref={containerRef}
+      className={`relative text-left ${isFullWidth ? 'w-full block' : 'inline-block'} ${wrapperClassName}`}
+    >
       <button
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-2 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg hover:border-red-500 focus:outline-none focus:border-[#2563EB] transition-all ${
-          disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-        } ${className}`}
+        className={`flex items-center gap-2 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg hover:border-[#2563EB] focus:outline-none focus:border-[#2563EB] transition-all ${
+          isFullWidth ? 'w-full' : ''
+        } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${className}`}
       >
         <CalendarIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
         <span className={formattedDisplay ? 'font-medium' : 'text-gray-400'}>
