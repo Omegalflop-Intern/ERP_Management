@@ -409,9 +409,9 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
   const [isQuickSupplier, setIsQuickSupplier] = useState(suppliers.length === 0);
 
   const [paymentMethod, setPaymentMethod] = useState('CASH');
-  const [paidAmount, setPaidAmount] = useState(0);
-  const [discount, setDiscount] = useState(0);
-  const [tax, setTax] = useState(0);
+  const [paidAmount, setPaidAmount] = useState('');
+  const [discount, setDiscount] = useState('');
+  const [tax, setTax] = useState('');
   const [notes, setNotes] = useState('');
 
   const [lineItems, setLineItems] = useState([
@@ -420,8 +420,8 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
       productName: '',
       category: 'Smartphones',
       qty: 1,
-      unitCost: 0,
-      sellingPrice: 0,
+      unitCost: '',
+      sellingPrice: '',
       showImei: false,
       imeiText: '',
     },
@@ -446,8 +446,8 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
         productName: '',
         category: 'Smartphones',
         qty: 1,
-        unitCost: 0,
-        sellingPrice: 0,
+        unitCost: '',
+        sellingPrice: '',
         showImei: false,
         imeiText: '',
       },
@@ -469,14 +469,16 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
           productId: selected._id || selected.id,
           productName: selected.name,
           category: selected.category || 'Smartphones',
-          unitCost: Number(selected.costPrice || selected.cost_price || 0),
-          sellingPrice: Number(selected.sellingPrice || selected.selling_price || 0),
+          unitCost: Number(selected.costPrice || selected.cost_price || 0) || '',
+          sellingPrice: Number(selected.sellingPrice || selected.selling_price || 0) || '',
         };
       } else {
         next[index] = {
           ...next[index],
           productId: 'new',
           productName: '',
+          unitCost: '',
+          sellingPrice: '',
         };
       }
       return next;
@@ -689,7 +691,7 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                     className="p-4 bg-slate-50/60 dark:bg-slate-900/30 rounded-2xl border border-slate-200/90 dark:border-slate-800 hover:border-blue-400/50 dark:hover:border-blue-600/50 transition-all space-y-3 shadow-xs"
                   >
                     <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
-                      {/* Product Selector / Name */}
+                      {/* Product Selector / Name (4 cols) */}
                       <div className="sm:col-span-4 space-y-1.5">
                         <Label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center justify-between">
                           <span>Product / Item Name *</span>
@@ -723,7 +725,7 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                         )}
                       </div>
 
-                      {/* Category */}
+                      {/* Category (2 cols) */}
                       <div className="sm:col-span-2 space-y-1.5">
                         <Label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                           Category
@@ -739,7 +741,7 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                         </select>
                       </div>
 
-                      {/* Qty */}
+                      {/* Qty (1 col) */}
                       <div className="sm:col-span-1 space-y-1.5">
                         <Label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-center block">
                           Qty *
@@ -748,13 +750,14 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                           type="number"
                           min="1"
                           required
+                          placeholder="1"
                           value={item.qty}
                           onChange={(e) => handleLineChange(index, 'qty', Math.max(1, Number(e.target.value)))}
                           className="h-9 text-xs font-mono font-bold text-center rounded-xl bg-white dark:bg-[#1e293b]"
                         />
                       </div>
 
-                      {/* Unit Cost */}
+                      {/* Unit Cost (2 cols) */}
                       <div className="sm:col-span-2 space-y-1.5">
                         <Label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-right block">
                           Cost Price (৳) *
@@ -763,32 +766,33 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                           type="number"
                           min="0"
                           required
-                          value={item.unitCost}
-                          onChange={(e) => handleLineChange(index, 'unitCost', Number(e.target.value))}
+                          placeholder="0"
+                          value={item.unitCost === 0 ? '' : item.unitCost}
+                          onChange={(e) => handleLineChange(index, 'unitCost', e.target.value === '' ? '' : Number(e.target.value))}
                           className="h-9 text-xs font-mono font-bold text-right rounded-xl bg-white dark:bg-[#1e293b]"
                         />
                       </div>
 
-                      {/* Retail Price */}
-                      <div className="sm:col-span-2 space-y-1.5">
+                      {/* Retail Price (1.5 cols) */}
+                      <div className="sm:col-span-1 space-y-1.5">
                         <Label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-right block">
-                          Retail Price (৳)
+                          Retail (৳)
                         </Label>
                         <Input
                           type="number"
                           min="0"
-                          placeholder="Selling price"
-                          value={item.sellingPrice}
-                          onChange={(e) => handleLineChange(index, 'sellingPrice', Number(e.target.value))}
+                          placeholder="0"
+                          value={item.sellingPrice === 0 ? '' : item.sellingPrice}
+                          onChange={(e) => handleLineChange(index, 'sellingPrice', e.target.value === '' ? '' : Number(e.target.value))}
                           className="h-9 text-xs font-mono font-bold text-right rounded-xl bg-white dark:bg-[#1e293b]"
                         />
                       </div>
 
-                      {/* Line Total & Remove Action */}
-                      <div className="sm:col-span-1 flex items-center justify-between sm:justify-end gap-2 pb-1">
-                        <div className="text-right flex-1 sm:flex-none">
-                          <div className="text-[9px] font-bold text-slate-400 uppercase">Subtotal</div>
-                          <div className="font-mono font-black text-xs text-slate-900 dark:text-slate-100">
+                      {/* Line Total & Remove Action (1.5 cols) */}
+                      <div className="sm:col-span-2 flex items-center justify-end gap-2.5 pb-1">
+                        <div className="text-right flex-1">
+                          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Subtotal</div>
+                          <div className="font-mono font-black text-xs text-slate-900 dark:text-slate-100 whitespace-nowrap">
                             ৳{lineTotal.toLocaleString()}
                           </div>
                         </div>
@@ -815,9 +819,9 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                         {item.showImei ? 'Close IMEI / Serial Box' : `+ Add IMEI / Serial Numbers ${imeisCount > 0 ? `(${imeisCount} entered)` : '(Optional)'}`}
                       </button>
 
-                      {item.sellingPrice > 0 && item.unitCost > 0 && (
+                      {Number(item.sellingPrice || 0) > 0 && Number(item.unitCost || 0) > 0 && (
                         <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                          Est. Margin: +৳{(item.sellingPrice - item.unitCost).toLocaleString()} ({Math.round(((item.sellingPrice - item.unitCost) / item.unitCost) * 100)}%)
+                          Est. Margin: +৳{(Number(item.sellingPrice) - Number(item.unitCost)).toLocaleString()} ({Math.round(((Number(item.sellingPrice) - Number(item.unitCost)) / Number(item.unitCost)) * 100)}%)
                         </span>
                       )}
                     </div>
@@ -899,8 +903,9 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                   <Input
                     type="number"
                     min="0"
-                    value={discount}
-                    onChange={(e) => setDiscount(Number(e.target.value))}
+                    placeholder="0"
+                    value={discount === 0 ? '' : discount}
+                    onChange={(e) => setDiscount(e.target.value === '' ? '' : Number(e.target.value))}
                     className="h-7 w-32 text-xs font-mono text-right rounded-lg bg-white dark:bg-[#1e293b]"
                   />
                 </div>
@@ -910,8 +915,9 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                   <Input
                     type="number"
                     min="0"
-                    value={tax}
-                    onChange={(e) => setTax(Number(e.target.value))}
+                    placeholder="0"
+                    value={tax === 0 ? '' : tax}
+                    onChange={(e) => setTax(e.target.value === '' ? '' : Number(e.target.value))}
                     className="h-7 w-32 text-xs font-mono text-right rounded-lg bg-white dark:bg-[#1e293b]"
                   />
                 </div>
@@ -940,8 +946,9 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                       type="number"
                       min="0"
                       max={netTotal}
-                      value={paidAmount}
-                      onChange={(e) => setPaidAmount(Number(e.target.value))}
+                      placeholder="0"
+                      value={paidAmount === 0 ? '' : paidAmount}
+                      onChange={(e) => setPaidAmount(e.target.value === '' ? '' : Number(e.target.value))}
                       className="h-7 w-32 text-xs font-mono text-right rounded-lg bg-white dark:bg-[#1e293b] border-emerald-500 font-black text-emerald-600"
                     />
                   </div>
