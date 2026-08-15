@@ -19,6 +19,7 @@ import {
   Tag,
   Trash2,
   User,
+  Users,
   Wrench,
   X,
 } from 'lucide-react';
@@ -106,6 +107,42 @@ export default function RepairsView() {
     },
   });
 
+  const { data: usersData } = useQuery({
+    queryKey: ['users-staff'],
+    queryFn: async () => {
+      try {
+        const { data } = await api.get('/users', { params: { limit: 100 } });
+        return data.data || [];
+      } catch {
+        return [];
+      }
+    },
+  });
+
+  const { data: customersData } = useQuery({
+    queryKey: ['customers-list'],
+    queryFn: async () => {
+      try {
+        const { data } = await api.get('/customers', { params: { limit: 300 } });
+        return data.data || [];
+      } catch {
+        return [];
+      }
+    },
+  });
+
+  const { data: imeiData } = useQuery({
+    queryKey: ['imei-list'],
+    queryFn: async () => {
+      try {
+        const { data } = await api.get('/imei', { params: { limit: 300 } });
+        return data.data || [];
+      } catch {
+        return [];
+      }
+    },
+  });
+
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }) => {
       const { data } = await api.patch(`/repairs/${id}/status`, { status });
@@ -140,6 +177,9 @@ export default function RepairsView() {
   };
 
   const repairs = repairsData || [];
+  const users = usersData || [];
+  const customers = customersData || [];
+  const imeis = imeiData || [];
 
   const summary = useMemo(() => {
     const total = repairs.length;
@@ -163,7 +203,7 @@ export default function RepairsView() {
     <div className="space-y-6">
       <PageHeader
         title="Repair & Service Management"
-        subtitle="Log mobile repair tickets, track technician service progress, collect advance & issue repair receipts."
+        subtitle="Log mobile repair tickets, link customer profiles, assign technicians from staff, track progress and print receipts."
         icon={Wrench}
         breadcrumbs={['Services & Repairs', 'Repair Tickets']}
         actions={
@@ -275,7 +315,7 @@ export default function RepairsView() {
         <EmptyState
           icon={Wrench}
           title="No Repair Tickets Found"
-          description="Log device repairs, customer fault reports, technician assignments, and cost estimates."
+          description="Log device repairs, customer fault reports, technician assignments from staff, and cost estimates."
           action={
             <Button
               onClick={() => setShowNewTicketModal(true)}
@@ -374,7 +414,7 @@ export default function RepairsView() {
 
                 {/* Card Actions */}
                 <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
-                  <div className="text-[10px] text-slate-400">
+                  <div className="text-[10px] text-slate-400 truncate max-w-[140px]">
                     Tech: <strong className="text-slate-600 dark:text-slate-300">{ticket.technicianName || 'Unassigned'}</strong>
                   </div>
 
@@ -411,11 +451,15 @@ export default function RepairsView() {
       {/* ── 1. LOG NEW REPAIR TICKET MODAL ── */}
       {showNewTicketModal && (
         <RepairTicketModal
+          users={users}
+          customers={customers}
+          imeis={imeis}
           onClose={() => setShowNewTicketModal(false)}
           onSuccess={() => {
             setShowNewTicketModal(false);
             queryClient.invalidateQueries({ queryKey: ['repairs'] });
             queryClient.invalidateQueries({ queryKey: ['repairs-stats'] });
+            queryClient.invalidateQueries({ queryKey: ['customers-list'] });
           }}
         />
       )}
@@ -424,11 +468,15 @@ export default function RepairsView() {
       {editingTicket && (
         <RepairTicketModal
           initialData={editingTicket}
+          users={users}
+          customers={customers}
+          imeis={imeis}
           onClose={() => setEditingTicket(null)}
           onSuccess={() => {
             setEditingTicket(null);
             queryClient.invalidateQueries({ queryKey: ['repairs'] });
             queryClient.invalidateQueries({ queryKey: ['repairs-stats'] });
+            queryClient.invalidateQueries({ queryKey: ['customers-list'] });
           }}
         />
       )}
@@ -448,10 +496,13 @@ export default function RepairsView() {
 }
 
 // ----------------------------------------------------------------------
-// MODAL: CREATE / EDIT REPAIR TICKET
+// MODAL: CREATE / EDIT REPAIR TICKET (WITH REAL USERS & CUSTOMER LINKUP)
 // ----------------------------------------------------------------------
-function RepairTicketModal({ initialData, onClose, onSuccess }) {
+function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSuccess }) {
   const isEdit = Boolean(initialData);
+
+  const [selectedCustomerId, setSelectedCustomerId] = useState('');
+  const [isQuickCustomer, setIsQuickCustomer] = useState(customers.length === 0 || !isEdit);
 
   const [form, setForm] = useState({
     customerName: initialData?.customerName || '',
@@ -462,7 +513,8 @@ function RepairTicketModal({ initialData, onClose, onSuccess }) {
     issueDescription: initialData?.issueDescription || '',
     estimatedCost: initialData?.estimatedCost ? String(initialData.estimatedCost) : '',
     advancePaid: initialData?.advancePaid ? String(initialData.advancePaid) : '',
-    technicianName: initialData?.technicianName || 'In-House Technician',
+    technicianName: initialData?.technicianName || (users[0]?.name || 'In-House Technician'),
+    isCustomTech: false,
     status: initialData?.status || 'RECEIVED',
   });
 
@@ -483,6 +535,30 @@ function RepairTicketModal({ initialData, onClose, onSuccess }) {
       toast.error(err.response?.data?.message || 'Failed to save ticket');
     },
   });
+
+  const handleCustomerSelect = (custId) => {
+    setSelectedCustomerId(custId);
+    const found = customers.find((c) => String(c._id || c.id) === String(custId));
+    if (found) {
+      setForm((prev) => ({
+        ...prev,
+        customerName: found.name || '',
+        customerPhone: found.phone || '',
+        customerEmail: found.email || '',
+      }));
+    }
+  };
+
+  const handleImeiSelect = (imeiVal) => {
+    setForm((prev) => {
+      const found = imeis.find((i) => i.imeiOrSerial === imeiVal);
+      return {
+        ...prev,
+        imeiOrSerial: imeiVal,
+        deviceModel: found?.productName || found?.product?.name || prev.deviceModel,
+      };
+    });
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -519,21 +595,51 @@ function RepairTicketModal({ initialData, onClose, onSuccess }) {
                 {isEdit ? `Edit Repair Ticket #${initialData?.ticketNumber}` : 'Log New Repair Ticket'}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Register customer device, fault symptoms, pricing estimate, and technician notes.
+                Register customer device, link customer database, assign staff technician and set pricing.
               </p>
             </div>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Customer Information */}
+          {/* Customer Information (Linked with Customers Database) */}
           <div className="bg-slate-50/80 dark:bg-slate-900/40 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-              <User className="w-3.5 h-3.5 text-blue-600" /> Customer Details *
-            </span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-blue-600" /> Customer Details (Linked to CRM) *
+              </span>
+              {customers.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setIsQuickCustomer(!isQuickCustomer)}
+                  className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 hover:underline font-semibold"
+                >
+                  {isQuickCustomer ? 'Select Existing Customer' : '+ Type New Customer Details'}
+                </button>
+              )}
+            </div>
+
+            {!isQuickCustomer && customers.length > 0 && (
+              <div className="space-y-1.5">
+                <Label className="text-[11px] text-slate-500">Pick from Existing Customer Directory</Label>
+                <select
+                  value={selectedCustomerId}
+                  onChange={(e) => handleCustomerSelect(e.target.value)}
+                  className="w-full px-3 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:border-blue-500"
+                >
+                  <option value="">-- Choose Existing Customer --</option>
+                  {customers.map((c) => (
+                    <option key={c._id || c.id} value={c._id || c.id}>
+                      {c.name} ({c.phone}) {c.address ? `— ${c.address}` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <Label className="text-[11px] font-semibold">Customer Full Name *</Label>
+                <Label className="text-[11px] font-semibold">Customer Name *</Label>
                 <Input
                   required
                   placeholder="e.g. Tanvir Hasan"
@@ -543,12 +649,22 @@ function RepairTicketModal({ initialData, onClose, onSuccess }) {
                 />
               </div>
               <div>
-                <Label className="text-[11px] font-semibold">Contact Phone Number *</Label>
+                <Label className="text-[11px] font-semibold">Phone Number *</Label>
                 <Input
                   required
                   placeholder="e.g. 01712345678"
                   value={form.customerPhone}
                   onChange={(e) => setForm({ ...form, customerPhone: e.target.value })}
+                  className="h-9 text-xs rounded-xl mt-1 bg-white dark:bg-[#1e293b]"
+                />
+              </div>
+              <div>
+                <Label className="text-[11px] font-semibold">Email Address (Optional)</Label>
+                <Input
+                  type="email"
+                  placeholder="customer@email.com"
+                  value={form.customerEmail}
+                  onChange={(e) => setForm({ ...form, customerEmail: e.target.value })}
                   className="h-9 text-xs rounded-xl mt-1 bg-white dark:bg-[#1e293b]"
                 />
               </div>
@@ -573,12 +689,22 @@ function RepairTicketModal({ initialData, onClose, onSuccess }) {
               </div>
               <div>
                 <Label className="text-[11px] font-semibold">IMEI / Serial Number (Optional)</Label>
-                <Input
-                  placeholder="e.g. 354890123456789"
-                  value={form.imeiOrSerial}
-                  onChange={(e) => setForm({ ...form, imeiOrSerial: e.target.value })}
-                  className="h-9 text-xs rounded-xl mt-1 font-mono bg-white dark:bg-[#1e293b]"
-                />
+                <div className="relative mt-1">
+                  <Input
+                    placeholder="Type or select IMEI..."
+                    value={form.imeiOrSerial}
+                    onChange={(e) => setForm({ ...form, imeiOrSerial: e.target.value })}
+                    className="h-9 text-xs rounded-xl font-mono bg-white dark:bg-[#1e293b]"
+                    list="imei-options"
+                  />
+                  <datalist id="imei-options">
+                    {imeis.map((item, idx) => (
+                      <option key={idx} value={item.imeiOrSerial}>
+                        {item.productName || item.product?.name || 'Device'}
+                      </option>
+                    ))}
+                  </datalist>
+                </div>
               </div>
             </div>
 
@@ -595,7 +721,7 @@ function RepairTicketModal({ initialData, onClose, onSuccess }) {
             </div>
           </div>
 
-          {/* Pricing & Technician */}
+          {/* Pricing & Technician Assignment */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="bg-slate-50/80 dark:bg-slate-900/40 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
               <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
@@ -627,17 +753,44 @@ function RepairTicketModal({ initialData, onClose, onSuccess }) {
 
             <div className="bg-slate-50/80 dark:bg-slate-900/40 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
               <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                <Wrench className="w-3.5 h-3.5 text-blue-600" /> Technician & Status
+                <Users className="w-3.5 h-3.5 text-blue-600" /> Technician & Status
               </span>
+
+              {/* Technician Dropdown from Users & Staff */}
               <div>
-                <Label className="text-[11px] font-semibold">Assigned Technician</Label>
-                <Input
-                  placeholder="e.g. Master Tech Sabbir"
-                  value={form.technicianName}
-                  onChange={(e) => setForm({ ...form, technicianName: e.target.value })}
-                  className="h-9 text-xs rounded-xl mt-1 bg-white dark:bg-[#1e293b]"
-                />
+                <Label className="text-[11px] font-semibold">Assigned Technician (Staff)</Label>
+                <select
+                  value={form.isCustomTech ? 'custom' : form.technicianName}
+                  onChange={(e) => {
+                    if (e.target.value === 'custom') {
+                      setForm({ ...form, isCustomTech: true, technicianName: '' });
+                    } else {
+                      setForm({ ...form, isCustomTech: false, technicianName: e.target.value });
+                    }
+                  }}
+                  className="w-full mt-1 px-3 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-semibold focus:outline-none"
+                >
+                  <optgroup label="Shop Users & Staff">
+                    {users.map((u) => (
+                      <option key={u._id || u.id} value={u.name}>
+                        {u.name} {u.role?.name ? `(${u.role.name})` : ''}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <option value="custom">+ Assign Other / External Technician...</option>
+                </select>
+
+                {form.isCustomTech && (
+                  <Input
+                    required
+                    placeholder="Enter technician name..."
+                    value={form.technicianName}
+                    onChange={(e) => setForm({ ...form, technicianName: e.target.value })}
+                    className="h-8 text-xs rounded-xl mt-1.5 bg-white dark:bg-[#1e293b]"
+                  />
+                )}
               </div>
+
               <div>
                 <Label className="text-[11px] font-semibold">Repair Status</Label>
                 <select

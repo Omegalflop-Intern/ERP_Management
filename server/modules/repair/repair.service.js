@@ -100,6 +100,26 @@ export const getRepairById = async (id, tenantId = null, branchId = null) => {
 };
 
 export const createRepair = async (data, tenantId = null) => {
+  // Auto-sync / link with customers database
+  if (data.customerPhone && data.customerName) {
+    const custQ = db('customers').where({ phone: data.customerPhone, is_deleted: false });
+    if (tenantId) custQ.where('tenant_id', tenantId);
+    const existingCust = await custQ.first();
+    if (!existingCust) {
+      await db('customers').insert({
+        tenant_id: tenantId || null,
+        branch_id: data.branchId || null,
+        name: data.customerName,
+        phone: data.customerPhone,
+        email: data.customerEmail || null,
+        address: '',
+        due_balance: 0,
+        total_purchases: 0,
+        is_deleted: false,
+      });
+    }
+  }
+
   const ticketNumber = await generateTicketNumber(tenantId);
   const [insertedId] = await db('repair_tickets').insert({
     tenant_id: tenantId || data.tenantId || null,
