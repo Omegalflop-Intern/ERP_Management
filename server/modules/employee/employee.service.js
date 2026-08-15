@@ -44,7 +44,122 @@ function applyTenantScope(query, tenantId) {
   }
 }
 
+function mapRoleToDepartment(roleName) {
+  const r = String(roleName || '').toUpperCase();
+  if (r.includes('ADMIN') || r.includes('OWNER') || r.includes('MANAGER')) return 'Management';
+  if (r.includes('SALES') || r.includes('CASHIER') || r.includes('POS')) return 'Sales';
+  if (r.includes('TECH') || r.includes('REPAIR') || r.includes('SERVICE')) return 'Service';
+  if (r.includes('ACCOUNT') || r.includes('AUDIT') || r.includes('FINANCE')) return 'Accounts';
+  if (r.includes('STOCK') || r.includes('INVENTORY') || r.includes('WAREHOUSE')) return 'Inventory';
+  return 'General';
+}
+
+export const syncUserToEmployee = async (userId, userData = null, tenantId = null) => {
+  try {
+    const uId = Number(userId);
+    if (!uId || isNaN(uId)) return null;
+
+    let user = userData;
+    if (!user || !user.username) {
+      user = await db('users')
+        .leftJoin('roles', 'users.role_id', 'roles.id')
+        .leftJoin('branches', 'users.branch_id', 'branches.id')
+        .where({ 'users.id': uId })
+        .select(
+          'users.*',
+          'roles.name as role_name_val',
+          'branches.name as branch_name_val'
+        )
+        .first();
+    }
+    if (!user) return null;
+
+    const tId = tenantId || user.tenant_id || user.tenantId || null;
+    const bId = user.branch_id || user.branchId || null;
+    const roleName = user.role_name || user.role_name_val || (typeof user.role === 'object' ? user.role?.name : user.role) || 'STAFF';
+    const department = mapRoleToDepartment(roleName);
+    const designation = roleName.charAt(0).toUpperCase() + roleName.slice(1).toLowerCase();
+    const branchName = user.branch_name_val || (typeof user.branch === 'object' ? user.branch?.name : user.branch) || 'Main';
+    const empCode = `EMP-${tId ? tId + '-' : ''}${String(uId).padStart(4, '0')}`;
+    const name = user.full_name || user.fullName || user.username || 'Employee';
+    const email = user.email || null;
+    const phone = user.phone || `01700${String(uId).padStart(6, '0')}`;
+
+    const existingEmp = await db('employees').where({ user_id: uId }).first();
+
+    if (existingEmp) {
+      await db('employees')
+        .where({ id: existingEmp.id })
+        .update({
+          name,
+          email,
+          phone: existingEmp.phone || phone,
+          designation: existingEmp.designation || designation,
+          department: existingEmp.department || department,
+          branch: branchName,
+          branch_id: bId || existingEmp.branch_id,
+          tenant_id: tId || existingEmp.tenant_id,
+          is_active: user.is_active !== undefined ? Boolean(user.is_active) : true,
+          is_deleted: false,
+          updated_at: new Date(),
+        });
+      return getEmployeeById(existingEmp.id, tId);
+    } else {
+      let finalEmpCode = empCode;
+      let counter = 1;
+      while (await db('employees').where({ employee_id: finalEmpCode }).first()) {
+        finalEmpCode = `${empCode}-${counter++}`;
+      }
+
+      const [insertedId] = await db('employees').insert({
+        tenant_id: tId,
+        branch_id: bId,
+        user_id: uId,
+        employee_id: finalEmpCode,
+        name,
+        phone,
+        email,
+        designation,
+        department,
+        branch: branchName,
+        salary: user.salary || 0,
+        joining_date: user.created_at ? new Date(user.created_at) : new Date(),
+        is_active: user.is_active !== undefined ? Boolean(user.is_active) : true,
+        is_deleted: false,
+      });
+      return getEmployeeById(insertedId, tId);
+    }
+  } catch (err) {
+    console.error(`[SYNC-EMPLOYEE] Failed to sync user ${userId} to employee:`, err.message);
+    return null;
+  }
+};
+
 export const getAllEmployees = async (page = 1, limit = 20, search = '', branch = '', tenantId = null, branchId = null) => {
+  // Auto-sync any existing tenant users who are not yet in employees
+  try {
+    const userQuery = db('users')
+      .leftJoin('employees', 'users.id', 'employees.user_id')
+      .leftJoin('roles', 'users.role_id', 'roles.id')
+      .leftJoin('branches', 'users.branch_id', 'branches.id')
+      .where('users.is_deleted', false)
+      .whereNull('employees.id')
+      .select(
+        'users.*',
+        'roles.name as role_name_val',
+        'branches.name as branch_name_val'
+      );
+    if (tenantId) {
+      userQuery.where('users.tenant_id', tenantId);
+    }
+    const unsyncedUsers = await userQuery.limit(50);
+    for (const u of unsyncedUsers) {
+      await syncUserToEmployee(u.id, u, tenantId);
+    }
+  } catch (e) {
+    // Non-blocking sync
+  }
+
   const countQuery = db('employees').where('employees.is_deleted', false);
   applyTenantScope(countQuery, tenantId);
   if (branch) countQuery.where('employees.branch', branch);

@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import { db } from '../../config/db.knex.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { seedDefaultsForTenant, updateSettings } from '../settings/settings.service.js';
+import { syncUserToEmployee } from '../employee/employee.service.js';
 
 export function formatTenant(row) {
   if (!row) return null;
@@ -416,6 +417,12 @@ export const createTenant = async (data) => {
 
   // Link owner user to default main branch
   await db('users').where({ tenant_id: insertedId }).update({ branch_id: mainBranchId });
+
+  // Automatically sync shop owner admin user into Employees list
+  const ownerUser = await db('users').where({ tenant_id: insertedId }).first();
+  if (ownerUser) {
+    await syncUserToEmployee(ownerUser.id, ownerUser, insertedId);
+  }
 
   // Automatically provision default settings for the new shop tenant
   await seedDefaultsForTenant(insertedId, data);

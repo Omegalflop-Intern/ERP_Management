@@ -4,6 +4,7 @@ import { ApiError } from '../../utils/http/ApiError.js';
 import { getPagination } from '../../utils/http/pagination.js';
 import { generateOTP, sendOTP } from '../auth/auth.service.js';
 import emitter, { EVENTS } from '../../events/index.js';
+import { syncUserToEmployee } from '../employee/employee.service.js';
 
 export function formatUser(row, roleRow = null, branchRow = null) {
   if (!row) return null;
@@ -253,6 +254,10 @@ export const createUser = async (data, tenantId = null) => {
 
   const user = await getUserById(insertedId, effectiveTenantId);
   emitter.emit(EVENTS.USER_CREATED, { ...user, tenantId: effectiveTenantId });
+
+  // Automatically sync/add created user as an Employee
+  await syncUserToEmployee(insertedId, user, effectiveTenantId);
+
   return user;
 };
 
@@ -331,6 +336,10 @@ export const updateUser = async (id, data, tenantId = null) => {
 
   const updatedUser = await getUserById(id, tenantId);
   emitter.emit(EVENTS.USER_MUTATED, { ...updatedUser, tenantId: updatedUser?.tenantId || tenantId });
+
+  // Automatically sync updated user details into Employees
+  await syncUserToEmployee(id, updatedUser, tenantId);
+
   return updatedUser;
 };
 
@@ -341,6 +350,10 @@ export const deleteUser = async (id, tenantId = null) => {
   const q1 = db('users').where({ id });
   if (tenantId) q1.andWhere('tenant_id', tenantId);
   await q1.update({ is_deleted: true });
+
+  // Mark employee record inactive/deleted as well
+  await db('employees').where({ user_id: id }).update({ is_deleted: true, is_active: false });
+
   const result = { ...user, isDeleted: true };
   emitter.emit(EVENTS.USER_MUTATED, { ...result, tenantId: user?.tenantId || tenantId });
   return result;
