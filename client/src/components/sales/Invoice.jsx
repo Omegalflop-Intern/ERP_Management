@@ -227,7 +227,7 @@ export function InvoiceA4Full({ sale }) {
 
   return (
     <div
-      className="bg-white text-slate-900 p-8 max-w-[210mm] min-h-[270mm] mx-auto flex flex-col justify-between shadow-lg border border-slate-200 print:shadow-none print:border-none print:p-4 print:max-w-none print:w-full print:min-h-[265mm] print:h-auto"
+      className="bg-white text-slate-900 p-4 sm:p-6 md:p-8 w-full max-w-[210mm] min-h-[270mm] mx-auto flex flex-col justify-between shadow-lg border border-slate-200 print:shadow-none print:border-none print:p-4 print:max-w-none print:w-full print:min-h-[265mm] print:h-auto"
       style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
     >
       <div>
@@ -565,7 +565,7 @@ export function InvoiceA4Half({ sale }) {
 
   return (
     <div
-      className="bg-white text-slate-900 p-5 max-w-[210mm] mx-auto flex flex-col justify-between shadow-lg border border-slate-200 print:shadow-none print:border-none print:p-3 print:max-w-none print:w-full print:min-h-0 print:h-auto print:break-inside-avoid print:page-break-inside-avoid"
+      className="bg-white text-slate-900 p-3 sm:p-4 md:p-5 w-full max-w-[210mm] mx-auto flex flex-col justify-between shadow-lg border border-slate-200 print:shadow-none print:border-none print:p-3 print:max-w-none print:w-full print:min-h-0 print:h-auto print:break-inside-avoid print:page-break-inside-avoid"
       style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: '10px' }}
     >
       <div>

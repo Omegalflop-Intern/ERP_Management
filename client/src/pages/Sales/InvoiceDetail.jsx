@@ -365,7 +365,7 @@ export default function InvoiceDetail() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <div className="bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-4">
           <div className="text-xs text-gray-500 dark:text-gray-400 uppercase">Grand Total</div>
           <div className="text-xl font-bold text-gray-900 dark:text-gray-100">
@@ -418,45 +418,29 @@ export default function InvoiceDetail() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-amber-900 dark:text-amber-300 font-bold text-sm">
               <RotateCcw className="w-4 h-4 text-red-600 dark:text-red-400" />
-              <span>Return &amp; Refund Log ({sale.returnLogs?.length || 0} entries)</span>
+              <span>Return & Refund History ({sale.returnLogs?.length || 1} event)</span>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="text-xs font-mono font-bold text-red-600 dark:text-red-400">
-                Total Refunded: ৳{(sale.returnedAmount || 0).toLocaleString()} (
-                {sale.returnLogs?.reduce((acc, l) => acc + (l.qty || 1), 0) || 0} pcs returned)
-              </div>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setShowCreditNoteModal(true)}
-                className="gap-1.5 text-xs text-red-700 dark:text-red-400 border-red-500/30 hover:bg-red-500/10 font-bold"
-              >
-                <Printer className="w-3.5 h-3.5" /> Return Credit Note
-              </Button>
-            </div>
+            <button
+              onClick={() => setShowCreditNoteModal(true)}
+              className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5"
+            >
+              <FileText className="w-3.5 h-3.5" /> View Credit Note
+            </button>
           </div>
-          <div className="divide-y divide-amber-200/50 dark:divide-amber-900/40 border border-amber-200 dark:border-amber-900/40 rounded-lg overflow-hidden bg-white/60 dark:bg-gray-900/40">
+
+          <div className="divide-y divide-amber-200/60 dark:divide-amber-900/30">
             {sale.returnLogs?.map((log, idx) => (
-              <div
-                key={idx}
-                className="p-2.5 flex items-center justify-between text-xs text-amber-900 dark:text-amber-200"
-              >
-                <div className="space-y-0.5">
-                  <div className="font-bold flex items-center gap-2">
-                    {log.returnInvoiceNumber && (
-                      <span className="font-mono font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 px-1.5 py-0.5 rounded border border-red-200 dark:border-red-800">
-                        {log.returnInvoiceNumber}
+              <div key={idx} className="py-2.5 flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="text-xs font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                    <span>{log.description}</span>
+                    {log.imeiOrSerial && (
+                      <span className="font-mono text-[10px] bg-white dark:bg-gray-800 px-1.5 py-0.5 rounded border border-gray-200 dark:border-gray-700">
+                        {log.imeiOrSerial}
                       </span>
                     )}
-                    {log.imeiOrSerial ? (
-                      <span className="font-mono bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 rounded text-amber-800 dark:text-amber-200 border border-amber-300 dark:border-amber-700">
-                        IMEI: {log.imeiOrSerial}
-                      </span>
-                    ) : (
-                      <span>Bulk Line Item</span>
-                    )}
-                    <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">
-                      {log.reason || 'defective'}
+                    <span className="text-[10px] uppercase font-bold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 rounded">
+                      {log.reason || 'Returned'}
                     </span>
                   </div>
                   <div className="text-[11px] text-gray-500 flex items-center gap-2">
@@ -487,10 +471,15 @@ export default function InvoiceDetail() {
         </div>
       )}
 
-      {/* Invoice Renderer */}
-      <div className="bg-gray-200 dark:bg-gray-900 rounded-xl p-4 flex justify-center overflow-x-auto">
-        <div ref={printRef} className={`${getWidth()} flex-shrink-0 printable-invoice-container`}>
-          {renderInvoice()}
+      {/* Invoice Renderer with Responsive Fit & Scroll */}
+      <div className="bg-slate-200/80 dark:bg-slate-900/80 rounded-2xl p-2 sm:p-4 md:p-6 w-full shadow-inner border border-slate-300/40 dark:border-slate-800">
+        <div className="w-full overflow-x-auto pb-4 flex justify-start md:justify-center">
+          <div
+            ref={printRef}
+            className={`${getWidth()} w-full min-w-[320px] sm:min-w-[650px] md:min-w-[750px] flex-shrink-0 printable-invoice-container`}
+          >
+            {renderInvoice()}
+          </div>
         </div>
       </div>
 
