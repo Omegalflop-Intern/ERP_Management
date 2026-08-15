@@ -56,6 +56,7 @@ import { seedDefaultRoles } from './modules/role/role.service.js';
 import { getAuditLogs } from './utils/auth/auditLog.js';
 import emitter, { EVENTS } from './events/index.js';
 import { setupSwagger } from './config/swagger.config.js';
+import { getLandingPageHtml } from './utils/landingPage.js';
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
@@ -85,8 +86,8 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", 'data:', 'https:', 'http:'],
       connectSrc: [
         "'self'",
@@ -136,14 +137,21 @@ app.use('/uploads', (req, res, next) => {
 app.use('/api', apiLimiter);
 
 app.get('/', (req, res) => {
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.json({
-    success: true,
-    message: 'OmniManage API Server is running',
-    version: '1.0.0',
-    documentation: '/api-docs',
-    health: '/api/v1/health',
-  });
+  if (
+    req.query.format === 'json' ||
+    (req.headers.accept && req.headers.accept.includes('application/json') && !req.headers.accept.includes('text/html'))
+  ) {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    return res.json({
+      success: true,
+      message: 'OmniManage API Server is running',
+      version: '1.0.0',
+      documentation: '/api-docs',
+      health: '/api/v1/health',
+    });
+  }
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  return res.send(getLandingPageHtml({ version: '1.0.0' }));
 });
 
 app.get(['/api', '/api/v1'], (req, res) => {
