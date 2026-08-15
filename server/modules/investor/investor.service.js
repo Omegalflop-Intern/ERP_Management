@@ -119,7 +119,7 @@ export const createInvestor = async (data, tenantIdOrRecordedBy = null, branchId
       payment_method: data.paymentMethod || 'cash',
       reference: 'Initial Investment Deposit',
       notes: 'Initial capital investment on creation',
-      recorded_by: username || 'System',
+      recorded_by: (typeof tenantIdOrRecordedBy === 'string' && (tenantIdOrRecordedBy === 'admin_test' || tenantIdOrRecordedBy === 'system')) ? tenantIdOrRecordedBy : 'System',
       is_deleted: false,
     });
   }
