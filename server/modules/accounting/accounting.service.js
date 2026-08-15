@@ -748,7 +748,7 @@ export const syncHistoricalJournals = async (tenantId = null) => {
       const pCost = Number(fa.balance || 0);
       if (pCost > 0) {
         const ref = `INIT-AST-${fa.id}`;
-        const existing = await db('journal_entries').where({ reference: ref, is_deleted: false });
+        const existing = db('journal_entries').where({ reference: ref, is_deleted: false });
         applyTenantScope(existing, tenantId, 'journal_entries');
         const hasExisting = await existing.first();
         if (!hasExisting) {
@@ -775,7 +775,7 @@ export const syncHistoricalJournals = async (tenantId = null) => {
 
   for (const sale of sales) {
     const ref = sale.invoice_number;
-    const existing = await db('journal_entries').where({ reference: ref, is_deleted: false });
+    const existing = db('journal_entries').where({ reference: ref, is_deleted: false });
     applyTenantScope(existing, tenantId, 'journal_entries');
     const hasExisting = await existing.first();
 
@@ -842,7 +842,7 @@ export const syncHistoricalJournals = async (tenantId = null) => {
 
   for (const exp of expenses) {
     const ref = `EXP-${exp.id}`;
-    const existing = await db('journal_entries').where({ reference: ref, is_deleted: false });
+    const existing = db('journal_entries').where({ reference: ref, is_deleted: false });
     applyTenantScope(existing, tenantId, 'journal_entries');
     const hasExisting = await existing.first();
 
