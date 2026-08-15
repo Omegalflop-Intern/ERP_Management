@@ -90,21 +90,24 @@ export const createInvestor = async (data, tenantIdOrRecordedBy = null, branchId
   let tenantId = data.tenantId || null;
   let branchId = data.branchId || null;
 
-  if (tenantIdOrRecordedBy && typeof tenantIdOrRecordedBy === 'string' && tenantIdOrRecordedBy !== 'admin_test' && tenantIdOrRecordedBy !== 'system') {
+  if (tenantIdOrRecordedBy !== null && tenantIdOrRecordedBy !== undefined && tenantIdOrRecordedBy !== 'admin_test' && tenantIdOrRecordedBy !== 'system') {
     tenantId = tenantIdOrRecordedBy;
   }
-  if (branchIdOrTenantId && typeof branchIdOrTenantId === 'string' && (branchIdOrTenantId.startsWith('ten_') || branchIdOrTenantId.includes('-') || !isNaN(Number(branchIdOrTenantId)))) {
+  if (branchIdOrTenantId !== null && branchIdOrTenantId !== undefined) {
     tenantId = branchIdOrTenantId;
   }
 
+  const initialCap = Number(data.initialCapital || 0);
   const [insertedId] = await db('investors').insert({
     tenant_id: tenantId,
-    branch_id: branchId,
     name: data.name,
     phone: data.phone,
     email: data.email || null,
-    share_percentage: data.sharePercentage || 0,
-    agreed_return_rate: data.agreedReturnRate || 0,
+    address: data.address || null,
+    share_percentage: Number(data.sharePercentage || 0),
+    total_invested: initialCap,
+    total_withdrawn: 0,
+    total_profit_paid: 0,
     status: data.status || 'Active',
     notes: data.notes || null,
     is_deleted: false,
