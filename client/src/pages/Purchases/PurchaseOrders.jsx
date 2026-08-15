@@ -414,6 +414,11 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
   const [tax, setTax] = useState('');
   const [notes, setNotes] = useState('');
 
+  const availableCategories = useMemo(() => {
+    const existing = products.map((p) => p.category).filter(Boolean);
+    return Array.from(new Set([...CATEGORIES, ...existing]));
+  }, [products]);
+
   const [lineItems, setLineItems] = useState([
     {
       productId: '',
@@ -731,14 +736,33 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                           Category
                         </Label>
                         <select
-                          value={item.category || 'Smartphones'}
-                          onChange={(e) => handleLineChange(index, 'category', e.target.value)}
+                          value={item.isCustomCategory ? 'custom' : (item.category || 'Smartphones')}
+                          onChange={(e) => {
+                            if (e.target.value === 'custom') {
+                              handleLineChange(index, 'isCustomCategory', true);
+                              handleLineChange(index, 'category', '');
+                            } else {
+                              handleLineChange(index, 'isCustomCategory', false);
+                              handleLineChange(index, 'category', e.target.value);
+                            }
+                          }}
                           className="w-full px-2.5 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 font-medium focus:outline-none"
                         >
-                          {CATEGORIES.map((c) => (
+                          {availableCategories.map((c) => (
                             <option key={c} value={c}>{c}</option>
                           ))}
+                          <option value="custom">+ Type Custom Category...</option>
                         </select>
+
+                        {item.isCustomCategory && (
+                          <Input
+                            required
+                            placeholder="Enter category name..."
+                            value={item.category}
+                            onChange={(e) => handleLineChange(index, 'category', e.target.value)}
+                            className="h-8 text-xs rounded-xl bg-white dark:bg-[#1e293b] mt-1 border-blue-400"
+                          />
+                        )}
                       </div>
 
                       {/* Qty (1 col) */}

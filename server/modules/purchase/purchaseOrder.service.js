@@ -137,10 +137,37 @@ export const getPurchaseOrderById = async (id, tenantId = null, branchId = null)
 export const createPurchaseOrder = async (data, createdBy = 'system') => {
   const tenantId = data.tenantId || null;
   const branchId = data.branchId || null;
-  const supQuery = db('suppliers').where({ id: data.supplierId, is_deleted: false });
-  if (tenantId) supQuery.where('tenant_id', tenantId);
-  const supplier = await supQuery.first();
-  if (!supplier) throw ApiError.notFound('Supplier not found');
+
+  let supplier = null;
+  if (data.supplierId && !isNaN(Number(data.supplierId))) {
+    const supQuery = db('suppliers').where({ id: Number(data.supplierId), is_deleted: false });
+    if (tenantId) supQuery.where('tenant_id', tenantId);
+    supplier = await supQuery.first();
+  }
+
+  if (!supplier && (data.supplierName || (data.supplierId && isNaN(Number(data.supplierId))))) {
+    const sName = data.supplierName || String(data.supplierId);
+    const supNameQ = db('suppliers').where({ name: sName, is_deleted: false });
+    if (tenantId) supNameQ.where('tenant_id', tenantId);
+    supplier = await supNameQ.first();
+
+    if (!supplier) {
+      const [newSupId] = await db('suppliers').insert({
+        tenant_id: tenantId,
+        branch_id: branchId,
+        name: sName,
+        phone: data.supplierPhone || 'N/A',
+        company: data.supplierCompany || '',
+        due_balance: 0,
+        total_purchases: 0,
+        is_deleted: false,
+      });
+      const getSup = db('suppliers').where({ id: newSupId });
+      supplier = await getSup.first();
+    }
+  }
+
+  if (!supplier) throw ApiError.notFound('Supplier not found or could not be created');
 
   const processedLineItems = [];
 
