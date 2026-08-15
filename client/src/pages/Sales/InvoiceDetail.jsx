@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft,
+  CheckCircle2,
+  DollarSign,
   Download,
   FileText,
   Maximize,
@@ -53,6 +55,7 @@ export default function InvoiceDetail() {
   const [showDownload, setShowDownload] = useState(false);
   const [showReturnModal, setShowReturnModal] = useState(false);
   const [showCreditNoteModal, setShowCreditNoteModal] = useState(false);
+  const [showCollectDueModal, setShowCollectDueModal] = useState(false);
   const [returnSelection, setReturnSelection] = useState({});
 
   const { data: sale, isLoading } = useQuery({
@@ -261,6 +264,16 @@ export default function InvoiceDetail() {
               </button>
             ))}
           </div>
+
+          {/* Collect Due Button */}
+          {Number(sale.paymentBreakdown?.dueAmount || 0) > 0 && (
+            <button
+              onClick={() => setShowCollectDueModal(true)}
+              className="px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 hover:shadow-md active:scale-[0.97]"
+            >
+              <DollarSign className="w-4 h-4" /> Collect Due (৳{Number(sale.paymentBreakdown.dueAmount).toLocaleString()})
+            </button>
+          )}
 
           {/* Return Items Button */}
           {sale.status !== 'RETURNED' && (
@@ -691,6 +704,156 @@ export default function InvoiceDetail() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Collect Due Modal */}
+      {showCollectDueModal && (
+        <InvoiceCollectDueModal
+          sale={sale}
+          onClose={() => setShowCollectDueModal(false)}
+          onSuccess={() => {
+            setShowCollectDueModal(false);
+            queryClient.invalidateQueries({ queryKey: ['sale', id] });
+            queryClient.invalidateQueries({ queryKey: ['sales'] });
+            queryClient.invalidateQueries({ queryKey: ['customers'] });
+            queryClient.invalidateQueries({ queryKey: ['customer-history'] });
+            queryClient.invalidateQueries({ queryKey: ['customer-stats'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+function InvoiceCollectDueModal({ sale, onClose, onSuccess }) {
+  const [amount, setAmount] = useState('');
+  const [method, setMethod] = useState('cash');
+  const dueAmount = Number(sale.paymentBreakdown?.dueAmount || 0);
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      let collectAmount = amount === '' ? dueAmount : Number(amount);
+      if (isNaN(collectAmount) || collectAmount <= 0) {
+        throw new Error('Please enter a valid payment amount');
+      }
+      if (collectAmount > dueAmount) {
+        collectAmount = dueAmount;
+      }
+
+      const custId = typeof sale.customerId === 'object' ? (sale.customerId?._id || sale.customerId?.id) : sale.customerId;
+
+      if (custId) {
+        return api.post(`/customers/${custId}/collect-due`, {
+          amount: collectAmount,
+          paymentMethod: method,
+        });
+      }
+
+      const updatedBreakdown = { ...(sale.paymentBreakdown || {}) };
+      const m = (method || 'cash').toLowerCase();
+      updatedBreakdown[m] = (Number(updatedBreakdown[m]) || 0) + collectAmount;
+      updatedBreakdown.dueAmount = Math.max(0, dueAmount - collectAmount);
+
+      const targetSaleId = sale.id || sale._id;
+      return api.put(`/sales/${targetSaleId}`, { paymentBreakdown: updatedBreakdown });
+    },
+    onSuccess: () => {
+      toast.success('Due payment collected and recorded successfully!');
+      onSuccess();
+    },
+    onError: (e) => toast.error(e.response?.data?.message || e.message || 'Failed to collect payment'),
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    mutation.mutate();
+  };
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md w-[94vw] rounded-3xl p-0 border border-slate-200 dark:border-slate-800 shadow-2xl bg-white dark:bg-[#0f172a]">
+        <div className="p-5 px-6 pr-12 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-600/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold shrink-0">
+              <DollarSign className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                Collect Due — {sale.invoiceNumber}
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Record customer payment against this invoice.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
+            <div className="flex justify-between items-center">
+              <span className="text-slate-500">Customer:</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100">
+                {sale.customerName} {sale.customerPhone ? `(${sale.customerPhone})` : ''}
+              </span>
+            </div>
+            <div className="flex justify-between items-center border-t border-slate-200 dark:border-slate-800 pt-2">
+              <span className="text-rose-600 font-bold uppercase text-[10px]">Invoice Due Pending:</span>
+              <span className="text-base font-black font-mono text-rose-600">
+                ৳{dueAmount.toLocaleString()}
+              </span>
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+              Amount to Collect (৳) *
+            </Label>
+            <Input
+              type="number"
+              min="1"
+              max={dueAmount}
+              placeholder={`Max: ${dueAmount}`}
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="h-10 text-sm font-mono font-bold text-slate-900 dark:text-slate-100 rounded-xl mt-1.5 bg-slate-50 dark:bg-slate-900"
+            />
+            <p className="text-[11px] text-slate-400 mt-1">
+              Leave blank to settle full invoice due of ৳{dueAmount.toLocaleString()}
+            </p>
+          </div>
+
+          <div>
+            <Label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+              Payment Method
+            </Label>
+            <select
+              value={method}
+              onChange={(e) => setMethod(e.target.value)}
+              className="w-full mt-1.5 px-3 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500"
+            >
+              <option value="cash">Cash in Hand</option>
+              <option value="bkash">bKash</option>
+              <option value="nagad">Nagad</option>
+              <option value="rocket">Rocket</option>
+              <option value="bank">Bank / Card</option>
+            </select>
+          </div>
+
+          <DialogFooter className="border-t border-slate-100 dark:border-slate-800 pt-3">
+            <Button type="button" variant="outline" onClick={onClose} className="rounded-xl text-xs">
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={mutation.isPending}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold gap-1.5 px-5"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              {mutation.isPending ? 'Processing...' : 'Confirm Payment'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

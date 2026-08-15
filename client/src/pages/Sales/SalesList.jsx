@@ -1,14 +1,36 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Calendar, Eye, Filter, Pencil, Plus, Receipt, Search, Trash2 } from 'lucide-react';
+import {
+  Calendar,
+  CheckCircle2,
+  DollarSign,
+  Eye,
+  Filter,
+  Pencil,
+  Plus,
+  Receipt,
+  Search,
+  Trash2,
+  Wallet,
+  X,
+} from 'lucide-react';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import DatePicker from '../../components/ui/DatePicker';
+import { Button } from '../../components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../components/ui/dialog';
+import EmptyState from '../../components/ui/EmptyState';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import PageHeader from '../../components/layout/PageHeader';
 import api from '../../lib/api';
 import { confirmDelete } from '../../lib/confirm';
-
-import PageHeader from '../../components/layout/PageHeader';
-import EmptyState from '../../components/ui/EmptyState';
 import EditSaleModal from './EditSaleModal';
 
 export default function SalesList() {
@@ -19,12 +41,13 @@ export default function SalesList() {
   const [paymentFilter, setPaymentFilter] = useState('');
   const [saleTypeFilter, setSaleTypeFilter] = useState('');
   const [editSaleId, setEditSaleId] = useState(null);
+  const [collectSaleModal, setCollectSaleModal] = useState(null);
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ['sales', search, dateFrom, dateTo, paymentFilter, saleTypeFilter],
     queryFn: async () => {
-      const params = { limit: 50 };
+      const params = { limit: 100 };
       if (search) params.customer = search;
       if (dateFrom) params.from = dateFrom;
       if (dateTo) params.to = dateTo;
@@ -39,7 +62,8 @@ export default function SalesList() {
     mutationFn: async (id) => api.delete(`/sales/${id}`),
     onSuccess: () => {
       toast.success('Sale deleted');
-      queryClient.invalidateQueries(['sales']);
+      queryClient.invalidateQueries({ queryKey: ['sales'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
     },
     onError: (e) => toast.error(e.response?.data?.message || 'Failed'),
   });
@@ -50,16 +74,16 @@ export default function SalesList() {
     <div className="space-y-6">
       <PageHeader
         title="Sales & Transactions"
-        subtitle="Manage customer invoices, view payment statuses, and issue return receipts."
+        subtitle="Manage customer invoices, track dues, record payments, and issue return receipts."
         icon={Receipt}
         breadcrumbs={['Sales & Orders', 'Sales History']}
         actions={
-          <button
+          <Button
             onClick={() => navigate('/sales/new')}
-            className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl text-xs transition-all shadow-xs"
+            className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-xl text-xs shadow-md px-4 py-2"
           >
             <Plus className="w-4 h-4" /> New Sale (POS)
-          </button>
+          </Button>
         }
       />
 
@@ -100,7 +124,7 @@ export default function SalesList() {
           <option value="rocket">Rocket</option>
           <option value="nagad">Nagad</option>
           <option value="bank">Bank/Card</option>
-          <option value="due">Due</option>
+          <option value="due">Due Pending</option>
         </select>
       </div>
 
@@ -177,11 +201,12 @@ export default function SalesList() {
                     (s.paymentBreakdown?.nagad || 0) +
                     (s.paymentBreakdown?.bank || 0);
                   const netPaid = Math.max(0, rawPaid - (s.returnedAmount || 0));
+                  const dueAmt = Number(s.paymentBreakdown?.dueAmount || 0);
                   const isWholesale =
                     s.saleType === 'WHOLESALE' || s.customerId?.customerType === 'B2B';
                   return (
                     <tr
-                      key={s._id}
+                      key={s._id || s.id}
                       className="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30"
                     >
                       <td className="px-4 py-3">
@@ -246,10 +271,15 @@ export default function SalesList() {
                         )}
                       </td>
                       <td className="px-4 py-3 text-right text-sm font-medium">
-                        {s.paymentBreakdown?.dueAmount > 0 ? (
-                          <span className="text-red-600 dark:text-red-400">
-                            ৳{s.paymentBreakdown.dueAmount?.toLocaleString()}
-                          </span>
+                        {dueAmt > 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => setCollectSaleModal(s)}
+                            className="inline-flex items-center gap-1 font-mono font-bold text-rose-600 dark:text-rose-400 hover:underline bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-lg border border-rose-200 dark:border-rose-800"
+                            title="Click to Collect Due"
+                          >
+                            ৳{dueAmt.toLocaleString()}
+                          </button>
                         ) : (
                           <span className="text-gray-400">—</span>
                         )}
@@ -288,9 +318,19 @@ export default function SalesList() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1.5">
+                          {dueAmt > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setCollectSaleModal(s)}
+                              className="px-2 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-colors text-xs font-bold flex items-center gap-1 border border-emerald-200 dark:border-emerald-800"
+                              title="Collect Due"
+                            >
+                              <DollarSign className="w-3.5 h-3.5" /> Collect
+                            </button>
+                          )}
                           <button
                             type="button"
-                            onClick={() => setEditSaleId(s._id)}
+                            onClick={() => setEditSaleId(s._id || s.id)}
                             className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-amber-600 transition-colors"
                             title="Edit Sale Details"
                           >
@@ -298,7 +338,7 @@ export default function SalesList() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => navigate(`/sales/${s._id}`)}
+                            onClick={() => navigate(`/sales/${s._id || s.id}`)}
                             className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-blue-600 transition-colors"
                             title="View Invoice & Issue Returns"
                           >
@@ -309,7 +349,7 @@ export default function SalesList() {
                             onClick={() => {
                               confirmDelete(
                                 `Delete sale #${s.invoiceNumber}?`,
-                                () => deleteMutation.mutate(s._id),
+                                () => deleteMutation.mutate(s._id || s.id),
                                 'Stock and customer balances will be restored.'
                               );
                             }}
@@ -341,6 +381,160 @@ export default function SalesList() {
           onSuccess={() => setEditSaleId(null)}
         />
       )}
+
+      {/* Collect Due Payment Modal directly on Sales List */}
+      {collectSaleModal && (
+        <SaleCollectDueModal
+          sale={collectSaleModal}
+          onClose={() => setCollectSaleModal(null)}
+          onSuccess={() => {
+            setCollectSaleModal(null);
+            queryClient.invalidateQueries({ queryKey: ['sales'] });
+            queryClient.invalidateQueries({ queryKey: ['customers'] });
+            queryClient.invalidateQueries({ queryKey: ['customer-history'] });
+            queryClient.invalidateQueries({ queryKey: ['customer-stats'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+// ----------------------------------------------------------------------
+// MODAL: COLLECT DUE PAYMENT DIRECTLY FROM SALES LIST
+// ----------------------------------------------------------------------
+function SaleCollectDueModal({ sale, onClose, onSuccess }) {
+  const [amount, setAmount] = useState('');
+  const [method, setMethod] = useState('cash');
+  const dueAmount = Number(sale.paymentBreakdown?.dueAmount || 0);
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      let collectAmount = amount === '' ? dueAmount : Number(amount);
+      if (isNaN(collectAmount) || collectAmount <= 0) {
+        throw new Error('Please enter a valid payment amount');
+      }
+      if (collectAmount > dueAmount) {
+        collectAmount = dueAmount;
+      }
+
+      const custId = typeof sale.customerId === 'object' ? (sale.customerId?._id || sale.customerId?.id) : sale.customerId;
+
+      // If customer profile is attached, collect via customer due endpoint to sync customer ledger
+      if (custId) {
+        return api.post(`/customers/${custId}/collect-due`, {
+          amount: collectAmount,
+          paymentMethod: method,
+        });
+      }
+
+      // Otherwise update invoice payment breakdown directly
+      const updatedBreakdown = { ...(sale.paymentBreakdown || {}) };
+      const m = (method || 'cash').toLowerCase();
+      updatedBreakdown[m] = (Number(updatedBreakdown[m]) || 0) + collectAmount;
+      updatedBreakdown.dueAmount = Math.max(0, dueAmount - collectAmount);
+
+      const targetSaleId = sale.id || sale._id;
+      return api.put(`/sales/${targetSaleId}`, { paymentBreakdown: updatedBreakdown });
+    },
+    onSuccess: () => {
+      toast.success('Due payment collected and recorded successfully!');
+      onSuccess();
+    },
+    onError: (e) => toast.error(e.response?.data?.message || e.message || 'Failed to collect payment'),
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    mutation.mutate();
+  };
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md w-[94vw] rounded-3xl p-0 border border-slate-200 dark:border-slate-800 shadow-2xl bg-white dark:bg-[#0f172a]">
+        <div className="p-5 px-6 pr-12 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-600/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold shrink-0">
+              <DollarSign className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                Collect Due — {sale.invoiceNumber}
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Record customer payment against invoice.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
+            <div className="flex justify-between items-center">
+              <span className="text-slate-500">Customer:</span>
+              <span className="font-semibold text-slate-900 dark:text-slate-100">
+                {sale.customerName} {sale.customerPhone ? `(${sale.customerPhone})` : ''}
+              </span>
+            </div>
+            <div className="flex justify-between items-center border-t border-slate-200 dark:border-slate-800 pt-2">
+              <span className="text-rose-600 font-bold uppercase text-[10px]">Invoice Due Pending:</span>
+              <span className="text-base font-black font-mono text-rose-600">
+                ৳{dueAmount.toLocaleString()}
+              </span>
+            </div>
+          </div>
+
+          <div>
+            <Label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+              Amount to Collect (৳) *
+            </Label>
+            <Input
+              type="number"
+              min="1"
+              max={dueAmount}
+              placeholder={`Max: ${dueAmount}`}
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="h-10 text-sm font-mono font-bold text-slate-900 dark:text-slate-100 rounded-xl mt-1.5 bg-slate-50 dark:bg-slate-900"
+            />
+            <p className="text-[11px] text-slate-400 mt-1">
+              Leave blank to clear full due of ৳{dueAmount.toLocaleString()}
+            </p>
+          </div>
+
+          <div>
+            <Label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+              Payment Method
+            </Label>
+            <select
+              value={method}
+              onChange={(e) => setMethod(e.target.value)}
+              className="w-full mt-1.5 px-3 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500"
+            >
+              <option value="cash">Cash in Hand</option>
+              <option value="bkash">bKash</option>
+              <option value="nagad">Nagad</option>
+              <option value="rocket">Rocket</option>
+              <option value="bank">Bank / Card</option>
+            </select>
+          </div>
+
+          <DialogFooter className="border-t border-slate-100 dark:border-slate-800 pt-3">
+            <Button type="button" variant="outline" onClick={onClose} className="rounded-xl text-xs">
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={mutation.isPending}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold gap-1.5 px-5"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              {mutation.isPending ? 'Processing...' : 'Confirm Payment'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
