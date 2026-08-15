@@ -1276,14 +1276,37 @@ input[type="checkbox"]:focus {
    ═══════════════════════════════════════════════════════════════ */
 @media print {
   @page {
-    margin: 5mm;
+    size: auto;
+    margin: 4mm;
   }
 
+  *,
+  *::before,
+  *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  html,
   body {
     background: #ffffff !important;
     color: #000000 !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    height: auto !important;
+    min-height: 0 !important;
+    width: 100% !important;
+  }
+
+  #root,
+  main,
+  .app-layout {
+    overflow: visible !important;
+    height: auto !important;
+    min-height: 0 !important;
+    position: static !important;
+    display: block !important;
   }
 
   body * {
@@ -1295,11 +1318,14 @@ input[type="checkbox"]:focus {
   header,
   button,
   .no-print,
-  [role="dialog"] {
+  [role="dialog"],
+  .fixed,
+  .sticky {
     display: none !important;
   }
 
   .printable-invoice-container,
+  .printable-invoice-container *,
   #printable-receipt,
   #printable-receipt * {
     visibility: visible !important;
@@ -1310,12 +1336,14 @@ input[type="checkbox"]:focus {
     left: 0 !important;
     top: 0 !important;
     width: 100% !important;
+    max-width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
     background: #ffffff !important;
     box-shadow: none !important;
     border: none !important;
     z-index: 999999 !important;
+    display: block !important;
   }
 
   #printable-receipt {

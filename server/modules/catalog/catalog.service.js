@@ -15,6 +15,8 @@ function formatCatalogItem(row) {
   };
 }
 
+import { ensureCategoryInCatalog, ensureBrandInCatalog } from '../product/product.service.js';
+
 function applyTenantScope(query, tenantId) {
   if (tenantId) {
     query.where('tenant_id', tenantId);
@@ -22,6 +24,24 @@ function applyTenantScope(query, tenantId) {
 }
 
 export const getAllCatalogItems = async (type = '', search = '', tenantId = null) => {
+  try {
+    const prodQuery = db('products').where({ is_deleted: false });
+    if (tenantId) prodQuery.where('tenant_id', tenantId);
+    const existingProds = await prodQuery.select('category', 'brand');
+
+    const catItems = existingProds.map((p) => p.category?.trim()).filter(Boolean);
+    const brandItems = existingProds.map((p) => p.brand?.trim()).filter(Boolean);
+
+    for (const catName of new Set(catItems)) {
+      await ensureCategoryInCatalog(catName, tenantId);
+    }
+    for (const brandName of new Set(brandItems)) {
+      await ensureBrandInCatalog(brandName, tenantId);
+    }
+  } catch (e) {
+    // Ignore sync errors
+  }
+
   const query = db('catalog_items').where({ is_deleted: false });
   applyTenantScope(query, tenantId);
   if (type) query.where({ type });

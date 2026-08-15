@@ -397,7 +397,9 @@ export default function ProductList() {
           onSuccess={() => {
             setShowForm(false);
             setEditProduct(null);
-            queryClient.invalidateQueries(['products']);
+            queryClient.invalidateQueries({ queryKey: ['products'] });
+            queryClient.invalidateQueries({ queryKey: ['catalog'] });
+            queryClient.invalidateQueries({ queryKey: ['stock-overview-products'] });
           }}
         />
       )}

@@ -334,14 +334,14 @@ export default function SystemAnalytics() {
                 </tr>
               </thead>
               <tbody>
-                {(s.collections || []).map((coll) => {
+                {(s.collections || []).map((coll, idx) => {
                   const maxStorage = Math.max(
                     ...(s.collections || []).map((c) => c.storageSize || 0),
                     1
                   );
                   return (
                     <tr
-                      key={coll.name}
+                      key={coll.name ? `${coll.name}-${idx}` : `coll-${idx}`}
                       className="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30"
                     >
                       <td className="px-4 py-3">

@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { db } from '../../config/db.knex.js';
 import { ApiError } from '../../utils/http/ApiError.js';
+import { seedDefaultsForTenant, updateSettings } from '../settings/settings.service.js';
 
 export function formatTenant(row) {
   if (!row) return null;
@@ -290,6 +291,15 @@ export const updateTenant = async (id, data) => {
     }
   }
 
+  if (data.shopName || data.phone || data.email || data.address || data.platformAddress) {
+    await seedDefaultsForTenant(id, {
+      shopName: data.shopName,
+      phone: data.phone,
+      email: data.email,
+      address: data.address || data.platformAddress,
+    });
+  }
+
   return getTenantById(id);
 };
 
@@ -406,6 +416,9 @@ export const createTenant = async (data) => {
 
   // Link owner user to default main branch
   await db('users').where({ tenant_id: insertedId }).update({ branch_id: mainBranchId });
+
+  // Automatically provision default settings for the new shop tenant
+  await seedDefaultsForTenant(insertedId, data);
 
   return getTenantById(insertedId);
 };
@@ -528,6 +541,20 @@ export const getPublicTenantBySubdomain = async (subdomain) => {
     subdomain: row.subdomain,
     logo: row.logo || null,
   };
+};
+
+export const uploadTenantLogo = async (id, file) => {
+  const row = await db('tenants').where({ id, is_deleted: false }).first();
+  if (!row) throw ApiError.notFound('Shop tenant account not found');
+  if (!file) throw ApiError.badRequest('No logo file provided');
+
+  const logoUrl = `/uploads/tenants/logos/${file.filename}`;
+  await db('tenants').where({ id }).update({ logo: logoUrl });
+
+  // Sync with tenant settings companyLogo as well
+  await updateSettings({ companyLogo: logoUrl }, null, id);
+
+  return getTenantById(id);
 };
 
 export const bulkDeleteTenants = async (ids = []) => {

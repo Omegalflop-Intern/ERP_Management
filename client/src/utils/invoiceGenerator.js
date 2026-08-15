@@ -89,6 +89,7 @@ const captureElementToPDF = async (element, pdfFormat, filename) => {
     const canvas = await html2canvas(element, {
       scale: 2,
       useCORS: true,
+      allowTaint: true,
       logging: false,
       backgroundColor: '#FFFFFF',
       onclone: (clonedDoc) => {
@@ -117,10 +118,26 @@ const captureElementToPDF = async (element, pdfFormat, filename) => {
     });
 
     const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    let targetFormat = pdfFormat;
+
+    if (pdfFormat === 'a4') {
+      targetFormat = 'a4';
+    } else if (pdfFormat === 'a5' || pdfFormat === 'a4half') {
+      targetFormat = 'a5';
+    } else if (Array.isArray(pdfFormat)) {
+      targetFormat = pdfFormat;
+    } else if (pdfFormat === 'receipt' || pdfFormat === '80mm') {
+      const calcHeight = Math.max(100, Math.round((canvas.height * 80) / canvas.width));
+      targetFormat = [80, calcHeight];
+    } else if (pdfFormat === 'thermal' || pdfFormat === '58mm') {
+      const calcHeight = Math.max(80, Math.round((canvas.height * 58) / canvas.width));
+      targetFormat = [58, calcHeight];
+    }
+
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
-      format: pdfFormat,
+      format: targetFormat,
     });
 
     const pdfWidth = pdf.internal.pageSize.getWidth();

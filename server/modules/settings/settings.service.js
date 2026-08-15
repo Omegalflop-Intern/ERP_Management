@@ -97,17 +97,44 @@ export const seedDefaults = async () => {
   }
 };
 
-export const seedDefaultsForTenant = async (tenantId, shopName) => {
+export const seedDefaultsForTenant = async (tenantId, tenantData) => {
   if (!tenantId) return;
+  const shopName = typeof tenantData === 'string' ? tenantData : tenantData?.shopName || tenantData?.shop_name || '';
+  const phone = typeof tenantData === 'object' ? (tenantData.phone || '') : '';
+  const email = typeof tenantData === 'object' ? (tenantData.email || '') : '';
+  const address = typeof tenantData === 'object' ? (tenantData.address || tenantData.platformAddress || '') : '';
+  const binVat = typeof tenantData === 'object' && tenantData.tradeLicenseNumber ? `BIN: ${tenantData.tradeLicenseNumber}` : '';
+  const logo = typeof tenantData === 'object' ? (tenantData.logo || '') : '';
+
   for (const s of defaultSettings) {
     const existing = await db('settings').where({ key: s.key, tenant_id: tenantId }).first();
+    let val = s.value;
+
+    if (s.key === 'companyName' && shopName) val = shopName;
+    else if (s.key === 'companyPhone' && phone) val = phone;
+    else if (s.key === 'companyEmail' && email) val = email;
+    else if (s.key === 'companyAddress' && address) val = address;
+    else if (s.key === 'companyLogo' && logo) val = logo;
+    else if (s.key === 'binVat' && binVat) val = binVat;
+    else if (s.key === 'currency') val = 'BDT';
+    else if (s.key === 'currencySymbol') val = '৳';
+    else if (s.key === 'timezone') val = 'Asia/Dhaka';
+
     if (!existing) {
-      const val = s.key === 'companyName' && shopName ? shopName : s.value;
       await db('settings').insert({
         tenant_id: tenantId,
         key: s.key,
         value: JSON.stringify(val),
         category: s.category,
+      });
+    } else if (
+      (s.key === 'companyName' && shopName && (existing.value === JSON.stringify('OmniManage Store') || !existing.value)) ||
+      (s.key === 'companyPhone' && phone && (existing.value === JSON.stringify('+880 1700-000000') || !existing.value)) ||
+      (s.key === 'companyEmail' && email && (existing.value === JSON.stringify('sales@omnimanage.bd') || !existing.value)) ||
+      (s.key === 'companyAddress' && address && (existing.value === JSON.stringify('Dhanmondi, Dhaka, Bangladesh') || !existing.value))
+    ) {
+      await db('settings').where({ id: existing.id }).update({
+        value: JSON.stringify(val),
       });
     }
   }
@@ -133,14 +160,50 @@ export const getAllSettings = async (category, tenantId = null) => {
     const tenantRows = await db('settings').where({ tenant_id: tenantId }).where(category ? { category } : {}).orderBy('key', 'asc');
 
     const result = {};
-    globalRows.forEach(s => { result[s.key] = parseValue(s.value); });
-    tenantRows.forEach(s => { result[s.key] = parseValue(s.value); });
+    globalRows.forEach((s) => {
+      result[s.key] = parseValue(s.value);
+    });
+    tenantRows.forEach((s) => {
+      result[s.key] = parseValue(s.value);
+    });
+
+    // Dynamic fallback to tenant profile if company settings are still empty or placeholder
+    try {
+      const tenant = await db('tenants').where({ id: tenantId, is_deleted: false }).first();
+      if (tenant) {
+        if (!result.companyName || result.companyName === 'OmniManage Store') {
+          result.companyName = tenant.shop_name;
+        }
+        if (!result.companyPhone || result.companyPhone === '+880 1700-000000') {
+          result.companyPhone = tenant.phone || result.companyPhone;
+        }
+        if (!result.companyEmail || result.companyEmail === 'sales@omnimanage.bd') {
+          result.companyEmail = tenant.email || result.companyEmail;
+        }
+        if (tenant.logo && !result.companyLogo) {
+          result.companyLogo = tenant.logo;
+        }
+      }
+    } catch {
+      // Ignore tenant lookup error
+    }
+
+    // Default Bangladesh currency & timezone
+    if (!result.currencySymbol) result.currencySymbol = '৳';
+    if (!result.currency) result.currency = 'BDT';
+    if (!result.timezone) result.timezone = 'Asia/Dhaka';
+
     return result;
   }
 
   const globalRows = await db('settings').where({ tenant_id: null }).where(category ? { category } : {}).orderBy('key', 'asc');
   const result = {};
-  globalRows.forEach(s => { result[s.key] = parseValue(s.value); });
+  globalRows.forEach((s) => {
+    result[s.key] = parseValue(s.value);
+  });
+  if (!result.currencySymbol) result.currencySymbol = '৳';
+  if (!result.currency) result.currency = 'BDT';
+  if (!result.timezone) result.timezone = 'Asia/Dhaka';
   return result;
 };
 

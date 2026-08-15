@@ -235,8 +235,14 @@ function CollectDueModal({ sale, onClose, onSuccess }) {
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const collectAmount = Number(amount) || dueAmount;
-      const updatedBreakdown = { ...sale.paymentBreakdown };
+      let collectAmount = amount === '' ? dueAmount : Number(amount);
+      if (isNaN(collectAmount) || collectAmount < 0) {
+        throw new Error('Please enter a valid payment amount');
+      }
+      if (collectAmount > dueAmount) {
+        collectAmount = dueAmount;
+      }
+      const updatedBreakdown = { ...(sale.paymentBreakdown || {}) };
       if (method === 'cash') updatedBreakdown.cash = (updatedBreakdown.cash || 0) + collectAmount;
       else if (method === 'bkash')
         updatedBreakdown.bkash = (updatedBreakdown.bkash || 0) + collectAmount;
@@ -247,13 +253,14 @@ function CollectDueModal({ sale, onClose, onSuccess }) {
       else if (method === 'bank')
         updatedBreakdown.bank = (updatedBreakdown.bank || 0) + collectAmount;
       updatedBreakdown.dueAmount = Math.max(0, dueAmount - collectAmount);
-      return api.put(`/sales/${sale._id}`, { paymentBreakdown: updatedBreakdown });
+      const targetSaleId = sale.id || sale._id;
+      return api.put(`/sales/${targetSaleId}`, { paymentBreakdown: updatedBreakdown });
     },
     onSuccess: () => {
-      toast.success('Payment collected');
+      toast.success('Payment collected successfully');
       onSuccess();
     },
-    onError: (e) => toast.error(e.response?.data?.message || 'Failed'),
+    onError: (e) => toast.error(e.response?.data?.message || e.message || 'Failed to collect payment'),
   });
 
   return (

@@ -239,6 +239,10 @@ export function InvoiceA4Full({ sale }) {
                 <img
                   src={getAssetUrl(companyInfo.logo)}
                   alt="Logo"
+                  crossOrigin="anonymous"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
                   className="h-8 w-auto max-w-[80px] object-contain flex-shrink-0"
                 />
               )}
@@ -573,6 +577,10 @@ export function InvoiceA4Half({ sale }) {
                 <img
                   src={getAssetUrl(companyInfo.logo)}
                   alt="Logo"
+                  crossOrigin="anonymous"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
                   className="h-7 w-auto max-w-[100px] object-contain"
                 />
               )}

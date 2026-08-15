@@ -377,9 +377,16 @@ export const updateSale = async (id, data, tenantId = null, branchId = null) => 
       const oldDue = existing.paymentBreakdown?.dueAmount || 0;
       const dueDiff = dueAmount - oldDue;
       if (dueDiff !== 0) {
-        const custDueQuery = db('customers').where({ id: existing.customerId });
-        if (tenantId) custDueQuery.andWhere('tenant_id', tenantId);
-        await custDueQuery.increment('due_balance', dueDiff);
+        const custId = typeof existing.customerId === 'object' ? (existing.customerId.id || existing.customerId._id) : existing.customerId;
+        if (custId) {
+          const custDueQuery = db('customers').where({ id: custId });
+          if (tenantId) custDueQuery.andWhere('tenant_id', tenantId);
+          if (dueDiff > 0) {
+            await custDueQuery.increment('due_balance', dueDiff);
+          } else {
+            await custDueQuery.decrement('due_balance', Math.abs(dueDiff));
+          }
+        }
       }
     }
   }

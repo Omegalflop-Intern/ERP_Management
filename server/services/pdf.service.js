@@ -56,10 +56,27 @@ export async function generateInvoicePdfBuffer(sale) {
       // 1. TOP HEADER & BRANDING (DYNAMIC LOGO OR NAME)
       // ------------------------------------------------------------------
       let headerTextX = startX;
-      const logoPath = dbSettings.companyLogo ? path.join(process.cwd(), dbSettings.companyLogo) : null;
-      if (logoPath && fs.existsSync(logoPath)) {
+      let resolvedLogoPath = null;
+      if (dbSettings.companyLogo) {
+        const rawLogo = dbSettings.companyLogo.replace(/^[/\\]+/, '');
+        const searchPaths = [
+          path.resolve(process.cwd(), rawLogo),
+          path.resolve(process.cwd(), 'server', rawLogo),
+          path.resolve(process.cwd(), 'uploads', rawLogo.replace(/^uploads[/\\]/, '')),
+          path.resolve(process.cwd(), 'server', 'uploads', rawLogo.replace(/^uploads[/\\]/, '')),
+          path.resolve(path.dirname(new URL(import.meta.url).pathname), '../../uploads', rawLogo.replace(/^uploads[/\\]/, '')),
+        ];
+        for (const p of searchPaths) {
+          if (fs.existsSync(p)) {
+            resolvedLogoPath = p;
+            break;
+          }
+        }
+      }
+
+      if (resolvedLogoPath) {
         try {
-          doc.image(logoPath, startX, y - 2, { fit: [60, 24] });
+          doc.image(resolvedLogoPath, startX, y - 2, { fit: [60, 24] });
           headerTextX = startX + 68;
         } catch (err) {
           console.error('Error embedding logo image in PDF:', err);

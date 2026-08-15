@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { menuItems } from '../../config/sidebar.config';
 import { useAuth } from '../../context/AuthContext';
-import api from '../../lib/api';
+import api, { getAssetUrl } from '../../lib/api';
 
 function SidebarLink({ item, isCollapsed, onNavigate }) {
   return (
@@ -193,10 +193,17 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
     staleTime: 5 * 60 * 1000,
   });
 
+  const [logoError, setLogoError] = useState(false);
+
   const Logo = () => {
-    if (settings?.companyLogo) {
+    if (settings?.companyLogo && !logoError) {
       return (
-        <img src={settings.companyLogo} alt="Shop Logo" className="w-5 h-5 rounded object-cover" />
+        <img
+          src={getAssetUrl(settings.companyLogo)}
+          alt="Shop Logo"
+          className="w-5 h-5 rounded object-cover"
+          onError={() => setLogoError(true)}
+        />
       );
     }
     return <Smartphone className="w-5 h-5 text-[#2563EB] dark:text-blue-400" />;
@@ -250,11 +257,12 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
         {/* Desktop collapsed logo */}
         {isCollapsed && (
           <div className="hidden lg:flex justify-center mb-4">
-            {settings?.companyLogo ? (
+            {settings?.companyLogo && !logoError ? (
               <img
-                src={settings.companyLogo}
+                src={getAssetUrl(settings.companyLogo)}
                 alt="Shop Logo"
                 className="w-10 h-10 rounded-xl object-cover"
+                onError={() => setLogoError(true)}
               />
             ) : (
               <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50 dark:bg-blue-950/30">

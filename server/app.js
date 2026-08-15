@@ -234,11 +234,15 @@ app.get('/api/v1/system/analytics', authenticate, requireSuperAdmin, async (req,
       const tableRows = tablesRes[0] || [];
       dbStats = {
         collections: tableRows.length,
-        documents: tableRows.reduce((acc, t) => acc + Number(t.TABLE_ROWS || 0), 0),
+        documents: tableRows.reduce((acc, t) => acc + Number(t.TABLE_ROWS || t.table_rows || 0), 0),
         storageSize: 0,
         dataSize: 0,
       };
-      collections = tableRows.map(t => ({ name: t.TABLE_NAME, count: Number(t.TABLE_ROWS || 0), size: 0 }));
+      collections = tableRows.map((t, idx) => ({
+        name: t.TABLE_NAME || t.table_name || `collection_${idx}`,
+        count: Number(t.TABLE_ROWS || t.table_rows || 0),
+        size: 0,
+      }));
     } catch (e) {}
 
     let uploadsSize = 0;

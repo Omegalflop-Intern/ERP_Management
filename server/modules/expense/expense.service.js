@@ -61,15 +61,66 @@ export const getAllExpenses = async (params = {}, tenantId = null) => {
   };
 };
 
+export const getAvailableCashBalance = async (tenantId = null, branchId = null) => {
+  let cashAcctQuery = db('accounts').where({ is_deleted: false }).andWhere((b) => b.where('code', '1000').orWhere('name', 'like', '%Cash%'));
+  if (tenantId) cashAcctQuery.andWhere('tenant_id', tenantId);
+  const cashAcct = await cashAcctQuery.first();
+  if (cashAcct && Number(cashAcct.balance) > 0) {
+    return Number(cashAcct.balance);
+  }
+
+  const salesQuery = db('transactions').where({ tx_type: 'SALE', is_deleted: false });
+  if (tenantId) salesQuery.andWhere('tenant_id', tenantId);
+  if (branchId) salesQuery.andWhere('branch_id', branchId);
+  const sales = await salesQuery.select('payment_breakdown');
+  const totalSalesCash = sales.reduce((sum, s) => {
+    try {
+      const pb = typeof s.payment_breakdown === 'string' ? JSON.parse(s.payment_breakdown) : (s.payment_breakdown || {});
+      return sum + Number(pb.cash || 0);
+    } catch { return sum; }
+  }, 0);
+
+  const invQuery = db('investors').where({ is_deleted: false });
+  if (tenantId) invQuery.andWhere('tenant_id', tenantId);
+  const investorsRes = await invQuery.sum({ total: 'total_investment' }).first();
+  const totalInvCash = Number(investorsRes?.total || 0);
+
+  const expQuery = db('expenses').where({ is_deleted: false });
+  if (tenantId) expQuery.andWhere('tenant_id', tenantId);
+  if (branchId) expQuery.andWhere('branch_id', branchId);
+  expQuery.andWhere((b) => b.where('payment_method', 'cash').orWhere('payment_method', 'CASH'));
+  const expRes = await expQuery.sum({ total: 'amount' }).first();
+  const totalExpCash = Number(expRes?.total || 0);
+
+  const poQuery = db('purchase_orders').where({ is_deleted: false });
+  if (tenantId) poQuery.andWhere('tenant_id', tenantId);
+  if (branchId) poQuery.andWhere('branch_id', branchId);
+  poQuery.andWhere((b) => b.where('payment_method', 'cash').orWhere('payment_method', 'CASH'));
+  const poRes = await poQuery.sum({ total: 'paid_amount' }).first();
+  const totalPoCash = Number(poRes?.total || 0);
+
+  const netCash = (totalSalesCash + totalInvCash) - (totalExpCash + totalPoCash);
+  return Math.max(0, netCash);
+};
+
 export const createExpense = async (data, recordedBy = 'system', tenantId = null) => {
-  if (!data.amount || Number(data.amount) <= 0) throw ApiError.badRequest('Expense amount must be greater than 0');
+  const amount = Number(data.amount);
+  if (isNaN(amount) || amount <= 0) throw ApiError.badRequest('Expense amount must be greater than 0');
+
+  const method = (data.paymentMethod || 'cash').toLowerCase();
+  if (method === 'cash') {
+    const availableCash = await getAvailableCashBalance(tenantId || data.tenantId, data.branchId);
+    if (availableCash < amount) {
+      throw ApiError.badRequest(`Insufficient cash in hand! Available cash balance is ৳${availableCash.toLocaleString()}, but expense amount is ৳${amount.toLocaleString()}.`);
+    }
+  }
 
   const [insertedId] = await db('expenses').insert({
     tenant_id: tenantId || data.tenantId || null,
     branch_id: data.branchId || null,
     title: data.title,
     category: data.category || 'Miscellaneous',
-    amount: Number(data.amount),
+    amount,
     payment_method: data.paymentMethod || 'cash',
     date: data.date ? new Date(data.date) : new Date(),
     voucher_number: data.voucherNumber || null,

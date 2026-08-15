@@ -334,6 +334,10 @@ export default function SettingsPage() {
                           src={getAssetUrl(form.companyLogo)}
                           alt="Company Logo"
                           className="h-16 w-auto object-contain rounded border border-gray-200 dark:border-gray-700 bg-white p-1"
+                          onError={(e) => {
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.style.display = 'none';
+                          }}
                         />
                       ) : (
                         <div className="h-16 w-16 rounded border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-400">

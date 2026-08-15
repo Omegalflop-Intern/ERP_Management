@@ -42,11 +42,25 @@ export default defineConfig({
         target: `${serverProtocol}://localhost:5000`,
         changeOrigin: true,
         secure: false, // Allow self-signed certificates
+        configure: (proxy) => {
+          proxy.on('error', (_err, _req, res) => {
+            if (res.headersSent) return;
+            res.writeHead(503, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, message: 'Backend server unavailable' }));
+          });
+        },
       },
       '/uploads': {
         target: `${serverProtocol}://localhost:5000`,
         changeOrigin: true,
         secure: false,
+        configure: (proxy) => {
+          proxy.on('error', (_err, _req, res) => {
+            if (res.headersSent) return;
+            res.writeHead(404, { 'Content-Type': 'text/plain' });
+            res.end('File not found or backend server unavailable');
+          });
+        },
       },
     },
   },

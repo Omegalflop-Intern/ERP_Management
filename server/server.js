@@ -119,6 +119,7 @@ startServer(targetPort);
   emitter.on(EVENTS.SALE_COMPLETED, async (data) => {
     console.log('\x1b[32m[EVENT:SALE]\x1b[0m Sale completed:', data?.invoiceNo || data?.sale?.invoiceNo);
 
+    const eventTenantId = data?.tenantId || data?.sale?.tenantId || null;
     broadcastToTenant(eventTenantId, { type: 'SALE_COMPLETED', data });
     broadcastAll({ type: 'SALE_COMPLETED', data });
 

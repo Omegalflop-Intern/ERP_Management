@@ -163,22 +163,41 @@ export async function ensureCategoryInCatalog(categoryName, tenantId = null) {
   if (!categoryName || typeof categoryName !== 'string' || !categoryName.trim()) return;
   const cleanName = categoryName.trim();
   try {
-    const query = db('catalog').where({ type: 'CATEGORY', is_deleted: false })
+    const query = db('catalog_items').where({ type: 'CATEGORY', is_deleted: false })
       .whereRaw('LOWER(name) = ?', [cleanName.toLowerCase()]);
     if (tenantId) query.andWhere({ tenant_id: tenantId });
     const exists = await query.first();
     if (!exists) {
-      await db('catalog').insert({
+      await db('catalog_items').insert({
         tenant_id: tenantId,
         type: 'CATEGORY',
         name: cleanName,
-        description: 'Auto-created from Product / Purchase Entry',
-        is_active: true,
         is_deleted: false,
       });
     }
   } catch (err) {
-    console.error('Failed to auto-sync category into catalog:', err.message);
+    console.error('Failed to auto-sync category into catalog_items:', err.message);
+  }
+}
+
+export async function ensureBrandInCatalog(brandName, tenantId = null) {
+  if (!brandName || typeof brandName !== 'string' || !brandName.trim()) return;
+  const cleanName = brandName.trim();
+  try {
+    const query = db('catalog_items').where({ type: 'BRAND', is_deleted: false })
+      .whereRaw('LOWER(name) = ?', [cleanName.toLowerCase()]);
+    if (tenantId) query.andWhere({ tenant_id: tenantId });
+    const exists = await query.first();
+    if (!exists) {
+      await db('catalog_items').insert({
+        tenant_id: tenantId,
+        type: 'BRAND',
+        name: cleanName,
+        is_deleted: false,
+      });
+    }
+  } catch (err) {
+    console.error('Failed to auto-sync brand into catalog_items:', err.message);
   }
 }
 
@@ -195,6 +214,9 @@ export const createProduct = async (data) => {
 
   if (data.category) {
     await ensureCategoryInCatalog(data.category, tenantId);
+  }
+  if (data.brand) {
+    await ensureBrandInCatalog(data.brand, tenantId);
   }
 
   const [insertedId] = await db('products').insert({
@@ -277,7 +299,10 @@ export const updateProduct = async (id, data, tenantId = null) => {
   }
 
   if (data.name !== undefined) updateFields.name = data.name;
-  if (data.brand !== undefined) updateFields.brand = data.brand;
+  if (data.brand !== undefined) {
+    updateFields.brand = data.brand;
+    if (data.brand) await ensureBrandInCatalog(data.brand, tenantId);
+  }
   if (data.category !== undefined) {
     updateFields.category = data.category;
     if (data.category) await ensureCategoryInCatalog(data.category, tenantId);
