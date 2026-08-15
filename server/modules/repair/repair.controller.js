@@ -59,8 +59,6 @@ export const updateRepairStatus = async (req, res, next) => {
       `<p>Ticket <strong>#${ticket.ticketNumber}</strong> status changed to <strong style="color:#2563eb;">${ticket.status}</strong>.</p>`
     ).catch(e => console.error('[Admin Repair Mail Error]:', e.message));
 
-    sendAdminSMSNotification(`Repair #${ticket.ticketNumber} status updated to ${ticket.status}`).catch(e => console.error('[Admin Repair SMS Error]:', e.message));
-
     return ApiResponse.success(res, ticket, `Status updated to ${ticket.status}`);
   } catch (error) { next(error); }
 };

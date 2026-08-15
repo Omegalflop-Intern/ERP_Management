@@ -570,19 +570,21 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-5xl md:max-w-6xl w-[96vw] max-h-[92vh] overflow-hidden flex flex-col p-0 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl bg-white dark:bg-[#0f172a]">
         {/* Modal Header */}
-        <div className="p-5 px-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-blue-600/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
-              <Truck className="w-5 h-5" />
+        <div className="p-4 sm:p-5 px-5 sm:px-6 pr-12 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 flex items-start sm:items-center justify-between gap-3 shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-blue-600/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold shrink-0">
+              <Truck className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                New Stock Restock & Purchase Order
-                <span className="text-[11px] px-2 py-0.5 rounded-full font-mono font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-600 border border-blue-200 dark:border-blue-800">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">
+                  New Stock Restock & Purchase Order
+                </h2>
+                <span className="hidden sm:inline-flex items-center text-[10px] px-2 py-0.5 rounded-full font-mono font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 whitespace-nowrap shrink-0">
                   Auto-Inventory Sync
                 </span>
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              </div>
+              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Add stock items from vendor. Store stock and catalog are automatically updated.
               </p>
             </div>
@@ -1094,9 +1096,9 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-4xl w-[94vw] max-h-[88vh] overflow-y-auto rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-2xl bg-white dark:bg-[#0f172a]">
-        <DialogHeader className="border-b border-slate-100 dark:border-slate-800 pb-3">
+        <DialogHeader className="border-b border-slate-100 dark:border-slate-800 pb-3 pr-10 sm:pr-8">
           <DialogTitle className="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-bold text-base">
-            <RotateCcw className="w-5 h-5" /> Return Products to Supplier
+            <RotateCcw className="w-5 h-5 shrink-0" /> Return Products to Supplier
           </DialogTitle>
           <DialogDescription className="text-xs">
             Return items from PO <strong className="font-mono">{po.poNumber}</strong> back to vendor. Store stock will be deducted and supplier balance adjusted.
@@ -1235,10 +1237,10 @@ function ViewPurchaseModal({ po, onClose, onReturn }) {
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-4xl w-[94vw] max-h-[88vh] overflow-y-auto rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-2xl bg-white dark:bg-[#0f172a]">
-        <DialogHeader className="border-b border-slate-100 dark:border-slate-800 pb-3">
-          <div className="flex items-center justify-between">
+        <DialogHeader className="border-b border-slate-100 dark:border-slate-800 pb-3 pr-10 sm:pr-8">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <DialogTitle className="font-mono text-lg font-bold text-slate-900 dark:text-slate-100">
+              <DialogTitle className="font-mono text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
                 {po.poNumber}
               </DialogTitle>
               <DialogDescription className="text-xs text-slate-500">
@@ -1246,7 +1248,7 @@ function ViewPurchaseModal({ po, onClose, onReturn }) {
               </DialogDescription>
             </div>
             <span
-              className={`px-3 py-1 rounded-full text-xs font-bold uppercase border ${
+              className={`px-3 py-1 rounded-full text-xs font-bold uppercase border shrink-0 ${
                 STATUS_COLORS[po.status] || STATUS_COLORS.DRAFT
               }`}
             >
