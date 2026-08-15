@@ -376,7 +376,13 @@ export const updateSale = async (id, data, tenantId = null, branchId = null) => 
     const oldDue = existing.paymentBreakdown?.dueAmount || 0;
     const dueDiff = dueAmount - oldDue;
     if (dueDiff !== 0) {
-      const custId = typeof existing.customerId === 'object' ? (existing.customerId.id || existing.customerId._id) : existing.customerId;
+      let custId = null;
+      if (existing.customerId && typeof existing.customerId === 'object') {
+        custId = existing.customerId.id || existing.customerId._id || null;
+      } else if (existing.customerId) {
+        custId = existing.customerId;
+      }
+
       let custDueQuery = null;
       if (custId && !isNaN(Number(custId))) {
         custDueQuery = db('customers').where({ id: Number(custId) });
@@ -426,10 +432,12 @@ export const deleteSale = async (id, tenantId = null, branchId = null) => {
   // 2. Restore customer due balance if any
   const dueAmount = sale.paymentBreakdown?.dueAmount || 0;
   if (sale.customerId && dueAmount > 0) {
-    const custId = typeof sale.customerId === 'object' ? sale.customerId.id : sale.customerId;
-    const custQuery = db('customers').where({ id: custId });
-    if (tenantId) custQuery.andWhere('tenant_id', tenantId);
-    await custQuery.decrement('due_balance', dueAmount);
+    const custId = typeof sale.customerId === 'object' ? (sale.customerId?.id || sale.customerId?._id) : sale.customerId;
+    if (custId) {
+      const custQuery = db('customers').where({ id: custId });
+      if (tenantId) custQuery.andWhere('tenant_id', tenantId);
+      await custQuery.decrement('due_balance', dueAmount);
+    }
   }
 
   const txDel = db('transactions').where({ id });
@@ -475,10 +483,12 @@ export const processReturn = async (id, data, tenantId = null, branchId = null) 
   });
 
   if (sale.customerId && refundAmount > 0) {
-    const custId = typeof sale.customerId === 'object' ? sale.customerId.id : sale.customerId;
-    const custQuery = db('customers').where({ id: custId });
-    if (tenantId) custQuery.andWhere('tenant_id', tenantId);
-    await custQuery.decrement('due_balance', refundAmount);
+    const custId = typeof sale.customerId === 'object' ? (sale.customerId?.id || sale.customerId?._id) : sale.customerId;
+    if (custId) {
+      const custQuery = db('customers').where({ id: custId });
+      if (tenantId) custQuery.andWhere('tenant_id', tenantId);
+      await custQuery.decrement('due_balance', refundAmount);
+    }
   }
 
   return { ...sale, returnedAmount: newReturnedAmount, refundAmount };
