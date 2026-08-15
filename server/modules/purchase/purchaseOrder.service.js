@@ -136,31 +136,127 @@ export const getPurchaseOrderById = async (id, tenantId = null, branchId = null)
 
 export const createPurchaseOrder = async (data, createdBy = 'system') => {
   const tenantId = data.tenantId || null;
+  const branchId = data.branchId || null;
   const supQuery = db('suppliers').where({ id: data.supplierId, is_deleted: false });
   if (tenantId) supQuery.where('tenant_id', tenantId);
   const supplier = await supQuery.first();
   if (!supplier) throw ApiError.notFound('Supplier not found');
 
-  const lineItems = (data.lineItems || []).map((item) => ({
-    ...item,
-    totalCost: item.qty * item.unitCost,
-  }));
+  const processedLineItems = [];
 
-  const subTotal = lineItems.reduce((sum, item) => sum + item.totalCost, 0);
-  const discount = data.discount || 0;
-  const tax = data.tax || 0;
-  const netTotal = subTotal - discount + tax;
-  const paidAmount = data.paidAmount || 0;
-  const dueAmount = netTotal - paidAmount;
+  for (const rawItem of (data.lineItems || [])) {
+    let pId = rawItem.productId;
+    const pName = rawItem.productName || rawItem.name || rawItem.description || 'Gadget Item';
+    const uCost = Number(rawItem.unitCost || 0);
+    const sPrice = Number(rawItem.sellingPrice || rawItem.unitPrice || (uCost > 0 ? Math.round(uCost * 1.25) : 0));
+    const qty = Number(rawItem.qty || 1);
+
+    // If no productId or if productId is new, find or create product in store
+    if (!pId || String(pId).toLowerCase() === 'new' || isNaN(Number(pId))) {
+      let existingProd = null;
+      if (pName) {
+        const pq = db('products').where({ name: pName, is_deleted: false });
+        if (tenantId) pq.andWhere('tenant_id', tenantId);
+        existingProd = await pq.first();
+      }
+
+      if (existingProd) {
+        pId = existingProd.id;
+      } else {
+        const sku = 'SKU-' + Date.now().toString(36).toUpperCase() + Math.floor(Math.random() * 900 + 100);
+        const [newId] = await db('products').insert({
+          tenant_id: tenantId,
+          branch_id: branchId,
+          name: pName,
+          sku,
+          category: rawItem.category || 'General',
+          cost_price: uCost,
+          selling_price: sPrice,
+          stock: 0,
+          min_stock_alert: 5,
+          is_deleted: false,
+        });
+        pId = newId;
+      }
+    } else {
+      pId = Number(pId);
+    }
+
+    // Auto increment stock in products table
+    const prodQ = db('products').where({ id: pId, is_deleted: false });
+    if (tenantId) prodQ.andWhere('tenant_id', tenantId);
+    const prod = await prodQ.first();
+    if (prod) {
+      const pUpdate = db('products').where({ id: pId });
+      if (tenantId) pUpdate.andWhere('tenant_id', tenantId);
+      await pUpdate.update({
+        stock: Number(prod.stock || 0) + qty,
+        cost_price: uCost > 0 ? uCost : prod.cost_price,
+        selling_price: sPrice > 0 ? sPrice : prod.selling_price,
+      });
+    }
+
+    // If IMEIs are provided at purchase time, insert them into inventory_units
+    const imeis = rawItem.imeis || rawItem.imeiList || rawItem.imeiOrSerials || [];
+    if (Array.isArray(imeis) && imeis.length > 0) {
+      for (const imei of imeis) {
+        const trimmed = String(imei).trim();
+        if (!trimmed) continue;
+        const imeiChk = db('inventory_units').where({ imei_or_serial: trimmed, is_deleted: false });
+        if (tenantId) imeiChk.where('tenant_id', tenantId);
+        const hasImei = await imeiChk.first();
+        if (!hasImei) {
+          await db('inventory_units').insert({
+            tenant_id: tenantId,
+            branch_id: branchId,
+            imei_or_serial: trimmed,
+            product_id: pId,
+            supplier_id: supplier.id,
+            purchase_price: uCost,
+            current_selling_price: sPrice,
+            warranty_months: Number(rawItem.warrantyMonths || 12),
+            passport_history: JSON.stringify([{
+              event: 'PURCHASED',
+              details: `Received via Purchase Restock`,
+              performedBy: createdBy,
+              amount: uCost,
+              timestamp: new Date().toISOString(),
+            }]),
+            status: 'Available',
+            is_deleted: false,
+          });
+        }
+      }
+    }
+
+    processedLineItems.push({
+      productId: pId,
+      description: pName,
+      name: pName,
+      qty,
+      receivedQty: qty,
+      unitCost: uCost,
+      sellingPrice: sPrice,
+      totalCost: qty * uCost,
+      imeis: Array.isArray(imeis) ? imeis : [],
+    });
+  }
+
+  const subTotal = processedLineItems.reduce((sum, item) => sum + item.totalCost, 0);
+  const discount = Number(data.discount || 0);
+  const tax = Number(data.tax || 0);
+  const netTotal = Math.max(0, subTotal - discount + tax);
+  const paidAmount = Number(data.paidAmount || 0);
+  const dueAmount = Math.max(0, netTotal - paidAmount);
 
   const [insertedId] = await db('purchase_orders').insert({
     tenant_id: tenantId,
-    branch_id: data.branchId || null,
+    branch_id: branchId,
     po_number: generatePoNumber(),
-    supplier_id: data.supplierId,
-    status: 'APPROVED',
-    approved_by: 'system',
-    line_items: JSON.stringify(lineItems),
+    supplier_id: supplier.id,
+    status: 'RECEIVED',
+    approved_by: createdBy,
+    line_items: JSON.stringify(processedLineItems),
     grn_entries: JSON.stringify([]),
     return_logs: JSON.stringify([]),
     sub_total: subTotal,
@@ -170,21 +266,30 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
     paid_amount: paidAmount,
     due_amount: dueAmount,
     payment_method: data.paymentMethod || 'CREDIT',
-    expected_delivery_date: data.expectedDeliveryDate ? new Date(data.expectedDeliveryDate) : null,
+    expected_delivery_date: data.expectedDeliveryDate ? new Date(data.expectedDeliveryDate) : new Date(),
+    received_date: new Date(),
     notes: data.notes || null,
     created_by: createdBy,
     is_deleted: false,
   });
 
-  return getPurchaseOrderById(insertedId, tenantId);
+  // Update supplier balances
+  const supUpdate = db('suppliers').where({ id: supplier.id });
+  if (tenantId) supUpdate.andWhere('tenant_id', tenantId);
+  await supUpdate.update({
+    total_purchases: Number(supplier.total_purchases || 0) + netTotal,
+    due_balance: Number(supplier.due_balance || 0) + dueAmount,
+  });
+
+  return getPurchaseOrderById(insertedId, tenantId, branchId);
 };
 
 export const updatePurchaseOrder = async (id, data, tenantId = null, branchId = null) => {
   const order = await getPurchaseOrderById(id, tenantId, branchId);
   if (!order) throw ApiError.notFound('Purchase order not found');
 
-  if (order.status === 'RECEIVED' || order.status === 'CANCELLED') {
-    throw ApiError.badRequest('Cannot update a completed or cancelled order');
+  if (order.status === 'CANCELLED') {
+    throw ApiError.badRequest('Cannot update a cancelled order');
   }
 
   const updateFields = {};
@@ -205,10 +310,6 @@ export const updatePurchaseOrder = async (id, data, tenantId = null, branchId = 
 export const receiveGoods = async (id, grnEntries, receivedBy = 'system', tenantId = null, branchId = null) => {
   const order = await getPurchaseOrderById(id, tenantId, branchId);
   if (!order) throw ApiError.notFound('Purchase order not found');
-
-  if (order.status !== 'APPROVED' && order.status !== 'PARTIALLY_RECEIVED') {
-    throw ApiError.badRequest('Order must be approved before receiving goods');
-  }
 
   for (const entry of grnEntries) {
     const imeiQuery = db('inventory_units').where({ imei_or_serial: entry.imeiOrSerial, is_deleted: false });
@@ -270,27 +371,128 @@ export const receiveGoods = async (id, grnEntries, receivedBy = 'system', tenant
     received_date: new Date(),
   });
 
-  const supplierId = order.supplierId?.id || order.supplierId;
-  const supQuery = db('suppliers').where({ id: supplierId, is_deleted: false });
-  if (tenantId) supQuery.where('tenant_id', tenantId);
-  const supplier = await supQuery.first();
-  if (supplier) {
-    const supUpdate = db('suppliers').where({ id: supplierId });
-    if (tenantId) supUpdate.andWhere('tenant_id', tenantId);
-    await supUpdate.update({
-      total_purchases: Number(supplier.total_purchases || 0) + grnEntries.length,
+  return getPurchaseOrderById(id, tenantId, branchId);
+};
+
+export const returnToSupplier = async (id, returnPayload, reason = '', returnedBy = 'system', tenantId = null, branchId = null) => {
+  const order = await getPurchaseOrderById(id, tenantId, branchId);
+  if (!order) throw ApiError.notFound('Purchase order not found');
+
+  let itemsToReturn = [];
+  if (Array.isArray(returnPayload)) {
+    if (typeof returnPayload[0] === 'string') {
+      itemsToReturn = returnPayload.map((imei) => ({ imeiOrSerial: imei, qty: 1, reason }));
+    } else {
+      itemsToReturn = returnPayload;
+    }
+  } else if (returnPayload && Array.isArray(returnPayload.items)) {
+    itemsToReturn = returnPayload.items;
+  } else if (returnPayload && Array.isArray(returnPayload.imeiOrSerials)) {
+    itemsToReturn = returnPayload.imeiOrSerials.map((imei) => ({ imeiOrSerial: imei, qty: 1, reason: returnPayload.reason || reason }));
+  }
+
+  if (itemsToReturn.length === 0) {
+    throw ApiError.badRequest('No return items specified');
+  }
+
+  let totalRefund = 0;
+  let totalReturnedQty = 0;
+  const processedReturnEntries = [];
+
+  for (const item of itemsToReturn) {
+    const pId = item.productId || item.productId?._id || item.productId?.id;
+    const qty = Number(item.qty || 1);
+    const uCost = Number(item.unitCost || 0);
+    const refund = Number(item.refundAmount !== undefined ? item.refundAmount : (uCost * qty) || 0);
+
+    totalRefund += refund;
+    totalReturnedQty += qty;
+
+    // Deduct stock from products table
+    if (pId) {
+      const prodQ = db('products').where({ id: pId, is_deleted: false });
+      if (tenantId) prodQ.andWhere('tenant_id', tenantId);
+      const prod = await prodQ.first();
+      if (prod) {
+        const newStock = Math.max(0, Number(prod.stock || 0) - qty);
+        const pUp = db('products').where({ id: pId });
+        if (tenantId) pUp.andWhere('tenant_id', tenantId);
+        await pUp.update({ stock: newStock });
+      }
+    }
+
+    // If IMEI specified, mark as returned in inventory_units
+    if (item.imeiOrSerial) {
+      const imeiQ = db('inventory_units').where({ imei_or_serial: item.imeiOrSerial, is_deleted: false });
+      if (tenantId) imeiQ.where('tenant_id', tenantId);
+      const imeiUnit = await imeiQ.first();
+      if (imeiUnit) {
+        const uUp = db('inventory_units').where({ id: imeiUnit.id });
+        if (tenantId) uUp.andWhere('tenant_id', tenantId);
+        await uUp.update({
+          status: 'Returned to Supplier',
+          is_deleted: true,
+        });
+      }
+    }
+
+    processedReturnEntries.push({
+      productId: pId,
+      description: item.description || item.name || 'Returned Product',
+      imeiOrSerial: item.imeiOrSerial || null,
+      qty,
+      refundAmount: refund,
+      reason: item.reason || reason || 'Defective / Return to Supplier',
+      notes: item.notes || '',
+      returnedAt: new Date().toISOString(),
+      returnedBy,
     });
   }
 
-  return getPurchaseOrderById(id, tenantId, branchId);
+  // Update purchase order return_logs
+  const currentReturnLogs = order.returnLogs || [];
+  currentReturnLogs.push(...processedReturnEntries);
+
+  const newReturnedCount = Number(order.returnedCount || 0) + totalReturnedQty;
+  const newReturnedAmount = Number(order.returnedAmount || 0) + totalRefund;
+
+  const poUpdate = db('purchase_orders').where({ id });
+  if (tenantId) poUpdate.andWhere('tenant_id', tenantId);
+  if (branchId) poUpdate.andWhere('branch_id', branchId);
+  await poUpdate.update({
+    return_logs: JSON.stringify(currentReturnLogs),
+    returned_count: newReturnedCount,
+    returned_amount: newReturnedAmount,
+    returned_date: new Date(),
+  });
+
+  // Adjust supplier due balance
+  const supplierId = order.supplierId?.id || order.supplierId;
+  if (supplierId) {
+    const supQ = db('suppliers').where({ id: supplierId, is_deleted: false });
+    if (tenantId) supQ.where('tenant_id', tenantId);
+    const supplier = await supQ.first();
+    if (supplier) {
+      const curDue = Number(supplier.due_balance || 0);
+      const newDue = Math.max(0, curDue - totalRefund);
+      const supUp = db('suppliers').where({ id: supplierId });
+      if (tenantId) supUp.andWhere('tenant_id', tenantId);
+      await supUp.update({ due_balance: newDue });
+    }
+  }
+
+  return {
+    success: true,
+    message: `${totalReturnedQty} item(s) returned to supplier successfully`,
+    returnedCount: totalReturnedQty,
+    totalRefund,
+    order: await getPurchaseOrderById(id, tenantId, branchId),
+  };
 };
 
 export const deletePurchaseOrder = async (id, tenantId = null, branchId = null) => {
   const order = await getPurchaseOrderById(id, tenantId, branchId);
   if (!order) throw ApiError.notFound('Purchase order not found');
-  if (order.status === 'RECEIVED' || order.status === 'PARTIALLY_RECEIVED' || order.status === 'CANCELLED') {
-    throw ApiError.badRequest('Only un-received orders can be deleted');
-  }
 
   const poDel = db('purchase_orders').where({ id });
   if (tenantId) poDel.andWhere('tenant_id', tenantId);
