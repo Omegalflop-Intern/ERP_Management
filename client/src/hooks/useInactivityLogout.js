@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/authStore';
 
-const INACTIVITY_TIMEOUT_MS = 60 * 60 * 1000; // 60 minutes
+const INACTIVITY_TIMEOUT_MS = 120 * 60 * 1000; // 120 minutes
 const WARNING_BEFORE_MS = 2 * 60 * 1000; // warn 2 minutes before logout
 const ACTIVITY_EVENTS = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click'];
 
