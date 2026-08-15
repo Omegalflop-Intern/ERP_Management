@@ -9,6 +9,13 @@ export const getPublicSettings = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
+export const getPlatformSettings = async (req, res, next) => {
+  try {
+    const settings = await settingsService.getPublicSettings();
+    return ApiResponse.success(res, settings, 'Platform settings retrieved');
+  } catch (error) { next(error); }
+};
+
 export const updatePlatformSettings = async (req, res, next) => {
   try {
     const settings = await settingsService.updatePlatformSettings(req.body);

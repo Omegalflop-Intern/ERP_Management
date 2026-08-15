@@ -33,7 +33,7 @@ export const authenticate = async (req, res, next) => {
 
     if (!row) throw ApiError.unauthorized('User not found or deactivated');
 
-    const isSuperAdmin = Boolean(row.is_super_admin);
+    const isSuperAdmin = !row.tenant_id && (row.role_name_val || row.role_name || '').toUpperCase() === 'ADMIN';
 
     if (row.tenant_id && !isSuperAdmin) {
       if (Boolean(row.tenant_is_deleted) || (row.tenant_status && row.tenant_status !== 'ACTIVE')) {

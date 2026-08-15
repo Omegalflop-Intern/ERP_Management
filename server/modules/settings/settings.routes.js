@@ -14,7 +14,8 @@ router.get('/public', settingsController.getPublicSettings);
 router.use(authenticate);
 router.use(checkTenantStatus);
 
-// Super-Admin platform settings route
+// Super-Admin platform settings routes
+router.get('/platform', requireSuperAdmin, settingsController.getPlatformSettings);
 router.put('/platform', requireSuperAdmin, settingsController.updatePlatformSettings);
 
 router.use(authorize('ADMIN'));

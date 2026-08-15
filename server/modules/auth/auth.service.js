@@ -48,7 +48,7 @@ export function formatUser(row) {
     roleName: row.role_name || '',
     roleDisplayName: row.role_display_name || '',
     permissions,
-    isSuperAdmin: Boolean(row.is_super_admin),
+    isSuperAdmin: !row.tenant_id && (row.role_name || '').toUpperCase() === 'ADMIN',
     isActive: Boolean(row.is_active),
     isVerified: Boolean(row.is_verified),
     mfaEnabled: Boolean(row.is_mfa_enabled),
@@ -86,7 +86,7 @@ export const findUserByLogin = async (identifier, tenantId = null) => {
   if (!row) return null;
 
   // Enforce tenant active check for non-SuperAdmin users
-  if (row.tenant_id && !row.is_super_admin) {
+  if (row.tenant_id) {
     if (Boolean(row.tenant_is_deleted) || (row.tenant_status && row.tenant_status !== 'ACTIVE')) {
       throw ApiError.forbidden(`Shop account is ${row.tenant_status === 'SUSPENDED' ? 'suspended' : 'deleted or inactive'}. Access denied.`);
     }
@@ -101,6 +101,7 @@ export const findUserByLogin = async (identifier, tenantId = null) => {
   row.isActive = Boolean(row.is_active);
   row.isVerified = Boolean(row.is_verified);
   row.isMfaEnabled = Boolean(row.is_mfa_enabled);
+  row.tenantId = row.tenant_id || null;
   return row;
 };
 
@@ -144,7 +145,7 @@ export const loginDirect = async (identifier, password, ipAddress = '', userAgen
   if (!userRow) throw ApiError.unauthorized('Invalid username or password');
 
   // Enforce tenant status and subscription expiration check
-  if (userRow.tenant_id && !userRow.is_super_admin) {
+  if (userRow.tenant_id) {
     const tenant = await db('tenants').where({ id: userRow.tenant_id, is_deleted: false }).first();
     if (!tenant) throw ApiError.forbidden('Associated shop account no longer exists');
 
