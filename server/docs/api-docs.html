@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Omni-Manage — API Docs</title>
+  <meta name="description" content="Complete REST API documentation for Omni-Manage Gadget Shop ERP Platform" />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #0a0e1a;
+      --bg-secondary: #111827;
+      --bg-card: #1a1f35;
+      --bg-card-hover: #1f2642;
+      --bg-input: #0d1225;
+      --border-primary: #1e2a4a;
+      --border-secondary: #2a3555;
+      --border-accent: #3b82f6;
+      --text-primary: #f0f4ff;
+      --text-secondary: #8892b0;
+      --text-muted: #5a6580;
+      --accent-blue: #3b82f6;
+      --accent-blue-light: #60a5fa;
+      --accent-blue-glow: rgba(59, 130, 246, 0.15);
+      --accent-red: #ef4444;
+      --accent-red-glow: rgba(239, 68, 68, 0.15);
+      --accent-green: #22c55e;
+      --accent-green-glow: rgba(34, 197, 94, 0.15);
+      --accent-yellow: #eab308;
+      --accent-yellow-glow: rgba(234, 179, 8, 0.15);
+      --accent-purple: #a855f7;
+      --accent-purple-glow: rgba(168, 85, 247, 0.15);
+      --accent-cyan: #06b6d4;
+      --accent-orange: #f97316;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+      --shadow-lg: 0 10px 30px rgba(0,0,0,0.5);
+      --shadow-glow: 0 0 30px rgba(59, 130, 246, 0.1);
+      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Animated Background ── */
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .bg-glow {
+      position: fixed;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      filter: blur(150px);
+      opacity: 0.07;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .bg-glow-1 { background: var(--accent-blue); top: -200px; right: -100px; }
+    .bg-glow-2 { background: var(--accent-purple); bottom: -200px; left: -100px; }
+
+    /* ── Header ── */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10, 14, 26, 0.85);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-bottom: 1px solid var(--border-primary);
+    }
+    .header-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 32px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+    }
+    .logo-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+    }
+    .logo-text {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.3px;
+    }
+    .logo-text span { color: var(--accent-blue); }
+    .logo-badge {
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .nav-link {
+      padding: 8px 16px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: var(--radius-sm);
+      transition: var(--transition);
+    }
+    .nav-link:hover, .nav-link.active {
+      color: var(--text-primary);
+      background: var(--accent-blue-glow);
+    }
+    .nav-link.active { color: var(--accent-blue); }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn {
+      padding: 8px 18px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: var(--transition);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-primary {
+      background: var(--accent-blue);
+      color: #fff;
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+    }
+    .btn-primary:hover {
+      background: #2563eb;
+      box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
+      transform: translateY(-1px);
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-secondary);
+    }
+    .btn-ghost:hover {
+      color: var(--text-primary);
+      background: var(--bg-card);
+      border-color: var(--border-accent);
+    }
+
+    /* ── Hero Section ── */
+    .hero {
+      position: relative;
+      z-index: 1;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 48px 32px 32px;
+      text-align: center;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--accent-blue-glow);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      color: var(--accent-blue-light);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 16px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+    .hero-badge .dot {
+      width: 6px;
+      height: 6px;
+      background: var(--accent-green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .hero h1 {
+      font-size: 42px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero p {
+      font-size: 16px;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto 28px;
+      line-height: 1.7;
+    }
+
+    /* ── Quick Stats ── */
+    .quick-stats {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .stat-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-primary);
+      padding: 10px 18px;
+      border-radius: var(--radius-lg);
+      font-size: 13px;
+      color: var(--text-secondary);
+      transition: var(--transition);
+    }
+    .stat-pill:hover {
+      border-color: var(--border-accent);
+      background: var(--bg-card-hover);
+    }
+    .stat-pill .stat-num {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .stat-pill .stat-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .stat-dot.green { background: var(--accent-green); }
+    .stat-dot.blue { background: var(--accent-blue); }
+    .stat-dot.purple { background: var(--accent-purple); }
+    .stat-dot.yellow { background: var(--accent-yellow); }
+
+    /* ── Main Container ── */
+    .main {
+      position: relative;
+      z-index: 1;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 32px 80px;
+    }
+
+    /* ── Swagger UI Overrides ── */
+    .swagger-ui .wrapper {
+      max-width: 100% !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
+    /* Hide default swagger topbar */
+    .swagger-ui .topbar { display: none !important; }
+
+    /* Info Section */
+    .swagger-ui .information-container {
+      background: transparent !important;
+      border: none !important;
+      border-radius: 0 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    .swagger-ui .info {
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    .swagger-ui .info .title {
+      display: none !important;
+    }
+    .swagger-ui .info p,
+    .swagger-ui .info li,
+    .swagger-ui .info td {
+      color: var(--text-secondary) !important;
+      font-size: 13px !important;
+      line-height: 1.7 !important;
+    }
+    .swagger-ui .info h1, .swagger-ui .info h2, .swagger-ui .info h3 {
+      color: var(--text-primary) !important;
+    }
+    .swagger-ui .info code {
+      background: var(--bg-card) !important;
+      color: var(--accent-blue-light) !important;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+    .swagger-ui .info pre {
+      background: var(--bg-input) !important;
+      border: 1px solid var(--border-primary) !important;
+      border-radius: var(--radius-md) !important;
+      padding: 16px !important;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+    .swagger-ui .info pre code {
+      background: transparent !important;
+      padding: 0 !important;
+      color: var(--text-secondary) !important;
+    }
+
+    /* Scheme Container (Server dropdown + Auth) */
+    .swagger-ui .scheme-container {
+      background: var(--bg-card) !important;
+      border: 1px solid var(--border-primary) !important;
+      border-radius: var(--radius-lg) !important;
+      padding: 20px 24px !important;
+      margin: 0 0 24px 0 !important;
+      box-shadow: var(--shadow-sm) !important;
+    }
+    .swagger-ui .servers > label {
+      color: var(--text-secondary) !important;
+      font-size: 12px !important;
+      font-weight: 500 !important;
+    }
+    .swagger-ui .servers select {
+      background: var(--bg-input) !important;
+      color: var(--text-primary) !important;
+      border: 1px solid var(--border-secondary) !important;
+      border-radius: var(--radius-sm) !important;
+      padding: 8px 12px !important;
+      font-size: 13px !important;
+    }
+    .swagger-ui .servers select:hover {
+      border-color: var(--accent-blue) !important;
+    }
+
+    /* Authorize Button */
+    .swagger-ui .btn.authorize {
+      background: linear-gradient(135deg, var(--accent-green), #16a34a) !important;
+      border: none !important;
+      color: #fff !important;
+      border-radius: var(--radius-sm) !important;
+      font-weight: 600 !important;
+      font-size: 13px !important;
+      padding: 10px 22px !important;
+      transition: var(--transition) !important;
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.2) !important;
+    }
+    .swagger-ui .btn.authorize:hover {
+      box-shadow: 0 0 30px rgba(34, 197, 94, 0.4) !important;
+      transform: translateY(-1px) !important;
+    }
+    .swagger-ui .btn.authorize svg { fill: #fff !important; }
+    .swagger-ui .btn.authorize_unauthorized {
+      background: linear-gradient(135deg, var(--accent-red), #dc2626) !important;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.2) !important;
+    }
+    .swagger-ui .auth-wrapper .btn-done {
+      background: var(--accent-green) !important;
+      border: none !important;
+      color: #fff !important;
+      border-radius: var(--radius-sm) !important;
+      font-weight: 600 !important;
+    }
+
+    /* Operation Tags (Section Headers) */
+    .swagger-ui .opblock-tag-container {
+      margin-top: 32px !important;
+    }
+    .swagger-ui .opblock-tag {
+      color: var(--text-primary) !important;
+      border-bottom: 1px solid var(--border-primary) !important;
+      font-size: 18px !important;
+      font-weight: 700 !important;
+      padding: 16px 0 !important;
+      margin: 0 0 8px 0 !important;
+      letter-spacing: -0.3px;
+      background: transparent !important;
+      border-radius: 0 !important;
+    }
+    .swagger-ui .opblock-tag:hover {
+      background: transparent !important;
+    }
+    .swagger-ui .opblock-tag small {
+      color: var(--text-muted) !important;
+      font-size: 12px !important;
+      font-weight: 400 !important;
+    }
+    .swagger-ui .opblock-tag .view-line-link {
+      color: var(--text-muted) !important;
+    }
+    .swagger-ui .opblock-tag .view-line-link:hover {
+      color: var(--accent-blue) !important;
+    }
+
+    /* Operation Blocks */
+    .swagger-ui .opblock {
+      border-radius: var(--radius-md) !important;
+      border: 1px solid var(--border-primary) !important;
+      margin: 6px 0 !important;
+      box-shadow: none !important;
+      background: var(--bg-card) !important;
+      transition: var(--transition) !important;
+    }
+    .swagger-ui .opblock:hover {
+      border-color: var(--border-secondary) !important;
+      box-shadow: var(--shadow-sm) !important;
+    }
+    .swagger-ui .opblock.opblock-is-open {
+      box-shadow: var(--shadow-md) !important;
+    }
+    .swagger-ui .opblock-summary {
+      border-radius: var(--radius-md) !important;
+      padding: 12px 16px !important;
+    }
+    .swagger-ui .opblock-summary-path {
+      color: var(--text-primary) !important;
+      font-size: 13px !important;
+      font-weight: 600 !important;
+      font-family: 'JetBrains Mono', monospace !important;
+    }
+    .swagger-ui .opblock-summary-description {
+      color: var(--text-muted) !important;
+      font-size: 12px !important;
+    }
+    .swagger-ui .opblock-summary-markdown {
+      color: var(--text-secondary) !important;
+      font-size: 12px !important;
+    }
+
+    /* Method Colors — vibrant & distinct */
+    .swagger-ui .opblock.opblock-get {
+      border-left: 4px solid var(--accent-blue) !important;
+      background: rgba(59, 130, 246, 0.04) !important;
+    }
+    .swagger-ui .opblock.opblock-get .opblock-summary-method {
+      background: var(--accent-blue) !important;
+    }
+    .swagger-ui .opblock.opblock-post {
+      border-left: 4px solid var(--accent-green) !important;
+      background: rgba(34, 197, 94, 0.04) !important;
+    }
+    .swagger-ui .opblock.opblock-post .opblock-summary-method {
+      background: var(--accent-green) !important;
+    }
+    .swagger-ui .opblock.opblock-put {
+      border-left: 4px solid var(--accent-yellow) !important;
+      background: rgba(234, 179, 8, 0.04) !important;
+    }
+    .swagger-ui .opblock.opblock-put .opblock-summary-method {
+      background: var(--accent-yellow) !important;
+    }
+    .swagger-ui .opblock.opblock-patch {
+      border-left: 4px solid var(--accent-purple) !important;
+      background: rgba(168, 85, 247, 0.04) !important;
+    }
+    .swagger-ui .opblock.opblock-patch .opblock-summary-method {
+      background: var(--accent-purple) !important;
+    }
+    .swagger-ui .opblock.opblock-delete {
+      border-left: 4px solid var(--accent-red) !important;
+      background: rgba(239, 68, 68, 0.04) !important;
+    }
+    .swagger-ui .opblock.opblock-delete .opblock-summary-method {
+      background: var(--accent-red) !important;
+    }
+
+    /* Method Badge */
+    .swagger-ui .opblock-summary-method {
+      border-radius: var(--radius-sm) !important;
+      font-size: 11px !important;
+      font-weight: 700 !important;
+      min-width: 64px !important;
+      text-align: center !important;
+      padding: 6px 0 !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.5px !important;
+    }
+
+    /* Expanded Panel */
+    .swagger-ui .opblock-body {
+      background: var(--bg-input) !important;
+      border-radius: 0 0 var(--radius-md) var(--radius-md) !important;
+    }
+    .swagger-ui .opblock-section-header {
+      background: var(--bg-card) !important;
+      border-top: 1px solid var(--border-primary) !important;
+    }
+    .swagger-ui .opblock-section-header h4 {
+      color: var(--text-primary) !important;
+      font-size: 13px !important;
+      font-weight: 600 !important;
+    }
+
+    /* Tabs */
+    .swagger-ui .tab li {
+      color: var(--text-muted) !important;
+      font-size: 13px !important;
+      font-weight: 500 !important;
+    }
+    .swagger-ui .tab li.active {
+      color: var(--accent-blue) !important;
+      border-bottom: 2px solid var(--accent-blue) !important;
+    }
+    .swagger-ui .tab li:hover {
+      color: var(--text-secondary) !important;
+    }
+
+    /* Inputs & Textareas */
+    .swagger-ui input[type="text"],
+    .swagger-ui textarea,
+    .swagger-ui select {
+      background: var(--bg-input) !important;
+      color: var(--text-primary) !important;
+      border: 1px solid var(--border-secondary) !important;
+      border-radius: var(--radius-sm) !important;
+      font-family: 'JetBrains Mono', monospace !important;
+      font-size: 13px !important;
+      transition: var(--transition) !important;
+    }
+    .swagger-ui input[type="text"]:focus,
+    .swagger-ui textarea:focus {
+      border-color: var(--accent-blue) !important;
+      box-shadow: 0 0 0 3px var(--accent-blue-glow) !important;
+      outline: none !important;
+    }
+    .swagger-ui textarea {
+      min-height: 120px !important;
+    }
+
+    /* Execute Button */
+    .swagger-ui .btn.execute {
+      background: linear-gradient(135deg, var(--accent-blue), #2563eb) !important;
+      border: none !important;
+      color: #fff !important;
+      border-radius: var(--radius-sm) !important;
+      font-weight: 600 !important;
+      font-size: 13px !important;
+      padding: 10px 24px !important;
+      transition: var(--transition) !important;
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.3) !important;
+    }
+    .swagger-ui .btn.execute:hover {
+      box-shadow: 0 0 30px rgba(59, 130, 246, 0.5) !important;
+      transform: translateY(-1px) !important;
+    }
+    .swagger-ui .btn.try-out__btn {
+      border: 1px solid var(--border-secondary) !important;
+      color: var(--text-secondary) !important;
+      border-radius: var(--radius-sm) !important;
+      font-size: 12px !important;
+      transition: var(--transition) !important;
+    }
+    .swagger-ui .btn.try-out__btn:hover {
+      background: var(--bg-card) !important;
+      border-color: var(--accent-blue) !important;
+      color: var(--text-primary) !important;
+    }
+    .swagger-ui .btn.cancel {
+      border-color: var(--border-secondary) !important;
+      color: var(--text-secondary) !important;
+      border-radius: var(--radius-sm) !important;
+    }
+
+    /* Response Section */
+    .swagger-ui .responses-table {
+      background: transparent !important;
+    }
+    .swagger-ui .response-col_status {
+      color: var(--text-primary) !important;
+      font-weight: 600 !important;
+    }
+    .swagger-ui .response-col_description {
+      color: var(--text-secondary) !important;
+    }
+    .swagger-ui .highlight-code pre {
+      background: var(--bg-input) !important;
+      border-radius: var(--radius-sm) !important;
+      border: 1px solid var(--border-primary) !important;
+    }
+    .swagger-ui .microlight {
+      color: var(--text-secondary) !important;
+      background: var(--bg-input) !important;
+      font-family: 'JetBrains Mono', monospace !important;
+      font-size: 12px !important;
+    }
+
+    /* Parameters Table */
+    .swagger-ui table {
+      background: transparent !important;
+    }
+    .swagger-ui table thead tr th {
+      background: var(--bg-card) !important;
+      color: var(--text-primary) !important;
+      border-color: var(--border-primary) !important;
+      font-weight: 600 !important;
+      font-size: 12px !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.5px !important;
+    }
+    .swagger-ui table tbody tr td {
+      color: var(--text-secondary) !important;
+      border-color: var(--border-primary) !important;
+    }
+    .swagger-ui .parameter__name {
+      color: var(--text-primary) !important;
+      font-weight: 600 !important;
+      font-family: 'JetBrains Mono', monospace !important;
+    }
+    .swagger-ui .parameter__type {
+      color: var(--accent-cyan) !important;
+      font-family: 'JetBrains Mono', monospace !important;
+      font-size: 12px !important;
+    }
+    .swagger-ui .parameter__in {
+      color: var(--accent-purple) !important;
+      font-size: 11px !important;
+    }
+    .swagger-ui .parameter__name.required::after {
+      content: ' *';
+      color: var(--accent-red) !important;
+    }
+
+    /* Models / Schemas */
+    .swagger-ui section.models {
+      background: var(--bg-card) !important;
+      border: 1px solid var(--border-primary) !important;
+      border-radius: var(--radius-lg) !important;
+      margin-top: 32px !important;
+    }
+    .swagger-ui section.models h4 {
+      color: var(--text-primary) !important;
+      font-weight: 700 !important;
+      font-size: 16px !important;
+    }
+    .swagger-ui .model-container {
+      background: var(--bg-input) !important;
+      border-radius: var(--radius-md) !important;
+      margin: 8px !important;
+      border: 1px solid var(--border-primary) !important;
+    }
+    .swagger-ui .model {
+      color: var(--text-secondary) !important;
+    }
+    .swagger-ui .model-title {
+      color: var(--text-primary) !important;
+      font-weight: 600 !important;
+      font-family: 'JetBrains Mono', monospace !important;
+    }
+    .swagger-ui .prop-type {
+      color: var(--accent-cyan) !important;
+      font-family: 'JetBrains Mono', monospace !important;
+    }
+    .swagger-ui .prop-format {
+      color: var(--accent-purple) !important;
+    }
+
+    /* Auth Dialog */
+    .swagger-ui .dialog-ux .modal-ux {
+      background: var(--bg-card) !important;
+      border: 1px solid var(--border-primary) !important;
+      border-radius: var(--radius-xl) !important;
+      box-shadow: 0 25px 80px rgba(0,0,0,0.6) !important;
+    }
+    .swagger-ui .dialog-ux .modal-ux-header {
+      border-bottom: 1px solid var(--border-primary) !important;
+    }
+    .swagger-ui .dialog-ux .modal-ux-header h3 {
+      color: var(--text-primary) !important;
+      font-weight: 700 !important;
+    }
+    .swagger-ui .dialog-ux .modal-ux-content p,
+    .swagger-ui .dialog-ux .modal-ux-content h4 {
+      color: var(--text-secondary) !important;
+    }
+    .swagger-ui .dialog-ux .modal-ux-content code {
+      color: var(--accent-blue-light) !important;
+      background: var(--bg-input) !important;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .swagger-ui .dialog-ux .modal-ux-content input[type="text"] {
+      background: var(--bg-input) !important;
+      color: var(--text-primary) !important;
+      border: 1px solid var(--border-secondary) !important;
+      border-radius: var(--radius-sm) !important;
+      padding: 10px 14px !important;
+    }
+
+    /* Search / Filter */
+    .swagger-ui .filter-container {
+      margin-bottom: 20px !important;
+    }
+    .swagger-ui .filter-container input {
+      background: var(--bg-card) !important;
+      color: var(--text-primary) !important;
+      border: 1px solid var(--border-primary) !important;
+      border-radius: var(--radius-md) !important;
+      padding: 12px 16px !important;
+      font-size: 14px !important;
+      width: 100% !important;
+      transition: var(--transition) !important;
+    }
+    .swagger-ui .filter-container input:focus {
+      border-color: var(--accent-blue) !important;
+      box-shadow: 0 0 0 3px var(--accent-blue-glow) !important;
+    }
+    .swagger-ui .filter-container input::placeholder {
+      color: var(--text-muted) !important;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-primary); }
+    ::-webkit-scrollbar-thumb { background: var(--border-secondary); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+    /* Loading */
+    .swagger-ui .loading-container {
+      background: transparent !important;
+    }
+    .swagger-ui .loading-container .loading::after {
+      content: 'Loading API documentation...';
+      color: var(--text-muted) !important;
+      font-size: 14px !important;
+    }
+
+    /* ── Custom Cards Below Swagger ── */
+    .bottom-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-top: 48px;
+      padding-top: 32px;
+      border-top: 1px solid var(--border-primary);
+    }
+    .bottom-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      transition: var(--transition);
+    }
+    .bottom-card:hover {
+      border-color: var(--border-accent);
+      box-shadow: var(--shadow-glow);
+      transform: translateY(-2px);
+    }
+    .bottom-card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-bottom: 14px;
+    }
+    .bottom-card-icon.blue { background: var(--accent-blue-glow); }
+    .bottom-card-icon.green { background: var(--accent-green-glow); }
+    .bottom-card-icon.purple { background: var(--accent-purple-glow); }
+    .bottom-card-icon.yellow { background: var(--accent-yellow-glow); }
+    .bottom-card h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+    .bottom-card p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .bottom-card code {
+      background: var(--bg-input);
+      color: var(--accent-blue-light);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border-primary);
+      padding: 24px 32px;
+      text-align: center;
+    }
+    .footer-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+    .footer a {
+      color: var(--accent-blue);
+      text-decoration: none;
+    }
+    .footer a:hover { text-decoration: underline; }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .header-inner { padding: 0 16px; }
+      .nav-links { display: none; }
+      .hero { padding: 32px 16px 24px; }
+      .hero h1 { font-size: 28px; }
+      .quick-stats { gap: 8px; }
+      .stat-pill { padding: 8px 12px; font-size: 12px; }
+      .stat-pill .stat-num { font-size: 15px; }
+      .main { padding: 0 16px 60px; }
+      .bottom-cards { grid-template-columns: 1fr; }
+      .footer-inner { flex-direction: column; gap: 8px; }
+    }
+
+    /* ── Animations ── */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .hero { animation: fadeInUp 0.6s ease-out; }
+    .stat-pill { animation: fadeInUp 0.6s ease-out backwards; }
+    .stat-pill:nth-child(1) { animation-delay: 0.1s; }
+    .stat-pill:nth-child(2) { animation-delay: 0.15s; }
+    .stat-pill:nth-child(3) { animation-delay: 0.2s; }
+    .stat-pill:nth-child(4) { animation-delay: 0.25s; }
+  </style>
+</head>
+<body>
+  <!-- Background Effects -->
+  <div class="bg-grid"></div>
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-inner">
+      <a href="/api-docs" class="logo">
+        <div class="logo-icon">⚡</div>
+        <div class="logo-text">Omni<span>Manage</span></div>
+        <div class="logo-badge">API</div>
+      </a>
+      <nav class="nav-links">
+        <a href="#section/Auth" class="nav-link active">Auth</a>
+        <a href="#section/Sales" class="nav-link">Sales</a>
+        <a href="#section/Products" class="nav-link">Products</a>
+        <a href="#section/Customers" class="nav-link">Customers</a>
+        <a href="#section/Accounting" class="nav-link">Accounting</a>
+        <a href="#section/Reports" class="nav-link">Reports</a>
+      </nav>
+      <div class="header-actions">
+        <button class="btn btn-ghost" onclick="downloadSpec()">📄 OpenAPI Spec</button>
+        <a href="/" class="btn btn-primary">🚀 Back to App</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-badge">
+      <span class="dot"></span>
+      Server Online — All systems operational
+    </div>
+    <h1>API Documentation</h1>
+    <p>Complete REST API reference for Omni-Manage Gadget Shop ERP. Authenticate with JWT, explore endpoints, and test requests directly.</p>
+
+    <div class="quick-stats">
+      <div class="stat-pill">
+        <span class="stat-dot green"></span>
+        <span class="stat-num" id="stat-endpoints">210+</span>
+        <span>Endpoints</span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-dot blue"></span>
+        <span class="stat-num">32</span>
+        <span>Modules</span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-dot purple"></span>
+        <span class="stat-num">JWT</span>
+        <span>Auth</span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-dot yellow"></span>
+        <span class="stat-num">v1</span>
+        <span>API Version</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Swagger UI Container -->
+  <main class="main">
+    <div id="swagger-ui"></div>
+
+    <!-- Bottom Info Cards -->
+    <div class="bottom-cards">
+      <div class="bottom-card">
+        <div class="bottom-card-icon blue">🔑</div>
+        <h3>Authentication</h3>
+        <p>All protected endpoints require a Bearer JWT token. Get yours via <code>POST /api/v1/auth/login-direct</code> with your username and password.</p>
+      </div>
+      <div class="bottom-card">
+        <div class="bottom-card-icon green">📦</div>
+        <h3>Response Format</h3>
+        <p>Every response follows a standard envelope: <code>{ success, message, data, pagination? }</code> — consistent across all 210+ endpoints.</p>
+      </div>
+      <div class="bottom-card">
+        <div class="bottom-card-icon purple">🏢</div>
+        <h3>Multi-Tenancy</h3>
+        <p>Data is isolated per tenant. Your JWT token contains a <code>tenantId</code> that scopes all queries to your shop automatically.</p>
+      </div>
+      <div class="bottom-card">
+        <div class="bottom-card-icon yellow">⚡</div>
+        <h3>Real-time Events</h3>
+        <p>Connect to <code>GET /api/v1/sse/connect</code> for live Server-Sent Events — stock updates, new sales, notifications, and more.</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <span>Omni-Manage ERP &copy; 2026 — Built by <a href="https://salahuddin.codes" target="_blank">Salah Uddin</a></span>
+      <span>OpenAPI 3.0.0 &middot; Swagger UI &middot; <a href="/api/v1/health">Health Check</a></span>
+    </div>
+  </footer>
+
+  <!-- Swagger UI CSS & JS from CDN -->
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.18.2/swagger-ui.css" />
+  <script src="https://unpkg.com/swagger-ui-dist@5.18.2/swagger-ui-bundle.js"></script>
+  <script src="https://unpkg.com/swagger-ui-dist@5.18.2/swagger-ui-standalone-preset.js"></script>
+
+  <script>
+    // Initialize Swagger UI
+    window.onload = () => {
+      const ui = SwaggerUIBundle({
+        url: '/api/v1/swagger.json',
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIStandalonePreset,
+        ],
+        layout: 'StandaloneLayout',
+        defaultModelsExpandDepth: 1,
+        defaultModelExpandDepth: 2,
+        docExpansion: 'none',
+        filter: true,
+        tryItOutEnabled: false,
+        persistAuthorization: true,
+        displayRequestDuration: true,
+        syntaxHighlight: {
+          activate: true,
+          theme: 'monokai',
+        },
+        requestSnippetsEnabled: true,
+        supportedSubmitMethods: ['get', 'put', 'post', 'delete', 'patch'],
+        onComplete: () => {
+          // Update endpoint count
+          try {
+            const tags = document.querySelectorAll('.opblock-tag');
+            const operations = document.querySelectorAll('.opblock');
+            const statEl = document.getElementById('stat-endpoints');
+            if (statEl && operations.length > 0) {
+              statEl.textContent = operations.length;
+            }
+          } catch (e) {}
+        },
+      });
+
+      window.ui = ui;
+    };
+
+    // Download OpenAPI spec
+    function downloadSpec() {
+      fetch('/api/v1/swagger.json')
+        .then(r => r.json())
+        .then(data => {
+          const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'omni-manage-openapi-spec.json';
+          a.click();
+          URL.revokeObjectURL(url);
+        });
+    }
+
+    // Smooth scroll for nav links
+    document.querySelectorAll('.nav-link[href^="#section/"]').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const tag = link.getAttribute('href').replace('#section/', '');
+        const el = document.querySelector(`.opblock-tag[data-tag="${tag}"]`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+          link.classList.add('active');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

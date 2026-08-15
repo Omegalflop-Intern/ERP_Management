@@ -199,7 +199,7 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
           category: rawItem.category || 'General',
           cost_price: uCost,
           selling_price: sPrice,
-          stock: 0,
+          stock_quantity: 0,
           min_stock_alert: 5,
           is_deleted: false,
         });
@@ -217,7 +217,7 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
       const pUpdate = db('products').where({ id: pId });
       if (tenantId) pUpdate.andWhere('tenant_id', tenantId);
       await pUpdate.update({
-        stock: Number(prod.stock || 0) + qty,
+        stock_quantity: Number(prod.stock_quantity || 0) + qty,
         cost_price: uCost > 0 ? uCost : prod.cost_price,
         selling_price: sPrice > 0 ? sPrice : prod.selling_price,
       });
@@ -441,10 +441,10 @@ export const returnToSupplier = async (id, returnPayload, reason = '', returnedB
       if (tenantId) prodQ.andWhere('tenant_id', tenantId);
       const prod = await prodQ.first();
       if (prod) {
-        const newStock = Math.max(0, Number(prod.stock || 0) - qty);
+        const newStock = Math.max(0, Number(prod.stock_quantity || 0) - qty);
         const pUp = db('products').where({ id: pId });
         if (tenantId) pUp.andWhere('tenant_id', tenantId);
-        await pUp.update({ stock: newStock });
+        await pUp.update({ stock_quantity: newStock });
       }
     }
 

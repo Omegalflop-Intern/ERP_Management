@@ -1,5 +1,8 @@
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 
 const options = {
   definition: {
@@ -543,7 +546,23 @@ const SWAGGER_OPTIONS = {
 };
 
 export const setupSwagger = (app) => {
-  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, SWAGGER_OPTIONS));
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  const docsPath = path.resolve(__dirname, '../docs/api-docs.html');
+
+  // Serve the custom HTML page at /api-docs
+  app.get('/api-docs', (req, res) => {
+    res.sendFile(docsPath);
+  });
+
+  // Serve the raw OpenAPI JSON spec
+  app.get('/api/v1/swagger.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.json(specs);
+  });
+
+  // Keep raw Swagger UI at /api-docs/raw as fallback
+  app.use('/api-docs/raw', swaggerUi.serve, swaggerUi.setup(specs, SWAGGER_OPTIONS));
 };
 
 export default specs;

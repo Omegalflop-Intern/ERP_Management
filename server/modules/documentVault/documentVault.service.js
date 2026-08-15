@@ -30,10 +30,10 @@ function applyTenantScope(query, tenantId) {
   }
 }
 
-export const getDocumentsByEntity = async (entityType, entityId, tenantId = null, branchId = null) => {
-  if (!entityType || !entityId) throw ApiError.badRequest('entityType and entityId are required');
-
-  const query = db('document_vaults').where({ entity_type: entityType, entity_id: entityId, is_deleted: false });
+export const getDocumentsByEntity = async (entityType = null, entityId = null, tenantId = null, branchId = null) => {
+  const query = db('document_vaults').where({ is_deleted: false });
+  if (entityType) query.where('entity_type', entityType);
+  if (entityId) query.where('entity_id', entityId);
   applyTenantScope(query, tenantId);
   if (branchId && branchId !== 'all') {
     query.where((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
