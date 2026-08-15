@@ -2,8 +2,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   AlertCircle,
   Building,
+  Check,
   CheckCircle2,
   ChevronDown,
+  CreditCard,
   DollarSign,
   Download,
   Eye,
@@ -16,11 +18,13 @@ import {
   RefreshCw,
   RotateCcw,
   Search,
+  Sparkles,
   Tag,
   Trash2,
   Truck,
   User,
   X,
+  Zap,
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -37,19 +41,31 @@ import {
 } from '../../components/ui/dialog';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
-import { NumberInput } from '../../components/ui/NumberInput';
 import api from '../../lib/api';
 import { confirmDelete } from '../../lib/confirm';
 
 const STATUSES = ['ALL', 'RECEIVED', 'APPROVED', 'PARTIALLY_RECEIVED', 'DRAFT', 'CANCELLED'];
 
 const STATUS_COLORS = {
-  RECEIVED: 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800',
-  APPROVED: 'bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-800',
-  PARTIALLY_RECEIVED: 'bg-purple-100 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-800',
-  DRAFT: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700',
-  CANCELLED: 'bg-rose-100 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800',
+  RECEIVED: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
+  APPROVED: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30',
+  PARTIALLY_RECEIVED: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30',
+  DRAFT: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/30',
+  CANCELLED: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30',
 };
+
+const CATEGORIES = [
+  'Smartphones',
+  'Feature Phones',
+  'Tablets',
+  'Smartwatches',
+  'Audio & Earbuds',
+  'Chargers & Cables',
+  'Power Banks',
+  'Cases & Protectors',
+  'Accessories',
+  'General',
+];
 
 export default function PurchaseOrders() {
   const [search, setSearch] = useState('');
@@ -117,42 +133,63 @@ export default function PurchaseOrders() {
     <div className="space-y-6">
       <PageHeader
         title="Purchase & Inventory Restock"
-        subtitle="Manage supplier purchases, restock store products automatically, track IMEIs, and process supplier returns."
+        subtitle="Manage supplier purchases, restock products automatically, track IMEIs, and process returns."
         icon={Truck}
         breadcrumbs={['Purchases & Suppliers', 'Purchase Orders']}
         actions={
           <Button
             onClick={() => setShowCreateModal(true)}
-            className="gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md text-xs font-semibold"
+            className="gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl shadow-md text-xs font-semibold px-4 py-2"
           >
             <Plus className="w-4 h-4" /> New Restock Purchase
           </Button>
         }
       />
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <div className="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
-          <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Purchases</div>
-          <div className="text-xl font-black text-slate-900 dark:text-slate-100 mt-1">৳{summary.totalPurchases.toLocaleString()}</div>
-          <div className="text-[11px] text-slate-400 mt-0.5">{orders.length} order(s) recorded</div>
+      {/* KPI Stats Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Purchases</div>
+          <div className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-1.5 font-mono">
+            ৳{summary.totalPurchases.toLocaleString()}
+          </div>
+          <div className="text-[11px] text-slate-400 mt-1 font-medium">{orders.length} orders recorded</div>
+          <div className="absolute right-3 top-3 w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-blue-600">
+            <Truck className="w-4 h-4" />
+          </div>
         </div>
-        <div className="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
-          <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Paid</div>
-          <div className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-1">৳{summary.totalPaid.toLocaleString()}</div>
-          <div className="text-[11px] text-emerald-600/80 mt-0.5">Disbursed to suppliers</div>
+
+        <div className="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Paid</div>
+          <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1.5 font-mono">
+            ৳{summary.totalPaid.toLocaleString()}
+          </div>
+          <div className="text-[11px] text-emerald-600/80 mt-1 font-medium">Disbursed to suppliers</div>
+          <div className="absolute right-3 top-3 w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-600">
+            <CheckCircle2 className="w-4 h-4" />
+          </div>
         </div>
-        <div className="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
-          <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Supplier Payable Due</div>
-          <div className={`text-xl font-black mt-1 ${summary.totalDue > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}`}>
+
+        <div className="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Supplier Payable Due</div>
+          <div className={`text-2xl font-black mt-1.5 font-mono ${summary.totalDue > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}`}>
             ৳{summary.totalDue.toLocaleString()}
           </div>
-          <div className="text-[11px] text-slate-400 mt-0.5">Pending supplier bills</div>
+          <div className="text-[11px] text-slate-400 mt-1 font-medium">Outstanding vendor dues</div>
+          <div className="absolute right-3 top-3 w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/50 flex items-center justify-center text-rose-600">
+            <CreditCard className="w-4 h-4" />
+          </div>
         </div>
-        <div className="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
-          <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Returned to Supplier</div>
-          <div className="text-xl font-black text-amber-600 dark:text-amber-400 mt-1">৳{summary.totalReturned.toLocaleString()}</div>
-          <div className="text-[11px] text-amber-600/80 mt-0.5">Returned defective / credit</div>
+
+        <div className="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Returned to Supplier</div>
+          <div className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1.5 font-mono">
+            ৳{summary.totalReturned.toLocaleString()}
+          </div>
+          <div className="text-[11px] text-amber-600/80 mt-1 font-medium">Credit / refunds processed</div>
+          <div className="absolute right-3 top-3 w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/50 flex items-center justify-center text-amber-600">
+            <RotateCcw className="w-4 h-4" />
+          </div>
         </div>
       </div>
 
@@ -162,10 +199,10 @@ export default function PurchaseOrders() {
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Search PO #, supplier, notes..."
+            placeholder="Search PO #, supplier name, notes..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 outline-none focus:border-blue-500 transition-all"
+            className="w-full pl-9 pr-4 py-2 bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 outline-none focus:border-blue-500 transition-all shadow-xs"
           />
         </div>
 
@@ -174,7 +211,7 @@ export default function PurchaseOrders() {
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-xl transition-colors shrink-0 ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-xl transition-all shrink-0 ${
                 statusFilter === s
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'bg-white dark:bg-[#111827] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'
@@ -194,7 +231,7 @@ export default function PurchaseOrders() {
         </div>
       </div>
 
-      {/* Purchase Orders Table */}
+      {/* Orders Table */}
       <div className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-slate-800 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
@@ -202,7 +239,7 @@ export default function PurchaseOrders() {
               <tr className="border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-900/50 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 <th className="px-4 py-3.5">PO Number</th>
                 <th className="px-4 py-3.5">Supplier</th>
-                <th className="px-4 py-3.5">Items & Qty</th>
+                <th className="px-4 py-3.5">Products / Items</th>
                 <th className="px-4 py-3.5 text-right">Grand Total</th>
                 <th className="px-4 py-3.5 text-right">Paid</th>
                 <th className="px-4 py-3.5 text-right">Due</th>
@@ -225,7 +262,7 @@ export default function PurchaseOrders() {
                   <td colSpan={9} className="px-4 py-16 text-center text-slate-400">
                     <Truck className="w-12 h-12 mx-auto mb-2 opacity-30" />
                     <p className="font-semibold text-sm">No purchase orders found</p>
-                    <p className="text-xs text-slate-500 mt-1">Click "New Restock Purchase" to add your first stock restock.</p>
+                    <p className="text-xs text-slate-500 mt-1">Click "New Restock Purchase" to record inventory stock.</p>
                   </td>
                 </tr>
               ) : (
@@ -250,7 +287,7 @@ export default function PurchaseOrders() {
                           {po.lineItems?.length || 0} product(s) ({totalItems} pcs)
                         </div>
                         {po.lineItems?.length > 0 && (
-                          <div className="text-[10px] text-slate-400 truncate max-w-[180px]">
+                          <div className="text-[10px] text-slate-400 truncate max-w-[200px]">
                             {po.lineItems.map((it) => it.description || it.name).join(', ')}
                           </div>
                         )}
@@ -286,7 +323,7 @@ export default function PurchaseOrders() {
                           <button
                             onClick={() => setViewPO(po)}
                             className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
-                            title="View Details"
+                            title="View PO Details"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
@@ -315,7 +352,7 @@ export default function PurchaseOrders() {
         </div>
       </div>
 
-      {/* ── 1. UNIFIED NEW RESTOCK PURCHASE MODAL ── */}
+      {/* ── 1. WIDE, MODERN RESTOCK PURCHASE MODAL ── */}
       {showCreateModal && (
         <CreatePurchaseModal
           suppliers={suppliers}
@@ -363,7 +400,7 @@ export default function PurchaseOrders() {
 }
 
 // ----------------------------------------------------------------------
-// MODAL 1: UNIFIED SINGLE RESTOCK PURCHASE MODAL
+// MODAL 1: HIGH-END, WIDE RESTOCK PURCHASE MODAL (USER-FRIENDLY ERP UX)
 // ----------------------------------------------------------------------
 function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
   const [supplierId, setSupplierId] = useState(suppliers[0]?._id || suppliers[0]?.id || '');
@@ -393,7 +430,7 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
   const mutation = useMutation({
     mutationFn: async (payload) => api.post('/purchase-orders', payload),
     onSuccess: () => {
-      toast.success('Stock purchased and added to store inventory successfully!');
+      toast.success('Stock purchased and synchronized into inventory!');
       onSuccess();
     },
     onError: (err) => {
@@ -461,6 +498,10 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
   const netTotal = Math.max(0, subTotal - Number(discount || 0) + Number(tax || 0));
   const dueAmount = Math.max(0, netTotal - Number(paidAmount || 0));
 
+  const handlePayInFull = () => {
+    setPaidAmount(netTotal);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -520,112 +561,152 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 rounded-2xl">
-        <DialogHeader className="p-6 pb-3 border-b border-slate-100 dark:border-slate-800">
-          <DialogTitle className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-slate-100">
-            <Truck className="w-5 h-5 text-blue-600" /> New Stock Restock / Purchase Order
-          </DialogTitle>
-          <DialogDescription className="text-xs text-slate-500">
-            Add purchased stock from supplier. Products and inventory stock will be automatically synchronized.
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-5xl md:max-w-6xl w-[96vw] max-h-[92vh] overflow-hidden flex flex-col p-0 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl bg-white dark:bg-[#0f172a]">
+        {/* Modal Header */}
+        <div className="p-5 px-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-blue-600/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
+              <Truck className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                New Stock Restock & Purchase Order
+                <span className="text-[11px] px-2 py-0.5 rounded-full font-mono font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-600 border border-blue-200 dark:border-blue-800">
+                  Auto-Inventory Sync
+                </span>
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Add stock items from vendor. Store stock and catalog are automatically updated.
+              </p>
+            </div>
+          </div>
+        </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Supplier Section */}
-          <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                <Building className="w-3.5 h-3.5 text-blue-600" /> Supplier Details *
-              </span>
+        {/* Modal Scrollable Body */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
+          {/* Top Section: Supplier Selection Card */}
+          <div className="bg-slate-50/80 dark:bg-slate-900/40 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+              <div className="flex items-center gap-2">
+                <Building className="w-4 h-4 text-blue-600" />
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                  Supplier / Vendor Details *
+                </span>
+              </div>
               <button
                 type="button"
                 onClick={() => setIsQuickSupplier(!isQuickSupplier)}
-                className="text-xs text-blue-600 hover:underline font-semibold"
+                className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 hover:underline font-semibold self-start sm:self-auto"
               >
-                {isQuickSupplier ? 'Select Existing Supplier' : '+ Quick Add New Supplier'}
+                {isQuickSupplier ? '← Select Existing Supplier' : '+ Quick Add New Supplier'}
               </button>
             </div>
 
             {!isQuickSupplier ? (
-              <div>
-                <select
-                  required
-                  value={supplierId}
-                  onChange={(e) => setSupplierId(e.target.value)}
-                  className="w-full px-3 py-2 bg-white dark:bg-[#111827] border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500"
-                >
-                  <option value="">-- Choose Supplier --</option>
-                  {suppliers.map((s) => (
-                    <option key={s._id || s.id} value={s._id || s.id}>
-                      {s.name} {s.phone ? `(${s.phone})` : ''} {s.company ? `— ${s.company}` : ''}
-                    </option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
+                <div className="sm:col-span-2">
+                  <select
+                    required
+                    value={supplierId}
+                    onChange={(e) => setSupplierId(e.target.value)}
+                    className="w-full px-3 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-xs"
+                  >
+                    <option value="">-- Select Supplier from List --</option>
+                    {suppliers.map((s) => (
+                      <option key={s._id || s.id} value={s._id || s.id}>
+                        {s.name} {s.phone ? `(${s.phone})` : ''} {s.company ? `— ${s.company}` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400 bg-white dark:bg-[#1e293b] p-2 rounded-xl border border-slate-200 dark:border-slate-700 font-mono">
+                  {suppliers.find((s) => String(s._id || s.id) === String(supplierId))?.phone
+                    ? `Phone: ${suppliers.find((s) => String(s._id || s.id) === String(supplierId))?.phone}`
+                    : 'Select a supplier to link order'}
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-[11px]">Supplier / Vendor Name *</Label>
+                  <Label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                    Supplier / Vendor Name *
+                  </Label>
                   <Input
                     required
-                    placeholder="e.g. Star Tech Wholesale"
+                    placeholder="e.g. Dhaka Gadget Distributors"
                     value={newSupplierName}
                     onChange={(e) => setNewSupplierName(e.target.value)}
-                    className="h-8 text-xs rounded-lg mt-1"
+                    className="h-9 text-xs rounded-xl mt-1 bg-white dark:bg-[#1e293b]"
                   />
                 </div>
                 <div>
-                  <Label className="text-[11px]">Phone Number</Label>
+                  <Label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                    Supplier Contact Phone
+                  </Label>
                   <Input
-                    placeholder="e.g. 01700000000"
+                    placeholder="e.g. 01711223344"
                     value={newSupplierPhone}
                     onChange={(e) => setNewSupplierPhone(e.target.value)}
-                    className="h-8 text-xs rounded-lg mt-1"
+                    className="h-9 text-xs rounded-xl mt-1 bg-white dark:bg-[#1e293b]"
                   />
                 </div>
               </div>
             )}
           </div>
 
-          {/* Product Line Items */}
+          {/* Middle Section: Items Data Table */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                <Package className="w-3.5 h-3.5 text-blue-600" /> Restock Items & Pricing *
-              </span>
+              <div className="flex items-center gap-2">
+                <Package className="w-4 h-4 text-blue-600" />
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                  Purchased Products & Restock Quantities *
+                </span>
+                <span className="text-[11px] text-slate-400">({lineItems.length} items)</span>
+              </div>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={handleAddLine}
-                className="h-7 text-xs rounded-lg gap-1 border-blue-200 dark:border-blue-800 text-blue-600"
+                className="h-8 text-xs rounded-xl gap-1.5 border-blue-200 dark:border-blue-800/80 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 font-semibold"
               >
-                <Plus className="w-3.5 h-3.5" /> Add Another Item
+                <Plus className="w-3.5 h-3.5" /> Add Product Row
               </Button>
             </div>
 
+            {/* Structured Table for Products */}
             <div className="space-y-3">
-              {lineItems.map((item, index) => (
-                <div
-                  key={index}
-                  className="p-3.5 bg-slate-50/80 dark:bg-slate-900/40 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5"
-                >
-                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end">
-                    <div className="sm:col-span-4">
-                      <Label className="text-[10px] text-slate-500 uppercase font-semibold">
-                        Product (Select or Type New) *
-                      </Label>
-                      <div className="space-y-1 mt-1">
+              {lineItems.map((item, index) => {
+                const lineTotal = Number(item.qty || 1) * Number(item.unitCost || 0);
+                const imeisCount = item.imeiText
+                  ? item.imeiText.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean).length
+                  : 0;
+
+                return (
+                  <div
+                    key={index}
+                    className="p-4 bg-slate-50/60 dark:bg-slate-900/30 rounded-2xl border border-slate-200/90 dark:border-slate-800 hover:border-blue-400/50 dark:hover:border-blue-600/50 transition-all space-y-3 shadow-xs"
+                  >
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                      {/* Product Selector / Name */}
+                      <div className="sm:col-span-4 space-y-1.5">
+                        <Label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                          <span>Product / Item Name *</span>
+                          <span className="text-[10px] text-blue-600 dark:text-blue-400 lowercase font-normal">
+                            #{index + 1}
+                          </span>
+                        </Label>
                         <select
                           value={item.productId || (item.productName ? 'new' : '')}
                           onChange={(e) => handleProductSelect(index, e.target.value)}
-                          className="w-full px-2.5 py-1.5 bg-white dark:bg-[#111827] border border-slate-300 dark:border-slate-700 rounded-lg text-xs"
+                          className="w-full px-3 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:border-blue-500"
                         >
-                          <option value="new">+ Type New Product Name...</option>
-                          <optgroup label="Existing Products in Store">
+                          <option value="new">+ Type New Product Name Below</option>
+                          <optgroup label="Select from Store Catalog">
                             {products.map((p) => (
                               <option key={p._id || p.id} value={p._id || p.id}>
-                                {p.name} (Stock: {p.stock || 0})
+                                {p.name} (In stock: {p.stock || 0})
                               </option>
                             ))}
                           </optgroup>
@@ -634,196 +715,278 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                         {(!item.productId || item.productId === 'new') && (
                           <Input
                             required
-                            placeholder="Enter product model / name..."
+                            placeholder="Type new gadget name / model..."
                             value={item.productName}
                             onChange={(e) => handleLineChange(index, 'productName', e.target.value)}
-                            className="h-7 text-xs rounded-lg"
+                            className="h-8 text-xs rounded-xl bg-white dark:bg-[#1e293b] mt-1"
                           />
                         )}
                       </div>
-                    </div>
 
-                    <div className="sm:col-span-2">
-                      <Label className="text-[10px] text-slate-500 uppercase font-semibold">Qty *</Label>
-                      <Input
-                        type="number"
-                        min="1"
-                        required
-                        value={item.qty}
-                        onChange={(e) => handleLineChange(index, 'qty', Math.max(1, Number(e.target.value)))}
-                        className="h-7 text-xs rounded-lg mt-1 font-mono text-center"
-                      />
-                    </div>
-
-                    <div className="sm:col-span-2">
-                      <Label className="text-[10px] text-slate-500 uppercase font-semibold">Unit Cost (৳) *</Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        required
-                        value={item.unitCost}
-                        onChange={(e) => handleLineChange(index, 'unitCost', Number(e.target.value))}
-                        className="h-7 text-xs rounded-lg mt-1 font-mono text-right"
-                      />
-                    </div>
-
-                    <div className="sm:col-span-2">
-                      <Label className="text-[10px] text-slate-500 uppercase font-semibold">Retail Price (৳)</Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        value={item.sellingPrice}
-                        onChange={(e) => handleLineChange(index, 'sellingPrice', Number(e.target.value))}
-                        className="h-7 text-xs rounded-lg mt-1 font-mono text-right"
-                      />
-                    </div>
-
-                    <div className="sm:col-span-2 flex items-center justify-between gap-1.5 pb-0.5">
-                      <div className="text-right flex-1 min-w-0">
-                        <div className="text-[9px] text-slate-400 uppercase">Subtotal</div>
-                        <div className="font-mono font-bold text-xs text-slate-900 dark:text-slate-100 truncate">
-                          ৳{(Number(item.qty || 1) * Number(item.unitCost || 0)).toLocaleString()}
-                        </div>
+                      {/* Category */}
+                      <div className="sm:col-span-2 space-y-1.5">
+                        <Label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                          Category
+                        </Label>
+                        <select
+                          value={item.category || 'Smartphones'}
+                          onChange={(e) => handleLineChange(index, 'category', e.target.value)}
+                          className="w-full px-2.5 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 font-medium focus:outline-none"
+                        >
+                          {CATEGORIES.map((c) => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        </select>
                       </div>
+
+                      {/* Qty */}
+                      <div className="sm:col-span-1 space-y-1.5">
+                        <Label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-center block">
+                          Qty *
+                        </Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          required
+                          value={item.qty}
+                          onChange={(e) => handleLineChange(index, 'qty', Math.max(1, Number(e.target.value)))}
+                          className="h-9 text-xs font-mono font-bold text-center rounded-xl bg-white dark:bg-[#1e293b]"
+                        />
+                      </div>
+
+                      {/* Unit Cost */}
+                      <div className="sm:col-span-2 space-y-1.5">
+                        <Label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-right block">
+                          Cost Price (৳) *
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          required
+                          value={item.unitCost}
+                          onChange={(e) => handleLineChange(index, 'unitCost', Number(e.target.value))}
+                          className="h-9 text-xs font-mono font-bold text-right rounded-xl bg-white dark:bg-[#1e293b]"
+                        />
+                      </div>
+
+                      {/* Retail Price */}
+                      <div className="sm:col-span-2 space-y-1.5">
+                        <Label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-right block">
+                          Retail Price (৳)
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="Selling price"
+                          value={item.sellingPrice}
+                          onChange={(e) => handleLineChange(index, 'sellingPrice', Number(e.target.value))}
+                          className="h-9 text-xs font-mono font-bold text-right rounded-xl bg-white dark:bg-[#1e293b]"
+                        />
+                      </div>
+
+                      {/* Line Total & Remove Action */}
+                      <div className="sm:col-span-1 flex items-center justify-between sm:justify-end gap-2 pb-1">
+                        <div className="text-right flex-1 sm:flex-none">
+                          <div className="text-[9px] font-bold text-slate-400 uppercase">Subtotal</div>
+                          <div className="font-mono font-black text-xs text-slate-900 dark:text-slate-100">
+                            ৳{lineTotal.toLocaleString()}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={lineItems.length <= 1}
+                          onClick={() => handleRemoveLine(index)}
+                          className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 disabled:opacity-20 transition-colors"
+                          title="Remove item"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* IMEI Toggle & Input Strip */}
+                    <div className="pt-2 border-t border-slate-200/50 dark:border-slate-800/60 flex items-center justify-between">
                       <button
                         type="button"
-                        disabled={lineItems.length <= 1}
-                        onClick={() => handleRemoveLine(index)}
-                        className="p-1 rounded-md text-slate-400 hover:text-rose-600 disabled:opacity-30"
+                        onClick={() => handleLineChange(index, 'showImei', !item.showImei)}
+                        className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 flex items-center gap-1.5 font-semibold"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Tag className="w-3.5 h-3.5" />
+                        {item.showImei ? 'Close IMEI / Serial Box' : `+ Add IMEI / Serial Numbers ${imeisCount > 0 ? `(${imeisCount} entered)` : '(Optional)'}`}
+                      </button>
+
+                      {item.sellingPrice > 0 && item.unitCost > 0 && (
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
+                          Est. Margin: +৳{(item.sellingPrice - item.unitCost).toLocaleString()} ({Math.round(((item.sellingPrice - item.unitCost) / item.unitCost) * 100)}%)
+                        </span>
+                      )}
+                    </div>
+
+                    {item.showImei && (
+                      <div className="bg-white dark:bg-[#1e293b] p-3 rounded-xl border border-blue-200 dark:border-blue-900/50 space-y-1">
+                        <Label className="text-[11px] text-slate-600 dark:text-slate-300 font-semibold">
+                          Enter or Scan IMEI / Serials ({item.qty} units expected, separated by commas or line breaks):
+                        </Label>
+                        <textarea
+                          rows={2}
+                          placeholder="356789012345678, 356789012345679..."
+                          value={item.imeiText}
+                          onChange={(e) => handleLineChange(index, 'imeiText', e.target.value)}
+                          className="w-full p-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-mono focus:outline-none focus:border-blue-500"
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Bottom Section: Payment & Financial Summary */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-5 pt-2">
+            {/* Left: Payment Method & Notes */}
+            <div className="md:col-span-6 space-y-4">
+              <div className="bg-slate-50/80 dark:bg-slate-900/40 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                  <CreditCard className="w-4 h-4 text-blue-600" /> Payment & Billing Info
+                </span>
+
+                <div>
+                  <Label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                    Payment Method
+                  </Label>
+                  <select
+                    value={paymentMethod}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    className="w-full mt-1 px-3 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100"
+                  >
+                    <option value="CASH">Cash Payment</option>
+                    <option value="BANK">Bank Transfer / Card</option>
+                    <option value="BKASH">bKash Merchant</option>
+                    <option value="NAGAD">Nagad</option>
+                    <option value="ROCKET">Rocket</option>
+                    <option value="CREDIT">Supplier Credit (Pay Later)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <Label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                    Order Reference / Invoice Notes
+                  </Label>
+                  <textarea
+                    rows={2}
+                    placeholder="e.g. Vendor Invoice #INV-8891, Restock batch note..."
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    className="w-full mt-1 p-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Calculations & Totals */}
+            <div className="md:col-span-6">
+              <div className="bg-slate-50/90 dark:bg-slate-900/60 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2.5 text-xs shadow-xs">
+                <div className="flex justify-between text-slate-600 dark:text-slate-400 font-medium">
+                  <span>Gross Subtotal:</span>
+                  <span className="font-mono font-bold text-slate-900 dark:text-slate-100 text-sm">
+                    ৳{subTotal.toLocaleString()}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center gap-3">
+                  <span className="text-slate-600 dark:text-slate-400 font-medium">Discount (৳):</span>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={discount}
+                    onChange={(e) => setDiscount(Number(e.target.value))}
+                    className="h-7 w-32 text-xs font-mono text-right rounded-lg bg-white dark:bg-[#1e293b]"
+                  />
+                </div>
+
+                <div className="flex justify-between items-center gap-3">
+                  <span className="text-slate-600 dark:text-slate-400 font-medium">Tax / VAT (৳):</span>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={tax}
+                    onChange={(e) => setTax(Number(e.target.value))}
+                    className="h-7 w-32 text-xs font-mono text-right rounded-lg bg-white dark:bg-[#1e293b]"
+                  />
+                </div>
+
+                <div className="flex justify-between font-black text-base text-slate-900 dark:text-slate-100 pt-2 border-t border-slate-200 dark:border-slate-700">
+                  <span>GRAND TOTAL:</span>
+                  <span className="font-mono text-blue-600 dark:text-blue-400 text-lg">
+                    ৳{netTotal.toLocaleString()}
+                  </span>
+                </div>
+
+                {/* Paid Now & Pay Full Button */}
+                <div className="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-1.5">
+                  <div className="flex justify-between items-center gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400">Paid Now:</span>
+                      <button
+                        type="button"
+                        onClick={handlePayInFull}
+                        className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 border border-emerald-300 dark:border-emerald-800 hover:bg-emerald-100 transition-colors"
+                      >
+                        ⚡ Pay in Full
                       </button>
                     </div>
+                    <Input
+                      type="number"
+                      min="0"
+                      max={netTotal}
+                      value={paidAmount}
+                      onChange={(e) => setPaidAmount(Number(e.target.value))}
+                      className="h-7 w-32 text-xs font-mono text-right rounded-lg bg-white dark:bg-[#1e293b] border-emerald-500 font-black text-emerald-600"
+                    />
                   </div>
 
-                  {/* Optional IMEI Drawer Toggle */}
-                  <div className="pt-1 flex items-center justify-between">
-                    <button
-                      type="button"
-                      onClick={() => handleLineChange(index, 'showImei', !item.showImei)}
-                      className="text-[11px] text-blue-600 hover:underline flex items-center gap-1 font-medium"
-                    >
-                      <Tag className="w-3 h-3" />
-                      {item.showImei ? 'Hide IMEI/Serial Entry' : '+ Optional: Enter IMEI/Serials Now (or add later)'}
-                    </button>
+                  <div className="flex justify-between font-bold text-xs pt-1">
+                    <span className={dueAmount > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}>
+                      Supplier Due Balance:
+                    </span>
+                    <span className={`font-mono font-bold ${dueAmount > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}`}>
+                      ৳{dueAmount.toLocaleString()}
+                    </span>
                   </div>
-
-                  {item.showImei && (
-                    <div className="pt-1.5 border-t border-slate-200/60 dark:border-slate-800/60">
-                      <Label className="text-[10px] text-slate-500">
-                        Enter IMEI / Serial Numbers ({item.qty} units expected, separated by comma or new lines)
-                      </Label>
-                      <textarea
-                        rows={2}
-                        placeholder="354890123456789, 354890123456790..."
-                        value={item.imeiText}
-                        onChange={(e) => handleLineChange(index, 'imeiText', e.target.value)}
-                        className="w-full mt-1 p-2 bg-white dark:bg-[#111827] border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-mono"
-                      />
-                    </div>
-                  )}
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Financial Summary & Payment */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-slate-200 dark:border-slate-800">
-            <div className="space-y-3">
-              <div>
-                <Label className="text-xs font-semibold">Payment Method</Label>
-                <select
-                  value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 bg-white dark:bg-[#111827] border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-semibold"
-                >
-                  <option value="CASH">Cash Payment</option>
-                  <option value="BANK">Bank Transfer</option>
-                  <option value="BKASH">bKash</option>
-                  <option value="NAGAD">Nagad</option>
-                  <option value="ROCKET">Rocket</option>
-                  <option value="CREDIT">Supplier Credit (Pay Later)</option>
-                </select>
-              </div>
-
-              <div>
-                <Label className="text-xs font-semibold">Order / Reference Notes</Label>
-                <textarea
-                  rows={2}
-                  placeholder="Invoice #, delivery notes, terms..."
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="w-full mt-1 p-2 bg-white dark:bg-[#111827] border border-slate-300 dark:border-slate-700 rounded-xl text-xs"
-                />
-              </div>
-            </div>
-
-            <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
-              <div className="flex justify-between text-slate-600 dark:text-slate-400">
-                <span>Subtotal:</span>
-                <span className="font-mono font-bold text-slate-900 dark:text-slate-100">৳{subTotal.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between items-center gap-2">
-                <span className="text-slate-600 dark:text-slate-400">Discount:</span>
-                <Input
-                  type="number"
-                  min="0"
-                  value={discount}
-                  onChange={(e) => setDiscount(Number(e.target.value))}
-                  className="h-6 w-28 text-xs font-mono text-right rounded"
-                />
-              </div>
-              <div className="flex justify-between items-center gap-2">
-                <span className="text-slate-600 dark:text-slate-400">Tax / VAT:</span>
-                <Input
-                  type="number"
-                  min="0"
-                  value={tax}
-                  onChange={(e) => setTax(Number(e.target.value))}
-                  className="h-6 w-28 text-xs font-mono text-right rounded"
-                />
-              </div>
-              <div className="flex justify-between font-extrabold text-sm text-slate-900 dark:text-slate-100 pt-1.5 border-t border-slate-200 dark:border-slate-700">
-                <span>GRAND TOTAL:</span>
-                <span className="font-mono text-blue-600 dark:text-blue-400">৳{netTotal.toLocaleString()}</span>
-              </div>
-
-              <div className="flex justify-between items-center gap-2 pt-1 border-t border-slate-200/60 dark:border-slate-800">
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">Paid Now:</span>
-                <Input
-                  type="number"
-                  min="0"
-                  max={netTotal}
-                  value={paidAmount}
-                  onChange={(e) => setPaidAmount(Number(e.target.value))}
-                  className="h-6 w-28 text-xs font-mono text-right rounded border-emerald-500 font-bold"
-                />
-              </div>
-
-              <div className="flex justify-between font-bold text-xs pt-1">
-                <span className={dueAmount > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}>
-                  Balance Due:
-                </span>
-                <span className={`font-mono ${dueAmount > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}`}>
-                  ৳{dueAmount.toLocaleString()}
-                </span>
               </div>
             </div>
           </div>
 
-          <DialogFooter className="border-t border-slate-100 dark:border-slate-800 pt-4">
-            <Button type="button" variant="outline" onClick={onClose} className="rounded-xl text-xs">
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={mutation.isPending}
-              className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md gap-1.5"
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              {mutation.isPending ? 'Saving & Adding Stock...' : 'Confirm Restock & Add to Store'}
-            </Button>
-          </DialogFooter>
+          {/* Sticky Modal Actions */}
+          <div className="border-t border-slate-100 dark:border-slate-800 pt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-blue-500" />
+              <span>
+                Total <strong>{lineItems.reduce((acc, it) => acc + Number(it.qty || 1), 0)} units</strong> ready to restock
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2.5 w-full sm:w-auto">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                className="flex-1 sm:flex-none rounded-xl text-xs px-4"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={mutation.isPending}
+                className="flex-1 sm:flex-none bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold px-6 py-2 shadow-md gap-2"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                {mutation.isPending ? 'Processing Restock...' : `Confirm Purchase (৳${netTotal.toLocaleString()})`}
+              </Button>
+            </div>
+          </div>
         </form>
       </DialogContent>
     </Dialog>
@@ -899,9 +1062,9 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-bold">
+      <DialogContent className="sm:max-w-4xl w-[94vw] max-h-[88vh] overflow-y-auto rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-2xl bg-white dark:bg-[#0f172a]">
+        <DialogHeader className="border-b border-slate-100 dark:border-slate-800 pb-3">
+          <DialogTitle className="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-bold text-base">
             <RotateCcw className="w-5 h-5" /> Return Products to Supplier
           </DialogTitle>
           <DialogDescription className="text-xs">
@@ -915,13 +1078,15 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
             <Input
               value={generalReason}
               onChange={(e) => setGeneralReason(e.target.value)}
-              placeholder="e.g. Factory fault, wrong batch received"
-              className="h-8 text-xs mt-1 rounded-lg"
+              placeholder="e.g. Factory fault, damaged parcel, wrong batch"
+              className="h-9 text-xs mt-1 rounded-xl bg-slate-50 dark:bg-slate-900"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs font-semibold uppercase text-slate-500">Select Items to Return</Label>
+            <Label className="text-xs font-bold uppercase text-slate-500 tracking-wider">
+              Select Line Items to Return
+            </Label>
             {lineItems.map((item, idx) => {
               const key = `item-${idx}`;
               const isSelected = !!returnSelection[key];
@@ -930,14 +1095,14 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
               return (
                 <div
                   key={key}
-                  className={`p-3 rounded-xl border transition-colors space-y-2 ${
+                  className={`p-3.5 rounded-2xl border transition-all space-y-2.5 ${
                     isSelected
-                      ? 'bg-rose-50/50 dark:bg-rose-950/20 border-rose-300 dark:border-rose-800'
-                      : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800'
+                      ? 'bg-rose-50/60 dark:bg-rose-950/30 border-rose-300 dark:border-rose-800'
+                      : 'bg-slate-50/60 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800'
                   }`}
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <label className="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0">
+                    <label className="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
                       <input
                         type="checkbox"
                         checked={isSelected}
@@ -945,7 +1110,7 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
                         className="w-4 h-4 text-rose-600 rounded cursor-pointer"
                       />
                       <div className="truncate">
-                        <div className="font-semibold text-xs text-slate-900 dark:text-slate-100 truncate">
+                        <div className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">
                           {item.description || item.name}
                         </div>
                         <div className="text-[10px] text-slate-400 font-mono">
@@ -960,9 +1125,9 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
                   </div>
 
                   {isSelected && (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-rose-200 dark:border-rose-900/40">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2.5 border-t border-rose-200 dark:border-rose-900/40">
                       <div>
-                        <Label className="text-[10px] text-slate-500">Return Qty (Max {maxQty})</Label>
+                        <Label className="text-[10px] text-slate-500 font-semibold">Return Qty (Max {maxQty})</Label>
                         <Input
                           type="number"
                           min="1"
@@ -973,26 +1138,26 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
                             updateItem(key, 'qty', q);
                             updateItem(key, 'refundAmount', q * (item.unitCost || 0));
                           }}
-                          className="h-7 text-xs font-mono rounded mt-0.5"
+                          className="h-8 text-xs font-mono font-bold rounded-xl mt-1 bg-white dark:bg-[#1e293b]"
                         />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-slate-500">Refund / Credit (৳)</Label>
+                        <Label className="text-[10px] text-slate-500 font-semibold">Refund / Credit (৳)</Label>
                         <Input
                           type="number"
                           min="0"
                           value={returnSelection[key]?.refundAmount}
                           onChange={(e) => updateItem(key, 'refundAmount', Number(e.target.value))}
-                          className="h-7 text-xs font-mono rounded mt-0.5 text-right font-bold text-rose-600"
+                          className="h-8 text-xs font-mono rounded-xl mt-1 text-right font-black text-rose-600 bg-white dark:bg-[#1e293b]"
                         />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-slate-500">Item Notes</Label>
+                        <Label className="text-[10px] text-slate-500 font-semibold">Item Notes</Label>
                         <Input
-                          placeholder="Optional details..."
+                          placeholder="Specific defect details..."
                           value={returnSelection[key]?.notes}
                           onChange={(e) => updateItem(key, 'notes', e.target.value)}
-                          className="h-7 text-xs rounded mt-0.5"
+                          className="h-8 text-xs rounded-xl mt-1 bg-white dark:bg-[#1e293b]"
                         />
                       </div>
                     </div>
@@ -1002,24 +1167,24 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
             })}
           </div>
 
-          <DialogFooter className="border-t border-slate-100 dark:border-slate-800 pt-3 flex items-center justify-between sm:justify-between">
+          <div className="border-t border-slate-100 dark:border-slate-800 pt-3 flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="text-xs font-bold">
-              Total Credit Refund: <span className="text-rose-600 font-mono text-sm">৳{totalRefund.toLocaleString()}</span>
+              Total Credit Refund: <span className="text-rose-600 font-mono text-base">৳{totalRefund.toLocaleString()}</span>
             </div>
-            <div className="flex gap-2">
-              <Button type="button" variant="outline" size="sm" onClick={onClose} className="rounded-xl">
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button type="button" variant="outline" size="sm" onClick={onClose} className="rounded-xl flex-1 sm:flex-none">
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={mutation.isPending || Object.keys(returnSelection).length === 0}
-                className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold gap-1.5"
+                className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold gap-1.5 flex-1 sm:flex-none"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
-                {mutation.isPending ? 'Processing Return...' : 'Confirm Return to Supplier'}
+                {mutation.isPending ? 'Processing...' : 'Confirm Return to Supplier'}
               </Button>
             </div>
-          </DialogFooter>
+          </div>
         </form>
       </DialogContent>
     </Dialog>
@@ -1038,7 +1203,7 @@ function ViewPurchaseModal({ po, onClose, onReturn }) {
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl p-6">
+      <DialogContent className="sm:max-w-4xl w-[94vw] max-h-[88vh] overflow-y-auto rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-2xl bg-white dark:bg-[#0f172a]">
         <DialogHeader className="border-b border-slate-100 dark:border-slate-800 pb-3">
           <div className="flex items-center justify-between">
             <div>
@@ -1060,28 +1225,28 @@ function ViewPurchaseModal({ po, onClose, onReturn }) {
         </DialogHeader>
 
         <div className="space-y-4 pt-2">
-          {/* Supplier Strip */}
-          <div className="bg-slate-50 dark:bg-slate-900/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs">
+          {/* Supplier Info */}
+          <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 text-xs">
             <div className="font-bold text-slate-900 dark:text-slate-100 text-sm">{supplierName}</div>
             {supplierPhone && <div className="text-slate-500 font-mono mt-0.5">Phone: {supplierPhone}</div>}
             {supplierAddress && <div className="text-slate-400 mt-0.5">{supplierAddress}</div>}
           </div>
 
           {/* Line Items Table */}
-          <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden text-xs">
+          <div className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden text-xs">
             <table className="w-full">
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-900 text-slate-500 text-[10px] uppercase font-bold border-b border-slate-200 dark:border-slate-800">
-                  <th className="px-3 py-2 text-left">Product</th>
-                  <th className="px-3 py-2 text-center">Qty</th>
-                  <th className="px-3 py-2 text-right">Unit Cost</th>
-                  <th className="px-3 py-2 text-right">Total</th>
+                  <th className="px-3.5 py-2.5 text-left">Product</th>
+                  <th className="px-3.5 py-2.5 text-center">Qty</th>
+                  <th className="px-3.5 py-2.5 text-right">Unit Cost</th>
+                  <th className="px-3.5 py-2.5 text-right">Total</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {lineItems.map((item, idx) => (
                   <tr key={idx}>
-                    <td className="px-3 py-2">
+                    <td className="px-3.5 py-2.5">
                       <div className="font-semibold text-slate-900 dark:text-slate-100">{item.description || item.name}</div>
                       {item.imeis?.length > 0 && (
                         <div className="text-[10px] text-blue-600 dark:text-blue-400 font-mono mt-0.5">
@@ -1089,9 +1254,9 @@ function ViewPurchaseModal({ po, onClose, onReturn }) {
                         </div>
                       )}
                     </td>
-                    <td className="px-3 py-2 text-center font-bold">{item.qty}</td>
-                    <td className="px-3 py-2 text-right font-mono">৳{Number(item.unitCost || 0).toLocaleString()}</td>
-                    <td className="px-3 py-2 text-right font-mono font-bold text-slate-900 dark:text-slate-100">
+                    <td className="px-3.5 py-2.5 text-center font-bold">{item.qty}</td>
+                    <td className="px-3.5 py-2.5 text-right font-mono">৳{Number(item.unitCost || 0).toLocaleString()}</td>
+                    <td className="px-3.5 py-2.5 text-right font-mono font-bold text-slate-900 dark:text-slate-100">
                       ৳{Number(item.totalCost || (item.qty * item.unitCost) || 0).toLocaleString()}
                     </td>
                   </tr>
@@ -1102,14 +1267,14 @@ function ViewPurchaseModal({ po, onClose, onReturn }) {
 
           {/* Financials & Notes */}
           <div className="grid grid-cols-2 gap-3 text-xs">
-            <div className="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1">
+            <div className="bg-slate-50 dark:bg-slate-900/40 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-1">
               <div>Payment Method: <strong>{po.paymentMethod}</strong></div>
               <div>Paid: <strong className="text-emerald-600">৳{Number(po.paidAmount || 0).toLocaleString()}</strong></div>
               <div>Due: <strong className={Number(po.dueAmount || 0) > 0 ? 'text-rose-600' : 'text-slate-500'}>৳{Number(po.dueAmount || 0).toLocaleString()}</strong></div>
               {po.notes && <div className="text-[11px] text-slate-400 pt-1 border-t">Notes: {po.notes}</div>}
             </div>
 
-            <div className="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1 text-right">
+            <div className="bg-slate-50 dark:bg-slate-900/40 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-1 text-right">
               <div>Subtotal: ৳{Number(po.subTotal || 0).toLocaleString()}</div>
               {po.discount > 0 && <div className="text-rose-600">Discount: -৳{Number(po.discount).toLocaleString()}</div>}
               {po.tax > 0 && <div>Tax: +৳{Number(po.tax).toLocaleString()}</div>}
@@ -1121,7 +1286,7 @@ function ViewPurchaseModal({ po, onClose, onReturn }) {
 
           {/* Return History */}
           {returnLogs.length > 0 && (
-            <div className="bg-amber-50 dark:bg-amber-950/20 p-3 rounded-xl border border-amber-200 dark:border-amber-900/40 text-xs space-y-1.5">
+            <div className="bg-amber-50 dark:bg-amber-950/20 p-3.5 rounded-2xl border border-amber-200 dark:border-amber-900/40 text-xs space-y-1.5">
               <div className="font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
                 <RotateCcw className="w-3.5 h-3.5" /> Supplier Return Logs ({returnLogs.length})
               </div>
