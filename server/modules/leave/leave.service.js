@@ -72,7 +72,24 @@ export const getAllLeaves = async (page = 1, limit = 20, search = '', status = '
 };
 
 export const createLeave = async (data, currentUser = null, tenantId = null) => {
-  const empId = data.employee || data.employeeId;
+  let empId = data.employee || data.employeeId;
+  if (!empId && currentUser) {
+    const q = db('employees').where({ is_deleted: false });
+    if (tenantId) q.where('tenant_id', tenantId);
+    q.andWhere((builder) => {
+      if (currentUser.userId || currentUser._id || currentUser.id) {
+        builder.where('user_id', currentUser.userId || currentUser._id || currentUser.id);
+      }
+      if (currentUser.email) {
+        builder.orWhere('email', currentUser.email);
+      }
+    });
+    const matched = await q.first();
+    if (matched) empId = matched.id;
+  }
+
+  if (!empId) throw ApiError.badRequest('Please select an employee');
+
   const empQuery = db('employees').where({ id: empId, is_deleted: false });
   if (tenantId) empQuery.where('tenant_id', tenantId);
   const employee = await empQuery.first();
@@ -85,7 +102,7 @@ export const createLeave = async (data, currentUser = null, tenantId = null) => 
 
   const [insertedId] = await db('leaves').insert({
     tenant_id: tenantId || data.tenantId || null,
-    branch_id: data.branchId || null,
+    branch_id: data.branchId || employee.branch_id || null,
     employee_id: empId,
     type: data.type,
     from_date: from,
@@ -101,6 +118,8 @@ export const createLeave = async (data, currentUser = null, tenantId = null) => 
   const row = await lrq.first();
   return formatLeave(row, employee);
 };
+
+export const applyForLeave = createLeave;
 
 export const updateLeaveStatus = async (id, status, approvedBy, rejectionReason, tenantId = null, branchId = null) => {
   const leaveQuery = db('leaves').where({ id, is_deleted: false });

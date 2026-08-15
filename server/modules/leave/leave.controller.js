@@ -17,7 +17,7 @@ export const createLeave = async (req, res, next) => {
     const tenantId = req.user?.tenantId || null;
     const effectiveBranchId = req.body.branchId || req.selectedBranchId || req.user?.branchId || null;
     const leaveData = { ...req.body, branchId: effectiveBranchId };
-    const leave = await leaveService.applyForLeave(leaveData, tenantId);
+    const leave = await leaveService.createLeave(leaveData, req.user, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'CREATE', module: 'leave', entityId: leave._id, entityType: 'Leave', details: { employeeId: leave.employeeId, type: leave.type }, req });
     return ApiResponse.created(res, leave, 'Leave request submitted');
   } catch (error) { next(error); }

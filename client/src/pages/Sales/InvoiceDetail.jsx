@@ -135,9 +135,12 @@ export default function InvoiceDetail() {
     }
   };
 
-  const toggleReturnItem = (item) => {
-    const key = item._id;
-    const remainingQty = item.qty - (item.returnedQty || 0);
+  const getItemKey = (item, idx) =>
+    String(item?._id || item?.id || item?.lineItemId || item?.productId?._id || item?.productId || `item-${idx}`);
+
+  const toggleReturnItem = (item, idx) => {
+    const key = getItemKey(item, idx);
+    const remainingQty = (item.qty || 0) - (item.returnedQty || 0);
     if (remainingQty <= 0) return;
 
     if (returnSelection[key]) {
@@ -148,7 +151,7 @@ export default function InvoiceDetail() {
       setReturnSelection({
         ...returnSelection,
         [key]: {
-          lineItemId: item._id,
+          lineItemId: item._id || item.id || item.lineItemId || key,
           productId: item.productId?._id || item.productId,
           imeiOrSerial: item.imeiOrSerial || '',
           description: item.description,
@@ -499,14 +502,15 @@ export default function InvoiceDetail() {
 
           <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
             <div className="space-y-2">
-              {sale.lineItems?.map((item) => {
+              {sale.lineItems?.map((item, idx) => {
+                const itemKey = getItemKey(item, idx);
                 const availableToReturn = item.qty - (item.returnedQty || 0);
-                const isSelected = !!returnSelection[item._id];
+                const isSelected = !!returnSelection[itemKey];
                 const isFullyReturned = availableToReturn <= 0;
 
                 return (
                   <div
-                    key={item._id}
+                    key={itemKey}
                     className={`p-3 rounded-lg border transition-all ${isFullyReturned ? 'bg-gray-100 dark:bg-gray-900/40 border-gray-200 dark:border-gray-800 opacity-60' : isSelected ? 'bg-red-500/10 border-red-500/40' : 'bg-background border-border'}`}
                   >
                     <div className="flex items-center justify-between gap-3">
@@ -515,7 +519,7 @@ export default function InvoiceDetail() {
                           type="checkbox"
                           disabled={isFullyReturned}
                           checked={isSelected}
-                          onChange={() => toggleReturnItem(item)}
+                          onChange={() => toggleReturnItem(item, idx)}
                           className="w-4 h-4 text-red-600 rounded cursor-pointer"
                         />
                         <div className="min-w-0">
@@ -561,11 +565,11 @@ export default function InvoiceDetail() {
                             type="number"
                             min="1"
                             max={availableToReturn}
-                            value={returnSelection[item._id]?.quantity}
+                            value={returnSelection[itemKey]?.quantity}
                             onFocus={(e) => e.target.select()}
                             onChange={(e) =>
                               updateReturnField(
-                                item._id,
+                                itemKey,
                                 'quantity',
                                 Math.min(availableToReturn, Math.max(1, Number(e.target.value)))
                               )
@@ -576,8 +580,8 @@ export default function InvoiceDetail() {
                         <div>
                           <Label className="text-[11px]">Reason</Label>
                           <select
-                            value={returnSelection[item._id]?.reason}
-                            onChange={(e) => updateReturnField(item._id, 'reason', e.target.value)}
+                            value={returnSelection[itemKey]?.reason}
+                            onChange={(e) => updateReturnField(itemKey, 'reason', e.target.value)}
                             className="w-full h-8 px-2 bg-background border border-input rounded-md text-xs text-foreground"
                           >
                             <option value="defective">Defective / Damaged</option>
@@ -590,8 +594,8 @@ export default function InvoiceDetail() {
                           <Label className="text-[11px]">Notes (Optional)</Label>
                           <Input
                             placeholder="Reason details..."
-                            value={returnSelection[item._id]?.notes}
-                            onChange={(e) => updateReturnField(item._id, 'notes', e.target.value)}
+                            value={returnSelection[itemKey]?.notes}
+                            onChange={(e) => updateReturnField(itemKey, 'notes', e.target.value)}
                             className="h-8 text-xs"
                           />
                         </div>
