@@ -2,6 +2,7 @@ import { db } from '../../config/db.knex.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { getPagination } from '../../utils/http/pagination.js';
 import { hashText } from '../../utils/crypto.utils.js';
+import { formatTransaction } from '../sale/sale.service.js';
 
 export function formatCustomer(row) {
   if (!row) return null;
@@ -159,15 +160,44 @@ export const getCustomerHistory = async (id, tenantId = null, branchId = null) =
   const customer = await getCustomerById(id, tenantId, branchId);
   if (!customer) throw ApiError.notFound('Customer not found');
 
+  const salesQuery = db('transactions').where({ is_deleted: false, tx_type: 'SALE' });
+  applyTenantScope(salesQuery, tenantId);
+  if (branchId) salesQuery.where({ branch_id: branchId });
+  salesQuery.andWhere((b) => {
+    b.where('customer_id', id);
+    if (customer.phone) b.orWhere('customer_phone', customer.phone);
+  });
+  const salesRows = await salesQuery.orderBy('created_at', 'desc');
+
+  const returnsQuery = db('transactions').where({ is_deleted: false, tx_type: 'RETURN' });
+  applyTenantScope(returnsQuery, tenantId);
+  if (branchId) returnsQuery.where({ branch_id: branchId });
+  returnsQuery.andWhere((b) => {
+    b.where('customer_id', id);
+    if (customer.phone) b.orWhere('customer_phone', customer.phone);
+  });
+  const returnRows = await returnsQuery.orderBy('created_at', 'desc');
+
+  const formattedSales = salesRows.map((r) => formatTransaction(r, customer));
+  const formattedReturns = returnRows.map((r) => formatTransaction(r, customer));
+
+  const totalPurchased = formattedSales.reduce((sum, s) => sum + (s.netTotal || 0), 0);
+  const totalReturns = formattedReturns.reduce((sum, r) => sum + Math.abs(r.netTotal || 0), 0);
+  const calculatedDue = formattedSales.reduce((sum, s) => sum + (s.paymentBreakdown?.dueAmount || 0), 0);
+
   return {
-    customer,
-    sales: [],
-    returns: [],
+    customer: {
+      ...customer,
+      dueBalance: calculatedDue,
+      totalPurchases: totalPurchased,
+    },
+    sales: formattedSales,
+    returns: formattedReturns,
     summary: {
-      totalPurchased: customer.totalPurchases,
-      totalReturns: 0,
-      totalDue: customer.dueBalance,
-      totalTransactions: 0,
+      totalPurchased,
+      totalReturns,
+      totalDue: calculatedDue,
+      totalTransactions: formattedSales.length + formattedReturns.length,
     },
   };
 };
@@ -175,16 +205,70 @@ export const getCustomerHistory = async (id, tenantId = null, branchId = null) =
 export const collectDue = async (id, amount, paymentMethod, userId, tenantId = null, branchId = null) => {
   const customer = await getCustomerById(id, tenantId, branchId);
   if (!customer) throw ApiError.notFound('Customer not found');
-  if (customer.dueBalance <= 0) throw ApiError.badRequest('No pending due for this customer');
-  if (amount > customer.dueBalance) throw ApiError.badRequest(`Due amount exceeds balance of ৳${customer.dueBalance}`);
 
-  const newDue = Math.max(0, customer.dueBalance - amount);
-  const q2 = db('customers').where({ id });
-  if (tenantId) q2.andWhere('tenant_id', tenantId);
-  await q2.update({ due_balance: newDue });
+  const numAmount = Number(amount);
+  if (isNaN(numAmount) || numAmount <= 0) throw ApiError.badRequest('Please enter a valid collection amount');
 
-  const updated = await getCustomerById(id, tenantId);
-  return { customer: updated, collected: amount };
+  // 1. Fetch all unpaid sales transactions for this customer
+  const salesQuery = db('transactions').where({ is_deleted: false, tx_type: 'SALE' });
+  applyTenantScope(salesQuery, tenantId);
+  if (branchId) salesQuery.where({ branch_id: branchId });
+  salesQuery.andWhere((b) => {
+    b.where('customer_id', id);
+    if (customer.phone) b.orWhere('customer_phone', customer.phone);
+  });
+  const salesRows = await salesQuery.orderBy('created_at', 'asc');
+
+  let remainingToApply = numAmount;
+
+  for (const row of salesRows) {
+    if (remainingToApply <= 0) break;
+    let pb = {};
+    try {
+      pb = typeof row.payment_breakdown === 'string' ? JSON.parse(row.payment_breakdown) : (row.payment_breakdown || {});
+    } catch { pb = {}; }
+
+    const invoiceDue = Number(pb.dueAmount || 0);
+
+    if (invoiceDue > 0) {
+      const payThis = Math.min(remainingToApply, invoiceDue);
+      pb.dueAmount = Math.max(0, invoiceDue - payThis);
+
+      const pMethod = (paymentMethod || 'cash').toLowerCase();
+      pb[pMethod] = (Number(pb[pMethod]) || 0) + payThis;
+      remainingToApply -= payThis;
+
+      const qTx = db('transactions').where({ id: row.id });
+      if (tenantId) qTx.andWhere('tenant_id', tenantId);
+      await qTx.update({
+        payment_breakdown: JSON.stringify(pb),
+        updated_at: new Date(),
+      });
+    }
+  }
+
+  // 2. Recalculate remaining due balance from transactions
+  const remainingDueQuery = db('transactions').where({ is_deleted: false, tx_type: 'SALE' });
+  applyTenantScope(remainingDueQuery, tenantId);
+  remainingDueQuery.andWhere((b) => {
+    b.where('customer_id', id);
+    if (customer.phone) b.orWhere('customer_phone', customer.phone);
+  });
+  const allSales = await remainingDueQuery.select('payment_breakdown');
+  const freshDueBalance = allSales.reduce((sum, s) => {
+    try {
+      const pb = typeof s.payment_breakdown === 'string' ? JSON.parse(s.payment_breakdown) : (s.payment_breakdown || {});
+      return sum + Number(pb.dueAmount || 0);
+    } catch { return sum; }
+  }, 0);
+
+  // 3. Update customer's due_balance in customers table
+  const qCust = db('customers').where({ id });
+  if (tenantId) qCust.andWhere('tenant_id', tenantId);
+  await qCust.update({ due_balance: freshDueBalance });
+
+  const updated = await getCustomerById(id, tenantId, branchId);
+  return { customer: updated, collected: numAmount, remainingDue: freshDueBalance };
 };
 
 export const getCustomerStats = async (tenantId = null, branchId = null) => {
