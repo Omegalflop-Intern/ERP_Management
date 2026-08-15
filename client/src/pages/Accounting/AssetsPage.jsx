@@ -54,9 +54,9 @@ export default function AssetsPage() {
     },
   ];
 
-  const totalAssetValue = assets.reduce((sum, a) => sum + (a.purchaseCost || 0), 0);
-  const currentBookValue = assets.reduce((sum, a) => sum + (a.currentBookValue || 0), 0);
-  const totalDepreciation = totalAssetValue - currentBookValue;
+  const totalAssetValue = assets.reduce((sum, a) => sum + Number(a.purchaseCost || a.balance || 0), 0);
+  const currentBookValue = assets.reduce((sum, a) => sum + Number(a.currentBookValue || a.balance || a.purchaseCost || 0), 0);
+  const totalDepreciation = Math.max(0, totalAssetValue - currentBookValue);
 
   const cardCls = styled
     ? 'neu-card p-4 space-y-1'
@@ -145,34 +145,39 @@ export default function AssetsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
-              {assets.map((asset) => {
-                const monthlyLoss = Math.round(
-                  (asset.purchaseCost - asset.salvageValue) / (asset.usefulLifeMonths || 36)
-                );
+              {assets.map((asset, idx) => {
+                const pCost = Number(asset.purchaseCost ?? asset.balance ?? 0);
+                const sValue = Number(asset.salvageValue ?? 0);
+                const uLife = Number(asset.usefulLifeMonths || 36);
+                const cValue = Number(asset.currentBookValue ?? asset.balance ?? pCost);
+                const monthlyLoss = Math.max(0, Math.round((pCost - sValue) / uLife));
+
                 return (
                   <tr
-                    key={asset._id}
+                    key={asset._id || asset.id || idx}
                     className="hover:bg-gray-50/70 dark:hover:bg-gray-800/40 transition-colors"
                   >
                     <td className="px-4 py-3.5 font-bold text-gray-900 dark:text-gray-100">
-                      {asset.assetName}
+                      {asset.assetName || asset.name || 'Shop Asset'}
                     </td>
                     <td className="px-4 py-3.5">
                       <span className="text-xs px-2.5 py-0.5 rounded-full font-bold uppercase bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300">
-                        {asset.category}
+                        {asset.category || asset.type || 'FURNITURE'}
                       </span>
                     </td>
                     <td className="px-4 py-3.5 font-mono text-xs text-gray-600 dark:text-gray-400">
-                      {new Date(asset.purchaseDate).toLocaleDateString()}
+                      {asset.purchaseDate
+                        ? new Date(asset.purchaseDate).toLocaleDateString()
+                        : (asset.createdAt ? new Date(asset.createdAt).toLocaleDateString() : 'N/A')}
                     </td>
                     <td className="px-4 py-3.5 text-right font-mono text-gray-900 dark:text-gray-100">
-                      ৳{asset.purchaseCost.toLocaleString()}
+                      ৳{pCost.toLocaleString()}
                     </td>
                     <td className="px-4 py-3.5 text-right font-mono text-gray-600 dark:text-gray-400">
-                      {asset.usefulLifeMonths} months
+                      {uLife} months
                     </td>
                     <td className="px-4 py-3.5 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                      ৳{asset.currentBookValue.toLocaleString()}
+                      ৳{cValue.toLocaleString()}
                     </td>
                     <td className="px-4 py-3.5 text-right font-mono font-bold text-amber-600 dark:text-amber-400">
                       -৳{monthlyLoss.toLocaleString()}/mo

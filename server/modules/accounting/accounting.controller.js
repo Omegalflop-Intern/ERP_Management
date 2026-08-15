@@ -158,15 +158,46 @@ export const getAssets = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
     const result = await accountingService.getAllAccounts(1, 100, '', 'ASSET', tenantId);
-    return ApiResponse.success(res, result.accounts);
+    const mappedAssets = (result.accounts || []).map((a) => ({
+      _id: String(a.id),
+      id: a.id,
+      assetName: a.name,
+      category: a.subType || 'FURNITURE',
+      purchaseDate: a.createdAt || new Date().toISOString(),
+      purchaseCost: Number(a.balance || 0),
+      currentBookValue: Number(a.balance || 0),
+      usefulLifeMonths: 36,
+      salvageValue: 0,
+      code: a.code,
+    }));
+    return ApiResponse.success(res, mappedAssets);
   } catch (error) { next(error); }
 };
 
 export const createAsset = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const account = await accountingService.createAccount({ ...req.body, type: 'ASSET' }, tenantId);
+    const data = req.body;
+    const code = `AST-${Date.now().toString().slice(-4)}`;
+    const account = await accountingService.createAccount({
+      code,
+      name: data.assetName || data.name || 'Shop Asset',
+      type: 'ASSET',
+      subType: data.category || 'FURNITURE',
+      balance: Number(data.purchaseCost || data.balance || 0),
+      description: `Asset acquired on ${data.purchaseDate || new Date().toISOString().split('T')[0]} (Useful life: ${data.usefulLifeMonths || 36} mos)`,
+    }, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'CREATE_ASSET', module: 'accounting', entityId: account.id, entityType: 'Account', details: { name: account.name, code: account.code }, req });
-    return ApiResponse.created(res, account, 'Asset registered successfully');
+    return ApiResponse.created(res, {
+      _id: String(account.id),
+      id: account.id,
+      assetName: account.name,
+      category: account.subType || 'FURNITURE',
+      purchaseDate: data.purchaseDate || account.createdAt,
+      purchaseCost: Number(account.balance || 0),
+      currentBookValue: Number(account.balance || 0),
+      usefulLifeMonths: Number(data.usefulLifeMonths || 36),
+      salvageValue: Number(data.salvageValue || 0),
+    }, 'Asset registered successfully');
   } catch (error) { next(error); }
 };
