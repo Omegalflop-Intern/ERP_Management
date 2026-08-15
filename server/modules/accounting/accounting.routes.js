@@ -36,5 +36,6 @@ router.get('/reports/trial-balance', accountingController.getTrialBalance);
 // Assets
 router.get('/assets', accountingController.getAssets);
 router.post('/assets', authorize('ADMIN', 'MANAGER'), accountingController.createAsset);
+router.delete('/assets/:id', authorize('ADMIN', 'MANAGER'), accountingController.deleteAsset);
 
 export default router;

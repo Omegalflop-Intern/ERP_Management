@@ -1,6 +1,13 @@
 import * as accountingService from './accounting.service.js';
 import { ApiResponse } from '../../utils/http/ApiResponse.js';
 import { logAction } from '../../utils/auth/auditLog.js';
+import { db } from '../../config/db.knex.js';
+
+function applyTenantScope(query, tenantId, tablePrefix = 'accounts') {
+  if (tenantId) {
+    query.where(`${tablePrefix}.tenant_id`, tenantId);
+  }
+}
 
 
 export const getAllAccounts = async (req, res, next) => {
@@ -155,22 +162,69 @@ export const getTrialBalance = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
+function formatAssetRow(a) {
+  let uLife = 36;
+  let pDate = a.created_at;
+  let sValue = 0;
+  if (a.description) {
+    const lifeMatch = a.description.match(/Useful life:\s*(\d+)/i);
+    if (lifeMatch) uLife = Number(lifeMatch[1]);
+    const dateMatch = a.description.match(/acquired on\s*([\d-]+)/i);
+    if (dateMatch) pDate = dateMatch[1];
+  }
+  const pCost = Number(a.balance || 0);
+  return {
+    _id: String(a.id),
+    id: a.id,
+    assetName: a.name,
+    category: a.sub_type || 'FURNITURE',
+    purchaseDate: pDate,
+    purchaseCost: pCost,
+    currentBookValue: pCost,
+    usefulLifeMonths: uLife,
+    salvageValue: sValue,
+    code: a.code,
+  };
+}
+
 export const getAssets = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const result = await accountingService.getAllAccounts(1, 100, '', 'ASSET', tenantId);
-    const mappedAssets = (result.accounts || []).map((a) => ({
-      _id: String(a.id),
-      id: a.id,
-      assetName: a.name,
-      category: a.subType || 'FURNITURE',
-      purchaseDate: a.createdAt || new Date().toISOString(),
-      purchaseCost: Number(a.balance || 0),
-      currentBookValue: Number(a.balance || 0),
-      usefulLifeMonths: 36,
-      salvageValue: 0,
-      code: a.code,
-    }));
+    const query = db('accounts').where({ type: 'ASSET', is_deleted: false });
+    applyTenantScope(query, tenantId, 'accounts');
+    query.whereNotIn('code', ['1000', '1010', '1011', '1012', '1013', '1020', '1030']);
+    const rows = await query.orderBy('created_at', 'desc');
+
+    if (rows.length === 0) {
+      const defaultAssets = [
+        { name: 'Main Glass Counter & Display Rack', category: 'FURNITURE', cost: 85000, life: 36 },
+        { name: 'CCTV & Security Camera System', category: 'ELECTRONICS', cost: 45000, life: 24 },
+        { name: 'POS Thermal Printer & Barcode Setup', category: 'EQUIPMENT', cost: 25000, life: 24 },
+      ];
+      for (const def of defaultAssets) {
+        const code = `AST-${Date.now().toString().slice(-4)}${Math.floor(Math.random() * 90 + 10)}`;
+        await db('accounts').insert({
+          tenant_id: tenantId,
+          code,
+          name: def.name,
+          type: 'ASSET',
+          sub_type: def.category,
+          balance: def.cost,
+          description: `Asset acquired on ${new Date().toISOString().split('T')[0]} (Useful life: ${def.life} mos)`,
+          is_active: true,
+          is_deleted: false,
+        });
+      }
+      const refreshed = db('accounts')
+        .where({ type: 'ASSET', is_deleted: false })
+        .whereNotIn('code', ['1000', '1010', '1011', '1012', '1013', '1020', '1030']);
+      applyTenantScope(refreshed, tenantId, 'accounts');
+      const seededRows = await refreshed.orderBy('created_at', 'desc');
+      const mapped = seededRows.map((a) => formatAssetRow(a));
+      return ApiResponse.success(res, mapped);
+    }
+
+    const mappedAssets = rows.map((a) => formatAssetRow(a));
     return ApiResponse.success(res, mappedAssets);
   } catch (error) { next(error); }
 };
@@ -179,7 +233,7 @@ export const createAsset = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
     const data = req.body;
-    const code = `AST-${Date.now().toString().slice(-4)}`;
+    const code = `AST-${Date.now().toString().slice(-4)}${Math.floor(Math.random() * 90 + 10)}`;
     const account = await accountingService.createAccount({
       code,
       name: data.assetName || data.name || 'Shop Asset',
@@ -200,5 +254,16 @@ export const createAsset = async (req, res, next) => {
       usefulLifeMonths: Number(data.usefulLifeMonths || 36),
       salvageValue: Number(data.salvageValue || 0),
     }, 'Asset registered successfully');
+  } catch (error) { next(error); }
+};
+
+export const deleteAsset = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const tenantId = req.user?.tenantId || null;
+    const q = db('accounts').where({ id, type: 'ASSET' });
+    applyTenantScope(q, tenantId, 'accounts');
+    await q.update({ is_deleted: true });
+    return ApiResponse.success(res, null, 'Asset deleted successfully');
   } catch (error) { next(error); }
 };

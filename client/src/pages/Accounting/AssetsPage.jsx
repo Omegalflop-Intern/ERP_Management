@@ -7,14 +7,18 @@ import {
   PackageCheck,
   Plus,
   RefreshCw,
+  Search,
+  Trash2,
   TrendingDown,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { NumberInput } from '../../components/ui/NumberInput';
 import DatePicker from '../../components/ui/DatePicker';
+import EmptyState from '../../components/ui/EmptyState';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
+import { confirmDelete } from '../../lib/confirm';
 
 export default function AssetsPage() {
   const { styled } = useTheme();
@@ -22,41 +26,42 @@ export default function AssetsPage() {
   const [showModal, setShowModal] = useState(false);
   const [search, setSearch] = useState('');
 
-  const { data: assetsData, isLoading } = useQuery({
-    queryKey: ['accounting-assets', search],
+  const { data: assetsData, isLoading, refetch } = useQuery({
+    queryKey: ['accounting-assets'],
     queryFn: async () => {
       const res = await api.get('/accounting/assets');
       return res.data?.data || [];
     },
   });
 
-  const assets = assetsData || [
-    {
-      _id: '1',
-      assetName: 'Main Counter & Display Glass Rack',
-      category: 'FURNITURE',
-      purchaseDate: '2026-01-10',
-      purchaseCost: 85000,
-      usefulLifeMonths: 36,
-      salvageValue: 5000,
-      currentBookValue: 72000,
-      depreciationMethod: 'STRAIGHT_LINE',
+  const deleteMutation = useMutation({
+    mutationFn: async (id) => api.delete(`/accounting/assets/${id}`),
+    onSuccess: () => {
+      toast.success('Asset deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['accounting-assets'] });
     },
-    {
-      _id: '2',
-      assetName: 'Security Camera & CCTV System',
-      category: 'ELECTRONICS',
-      purchaseDate: '2026-02-15',
-      purchaseCost: 45000,
-      usefulLifeMonths: 24,
-      salvageValue: 3000,
-      currentBookValue: 36000,
-      depreciationMethod: 'STRAIGHT_LINE',
-    },
-  ];
+    onError: (err) => toast.error(err.response?.data?.message || 'Failed to delete asset'),
+  });
 
-  const totalAssetValue = assets.reduce((sum, a) => sum + Number(a.purchaseCost || a.balance || 0), 0);
-  const currentBookValue = assets.reduce((sum, a) => sum + Number(a.currentBookValue || a.balance || a.purchaseCost || 0), 0);
+  const handleDelete = (asset) => {
+    confirmDelete(`Are you sure you want to delete asset "${asset.assetName}"?`, () => {
+      deleteMutation.mutate(asset.id || asset._id);
+    });
+  };
+
+  const allAssets = assetsData || [];
+  const filteredAssets = allAssets.filter((a) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (
+      a.assetName?.toLowerCase().includes(q) ||
+      a.category?.toLowerCase().includes(q) ||
+      a.code?.toLowerCase().includes(q)
+    );
+  });
+
+  const totalAssetValue = filteredAssets.reduce((sum, a) => sum + Number(a.purchaseCost || a.balance || 0), 0);
+  const currentBookValue = filteredAssets.reduce((sum, a) => sum + Number(a.currentBookValue || a.balance || a.purchaseCost || 0), 0);
   const totalDepreciation = Math.max(0, totalAssetValue - currentBookValue);
 
   const cardCls = styled
@@ -75,12 +80,21 @@ export default function AssetsPage() {
             Track shop furniture, electronics, equipment value and calculate monthly depreciation
           </p>
         </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm rounded-xl transition-colors flex items-center gap-2 shrink-0"
-        >
-          <Plus className="w-4 h-4" /> Add New Shop Asset
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => refetch()}
+            className="p-2.5 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-xl transition-colors"
+            title="Refresh assets"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setShowModal(true)}
+            className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm rounded-xl transition-colors flex items-center gap-2 shrink-0 shadow-sm"
+          >
+            <Plus className="w-4 h-4" /> Add New Shop Asset
+          </button>
+        </div>
       </div>
 
       {/* KPI Overview */}
@@ -119,76 +133,120 @@ export default function AssetsPage() {
         </div>
       </div>
 
+      {/* Search Filter Bar */}
+      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
+        <div className="relative flex-1 max-w-md w-full">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search asset name, category, or code..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 outline-none focus:border-indigo-500 transition-colors"
+          />
+        </div>
+      </div>
+
       {/* Assets Table */}
       <div
         className={`overflow-hidden ${styled ? 'neu-card p-0' : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800'}`}
       >
         <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
           <h3 className="font-bold text-base text-gray-900 dark:text-gray-100">
-            Registered Shop Assets ({assets.length})
+            Registered Shop Assets ({filteredAssets.length})
           </h3>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400">
-                <th className="px-4 py-3.5 font-bold uppercase text-xs">Asset Name</th>
-                <th className="px-4 py-3.5 font-bold uppercase text-xs">Category</th>
-                <th className="px-4 py-3.5 font-bold uppercase text-xs">Purchase Date</th>
-                <th className="px-4 py-3.5 font-bold uppercase text-xs text-right">
-                  Purchase Cost
-                </th>
-                <th className="px-4 py-3.5 font-bold uppercase text-xs text-right">Useful Life</th>
-                <th className="px-4 py-3.5 font-bold uppercase text-xs text-right">
-                  Current Value
-                </th>
-                <th className="px-4 py-3.5 font-bold uppercase text-xs text-right">Monthly Loss</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
-              {assets.map((asset, idx) => {
-                const pCost = Number(asset.purchaseCost ?? asset.balance ?? 0);
-                const sValue = Number(asset.salvageValue ?? 0);
-                const uLife = Number(asset.usefulLifeMonths || 36);
-                const cValue = Number(asset.currentBookValue ?? asset.balance ?? pCost);
-                const monthlyLoss = Math.max(0, Math.round((pCost - sValue) / uLife));
 
-                return (
-                  <tr
-                    key={asset._id || asset.id || idx}
-                    className="hover:bg-gray-50/70 dark:hover:bg-gray-800/40 transition-colors"
-                  >
-                    <td className="px-4 py-3.5 font-bold text-gray-900 dark:text-gray-100">
-                      {asset.assetName || asset.name || 'Shop Asset'}
-                    </td>
-                    <td className="px-4 py-3.5">
-                      <span className="text-xs px-2.5 py-0.5 rounded-full font-bold uppercase bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300">
-                        {asset.category || asset.type || 'FURNITURE'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3.5 font-mono text-xs text-gray-600 dark:text-gray-400">
-                      {asset.purchaseDate
-                        ? new Date(asset.purchaseDate).toLocaleDateString()
-                        : (asset.createdAt ? new Date(asset.createdAt).toLocaleDateString() : 'N/A')}
-                    </td>
-                    <td className="px-4 py-3.5 text-right font-mono text-gray-900 dark:text-gray-100">
-                      ৳{pCost.toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3.5 text-right font-mono text-gray-600 dark:text-gray-400">
-                      {uLife} months
-                    </td>
-                    <td className="px-4 py-3.5 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                      ৳{cValue.toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3.5 text-right font-mono font-bold text-amber-600 dark:text-amber-400">
-                      -৳{monthlyLoss.toLocaleString()}/mo
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        {isLoading ? (
+          <div className="p-6 space-y-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-8 bg-gray-100 dark:bg-gray-800 rounded-lg animate-pulse" />
+            ))}
+          </div>
+        ) : filteredAssets.length === 0 ? (
+          <div className="p-8">
+            <EmptyState
+              icon={Building}
+              title="No assets found"
+              description="Register your shop's furniture, computers, AC, or display racks to track their asset value and depreciation."
+              actionLabel="Add Shop Asset"
+              onAction={() => setShowModal(true)}
+            />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 text-gray-500 dark:text-gray-400">
+                  <th className="px-4 py-3.5 font-bold uppercase text-xs">Asset Name</th>
+                  <th className="px-4 py-3.5 font-bold uppercase text-xs">Category</th>
+                  <th className="px-4 py-3.5 font-bold uppercase text-xs">Purchase Date</th>
+                  <th className="px-4 py-3.5 font-bold uppercase text-xs text-right">
+                    Purchase Cost
+                  </th>
+                  <th className="px-4 py-3.5 font-bold uppercase text-xs text-right">Useful Life</th>
+                  <th className="px-4 py-3.5 font-bold uppercase text-xs text-right">
+                    Current Value
+                  </th>
+                  <th className="px-4 py-3.5 font-bold uppercase text-xs text-right">Monthly Loss</th>
+                  <th className="px-4 py-3.5 font-bold uppercase text-xs text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
+                {filteredAssets.map((asset, idx) => {
+                  const pCost = Number(asset.purchaseCost ?? asset.balance ?? 0);
+                  const sValue = Number(asset.salvageValue ?? 0);
+                  const uLife = Number(asset.usefulLifeMonths || 36);
+                  const cValue = Number(asset.currentBookValue ?? asset.balance ?? pCost);
+                  const monthlyLoss = Math.max(0, Math.round((pCost - sValue) / uLife));
+
+                  return (
+                    <tr
+                      key={asset._id || asset.id || idx}
+                      className="hover:bg-gray-50/70 dark:hover:bg-gray-800/40 transition-colors"
+                    >
+                      <td className="px-4 py-3.5 font-bold text-gray-900 dark:text-gray-100">
+                        <div>{asset.assetName || asset.name || 'Shop Asset'}</div>
+                        {asset.code && <div className="text-[11px] font-mono text-gray-400">{asset.code}</div>}
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <span className="text-xs px-2.5 py-0.5 rounded-full font-bold uppercase bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300">
+                          {asset.category || asset.type || 'FURNITURE'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5 font-mono text-xs text-gray-600 dark:text-gray-400">
+                        {asset.purchaseDate
+                          ? new Date(asset.purchaseDate).toLocaleDateString()
+                          : (asset.createdAt ? new Date(asset.createdAt).toLocaleDateString() : 'N/A')}
+                      </td>
+                      <td className="px-4 py-3.5 text-right font-mono text-gray-900 dark:text-gray-100">
+                        ৳{pCost.toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3.5 text-right font-mono text-gray-600 dark:text-gray-400">
+                        {uLife} months
+                      </td>
+                      <td className="px-4 py-3.5 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                        ৳{cValue.toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3.5 text-right font-mono font-bold text-amber-600 dark:text-amber-400">
+                        -৳{monthlyLoss.toLocaleString()}/mo
+                      </td>
+                      <td className="px-4 py-3.5 text-center">
+                        <button
+                          onClick={() => handleDelete(asset)}
+                          className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors"
+                          title="Delete asset"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {showModal && (
