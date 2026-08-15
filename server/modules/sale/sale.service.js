@@ -373,19 +373,22 @@ export const updateSale = async (id, data, tenantId = null, branchId = null) => 
       dueAmount,
     });
 
-    if (existing.customerId) {
-      const oldDue = existing.paymentBreakdown?.dueAmount || 0;
-      const dueDiff = dueAmount - oldDue;
-      if (dueDiff !== 0) {
-        const custId = typeof existing.customerId === 'object' ? (existing.customerId.id || existing.customerId._id) : existing.customerId;
-        if (custId) {
-          const custDueQuery = db('customers').where({ id: custId });
-          if (tenantId) custDueQuery.andWhere('tenant_id', tenantId);
-          if (dueDiff > 0) {
-            await custDueQuery.increment('due_balance', dueDiff);
-          } else {
-            await custDueQuery.decrement('due_balance', Math.abs(dueDiff));
-          }
+    const oldDue = existing.paymentBreakdown?.dueAmount || 0;
+    const dueDiff = dueAmount - oldDue;
+    if (dueDiff !== 0) {
+      const custId = typeof existing.customerId === 'object' ? (existing.customerId.id || existing.customerId._id) : existing.customerId;
+      let custDueQuery = null;
+      if (custId && !isNaN(Number(custId))) {
+        custDueQuery = db('customers').where({ id: Number(custId) });
+      } else if (existing.customerPhone) {
+        custDueQuery = db('customers').where({ phone: existing.customerPhone, is_deleted: false });
+      }
+      if (custDueQuery) {
+        if (tenantId) custDueQuery.andWhere('tenant_id', tenantId);
+        if (dueDiff > 0) {
+          await custDueQuery.increment('due_balance', dueDiff);
+        } else {
+          await custDueQuery.decrement('due_balance', Math.abs(dueDiff));
         }
       }
     }

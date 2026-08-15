@@ -46,11 +46,14 @@ export default function CustomerDetail() {
       });
     },
     onSuccess: () => {
-      toast.success('Payment collected');
+      toast.success('Payment collected and invoices updated');
       setCollectModal(false);
       setAmount('');
-      queryClient.invalidateQueries(['customer-history', id]);
-      queryClient.invalidateQueries(['customer-stats']);
+      queryClient.invalidateQueries({ queryKey: ['customer-history', id] });
+      queryClient.invalidateQueries({ queryKey: ['customer-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      queryClient.invalidateQueries({ queryKey: ['sales'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
     },
     onError: (e) => toast.error(e.response?.data?.message || 'Failed'),
   });
