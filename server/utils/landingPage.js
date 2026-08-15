@@ -539,6 +539,14 @@ export function getLandingPageHtml(serverInfo = {}) {
       .nav-actions .btn-secondary { display: none; }
       .grid-stats { grid-template-columns: 1fr; }
     }
+
+    @media (max-width: 640px) {
+      .nav-wrapper { height: 60px; }
+      .brand-text { font-size: 1rem; white-space: nowrap; }
+      .brand-tag { display: none; }
+      .status-badge span:not(.pulse-dot) { font-size: 0.75rem; }
+      .btn { padding: 8px 12px; font-size: 0.8rem; white-space: nowrap; }
+    }
   </style>
 </head>
 <body>

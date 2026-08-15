@@ -493,20 +493,24 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-[#0a0a1a] text-slate-200 font-sans selection:bg-indigo-500 selection:text-white">
       {/* ─── FLOATING ROUNDED NAVBAR ──────────────────────────────────────── */}
-      <header className="sticky top-3 sm:top-5 z-50 max-w-7xl mx-3 sm:mx-auto px-4 sm:px-6 rounded-2xl md:rounded-full bg-[#0a0a1a]/85 backdrop-blur-2xl border border-white/10 shadow-2xl shadow-indigo-600/10 transition-all">
-        <div className="h-14 sm:h-16 flex items-center justify-between">
+      <header
+        className={`sticky top-3 sm:top-5 z-50 max-w-7xl mx-2 sm:mx-auto px-3 sm:px-6 bg-[#0a0a1a]/95 backdrop-blur-2xl border border-white/10 shadow-2xl shadow-indigo-600/10 transition-all ${
+          mobileMenuOpen ? 'rounded-2xl sm:rounded-3xl' : 'rounded-full'
+        }`}
+      >
+        <div className="h-14 sm:h-16 flex items-center justify-between gap-2">
           <button
             onClick={() => scrollTo('home')}
-            className="flex items-center gap-2 sm:gap-2.5 group text-left"
+            className="flex items-center gap-2 sm:gap-2.5 group text-left shrink-0 min-w-0"
           >
             <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-indigo-600/20 group-hover:shadow-indigo-600/40 transition-shadow shrink-0">
               O
             </div>
-            <div className="flex flex-col text-left">
-              <span className="font-black text-base sm:text-lg tracking-tight text-white leading-tight">
+            <div className="flex flex-col text-left min-w-0">
+              <span className="font-black text-sm sm:text-lg tracking-tight text-white leading-tight truncate">
                 Omni<span className="text-indigo-400">Manage</span>
               </span>
-              <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 tracking-widest uppercase">
+              <span className="text-[7px] sm:text-[9px] font-bold text-slate-400 tracking-widest uppercase hidden xs:inline-block sm:block">
                 Enterprise ERP
               </span>
             </div>
@@ -519,7 +523,7 @@ export default function LandingPage() {
                 <button
                   key={tab.id}
                   onClick={() => scrollTo(tab.id)}
-                  className={`px-4 py-1.5 rounded-full font-bold text-[11px] transition-all flex items-center gap-1.5 ${
+                  className={`px-4 py-1.5 rounded-full font-bold text-[11px] transition-all flex items-center gap-1.5 whitespace-nowrap ${
                     activeTab === tab.id
                       ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
                       : 'text-slate-400 hover:text-white hover:bg-white/5'
@@ -532,31 +536,31 @@ export default function LandingPage() {
             })}
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <Link
               to="/login"
-              className="px-3 sm:px-4 py-2 rounded-xl sm:rounded-full font-bold text-[11px] sm:text-xs text-slate-300 bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
+              className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full font-bold text-[11px] sm:text-xs text-slate-300 bg-white/5 hover:bg-white/10 border border-white/10 transition-all whitespace-nowrap shrink-0"
             >
               Sign In
             </Link>
             <Link
               to="/register-shop"
-              className="px-3 sm:px-4 py-2 rounded-xl sm:rounded-full font-bold text-[11px] sm:text-xs text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 shadow-lg shadow-indigo-600/20 transition-all flex items-center gap-1.5"
+              className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full font-bold text-[11px] sm:text-xs text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 shadow-lg shadow-indigo-600/20 transition-all flex items-center gap-1 sm:gap-1.5 whitespace-nowrap shrink-0"
             >
               <span className="hidden sm:inline">Register Shop</span>
               <span className="sm:hidden">Register</span>
-              <ArrowRight className="h-3.5 w-3.5" />
+              <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
             </Link>
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden relative px-3 py-2 rounded-full bg-gradient-to-r from-indigo-500/20 via-violet-500/20 to-sky-500/20 border border-indigo-400/30 text-white shadow-lg shadow-indigo-500/10 hover:border-indigo-400/60 active:scale-95 transition-all duration-300 flex items-center justify-center gap-1.5"
+              className="lg:hidden relative p-2 sm:px-3 sm:py-2 rounded-full bg-gradient-to-r from-indigo-500/20 via-violet-500/20 to-sky-500/20 border border-indigo-400/30 text-white shadow-lg shadow-indigo-500/10 hover:border-indigo-400/60 active:scale-95 transition-all duration-300 flex items-center justify-center shrink-0"
               aria-label="Toggle mobile navigation menu"
             >
               {mobileMenuOpen ? (
-                <X className="h-4 w-4 text-rose-400 stroke-[2.5] rotate-90 transition-transform duration-300" />
+                <X className="h-4 w-4 text-rose-400 stroke-[2.5]" />
               ) : (
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 px-0.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
                   <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />
                   <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
@@ -567,36 +571,49 @@ export default function LandingPage() {
         </div>
 
         {mobileMenuOpen && (
-          <div className="lg:hidden pt-3 pb-2 border-t border-white/10 space-y-1 animate-in fade-in slide-in-from-top-2 duration-200">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-2 pb-1.5 flex items-center justify-between">
+          <div className="lg:hidden pt-3 pb-3 border-t border-white/10 space-y-2.5 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-1 flex items-center justify-between">
               <span>Navigation Menu</span>
               <span className="text-[9px] text-indigo-400 font-extrabold">OmniManage ERP</span>
             </div>
-            {navLinks.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => scrollTo(tab.id)}
-                  className={`w-full p-2.5 rounded-xl font-bold text-xs flex items-center justify-between transition-all ${
-                    isActive
-                      ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-600/20'
-                      : 'text-slate-300 hover:bg-white/5 hover:text-white'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div
-                      className={`p-1.5 rounded-lg ${isActive ? 'bg-white/20' : 'bg-white/5 text-indigo-400'}`}
-                    >
-                      <Icon className="h-3.5 w-3.5" />
-                    </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+              {navLinks.map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => scrollTo(tab.id)}
+                    className={`p-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all ${
+                      isActive
+                        ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-600/20'
+                        : 'text-slate-300 bg-white/5 hover:bg-white/10 hover:text-white'
+                    }`}
+                  >
+                    <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-white' : 'text-indigo-400'}`} />
                     <span>{tab.label}</span>
-                  </div>
-                  {isActive && <ChevronRight className="h-3.5 w-3.5 text-white/80" />}
-                </button>
-              );
-            })}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="pt-2 border-t border-white/10 flex items-center gap-2">
+              <Link
+                to="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex-1 py-2 rounded-xl font-bold text-xs text-center text-slate-200 bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
+              >
+                Sign In
+              </Link>
+              <Link
+                to="/register-shop"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex-1 py-2 rounded-xl font-bold text-xs text-center text-white bg-gradient-to-r from-indigo-600 to-violet-600 shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-1.5"
+              >
+                <span>Register Shop</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
           </div>
         )}
       </header>
