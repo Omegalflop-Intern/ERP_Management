@@ -13,6 +13,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useState } from 'react';
+import DatePicker from '../../components/ui/DatePicker';
 import api from '../../lib/api';
 
 const ACTION_COLORS = {
@@ -244,17 +245,17 @@ export default function SAAuditLogs() {
                 Date Range
               </label>
               <div className="flex gap-2">
-                <input
-                  type="date"
+                <DatePicker
                   value={filters.from}
-                  onChange={(e) => setFilters({ ...filters, from: e.target.value })}
-                  className="flex-1 px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
+                  onChange={(dateStr) => setFilters({ ...filters, from: dateStr })}
+                  placeholder="From Date"
+                  className="flex-1 !rounded-lg text-xs"
                 />
-                <input
-                  type="date"
+                <DatePicker
                   value={filters.to}
-                  onChange={(e) => setFilters({ ...filters, to: e.target.value })}
-                  className="flex-1 px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
+                  onChange={(dateStr) => setFilters({ ...filters, to: dateStr })}
+                  placeholder="To Date"
+                  className="flex-1 !rounded-lg text-xs"
                 />
               </div>
             </div>

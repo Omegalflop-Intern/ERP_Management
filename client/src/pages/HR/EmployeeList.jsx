@@ -20,6 +20,7 @@ import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
 import { confirmDelete } from '../../lib/confirm';
 import { NumberInput } from '../../components/ui/NumberInput';
+import DatePicker from '../../components/ui/DatePicker';
 
 const DEPARTMENTS = ['Sales', 'Accounts', 'Inventory', 'Management', 'Service', 'Other'];
 const DESIGNATIONS = [
@@ -464,12 +465,11 @@ function EmployeeModal({ editEmp, onClose }) {
               <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
                 Joining Date *
               </label>
-              <input
-                type="date"
-                required
+              <DatePicker
                 value={form.joiningDate}
-                onChange={(e) => setForm({ ...form, joiningDate: e.target.value })}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-[#2563EB]"
+                onChange={(dateStr) => setForm({ ...form, joiningDate: dateStr })}
+                placeholder="Joining Date"
+                className="w-full !rounded-lg"
               />
             </div>
             <div>

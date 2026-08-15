@@ -21,6 +21,7 @@ import PageHeader from '../../components/layout/PageHeader';
 import { Badge } from '../../components/ui/badge';
 import EmptyState from '../../components/ui/EmptyState';
 import { NumberInput } from '../../components/ui/NumberInput';
+import DatePicker from '../../components/ui/DatePicker';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
 import { confirmAction, confirmDelete } from '../../lib/confirm';
@@ -455,11 +456,11 @@ function JournalEntryForm({ onClose, onSuccess }) {
               <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
                 Entry Date *
               </label>
-              <input
-                type="date"
+              <DatePicker
                 value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className={inputClass}
+                onChange={setDate}
+                placeholder="Entry Date"
+                className="w-full !rounded-xl"
               />
             </div>
             <div className="sm:col-span-2">

@@ -13,6 +13,7 @@ import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import DatePicker from '../../components/ui/DatePicker';
 import api from '../../lib/api';
 
 export default function Attendance() {
@@ -206,20 +207,20 @@ export default function Attendance() {
         <div className="flex flex-wrap items-end gap-4">
           <div>
             <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">From</label>
-            <input
-              type="date"
+            <DatePicker
               value={from}
-              onChange={(e) => setFrom(e.target.value)}
-              className="px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-[#2563EB]"
+              onChange={setFrom}
+              placeholder="From Date"
+              className="!rounded-lg"
             />
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">To</label>
-            <input
-              type="date"
+            <DatePicker
               value={to}
-              onChange={(e) => setTo(e.target.value)}
-              className="px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-[#2563EB]"
+              onChange={setTo}
+              placeholder="To Date"
+              className="!rounded-lg"
             />
           </div>
           <div>

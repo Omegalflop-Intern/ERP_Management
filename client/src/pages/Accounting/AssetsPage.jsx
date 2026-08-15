@@ -12,6 +12,7 @@ import {
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { NumberInput } from '../../components/ui/NumberInput';
+import DatePicker from '../../components/ui/DatePicker';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
 
@@ -281,12 +282,11 @@ function AddAssetModal({ onClose, onSuccess }) {
               <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
                 Purchase Date
               </label>
-              <input
-                type="date"
-                required
+              <DatePicker
                 value={form.purchaseDate}
-                onChange={(e) => setForm({ ...form, purchaseDate: e.target.value })}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none"
+                onChange={(dateStr) => setForm({ ...form, purchaseDate: dateStr })}
+                placeholder="Purchase Date"
+                className="w-full !rounded-xl"
               />
             </div>
           </div>

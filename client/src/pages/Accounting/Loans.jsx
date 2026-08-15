@@ -33,6 +33,7 @@ export default function Loans() {
   const [search, setSearch] = useState('');
   const [loanType, setLoanType] = useState('LOAN_TAKEN'); // 'LOAN_TAKEN' (Lender) | 'LOAN_GIVEN' (Borrower)
   const [showAddLoanModal, setShowAddLoanModal] = useState(false);
+  const [loanDueDate, setLoanDueDate] = useState('');
 
   // Repayment Modal State
   const [repayTargetLoan, setRepayTargetLoan] = useState(null);
@@ -437,7 +438,7 @@ export default function Loans() {
                   loanAmount: Number(fd.get('loanAmount')),
                   interestRate: Number(fd.get('interestRate')) || 0,
                   installmentCount: Number(fd.get('installmentCount')) || 1,
-                  dueDate: fd.get('dueDate') || undefined,
+                  dueDate: loanDueDate || undefined,
                   notes: fd.get('notes'),
                 });
               }}
@@ -518,7 +519,12 @@ export default function Loans() {
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
                   First Due Date
                 </label>
-                <input type="date" name="dueDate" className={inputCls} />
+                <DatePicker
+                  value={loanDueDate}
+                  onChange={setLoanDueDate}
+                  placeholder="First Due Date"
+                  className="w-full !rounded-xl"
+                />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">

@@ -13,6 +13,7 @@ import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import DatePicker from '../../components/ui/DatePicker';
 import api from '../../lib/api';
 import { confirmDelete } from '../../lib/confirm';
 
@@ -385,24 +386,22 @@ function LeaveModal({ employees, isAdminOrManager, onClose }) {
               <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
                 From *
               </label>
-              <input
-                type="date"
-                required
+              <DatePicker
                 value={form.fromDate}
-                onChange={(e) => setForm({ ...form, fromDate: e.target.value })}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-[#2563EB]"
+                onChange={(dateStr) => setForm({ ...form, fromDate: dateStr })}
+                placeholder="From Date"
+                className="w-full !rounded-lg"
               />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
                 To *
               </label>
-              <input
-                type="date"
-                required
+              <DatePicker
                 value={form.toDate}
-                onChange={(e) => setForm({ ...form, toDate: e.target.value })}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-[#2563EB]"
+                onChange={(dateStr) => setForm({ ...form, toDate: dateStr })}
+                placeholder="To Date"
+                className="w-full !rounded-lg"
               />
             </div>
           </div>
