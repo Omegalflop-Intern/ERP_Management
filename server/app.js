@@ -307,6 +307,7 @@ app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/roles', roleRoutes);
 app.use('/api/v1/products', productRoutes);
 app.use('/api/v1/inventory', imeiRoutes);
+app.use('/api/v1/imei', imeiRoutes);
 app.use('/api/v1/stock', stockRoutes);
 app.use('/api/v1/sales', saleRoutes);
 app.use('/api/v1/finance', reportRoutes);
