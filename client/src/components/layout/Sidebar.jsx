@@ -1,5 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
-import { ChevronDown, ChevronRight, Smartphone, X } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronRight,
+  Smartphone,
+  User,
+  X,
+} from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { menuItems } from '../../config/sidebar.config';
@@ -14,16 +20,16 @@ function SidebarLink({ item, isCollapsed, onNavigate }) {
       title={isCollapsed ? item.label : undefined}
       onClick={onNavigate}
       className={({ isActive }) =>
-        `w-full flex items-center gap-3 rounded-xl font-medium text-sm transition-all duration-200 mb-1 ${
-          isCollapsed ? 'justify-center px-2 py-2.5' : 'px-3.5 py-2.5'
+        `w-full flex items-center gap-2.5 rounded-lg text-[13px] transition-all duration-150 py-2 ${
+          isCollapsed ? 'justify-center px-2' : 'px-2.5'
         } ${
           isActive
-            ? 'bg-[#2563EB] text-white font-bold shadow-md shadow-[#2563EB]/25'
-            : 'text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80'
+            ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold'
+            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/60 dark:hover:bg-slate-800/40'
         }`
       }
     >
-      <item.icon className="w-4 h-4 shrink-0 stroke-[2.2]" />
+      <item.icon className="w-4 h-4 shrink-0 stroke-[1.8]" />
       {!isCollapsed && <span className="truncate">{item.label}</span>}
     </NavLink>
   );
@@ -36,46 +42,51 @@ function SubmenuGroup({ item, isCollapsed, openSubmenus, toggleSubmenu, location
   );
 
   return (
-    <div className="mb-1">
+    <div>
       <button
         type="button"
         onClick={() => toggleSubmenu(item.label)}
-        className={`w-full flex items-center justify-between rounded-xl font-medium text-sm transition-all duration-200 ${
-          isCollapsed ? 'justify-center px-2 py-2.5' : 'px-3.5 py-2.5'
+        title={isCollapsed ? item.label : undefined}
+        className={`w-full flex items-center justify-between rounded-lg text-[13px] transition-all duration-150 py-2 ${
+          isCollapsed ? 'justify-center px-2' : 'px-2.5'
         } ${
           hasActiveChild
-            ? 'bg-blue-50 dark:bg-blue-950/50 text-[#2563EB] dark:text-blue-400 font-bold border border-blue-200/80 dark:border-blue-800/50'
-            : 'text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80'
+            ? 'text-blue-600 dark:text-blue-400 font-semibold bg-blue-500/5'
+            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/60 dark:hover:bg-slate-800/40'
         }`}
       >
-        <div className="flex items-center gap-3">
-          <item.icon className="w-4 h-4 shrink-0 text-[#2563EB] dark:text-blue-400 stroke-[2.2]" />
+        <div className="flex items-center gap-2.5 min-w-0">
+          <item.icon className="w-4 h-4 shrink-0 stroke-[1.8]" />
           {!isCollapsed && <span className="truncate">{item.label}</span>}
         </div>
-        {!isCollapsed &&
-          (isOpen ? (
-            <ChevronDown className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-          ) : (
-            <ChevronRight className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-          ))}
+
+        {!isCollapsed && (
+          <span className="shrink-0 text-slate-400 dark:text-slate-500 ml-1">
+            {isOpen ? (
+              <ChevronDown className="w-3.5 h-3.5" />
+            ) : (
+              <ChevronRight className="w-3.5 h-3.5" />
+            )}
+          </span>
+        )}
       </button>
 
       {!isCollapsed && isOpen && (
-        <div className="pl-4 mt-1 space-y-1 border-l-2 border-[#2563EB]/30 ml-5">
+        <div className="pl-4 mt-0.5 space-y-0.5 border-l border-slate-200 dark:border-slate-800 ml-4 py-0.5">
           {item.children.map((child) => (
             <NavLink
               key={child.path}
               to={child.path}
               onClick={onNavigate}
               className={({ isActive }) =>
-                `w-full flex items-center gap-2.5 px-3 py-2 rounded-xl font-medium text-xs transition-all duration-200 ${
+                `flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs transition-all duration-150 ${
                   isActive
-                    ? 'bg-[#2563EB] text-white font-bold shadow-sm'
-                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/70'
+                    ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/40 dark:hover:bg-slate-800/30'
                 }`
               }
             >
-              <child.icon className="w-3.5 h-3.5 shrink-0 stroke-[2]" />
+              <child.icon className="w-3.5 h-3.5 shrink-0 stroke-[1.6]" />
               <span className="truncate">{child.label}</span>
             </NavLink>
           ))}
@@ -85,84 +96,12 @@ function SubmenuGroup({ item, isCollapsed, openSubmenus, toggleSubmenu, location
   );
 }
 
-function SidebarMenu({ isCollapsed, location, onNavigate }) {
-  const { hasAnyPermission } = useAuth();
-  const [openSubmenus, setOpenSubmenus] = useState({});
-
-  useEffect(() => {
-    const next = {};
-    menuItems.forEach((group) => {
-      group.items.forEach((item) => {
-        if (
-          item.children?.some(
-            (c) =>
-              location.pathname === c.path ||
-              (c.path !== '/' && location.pathname.startsWith(c.path))
-          )
-        ) {
-          next[item.label] = true;
-        }
-      });
-    });
-    setOpenSubmenus((prev) => ({ ...prev, ...next }));
-  }, [location.pathname]);
-
-  const toggle = (label) => setOpenSubmenus((p) => ({ ...p, [label]: !p[label] }));
-
-  return (
-    <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 pb-14 overscroll-contain sidebar-scrollbar">
-      {menuItems.map((group, idx) => {
-        const visible = group.items.filter((item) => {
-          const perms = item.children
-            ? item.children.flatMap((c) => c.permissions || [])
-            : item.permissions || [];
-          return perms.length === 0 || hasAnyPermission(perms);
-        });
-        if (!visible.length) return null;
-
-        const isLastGroup = idx === menuItems.length - 1;
-
-        return (
-          <div key={group.section} className={isLastGroup ? 'mb-4' : 'mb-2'}>
-            {!isCollapsed && (
-              <div className="px-3 pt-3 pb-1 text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest">
-                {group.section}
-              </div>
-            )}
-            {isCollapsed && (
-              <div className="mx-2 mb-1 border-t border-slate-200 dark:border-slate-800" />
-            )}
-
-            {visible.map((item) =>
-              item.children ? (
-                <SubmenuGroup
-                  key={item.label}
-                  item={item}
-                  isCollapsed={isCollapsed}
-                  openSubmenus={openSubmenus}
-                  toggleSubmenu={toggle}
-                  location={location}
-                  onNavigate={onNavigate}
-                />
-              ) : (
-                <SidebarLink
-                  key={item.path}
-                  item={item}
-                  isCollapsed={isCollapsed}
-                  onNavigate={onNavigate}
-                />
-              )
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 export default function Sidebar({ isOpen, onClose, collapsed = false }) {
   const location = useLocation();
+  const { user, hasAnyPermission } = useAuth();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 1024);
+  const [openSubmenus, setOpenSubmenus] = useState({});
+  const [logoError, setLogoError] = useState(false);
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 1024);
@@ -170,7 +109,6 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // Lock body scroll when mobile sidebar is open so background doesn't scroll
   useEffect(() => {
     if (isMobile && isOpen) {
       document.body.style.overflow = 'hidden';
@@ -193,90 +131,162 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
     staleTime: 5 * 60 * 1000,
   });
 
-  const [logoError, setLogoError] = useState(false);
+  useEffect(() => {
+    const next = {};
+    menuItems.forEach((group) => {
+      group.items.forEach((item) => {
+        if (
+          item.children?.some(
+            (c) =>
+              location.pathname === c.path ||
+              (c.path !== '/' && location.pathname.startsWith(c.path))
+          )
+        ) {
+          next[item.label] = true;
+        }
+      });
+    });
+    setOpenSubmenus((prev) => ({ ...prev, ...next }));
+  }, [location.pathname]);
 
-  const Logo = () => {
-    if (settings?.companyLogo && !logoError) {
-      return (
-        <img
-          src={getAssetUrl(settings.companyLogo)}
-          alt="Shop Logo"
-          className="w-5 h-5 rounded object-cover"
-          onError={() => setLogoError(true)}
-        />
-      );
-    }
-    return <Smartphone className="w-5 h-5 text-[#2563EB] dark:text-blue-400" />;
-  };
+  const toggleSubmenu = (label) => setOpenSubmenus((p) => ({ ...p, [label]: !p[label] }));
+
+  const shopName = settings?.companyName || user?.shopName || 'Omni-Manage';
+  const roleName = user?.roleName || (user?.role && user?.role.name) || 'STAFF';
 
   return (
     <>
-      {/* ── Mobile backdrop ── */}
+      {/* Mobile backdrop */}
       <div
         aria-hidden="true"
         onClick={onClose}
-        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300 ease-in-out ${
+        className={`fixed inset-0 bg-black/40 backdrop-blur-xs z-40 lg:hidden transition-opacity duration-200 ${
           isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
       />
 
-      {/* ── Sidebar ── */}
+      {/* Sidebar container */}
       <aside
         className={`
           z-50 lg:z-30 flex flex-col
-          transition-transform duration-300 ease-in-out
+          transition-all duration-200 ease-in-out select-none
+          bg-white/95 dark:bg-[#0B0F17]/95 backdrop-blur-md
+          border-r border-slate-200/70 dark:border-slate-800/70
           ${
             isMobile
-              ? /* Mobile: floating rounded glass card */
-                `fixed top-2 bottom-2 left-2 w-72 h-[calc(100vh-1rem)] glass-primary rounded-[24px] pt-4 pb-2
-               shadow-2xl shadow-black/50 border border-white/20 dark:border-slate-800/80
-               ${isOpen ? 'translate-x-0' : '-translate-x-[calc(100%+1rem)]'}`
-              : /* Desktop: static floating glass card */
-                `static h-[calc(100vh-1rem)] my-2 ml-2 glass-primary rounded-[24px] pt-4 pb-2
-               translate-x-0
-               ${isCollapsed ? 'w-[68px]' : 'w-64'}`
+              ? `fixed top-0 bottom-0 left-0 w-64 h-full shadow-2xl
+                 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`
+              : `static h-[calc(100vh-4rem)]
+                 translate-x-0
+                 ${isCollapsed ? 'w-[64px]' : 'w-60'}`
           }
         `}
       >
-        {/* Mobile header with close button */}
-        <div className="flex items-center justify-between px-4 mb-4 lg:hidden">
-          <div className="flex items-center gap-2">
-            <Logo />
-            <span className="font-bold text-slate-900 dark:text-slate-100 text-base">Menu</span>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close sidebar"
-            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          >
-            <X className="w-5 h-5 text-slate-500" />
-          </button>
-        </div>
+        {/* Minimal Header */}
+        <div className="h-14 px-3.5 border-b border-slate-200/50 dark:border-slate-800/50 flex items-center justify-between">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-blue-600/10 dark:bg-blue-500/15 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 overflow-hidden">
+              {settings?.companyLogo && !logoError ? (
+                <img
+                  src={getAssetUrl(settings.companyLogo)}
+                  alt="Logo"
+                  className="w-full h-full object-cover"
+                  onError={() => setLogoError(true)}
+                />
+              ) : (
+                <Smartphone className="w-4 h-4" />
+              )}
+            </div>
 
-        {/* Desktop collapsed logo */}
-        {isCollapsed && (
-          <div className="hidden lg:flex justify-center mb-4">
-            {settings?.companyLogo && !logoError ? (
-              <img
-                src={getAssetUrl(settings.companyLogo)}
-                alt="Shop Logo"
-                className="w-10 h-10 rounded-xl object-cover"
-                onError={() => setLogoError(true)}
-              />
-            ) : (
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-50 dark:bg-blue-950/30">
-                <Smartphone className="w-5 h-5 text-[#2563EB] dark:text-blue-400" />
-              </div>
+            {!isCollapsed && (
+              <span className="font-semibold text-sm text-slate-800 dark:text-slate-100 truncate tracking-tight">
+                {shopName}
+              </span>
             )}
           </div>
-        )}
 
-        <SidebarMenu
-          isCollapsed={isCollapsed}
-          location={location}
-          onNavigate={isMobile ? onClose : undefined}
-        />
+          {isMobile && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+
+        {/* Scrollable Navigation */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-3 space-y-4 overscroll-contain sidebar-scrollbar">
+          {menuItems.map((group) => {
+            const visible = group.items.filter((item) => {
+              const perms = item.children
+                ? item.children.flatMap((c) => c.permissions || [])
+                : item.permissions || [];
+              return perms.length === 0 || hasAnyPermission(perms);
+            });
+            if (!visible.length) return null;
+
+            return (
+              <div key={group.section} className="space-y-0.5">
+                {!isCollapsed && (
+                  <div className="px-2.5 pb-1 text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                    {group.section}
+                  </div>
+                )}
+                {isCollapsed && (
+                  <div className="mx-2 my-1 border-t border-slate-200/50 dark:border-slate-800/50" />
+                )}
+
+                {visible.map((item) =>
+                  item.children ? (
+                    <SubmenuGroup
+                      key={item.label}
+                      item={item}
+                      isCollapsed={isCollapsed}
+                      openSubmenus={openSubmenus}
+                      toggleSubmenu={toggleSubmenu}
+                      location={location}
+                      onNavigate={isMobile ? onClose : undefined}
+                    />
+                  ) : (
+                    <SidebarLink
+                      key={item.path}
+                      item={item}
+                      isCollapsed={isCollapsed}
+                      onNavigate={isMobile ? onClose : undefined}
+                    />
+                  )
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Minimal Footer */}
+        <div className="p-2 border-t border-slate-200/50 dark:border-slate-800/50">
+          <NavLink
+            to="/profile"
+            onClick={isMobile ? onClose : undefined}
+            className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40 transition-colors"
+            title="Profile"
+          >
+            <div className="w-7 h-7 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 font-medium text-xs shrink-0">
+              {user?.fullName ? user.fullName.charAt(0).toUpperCase() : <User className="w-3.5 h-3.5" />}
+            </div>
+
+            {!isCollapsed && (
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
+                  {user?.fullName || user?.username || 'Staff'}
+                </div>
+                <div className="text-[10px] text-slate-400 uppercase tracking-wider truncate">
+                  {roleName}
+                </div>
+              </div>
+            )}
+          </NavLink>
+        </div>
       </aside>
     </>
   );
