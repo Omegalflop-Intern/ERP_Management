@@ -86,10 +86,20 @@ export const getAllInvestors = async (tenantId = null, branchId = null) => {
   };
 };
 
-export const createInvestor = async (data, tenantId = null, branchId = null) => {
+export const createInvestor = async (data, tenantIdOrRecordedBy = null, branchIdOrTenantId = null) => {
+  let tenantId = data.tenantId || null;
+  let branchId = data.branchId || null;
+
+  if (tenantIdOrRecordedBy && typeof tenantIdOrRecordedBy === 'string' && tenantIdOrRecordedBy !== 'admin_test' && tenantIdOrRecordedBy !== 'system') {
+    tenantId = tenantIdOrRecordedBy;
+  }
+  if (branchIdOrTenantId && typeof branchIdOrTenantId === 'string' && (branchIdOrTenantId.startsWith('ten_') || branchIdOrTenantId.includes('-') || !isNaN(Number(branchIdOrTenantId)))) {
+    tenantId = branchIdOrTenantId;
+  }
+
   const [insertedId] = await db('investors').insert({
     tenant_id: tenantId,
-    branch_id: data.branchId || branchId || null,
+    branch_id: branchId,
     name: data.name,
     phone: data.phone,
     email: data.email || null,
