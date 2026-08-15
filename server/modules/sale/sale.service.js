@@ -103,7 +103,7 @@ export const createSale = async (data, createdBy = 'system') => {
       }
     }
 
-    const itemTotal = (item.unitPrice * item.qty) - (item.discount || 0);
+    const itemTotal = item.unitPrice * item.qty;
     subTotal += itemTotal;
     lineItems.push({
       productId: item.productId,
@@ -116,7 +116,7 @@ export const createSale = async (data, createdBy = 'system') => {
     });
   }
 
-  const netTotal = subTotal - (data.discount || 0) + (data.tax || 0);
+  const netTotal = Math.max(0, subTotal - (data.discount || 0) + (data.tax || 0));
   const rawCash = Number(data.paymentBreakdown?.cash || 0);
   const rawDigital = (Number(data.paymentBreakdown?.bkash || 0)) +
     (Number(data.paymentBreakdown?.rocket || 0)) +
@@ -352,9 +352,12 @@ export const updateSale = async (id, data, tenantId = null, branchId = null) => 
     updateFields.line_items = JSON.stringify(lineItems);
   }
 
-  const netTotal = subTotal - newDiscount + newTax;
-  updateFields.sub_total = subTotal;
-  updateFields.net_total = netTotal;
+  let netTotal = existing.netTotal;
+  if (data.items !== undefined || data.discount !== undefined || data.tax !== undefined) {
+    netTotal = Math.max(0, subTotal - newDiscount + newTax);
+    updateFields.sub_total = subTotal;
+    updateFields.net_total = netTotal;
+  }
 
   if (data.paymentBreakdown !== undefined) {
     const paidAmount = (data.paymentBreakdown.cash || 0) +
@@ -362,7 +365,8 @@ export const updateSale = async (id, data, tenantId = null, branchId = null) => 
       (data.paymentBreakdown.rocket || 0) +
       (data.paymentBreakdown.nagad || 0) +
       (data.paymentBreakdown.bank || 0);
-    const dueAmount = Math.max(0, netTotal - paidAmount);
+    const effectiveNet = Math.max(0, netTotal - (existing.returnedAmount || 0));
+    const dueAmount = Math.max(0, effectiveNet - paidAmount);
 
     updateFields.payment_breakdown = JSON.stringify({
       cash: data.paymentBreakdown.cash || 0,

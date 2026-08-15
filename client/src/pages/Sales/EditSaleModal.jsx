@@ -19,13 +19,13 @@ export default function EditSaleModal({ saleId, onClose, onSuccess }) {
   const [customerEmail, setCustomerEmail] = useState('');
   const [saleType, setSaleType] = useState('RETAIL');
   const [items, setItems] = useState([]);
-  const [discount, setDiscount] = useState(0);
-  const [tax, setTax] = useState(0);
-  const [paymentCash, setPaymentCash] = useState(0);
-  const [paymentBkash, setPaymentBkash] = useState(0);
-  const [paymentRocket, setPaymentRocket] = useState(0);
-  const [paymentNagad, setPaymentNagad] = useState(0);
-  const [paymentBank, setPaymentBank] = useState(0);
+  const [discount, setDiscount] = useState('');
+  const [tax, setTax] = useState('');
+  const [paymentCash, setPaymentCash] = useState('');
+  const [paymentBkash, setPaymentBkash] = useState('');
+  const [paymentRocket, setPaymentRocket] = useState('');
+  const [paymentNagad, setPaymentNagad] = useState('');
+  const [paymentBank, setPaymentBank] = useState('');
 
   const { data: saleData, isLoading } = useQuery({
     queryKey: ['sale', saleId],
@@ -49,23 +49,30 @@ export default function EditSaleModal({ saleId, onClose, onSuccess }) {
           description: li.description || '',
           imeiOrSerial: li.imeiOrSerial || '',
           qty: li.qty || 1,
-          unitPrice: li.unitPrice || 0,
-          unitCost: li.unitCost || 0,
+          unitPrice: li.unitPrice ? String(li.unitPrice) : '',
+          unitCost: li.unitCost ? String(li.unitCost) : '',
         }))
       );
-      setDiscount(saleData.discount || 0);
-      setTax(saleData.tax || 0);
-      setPaymentCash(saleData.paymentBreakdown?.cash || 0);
-      setPaymentBkash(saleData.paymentBreakdown?.bkash || 0);
-      setPaymentRocket(saleData.paymentBreakdown?.rocket || 0);
-      setPaymentNagad(saleData.paymentBreakdown?.nagad || 0);
-      setPaymentBank(saleData.paymentBreakdown?.bank || 0);
+      setDiscount(saleData.discount ? String(saleData.discount) : '');
+      setTax(saleData.tax ? String(saleData.tax) : '');
+      setPaymentCash(saleData.paymentBreakdown?.cash ? String(saleData.paymentBreakdown.cash) : '');
+      setPaymentBkash(saleData.paymentBreakdown?.bkash ? String(saleData.paymentBreakdown.bkash) : '');
+      setPaymentRocket(saleData.paymentBreakdown?.rocket ? String(saleData.paymentBreakdown.rocket) : '');
+      setPaymentNagad(saleData.paymentBreakdown?.nagad ? String(saleData.paymentBreakdown.nagad) : '');
+      setPaymentBank(saleData.paymentBreakdown?.bank ? String(saleData.paymentBreakdown.bank) : '');
     }
   }, [saleData]);
 
-  const subTotal = items.reduce((sum, item) => sum + item.unitPrice * item.qty, 0);
-  const netTotal = subTotal - discount + tax;
-  const totalPaid = paymentCash + paymentBkash + paymentRocket + paymentNagad + paymentBank;
+  const numDiscount = Number(discount) || 0;
+  const numTax = Number(tax) || 0;
+  const subTotal = items.reduce((sum, item) => sum + (Number(item.unitPrice) || 0) * (Number(item.qty) || 1), 0);
+  const netTotal = Math.max(0, subTotal - numDiscount + numTax);
+  const totalPaid =
+    (Number(paymentCash) || 0) +
+    (Number(paymentBkash) || 0) +
+    (Number(paymentRocket) || 0) +
+    (Number(paymentNagad) || 0) +
+    (Number(paymentBank) || 0);
   const dueAmount = Math.max(0, netTotal - totalPaid);
 
   const updateItem = (idx, field, value) => {
@@ -236,15 +243,16 @@ export default function EditSaleModal({ saleId, onClose, onSuccess }) {
                     <input
                       type="number"
                       min="0"
+                      placeholder="0"
                       value={item.unitPrice}
-                      onChange={(e) => updateItem(idx, 'unitPrice', Number(e.target.value))}
+                      onChange={(e) => updateItem(idx, 'unitPrice', e.target.value)}
                       className="w-full px-2.5 py-1.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-xs text-gray-900 dark:text-gray-100"
                     />
                   </div>
                   <div className="w-24 text-right">
                     <label className="block text-[10px] text-gray-500 mb-0.5">Total</label>
                     <div className="px-2.5 py-1.5 text-xs font-semibold text-gray-900 dark:text-gray-100">
-                      ৳{(item.unitPrice * item.qty).toLocaleString()}
+                      ৳{((Number(item.unitPrice) || 0) * (Number(item.qty) || 1)).toLocaleString()}
                     </div>
                   </div>
                   {item.imeiOrSerial && (
@@ -277,8 +285,9 @@ export default function EditSaleModal({ saleId, onClose, onSuccess }) {
               <input
                 type="number"
                 min="0"
+                placeholder="0"
                 value={discount}
-                onChange={(e) => setDiscount(Number(e.target.value))}
+                onChange={(e) => setDiscount(e.target.value)}
                 className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100"
               />
             </div>
@@ -289,8 +298,9 @@ export default function EditSaleModal({ saleId, onClose, onSuccess }) {
               <input
                 type="number"
                 min="0"
+                placeholder="0"
                 value={tax}
-                onChange={(e) => setTax(Number(e.target.value))}
+                onChange={(e) => setTax(e.target.value)}
                 className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100"
               />
             </div>
@@ -312,8 +322,9 @@ export default function EditSaleModal({ saleId, onClose, onSuccess }) {
                   <input
                     type="number"
                     min="0"
+                    placeholder="0"
                     value={p.value}
-                    onChange={(e) => p.set(Number(e.target.value))}
+                    onChange={(e) => p.set(e.target.value)}
                     className="w-full px-2.5 py-1.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-xs text-gray-900 dark:text-gray-100"
                   />
                 </div>
