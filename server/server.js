@@ -9,6 +9,7 @@ import { printAsciiBanner, printServerInfo, logStep } from './utils/system/banne
 import { broadcastAll, broadcastToTenant } from './modules/sse/sse.controller.js';
 import { db } from './config/db.knex.js';
 import { createBulkNotifications } from './modules/notification/notification.service.js';
+import { createAutomatedSaleJournal, createAutomatedExpenseJournal } from './modules/accounting/accounting.service.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -123,6 +124,11 @@ startServer(targetPort);
     broadcastToTenant(eventTenantId, { type: 'SALE_COMPLETED', data });
     broadcastAll({ type: 'SALE_COMPLETED', data });
 
+    // Automatically record double-entry journal entry for the completed sale
+    createAutomatedSaleJournal(data?.sale || data).catch((err) =>
+      console.error('[Accounting Auto-Journal Sale Error]:', err.message)
+    );
+
     const invoiceNo = data?.invoiceNo || data?.sale?.invoiceNo || data?.invoiceNumber || 'Invoice';
     const amount = data?.grandTotal || data?.sale?.grandTotal || 0;
     const customerEmail = data?.customerEmail || data?.sale?.customer?.email || data?.customer?.email;
@@ -209,6 +215,11 @@ startServer(targetPort);
 
   emitter.on(EVENTS.EXPENSE_MUTATED, (data) => {
     broadcastToTenant(data?.tenantId || null, { type: 'EXPENSE_MUTATED', data });
+    if (data?.expense && !data?.expense?.isDeleted) {
+      createAutomatedExpenseJournal(data.expense).catch((err) =>
+        console.error('[Accounting Auto-Journal Expense Error]:', err.message)
+      );
+    }
   });
 
   emitter.on(EVENTS.ACCOUNT_MUTATED, (data) => {

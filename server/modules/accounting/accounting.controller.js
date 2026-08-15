@@ -129,10 +129,11 @@ export const getLedger = async (req, res, next) => {
 
 export const getProfitLoss = async (req, res, next) => {
   try {
-    const { startDate = '', endDate = '' } = req.query;
+    const fromDate = req.query.from || req.query.startDate || '';
+    const toDate = req.query.to || req.query.endDate || '';
     const tenantId = req.user?.tenantId || null;
-    const branchId = req.selectedBranchId || null;
-    const data = await accountingService.getProfitLoss(startDate, endDate, tenantId, branchId);
+    const branchId = req.selectedBranchId || req.query.branchId || null;
+    const data = await accountingService.getProfitLoss(fromDate, toDate, tenantId, branchId);
     return ApiResponse.success(res, data);
   } catch (error) { next(error); }
 };

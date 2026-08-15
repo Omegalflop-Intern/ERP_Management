@@ -249,10 +249,42 @@ export const getJournalEntryById = async (id, tenantId = null) => {
   return formatJournalEntry(row);
 };
 
+async function applyLinesToAccounts(lines = [], reverse = false, tenantId = null) {
+  if (!Array.isArray(lines) || lines.length === 0) return;
+  for (const line of lines) {
+    const debit = Number(line.debit || 0);
+    const credit = Number(line.credit || 0);
+    if (debit === 0 && credit === 0) continue;
+
+    let account = null;
+    if (line.accountId) {
+      account = await db('accounts').where({ id: line.accountId }).first();
+    } else if (line.code) {
+      const q = db('accounts').where({ code: line.code, is_deleted: false });
+      if (tenantId) q.andWhere('tenant_id', tenantId);
+      account = await q.first();
+    }
+
+    if (account) {
+      let delta = 0;
+      if (account.type === 'ASSET' || account.type === 'EXPENSE') {
+        delta = debit - credit;
+      } else {
+        delta = credit - debit;
+      }
+
+      if (reverse) delta = -delta;
+
+      const newBalance = Number(account.balance || 0) + delta;
+      await db('accounts').where({ id: account.id }).update({ balance: newBalance });
+    }
+  }
+}
+
 export const createJournalEntry = async (data) => {
   const tenantId = data.tenantId || null;
-  const totalDebit = (data.lines || []).reduce((sum, l) => sum + (l.debit || 0), 0);
-  const totalCredit = (data.lines || []).reduce((sum, l) => sum + (l.credit || 0), 0);
+  const totalDebit = (data.lines || []).reduce((sum, l) => sum + (Number(l.debit) || 0), 0);
+  const totalCredit = (data.lines || []).reduce((sum, l) => sum + (Number(l.credit) || 0), 0);
 
   if (Math.abs(totalDebit - totalCredit) > 0.01) throw ApiError.badRequest('Total debits must equal total credits');
   if (totalDebit <= 0) throw ApiError.badRequest('Total must be greater than 0');
@@ -267,10 +299,14 @@ export const createJournalEntry = async (data) => {
     lines: JSON.stringify(data.lines),
     total_debit: totalDebit,
     total_credit: totalCredit,
-    status: 'POSTED',
-    posted_by: 'system',
+    status: data.status || 'POSTED',
+    posted_by: data.postedBy || 'system',
     is_deleted: false,
   });
+
+  if ((data.status || 'POSTED') === 'POSTED') {
+    await applyLinesToAccounts(data.lines, false, tenantId);
+  }
 
   return getJournalEntryById(insertedId, tenantId);
 };
@@ -279,15 +315,22 @@ export const postJournalEntry = async (id, postedBy = 'system', tenantId = null)
   const entry = await getJournalEntryById(id, tenantId);
   if (!entry) throw ApiError.notFound('Journal entry not found');
 
-  const jePost = db('journal_entries').where({ id });
-  if (tenantId) jePost.andWhere('tenant_id', tenantId);
-  await jePost.update({ status: 'POSTED', posted_by: postedBy });
+  if (entry.status !== 'POSTED') {
+    const jePost = db('journal_entries').where({ id });
+    if (tenantId) jePost.andWhere('tenant_id', tenantId);
+    await jePost.update({ status: 'POSTED', posted_by: postedBy });
+    await applyLinesToAccounts(parseJSON(entry.lines), false, tenantId);
+  }
   return getJournalEntryById(id, tenantId);
 };
 
 export const voidJournalEntry = async (id, voidedBy = 'system', tenantId = null) => {
   const entry = await getJournalEntryById(id, tenantId);
   if (!entry) throw ApiError.notFound('Journal entry not found');
+
+  if (entry.status === 'POSTED') {
+    await applyLinesToAccounts(parseJSON(entry.lines), true, tenantId);
+  }
 
   const jeVoid = db('journal_entries').where({ id });
   if (tenantId) jeVoid.andWhere('tenant_id', tenantId);
@@ -298,6 +341,10 @@ export const voidJournalEntry = async (id, voidedBy = 'system', tenantId = null)
 export const deleteJournalEntry = async (id, tenantId = null) => {
   const entry = await getJournalEntryById(id, tenantId);
   if (!entry) throw ApiError.notFound('Journal entry not found');
+
+  if (entry.status === 'POSTED') {
+    await applyLinesToAccounts(parseJSON(entry.lines), true, tenantId);
+  }
 
   const jeDel = db('journal_entries').where({ id });
   if (tenantId) jeDel.andWhere('tenant_id', tenantId);
@@ -331,45 +378,188 @@ export const getBalanceSheet = async (asOf = '', tenantId = null) => {
 };
 
 export const getProfitLoss = async (from = '', to = '', tenantId = null, branchId = null) => {
-  const revQuery = db('transactions').where({ tx_type: 'SALE', is_deleted: false });
+  // 1. Fetch completed sales transactions
+  const revQuery = db('transactions')
+    .where({ tx_type: 'SALE', is_deleted: false, status: 'COMPLETED' });
   applyTenantScope(revQuery, tenantId, 'transactions');
-  if (branchId) revQuery.where('branch_id', branchId);
-  if (from) revQuery.where('created_at', '>=', new Date(from));
+  if (branchId && branchId !== 'all') revQuery.where('branch_id', branchId);
+  if (from) revQuery.where('created_at', '>=', new Date(from + 'T00:00:00'));
   if (to) revQuery.where('created_at', '<=', new Date(to + 'T23:59:59'));
-  const revRes = await revQuery.sum({ total: 'net_total' }).first();
 
+  const salesRows = await revQuery.select(
+    'id', 'invoice_number', 'sub_total', 'discount', 'tax', 'net_total',
+    'returned_amount', 'line_items', 'created_at'
+  );
+
+  let totalSalesRevenue = 0;
+  let totalCogs = 0;
+  let totalDiscounts = 0;
+  let totalReturns = 0;
+
+  // Cache products cost price for fallback
+  const allProducts = await db('products')
+    .where('is_deleted', false)
+    .select('id', 'cost_price', 'selling_price');
+  const productCostMap = {};
+  for (const p of allProducts) {
+    productCostMap[p.id] = Number(p.cost_price || 0);
+  }
+
+  for (const sale of salesRows) {
+    const net = Number(sale.net_total || 0) - Number(sale.returned_amount || 0);
+    totalSalesRevenue += net;
+    totalDiscounts += Number(sale.discount || 0);
+    totalReturns += Number(sale.returned_amount || 0);
+
+    let items = [];
+    try {
+      items = typeof sale.line_items === 'string' ? JSON.parse(sale.line_items) : (sale.line_items || []);
+    } catch {
+      items = [];
+    }
+
+    for (const item of items) {
+      const qty = Number(item.qty || 1);
+      const unitCost = item.unitCost !== undefined && item.unitCost !== null
+        ? Number(item.unitCost)
+        : (productCostMap[item.productId] || 0);
+      totalCogs += (unitCost * qty);
+    }
+  }
+
+  const grossProfit = totalSalesRevenue - totalCogs;
+
+  // 2. Fetch Operating Expenses
   const expQuery = db('expenses').where({ is_deleted: false });
   applyTenantScope(expQuery, tenantId, 'expenses');
-  if (branchId) expQuery.where('branch_id', branchId);
-  if (from) expQuery.where('created_at', '>=', new Date(from));
+  if (branchId && branchId !== 'all') expQuery.where('branch_id', branchId);
+  if (from) expQuery.where('created_at', '>=', new Date(from + 'T00:00:00'));
   if (to) expQuery.where('created_at', '<=', new Date(to + 'T23:59:59'));
-  const expRes = await expQuery.sum({ total: 'amount' }).first();
 
-  const totalRevenue = Number(revRes?.total || 0);
-  const totalExpenses = Number(expRes?.total || 0);
-  const netIncome = totalRevenue - totalExpenses;
+  const expRows = await expQuery.select('id', 'title', 'category', 'amount');
+  let totalExpenses = 0;
+  const byCategory = {};
+
+  for (const exp of expRows) {
+    const amt = Number(exp.amount || 0);
+    totalExpenses += amt;
+    const cat = exp.category || 'General Expense';
+    byCategory[cat] = (byCategory[cat] || 0) + amt;
+  }
+
+  // 3. Fetch Paid Payroll / Staff Salaries
+  try {
+    const payQuery = db('payrolls').where({ is_deleted: false, payment_status: 'PAID' });
+    applyTenantScope(payQuery, tenantId, 'payrolls');
+    if (branchId && branchId !== 'all') payQuery.where('branch_id', branchId);
+    if (from) payQuery.where('created_at', '>=', new Date(from + 'T00:00:00'));
+    if (to) payQuery.where('created_at', '<=', new Date(to + 'T23:59:59'));
+
+    const payRows = await payQuery.sum({ total: 'net_salary' }).first();
+    const payrollTotal = Number(payRows?.total || 0);
+    if (payrollTotal > 0) {
+      totalExpenses += payrollTotal;
+      byCategory['Staff Salaries & Payroll'] = (byCategory['Staff Salaries & Payroll'] || 0) + payrollTotal;
+    }
+  } catch (err) {
+    // Non-blocking if payrolls table not yet queried
+  }
+
+  const netIncome = grossProfit - totalExpenses;
+  const grossMarginPercent = totalSalesRevenue > 0 ? (grossProfit / totalSalesRevenue) * 100 : 0;
+  const netMarginPercent = totalSalesRevenue > 0 ? (netIncome / totalSalesRevenue) * 100 : 0;
 
   return {
     period: { from, to },
-    revenue: { total: totalRevenue },
-    expenses: { total: totalExpenses },
+    revenue: {
+      total: totalSalesRevenue,
+      salesCount: salesRows.length,
+      discounts: totalDiscounts,
+      returns: totalReturns,
+    },
+    cogs: {
+      total: totalCogs,
+    },
+    grossProfit,
+    grossMarginPercent: Number(grossMarginPercent.toFixed(2)),
+    expenses: {
+      total: totalExpenses,
+      byCategory,
+    },
     netIncome,
+    netMarginPercent: Number(netMarginPercent.toFixed(2)),
     isProfit: netIncome >= 0,
   };
 };
 
+export const recalculateAllAccountBalances = async (tenantId = null) => {
+  await seedDefaultAccounts(tenantId);
+  const acctQuery = db('accounts').where({ is_deleted: false });
+  applyTenantScope(acctQuery, tenantId, 'accounts');
+  const allAccounts = await acctQuery;
+
+  for (const acct of allAccounts) {
+    await db('accounts').where({ id: acct.id }).update({ balance: 0 });
+  }
+
+  const jeQuery = db('journal_entries').where({ is_deleted: false, status: 'POSTED' });
+  applyTenantScope(jeQuery, tenantId, 'journal_entries');
+  const postedEntries = await jeQuery;
+
+  for (const entry of postedEntries) {
+    const lines = parseJSON(entry.lines);
+    await applyLinesToAccounts(lines, false, tenantId);
+  }
+};
+
 export const getTrialBalance = async (tenantId = null) => {
   await seedDefaultAccounts(tenantId);
+
+  // If no journal entries exist yet, auto-sync past store sales & expenses
+  const countJE = db('journal_entries').where({ is_deleted: false });
+  applyTenantScope(countJE, tenantId, 'journal_entries');
+  const jeRes = await countJE.count({ count: '*' }).first();
+  if (Number(jeRes?.count || 0) === 0) {
+    try {
+      await syncHistoricalJournals(tenantId);
+    } catch (e) {}
+  }
+
   const query = db('accounts').where({ is_deleted: false, is_active: true });
   applyTenantScope(query, tenantId, 'accounts');
   const rows = await query.orderBy('code', 'asc');
-  const accounts = rows.map(r => formatAccount(r));
 
   let totalDebit = 0;
   let totalCredit = 0;
-  accounts.forEach(a => {
-    if (a.type === 'ASSET' || a.type === 'EXPENSE') totalDebit += a.balance;
-    else totalCredit += a.balance;
+
+  const accounts = rows.map((r) => {
+    const formatted = formatAccount(r);
+    const balance = Number(formatted.balance || 0);
+    let debit = 0;
+    let credit = 0;
+
+    if (formatted.type === 'ASSET' || formatted.type === 'EXPENSE') {
+      if (balance >= 0) {
+        debit = balance;
+      } else {
+        credit = Math.abs(balance);
+      }
+    } else {
+      if (balance >= 0) {
+        credit = balance;
+      } else {
+        debit = Math.abs(balance);
+      }
+    }
+
+    totalDebit += debit;
+    totalCredit += credit;
+
+    return {
+      ...formatted,
+      debit,
+      credit,
+    };
   });
 
   return {
@@ -380,10 +570,285 @@ export const getTrialBalance = async (tenantId = null) => {
   };
 };
 
-export const createAutomatedSaleJournal = async (sale) => {};
+export const createAutomatedSaleJournal = async (sale) => {
+  try {
+    const tenantId = sale.tenant_id || sale.tenantId || null;
+    const ref = sale.invoice_number || sale.invoiceNo;
+    if (!ref) return null;
+
+    const existing = await db('journal_entries').where({ reference: ref, is_deleted: false }).first();
+    if (existing) return existing;
+
+    await seedDefaultAccounts(tenantId);
+    const acctsQuery = db('accounts').where({ is_deleted: false });
+    applyTenantScope(acctsQuery, tenantId, 'accounts');
+    const accounts = await acctsQuery;
+    const acctMap = {};
+    for (const a of accounts) acctMap[a.code] = a;
+
+    let pb = {};
+    try { pb = typeof sale.payment_breakdown === 'string' ? JSON.parse(sale.payment_breakdown) : (sale.paymentBreakdown || sale.payment_breakdown || {}); } catch { pb = {}; }
+
+    const cash = Number(pb.cash || 0);
+    const bkash = Number(pb.bkash || 0);
+    const nagad = Number(pb.nagad || 0);
+    const rocket = Number(pb.rocket || 0);
+    const bank = Number(pb.bank || 0);
+    const due = Number(pb.dueAmount || 0);
+    const netTotal = Number(sale.net_total || sale.grandTotal || sale.totalAmount || 0);
+
+    const lines = [];
+    if (cash > 0 && acctMap['1000']) lines.push({ accountId: acctMap['1000'].id, code: '1000', accountName: 'Cash', debit: cash, credit: 0 });
+    if (bank > 0 && acctMap['1010']) lines.push({ accountId: acctMap['1010'].id, code: '1010', accountName: 'Bank Account', debit: bank, credit: 0 });
+    if (bkash > 0 && acctMap['1011']) lines.push({ accountId: acctMap['1011'].id, code: '1011', accountName: 'bKash Account', debit: bkash, credit: 0 });
+    if (nagad > 0 && acctMap['1012']) lines.push({ accountId: acctMap['1012'].id, code: '1012', accountName: 'Nagad Account', debit: nagad, credit: 0 });
+    if (rocket > 0 && acctMap['1013']) lines.push({ accountId: acctMap['1013'].id, code: '1013', accountName: 'Rocket Account', debit: rocket, credit: 0 });
+    if (due > 0 && acctMap['1020']) lines.push({ accountId: acctMap['1020'].id, code: '1020', accountName: 'Accounts Receivable', debit: due, credit: 0 });
+
+    const totalPaidAssigned = cash + bank + bkash + nagad + rocket + due;
+    if (totalPaidAssigned < netTotal && acctMap['1000']) {
+      lines.push({ accountId: acctMap['1000'].id, code: '1000', accountName: 'Cash', debit: netTotal - totalPaidAssigned, credit: 0 });
+    }
+
+    if (acctMap['4000']) {
+      lines.push({ accountId: acctMap['4000'].id, code: '4000', accountName: 'Sales Revenue', debit: 0, credit: netTotal });
+    }
+
+    let saleItems = [];
+    try { saleItems = typeof sale.line_items === 'string' ? JSON.parse(sale.line_items) : (sale.lineItems || sale.items || []); } catch { saleItems = []; }
+    let cogs = 0;
+    for (const it of saleItems) {
+      const qty = Number(it.qty || 1);
+      const uCost = Number(it.unitCost || 0);
+      cogs += (uCost * qty);
+    }
+    if (cogs > 0 && acctMap['5000'] && acctMap['1030']) {
+      lines.push({ accountId: acctMap['5000'].id, code: '5000', accountName: 'Cost of Goods Sold', debit: cogs, credit: 0 });
+      lines.push({ accountId: acctMap['1030'].id, code: '1030', accountName: 'Inventory', debit: 0, credit: cogs });
+    }
+
+    if (lines.length >= 2) {
+      return await createJournalEntry({
+        tenantId,
+        date: sale.created_at || new Date(),
+        description: `Sale Invoice #${ref} (${sale.customer_name || 'Walk-in'})`,
+        reference: ref,
+        lines,
+      });
+    }
+  } catch (err) {
+    console.error('[AUTO-JOURNAL] Failed to create sale journal:', err.message);
+  }
+  return null;
+};
+
+export const createAutomatedExpenseJournal = async (expense) => {
+  try {
+    const tenantId = expense.tenant_id || expense.tenantId || null;
+    const ref = `EXP-${expense.id}`;
+    const existing = await db('journal_entries').where({ reference: ref, is_deleted: false }).first();
+    if (existing) return existing;
+
+    await seedDefaultAccounts(tenantId);
+    const acctsQuery = db('accounts').where({ is_deleted: false });
+    applyTenantScope(acctsQuery, tenantId, 'accounts');
+    const accounts = await acctsQuery;
+    const acctMap = {};
+    for (const a of accounts) acctMap[a.code] = a;
+
+    const amt = Number(expense.amount || 0);
+    const method = String(expense.payment_method || expense.paymentMethod || 'cash').toLowerCase();
+    let creditAcct = acctMap['1000'];
+    if (method.includes('bank') && acctMap['1010']) creditAcct = acctMap['1010'];
+    else if (method.includes('bkash') && acctMap['1011']) creditAcct = acctMap['1011'];
+    else if (method.includes('nagad') && acctMap['1012']) creditAcct = acctMap['1012'];
+    else if (method.includes('rocket') && acctMap['1013']) creditAcct = acctMap['1013'];
+
+    const expenseAcct = acctMap['6000'];
+    if (expenseAcct && creditAcct && amt > 0) {
+      return await createJournalEntry({
+        tenantId,
+        date: expense.created_at || new Date(),
+        description: `Expense: ${expense.title || expense.category} (${expense.category})`,
+        reference: ref,
+        lines: [
+          { accountId: expenseAcct.id, code: expenseAcct.code, accountName: expenseAcct.name, debit: amt, credit: 0 },
+          { accountId: creditAcct.id, code: creditAcct.code, accountName: creditAcct.name, debit: 0, credit: amt },
+        ],
+      });
+    }
+  } catch (err) {
+    console.error('[AUTO-JOURNAL] Failed to create expense journal:', err.message);
+  }
+  return null;
+};
+
+export const createAutomatedDueCollectionJournal = async (sale, collectedAmount, method = 'cash', collectedBy = 'system') => {
+  try {
+    const tenantId = sale.tenant_id || sale.tenantId || null;
+    const amt = Number(collectedAmount || 0);
+    if (amt <= 0) return null;
+
+    await seedDefaultAccounts(tenantId);
+    const acctsQuery = db('accounts').where({ is_deleted: false });
+    applyTenantScope(acctsQuery, tenantId, 'accounts');
+    const accounts = await acctsQuery;
+    const acctMap = {};
+    for (const a of accounts) acctMap[a.code] = a;
+
+    let debitAcct = acctMap['1000'];
+    const m = String(method).toLowerCase();
+    if (m.includes('bank') && acctMap['1010']) debitAcct = acctMap['1010'];
+    else if (m.includes('bkash') && acctMap['1011']) debitAcct = acctMap['1011'];
+    else if (m.includes('nagad') && acctMap['1012']) debitAcct = acctMap['1012'];
+    else if (m.includes('rocket') && acctMap['1013']) debitAcct = acctMap['1013'];
+
+    const arAcct = acctMap['1020'];
+    if (debitAcct && arAcct) {
+      return await createJournalEntry({
+        tenantId,
+        date: new Date(),
+        description: `Due Collection for Invoice #${sale.invoice_number || sale.invoiceNo || 'Sale'}`,
+        reference: `DUE-${sale.invoice_number || sale.id}-${Date.now().toString().slice(-4)}`,
+        lines: [
+          { accountId: debitAcct.id, code: debitAcct.code, accountName: debitAcct.name, debit: amt, credit: 0 },
+          { accountId: arAcct.id, code: arAcct.code, accountName: arAcct.name, debit: 0, credit: amt },
+        ],
+      });
+    }
+  } catch (err) {
+    console.error('[AUTO-JOURNAL] Failed to create due collection journal:', err.message);
+  }
+  return null;
+};
+
+export const syncHistoricalJournals = async (tenantId = null) => {
+  await seedDefaultAccounts(tenantId);
+
+  const acctsQuery = db('accounts').where({ is_deleted: false });
+  applyTenantScope(acctsQuery, tenantId, 'accounts');
+  const accounts = await acctsQuery;
+  const acctMap = {};
+  for (const a of accounts) {
+    acctMap[a.code] = a;
+  }
+
+  const allProducts = await db('products').where('is_deleted', false).select('id', 'cost_price');
+  const prodCostMap = {};
+  for (const p of allProducts) {
+    prodCostMap[p.id] = Number(p.cost_price || 0);
+  }
+
+  let syncedCount = 0;
+
+  // 1. Sync Sales
+  const salesQuery = db('transactions').where({ tx_type: 'SALE', is_deleted: false, status: 'COMPLETED' });
+  applyTenantScope(salesQuery, tenantId, 'transactions');
+  const sales = await salesQuery;
+
+  for (const sale of sales) {
+    const ref = sale.invoice_number;
+    const existing = await db('journal_entries').where({ reference: ref, is_deleted: false });
+    applyTenantScope(existing, tenantId, 'journal_entries');
+    const hasExisting = await existing.first();
+
+    if (!hasExisting && sale.net_total > 0) {
+      let pb = {};
+      try { pb = typeof sale.payment_breakdown === 'string' ? JSON.parse(sale.payment_breakdown) : (sale.payment_breakdown || {}); } catch { pb = {}; }
+
+      const cash = Number(pb.cash || 0);
+      const bkash = Number(pb.bkash || 0);
+      const nagad = Number(pb.nagad || 0);
+      const rocket = Number(pb.rocket || 0);
+      const bank = Number(pb.bank || 0);
+      const due = Number(pb.dueAmount || 0);
+      const netTotal = Number(sale.net_total || 0);
+
+      const lines = [];
+      if (cash > 0 && acctMap['1000']) lines.push({ accountId: acctMap['1000'].id, code: '1000', accountName: 'Cash', debit: cash, credit: 0 });
+      if (bank > 0 && acctMap['1010']) lines.push({ accountId: acctMap['1010'].id, code: '1010', accountName: 'Bank Account', debit: bank, credit: 0 });
+      if (bkash > 0 && acctMap['1011']) lines.push({ accountId: acctMap['1011'].id, code: '1011', accountName: 'bKash Account', debit: bkash, credit: 0 });
+      if (nagad > 0 && acctMap['1012']) lines.push({ accountId: acctMap['1012'].id, code: '1012', accountName: 'Nagad Account', debit: nagad, credit: 0 });
+      if (rocket > 0 && acctMap['1013']) lines.push({ accountId: acctMap['1013'].id, code: '1013', accountName: 'Rocket Account', debit: rocket, credit: 0 });
+      if (due > 0 && acctMap['1020']) lines.push({ accountId: acctMap['1020'].id, code: '1020', accountName: 'Accounts Receivable', debit: due, credit: 0 });
+
+      const totalPaidAssigned = cash + bank + bkash + nagad + rocket + due;
+      if (totalPaidAssigned < netTotal && acctMap['1000']) {
+        lines.push({ accountId: acctMap['1000'].id, code: '1000', accountName: 'Cash', debit: netTotal - totalPaidAssigned, credit: 0 });
+      }
+
+      if (acctMap['4000']) {
+        lines.push({ accountId: acctMap['4000'].id, code: '4000', accountName: 'Sales Revenue', debit: 0, credit: netTotal });
+      }
+
+      let saleItems = [];
+      try { saleItems = typeof sale.line_items === 'string' ? JSON.parse(sale.line_items) : (sale.line_items || []); } catch { saleItems = []; }
+      let cogs = 0;
+      for (const it of saleItems) {
+        const qty = Number(it.qty || 1);
+        const uCost = it.unitCost !== undefined ? Number(it.unitCost) : (prodCostMap[it.productId] || 0);
+        cogs += (uCost * qty);
+      }
+
+      if (cogs > 0 && acctMap['5000'] && acctMap['1030']) {
+        lines.push({ accountId: acctMap['5000'].id, code: '5000', accountName: 'Cost of Goods Sold', debit: cogs, credit: 0 });
+        lines.push({ accountId: acctMap['1030'].id, code: '1030', accountName: 'Inventory', debit: 0, credit: cogs });
+      }
+
+      if (lines.length >= 2) {
+        await createJournalEntry({
+          tenantId: sale.tenant_id || tenantId,
+          date: sale.created_at,
+          description: `Sale Invoice #${ref} (${sale.customer_name || 'Walk-in'})`,
+          reference: ref,
+          lines,
+        });
+        syncedCount++;
+      }
+    }
+  }
+
+  // 2. Sync Expenses
+  const expQuery = db('expenses').where({ is_deleted: false });
+  applyTenantScope(expQuery, tenantId, 'expenses');
+  const expenses = await expQuery;
+
+  for (const exp of expenses) {
+    const ref = `EXP-${exp.id}`;
+    const existing = await db('journal_entries').where({ reference: ref, is_deleted: false });
+    applyTenantScope(existing, tenantId, 'journal_entries');
+    const hasExisting = await existing.first();
+
+    if (!hasExisting && exp.amount > 0) {
+      const amt = Number(exp.amount || 0);
+      const method = String(exp.payment_method || 'cash').toLowerCase();
+      let creditAcct = acctMap['1000'];
+      if (method.includes('bank') && acctMap['1010']) creditAcct = acctMap['1010'];
+      else if (method.includes('bkash') && acctMap['1011']) creditAcct = acctMap['1011'];
+      else if (method.includes('nagad') && acctMap['1012']) creditAcct = acctMap['1012'];
+      else if (method.includes('rocket') && acctMap['1013']) creditAcct = acctMap['1013'];
+
+      const expenseAcct = acctMap['6000'];
+      if (expenseAcct && creditAcct) {
+        await createJournalEntry({
+          tenantId: exp.tenant_id || tenantId,
+          date: exp.created_at,
+          description: `Expense: ${exp.title || exp.category} (${exp.category})`,
+          reference: ref,
+          lines: [
+            { accountId: expenseAcct.id, code: expenseAcct.code, accountName: expenseAcct.name, debit: amt, credit: 0 },
+            { accountId: creditAcct.id, code: creditAcct.code, accountName: creditAcct.name, debit: 0, credit: amt },
+          ],
+        });
+        syncedCount++;
+      }
+    }
+  }
+
+  await recalculateAllAccountBalances(tenantId);
+  return { message: `Successfully synced ${syncedCount} journal entries into ledger`, syncedCount };
+};
+
 export const createAutomatedReturnJournal = async (sale, refundAmount, returnInvoiceNumber, opts = {}) => {};
-export const createAutomatedDueCollectionJournal = async (sale, collectedAmount, method = 'cash', collectedBy = 'system') => {};
 export const createAutomatedPurchaseReturnJournal = async (purchaseOrder, refundAmount) => {};
 export const createAutomatedPurchaseJournal = async (purchaseOrder, grnEntries = []) => {};
-export const createAutomatedExpenseJournal = async (expense) => {};
-export const syncHistoricalJournals = async (tenantId = null) => { return { message: 'Synced', syncedCount: 0 }; };
