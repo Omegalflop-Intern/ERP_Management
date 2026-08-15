@@ -121,7 +121,7 @@ export default function Loans() {
             Track inbound capital loans taken vs outbound loans extended to third parties
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Dual View Toggle */}
           <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
             <button
@@ -411,7 +411,7 @@ export default function Loans() {
           onClick={() => setShowAddLoanModal(false)}
         >
           <div
-            className={`${cardCls} w-full max-w-md p-6 shadow-2xl space-y-4`}
+            className={`${cardCls} w-full max-w-md p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b dark:border-gray-800 pb-3">
@@ -551,7 +551,7 @@ export default function Loans() {
           onClick={() => setRepayTargetLoan(null)}
         >
           <div
-            className={`${cardCls} w-full max-w-md p-6 shadow-2xl space-y-4`}
+            className={`${cardCls} w-full max-w-md p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b dark:border-gray-800 pb-3">
