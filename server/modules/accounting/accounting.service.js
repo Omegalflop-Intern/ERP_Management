@@ -515,14 +515,11 @@ export const recalculateAllAccountBalances = async (tenantId = null) => {
 export const getTrialBalance = async (tenantId = null) => {
   await seedDefaultAccounts(tenantId);
 
-  // If no journal entries exist yet, auto-sync past store sales & expenses
-  const countJE = db('journal_entries').where({ is_deleted: false });
-  applyTenantScope(countJE, tenantId, 'journal_entries');
-  const jeRes = await countJE.count({ count: '*' }).first();
-  if (Number(jeRes?.count || 0) === 0) {
-    try {
-      await syncHistoricalJournals(tenantId);
-    } catch (e) {}
+  // Sync any unsynced assets, sales, or expenses to ensure books are fully balanced
+  try {
+    await syncHistoricalJournals(tenantId);
+  } catch (e) {
+    console.error('[TrialBalance Sync Error]:', e.message);
   }
 
   const query = db('accounts').where({ is_deleted: false, is_active: true });
@@ -740,6 +737,36 @@ export const syncHistoricalJournals = async (tenantId = null) => {
   }
 
   let syncedCount = 0;
+
+  // 0. Sync Fixed Shop Assets with Owner's Capital
+  const capitalAcct = acctMap['3000'];
+  if (capitalAcct) {
+    const fixedAssets = accounts.filter(
+      (a) => a.type === 'ASSET' && !['1000', '1010', '1011', '1012', '1013', '1020', '1030'].includes(a.code)
+    );
+    for (const fa of fixedAssets) {
+      const pCost = Number(fa.balance || 0);
+      if (pCost > 0) {
+        const ref = `INIT-AST-${fa.id}`;
+        const existing = await db('journal_entries').where({ reference: ref, is_deleted: false });
+        applyTenantScope(existing, tenantId, 'journal_entries');
+        const hasExisting = await existing.first();
+        if (!hasExisting) {
+          await createJournalEntry({
+            tenantId: fa.tenant_id || tenantId,
+            date: fa.created_at || new Date(),
+            description: `Initial Capital Asset: ${fa.name}`,
+            reference: ref,
+            lines: [
+              { accountId: fa.id, code: fa.code, accountName: fa.name, debit: pCost, credit: 0 },
+              { accountId: capitalAcct.id, code: capitalAcct.code, accountName: capitalAcct.name, debit: 0, credit: pCost },
+            ],
+          });
+          syncedCount++;
+        }
+      }
+    }
+  }
 
   // 1. Sync Sales
   const salesQuery = db('transactions').where({ tx_type: 'SALE', is_deleted: false, status: 'COMPLETED' });

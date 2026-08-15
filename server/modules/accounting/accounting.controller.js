@@ -233,15 +233,35 @@ export const createAsset = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
     const data = req.body;
+    const pCost = Number(data.purchaseCost || data.balance || 0);
     const code = `AST-${Date.now().toString().slice(-4)}${Math.floor(Math.random() * 90 + 10)}`;
     const account = await accountingService.createAccount({
       code,
       name: data.assetName || data.name || 'Shop Asset',
       type: 'ASSET',
       subType: data.category || 'FURNITURE',
-      balance: Number(data.purchaseCost || data.balance || 0),
+      balance: pCost,
       description: `Asset acquired on ${data.purchaseDate || new Date().toISOString().split('T')[0]} (Useful life: ${data.usefulLifeMonths || 36} mos)`,
     }, tenantId);
+
+    if (pCost > 0) {
+      const capitalQuery = db('accounts').where({ code: '3000', is_deleted: false });
+      applyTenantScope(capitalQuery, tenantId, 'accounts');
+      const capitalAcct = await capitalQuery.first();
+      if (capitalAcct) {
+        await accountingService.createJournalEntry({
+          tenantId,
+          date: data.purchaseDate ? new Date(data.purchaseDate) : new Date(),
+          description: `Shop Asset Acquisition: ${account.name}`,
+          reference: `AST-BUY-${account.id}`,
+          lines: [
+            { accountId: account.id, code: account.code, accountName: account.name, debit: pCost, credit: 0 },
+            { accountId: capitalAcct.id, code: capitalAcct.code, accountName: capitalAcct.name, debit: 0, credit: pCost },
+          ],
+        });
+      }
+    }
+
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'CREATE_ASSET', module: 'accounting', entityId: account.id, entityType: 'Account', details: { name: account.name, code: account.code }, req });
     return ApiResponse.created(res, {
       _id: String(account.id),
@@ -249,8 +269,8 @@ export const createAsset = async (req, res, next) => {
       assetName: account.name,
       category: account.subType || 'FURNITURE',
       purchaseDate: data.purchaseDate || account.createdAt,
-      purchaseCost: Number(account.balance || 0),
-      currentBookValue: Number(account.balance || 0),
+      purchaseCost: pCost,
+      currentBookValue: pCost,
       usefulLifeMonths: Number(data.usefulLifeMonths || 36),
       salvageValue: Number(data.salvageValue || 0),
     }, 'Asset registered successfully');
