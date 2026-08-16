@@ -1,2 +1,0 @@
-whenever i try to edit shop and wanted to saving it its throwing me this
-```update `tenants` set `subdomain` = 'cox-gadget', `custom_domain` = NULL, `shop_name` = 'Cox Gadget', `owner_name` = 'Salah Uddin', `phone` = '+8801851075537', `plan` = 'ENTERPRISE', `max_branches` = 5, `max_users` = 5, `expires_at` = '2027-08-08 05:30:00.000', `notes` = '' where `id` = '1' - Unknown column 'notes' in 'SET'```
