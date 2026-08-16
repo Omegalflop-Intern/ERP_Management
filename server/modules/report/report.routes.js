@@ -259,17 +259,30 @@ router.get('/analytics', async (req, res, next) => {
     applyScope(prodQuery);
     const prodRes = await prodQuery.count({ count: '*' }).first();
 
-    const pmQuery = db('transactions')
+    const txForPm = db('transactions')
       .where({ is_deleted: false, tx_type: 'SALE' })
-      .select('payment_method')
-      .count({ count: '*' })
-      .groupBy('payment_method');
-    applyScope(pmQuery);
-    applyBranch(pmQuery);
-    const pmRows = await pmQuery;
-    const paymentMethods = pmRows.map((r) => ({
-      method: (r.payment_method || 'Cash').toUpperCase(),
-      count: Number(r.count || 0),
+      .select('payment_breakdown');
+    applyScope(txForPm);
+    applyBranch(txForPm);
+    const pmTransactions = await txForPm;
+
+    const pmCounts = {};
+    for (const tx of pmTransactions) {
+      let pb = tx.payment_breakdown;
+      if (typeof pb === 'string') { try { pb = JSON.parse(pb); } catch { pb = {}; } }
+      if (pb && typeof pb === 'object') {
+        Object.entries(pb).forEach(([method, amt]) => {
+          if (Number(amt || 0) > 0) {
+            const m = method.toUpperCase();
+            pmCounts[m] = (pmCounts[m] || 0) + 1;
+          }
+        });
+      }
+    }
+
+    const paymentMethods = Object.entries(pmCounts).map(([method, count]) => ({
+      method,
+      count,
     }));
 
     const catQuery = db('products')
@@ -519,15 +532,14 @@ router.get('/employees', async (req, res, next) => {
 
     // Sales by employee
     const salesByEmpQuery = db('transactions')
-      .leftJoin('employees', 'transactions.created_by', 'employees.user_id')
-      .where({ 'transactions.is_deleted': false, 'transactions.tx_type': 'SALE' })
-      .select('employees.name as name')
+      .where({ is_deleted: false, tx_type: 'SALE' })
+      .select(db.raw('COALESCE(seller_name, cashier_username, "Staff") as name'))
       .count({ salesCount: '*' })
-      .sum({ totalRevenue: 'transactions.net_total' })
-      .groupBy('employees.name')
+      .sum({ totalRevenue: 'net_total' })
+      .groupByRaw('COALESCE(seller_name, cashier_username, "Staff")')
       .limit(10);
-    applyScope(salesByEmpQuery, 'transactions');
-    applyBranch(salesByEmpQuery, 'transactions');
+    applyScope(salesByEmpQuery);
+    applyBranch(salesByEmpQuery);
     const salesByEmpRows = await salesByEmpQuery;
 
     const salesByEmployee = salesByEmpRows
