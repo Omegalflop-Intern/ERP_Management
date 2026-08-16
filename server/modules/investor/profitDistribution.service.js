@@ -54,7 +54,7 @@ export const calculateProfitDistribution = async (startDate, endDate, tenantId =
   };
 };
 
-export const executeShareDistribution = async (distributionData, username = 'system', tenantId = null) => {
+export const executeShareDistribution = async (distributionData, username = 'system', tenantId = null, branchId = null) => {
   const { investorId, actionType, amount, paymentMethod, reference, notes } = distributionData;
 
   if (!investorId || !actionType || !amount || Number(amount) <= 0) {
@@ -64,6 +64,10 @@ export const executeShareDistribution = async (distributionData, username = 'sys
   const numericAmount = Number(amount);
   const investor = await getInvestorById(investorId, tenantId);
   if (!investor) throw ApiError.notFound('Investor profile not found');
+
+  if (branchId && branchId !== 'all' && investor.branchId && String(investor.branchId) !== String(branchId)) {
+    throw ApiError.forbidden('Investor does not belong to your branch');
+  }
 
   let txType = 'PROFIT_PAYOUT';
   let referenceMsg = reference || 'Profit Share Pay Out';

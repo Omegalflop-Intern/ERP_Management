@@ -417,8 +417,8 @@ function JournalEntryForm({ onClose, onSuccess }) {
     'w-full px-3.5 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-all';
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="glass-primary w-full max-w-3xl rounded-[24px] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+      <div className="glass-primary w-full max-w-3xl max-w-[calc(100vw-1.5rem)] my-auto rounded-[24px] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
         {/* Modal Header */}
         <div className="px-6 py-4 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between shrink-0">
           <div>
@@ -617,8 +617,8 @@ function JournalEntryForm({ onClose, onSuccess }) {
 function JournalEntryDetail({ entry, onClose }) {
   if (!entry) return null;
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="glass-primary w-full max-w-2xl rounded-[24px] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+      <div className="glass-primary w-full max-w-2xl max-w-[calc(100vw-1.5rem)] my-auto rounded-[24px] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
         <div className="px-6 py-4 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between shrink-0">
           <div>
             <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">

@@ -300,11 +300,11 @@ export default function Expenses() {
       {/* Record Expense Modal */}
       {showAddModal && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
           onClick={() => setShowAddModal(false)}
         >
           <div
-            className={`${cardCls} w-full max-w-md p-6 shadow-2xl`}
+            className={`${cardCls} w-full max-w-md max-w-[calc(100vw-1.5rem)] my-auto max-h-[90vh] overflow-y-auto p-4 sm:p-6 shadow-2xl`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4 border-b dark:border-gray-800 pb-3">
@@ -482,11 +482,11 @@ function EditExpenseModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
       onClick={onClose}
     >
       <div
-        className={`${cardCls} w-full max-w-md p-6 shadow-2xl`}
+        className={`${cardCls} w-full max-w-md max-w-[calc(100vw-1.5rem)] my-auto max-h-[90vh] overflow-y-auto p-4 sm:p-6 shadow-2xl`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4 border-b dark:border-gray-800 pb-3">

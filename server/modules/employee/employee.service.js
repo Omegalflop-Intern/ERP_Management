@@ -38,9 +38,7 @@ export function formatEmployee(row, userRow = null) {
 
 function applyTenantScope(query, tenantId) {
   if (tenantId) {
-    query.where((b) => {
-      b.where('employees.tenant_id', tenantId).orWhereNull('employees.tenant_id');
-    });
+    query.where('employees.tenant_id', tenantId);
   }
 }
 

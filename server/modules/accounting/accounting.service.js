@@ -65,6 +65,12 @@ function applyTenantScope(query, tenantId, tablePrefix = 'accounts') {
   }
 }
 
+function applyBranchScope(query, branchId, tablePrefix = 'accounts') {
+  if (branchId && branchId !== 'all') {
+    query.where((b) => b.where(`${tablePrefix}.branch_id`, branchId).orWhereNull(`${tablePrefix}.branch_id`));
+  }
+}
+
 export const getAllAccounts = async (page = 1, limit = 100, search = '', type = '', tenantId = null, branchId = null) => {
   const countQuery = db('accounts').where('accounts.is_deleted', false);
   applyTenantScope(countQuery, tenantId, 'accounts');
@@ -112,7 +118,7 @@ export const getAllAccounts = async (page = 1, limit = 100, search = '', type = 
   return { accounts, pagination: getPagination(total, page, limit) };
 };
 
-export const getAccountById = async (id, tenantId = null) => {
+export const getAccountById = async (id, tenantId = null, branchId = null) => {
   const query = db('accounts')
     .leftJoin('accounts as p', 'accounts.parent_id', 'p.id')
     .where({ 'accounts.id': id, 'accounts.is_deleted': false })
@@ -121,6 +127,7 @@ export const getAccountById = async (id, tenantId = null) => {
       'p.id as p_id', 'p.code as p_code', 'p.name as p_name'
     );
   applyTenantScope(query, tenantId, 'accounts');
+  applyBranchScope(query, branchId, 'accounts');
   const row = await query.first();
   if (!row) throw ApiError.notFound('Account not found');
   const parentRow = row.p_id ? { id: row.p_id, code: row.p_code, name: row.p_name } : null;
@@ -151,8 +158,8 @@ export const createAccount = async (data) => {
   return getAccountById(insertedId, tenantId);
 };
 
-export const updateAccount = async (id, data, tenantId = null) => {
-  const account = await getAccountById(id, tenantId);
+export const updateAccount = async (id, data, tenantId = null, branchId = null) => {
+  const account = await getAccountById(id, tenantId, branchId);
   if (!account) throw ApiError.notFound('Account not found');
 
   const updateFields = {};
@@ -170,8 +177,8 @@ export const updateAccount = async (id, data, tenantId = null) => {
   return getAccountById(id, tenantId);
 };
 
-export const deleteAccount = async (id, tenantId = null) => {
-  const account = await getAccountById(id, tenantId);
+export const deleteAccount = async (id, tenantId = null, branchId = null) => {
+  const account = await getAccountById(id, tenantId, branchId);
   if (!account) throw ApiError.notFound('Account not found');
 
   const acctDel = db('accounts').where({ id });
@@ -241,9 +248,10 @@ export const getAllJournalEntries = async (page = 1, limit = 20, search = '', st
   return { entries, pagination: getPagination(total, page, limit) };
 };
 
-export const getJournalEntryById = async (id, tenantId = null) => {
+export const getJournalEntryById = async (id, tenantId = null, branchId = null) => {
   const query = db('journal_entries').where({ id, is_deleted: false });
   applyTenantScope(query, tenantId, 'journal_entries');
+  applyBranchScope(query, branchId, 'journal_entries');
   const row = await query.first();
   if (!row) throw ApiError.notFound('Journal entry not found');
   return formatJournalEntry(row);
@@ -258,7 +266,9 @@ async function applyLinesToAccounts(lines = [], reverse = false, tenantId = null
 
     let account = null;
     if (line.accountId) {
-      account = await db('accounts').where({ id: line.accountId }).first();
+      const q = db('accounts').where({ id: line.accountId });
+      if (tenantId) q.andWhere('tenant_id', tenantId);
+      account = await q.first();
     } else if (line.code) {
       const q = db('accounts').where({ code: line.code, is_deleted: false });
       if (tenantId) q.andWhere('tenant_id', tenantId);
@@ -283,6 +293,7 @@ async function applyLinesToAccounts(lines = [], reverse = false, tenantId = null
 
 export const createJournalEntry = async (data) => {
   const tenantId = data.tenantId || null;
+  const branchId = data.branchId || null;
   const totalDebit = (data.lines || []).reduce((sum, l) => sum + (Number(l.debit) || 0), 0);
   const totalCredit = (data.lines || []).reduce((sum, l) => sum + (Number(l.credit) || 0), 0);
 
@@ -292,6 +303,7 @@ export const createJournalEntry = async (data) => {
   const entryNumber = await generateEntryNumber(tenantId);
   const [insertedId] = await db('journal_entries').insert({
     tenant_id: tenantId,
+    branch_id: branchId,
     entry_number: entryNumber,
     date: data.date ? new Date(data.date) : new Date(),
     description: data.description,
@@ -308,24 +320,25 @@ export const createJournalEntry = async (data) => {
     await applyLinesToAccounts(data.lines, false, tenantId);
   }
 
-  return getJournalEntryById(insertedId, tenantId);
+  return getJournalEntryById(insertedId, tenantId, branchId);
 };
 
-export const postJournalEntry = async (id, postedBy = 'system', tenantId = null) => {
-  const entry = await getJournalEntryById(id, tenantId);
+export const postJournalEntry = async (id, postedBy = 'system', tenantId = null, branchId = null) => {
+  const entry = await getJournalEntryById(id, tenantId, branchId);
   if (!entry) throw ApiError.notFound('Journal entry not found');
 
   if (entry.status !== 'POSTED') {
     const jePost = db('journal_entries').where({ id });
     if (tenantId) jePost.andWhere('tenant_id', tenantId);
+    if (branchId && branchId !== 'all') jePost.andWhere('branch_id', branchId);
     await jePost.update({ status: 'POSTED', posted_by: postedBy });
     await applyLinesToAccounts(parseJSON(entry.lines), false, tenantId);
   }
-  return getJournalEntryById(id, tenantId);
+  return getJournalEntryById(id, tenantId, branchId);
 };
 
-export const voidJournalEntry = async (id, voidedBy = 'system', tenantId = null) => {
-  const entry = await getJournalEntryById(id, tenantId);
+export const voidJournalEntry = async (id, voidedBy = 'system', tenantId = null, branchId = null) => {
+  const entry = await getJournalEntryById(id, tenantId, branchId);
   if (!entry) throw ApiError.notFound('Journal entry not found');
 
   if (entry.status === 'POSTED') {
@@ -334,12 +347,13 @@ export const voidJournalEntry = async (id, voidedBy = 'system', tenantId = null)
 
   const jeVoid = db('journal_entries').where({ id });
   if (tenantId) jeVoid.andWhere('tenant_id', tenantId);
+  if (branchId && branchId !== 'all') jeVoid.andWhere('branch_id', branchId);
   await jeVoid.update({ status: 'VOID', voided_by: voidedBy, voided_at: new Date() });
-  return getJournalEntryById(id, tenantId);
+  return getJournalEntryById(id, tenantId, branchId);
 };
 
-export const deleteJournalEntry = async (id, tenantId = null) => {
-  const entry = await getJournalEntryById(id, tenantId);
+export const deleteJournalEntry = async (id, tenantId = null, branchId = null) => {
+  const entry = await getJournalEntryById(id, tenantId, branchId);
   if (!entry) throw ApiError.notFound('Journal entry not found');
 
   if (entry.status === 'POSTED') {
@@ -348,14 +362,16 @@ export const deleteJournalEntry = async (id, tenantId = null) => {
 
   const jeDel = db('journal_entries').where({ id });
   if (tenantId) jeDel.andWhere('tenant_id', tenantId);
+  if (branchId && branchId !== 'all') jeDel.andWhere('branch_id', branchId);
   await jeDel.update({ is_deleted: true });
   return { ...entry, isDeleted: true };
 };
 
-export const getBalanceSheet = async (asOf = '', tenantId = null) => {
+export const getBalanceSheet = async (asOf = '', tenantId = null, branchId = null) => {
   await seedDefaultAccounts(tenantId);
   const accountsQuery = db('accounts').where({ is_deleted: false, is_active: true });
   applyTenantScope(accountsQuery, tenantId, 'accounts');
+  applyBranchScope(accountsQuery, branchId, 'accounts');
   const rows = await accountsQuery.orderBy('code', 'asc');
   const accounts = rows.map(r => formatAccount(r));
 
@@ -512,7 +528,7 @@ export const recalculateAllAccountBalances = async (tenantId = null) => {
   }
 };
 
-export const getTrialBalance = async (tenantId = null) => {
+export const getTrialBalance = async (tenantId = null, branchId = null) => {
   await seedDefaultAccounts(tenantId);
 
   // Sync any unsynced assets, sales, or expenses to ensure books are fully balanced
@@ -524,6 +540,7 @@ export const getTrialBalance = async (tenantId = null) => {
 
   const query = db('accounts').where({ is_deleted: false, is_active: true });
   applyTenantScope(query, tenantId, 'accounts');
+  applyBranchScope(query, branchId, 'accounts');
   const rows = await query.orderBy('code', 'asc');
 
   let totalDebit = 0;

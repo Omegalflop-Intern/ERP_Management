@@ -145,9 +145,13 @@ export const getInvestorById = async (id, tenantId = null) => {
   return investor;
 };
 
-export const addInvestorTransaction = async (investorId, txData, username, tenantId = null) => {
+export const addInvestorTransaction = async (investorId, txData, username, tenantId = null, branchId = null) => {
   const investor = await getInvestorById(investorId, tenantId);
   if (!investor) throw ApiError.notFound('Investor not found');
+
+  if (branchId && branchId !== 'all' && investor.branchId && String(investor.branchId) !== String(branchId)) {
+    throw ApiError.forbidden('Investor does not belong to your branch');
+  }
 
   const amount = Number(txData.amount);
   if (isNaN(amount) || amount <= 0) throw ApiError.badRequest('Invalid transaction amount');
@@ -234,7 +238,7 @@ export const deleteInvestor = async (id, tenantId = null) => {
   return { ...investor, isDeleted: true };
 };
 
-export const getAllTransactions = async (tenantId = null) => {
+export const getAllTransactions = async (tenantId = null, branchId = null) => {
   const dataQuery = db('investor_transactions')
     .leftJoin('investors', 'investor_transactions.investor_id', 'investors.id')
     .where('investor_transactions.is_deleted', false)
@@ -247,6 +251,9 @@ export const getAllTransactions = async (tenantId = null) => {
     );
   if (tenantId) {
     dataQuery.where('investor_transactions.tenant_id', tenantId);
+  }
+  if (branchId && branchId !== 'all') {
+    dataQuery.where((b) => b.where('investors.branch_id', branchId).orWhereNull('investors.branch_id'));
   }
 
   const rows = await dataQuery.orderBy('investor_transactions.created_at', 'desc');

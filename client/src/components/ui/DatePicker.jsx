@@ -13,6 +13,7 @@ export default function DatePicker({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [openUpward, setOpenUpward] = useState(false);
+  const [alignRight, setAlignRight] = useState(false);
   const { styled } = useTheme();
   const containerRef = useRef(null);
 
@@ -36,6 +37,14 @@ export default function DatePicker({
         setOpenUpward(true);
       } else {
         setOpenUpward(false);
+      }
+
+      // If space on right of input is less than 290px, align popover to the right
+      const spaceRight = window.innerWidth - rect.left;
+      if (spaceRight < 290 && rect.right > 280) {
+        setAlignRight(true);
+      } else {
+        setAlignRight(false);
       }
     }
   }, [isOpen]);
@@ -155,9 +164,9 @@ export default function DatePicker({
 
       {isOpen && (
         <div
-          className={`absolute left-0 ${
+          className={`absolute ${alignRight ? 'right-0 left-auto' : 'left-0 right-auto'} ${
             openUpward ? 'bottom-full mb-2' : 'top-full mt-2'
-          } z-[99999] p-4 w-72 ${popoverCardClass}`}
+          } z-[99999] p-3 sm:p-4 w-[280px] sm:w-72 max-w-[calc(100vw-1.5rem)] ${popoverCardClass}`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header Month / Year Navigation */}
