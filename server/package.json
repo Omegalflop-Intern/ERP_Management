@@ -9,6 +9,7 @@
     "seed": "node utils/system/seed.js",
     "seed:admin": "node scripts/seedSuperAdmin.js",
     "seed:admins": "node scripts/seedSuperAdmins.js",
+    "db:migrate": "node scripts/runMigration.js",
     "db:reset": "node scripts/resetDatabase.js",
     "test": "NODE_ENV=test node --test tests/*.test.js"
   },

@@ -40,7 +40,7 @@ async function ensureDatabase() {
   }
 }
 
-async function main() {
+export async function runAutoMigrations() {
   await ensureDatabase();
 
   console.log('🔄 Running migration 1: roles table...');
@@ -87,10 +87,16 @@ async function main() {
   await addBranchIdToJournalEntries.up(db);
 
   console.log('✅ All 21 migrations completed successfully!');
-  process.exit(0);
+  return true;
 }
 
-main().catch((err) => {
-  console.error('❌ Migration error:', err);
-  process.exit(1);
-});
+// Execute directly if run via CLI
+const isDirectRun = process.argv[1] && (process.argv[1].endsWith('runMigration.js') || process.argv[1].endsWith('runMigration'));
+if (isDirectRun) {
+  runAutoMigrations()
+    .then(() => process.exit(0))
+    .catch((err) => {
+      console.error('❌ Migration error:', err);
+      process.exit(1);
+    });
+}

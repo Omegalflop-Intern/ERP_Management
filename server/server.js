@@ -1,6 +1,7 @@
 import app from './app.js';
 import { env } from './config/env.config.js';
 import { checkDbConnection } from './config/db.knex.js';
+import { runAutoMigrations } from './scripts/runMigration.js';
 import { initMailer, sendAdminNotificationEmail, sendCustomerInvoiceEmail, sendCustomerRepairEmail } from './config/mailer.js';
 import { seedDefaultRoles } from './modules/role/role.service.js';
 import { initAutoBackup } from './modules/settings/settings.service.js';
@@ -91,6 +92,7 @@ const startServer = (target) => {
     printAsciiBanner();
 
     await logStep('MySQL/MariaDB Database', checkDbConnection);
+    await logStep('Database Schema Migrations', runAutoMigrations);
     await logStep('SMTP Mailer Service', initMailer);
     await logStep('System Roles & Subscription Plans', seedDefaultRoles);
     await logStep('Automated Backup Scheduler', () => initAutoBackup());
