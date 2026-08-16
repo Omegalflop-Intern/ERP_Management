@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import { db } from '../../config/db.knex.js';
 import { seedDefaultRoles } from '../../modules/role/role.service.js';
 import { seedSubscriptionPlans } from '../../modules/plans/plans.service.js';
+import { seedDefaultAccounts } from '../../modules/accounting/accounting.service.js';
 
 const SEED_PASSWORD = process.env.SEED_PASSWORD || 'admin123';
 
@@ -20,6 +21,9 @@ const seed = async () => {
 
     console.log('[SEED] Seeding default subscription plans...');
     await seedSubscriptionPlans();
+
+    console.log('[SEED] Seeding default Chart of Accounts...');
+    await seedDefaultAccounts(null);
 
     const adminRole = await db('roles').where({ name: 'ADMIN' }).first();
     const passwordHash = await bcrypt.hash(SEED_PASSWORD, 10);
