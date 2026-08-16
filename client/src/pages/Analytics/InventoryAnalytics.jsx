@@ -89,30 +89,34 @@ export default function InventoryAnalytics() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="p-6 rounded-2xl border bg-card">
           <h3 className="text-lg font-semibold mb-4">Stock by Category</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={analytics?.categoryStock || []}>
-              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-              <XAxis dataKey="category" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip />
-              <Bar dataKey="count" fill="#6366f1" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={analytics?.categoryStock || analytics?.categoryBreakdown || []}>
+                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip />
+                <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
         <div className="p-6 rounded-2xl border bg-card">
           <h3 className="text-lg font-semibold mb-4">Stock Movement</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={analytics?.stockMovement || []}>
-              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-              <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="inbound" stroke="#10b981" strokeWidth={2} />
-              <Line type="monotone" dataKey="outbound" stroke="#ef4444" strokeWidth={2} />
-            </LineChart>
-          </ResponsiveContainer>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={analytics?.stockMovement || [{ date: 'Today', inbound: stats.totalProducts || 0, outbound: 0 }]}>
+                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="inbound" stroke="#10b981" strokeWidth={2} />
+                <Line type="monotone" dataKey="outbound" stroke="#ef4444" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 
@@ -124,26 +128,42 @@ export default function InventoryAnalytics() {
             <thead>
               <tr className="border-b">
                 <th className="text-left py-3 px-4 font-medium">Product</th>
-                <th className="text-left py-3 px-4 font-medium">SKU</th>
+                <th className="text-left py-3 px-4 font-medium">Brand</th>
                 <th className="text-right py-3 px-4 font-medium">Current Stock</th>
                 <th className="text-right py-3 px-4 font-medium">Min Required</th>
                 <th className="text-left py-3 px-4 font-medium">Status</th>
               </tr>
             </thead>
             <tbody>
-              {(analytics?.lowStockItems || []).map((item) => (
-                <tr key={item.id} className="border-b last:border-0 hover:bg-muted/50">
-                  <td className="py-3 px-4 font-medium">{item.name}</td>
-                  <td className="py-3 px-4 text-muted-foreground">{item.sku}</td>
-                  <td className="py-3 px-4 text-right">{item.currentStock}</td>
-                  <td className="py-3 px-4 text-right">{item.minStock}</td>
-                  <td className="py-3 px-4">
-                    <span className="px-2 py-1 rounded-full text-xs bg-amber-100 text-amber-700">
-                      {item.currentStock === 0 ? 'Out of Stock' : 'Low Stock'}
-                    </span>
+              {(analytics?.lowStockItems || []).length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="py-6 text-center text-slate-400">
+                    No low stock items. Inventory is healthy! 🎉
                   </td>
                 </tr>
-              ))}
+              ) : (
+                (analytics?.lowStockItems || []).map((item) => {
+                  const qty = item.stockQuantity ?? item.currentStock ?? 0;
+                  const min = item.minAlert ?? item.minStock ?? 2;
+                  return (
+                    <tr key={item.id} className="border-b last:border-0 hover:bg-muted/50">
+                      <td className="py-3 px-4 font-medium">{item.name}</td>
+                      <td className="py-3 px-4 text-muted-foreground">{item.brand || '-'}</td>
+                      <td className="py-3 px-4 text-right font-bold">{qty}</td>
+                      <td className="py-3 px-4 text-right">{min}</td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                          qty === 0
+                            ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400'
+                            : 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400'
+                        }`}>
+                          {qty === 0 ? 'Out of Stock' : 'Low Stock'}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>

@@ -88,64 +88,65 @@ export default function CustomerAnalytics() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="p-6 rounded-2xl border bg-card">
           <h3 className="text-lg font-semibold mb-4">Customer Growth</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={analytics?.customerGrowth || []}>
-              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-              <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip />
-              <Line
-                type="monotone"
-                dataKey="newCustomers"
-                stroke="#6366f1"
-                strokeWidth={2}
-                name="New"
-              />
-              <Line
-                type="monotone"
-                dataKey="totalCustomers"
-                stroke="#10b981"
-                strokeWidth={2}
-                name="Total"
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={analytics?.customerGrowth || []}>
+                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip />
+                <Line
+                  type="monotone"
+                  dataKey="newCustomers"
+                  stroke="#6366f1"
+                  strokeWidth={2}
+                  name="New Customers"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
         <div className="p-6 rounded-2xl border bg-card">
-          <h3 className="text-lg font-semibold mb-4">Top Customers</h3>
-          <div className="space-y-3">
-            {(analytics?.topCustomers || []).slice(0, 5).map((cust, i) => (
-              <div key={cust.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-sm font-bold text-indigo-600">
-                  {i + 1}
+          <h3 className="text-lg font-semibold mb-4">Top Spenders</h3>
+          <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+            {(analytics?.topCustomers || analytics?.topSpenders || []).length === 0 ? (
+              <div className="p-6 text-center text-slate-400">No customer records yet</div>
+            ) : (
+              (analytics?.topCustomers || analytics?.topSpenders || []).slice(0, 5).map((cust, i) => (
+                <div key={cust.id || i} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                  <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-sm font-bold text-indigo-600">
+                    {i + 1}
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-medium">{cust.name}</div>
+                    <div className="text-xs text-muted-foreground">{cust.phone || 'Standard Customer'}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-medium text-emerald-600 dark:text-emerald-400">৳{(cust.totalSpent || 0).toLocaleString()}</div>
+                    <div className="text-xs text-muted-foreground">VIP Member</div>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <div className="font-medium">{cust.name}</div>
-                  <div className="text-xs text-muted-foreground">{cust.phone || cust.email}</div>
-                </div>
-                <div className="text-right">
-                  <div className="font-medium">৳{cust.totalSpent?.toLocaleString()}</div>
-                  <div className="text-xs text-muted-foreground">{cust.totalOrders} orders</div>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>
 
-      {/* Customer Segments */}
+      {/* Customer Spenders Bar Chart */}
       <div className="p-6 rounded-2xl border bg-card">
-        <h3 className="text-lg font-semibold mb-4">Customer Segments</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={analytics?.segments || []}>
-            <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-            <XAxis dataKey="segment" tick={{ fontSize: 12 }} />
-            <YAxis tick={{ fontSize: 12 }} />
-            <Tooltip />
-            <Bar dataKey="count" fill="#6366f1" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+        <h3 className="text-lg font-semibold mb-4">Top Spenders Overview</h3>
+        <div className="h-[300px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={analytics?.topCustomers || analytics?.topSpenders || []}>
+              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+              <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 12 }} />
+              <Tooltip />
+              <Bar dataKey="totalSpent" fill="#6366f1" radius={[4, 4, 0, 0]} name="Total Spent (৳)" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </div>
   );

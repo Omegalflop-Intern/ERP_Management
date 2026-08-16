@@ -142,53 +142,57 @@ export default function BusinessAnalytics() {
         {/* Sales Trend */}
         <div className="p-6 rounded-2xl border bg-card">
           <h3 className="text-lg font-semibold mb-4">Sales Trend</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={salesTrend || []}>
-              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-              <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip />
-              <Area
-                type="monotone"
-                dataKey="revenue"
-                stroke="#6366f1"
-                fill="#6366f1"
-                fillOpacity={0.2}
-              />
-              <Area
-                type="monotone"
-                dataKey="sales"
-                stroke="#8b5cf6"
-                fill="#8b5cf6"
-                fillOpacity={0.2}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={salesTrend || []}>
+                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip />
+                <Area
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="#6366f1"
+                  fill="#6366f1"
+                  fillOpacity={0.2}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="sales"
+                  stroke="#8b5cf6"
+                  fill="#8b5cf6"
+                  fillOpacity={0.2}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
         {/* Payment Methods */}
         <div className="p-6 rounded-2xl border bg-card">
           <h3 className="text-lg font-semibold mb-4">Payment Methods</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={analytics?.paymentMethods || []}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={100}
-                paddingAngle={5}
-                dataKey="count"
-                nameKey="method"
-              >
-                {(analytics?.paymentMethods || []).map((_entry, index) => (
-                  <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={analytics?.paymentMethods || []}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={100}
+                  paddingAngle={5}
+                  dataKey="count"
+                  nameKey="method"
+                >
+                  {(analytics?.paymentMethods || []).map((_entry, index) => (
+                    <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 
@@ -197,39 +201,43 @@ export default function BusinessAnalytics() {
         {/* Top Products */}
         <div className="p-6 rounded-2xl border bg-card">
           <h3 className="text-lg font-semibold mb-4">Top Products</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={topProducts || []} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-              <XAxis type="number" tick={{ fontSize: 12 }} />
-              <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={100} />
-              <Tooltip />
-              <Bar dataKey="totalSold" fill="#6366f1" radius={[0, 4, 4, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={topProducts || []} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                <XAxis type="number" tick={{ fontSize: 12 }} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={100} />
+                <Tooltip />
+                <Bar dataKey="soldQty" fill="#6366f1" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
         {/* Category Distribution */}
         <div className="p-6 rounded-2xl border bg-card">
           <h3 className="text-lg font-semibold mb-4">Category Distribution</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={analytics?.categoryDistribution || []}
-                cx="50%"
-                cy="50%"
-                outerRadius={100}
-                paddingAngle={2}
-                dataKey="count"
-                nameKey="category"
-              >
-                {(analytics?.categoryDistribution || []).map((_entry, index) => (
-                  <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={analytics?.categoryDistribution || []}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={100}
+                  paddingAngle={2}
+                  dataKey="count"
+                  nameKey="category"
+                >
+                  {(analytics?.categoryDistribution || []).map((_entry, index) => (
+                    <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 

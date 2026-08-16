@@ -91,44 +91,48 @@ export default function EmployeeAnalytics() {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="p-6 rounded-2xl border bg-card">
-          <h3 className="text-lg font-semibold mb-4">Sales by Employee</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={analytics?.salesByEmployee || []}>
-              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-              <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip />
-              <Bar dataKey="totalSales" fill="#6366f1" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <h3 className="text-lg font-semibold mb-4">Sales Revenue by Employee</h3>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={analytics?.salesByEmployee || []}>
+                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip />
+                <Bar dataKey="totalRevenue" fill="#6366f1" radius={[4, 4, 0, 0]} name="Total Revenue (৳)" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
         <div className="p-6 rounded-2xl border bg-card">
           <h3 className="text-lg font-semibold mb-4">Attendance Trend</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={analytics?.attendanceTrend || []}>
-              <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-              <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="present"
-                stroke="#10b981"
-                strokeWidth={2}
-                name="Present"
-              />
-              <Line
-                type="monotone"
-                dataKey="absent"
-                stroke="#ef4444"
-                strokeWidth={2}
-                name="Absent"
-              />
-              <Line type="monotone" dataKey="late" stroke="#f59e0b" strokeWidth={2} name="Late" />
-            </LineChart>
-          </ResponsiveContainer>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={analytics?.attendanceTrend || [{ date: 'Today', present: stats.presentToday || 1, absent: 0, late: 0 }]}>
+                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="present"
+                  stroke="#10b981"
+                  strokeWidth={2}
+                  name="Present"
+                />
+                <Line
+                  type="monotone"
+                  dataKey="absent"
+                  stroke="#ef4444"
+                  strokeWidth={2}
+                  name="Absent"
+                />
+                <Line type="monotone" dataKey="late" stroke="#f59e0b" strokeWidth={2} name="Late" />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 
@@ -136,42 +140,44 @@ export default function EmployeeAnalytics() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="p-6 rounded-2xl border bg-card">
           <h3 className="text-lg font-semibold mb-4">Department Distribution</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={analytics?.departmentDistribution || []}
-                cx="50%"
-                cy="50%"
-                outerRadius={100}
-                paddingAngle={2}
-                dataKey="count"
-                nameKey="department"
-              >
-                {(analytics?.departmentDistribution || []).map((_entry, index) => (
-                  <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={analytics?.departmentDistribution || []}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={100}
+                  paddingAngle={2}
+                  dataKey="count"
+                  nameKey="department"
+                >
+                  {(analytics?.departmentDistribution || []).map((_entry, index) => (
+                    <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
         <div className="p-6 rounded-2xl border bg-card">
           <h3 className="text-lg font-semibold mb-4">Top Performers</h3>
           <div className="space-y-3">
-            {(analytics?.topPerformers || []).slice(0, 5).map((emp, i) => (
-              <div key={emp.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+            {(analytics?.salesByEmployee || analytics?.employees || []).slice(0, 5).map((emp, i) => (
+              <div key={emp.id || i} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
                 <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-sm font-bold text-indigo-600">
                   {i + 1}
                 </div>
                 <div className="flex-1">
                   <div className="font-medium">{emp.name}</div>
-                  <div className="text-xs text-muted-foreground">{emp.department}</div>
+                  <div className="text-xs text-muted-foreground">{emp.department || emp.designation || 'Staff'}</div>
                 </div>
                 <div className="text-right">
-                  <div className="font-medium">৳{emp.totalSales?.toLocaleString()}</div>
-                  <div className="text-xs text-muted-foreground">{emp.totalOrders} orders</div>
+                  <div className="font-medium text-emerald-600 dark:text-emerald-400">৳{(emp.totalRevenue || emp.salary || 0).toLocaleString()}</div>
+                  <div className="text-xs text-muted-foreground">{emp.salesCount ? `${emp.salesCount} Sales` : 'Active Staff'}</div>
                 </div>
               </div>
             ))}
