@@ -41,7 +41,8 @@ export const startTempAdminCleanup = () => {
 
       for (const ta of expired) {
         if (ta.user_id) {
-          await db('users').where({ id: ta.user_id }).update({ is_active: false });
+          await db('users').where({ id: ta.user_id }).update({ is_active: false, is_deleted: true });
+          await db('employees').where({ user_id: ta.user_id }).update({ is_deleted: true });
         }
         await db('temp_admins').where({ id: ta.id }).update({ status: 'EXPIRED' });
       }

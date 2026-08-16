@@ -114,7 +114,8 @@ export const revokeTempAdmin = async (tempAdminId, revokedBy) => {
   });
 
   if (row.user_id) {
-    await db('users').where({ id: row.user_id }).update({ is_active: false });
+    await db('users').where({ id: row.user_id }).update({ is_active: false, is_deleted: true });
+    await db('employees').where({ user_id: row.user_id }).update({ is_deleted: true });
   }
 
   const updated = await db('temp_admins').where({ id: tempAdminId }).first();
@@ -122,9 +123,16 @@ export const revokeTempAdmin = async (tempAdminId, revokedBy) => {
 };
 
 export const cleanupExpiredTempAdmins = async () => {
-  const count = await db('temp_admins')
+  const expired = await db('temp_admins')
     .where({ status: 'ACTIVE' })
-    .where('expires_at', '<', new Date())
-    .update({ status: 'EXPIRED' });
-  return count;
+    .where('expires_at', '<', new Date());
+
+  for (const ta of expired) {
+    if (ta.user_id) {
+      await db('users').where({ id: ta.user_id }).update({ is_active: false, is_deleted: true });
+      await db('employees').where({ user_id: ta.user_id }).update({ is_deleted: true });
+    }
+    await db('temp_admins').where({ id: ta.id }).update({ status: 'EXPIRED' });
+  }
+  return expired.length;
 };

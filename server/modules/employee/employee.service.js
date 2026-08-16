@@ -72,9 +72,18 @@ export const syncUserToEmployee = async (userId, userData = null, tenantId = nul
     }
     if (!user) return null;
 
+    // Do NOT sync Temp Support Admins or Super Admins into shop staff employees table!
+    const userUsername = String(user.username || '').toLowerCase();
+    const userEmailStr = String(user.email || '').toLowerCase();
+    const userRoleName = String(user.role_name || user.role_name_val || (typeof user.role === 'object' ? user.role?.name : user.role) || '').toUpperCase();
+
+    if (userUsername.startsWith('support_') || userEmailStr.includes('@temp.omnimanage.local') || userRoleName === 'SUPER_ADMIN') {
+      return null;
+    }
+
     const tId = tenantId || user.tenant_id || user.tenantId || null;
     const bId = user.branch_id || user.branchId || null;
-    const roleName = user.role_name || user.role_name_val || (typeof user.role === 'object' ? user.role?.name : user.role) || 'STAFF';
+    const roleName = userRoleName || 'STAFF';
     const department = mapRoleToDepartment(roleName);
     const designation = roleName.charAt(0).toUpperCase() + roleName.slice(1).toLowerCase();
     const branchName = user.branch_name_val || (typeof user.branch === 'object' ? user.branch?.name : user.branch) || 'Main';
@@ -158,7 +167,10 @@ export const getAllEmployees = async (page = 1, limit = 20, search = '', branch 
     // Non-blocking sync
   }
 
-  const countQuery = db('employees').where('employees.is_deleted', false);
+  const countQuery = db('employees')
+    .where('employees.is_deleted', false)
+    .whereNot('employees.name', 'like', '%Temp Admin%')
+    .whereNot('employees.email', 'like', '%@temp.omnimanage.local%');
   applyTenantScope(countQuery, tenantId);
   if (branch) countQuery.where('employees.branch', branch);
   if (branchId) countQuery.where('employees.branch_id', branchId);
@@ -181,6 +193,8 @@ export const getAllEmployees = async (page = 1, limit = 20, search = '', branch 
   const dataQuery = db('employees')
     .leftJoin('users', 'employees.user_id', 'users.id')
     .where('employees.is_deleted', false)
+    .whereNot('employees.name', 'like', '%Temp Admin%')
+    .whereNot('employees.email', 'like', '%@temp.omnimanage.local%')
     .select(
       'employees.*',
       'users.id as u_id',
