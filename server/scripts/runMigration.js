@@ -22,6 +22,7 @@ import * as addNotesToTransactionsTable from '../migrations/20260812000017_add_n
 import * as addBranchIdToWholesaleOrders from '../migrations/20260812000018_add_branch_id_to_wholesale_orders.js';
 import * as addBranchIdToAuditLogs from '../migrations/20260812000019_add_branch_id_to_audit_logs.js';
 import * as addBranchIdToSharedTables from '../migrations/20260812000020_add_branch_id_to_shared_tables.js';
+import * as addBranchIdToJournalEntries from '../migrations/20260816000001_add_branch_id_to_journal_entries.js';
 
 async function ensureDatabase() {
   try {
@@ -82,8 +83,10 @@ async function main() {
   await addBranchIdToAuditLogs.up(db);
   console.log('🔄 Running migration 20: add branch_id to shared tables...');
   await addBranchIdToSharedTables.up(db);
+  console.log('🔄 Running migration 21: add branch_id to journal entries...');
+  await addBranchIdToJournalEntries.up(db);
 
-  console.log('✅ All 20 migrations completed successfully!');
+  console.log('✅ All 21 migrations completed successfully!');
   process.exit(0);
 }
 
