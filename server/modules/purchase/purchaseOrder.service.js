@@ -1,6 +1,7 @@
 import { db } from '../../config/db.knex.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { getPagination } from '../../utils/http/pagination.js';
+import { createAutomatedExpenseJournal, createAutomatedPurchaseJournal } from '../accounting/accounting.service.js';
 
 const generatePoNumber = () => 'PO-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
 
@@ -195,6 +196,7 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
           tenant_id: tenantId,
           branch_id: branchId,
           name: pName,
+          brand: rawItem.brand || 'Generic',
           sku,
           category: rawItem.category || 'General',
           cost_price: uCost,
@@ -308,7 +310,16 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
     due_balance: Number(supplier.due_balance || 0) + dueAmount,
   });
 
-  return getPurchaseOrderById(insertedId, tenantId, branchId);
+  const createdOrder = await getPurchaseOrderById(insertedId, tenantId, branchId);
+
+  // Trigger automated expense entry & accounting journal for purchase restock
+  try {
+    await createAutomatedPurchaseJournal(createdOrder, createdBy);
+  } catch (err) {
+    console.error('Failed to log automated purchase accounting journal:', err.message);
+  }
+
+  return createdOrder;
 };
 
 export const updatePurchaseOrder = async (id, data, tenantId = null, branchId = null) => {
@@ -526,4 +537,64 @@ export const deletePurchaseOrder = async (id, tenantId = null, branchId = null) 
   if (branchId) poDel.andWhere('branch_id', branchId);
   await poDel.update({ is_deleted: true });
   return { ...order, isDeleted: true };
+};
+
+export const payPurchaseOrderDue = async (id, { amount, paymentMethod = 'CASH', notes = '' } = {}, tenantId = null, branchId = null, user = null) => {
+  const order = await getPurchaseOrderById(id, tenantId, branchId);
+  if (!order) throw ApiError.notFound('Purchase order not found');
+
+  const payAmount = Number(amount || 0);
+  if (payAmount <= 0) {
+    throw ApiError.badRequest('Payment amount must be greater than 0');
+  }
+
+  const currentDue = Number(order.dueAmount || 0);
+  if (payAmount > currentDue) {
+    throw ApiError.badRequest(`Payment amount (৳${payAmount}) cannot exceed current due balance of ৳${currentDue}`);
+  }
+
+  const newPaid = Number(order.paidAmount || 0) + payAmount;
+  const newDue = Math.max(0, currentDue - payAmount);
+
+  const poUpdate = db('purchase_orders').where({ id });
+  if (tenantId) poUpdate.andWhere('tenant_id', tenantId);
+  if (branchId) poUpdate.andWhere('branch_id', branchId);
+  await poUpdate.update({
+    paid_amount: newPaid,
+    due_amount: newDue,
+    payment_method: paymentMethod || order.paymentMethod || 'CASH',
+    updated_at: new Date(),
+  });
+
+  // Deduct supplier due balance
+  const supplierId = order.supplierId?.id || order.supplierId;
+  if (supplierId) {
+    const supQ = db('suppliers').where({ id: supplierId, is_deleted: false });
+    if (tenantId) supQ.andWhere('tenant_id', tenantId);
+    const supplier = await supQ.first();
+    if (supplier) {
+      const curSupDue = Number(supplier.due_balance || 0);
+      const newSupDue = Math.max(0, curSupDue - payAmount);
+      const supUp = db('suppliers').where({ id: supplierId });
+      if (tenantId) supUp.andWhere('tenant_id', tenantId);
+      await supUp.update({ due_balance: newSupDue });
+    }
+  }
+
+  // Create automated accounting expense entry
+  try {
+    await createAutomatedExpenseJournal({
+      tenantId: tenantId || order.tenantId,
+      branchId: branchId || order.branchId,
+      expenseCategory: 'Supplier Payment',
+      amount: payAmount,
+      paymentMethod,
+      notes: notes || `Due payment for PO #${order.poNumber}`,
+      createdBy: user?.username || 'system',
+    });
+  } catch (err) {
+    console.error('Failed to log automated journal for supplier due payment:', err.message);
+  }
+
+  return getPurchaseOrderById(id, tenantId, branchId);
 };

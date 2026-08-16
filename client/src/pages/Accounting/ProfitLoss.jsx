@@ -33,6 +33,8 @@ export default function ProfitLoss() {
 
   const revenueTotal = data?.revenue?.total || 0;
   const cogsTotal = data?.cogs?.total || 0;
+  const purchasesTotal = data?.purchases?.total || 0;
+  const purchasesCount = data?.purchases?.count || 0;
   const grossProfit = data?.grossProfit || revenueTotal - cogsTotal;
   const expensesTotal = data?.expenses?.total || 0;
   const netIncome = data?.netIncome || grossProfit - expensesTotal;
@@ -47,7 +49,7 @@ export default function ProfitLoss() {
             <TrendingUp className="w-6 h-6 text-emerald-600" /> Profit & Loss Statement
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Financial statement showing revenue, product purchase costs (COGS), operating expenses,
+            Financial statement showing revenue, product purchase costs (COGS), stock purchases, operating expenses,
             and net profit
           </p>
         </div>
@@ -91,7 +93,7 @@ export default function ProfitLoss() {
       ) : data ? (
         <div className="space-y-6">
           {/* Top Summary Stat Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className={cardClass}>
               <div className="text-xs font-semibold text-gray-500 uppercase flex items-center justify-between">
                 <span>Total Sales Revenue</span>
@@ -107,13 +109,24 @@ export default function ProfitLoss() {
 
             <div className={cardClass}>
               <div className="text-xs font-semibold text-gray-500 uppercase flex items-center justify-between">
-                <span>Product Cost (Kena Dam)</span>
+                <span>Product Cost (COGS)</span>
                 <PackageCheck className="w-4 h-4 text-amber-500" />
               </div>
               <div className="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-2 font-mono">
                 ৳{cogsTotal.toLocaleString()}
               </div>
-              <div className="text-[11px] text-gray-400 mt-1">Cost of Goods Sold (COGS)</div>
+              <div className="text-[11px] text-gray-400 mt-1">Cost of Goods Sold (Sold Items)</div>
+            </div>
+
+            <div className={cardClass}>
+              <div className="text-xs font-semibold text-gray-500 uppercase flex items-center justify-between">
+                <span>Stock Restock Purchases</span>
+                <DollarSign className="w-4 h-4 text-purple-500" />
+              </div>
+              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-2 font-mono">
+                ৳{purchasesTotal.toLocaleString()}
+              </div>
+              <div className="text-[11px] text-gray-400 mt-1">{purchasesCount} Purchase Orders</div>
             </div>
 
             <div className={cardClass}>
@@ -124,7 +137,7 @@ export default function ProfitLoss() {
               <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-2 font-mono">
                 ৳{grossProfit.toLocaleString()}
               </div>
-              <div className="text-[11px] text-gray-400 mt-1">Revenue minus Product Cost</div>
+              <div className="text-[11px] text-gray-400 mt-1">Revenue minus COGS</div>
             </div>
 
             <div className={cardClass}>
@@ -136,13 +149,13 @@ export default function ProfitLoss() {
                 ৳{expensesTotal.toLocaleString()}
               </div>
               <div className="text-[11px] text-gray-400 mt-1">
-                Rent, Utilities, Food & Shop Costs
+                Rent, Utilities, Food & Costs
               </div>
             </div>
           </div>
 
-          {/* Section 1: Revenue & COGS Breakdown */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Section 1: Revenue, COGS & Purchases Breakdown */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Sales Revenue Card */}
             <div className={cardClass}>
               <div className="flex items-center justify-between pb-3 mb-4 border-b border-gray-100 dark:border-gray-800">
@@ -175,7 +188,7 @@ export default function ProfitLoss() {
             <div className={cardClass}>
               <div className="flex items-center justify-between pb-3 mb-4 border-b border-gray-100 dark:border-gray-800">
                 <h3 className="text-base font-bold text-amber-600 dark:text-amber-400 flex items-center gap-2">
-                  <PackageCheck className="w-5 h-5" /> 2. Cost of Goods Sold (Product Kena Dam)
+                  <PackageCheck className="w-5 h-5" /> 2. Cost of Goods Sold (COGS)
                 </h3>
                 <span className="text-lg font-bold text-amber-600 dark:text-amber-400 font-mono">
                   ৳{cogsTotal.toLocaleString()}
@@ -194,6 +207,34 @@ export default function ProfitLoss() {
                   <span>Calculation Method</span>
                   <span className="font-medium text-amber-600 dark:text-amber-400">
                     Sum of (Qty × Product Cost Price)
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Product Purchases / Stock Restock Card */}
+            <div className={cardClass}>
+              <div className="flex items-center justify-between pb-3 mb-4 border-b border-gray-100 dark:border-gray-800">
+                <h3 className="text-base font-bold text-purple-600 dark:text-purple-400 flex items-center gap-2">
+                  <DollarSign className="w-5 h-5" /> 3. Stock Restock / Product Purchases
+                </h3>
+                <span className="text-lg font-bold text-purple-600 dark:text-purple-400 font-mono">
+                  ৳{purchasesTotal.toLocaleString()}
+                </span>
+              </div>
+              <div className="space-y-3 text-sm">
+                <div className="flex items-center justify-between py-1.5 border-b border-gray-100 dark:border-gray-800/50">
+                  <span className="text-gray-700 dark:text-gray-300">
+                    Total Inventory Product Purchases
+                  </span>
+                  <span className="font-semibold font-mono text-gray-900 dark:text-gray-100">
+                    ৳{purchasesTotal.toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between py-1.5 text-xs text-gray-500">
+                  <span>Purchase Orders Count</span>
+                  <span className="font-medium text-purple-600 dark:text-purple-400">
+                    {purchasesCount} purchase orders
                   </span>
                 </div>
               </div>

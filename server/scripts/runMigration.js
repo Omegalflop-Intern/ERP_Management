@@ -23,6 +23,7 @@ import * as addBranchIdToWholesaleOrders from '../migrations/20260812000018_add_
 import * as addBranchIdToAuditLogs from '../migrations/20260812000019_add_branch_id_to_audit_logs.js';
 import * as addBranchIdToSharedTables from '../migrations/20260812000020_add_branch_id_to_shared_tables.js';
 import * as addBranchIdToJournalEntries from '../migrations/20260816000001_add_branch_id_to_journal_entries.js';
+import * as alterProductsBrandDefault from '../migrations/20260816000002_alter_products_brand_default.js';
 
 async function ensureDatabase() {
   try {
@@ -40,53 +41,59 @@ async function ensureDatabase() {
   }
 }
 
-export async function runAutoMigrations() {
+export async function runAutoMigrations({ verbose = true } = {}) {
   await ensureDatabase();
 
-  console.log('🔄 Running migration 1: roles table...');
-  await createRolesTable.up(db);
-  console.log('🔄 Running migration 2: tenants tables...');
-  await createTenantsTables.up(db);
-  console.log('🔄 Running migration 3: users table...');
-  await createUsersTable.up(db);
-  console.log('🔄 Running migration 4: sessions table...');
-  await createSessionsTable.up(db);
-  console.log('🔄 Running migration 5: branches and settings tables...');
-  await createBranchesAndSettingsTables.up(db);
-  console.log('🔄 Running migration 6: Phase 2 master data tables...');
-  await createPhase2MasterDataTables.up(db);
-  console.log('🔄 Running migration 7: Phase 3 product & stock tables...');
-  await createPhase3ProductAndStockTables.up(db);
-  console.log('🔄 Running migration 8: Phase 4 operations tables...');
-  await createPhase4OperationsTables.up(db);
-  console.log('🔄 Running migration 9: Phase 5 accounting & finance tables...');
-  await createPhase5AccountingAndFinanceTables.up(db);
-  console.log('🔄 Running migration 10: Phase 6 workforce tables...');
-  await createPhase6WorkforceTables.up(db);
-  console.log('🔄 Running migration 11: Phase 7 system tables...');
-  await createPhase7SystemTables.up(db);
-  console.log('🔄 Running migration 12: contact messages table...');
-  await createContactMessagesTable.up(db);
-  console.log('🔄 Running migration 13: support tickets table...');
-  await createTicketsTable.up(db);
-  console.log('🔄 Running migration 14: add branch_id to operations tables...');
-  await addBranchIdToOperationsTables.up(db);
-  console.log('🔄 Running migration 15: add branch_id to HR & warranty tables...');
-  await addBranchIdToHrAndWarrantyTables.up(db);
-  console.log('🔄 Running migration 16: add notes column to tenants table...');
-  await addNotesToTenantsTable.up(db);
-  console.log('🔄 Running migration 17: add notes column to transactions table...');
-  await addNotesToTransactionsTable.up(db);
-  console.log('🔄 Running migration 18: add branch_id to wholesale orders...');
-  await addBranchIdToWholesaleOrders.up(db);
-  console.log('🔄 Running migration 19: add branch_id to audit logs...');
-  await addBranchIdToAuditLogs.up(db);
-  console.log('🔄 Running migration 20: add branch_id to shared tables...');
-  await addBranchIdToSharedTables.up(db);
-  console.log('🔄 Running migration 21: add branch_id to journal entries...');
-  await addBranchIdToJournalEntries.up(db);
+  const log = (...args) => {
+    if (verbose) console.log(...args);
+  };
 
-  console.log('✅ All 21 migrations completed successfully!');
+  log('🔄 Running migration 1: roles table...');
+  await createRolesTable.up(db);
+  log('🔄 Running migration 2: tenants tables...');
+  await createTenantsTables.up(db);
+  log('🔄 Running migration 3: users table...');
+  await createUsersTable.up(db);
+  log('🔄 Running migration 4: sessions table...');
+  await createSessionsTable.up(db);
+  log('🔄 Running migration 5: branches and settings tables...');
+  await createBranchesAndSettingsTables.up(db);
+  log('🔄 Running migration 6: Phase 2 master data tables...');
+  await createPhase2MasterDataTables.up(db);
+  log('🔄 Running migration 7: Phase 3 product & stock tables...');
+  await createPhase3ProductAndStockTables.up(db);
+  log('🔄 Running migration 8: Phase 4 operations tables...');
+  await createPhase4OperationsTables.up(db);
+  log('🔄 Running migration 9: Phase 5 accounting & finance tables...');
+  await createPhase5AccountingAndFinanceTables.up(db);
+  log('🔄 Running migration 10: Phase 6 workforce tables...');
+  await createPhase6WorkforceTables.up(db);
+  log('🔄 Running migration 11: Phase 7 system tables...');
+  await createPhase7SystemTables.up(db);
+  log('🔄 Running migration 12: contact messages table...');
+  await createContactMessagesTable.up(db);
+  log('🔄 Running migration 13: support tickets table...');
+  await createTicketsTable.up(db);
+  log('🔄 Running migration 14: add branch_id to operations tables...');
+  await addBranchIdToOperationsTables.up(db);
+  log('🔄 Running migration 15: add branch_id to HR & warranty tables...');
+  await addBranchIdToHrAndWarrantyTables.up(db);
+  log('🔄 Running migration 16: add notes column to tenants table...');
+  await addNotesToTenantsTable.up(db);
+  log('🔄 Running migration 17: add notes column to transactions table...');
+  await addNotesToTransactionsTable.up(db);
+  log('🔄 Running migration 18: add branch_id to wholesale orders...');
+  await addBranchIdToWholesaleOrders.up(db);
+  log('🔄 Running migration 19: add branch_id to audit logs...');
+  await addBranchIdToAuditLogs.up(db);
+  log('🔄 Running migration 20: add branch_id to shared tables...');
+  await addBranchIdToSharedTables.up(db);
+  log('🔄 Running migration 21: add branch_id to journal entries...');
+  await addBranchIdToJournalEntries.up(db);
+  log('🔄 Running migration 22: alter products brand default value...');
+  await alterProductsBrandDefault.up(db);
+
+  if (verbose) console.log('✅ All 22 migrations completed successfully!');
   return true;
 }
 

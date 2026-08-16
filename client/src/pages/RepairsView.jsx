@@ -5,6 +5,7 @@ import {
   Check,
   CheckCircle2,
   Clock,
+  CreditCard,
   DollarSign,
   Edit2,
   Eye,
@@ -84,6 +85,7 @@ export default function RepairsView() {
   const [showNewTicketModal, setShowNewTicketModal] = useState(false);
   const [editingTicket, setEditingTicket] = useState(null);
   const [viewTicket, setViewTicket] = useState(null);
+  const [collectDueTicket, setCollectDueTicket] = useState(null);
 
   const { data: repairsData, isLoading, refetch } = useQuery({
     queryKey: ['repairs', search, statusFilter],
@@ -419,6 +421,15 @@ export default function RepairsView() {
                   </div>
 
                   <div className="flex items-center gap-1">
+                    {dueAmount > 0 && (
+                      <button
+                        onClick={() => setCollectDueTicket(ticket)}
+                        className="p-1.5 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 transition-colors"
+                        title="Collect Remaining Due Payment"
+                      >
+                        <CreditCard className="w-4 h-4" />
+                      </button>
+                    )}
                     <button
                       onClick={() => setViewTicket(ticket)}
                       className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
@@ -481,13 +492,33 @@ export default function RepairsView() {
         />
       )}
 
-      {/* ── 3. VIEW & PRINT REPAIR RECEIPT MODAL ── */}
+      {/* ── 3. COLLECT REPAIR DUE MODAL ── */}
+      {collectDueTicket && (
+        <CollectRepairDueModal
+          ticket={collectDueTicket}
+          onClose={() => setCollectDueTicket(null)}
+          onSuccess={() => {
+            setCollectDueTicket(null);
+            queryClient.invalidateQueries({ queryKey: ['repairs'] });
+            queryClient.invalidateQueries({ queryKey: ['repairs-stats'] });
+            queryClient.invalidateQueries({ queryKey: ['journal-entries'] });
+            queryClient.invalidateQueries({ queryKey: ['chart-of-accounts'] });
+          }}
+        />
+      )}
+
+      {/* ── 4. VIEW & PRINT REPAIR RECEIPT MODAL ── */}
       {viewTicket && (
         <ViewRepairModal
           ticket={viewTicket}
           onClose={() => setViewTicket(null)}
           onStatusChange={(status) => {
             updateStatusMutation.mutate({ id: viewTicket._id || viewTicket.id, status });
+          }}
+          onCollectDue={() => {
+            const cur = viewTicket;
+            setViewTicket(null);
+            setCollectDueTicket(cur);
           }}
         />
       )}
@@ -924,19 +955,193 @@ function ViewRepairModal({ ticket, onClose, onStatusChange }) {
         </div>
 
         <DialogFooter className="border-t border-slate-100 dark:border-slate-800 pt-4 flex items-center justify-between sm:justify-between">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handlePrint}
-            className="rounded-xl text-xs gap-1.5"
-          >
-            <Printer className="w-3.5 h-3.5" /> Print Job Sheet
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handlePrint}
+              className="rounded-xl text-xs gap-1.5"
+            >
+              <Printer className="w-3.5 h-3.5" /> Print Job Sheet
+            </Button>
+            {dueAmount > 0 && (
+              <Button
+                type="button"
+                size="sm"
+                onClick={onCollectDue}
+                className="rounded-xl text-xs font-bold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+              >
+                <CreditCard className="w-3.5 h-3.5" /> Collect Remaining Due (৳{dueAmount.toLocaleString()})
+              </Button>
+            )}
+          </div>
           <Button type="button" onClick={onClose} size="sm" className="rounded-xl text-xs">
             Close
           </Button>
         </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ----------------------------------------------------------------------
+// MODAL: COLLECT REPAIR DUE PAYMENT
+// ----------------------------------------------------------------------
+function CollectRepairDueModal({ ticket, onClose, onSuccess }) {
+  const due = Math.max(0, (Number(ticket.estimatedCost) || 0) - (Number(ticket.advancePaid) || 0));
+  const [amount, setAmount] = useState(due);
+  const [paymentMethod, setPaymentMethod] = useState('CASH');
+  const [notes, setNotes] = useState('');
+
+  const mutation = useMutation({
+    mutationFn: async (payload) => api.post(`/repairs/${ticket._id || ticket.id}/collect-due`, payload),
+    onSuccess: () => {
+      toast.success(`Repair due collection of ৳${Number(amount).toLocaleString()} recorded successfully!`);
+      onSuccess();
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'Failed to collect due payment');
+    },
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (Number(amount) <= 0) {
+      toast.error('Please enter a valid payment amount');
+      return;
+    }
+    mutation.mutate({
+      amount: Number(amount),
+      paymentMethod,
+      notes,
+    });
+  };
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md p-0 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl bg-white dark:bg-[#0f172a] overflow-hidden">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
+              <CreditCard className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                Collect Repair Due Payment
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Ticket #{ticket.ticketNumber} — {ticket.customerName} ({ticket.deviceModel})
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          {/* Summary Box */}
+          <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2">
+            <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
+              <span>Total Estimated Cost:</span>
+              <span className="font-mono font-bold text-slate-900 dark:text-slate-100">৳{Number(ticket.estimatedCost || 0).toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
+              <span>Already Paid Advance:</span>
+              <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">৳{Number(ticket.advancePaid || 0).toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between text-xs pt-1.5 border-t border-slate-200 dark:border-slate-700/80">
+              <span className="font-bold text-slate-800 dark:text-slate-200">Current Remaining Due:</span>
+              <span className="font-mono font-bold text-rose-600 dark:text-rose-400 text-base">৳{due.toLocaleString()}</span>
+            </div>
+          </div>
+
+          {/* Quick Amount Buttons */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                Collection Amount (৳) *
+              </Label>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setAmount(due)}
+                  className="text-[11px] font-extrabold px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 hover:underline"
+                >
+                  Pay Full (৳{due.toLocaleString()})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAmount(Math.round(due / 2))}
+                  className="text-[11px] font-extrabold px-2 py-0.5 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  50%
+                </button>
+              </div>
+            </div>
+            <Input
+              type="number"
+              min="1"
+              max={due > 0 ? due : undefined}
+              required
+              placeholder="Enter amount collected"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="h-11 text-base font-mono font-bold rounded-xl bg-white dark:bg-[#1e293b]"
+            />
+          </div>
+
+          <div>
+            <Label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 block">
+              Payment Method *
+            </Label>
+            <select
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              className="w-full h-11 px-3 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100"
+            >
+              <option value="CASH">Cash Payment</option>
+              <option value="BANK">Bank Transfer / Card</option>
+              <option value="BKASH">bKash Merchant</option>
+              <option value="NAGAD">Nagad</option>
+              <option value="ROCKET">Rocket</option>
+            </select>
+          </div>
+
+          <div>
+            <Label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 block">
+              Notes (Optional)
+            </Label>
+            <Input
+              placeholder="e.g. Due collected upon device delivery"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="h-10 text-xs rounded-xl bg-white dark:bg-[#1e293b]"
+            />
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="h-11 px-5 rounded-xl text-sm font-semibold text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-100"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={mutation.isPending || Number(amount) <= 0}
+              className="h-11 px-6 rounded-xl text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg flex items-center justify-center gap-2"
+            >
+              {mutation.isPending ? (
+                <RefreshCw className="w-4 h-4 animate-spin" />
+              ) : (
+                <CreditCard className="w-4 h-4" />
+              )}
+              Confirm Collection (৳{Number(amount || 0).toLocaleString()})
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

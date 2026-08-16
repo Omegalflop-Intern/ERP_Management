@@ -369,6 +369,15 @@ export const deleteJournalEntry = async (id, tenantId = null, branchId = null) =
 
 export const getBalanceSheet = async (asOf = '', tenantId = null, branchId = null) => {
   await seedDefaultAccounts(tenantId);
+
+  // Sync historical transactions to journal entries & recalculate live account balances
+  try {
+    await syncHistoricalJournals(tenantId);
+    await recalculateAllAccountBalances(tenantId);
+  } catch (err) {
+    console.error('[BalanceSheet Sync Error]:', err.message);
+  }
+
   const accountsQuery = db('accounts').where({ is_deleted: false, is_active: true });
   applyTenantScope(accountsQuery, tenantId, 'accounts');
   applyBranchScope(accountsQuery, branchId, 'accounts');
@@ -481,6 +490,25 @@ export const getProfitLoss = async (from = '', to = '', tenantId = null, branchI
     // Non-blocking if payrolls table not yet queried
   }
 
+  // 4. Fetch Total Product Purchases / Stock Restocks from purchase_orders
+  let totalPurchasesCost = 0;
+  let purchasesCount = 0;
+  try {
+    const poQuery = db('purchase_orders').where({ is_deleted: false }).whereIn('status', ['RECEIVED', 'COMPLETED', 'ORDERED', 'PARTIAL']);
+    applyTenantScope(poQuery, tenantId, 'purchase_orders');
+    if (branchId && branchId !== 'all') poQuery.where('branch_id', branchId);
+    if (from) poQuery.where('created_at', '>=', new Date(from + 'T00:00:00'));
+    if (to) poQuery.where('created_at', '<=', new Date(to + 'T23:59:59'));
+
+    const poRows = await poQuery.select('id', 'total_cost', 'grand_total', 'paid_amount');
+    purchasesCount = poRows.length;
+    for (const po of poRows) {
+      totalPurchasesCost += Number(po.grand_total || po.total_cost || 0);
+    }
+  } catch (err) {
+    // Non-blocking if table missing
+  }
+
   const netIncome = grossProfit - totalExpenses;
   const grossMarginPercent = totalSalesRevenue > 0 ? (grossProfit / totalSalesRevenue) * 100 : 0;
   const netMarginPercent = totalSalesRevenue > 0 ? (netIncome / totalSalesRevenue) * 100 : 0;
@@ -495,6 +523,10 @@ export const getProfitLoss = async (from = '', to = '', tenantId = null, branchI
     },
     cogs: {
       total: totalCogs,
+    },
+    purchases: {
+      total: totalPurchasesCost,
+      count: purchasesCount,
     },
     grossProfit,
     grossMarginPercent: Number(grossMarginPercent.toFixed(2)),
@@ -659,7 +691,29 @@ export const createAutomatedSaleJournal = async (sale) => {
 export const createAutomatedExpenseJournal = async (expense) => {
   try {
     const tenantId = expense.tenant_id || expense.tenantId || null;
-    const ref = `EXP-${expense.id}`;
+    const branchId = expense.branch_id || expense.branchId || null;
+    const amt = Number(expense.amount || 0);
+    if (amt <= 0) return null;
+
+    let expenseId = expense.id;
+    if (!expenseId) {
+      const [insertedId] = await db('expenses').insert({
+        tenant_id: tenantId,
+        branch_id: branchId,
+        title: expense.title || expense.notes || `${expense.expenseCategory || expense.category || 'Supplier Payment'}`,
+        category: expense.expenseCategory || expense.category || 'Supplier Payment',
+        amount: amt,
+        payment_method: String(expense.paymentMethod || expense.payment_method || 'cash').toLowerCase(),
+        date: expense.date || new Date(),
+        voucher_number: expense.voucherNumber || `PAY-${Date.now().toString(36).toUpperCase()}`,
+        notes: expense.notes || '',
+        recorded_by: expense.createdBy || 'system',
+        is_deleted: false,
+      });
+      expenseId = insertedId;
+    }
+
+    const ref = `EXP-${expenseId}`;
     const existing = await db('journal_entries').where({ reference: ref, is_deleted: false }).first();
     if (existing) return existing;
 
@@ -670,7 +724,6 @@ export const createAutomatedExpenseJournal = async (expense) => {
     const acctMap = {};
     for (const a of accounts) acctMap[a.code] = a;
 
-    const amt = Number(expense.amount || 0);
     const method = String(expense.payment_method || expense.paymentMethod || 'cash').toLowerCase();
     let creditAcct = acctMap['1000'];
     if (method.includes('bank') && acctMap['1010']) creditAcct = acctMap['1010'];
@@ -680,10 +733,13 @@ export const createAutomatedExpenseJournal = async (expense) => {
 
     const expenseAcct = acctMap['6000'];
     if (expenseAcct && creditAcct && amt > 0) {
+      const expTitle = expense.title || expense.notes || expense.category || expense.expenseCategory || 'Shop Expense';
+      const expCat = expense.category || expense.expenseCategory || 'General Expense';
       return await createJournalEntry({
         tenantId,
-        date: expense.created_at || new Date(),
-        description: `Expense: ${expense.title || expense.category} (${expense.category})`,
+        branchId,
+        date: expense.created_at || expense.date || new Date(),
+        description: `Expense: ${expTitle} (${expCat})`,
         reference: ref,
         lines: [
           { accountId: expenseAcct.id, code: expenseAcct.code, accountName: expenseAcct.name, debit: amt, credit: 0 },
@@ -874,10 +930,12 @@ export const syncHistoricalJournals = async (tenantId = null) => {
 
       const expenseAcct = acctMap['6000'];
       if (expenseAcct && creditAcct) {
+        const titleStr = exp.title || exp.notes || exp.category || 'General Expense';
+        const catStr = exp.category || 'General Expense';
         await createJournalEntry({
           tenantId: exp.tenant_id || tenantId,
           date: exp.created_at,
-          description: `Expense: ${exp.title || exp.category} (${exp.category})`,
+          description: `Expense: ${titleStr} (${catStr})`,
           reference: ref,
           lines: [
             { accountId: expenseAcct.id, code: expenseAcct.code, accountName: expenseAcct.name, debit: amt, credit: 0 },
@@ -889,10 +947,157 @@ export const syncHistoricalJournals = async (tenantId = null) => {
     }
   }
 
+  // Cleanup any legacy undefined descriptions in journal entries
+  try {
+    await db('journal_entries')
+      .where('description', 'like', '%undefined%')
+      .update({ description: 'Expense: Shop Operating Expense (General Expense)' });
+  } catch (e) {
+    // ignore
+  }
+
+  // 3. Sync Purchase Orders
+  const poQuery = db('purchase_orders').where({ is_deleted: false });
+  applyTenantScope(poQuery, tenantId, 'purchase_orders');
+  const purchaseOrders = await poQuery;
+
+  for (const po of purchaseOrders) {
+    const ref = `PO-${po.id}`;
+    const existing = db('journal_entries').where({ reference: ref, is_deleted: false });
+    applyTenantScope(existing, tenantId, 'journal_entries');
+    const hasExisting = await existing.first();
+
+    if (!hasExisting) {
+      await createAutomatedPurchaseJournal(po, po.created_by || 'system');
+      syncedCount++;
+    }
+  }
+
   await recalculateAllAccountBalances(tenantId);
   return { message: `Successfully synced ${syncedCount} journal entries into ledger`, syncedCount };
 };
 
 export const createAutomatedReturnJournal = async (sale, refundAmount, returnInvoiceNumber, opts = {}) => {};
 export const createAutomatedPurchaseReturnJournal = async (purchaseOrder, refundAmount) => {};
-export const createAutomatedPurchaseJournal = async (purchaseOrder, grnEntries = []) => {};
+export const createAutomatedPurchaseJournal = async (purchaseOrder, createdBy = 'system') => {
+  try {
+    const tenantId = purchaseOrder.tenantId || purchaseOrder.tenant_id || null;
+    const branchId = purchaseOrder.branchId || purchaseOrder.branch_id || null;
+    const poNumber = purchaseOrder.poNumber || purchaseOrder.po_number || 'PO';
+    const ref = `PO-${purchaseOrder.id || purchaseOrder._id}`;
+
+    const netTotal = Number(purchaseOrder.netTotal || purchaseOrder.net_total || 0);
+    const paidAmount = Number(purchaseOrder.paidAmount || purchaseOrder.paid_amount || 0);
+    const dueAmount = Number(purchaseOrder.dueAmount || purchaseOrder.due_amount || 0);
+    const method = String(purchaseOrder.paymentMethod || purchaseOrder.payment_method || 'cash').toLowerCase();
+
+    // 1. Record in `expenses` table for Cash Outflow (Purchases) if paidAmount > 0
+    if (paidAmount > 0) {
+      const existingExp = await db('expenses').where({ voucher_number: poNumber, is_deleted: false }).first();
+      if (!existingExp) {
+        await db('expenses').insert({
+          tenant_id: tenantId,
+          branch_id: branchId,
+          title: `Product Restock Purchase (PO #${poNumber})`,
+          category: 'Inventory Purchase',
+          amount: paidAmount,
+          payment_method: method,
+          date: purchaseOrder.createdAt || purchaseOrder.created_at || new Date(),
+          voucher_number: poNumber,
+          notes: `Product restock cost paid for PO #${poNumber}`,
+          recorded_by: createdBy,
+          is_deleted: false,
+        });
+      }
+    }
+
+    // 2. Double-entry Journal Entry
+    const existingEntry = await db('journal_entries').where({ reference: ref, is_deleted: false }).first();
+    if (existingEntry) return existingEntry;
+
+    await seedDefaultAccounts(tenantId);
+    const acctsQuery = db('accounts').where({ is_deleted: false });
+    applyTenantScope(acctsQuery, tenantId, 'accounts');
+    const accounts = await acctsQuery;
+    const acctMap = {};
+    for (const a of accounts) acctMap[a.code] = a;
+
+    const invAcct = acctMap['1030']; // Inventory Asset
+    const apAcct = acctMap['2000'];  // Accounts Payable
+    let payAcct = acctMap['1000'];   // Cash
+    if (method.includes('bank') && acctMap['1010']) payAcct = acctMap['1010'];
+    else if (method.includes('bkash') && acctMap['1011']) payAcct = acctMap['1011'];
+    else if (method.includes('nagad') && acctMap['1012']) payAcct = acctMap['1012'];
+    else if (method.includes('rocket') && acctMap['1013']) payAcct = acctMap['1013'];
+
+    const lines = [];
+    if (invAcct && netTotal > 0) {
+      lines.push({ accountId: invAcct.id, code: invAcct.code, accountName: invAcct.name, debit: netTotal, credit: 0 });
+    }
+    if (payAcct && paidAmount > 0) {
+      lines.push({ accountId: payAcct.id, code: payAcct.code, accountName: payAcct.name, debit: 0, credit: paidAmount });
+    }
+    if (apAcct && dueAmount > 0) {
+      lines.push({ accountId: apAcct.id, code: apAcct.code, accountName: apAcct.name, debit: 0, credit: dueAmount });
+    }
+
+    if (lines.length >= 2) {
+      return await createJournalEntry({
+        tenantId,
+        branchId,
+        date: purchaseOrder.createdAt || purchaseOrder.created_at || new Date(),
+        description: `Product Purchase PO #${poNumber}`,
+        reference: ref,
+        lines,
+      });
+    }
+  } catch (err) {
+    console.error('[AUTO-JOURNAL] Failed to create purchase journal:', err.message);
+  }
+  return null;
+};
+
+export const createAutomatedServiceJournal = async (repairTicket, amountPaid, paymentMethod = 'CASH', createdBy = 'system') => {
+  try {
+    const tenantId = repairTicket.tenantId || repairTicket.tenant_id || null;
+    const branchId = repairTicket.branchId || repairTicket.branch_id || null;
+    const ticketNumber = repairTicket.ticketNumber || repairTicket.ticket_number || 'RPR';
+    const amt = Number(amountPaid || 0);
+    if (amt <= 0) return null;
+
+    const ref = `RPR-${repairTicket.id || repairTicket._id}-${Date.now().toString(36).toUpperCase()}`;
+
+    await seedDefaultAccounts(tenantId);
+    const acctsQuery = db('accounts').where({ is_deleted: false });
+    applyTenantScope(acctsQuery, tenantId, 'accounts');
+    const accounts = await acctsQuery;
+    const acctMap = {};
+    for (const a of accounts) acctMap[a.code] = a;
+
+    const method = String(paymentMethod).toLowerCase();
+    let debitAcct = acctMap['1000'];
+    if (method.includes('bank') && acctMap['1010']) debitAcct = acctMap['1010'];
+    else if (method.includes('bkash') && acctMap['1011']) debitAcct = acctMap['1011'];
+    else if (method.includes('nagad') && acctMap['1012']) debitAcct = acctMap['1012'];
+    else if (method.includes('rocket') && acctMap['1013']) debitAcct = acctMap['1013'];
+
+    const revAcct = acctMap['4000'];
+
+    if (debitAcct && revAcct) {
+      return await createJournalEntry({
+        tenantId,
+        branchId,
+        date: new Date(),
+        description: `Repair Service Revenue #${ticketNumber} (${repairTicket.deviceModel || 'Gadget Repair'})`,
+        reference: ref,
+        lines: [
+          { accountId: debitAcct.id, code: debitAcct.code, accountName: debitAcct.name, debit: amt, credit: 0 },
+          { accountId: revAcct.id, code: revAcct.code, accountName: revAcct.name, debit: 0, credit: amt },
+        ],
+      });
+    }
+  } catch (err) {
+    console.error('[AUTO-JOURNAL] Failed to create repair service journal:', err.message);
+  }
+  return null;
+};

@@ -1,6 +1,7 @@
 import { db } from '../../config/db.knex.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { getPagination } from '../../utils/http/pagination.js';
+import { createAutomatedServiceJournal } from '../accounting/accounting.service.js';
 
 const generateTicketNumber = async (tenantId = null) => {
   const countQuery = db('repair_tickets');
@@ -138,7 +139,52 @@ export const createRepair = async (data, tenantId = null) => {
     is_deleted: false,
   });
 
-  return getRepairById(insertedId, tenantId, data.branchId);
+  const createdTicket = await getRepairById(insertedId, tenantId, data.branchId);
+
+  // Auto-sync advance payment to accounting
+  if (Number(data.advancePaid || 0) > 0) {
+    try {
+      await createAutomatedServiceJournal(createdTicket, Number(data.advancePaid), data.paymentMethod || 'CASH');
+    } catch (err) {
+      console.error('Failed to log automated service advance journal:', err.message);
+    }
+  }
+
+  return createdTicket;
+};
+
+export const collectRepairDue = async (id, { amount, paymentMethod = 'CASH', notes = '' } = {}, tenantId = null, branchId = null, user = null) => {
+  const ticket = await getRepairById(id, tenantId, branchId);
+  if (!ticket) throw ApiError.notFound('Repair ticket not found');
+
+  const payAmount = Number(amount || 0);
+  if (payAmount <= 0) {
+    throw ApiError.badRequest('Payment amount must be greater than 0');
+  }
+
+  const currentDue = Math.max(0, Number(ticket.estimatedCost || 0) - Number(ticket.advancePaid || 0));
+  if (payAmount > currentDue && currentDue > 0) {
+    throw ApiError.badRequest(`Payment amount (৳${payAmount}) cannot exceed remaining repair due balance of ৳${currentDue}`);
+  }
+
+  const newAdvance = Number(ticket.advancePaid || 0) + payAmount;
+
+  const q = db('repair_tickets').where({ id });
+  if (tenantId) q.andWhere('tenant_id', tenantId);
+  if (branchId) q.andWhere('branch_id', branchId);
+  await q.update({
+    advance_paid: newAdvance,
+    updated_at: new Date(),
+  });
+
+  // Auto-sync repair due payment to accounting journal
+  try {
+    await createAutomatedServiceJournal(ticket, payAmount, paymentMethod, user?.username || 'system');
+  } catch (err) {
+    console.error('Failed to log automated repair due payment journal:', err.message);
+  }
+
+  return getRepairById(id, tenantId, branchId);
 };
 
 export const updateRepairStatus = async (id, status, tenantId = null, branchId = null) => {

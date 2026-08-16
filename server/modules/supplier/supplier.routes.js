@@ -16,6 +16,7 @@ router.get('/:id', supplierController.getSupplierById);
 router.get('/:id/stats', supplierController.getSupplierStats);
 router.post('/', authorize('ADMIN', 'MANAGER'), validate(createSupplierSchema), supplierController.createSupplier);
 router.put('/:id', authorize('ADMIN', 'MANAGER'), validate(updateSupplierSchema), supplierController.updateSupplier);
+router.post('/:id/pay-due', authorize('ADMIN', 'MANAGER'), supplierController.paySupplierDue);
 router.delete('/:id', authorize('ADMIN'), supplierController.deleteSupplier);
 
 export default router;

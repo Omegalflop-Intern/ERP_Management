@@ -118,8 +118,8 @@ export const createExpense = async (data, recordedBy = 'system', tenantId = null
   const [insertedId] = await db('expenses').insert({
     tenant_id: tenantId || data.tenantId || null,
     branch_id: data.branchId || null,
-    title: data.title,
-    category: data.category || 'Miscellaneous',
+    title: data.title || data.category || data.notes || 'General Expense',
+    category: data.category || 'General Expense',
     amount,
     payment_method: data.paymentMethod || 'cash',
     date: data.date ? new Date(data.date) : new Date(),

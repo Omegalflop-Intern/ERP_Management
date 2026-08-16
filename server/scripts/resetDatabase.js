@@ -23,6 +23,7 @@ import * as addBranchIdToWholesaleOrders from '../migrations/20260812000018_add_
 import * as addBranchIdToAuditLogs from '../migrations/20260812000019_add_branch_id_to_audit_logs.js';
 import * as addBranchIdToSharedTables from '../migrations/20260812000020_add_branch_id_to_shared_tables.js';
 import * as addBranchIdToJournalEntries from '../migrations/20260816000001_add_branch_id_to_journal_entries.js';
+import * as alterProductsBrandDefault from '../migrations/20260816000002_alter_products_brand_default.js';
 
 import { seedDefaultRoles } from '../modules/role/role.service.js';
 import { seedSubscriptionPlans } from '../modules/plans/plans.service.js';
@@ -78,6 +79,7 @@ async function resetDatabase() {
     await addBranchIdToAuditLogs.up(db);
     await addBranchIdToSharedTables.up(db);
     await addBranchIdToJournalEntries.up(db);
+    await alterProductsBrandDefault.up(db);
     console.log('✅ Schema created successfully!');
 
     // 3. Seed default roles, subscription plans, and super admins

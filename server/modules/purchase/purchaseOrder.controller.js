@@ -75,3 +75,13 @@ export const returnToSupplier = async (req, res, next) => {
     return ApiResponse.success(res, result, 'Product(s) returned to supplier successfully');
   } catch (error) { next(error); }
 };
+
+export const payPurchaseOrderDue = async (req, res, next) => {
+  try {
+    const tenantId = req.user?.tenantId || null;
+    const branchId = req.selectedBranchId || null;
+    const order = await purchaseOrderService.payPurchaseOrderDue(req.params.id, req.body, tenantId, branchId, req.user);
+    logAction({ userId: req.user?.userId, username: req.user?.username, action: 'PAY_PURCHASE_DUE', module: 'purchase', entityId: order._id, entityType: 'PurchaseOrder', details: { amount: req.body.amount, poNumber: order.poNumber }, req });
+    return ApiResponse.success(res, order, 'Supplier payment recorded successfully');
+  } catch (error) { next(error); }
+};

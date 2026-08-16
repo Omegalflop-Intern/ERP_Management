@@ -62,8 +62,8 @@ export default function Investors() {
     phone: '',
     email: '',
     address: '',
-    sharePercentage: 0,
-    initialCapital: 0,
+    sharePercentage: '',
+    initialCapital: '',
     paymentMethod: 'cash',
     notes: '',
   });
@@ -768,7 +768,13 @@ export default function Investors() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                createTxMutation.mutate({ investorId: txTargetInvestor._id, data: txForm });
+                createTxMutation.mutate({
+                  investorId: txTargetInvestor._id || txTargetInvestor.id,
+                  data: {
+                    ...txForm,
+                    amount: Number(txForm.amount),
+                  },
+                });
               }}
               className="space-y-3"
             >

@@ -2,18 +2,26 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   AlertTriangle,
   Calendar,
+  Check,
+  CheckCircle2,
   Clock,
   LogIn,
   LogOut,
   MapPin,
   RefreshCw,
+  Sparkles,
+  Timer,
+  User,
+  UserCheck,
   Users,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import PageHeader from '../../components/layout/PageHeader';
+import DatePicker from '../../components/ui/DatePicker';
+import { Button } from '../../components/ui/button';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import DatePicker from '../../components/ui/DatePicker';
 import api from '../../lib/api';
 
 export default function Attendance() {
@@ -21,8 +29,15 @@ export default function Attendance() {
   const [from, setFrom] = useState(new Date(new Date().setDate(1)).toISOString().split('T')[0]);
   const [to, setTo] = useState(new Date().toISOString().split('T')[0]);
   const [selectedEmployee, setSelectedEmployee] = useState('');
+  const [currentTime, setCurrentTime] = useState(new Date());
   const { styled } = useTheme();
   const queryClient = useQueryClient();
+
+  // Live Clock Ticker
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const isAdminOrManager =
     user?.roleName === 'ADMIN' ||
@@ -37,7 +52,7 @@ export default function Attendance() {
     },
   });
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ['attendance-report', from, to, selectedEmployee],
     queryFn: async () => {
       const res = await api.get('/attendance/report', {
@@ -71,171 +86,307 @@ export default function Attendance() {
 
   const employees = empData || [];
   const records = data?.data || [];
-  const myEmployee = employees.find((e) => e.user === user?._id || e.email === user?.email);
+  
+  // Find logged-in user's employee record
+  const myEmployee = employees.find(
+    (e) =>
+      String(e.user?._id || e.user?.id || e.user) === String(user?._id || user?.id) ||
+      (user?.email && e.email?.toLowerCase() === user.email.toLowerCase()) ||
+      (user?.name && e.name?.toLowerCase() === user.name.toLowerCase())
+  );
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const myTodayRecord = records.find(
+    (r) =>
+      String(r.employee?._id || r.employee?.id || r.employee) === String(myEmployee?._id || myEmployee?.id) &&
+      (String(r.date).slice(0, 10) === todayStr || new Date(r.date).toISOString().slice(0, 10) === todayStr)
+  );
+
+  const isCheckedIn = Boolean(myTodayRecord?.checkIn);
+  const isCheckedOut = Boolean(myTodayRecord?.checkOut);
 
   const presentCount = records.filter((r) => r.status === 'present' || r.status === 'late').length;
   const lateCount = records.filter((r) => r.status === 'late').length;
   const absentCount = records.filter((r) => r.status === 'absent').length;
 
   const cardClass = styled
-    ? 'neu-card p-4'
-    : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-4';
+    ? 'neu-card p-5'
+    : 'bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-slate-800 p-5 shadow-sm';
+
+  // Format Helper for Hours & Duration
+  const formatDuration = (checkIn, checkOut) => {
+    if (!checkIn) return '-';
+    const start = new Date(checkIn);
+    const end = checkOut ? new Date(checkOut) : currentTime;
+    const diffMs = end - start;
+    if (diffMs <= 0) return '0m';
+    const totalMins = Math.floor(diffMs / (1000 * 60));
+    const hrs = Math.floor(totalMins / 60);
+    const mins = totalMins % 60;
+    return hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`;
+  };
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Attendance</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Track employee check-in/out and daily attendance
-          </p>
-        </div>
-      </div>
-
-      {/* Self Attendance Card */}
-      {myEmployee && (
-        <div className="bg-gradient-to-r from-red-600 to-rose-700 text-white rounded-2xl p-5 shadow-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h3 className="font-bold text-lg">My Attendance Today</h3>
-            <p className="text-xs text-red-100 mt-0.5">
-              Logged in as <span className="font-semibold">{myEmployee.name}</span> (
-              {myEmployee.employeeId})
-            </p>
-          </div>
+      {/* Page Header */}
+      <PageHeader
+        title="Employee Attendance & Shift Tracker"
+        subtitle="Track staff check-ins, check-outs, shift durations, and monthly attendance records."
+        icon={Clock}
+        breadcrumbs={['HR & Payroll', 'Attendance Tracker']}
+        actions={
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => checkInMutation.mutate(myEmployee._id)}
-              disabled={checkInMutation.isPending}
-              className="px-4 py-2 bg-white text-red-700 hover:bg-red-50 font-bold rounded-xl text-sm transition-all flex items-center gap-2 shadow"
+            {/* Live Clock Display */}
+            <div className="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-mono font-bold">
+              <Timer className="w-4 h-4 text-blue-600 dark:text-blue-400 animate-pulse" />
+              <span>{currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetch()}
+              disabled={isFetching}
+              className="rounded-xl h-10 px-3 border-slate-200 dark:border-slate-800"
+              title="Refresh Records"
             >
-              <LogIn className="w-4 h-4" /> Check In
-            </button>
-            <button
-              onClick={() => checkOutMutation.mutate(myEmployee._id)}
-              disabled={checkOutMutation.isPending}
-              className="px-4 py-2 bg-red-900/40 hover:bg-red-900/60 text-white font-bold rounded-xl text-sm border border-white/20 transition-all flex items-center gap-2"
-            >
-              <LogOut className="w-4 h-4" /> Check Out
-            </button>
+              <RefreshCw className={`w-4 h-4 text-slate-600 dark:text-slate-300 ${isFetching ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
+        }
+      />
+
+      {/* ── 1. MY ATTENDANCE TODAY BANNER ── */}
+      {myEmployee && (
+        <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 shadow-xl border border-indigo-500/30 relative overflow-hidden">
+          <div className="absolute right-0 top-0 translate-x-8 -translate-y-8 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+          
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5 relative z-10">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-indigo-400" /> My Attendance Today
+                </span>
+                <span className="text-xs text-slate-400 font-mono">
+                  {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                </span>
+              </div>
+
+              <h2 className="text-xl font-black tracking-tight text-white flex items-center gap-2">
+                {myEmployee.name}
+                <span className="text-xs font-mono font-semibold text-slate-400 px-2 py-0.5 rounded-lg bg-white/10">
+                  {myEmployee.employeeId || 'EMP-STAFF'}
+                </span>
+              </h2>
+
+              <p className="text-xs text-slate-300 flex items-center gap-2">
+                <span>Role/Designation: <strong>{myEmployee.designation || myEmployee.department || 'Staff Member'}</strong></span>
+                <span>•</span>
+                {isCheckedOut ? (
+                  <span className="text-rose-300 font-bold flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Shift Completed (Checked Out at {new Date(myTodayRecord.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
+                  </span>
+                ) : isCheckedIn ? (
+                  <span className="text-emerald-400 font-bold flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" /> Shift Active (In Workshop since {new Date(myTodayRecord.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
+                  </span>
+                ) : (
+                  <span className="text-amber-300 font-medium">Not checked in yet today</span>
+                )}
+              </p>
+            </div>
+
+            {/* Check-In / Check-Out Actions */}
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={() => checkInMutation.mutate(myEmployee._id || myEmployee.id)}
+                disabled={checkInMutation.isPending || isCheckedIn}
+                className={`h-11 px-5 rounded-2xl font-bold text-xs gap-2 transition-all shadow-lg ${
+                  isCheckedIn
+                    ? 'bg-slate-800/80 text-slate-400 border border-slate-700 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-emerald-500/20'
+                }`}
+              >
+                <LogIn className="w-4 h-4" />
+                {isCheckedIn ? 'Checked In' : 'Check In Now'}
+              </Button>
+
+              <Button
+                onClick={() => checkOutMutation.mutate(myEmployee._id || myEmployee.id)}
+                disabled={checkOutMutation.isPending || !isCheckedIn || isCheckedOut}
+                className={`h-11 px-5 rounded-2xl font-bold text-xs gap-2 transition-all shadow-lg ${
+                  !isCheckedIn || isCheckedOut
+                    ? 'bg-slate-800/80 text-slate-500 border border-slate-700 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-600 hover:to-rose-700 text-white shadow-rose-500/20'
+                }`}
+              >
+                <LogOut className="w-4 h-4" />
+                {isCheckedOut ? 'Checked Out' : 'Check Out'}
+              </Button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Admin Quick Check-in/out */}
+      {/* ── 2. QUICK STAFF CHECK-IN / CHECK-OUT GRID (ADMIN / MANAGER) ── */}
       {isAdminOrManager && (
         <div className={cardClass}>
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-            Quick Staff Check-in / Check-out
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {employees.slice(0, 10).map((emp) => (
-              <div
-                key={emp._id}
-                className="flex items-center gap-1 bg-gray-50 dark:bg-gray-900 px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-800"
-              >
-                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                  {emp.name}
-                </span>
-                <button
-                  onClick={() => checkInMutation.mutate(emp._id)}
-                  className="p-1 rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200 transition-colors"
-                  title="Check In"
+          <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100 dark:border-slate-800">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <UserCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" /> Quick Staff Shift Actions
+            </h3>
+            <span className="text-[11px] text-slate-400 font-medium">1-Click Manager Override</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            {employees.slice(0, 12).map((emp) => {
+              const empToday = records.find(
+                (r) =>
+                  String(r.employee?._id || r.employee?.id || r.employee) === String(emp._id || emp.id) &&
+                  (String(r.date).slice(0, 10) === todayStr || new Date(r.date).toISOString().slice(0, 10) === todayStr)
+              );
+              const empIn = Boolean(empToday?.checkIn);
+              const empOut = Boolean(empToday?.checkOut);
+
+              return (
+                <div
+                  key={emp._id || emp.id}
+                  className="bg-slate-50/80 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between gap-2"
                 >
-                  <LogIn className="w-3 h-3" />
-                </button>
-                <button
-                  onClick={() => checkOutMutation.mutate(emp._id)}
-                  className="p-1 rounded bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 hover:bg-red-200 transition-colors"
-                  title="Check Out"
-                >
-                  <LogOut className="w-3 h-3" />
-                </button>
-              </div>
-            ))}
+                  <div className="min-w-0">
+                    <div className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">
+                      {emp.name}
+                    </div>
+                    <div className="text-[10px] text-slate-400 truncate flex items-center gap-1">
+                      <span>{emp.employeeId || 'STAFF'}</span>
+                      {empOut ? (
+                        <span className="text-rose-500 font-semibold">• Checked Out</span>
+                      ) : empIn ? (
+                        <span className="text-emerald-500 font-semibold">• Active</span>
+                      ) : (
+                        <span className="text-slate-400">• Off</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => checkInMutation.mutate(emp._id || emp.id)}
+                      disabled={checkInMutation.isPending || empIn}
+                      className={`p-1.5 rounded-lg transition-colors ${
+                        empIn
+                          ? 'opacity-40 cursor-not-allowed text-slate-400'
+                          : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100'
+                      }`}
+                      title={empIn ? 'Already Checked In' : 'Check In Staff'}
+                    >
+                      <LogIn className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => checkOutMutation.mutate(emp._id || emp.id)}
+                      disabled={checkOutMutation.isPending || !empIn || empOut}
+                      className={`p-1.5 rounded-lg transition-colors ${
+                        !empIn || empOut
+                          ? 'opacity-40 cursor-not-allowed text-slate-400'
+                          : 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 hover:bg-rose-100'
+                      }`}
+                      title={empOut ? 'Already Checked Out' : 'Check Out Staff'}
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {[
-          {
-            label: 'Total Records',
-            value: records.length,
-            icon: Users,
-            color: 'text-blue-600 dark:text-blue-400',
-          },
-          {
-            label: 'Present',
-            value: presentCount,
-            icon: Clock,
-            color: 'text-green-600 dark:text-green-400',
-          },
-          {
-            label: 'Late',
-            value: lateCount,
-            icon: AlertTriangle,
-            color: 'text-amber-600 dark:text-amber-400',
-          },
-          {
-            label: 'Absent',
-            value: absentCount,
-            icon: AlertTriangle,
-            color: 'text-red-600 dark:text-red-400',
-          },
-        ].map((s) => (
-          <div key={s.label} className={cardClass}>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                {s.label}
-              </span>
-              <s.icon className={`w-4 h-4 ${s.color}`} />
-            </div>
-            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {isLoading ? (
-                <div className="h-7 w-12 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-              ) : (
-                s.value
-              )}
-            </div>
+      {/* ── 3. METRIC STAT CARDS ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Attendance Records</div>
+          <div className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-1.5 font-mono">
+            {records.length}
           </div>
-        ))}
+          <div className="text-[11px] text-slate-400 mt-1 font-medium">Selected Date Period</div>
+          <div className="absolute right-3 top-3 w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-blue-600">
+            <Users className="w-4 h-4" />
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Present Count</div>
+          <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1.5 font-mono">
+            {presentCount}
+          </div>
+          <div className="text-[11px] text-emerald-600/80 dark:text-emerald-400/80 mt-1 font-medium">On-duty Staff</div>
+          <div className="absolute right-3 top-3 w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-600">
+            <CheckCircle2 className="w-4 h-4" />
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Late Entries</div>
+          <div className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1.5 font-mono">
+            {lateCount}
+          </div>
+          <div className="text-[11px] text-amber-600/80 dark:text-amber-400/80 mt-1 font-medium">Checked in after 10 AM</div>
+          <div className="absolute right-3 top-3 w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/50 flex items-center justify-center text-amber-600">
+            <Clock className="w-4 h-4" />
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Absent / Unreported</div>
+          <div className="text-2xl font-black text-rose-600 dark:text-rose-400 mt-1.5 font-mono">
+            {absentCount}
+          </div>
+          <div className="text-[11px] text-rose-600/80 dark:text-rose-400/80 mt-1 font-medium">Off-duty / Leaves</div>
+          <div className="absolute right-3 top-3 w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/50 flex items-center justify-center text-rose-600">
+            <AlertTriangle className="w-4 h-4" />
+          </div>
+        </div>
       </div>
 
-      {/* Filters */}
+      {/* ── 4. DATE RANGE & EMPLOYEE FILTERS ── */}
       <div className={cardClass}>
         <div className="flex flex-wrap items-end gap-4">
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">From</label>
+            <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+              From Date
+            </label>
             <DatePicker
               value={from}
               onChange={setFrom}
               placeholder="From Date"
-              className="!rounded-lg"
             />
           </div>
+
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">To</label>
+            <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+              To Date
+            </label>
             <DatePicker
               value={to}
               onChange={setTo}
               placeholder="To Date"
-              className="!rounded-lg"
             />
           </div>
+
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
-              Employee
+            <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+              Filter by Employee
             </label>
             <select
               value={selectedEmployee}
               onChange={(e) => setSelectedEmployee(e.target.value)}
-              className="px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-[#2563EB]"
+              className="h-10 px-3 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none min-w-[200px]"
             >
-              <option value="">All Employees</option>
+              <option value="">All Employees ({employees.length})</option>
               {employees.map((emp) => (
-                <option key={emp._id} value={emp._id}>
-                  {emp.name} ({emp.employeeId})
+                <option key={emp._id || emp.id} value={emp._id || emp.id}>
+                  {emp.name} ({emp.employeeId || 'STAFF'})
                 </option>
               ))}
             </select>
@@ -243,82 +394,99 @@ export default function Attendance() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800">
+      {/* ── 5. ATTENDANCE LOG TABLE ── */}
+      <div className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-800 text-left">
-                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">
-                  Employee
-                </th>
-                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Date</th>
-                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">
-                  Check In
-                </th>
-                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">
-                  Check Out
-                </th>
-                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Status</th>
-                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Hours</th>
+              <tr className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 text-slate-500 uppercase tracking-wider text-[10px] font-bold">
+                <th className="px-4 py-3.5 text-left">Employee Staff</th>
+                <th className="px-4 py-3.5 text-left">Date</th>
+                <th className="px-4 py-3.5 text-left">Check In</th>
+                <th className="px-4 py-3.5 text-left">Check Out</th>
+                <th className="px-4 py-3.5 text-left">Shift Status</th>
+                <th className="px-4 py-3.5 text-right">Shift Duration</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
               {isLoading ? (
                 <tr>
-                  <td colSpan="6" className="px-4 py-12 text-center text-gray-400">
-                    <RefreshCw className="w-6 h-6 animate-spin mx-auto" />
+                  <td colSpan="6" className="px-4 py-12 text-center text-slate-400">
+                    <RefreshCw className="w-6 h-6 animate-spin mx-auto text-blue-600 mb-2" />
+                    <span>Loading attendance records...</span>
                   </td>
                 </tr>
               ) : records.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="px-4 py-12 text-center text-gray-400">
-                    No attendance records found
+                  <td colSpan="6" className="px-4 py-12 text-center text-slate-400">
+                    No attendance records found for the selected period
                   </td>
                 </tr>
               ) : (
                 records.map((r) => {
-                  const hours =
-                    r.checkIn && r.checkOut
-                      ? ((new Date(r.checkOut) - new Date(r.checkIn)) / 3600000).toFixed(1)
-                      : '-';
+                  const durationStr = formatDuration(r.checkIn, r.checkOut);
+                  const isShiftActive = r.checkIn && !r.checkOut;
+                  const statusUpper = String(r.status || 'present').toUpperCase();
+
                   return (
                     <tr
-                      key={r._id}
-                      className="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30"
+                      key={r._id || r.id}
+                      className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors"
                     >
                       <td className="px-4 py-3">
-                        <div className="font-medium text-gray-900 dark:text-gray-100">
-                          {r.employee?.name || 'N/A'}
+                        <div className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                          <span>{r.employee?.name || 'Staff Member'}</span>
                         </div>
-                        <div className="text-xs text-gray-500">{r.employee?.employeeId}</div>
+                        <div className="text-[10px] text-slate-400 font-mono">
+                          {r.employee?.employeeId || 'EMP-STAFF'} {r.employee?.designation ? `• ${r.employee.designation}` : ''}
+                        </div>
                       </td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
-                        {new Date(r.date).toLocaleDateString()}
+
+                      <td className="px-4 py-3 font-medium text-slate-700 dark:text-slate-300">
+                        {new Date(r.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
                       </td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
-                        {r.checkIn ? new Date(r.checkIn).toLocaleTimeString() : '-'}
+
+                      <td className="px-4 py-3 font-mono font-semibold text-emerald-600 dark:text-emerald-400">
+                        {r.checkIn ? new Date(r.checkIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '-'}
                       </td>
-                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
-                        {r.checkOut ? new Date(r.checkOut).toLocaleTimeString() : '-'}
+
+                      <td className="px-4 py-3 font-mono font-semibold text-rose-600 dark:text-rose-400">
+                        {r.checkOut ? new Date(r.checkOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '-'}
                       </td>
+
                       <td className="px-4 py-3">
-                        <span
-                          className={`px-2 py-1 text-xs rounded-full font-medium ${
-                            r.status === 'present'
-                              ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400'
-                              : r.status === 'late'
-                                ? 'bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400'
-                                : r.status === 'half-day'
-                                  ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'
-                                  : 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400'
-                          }`}
-                        >
-                          {r.status}
-                        </span>
+                        {statusUpper === 'PRESENT' && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 font-extrabold text-[10px] border border-emerald-200 dark:border-emerald-800/50">
+                            <Check className="w-3 h-3" /> PRESENT
+                          </span>
+                        )}
+                        {statusUpper === 'LATE' && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 font-extrabold text-[10px] border border-amber-200 dark:border-amber-800/50">
+                            <Clock className="w-3 h-3" /> LATE ENTRY
+                          </span>
+                        )}
+                        {statusUpper === 'HALF-DAY' && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-extrabold text-[10px] border border-blue-200 dark:border-blue-800/50">
+                            HALF DAY
+                          </span>
+                        )}
+                        {statusUpper === 'ABSENT' && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 font-extrabold text-[10px] border border-rose-200 dark:border-rose-800/50">
+                            <AlertTriangle className="w-3 h-3" /> ABSENT
+                          </span>
+                        )}
                       </td>
-                      <td className="px-4 py-3 font-mono text-gray-600 dark:text-gray-400">
-                        {hours}h
+
+                      <td className="px-4 py-3 text-right">
+                        {isShiftActive ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-mono font-bold text-[11px] animate-pulse">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping inline-block" /> Active ({durationStr})
+                          </span>
+                        ) : (
+                          <span className="font-mono font-bold text-slate-700 dark:text-slate-300">
+                            {durationStr}
+                          </span>
+                        )}
                       </td>
                     </tr>
                   );

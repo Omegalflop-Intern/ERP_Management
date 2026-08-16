@@ -73,6 +73,7 @@ export default function PurchaseOrders() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [viewPO, setViewPO] = useState(null);
   const [returnPO, setReturnPO] = useState(null);
+  const [payDuePO, setPayDuePO] = useState(null);
   const queryClient = useQueryClient();
 
   const { data, isLoading, refetch } = useQuery({
@@ -320,6 +321,15 @@ export default function PurchaseOrders() {
                       </td>
                       <td className="px-4 py-3.5 text-right">
                         <div className="flex items-center justify-end gap-1.5">
+                          {Number(po.dueAmount || 0) > 0 && (
+                            <button
+                              onClick={() => setPayDuePO(po)}
+                              className="p-1.5 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 transition-colors"
+                              title="Pay Supplier Due"
+                            >
+                              <CreditCard className="w-4 h-4" />
+                            </button>
+                          )}
                           <button
                             onClick={() => setViewPO(po)}
                             className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors"
@@ -383,6 +393,21 @@ export default function PurchaseOrders() {
         />
       )}
 
+      {/* ── PAY SUPPLIER DUE MODAL ── */}
+      {payDuePO && (
+        <PayPODueModal
+          po={payDuePO}
+          onClose={() => setPayDuePO(null)}
+          onSuccess={() => {
+            setPayDuePO(null);
+            queryClient.invalidateQueries(['purchase-orders']);
+            queryClient.invalidateQueries(['suppliers']);
+            queryClient.invalidateQueries(['suppliers-list']);
+            queryClient.invalidateQueries(['expenses']);
+          }}
+        />
+      )}
+
       {/* ── 3. VIEW PURCHASE DETAILS MODAL ── */}
       {viewPO && (
         <ViewPurchaseModal
@@ -411,7 +436,9 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
   const [paymentMethod, setPaymentMethod] = useState('CASH');
   const [paidAmount, setPaidAmount] = useState('');
   const [discount, setDiscount] = useState('');
+  const [discountType, setDiscountType] = useState('FLAT'); // 'FLAT' or 'PERCENT'
   const [tax, setTax] = useState('');
+  const [taxType, setTaxType] = useState('FLAT'); // 'FLAT' or 'PERCENT'
   const [notes, setNotes] = useState('');
 
   const availableCategories = useMemo(() => {
@@ -502,7 +529,23 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
     return lineItems.reduce((sum, it) => sum + (Number(it.qty || 1) * Number(it.unitCost || 0)), 0);
   }, [lineItems]);
 
-  const netTotal = Math.max(0, subTotal - Number(discount || 0) + Number(tax || 0));
+  const calculatedDiscount = useMemo(() => {
+    const val = Number(discount || 0);
+    if (discountType === 'PERCENT') {
+      return (subTotal * val) / 100;
+    }
+    return val;
+  }, [subTotal, discount, discountType]);
+
+  const calculatedTax = useMemo(() => {
+    const val = Number(tax || 0);
+    if (taxType === 'PERCENT') {
+      return ((subTotal - calculatedDiscount) * val) / 100;
+    }
+    return val;
+  }, [subTotal, calculatedDiscount, tax, taxType]);
+
+  const netTotal = Math.max(0, subTotal - calculatedDiscount + calculatedTax);
   const dueAmount = Math.max(0, netTotal - Number(paidAmount || 0));
 
   const handlePayInFull = () => {
@@ -558,8 +601,8 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
     mutation.mutate({
       supplierId: finalSupplierId,
       lineItems: processedLines,
-      discount: Number(discount || 0),
-      tax: Number(tax || 0),
+      discount: Number(calculatedDiscount.toFixed(2)),
+      tax: Number(calculatedTax.toFixed(2)),
       paymentMethod,
       paidAmount: Number(paidAmount || 0),
       notes,
@@ -924,28 +967,98 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center gap-3">
-                  <span className="text-slate-600 dark:text-slate-400 font-medium">Discount (৳):</span>
-                  <Input
-                    type="number"
-                    min="0"
-                    placeholder="0"
-                    value={discount === 0 ? '' : discount}
-                    onChange={(e) => setDiscount(e.target.value === '' ? '' : Number(e.target.value))}
-                    className="h-7 w-32 text-xs font-mono text-right rounded-lg bg-white dark:bg-[#1e293b]"
-                  />
+                {/* Discount input with Flat / Percent toggle */}
+                <div className="flex justify-between items-center gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-slate-600 dark:text-slate-400 font-medium">Discount:</span>
+                    <div className="inline-flex rounded-lg p-0.5 bg-slate-200 dark:bg-slate-800 text-[10px] font-bold">
+                      <button
+                        type="button"
+                        onClick={() => setDiscountType('FLAT')}
+                        className={`px-1.5 py-0.5 rounded-md transition-all ${
+                          discountType === 'FLAT'
+                            ? 'bg-white dark:bg-[#1e293b] text-blue-600 dark:text-blue-400 shadow-xs'
+                            : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                        }`}
+                      >
+                        ৳
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDiscountType('PERCENT')}
+                        className={`px-1.5 py-0.5 rounded-md transition-all ${
+                          discountType === 'PERCENT'
+                            ? 'bg-white dark:bg-[#1e293b] text-blue-600 dark:text-blue-400 shadow-xs'
+                            : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                        }`}
+                      >
+                        %
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {discountType === 'PERCENT' && calculatedDiscount > 0 && (
+                      <span className="text-[10px] font-mono text-slate-400">
+                        (-৳{calculatedDiscount.toLocaleString()})
+                      </span>
+                    )}
+                    <Input
+                      type="number"
+                      min="0"
+                      step="any"
+                      placeholder={discountType === 'PERCENT' ? '0%' : '0 ৳'}
+                      value={discount === 0 ? '' : discount}
+                      onChange={(e) => setDiscount(e.target.value === '' ? '' : Number(e.target.value))}
+                      className="h-7 w-28 text-xs font-mono text-right rounded-lg bg-white dark:bg-[#1e293b]"
+                    />
+                  </div>
                 </div>
 
-                <div className="flex justify-between items-center gap-3">
-                  <span className="text-slate-600 dark:text-slate-400 font-medium">Tax / VAT (৳):</span>
-                  <Input
-                    type="number"
-                    min="0"
-                    placeholder="0"
-                    value={tax === 0 ? '' : tax}
-                    onChange={(e) => setTax(e.target.value === '' ? '' : Number(e.target.value))}
-                    className="h-7 w-32 text-xs font-mono text-right rounded-lg bg-white dark:bg-[#1e293b]"
-                  />
+                {/* Tax / VAT input with Flat / Percent toggle */}
+                <div className="flex justify-between items-center gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-slate-600 dark:text-slate-400 font-medium">Tax / VAT:</span>
+                    <div className="inline-flex rounded-lg p-0.5 bg-slate-200 dark:bg-slate-800 text-[10px] font-bold">
+                      <button
+                        type="button"
+                        onClick={() => setTaxType('FLAT')}
+                        className={`px-1.5 py-0.5 rounded-md transition-all ${
+                          taxType === 'FLAT'
+                            ? 'bg-white dark:bg-[#1e293b] text-blue-600 dark:text-blue-400 shadow-xs'
+                            : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                        }`}
+                      >
+                        ৳
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTaxType('PERCENT')}
+                        className={`px-1.5 py-0.5 rounded-md transition-all ${
+                          taxType === 'PERCENT'
+                            ? 'bg-white dark:bg-[#1e293b] text-blue-600 dark:text-blue-400 shadow-xs'
+                            : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                        }`}
+                      >
+                        %
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {taxType === 'PERCENT' && calculatedTax > 0 && (
+                      <span className="text-[10px] font-mono text-slate-400">
+                        (+৳{calculatedTax.toLocaleString()})
+                      </span>
+                    )}
+                    <Input
+                      type="number"
+                      min="0"
+                      step="any"
+                      placeholder={taxType === 'PERCENT' ? '0%' : '0 ৳'}
+                      value={tax === 0 ? '' : tax}
+                      onChange={(e) => setTax(e.target.value === '' ? '' : Number(e.target.value))}
+                      className="h-7 w-28 text-xs font-mono text-right rounded-lg bg-white dark:bg-[#1e293b]"
+                    />
+                  </div>
                 </div>
 
                 <div className="flex justify-between font-black text-base text-slate-900 dark:text-slate-100 pt-2 border-t border-slate-200 dark:border-slate-700">
@@ -1349,6 +1462,148 @@ function ViewPurchaseModal({ po, onClose, onReturn }) {
             Close
           </Button>
         </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ----------------------------------------------------------------------
+// MODAL 4: PAY SUPPLIER DUE BALANCE MODAL
+// ----------------------------------------------------------------------
+function PayPODueModal({ po, onClose, onSuccess }) {
+  const due = Number(po.dueAmount || 0);
+  const [amount, setAmount] = useState(due);
+  const [paymentMethod, setPaymentMethod] = useState('CASH');
+  const [notes, setNotes] = useState('');
+
+  const supplierName = typeof po.supplierId === 'object' ? po.supplierId?.name : 'Supplier';
+
+  const mutation = useMutation({
+    mutationFn: async (payload) => api.post(`/purchase-orders/${po._id || po.id}/pay-due`, payload),
+    onSuccess: () => {
+      toast.success(`Supplier payment of ৳${Number(amount).toLocaleString()} recorded successfully!`);
+      onSuccess();
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'Failed to record payment');
+    },
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (Number(amount) <= 0) {
+      toast.error('Please enter a valid payment amount');
+      return;
+    }
+    mutation.mutate({
+      amount: Number(amount),
+      paymentMethod,
+      notes,
+    });
+  };
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md p-0 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl bg-white dark:bg-[#0f172a] overflow-hidden">
+        <div className="p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
+              <CreditCard className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                Pay Supplier Due Balance
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {po.poNumber} — {supplierName}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 space-y-2">
+            <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400">
+              <span>Total Order Cost:</span>
+              <span className="font-mono font-bold text-slate-900 dark:text-slate-100">৳{Number(po.netTotal || 0).toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400">
+              <span>Already Paid:</span>
+              <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">৳{Number(po.paidAmount || 0).toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between text-xs pt-1.5 border-t border-slate-200 dark:border-slate-700/80">
+              <span className="font-bold text-slate-800 dark:text-slate-200">Current Due Payable:</span>
+              <span className="font-mono font-bold text-rose-600 dark:text-rose-400 text-sm">৳{due.toLocaleString()}</span>
+            </div>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Payment Amount (৳) *
+              </Label>
+              <button
+                type="button"
+                onClick={() => setAmount(due)}
+                className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline"
+              >
+                Pay Full Due (৳{due.toLocaleString()})
+              </button>
+            </div>
+            <Input
+              type="number"
+              min="1"
+              max={due}
+              required
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="h-10 text-sm font-mono font-bold rounded-xl bg-white dark:bg-[#1e293b]"
+            />
+          </div>
+
+          <div>
+            <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 block">
+              Payment Method *
+            </Label>
+            <select
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              className="w-full px-3 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100"
+            >
+              <option value="CASH">Cash Payment</option>
+              <option value="BANK">Bank Transfer / Card</option>
+              <option value="BKASH">bKash Merchant</option>
+              <option value="NAGAD">Nagad</option>
+              <option value="ROCKET">Rocket</option>
+            </select>
+          </div>
+
+          <div>
+            <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 block">
+              Payment Notes (Optional)
+            </Label>
+            <Input
+              placeholder="e.g. Cleared via Bank Transfer Ref #1234"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="h-9 text-xs rounded-xl bg-white dark:bg-[#1e293b]"
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <Button type="button" variant="outline" size="sm" onClick={onClose} className="rounded-xl">
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={mutation.isPending}
+              className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+            >
+              {mutation.isPending ? 'Processing...' : 'Confirm Due Payment'}
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

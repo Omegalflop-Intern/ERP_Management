@@ -91,3 +91,13 @@ export const getRepairStats = async (req, res, next) => {
     return ApiResponse.success(res, stats);
   } catch (error) { next(error); }
 };
+
+export const collectRepairDue = async (req, res, next) => {
+  try {
+    const tenantId = req.user?.tenantId || null;
+    const branchId = req.selectedBranchId || null;
+    const ticket = await repairService.collectRepairDue(req.params.id, req.body, tenantId, branchId, req.user);
+    logAction({ userId: req.user?.userId, username: req.user?.username, action: 'COLLECT_REPAIR_DUE', module: 'repair', entityId: ticket._id, entityType: 'RepairTicket', details: { amount: req.body.amount, ticketNumber: ticket.ticketNumber }, req });
+    return ApiResponse.success(res, ticket, 'Repair due payment collected successfully');
+  } catch (error) { next(error); }
+};

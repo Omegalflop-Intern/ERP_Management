@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { NumberInput } from '../../components/ui/NumberInput';
 import DatePicker from '../../components/ui/DatePicker';
 import EmptyState from '../../components/ui/EmptyState';
+import PageHeader from '../../components/layout/PageHeader';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
 import { confirmDelete } from '../../lib/confirm';
@@ -70,32 +71,29 @@ export default function AssetsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-            <Building className="w-7 h-7 text-indigo-600 dark:text-indigo-400" /> Shop Assets &amp;
-            Depreciation Schedule
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Track shop furniture, electronics, equipment value and calculate monthly depreciation
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => refetch()}
-            className="p-2.5 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-xl transition-colors"
-            title="Refresh assets"
-          >
-            <RefreshCw className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setShowModal(true)}
-            className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm rounded-xl transition-colors flex items-center gap-2 shrink-0 shadow-sm"
-          >
-            <Plus className="w-4 h-4" /> Add New Shop Asset
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title="Shop Assets & Depreciation Schedule"
+        subtitle="Track shop furniture, electronics, equipment value and calculate monthly depreciation schedule."
+        icon={Building}
+        breadcrumbs={['Costing & Capital', 'Shop Assets & Equipment']}
+        actions={
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => refetch()}
+              className="p-2.5 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-xl transition-colors"
+              title="Refresh assets"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setShowModal(true)}
+              className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm rounded-xl transition-colors flex items-center gap-2 shrink-0 shadow-sm"
+            >
+              <Plus className="w-4 h-4" /> Add New Shop Asset
+            </button>
+          </div>
+        }
+      />
 
       {/* KPI Overview */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -188,7 +186,7 @@ export default function AssetsPage() {
                   <th className="px-4 py-3.5 font-bold uppercase text-xs text-right">
                     Current Value
                   </th>
-                  <th className="px-4 py-3.5 font-bold uppercase text-xs text-right">Monthly Loss</th>
+                  <th className="px-4 py-3.5 font-bold uppercase text-xs text-right">Monthly Depreciation</th>
                   <th className="px-4 py-3.5 font-bold uppercase text-xs text-center">Action</th>
                 </tr>
               </thead>
@@ -198,7 +196,7 @@ export default function AssetsPage() {
                   const sValue = Number(asset.salvageValue ?? 0);
                   const uLife = Number(asset.usefulLifeMonths || 36);
                   const cValue = Number(asset.currentBookValue ?? asset.balance ?? pCost);
-                  const monthlyLoss = Math.max(0, Math.round((pCost - sValue) / uLife));
+                  const monthlyDepreciation = Math.max(0, Math.round((pCost - sValue) / uLife));
 
                   return (
                     <tr
@@ -228,8 +226,8 @@ export default function AssetsPage() {
                       <td className="px-4 py-3.5 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
                         ৳{cValue.toLocaleString()}
                       </td>
-                      <td className="px-4 py-3.5 text-right font-mono font-bold text-amber-600 dark:text-amber-400">
-                        -৳{monthlyLoss.toLocaleString()}/mo
+                      <td className="px-4 py-3.5 text-right font-mono font-semibold text-slate-700 dark:text-slate-300">
+                        ৳{monthlyDepreciation.toLocaleString()}/mo
                       </td>
                       <td className="px-4 py-3.5 text-center">
                         <button

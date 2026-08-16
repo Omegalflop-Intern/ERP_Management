@@ -130,6 +130,8 @@ export const getAllIMEI = async (page = 1, limit = 20, search = '', status = '',
   return { units, pagination: getPagination(total, page, limit) };
 };
 
+export const getAllIMEIs = getAllIMEI;
+
 export const getIMEIBySerial = async (imeiOrSerial, tenantId = null) => {
   const dataQuery = db('inventory_units')
     .leftJoin('products', 'inventory_units.product_id', 'products.id')

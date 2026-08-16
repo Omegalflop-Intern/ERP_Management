@@ -17,6 +17,7 @@ router.post('/', authorize('ADMIN', 'MANAGER'), validate(createPurchaseOrderSche
 router.put('/:id', authorize('ADMIN', 'MANAGER'), validate(updatePurchaseOrderSchema), purchaseOrderController.updatePurchaseOrder);
 router.post('/:id/receive', authorize('ADMIN', 'MANAGER'), validate(receiveGoodsSchema), purchaseOrderController.receiveGoods);
 router.post('/:id/return', authorize('ADMIN', 'MANAGER'), purchaseOrderController.returnToSupplier);
+router.post('/:id/pay-due', authorize('ADMIN', 'MANAGER'), purchaseOrderController.payPurchaseOrderDue);
 router.delete('/:id', authorize('ADMIN'), purchaseOrderController.deletePurchaseOrder);
 
 export default router;

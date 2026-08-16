@@ -1,7 +1,6 @@
 import app from './app.js';
 import { env } from './config/env.config.js';
 import { checkDbConnection } from './config/db.knex.js';
-import { runAutoMigrations } from './scripts/runMigration.js';
 import { initMailer, sendAdminNotificationEmail, sendCustomerInvoiceEmail, sendCustomerRepairEmail } from './config/mailer.js';
 import { seedDefaultRoles } from './modules/role/role.service.js';
 import { initAutoBackup } from './modules/settings/settings.service.js';
@@ -92,7 +91,6 @@ const startServer = (target) => {
     printAsciiBanner();
 
     await logStep('MySQL/MariaDB Database', checkDbConnection);
-    await logStep('Database Schema Migrations', runAutoMigrations);
     await logStep('SMTP Mailer Service', initMailer);
     await logStep('System Roles & Subscription Plans', seedDefaultRoles);
     await logStep('Automated Backup Scheduler', () => initAutoBackup());
@@ -108,23 +106,28 @@ const startServer = (target) => {
 
 startServer(targetPort);
 
+let isShuttingDown = false;
 const gracefulShutdown = (signal) => {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
   console.log(`\n[SERVER] ${signal} received. Shutting down gracefully...`);
-  server.close(() => {
-    console.log('[SERVER] HTTP server closed.');
-    db.destroy().then(() => {
-      console.log('[SERVER] Database connections closed.');
-      process.exit(0);
-    }).catch(() => process.exit(1));
-  });
-  setTimeout(() => {
-    console.error('[SERVER] Forced shutdown after timeout.');
-    process.exit(1);
-  }, 10000);
+  try {
+    server.close();
+  } catch {}
 };
 
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGINT', () => {
+  gracefulShutdown('SIGINT');
+  process.exit(0);
+});
+
+// In node --watch development mode, let Node handle SIGTERM to avoid "Failed running 'server.js'" watcher logs
+if (!process.env.NODE_WATCH && process.env.NODE_ENV === 'production') {
+  process.on('SIGTERM', () => {
+    gracefulShutdown('SIGTERM');
+    process.exit(0);
+  });
+}
 
   emitter.on(EVENTS.STOCK_UPDATED, (data) => {
     console.log('\x1b[36m[EVENT:STOCK]\x1b[0m Stock updated:', data?.name || data?.sku);

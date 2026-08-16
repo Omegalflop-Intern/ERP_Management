@@ -1,6 +1,7 @@
 import { db } from '../../config/db.knex.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { getPagination } from '../../utils/http/pagination.js';
+import { createAutomatedExpenseJournal } from '../accounting/accounting.service.js';
 
 export function formatSupplier(row) {
   if (!row) return null;
@@ -156,4 +157,65 @@ export const getSupplierStats = async (id, tenantId = null) => {
     totalPurchases: supplier.totalPurchases,
     paymentTerms: supplier.paymentTerms,
   };
+};
+
+export const paySupplierDue = async (id, { amount, paymentMethod = 'CASH', notes = '' } = {}, tenantId = null, branchId = null, user = null) => {
+  const supplier = await getSupplierById(id, tenantId);
+  if (!supplier) throw ApiError.notFound('Supplier not found');
+
+  const payAmount = Number(amount || 0);
+  if (payAmount <= 0) {
+    throw ApiError.badRequest('Payment amount must be greater than 0');
+  }
+
+  const currentDue = Number(supplier.dueBalance || 0);
+  if (payAmount > currentDue && currentDue > 0) {
+    throw ApiError.badRequest(`Payment amount (৳${payAmount}) cannot exceed supplier's current due balance of ৳${currentDue}`);
+  }
+
+  const newDue = Math.max(0, currentDue - payAmount);
+  const q = db('suppliers').where({ id });
+  if (tenantId) q.andWhere('tenant_id', tenantId);
+  await q.update({ due_balance: newDue, updated_at: new Date() });
+
+  // Distribute payment across pending purchase orders for this supplier
+  let remainingPay = payAmount;
+  const poQuery = db('purchase_orders')
+    .where({ supplier_id: id, is_deleted: false })
+    .where('due_amount', '>', 0)
+    .orderBy('created_at', 'asc');
+  if (tenantId) poQuery.andWhere('tenant_id', tenantId);
+
+  const pendingPOs = await poQuery;
+  for (const po of pendingPOs) {
+    if (remainingPay <= 0) break;
+    const poDue = Number(po.due_amount || 0);
+    const payForPO = Math.min(poDue, remainingPay);
+    const newPOPaid = Number(po.paid_amount || 0) + payForPO;
+    const newPODue = Math.max(0, poDue - payForPO);
+
+    await db('purchase_orders').where({ id: po.id }).update({
+      paid_amount: newPOPaid,
+      due_amount: newPODue,
+      updated_at: new Date(),
+    });
+    remainingPay -= payForPO;
+  }
+
+  // Log automated journal
+  try {
+    await createAutomatedExpenseJournal({
+      tenantId: tenantId || supplier.tenantId,
+      branchId,
+      expenseCategory: 'Supplier Payment',
+      amount: payAmount,
+      paymentMethod,
+      notes: notes || `Direct due payment to supplier ${supplier.name}`,
+      createdBy: user?.username || 'system',
+    });
+  } catch (err) {
+    console.error('Failed to log automated journal for supplier due payment:', err.message);
+  }
+
+  return getSupplierById(id, tenantId);
 };
