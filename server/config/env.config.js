@@ -17,7 +17,7 @@ const envSchema = z.object({
   DB_USER: z.string().default(''),
   DB_PASSWORD: z.string().default(''),
   DB_NAME: z.string().default(''),
-  JWT_SECRET: z.string().min(10).default('default_super_secret_jwt_key_2026'),
+  JWT_SECRET: z.string().min(10),
   JWT_EXPIRES_IN: z.string().default('30d'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('30d'),
   SMTP_HOST: z.string().optional(),

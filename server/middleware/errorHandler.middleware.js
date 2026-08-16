@@ -7,7 +7,7 @@ export const errorHandler = (err, req, res, next) => {
 
   const message = err instanceof ApiError
     ? err.message
-    : (err.message || 'Internal Server Error');
+    : (statusCode === 500 ? 'Internal Server Error' : (err.message || 'Request failed'));
 
   const errors = err.errors || [];
 

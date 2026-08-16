@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
+import compression from 'compression';
 import os from 'os';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -63,6 +64,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 app.set('trust proxy', 1);
+
+app.use(compression());
 
 if (process.env.NODE_ENV === 'production') {
   app.use((req, res, next) => {

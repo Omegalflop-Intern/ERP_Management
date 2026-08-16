@@ -106,6 +106,24 @@ const startServer = (target) => {
 
 startServer(targetPort);
 
+const gracefulShutdown = (signal) => {
+  console.log(`\n[SERVER] ${signal} received. Shutting down gracefully...`);
+  server.close(() => {
+    console.log('[SERVER] HTTP server closed.');
+    db.destroy().then(() => {
+      console.log('[SERVER] Database connections closed.');
+      process.exit(0);
+    }).catch(() => process.exit(1));
+  });
+  setTimeout(() => {
+    console.error('[SERVER] Forced shutdown after timeout.');
+    process.exit(1);
+  }, 10000);
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
   emitter.on(EVENTS.STOCK_UPDATED, (data) => {
     console.log('\x1b[36m[EVENT:STOCK]\x1b[0m Stock updated:', data?.name || data?.sku);
     broadcastToTenant(data?.tenantId || null, { type: 'STOCK_UPDATED', data });
