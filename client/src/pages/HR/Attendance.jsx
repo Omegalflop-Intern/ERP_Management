@@ -11,6 +11,7 @@ import {
   RefreshCw,
   Sparkles,
   Timer,
+  Trash2,
   User,
   UserCheck,
   Users,
@@ -23,6 +24,7 @@ import { Button } from '../../components/ui/button';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
+import { confirmDelete } from '../../lib/confirm';
 
 export default function Attendance() {
   const { user } = useAuth();
@@ -83,6 +85,25 @@ export default function Attendance() {
     },
     onError: (e) => toast.error(e.response?.data?.message || 'Check-out failed'),
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id) => {
+      return api.delete(`/attendance/${id}`);
+    },
+    onSuccess: () => {
+      toast.success('Attendance record deleted successfully');
+      queryClient.invalidateQueries(['attendance-report']);
+    },
+    onError: (e) => toast.error(e.response?.data?.message || 'Failed to delete attendance record'),
+  });
+
+  const handleDeleteRecord = (r) => {
+    const staffName = r.employee?.name || 'this staff';
+    const dateStr = r.date ? new Date(r.date).toLocaleDateString() : '';
+    confirmDelete(`Are you sure you want to delete attendance record for "${staffName}" (${dateStr})?`, () => {
+      deleteMutation.mutate(r._id || r.id);
+    });
+  };
 
   const employees = empData || [];
   const records = data?.data || [];
@@ -406,19 +427,20 @@ export default function Attendance() {
                 <th className="px-4 py-3.5 text-left">Check Out</th>
                 <th className="px-4 py-3.5 text-left">Shift Status</th>
                 <th className="px-4 py-3.5 text-right">Shift Duration</th>
+                {isAdminOrManager && <th className="px-4 py-3.5 text-center">Action</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
               {isLoading ? (
                 <tr>
-                  <td colSpan="6" className="px-4 py-12 text-center text-slate-400">
+                  <td colSpan={isAdminOrManager ? 7 : 6} className="px-4 py-12 text-center text-slate-400">
                     <RefreshCw className="w-6 h-6 animate-spin mx-auto text-blue-600 mb-2" />
                     <span>Loading attendance records...</span>
                   </td>
                 </tr>
               ) : records.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="px-4 py-12 text-center text-slate-400">
+                  <td colSpan={isAdminOrManager ? 7 : 6} className="px-4 py-12 text-center text-slate-400">
                     No attendance records found for the selected period
                   </td>
                 </tr>
@@ -488,6 +510,19 @@ export default function Attendance() {
                           </span>
                         )}
                       </td>
+
+                      {isAdminOrManager && (
+                        <td className="px-4 py-3 text-center">
+                          <button
+                            onClick={() => handleDeleteRecord(r)}
+                            disabled={deleteMutation.isPending}
+                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors"
+                            title="Delete Attendance Record"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   );
                 })

@@ -16,5 +16,6 @@ router.get('/today/:employeeId', attendanceController.getTodayStatus);
 router.post('/check-in', validate(checkInSchema), attendanceController.checkIn);
 router.post('/check-out', validate(checkOutSchema), attendanceController.checkOut);
 router.put('/:id', authorize('ADMIN', 'MANAGER'), validate(updateAttendanceSchema), attendanceController.updateAttendance);
+router.delete('/:id', authorize('ADMIN', 'MANAGER'), attendanceController.deleteAttendance);
 
 export default router;

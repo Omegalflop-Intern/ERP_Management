@@ -53,3 +53,13 @@ export const updateAttendance = async (req, res, next) => {
     return ApiResponse.success(res, attendance, 'Attendance updated');
   } catch (error) { next(error); }
 };
+
+export const deleteAttendance = async (req, res, next) => {
+  try {
+    const tenantId = req.user?.tenantId || null;
+    const effectiveBranchId = req.selectedBranchId || null;
+    await attendanceService.deleteAttendance(req.params.id, tenantId, effectiveBranchId);
+    logAction({ userId: req.user?.userId, username: req.user?.username, action: 'DELETE', module: 'attendance', entityId: req.params.id, entityType: 'Attendance', req });
+    return ApiResponse.success(res, null, 'Attendance record deleted successfully');
+  } catch (error) { next(error); }
+};

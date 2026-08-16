@@ -162,3 +162,17 @@ export const updateAttendance = async (id, data, tenantId = null, branchId = nul
   const updated = await uq.first();
   return formatAttendance(updated);
 };
+
+export const deleteAttendance = async (id, tenantId = null, branchId = null) => {
+  const query = db('attendances').where({ id, is_deleted: false });
+  if (tenantId) query.where('tenant_id', tenantId);
+  if (branchId) query.where('branch_id', branchId);
+  const attendance = await query.first();
+  if (!attendance) throw ApiError.notFound('Attendance record not found');
+
+  const dq = db('attendances').where({ id });
+  if (tenantId) dq.andWhere('tenant_id', tenantId);
+  if (branchId) dq.andWhere('branch_id', branchId);
+  await dq.update({ is_deleted: true });
+  return true;
+};
