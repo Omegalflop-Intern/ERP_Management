@@ -1,24 +1,36 @@
 import { db } from '../config/db.knex.js';
+import { env } from '../config/env.config.js';
 
 export const extractTenantFromHost = async (req, res, next) => {
   try {
-    const host = req.headers.host?.split(':')[0];
-    if (!host) return next();
+    const rawHost = req.headers.host?.split(':')[0]?.toLowerCase();
+    if (!rawHost) return next();
 
-    const baseDomain = process.env.BASE_DOMAIN || 'erp.com';
+    const baseDomain = (env.BASE_DOMAIN || process.env.BASE_DOMAIN || 'respawnalley.com').toLowerCase();
 
     if (req.user?.tenantId) return next();
+
+    // Main domain check: respawnalley.com, www.respawnalley.com, api.respawnalley.com, localhost
+    if (
+      rawHost === baseDomain ||
+      rawHost === `www.${baseDomain}` ||
+      rawHost === `api.${baseDomain}` ||
+      rawHost === 'localhost' ||
+      rawHost.startsWith('127.')
+    ) {
+      return next();
+    }
 
     let subdomain = null;
     let customDomain = null;
 
-    if (host.endsWith(`.${baseDomain}`)) {
-      const sub = host.replace(`.${baseDomain}`, '');
+    if (rawHost.endsWith(`.${baseDomain}`)) {
+      const sub = rawHost.slice(0, rawHost.length - baseDomain.length - 1);
       if (sub && sub !== 'www' && sub !== 'api') {
         subdomain = sub;
       }
-    } else if (host !== baseDomain && host !== 'localhost' && !host.startsWith('127.')) {
-      customDomain = host;
+    } else {
+      customDomain = rawHost.startsWith('www.') ? rawHost.slice(4) : rawHost;
     }
 
     if (subdomain || customDomain) {
@@ -58,3 +70,4 @@ export const extractTenantFromHost = async (req, res, next) => {
     next();
   }
 };
+
