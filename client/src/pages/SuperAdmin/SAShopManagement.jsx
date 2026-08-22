@@ -64,7 +64,7 @@ function TempAdminModal({ tenant, onClose }) {
   const [duration, setDuration] = useState('2h');
   const [reason, setReason] = useState('');
   const [credentials, setCredentials] = useState(null);
-  const [copied, setCopied] = useState(false);
+  const [copiedField, setCopiedField] = useState(null);
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -73,17 +73,45 @@ function TempAdminModal({ tenant, onClose }) {
     },
     onSuccess: (data) => {
       setCredentials(data);
-      toast.success('Temp admin created');
+      toast.success('Temporary admin created successfully');
       qc.invalidateQueries({ queryKey: ['sa-shops'] });
     },
-    onError: (e) => toast.error(e.response?.data?.message || 'Failed to create'),
+    onError: (e) => toast.error(e.response?.data?.message || 'Failed to create temporary admin'),
   });
 
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const getLoginUrl = () => {
+    if (tenant.subdomain) {
+      const baseDomain = getBaseDomain();
+      return `${window.location.protocol}//${tenant.subdomain}.${baseDomain}/login`;
+    }
+    return `${window.location.origin}/login`;
   };
+
+  const copyToClipboard = (text, fieldName) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedField(fieldName);
+    toast.success(`${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)} copied to clipboard`);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const handleCopyAll = () => {
+    const loginUrl = getLoginUrl();
+    const expiry = credentials?.expiresAt ? new Date(credentials.expiresAt).toLocaleString() : '';
+    const text = [
+      `🔐 Temporary Admin Access for ${tenant.shopName}`,
+      `━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+      `🌐 Login URL: ${loginUrl}`,
+      `👤 Username: ${credentials?.username}`,
+      `🔑 Password: ${credentials?.password}`,
+      `⏳ Valid Until: ${expiry}`,
+      `━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+      `⚠️ Note: This temporary account will automatically expire after the allotted duration.`
+    ].join('\n');
+    copyToClipboard(text, 'All credentials');
+  };
+
+  const loginUrl = getLoginUrl();
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
@@ -146,36 +174,80 @@ function TempAdminModal({ tenant, onClose }) {
             <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4 text-center">
               <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
               <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
-                Temp Admin Created!
+                Temporary Admin Created!
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Share these credentials with the shop owner or support engineer.
               </p>
             </div>
 
-            <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-4 space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-slate-500">Username:</span>
-                <code className="font-mono text-slate-900 dark:text-white bg-white dark:bg-slate-900 px-2 py-0.5 rounded">
-                  {credentials.username}
-                </code>
+            <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-4 space-y-3 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500">Shop:</span>
+                <span className="font-semibold text-slate-900 dark:text-white">{tenant.shopName}</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-slate-500">Password:</span>
-                <div className="flex items-center gap-1">
-                  <code className="font-mono text-slate-900 dark:text-white bg-white dark:bg-slate-900 px-2 py-0.5 rounded">
-                    {credentials.password}
-                  </code>
+
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500">Login URL:</span>
+                <div className="flex items-center gap-1.5 max-w-[220px]">
+                  <span className="font-mono text-indigo-600 dark:text-indigo-400 truncate" title={loginUrl}>
+                    {loginUrl}
+                  </span>
                   <button
-                    onClick={() => copyToClipboard(credentials.password)}
-                    className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded"
+                    onClick={() => copyToClipboard(loginUrl, 'login URL')}
+                    className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-slate-600 shrink-0"
+                    title="Copy Login URL"
                   >
-                    {copied ? (
-                      <Check className="w-3 h-3 text-emerald-500" />
+                    {copiedField === 'login URL' ? (
+                      <Check className="w-3.5 h-3.5 text-emerald-500" />
                     ) : (
-                      <Copy className="w-3 h-3 text-slate-400" />
+                      <Copy className="w-3.5 h-3.5" />
                     )}
                   </button>
                 </div>
               </div>
-              <div className="flex justify-between">
+
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500">Username:</span>
+                <div className="flex items-center gap-1.5">
+                  <code className="font-mono font-bold text-slate-900 dark:text-white bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
+                    {credentials.username}
+                  </code>
+                  <button
+                    onClick={() => copyToClipboard(credentials.username, 'username')}
+                    className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-slate-600"
+                    title="Copy Username"
+                  >
+                    {copiedField === 'username' ? (
+                      <Check className="w-3.5 h-3.5 text-emerald-500" />
+                    ) : (
+                      <Copy className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500">Password:</span>
+                <div className="flex items-center gap-1.5">
+                  <code className="font-mono font-bold text-slate-900 dark:text-white bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
+                    {credentials.password}
+                  </code>
+                  <button
+                    onClick={() => copyToClipboard(credentials.password, 'password')}
+                    className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-slate-600"
+                    title="Copy Password"
+                  >
+                    {copiedField === 'password' ? (
+                      <Check className="w-3.5 h-3.5 text-emerald-500" />
+                    ) : (
+                      <Copy className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
                 <span className="text-slate-500">Expires:</span>
                 <span className="text-amber-600 dark:text-amber-400 font-medium">
                   {new Date(credentials.expiresAt).toLocaleString()}
@@ -183,9 +255,22 @@ function TempAdminModal({ tenant, onClose }) {
               </div>
             </div>
 
-            <p className="text-xs text-slate-500 text-center">
-              Share these credentials with the shop owner for support access.
-            </p>
+            <button
+              onClick={handleCopyAll}
+              className="w-full py-2.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/50 dark:hover:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 font-semibold text-xs rounded-xl border border-indigo-200 dark:border-indigo-800 transition-colors flex items-center justify-center gap-2"
+            >
+              {copiedField === 'All credentials' ? (
+                <>
+                  <Check className="w-4 h-4 text-emerald-500" />
+                  <span>All Credentials Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-4 h-4" />
+                  <span>Copy All Credentials</span>
+                </>
+              )}
+            </button>
           </div>
         )}
 
@@ -631,6 +716,209 @@ function EditTenantModal({ tenant, onClose, onSuccess }) {
   );
 }
 
+function CreatedShopModal({ credentials, onClose }) {
+  const [copiedField, setCopiedField] = useState(null);
+
+  const copyToClipboard = (text, fieldName) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedField(fieldName);
+    toast.success(`${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)} copied to clipboard`);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const getLoginUrl = () => {
+    if (credentials.subdomain) {
+      const baseDomain = getBaseDomain();
+      return `${window.location.protocol}//${credentials.subdomain}.${baseDomain}/login`;
+    }
+    return `${window.location.origin}/login`;
+  };
+
+  const loginUrl = getLoginUrl();
+
+  const handleCopyAll = () => {
+    const expiry = credentials?.expiresAt ? new Date(credentials.expiresAt).toLocaleDateString() : '';
+    const text = [
+      `🎉 Welcome to Omni-Manage ERP!`,
+      `Here are your shop account login credentials:`,
+      `━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+      `🏪 Shop Name: ${credentials.shopName}`,
+      `👤 Owner Name: ${credentials.ownerName || 'Owner'}`,
+      `📦 Plan: ${credentials.plan || 'STARTER'} (${credentials.durationDays || 30} Days)`,
+      `🌐 Login URL: ${loginUrl}`,
+      `👤 Admin Username: ${credentials.username}`,
+      `📧 Admin Email: ${credentials.email}`,
+      `🔑 Password: ${credentials.password}`,
+      `⏳ Subscription Valid Until: ${expiry}`,
+      `━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+      `💡 Please keep your password safe and do not share it with unauthorized staff.`
+    ].join('\n');
+    copyToClipboard(text, 'All credentials');
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-900 dark:text-white text-base">
+                Shop Created Successfully!
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Share these login details with the shop owner
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-4 space-y-3 text-xs border border-slate-200 dark:border-slate-700/60">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500 font-medium">Shop Name:</span>
+              <span className="font-bold text-slate-900 dark:text-white text-sm">
+                {credentials.shopName}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500 font-medium">Subscription Plan:</span>
+              <span className="font-bold text-indigo-600 dark:text-indigo-400 uppercase">
+                {credentials.plan} ({credentials.durationDays || 30} Days)
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500 font-medium">Login URL:</span>
+              <div className="flex items-center gap-1.5 max-w-[240px]">
+                <span className="font-mono text-indigo-600 dark:text-indigo-400 truncate" title={loginUrl}>
+                  {loginUrl}
+                </span>
+                <button
+                  onClick={() => copyToClipboard(loginUrl, 'login URL')}
+                  className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-slate-600 shrink-0"
+                  title="Copy Login URL"
+                >
+                  {copiedField === 'login URL' ? (
+                    <Check className="w-3.5 h-3.5 text-emerald-500" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500 font-medium">Admin Username:</span>
+              <div className="flex items-center gap-1.5">
+                <code className="font-mono font-bold text-slate-900 dark:text-white bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
+                  {credentials.username}
+                </code>
+                <button
+                  onClick={() => copyToClipboard(credentials.username, 'username')}
+                  className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-slate-600"
+                  title="Copy Username"
+                >
+                  {copiedField === 'username' ? (
+                    <Check className="w-3.5 h-3.5 text-emerald-500" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500 font-medium">Owner Email:</span>
+              <div className="flex items-center gap-1.5">
+                <span className="font-mono text-slate-700 dark:text-slate-300">
+                  {credentials.email}
+                </span>
+                <button
+                  onClick={() => copyToClipboard(credentials.email, 'email')}
+                  className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-slate-600"
+                  title="Copy Email"
+                >
+                  {copiedField === 'email' ? (
+                    <Check className="w-3.5 h-3.5 text-emerald-500" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500 font-medium">Password:</span>
+              <div className="flex items-center gap-1.5">
+                <code className="font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
+                  {credentials.password}
+                </code>
+                <button
+                  onClick={() => copyToClipboard(credentials.password, 'password')}
+                  className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-slate-600"
+                  title="Copy Password"
+                >
+                  {copiedField === 'password' ? (
+                    <Check className="w-3.5 h-3.5 text-emerald-500" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {credentials.expiresAt && (
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 font-medium">Expires On:</span>
+                <span className="text-amber-600 dark:text-amber-400 font-semibold">
+                  {new Date(credentials.expiresAt).toLocaleDateString()}
+                </span>
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={handleCopyAll}
+            className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
+          >
+            {copiedField === 'All credentials' ? (
+              <>
+                <Check className="w-4 h-4 text-white" />
+                <span>All Credentials Copied!</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-4 h-4" />
+                <span>Copy All Shop Credentials</span>
+              </>
+            )}
+          </button>
+        </div>
+
+        <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-5 py-2.5 text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-colors"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function SAShopManagement() {
   const qc = useQueryClient();
   const [search, setSearch] = useState('');
@@ -638,6 +926,7 @@ export default function SAShopManagement() {
   const [kycTenant, setKycTenant] = useState(null);
   const [tempAdminTenant, setTempAdminTenant] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [createdShopCredentials, setCreatedShopCredentials] = useState(null);
   const [isCreateCustomDays, setIsCreateCustomDays] = useState(false);
   const PLAN_DEFAULTS = { FREE: 30, STARTER: 30, PRO: 90, ENTERPRISE: 365 };
   const [createForm, setCreateForm] = useState({
@@ -677,11 +966,24 @@ export default function SAShopManagement() {
       const res = await api.post('/tenants', body);
       return res.data;
     },
-    onSuccess: () => {
+    onSuccess: (res) => {
       toast.success('Shop created successfully');
       qc.invalidateQueries({ queryKey: ['sa-shops'] });
       qc.invalidateQueries({ queryKey: ['sa-stats'] });
       setShowCreate(false);
+      const createdData = res?.data || {};
+      setCreatedShopCredentials({
+        shopName: createForm.shopName,
+        ownerName: createForm.ownerName,
+        email: createForm.email,
+        phone: createForm.phone,
+        username: createdData.username || createForm.username || createForm.email.split('@')[0],
+        password: createForm.password,
+        plan: createForm.plan,
+        durationDays: createForm.durationDays,
+        subdomain: createdData.subdomain || createForm.subdomain,
+        expiresAt: createdData.expiresAt || new Date(Date.now() + (createForm.durationDays || 30) * 86400000).toISOString(),
+      });
       setCreateForm({
         shopName: '',
         ownerName: '',
@@ -1287,6 +1589,15 @@ export default function SAShopManagement() {
           </div>
         </div>
       )}
+
+      {/* Shop Created Credentials Modal */}
+      {createdShopCredentials && (
+        <CreatedShopModal
+          credentials={createdShopCredentials}
+          onClose={() => setCreatedShopCredentials(null)}
+        />
+      )}
     </div>
   );
 }
+

@@ -631,28 +631,64 @@ export default function TenantManagement() {
 
             <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-500 dark:text-slate-400">Shop Name:</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Shop Name:</span>
                 <span className="text-sm font-bold text-slate-900 dark:text-white">
                   {createdCredentials.shopName}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-500 dark:text-slate-400">Username:</span>
-                <span className="text-sm font-mono font-bold text-[#2563EB] dark:text-blue-400">
-                  {createdCredentials.username}
-                </span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Username:</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm font-mono font-bold text-[#2563EB] dark:text-blue-400">
+                    {createdCredentials.username}
+                  </span>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(createdCredentials.username);
+                      toast.success('Username copied');
+                    }}
+                    className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-slate-600"
+                    title="Copy Username"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-500 dark:text-slate-400">Email:</span>
-                <span className="text-sm font-mono text-slate-700 dark:text-slate-300">
-                  {createdCredentials.email}
-                </span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Email:</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm font-mono text-slate-700 dark:text-slate-300">
+                    {createdCredentials.email}
+                  </span>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(createdCredentials.email);
+                      toast.success('Email copied');
+                    }}
+                    className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-slate-600"
+                    title="Copy Email"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-500 dark:text-slate-400">Password:</span>
-                <span className="text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                  {createdCredentials.password}
-                </span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Password:</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                    {createdCredentials.password}
+                  </span>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(createdCredentials.password);
+                      toast.success('Password copied');
+                    }}
+                    className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded text-slate-400 hover:text-slate-600"
+                    title="Copy Password"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -725,14 +761,22 @@ export default function TenantManagement() {
             <div className="flex gap-2">
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(
-                    `Shop: ${createdCredentials.shopName}\nUsername: ${createdCredentials.username}\nEmail: ${createdCredentials.email}\nPassword: ${createdCredentials.password}`
-                  );
-                  toast.success('Credentials copied to clipboard!');
+                  const text = [
+                    `🎉 Omni-Manage ERP Shop Credentials`,
+                    `━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+                    `🏪 Shop: ${createdCredentials.shopName}`,
+                    `🌐 Login URL: ${window.location.origin}/login`,
+                    `👤 Username: ${createdCredentials.username}`,
+                    `📧 Email: ${createdCredentials.email}`,
+                    `🔑 Password: ${createdCredentials.password}`,
+                    `━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+                  ].join('\n');
+                  navigator.clipboard.writeText(text);
+                  toast.success('All credentials copied to clipboard!');
                 }}
                 className="flex-1 py-2.5 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/40 text-[#2563EB] dark:text-blue-400 text-xs font-semibold rounded-xl border border-blue-200 dark:border-blue-800 transition-colors flex items-center justify-center gap-1.5"
               >
-                <Key className="w-3.5 h-3.5" /> Copy Credentials
+                <Copy className="w-3.5 h-3.5" /> Copy All Credentials
               </button>
               <button
                 onClick={() => {
