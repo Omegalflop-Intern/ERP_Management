@@ -83,3 +83,40 @@ export const authenticate = async (req, res, next) => {
     next(error);
   }
 };
+
+export const optionalAuthenticate = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    let token;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    } else if (req.cookies?.accessToken) {
+      token = req.cookies.accessToken;
+    }
+    if (!token) return next();
+
+    const decoded = verifyToken(token);
+    const userId = decoded.id || decoded.userId;
+    if (!userId) return next();
+
+    const row = await db('users')
+      .leftJoin('roles', 'users.role_id', 'roles.id')
+      .where({ 'users.id': userId, 'users.is_deleted': false, 'users.is_active': true })
+      .select('users.*', 'roles.name as role_name_val')
+      .first();
+
+    if (row) {
+      const isSuperAdmin = !row.tenant_id && (row.role_name_val || row.role_name || '').toUpperCase() === 'ADMIN';
+      req.user = {
+        _id: String(row.id),
+        id: row.id,
+        username: row.username,
+        roleName: row.role_name_val || row.role_name || '',
+        isSuperAdmin,
+        tenantId: row.tenant_id || null,
+      };
+    }
+  } catch {}
+  next();
+};
+

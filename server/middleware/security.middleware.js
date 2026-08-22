@@ -2,9 +2,15 @@ import { logSecurityEvent } from '../utils/auth/auditLog.js';
 
 const failedAttempts = new Map();
 
+const normalizeKey = (loginIdentifier, ip) => {
+  const cleanId = (loginIdentifier || '').trim().toLowerCase();
+  const cleanIp = ip || 'unknown';
+  return `${cleanId}:${cleanIp}`;
+};
+
 export const trackFailedLogin = (req, loginIdentifier) => {
-  const ip = req.ip || req.connection.remoteAddress || 'unknown';
-  const key = `${loginIdentifier}:${ip}`;
+  const ip = req.ip || req.connection?.remoteAddress || 'unknown';
+  const key = normalizeKey(loginIdentifier, ip);
   const now = Date.now();
   const windowMs = 15 * 60 * 1000;
   const maxAttempts = 5;
@@ -25,7 +31,7 @@ export const trackFailedLogin = (req, loginIdentifier) => {
       ipAddress: ip,
       userAgent: req.headers['user-agent'] || '',
       details: {
-        loginIdentifier,
+        loginIdentifier: (loginIdentifier || '').trim().toLowerCase(),
         attempts: attempts.count,
         windowMinutes: 15,
       },
@@ -39,15 +45,16 @@ export const trackFailedLogin = (req, loginIdentifier) => {
 };
 
 export const clearFailedLogin = (loginIdentifier, ip) => {
-  const key = `${loginIdentifier}:${ip || 'unknown'}`;
+  const key = normalizeKey(loginIdentifier, ip);
   failedAttempts.delete(key);
 };
 
 export const getFailedLoginCount = (loginIdentifier, ip) => {
-  const key = `${loginIdentifier}:${ip || 'unknown'}`;
+  const key = normalizeKey(loginIdentifier, ip);
   const attempts = failedAttempts.get(key);
   if (!attempts || Date.now() - attempts.firstAttempt > 15 * 60 * 1000) {
     return 0;
   }
   return attempts.count;
 };
+

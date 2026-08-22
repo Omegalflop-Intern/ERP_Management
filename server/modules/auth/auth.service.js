@@ -85,10 +85,16 @@ export const findUserByLogin = async (identifier, tenantId = null) => {
 
   if (!row) return null;
 
-  // Enforce tenant active check for non-SuperAdmin users
+  // Enforce tenant check for non-SuperAdmin users
   if (row.tenant_id) {
-    if (Boolean(row.tenant_is_deleted) || (row.tenant_status && row.tenant_status !== 'ACTIVE')) {
-      throw ApiError.forbidden(`Shop account is ${row.tenant_status === 'SUSPENDED' ? 'suspended' : 'deleted or inactive'}. Access denied.`);
+    if (Boolean(row.tenant_is_deleted) || !row.tenant_status || row.tenant_status !== 'ACTIVE') {
+      if (row.tenant_status === 'PENDING_KYC') {
+        throw ApiError.forbidden('Your shop account is pending KYC verification. Please wait for administrator approval.');
+      }
+      if (row.tenant_status === 'PAUSED' || row.tenant_status === 'SUSPENDED') {
+        throw ApiError.forbidden('Your shop account has been suspended or paused. Please contact billing support.');
+      }
+      throw ApiError.forbidden('Associated shop account has been deleted or does not exist. Access denied.');
     }
   }
 
@@ -238,8 +244,15 @@ export const refreshAccessToken = async (refreshToken) => {
   const decoded = verifyToken(refreshToken);
   const query = db('users')
     .leftJoin('roles', 'users.role_id', 'roles.id')
-    .where({ 'users.id': decoded.id || decoded.userId, 'users.is_deleted': false })
-    .select('users.*', 'roles.name as role_name_val', 'roles.display_name as role_display_name_val');
+    .leftJoin('tenants', 'users.tenant_id', 'tenants.id')
+    .where({ 'users.id': decoded.id || decoded.userId, 'users.is_deleted': false, 'users.is_active': true })
+    .select(
+      'users.*',
+      'roles.name as role_name_val',
+      'roles.display_name as role_display_name_val',
+      'tenants.status as tenant_status',
+      'tenants.is_deleted as tenant_is_deleted'
+    );
 
   if (decoded.tenantId) {
     query.where('users.tenant_id', decoded.tenantId);
@@ -247,7 +260,13 @@ export const refreshAccessToken = async (refreshToken) => {
 
   const row = await query.first();
 
-  if (!row) throw ApiError.unauthorized('User not found');
+  if (!row) throw ApiError.unauthorized('User session expired or user deactivated');
+
+  if (row.tenant_id) {
+    if (Boolean(row.tenant_is_deleted) || !row.tenant_status || row.tenant_status !== 'ACTIVE') {
+      throw ApiError.unauthorized('Associated shop account is no longer active');
+    }
+  }
 
   const payload = {
     userId: String(row.id),

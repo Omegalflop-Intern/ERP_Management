@@ -47,7 +47,7 @@ import superAdminProfileRoutes from './modules/superAdmin/profile.routes.js';
 import superAdminAdminsRoutes from './modules/superAdmin/admins.routes.js';
 import { startLoanReminderJob } from './jobs/loanReminderCron.js';
 import { auditDiffInterceptor } from './middleware/auditInterceptor.middleware.js';
-import { apiLimiter, authLimiter } from './middleware/rateLimiter.middleware.js';
+import { apiLimiter } from './middleware/rateLimiter.middleware.js';
 import { extractTenantFromHost } from './middleware/subdomain.middleware.js';
 import { authenticate } from './middleware/auth.middleware.js';
 import { authorize } from './middleware/role.middleware.js';
@@ -313,7 +313,7 @@ if (process.env.NODE_ENV !== 'test') {
   startLoanReminderJob();
 }
 
-app.use('/api/v1/auth', authLimiter, authRoutes);
+app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/roles', roleRoutes);
 app.use('/api/v1/products', productRoutes);

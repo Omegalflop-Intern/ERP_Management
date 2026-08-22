@@ -333,7 +333,7 @@ async function generateUniqueSubdomain(shopName, initialSubdomain) {
 /**
  * Helper: Provision default ADMIN account for shop owner
  */
-async function createShopOwnerAdminUser(tenantId, data) {
+async function createShopOwnerAdminUser(tenantId, data, isSuperAdmin = false) {
   const emailLower = data.email.toLowerCase().trim();
   const rawPassword = data.password || '123456';
   const passwordHash = await bcrypt.hash(rawPassword, 10);
@@ -357,13 +357,13 @@ async function createShopOwnerAdminUser(tenantId, data) {
     password_hash: passwordHash,
     role_id: adminRole?.id || 1,
     role_name: 'ADMIN',
-    is_active: true,
-    is_verified: true,
+    is_active: isSuperAdmin ? true : false,
+    is_verified: isSuperAdmin ? true : false,
     is_deleted: false,
   });
 }
 
-export const createTenant = async (data) => {
+export const createTenant = async (data, isSuperAdmin = false) => {
   const emailLower = data.email.toLowerCase().trim();
 
   const existingTenant = await db('tenants').where({ email: emailLower }).first();
@@ -385,6 +385,9 @@ export const createTenant = async (data) => {
     expiresAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
   }
 
+  const initialStatus = isSuperAdmin ? (data.status || 'ACTIVE') : 'PENDING_KYC';
+  const initialKycStatus = isSuperAdmin ? 'APPROVED' : 'PENDING';
+
   const [insertedId] = await db('tenants').insert({
     shop_name: data.shopName,
     owner_name: data.ownerName,
@@ -393,16 +396,16 @@ export const createTenant = async (data) => {
     plan: data.plan || 'STARTER',
     subdomain,
     custom_domain: customDomain,
-    status: 'ACTIVE',
+    status: initialStatus,
     nid_number: data.nidNumber || '',
     trade_license_number: data.tradeLicenseNumber || '',
     expires_at: expiresAt,
-    kyc_status: 'APPROVED',
+    kyc_status: initialKycStatus,
     is_deleted: false,
   });
 
-  // Automatically provision shop owner ADMIN account
-  await createShopOwnerAdminUser(insertedId, data);
+  // Provision shop owner ADMIN account
+  await createShopOwnerAdminUser(insertedId, data, isSuperAdmin);
 
   // Automatically provision default Main Outlet branch for the new shop
   const [mainBranchId] = await db('branches').insert({
@@ -437,11 +440,20 @@ export const purgeTenantData = async (tenantId) => {
   // 1. Delete all active user sessions for this tenant
   const userIds = await db('users').where({ tenant_id: tId }).pluck('id');
   if (userIds.length > 0) {
-    await db('sessions').whereIn('user_id', userIds).delete();
+    await db('sessions').whereIn('user_id', userIds).delete().catch(() => {});
   }
 
-  // 2. Cascade delete all tenant-specific records across all tables
+  // 2. Cascade delete all tenant-specific records across all tables with FK checks disabled
   const tenantTables = [
+    'sale_items',
+    'sale_payments',
+    'sales',
+    'purchase_order_items',
+    'purchase_orders',
+    'inventory_units',
+    'imei_records',
+    'stock_transfers',
+    'products',
     'accounts',
     'attendances',
     'audit_logs',
@@ -453,23 +465,20 @@ export const purgeTenantData = async (tenantId) => {
     'employees',
     'expenses',
     'expense_categories',
-    'inventory_units',
-    'investors',
     'investor_transactions',
+    'investors',
     'journal_entries',
     'leaves',
     'ledger_entries',
-    'loans',
     'loan_repayments',
+    'loans',
     'notifications',
     'payrolls',
-    'products',
-    'purchase_orders',
     'repair_tickets',
     'settings',
-    'stock_transfers',
     'suppliers',
     'temp_admins',
+    'ticket_replies',
     'tickets',
     'transactions',
     'users',
@@ -478,16 +487,20 @@ export const purgeTenantData = async (tenantId) => {
     'wholesale_prices',
   ];
 
-  for (const table of tenantTables) {
-    try {
-      await db(table).where({ tenant_id: tId }).delete();
-    } catch (e) {
-      // Table might not exist or doesn't have tenant_id column
+  try {
+    await db.raw('SET FOREIGN_KEY_CHECKS = 0');
+    for (const table of tenantTables) {
+      try {
+        await db(table).where({ tenant_id: tId }).delete();
+      } catch (e) {
+        // Table might not exist or doesn't have tenant_id column
+      }
     }
+    // 3. Finally hard delete the shop row from tenants table
+    await db('tenants').where({ id: tId }).delete();
+  } finally {
+    await db.raw('SET FOREIGN_KEY_CHECKS = 1').catch(() => {});
   }
-
-  // 3. Finally hard delete the shop row from tenants table
-  await db('tenants').where({ id: tId }).delete();
 };
 
 export const updateTenantStatus = async (id, status, rejectionReason) => {
@@ -512,7 +525,7 @@ export const updateTenantStatus = async (id, status, rejectionReason) => {
     await db('users').where({ tenant_id: id }).update({ is_active: false });
     const tenantUserIds = await db('users').where({ tenant_id: id }).pluck('id');
     if (tenantUserIds.length > 0) {
-      await db('sessions').whereIn('user_id', tenantUserIds).delete();
+      await db('sessions').whereIn('user_id', tenantUserIds).delete().catch(() => {});
     }
   }
 

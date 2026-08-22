@@ -54,9 +54,24 @@ export const updateTenant = async (req, res, next) => {
 
 export const createTenant = async (req, res, next) => {
   try {
-    const tenant = await tenantService.createTenant(req.body);
+    const isSuperAdmin = Boolean(
+      req.user &&
+      !req.user.tenantId &&
+      (req.user.roleName || '').toUpperCase() === 'ADMIN'
+    );
+    const tenant = await tenantService.createTenant(req.body, isSuperAdmin);
     emitter.emit(EVENTS.TENANT_UPDATED, tenant);
     return ApiResponse.created(res, tenant, 'Shop tenant created successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteTenant = async (req, res, next) => {
+  try {
+    await tenantService.purgeTenantData(req.params.id);
+    emitter.emit(EVENTS.TENANT_UPDATED, { id: req.params.id, isDeleted: true });
+    return ApiResponse.success(res, { id: req.params.id, isDeleted: true }, 'Shop and all associated data deleted successfully');
   } catch (error) {
     next(error);
   }

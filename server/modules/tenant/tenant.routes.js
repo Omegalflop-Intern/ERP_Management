@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import * as tenantController from './tenant.controller.js';
 import * as tempAdminController from './tempAdmin.controller.js';
-import { authenticate } from '../../middleware/auth.middleware.js';
+import { authenticate, optionalAuthenticate } from '../../middleware/auth.middleware.js';
 import { requireSuperAdmin } from '../../middleware/tenant.middleware.js';
 import { validate } from '../../middleware/validate.middleware.js';
 import { createTenantSchema, updateTenantSchema, updateTenantStatusSchema, verifyKycSchema } from './tenant.validator.js';
@@ -57,13 +57,14 @@ const router = express.Router();
 router.get('/check-subdomain/:slug', tenantController.checkSubdomain);
 router.get('/public/by-subdomain/:subdomain', tenantController.getPublicTenantInfo);
 
-// Public: shop self-registration (also used by super admin from SaaS panel)
-router.post('/', validate(createTenantSchema), tenantController.createTenant);
+// Shop registration (public or super admin)
+router.post('/', optionalAuthenticate, validate(createTenantSchema), tenantController.createTenant);
 
-// Super admin only: list, inspect, change status, approve KYC, bulk delete
+// Super admin only: list, inspect, change status, approve KYC, delete, bulk delete
 router.get('/stats', authenticate, requireSuperAdmin, tenantController.getTenantStats);
 router.get('/', authenticate, requireSuperAdmin, tenantController.getTenants);
 router.delete('/bulk', authenticate, requireSuperAdmin, tenantController.bulkDeleteTenants);
+router.delete('/:id', authenticate, requireSuperAdmin, tenantController.deleteTenant);
 
 // Authenticated shop user: get their own tenant info
 router.get('/me', authenticate, tenantController.getMyTenant);

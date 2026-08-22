@@ -2,6 +2,7 @@ import { Router } from 'express';
 import * as authController from './auth.controller.js';
 import { validate } from '../../middleware/validate.middleware.js';
 import { authenticate } from '../../middleware/auth.middleware.js';
+import { authLimiter } from '../../middleware/rateLimiter.middleware.js';
 import { loginSchema, verifyOtpSchema, refreshTokenSchema, forgotPasswordSchema, resetPasswordSchema } from './auth.validator.js';
 
 const router = Router();
@@ -57,7 +58,7 @@ const router = Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/login', validate(loginSchema), authController.login);
+router.post('/login', authLimiter, validate(loginSchema), authController.login);
 
 /**
  * @swagger
@@ -105,7 +106,7 @@ router.post('/login', validate(loginSchema), authController.login);
  *       401:
  *         description: Invalid credentials
  */
-router.post('/login-direct', validate(loginSchema), authController.loginDirect);
+router.post('/login-direct', authLimiter, validate(loginSchema), authController.loginDirect);
 
 /**
  * @swagger
@@ -136,7 +137,7 @@ router.post('/login-direct', validate(loginSchema), authController.loginDirect);
  *       400:
  *         description: Invalid or expired OTP
  */
-router.post('/verify-otp', validate(verifyOtpSchema), authController.verifyOtp);
+router.post('/verify-otp', authLimiter, validate(verifyOtpSchema), authController.verifyOtp);
 
 /**
  * @swagger
@@ -189,7 +190,7 @@ router.post('/refresh-token', validate(refreshTokenSchema), authController.refre
  *       404:
  *         description: No account found with this email
  */
-router.post('/forgot-password', validate(forgotPasswordSchema), authController.forgotPassword);
+router.post('/forgot-password', authLimiter, validate(forgotPasswordSchema), authController.forgotPassword);
 
 /**
  * @swagger
@@ -219,12 +220,12 @@ router.post('/forgot-password', validate(forgotPasswordSchema), authController.f
  *       400:
  *         description: Invalid or expired reset token
  */
-router.post('/reset-password', validate(resetPasswordSchema), authController.resetPassword);
+router.post('/reset-password', authLimiter, validate(resetPasswordSchema), authController.resetPassword);
 
-router.post('/verify-email', validate(verifyOtpSchema), authController.verifyEmail);
+router.post('/verify-email', authLimiter, validate(verifyOtpSchema), authController.verifyEmail);
 
-router.post('/resend-verification-otp', validate(forgotPasswordSchema), authController.resendVerificationOTP);
-router.post('/resend-otp', validate(forgotPasswordSchema), authController.resendVerificationOTP);
+router.post('/resend-verification-otp', authLimiter, validate(forgotPasswordSchema), authController.resendVerificationOTP);
+router.post('/resend-otp', authLimiter, validate(forgotPasswordSchema), authController.resendVerificationOTP);
 
 router.post('/logout', authenticate, authController.logout);
 
