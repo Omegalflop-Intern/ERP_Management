@@ -107,7 +107,7 @@ export default function RefundPolicy() {
         <section className="bg-white dark:bg-slate-900 p-6 sm:p-8 border-3 border-black rounded-2xl shadow-[5px_5px_0px_0px_#000] space-y-4">
           <h2 className="text-xl sm:text-2xl font-black uppercase dark:text-white">1. SaaS Subscription Refunds</h2>
           <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed font-medium">
-            First-time subscribers are entitled to a full refund within 7 calendar days of their initial billing date if the service does not meet operational expectations. To request a refund, contact our support team at <strong className="text-black dark:text-yellow-300">support@omnimanage.site</strong> with your shop workspace domain.
+            First-time subscribers are entitled to a full refund within 7 calendar days of their initial billing date if the service does not meet operational expectations. To request a refund, contact our support team at <strong className="text-black dark:text-yellow-300">support@respawnalley.com</strong> with your shop workspace domain.
           </p>
         </section>
 

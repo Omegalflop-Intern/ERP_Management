@@ -16,4 +16,4 @@ Disallow: /dashboard/
 Disallow: /super-admin/
 Disallow: /api/
 
-Sitemap: https://omnimanage.site/sitemap.xml
+Sitemap: https://respawnalley.com/sitemap.xml
