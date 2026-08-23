@@ -126,10 +126,10 @@ export default function ContactPage() {
                   <div>
                     <div className="text-xs font-bold text-slate-500 uppercase">Official Support Email</div>
                     <a
-                      href="mailto:support@omnimanage.site"
+                      href="mailto:support@respawnalley.com"
                       className="font-black text-sm text-blue-600 dark:text-yellow-400 hover:underline"
                     >
-                      support@omnimanage.site
+                      support@respawnalley.com
                     </a>
                   </div>
                 </div>
