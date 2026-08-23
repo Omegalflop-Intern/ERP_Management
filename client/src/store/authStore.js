@@ -25,6 +25,7 @@ export const useAuthStore = create(
 
           if (token) localStorage.setItem('accessToken', token);
           localStorage.setItem('user', JSON.stringify(userData));
+          localStorage.setItem('omni_last_activity', String(Date.now()));
           set({ user: userData, token: token || null, loading: false });
 
           toast.success(`Welcome back, ${userData.fullName || userData.username}!`);
@@ -43,6 +44,7 @@ export const useAuthStore = create(
         // 1. Immediately clear local storage and state synchronously to avoid route re-render flickering
         localStorage.removeItem('accessToken');
         localStorage.removeItem('user');
+        localStorage.removeItem('omni_last_activity');
         set({ user: null, token: null });
 
         // 2. Non-blocking call to backend to clear cookie/session
