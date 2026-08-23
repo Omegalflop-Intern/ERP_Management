@@ -57,6 +57,12 @@ const ResetPassword = lazy(() => import('./pages/Auth/ResetPassword'));
 const RegisterShop = lazy(() => import('./pages/Auth/RegisterShop'));
 const LandingPage = lazy(() => import('./pages/Public/LandingPage'));
 const DeveloperPage = lazy(() => import('./pages/Public/DeveloperPage'));
+const AboutPage = lazy(() => import('./pages/Public/AboutPage'));
+const TermsPage = lazy(() => import('./pages/Public/TermsPage'));
+const PrivacyPolicy = lazy(() => import('./pages/Public/PrivacyPolicy'));
+const RefundPolicy = lazy(() => import('./pages/Public/RefundPolicy'));
+const ContactPage = lazy(() => import('./pages/Public/ContactPage'));
+const NotFoundPage = lazy(() => import('./pages/Public/NotFoundPage'));
 const BusinessAnalytics = lazy(() => import('./pages/Analytics/BusinessAnalytics'));
 const InventoryAnalytics = lazy(() => import('./pages/Analytics/InventoryAnalytics'));
 const EmployeeAnalytics = lazy(() => import('./pages/Analytics/EmployeeAnalytics'));
@@ -217,6 +223,15 @@ export default function App() {
         <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/pricing" element={<LandingPage />} />
         <Route path="/developer" element={<DeveloperPage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/terms-and-conditions" element={<TermsPage />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/refund-policy" element={<RefundPolicy />} />
+        <Route path="/refund" element={<RefundPolicy />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/404" element={<NotFoundPage />} />
 
         {/* Public / Root Route */}
         <Route path="/" element={<RootIndex />} />
@@ -694,7 +709,7 @@ export default function App() {
           <Route path="profile" element={<SAProfile />} />
         </Route>
 
-        <Route path="*" element={<Navigate to={homeRedirect} replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Suspense>
   );

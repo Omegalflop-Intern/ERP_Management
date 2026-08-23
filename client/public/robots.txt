@@ -1,2 +1,19 @@
 User-agent: *
-Disallow: /
+Allow: /
+Allow: /about
+Allow: /pricing
+Allow: /contact
+Allow: /register-shop
+Allow: /developer
+Allow: /privacy
+Allow: /terms
+Allow: /refund-policy
+Allow: /login
+Allow: /forgot-password
+
+# Disallow private ERP and SuperAdmin portals from indexing
+Disallow: /dashboard/
+Disallow: /super-admin/
+Disallow: /api/
+
+Sitemap: https://omnimanage.site/sitemap.xml

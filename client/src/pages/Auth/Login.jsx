@@ -182,10 +182,19 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [bgMode, setBgMode] = useState('particles'); // Default clean mode ('particles' | 'waves' | 'slideshow' | 'hybrid')
 
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+
+  // Automatically clean up stale or expired session tokens if user lands on login page unauthenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('user');
+      sessionStorage.removeItem('activeTab');
+    }
+  }, [isAuthenticated]);
 
   const subdomain = detectSubdomain();
 

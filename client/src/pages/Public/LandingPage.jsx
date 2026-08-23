@@ -1207,6 +1207,39 @@ export default function LandingPage() {
 
             <div className="space-y-3">
               <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-300">
+                Company & Legal
+              </h4>
+              <ul className="space-y-2 text-xs font-semibold text-slate-400">
+                <li>
+                  <Link to="/about" className="hover:text-indigo-400 transition-colors">
+                    About Us
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/terms" className="hover:text-indigo-400 transition-colors">
+                    Terms of Service
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/privacy" className="hover:text-indigo-400 transition-colors">
+                    Privacy Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/refund-policy" className="hover:text-indigo-400 transition-colors">
+                    Refund Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/contact" className="hover:text-indigo-400 transition-colors">
+                    Contact & Support
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="text-[11px] font-black uppercase tracking-widest text-slate-300">
                 Account & Systems
               </h4>
               <ul className="space-y-2 text-xs font-semibold text-slate-400">
