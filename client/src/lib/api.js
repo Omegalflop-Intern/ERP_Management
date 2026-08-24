@@ -99,6 +99,8 @@ api.interceptors.response.use(
         localStorage.removeItem('accessToken');
         localStorage.removeItem('user');
         localStorage.removeItem('auth-storage');
+        localStorage.removeItem('branch-storage');
+        localStorage.removeItem('omni_last_activity');
         try {
           const { useAuthStore } = await import('../store/authStore.js');
           useAuthStore.setState({ user: null, token: null });

@@ -192,6 +192,9 @@ export default function Login() {
     if (!isAuthenticated) {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('user');
+      localStorage.removeItem('auth-storage');
+      localStorage.removeItem('branch-storage');
+      localStorage.removeItem('omni_last_activity');
       sessionStorage.removeItem('activeTab');
     }
   }, [isAuthenticated]);

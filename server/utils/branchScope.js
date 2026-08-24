@@ -22,8 +22,8 @@
  * @param {string} [column='branch_id']
  */
 export function applyBranchScope(query, branchId, column = 'branch_id') {
-  if (branchId) {
-    query.where(column, branchId);
+  if (branchId && branchId !== 'all') {
+    query.where((b) => b.where(column, branchId).orWhereNull(column));
   }
 }
 
@@ -36,8 +36,8 @@ export function applyBranchScope(query, branchId, column = 'branch_id') {
  */
 export function getBranchScopeFn(branchId) {
   return (query, column = 'branch_id') => {
-    if (branchId) {
-      query.where(column, branchId);
+    if (branchId && branchId !== 'all') {
+      query.where((b) => b.where(column, branchId).orWhereNull(column));
     }
   };
 }

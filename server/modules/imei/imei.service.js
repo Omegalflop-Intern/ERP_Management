@@ -64,7 +64,9 @@ export const getAllIMEI = async (page = 1, limit = 20, search = '', status = '',
     .leftJoin('products', 'inventory_units.product_id', 'products.id')
     .where('inventory_units.is_deleted', false);
   applyTenantScope(countQuery, tenantId);
-  if (branchId) countQuery.where('inventory_units.branch_id', branchId);
+  if (branchId && branchId !== 'all') {
+    countQuery.where((b) => b.where('inventory_units.branch_id', branchId).orWhereNull('inventory_units.branch_id'));
+  }
 
   if (search) {
     const term = `%${search}%`;
@@ -101,7 +103,9 @@ export const getAllIMEI = async (page = 1, limit = 20, search = '', status = '',
       'branches.name as b_name'
     );
   applyTenantScope(dataQuery, tenantId);
-  if (branchId) dataQuery.where('inventory_units.branch_id', branchId);
+  if (branchId && branchId !== 'all') {
+    dataQuery.where((b) => b.where('inventory_units.branch_id', branchId).orWhereNull('inventory_units.branch_id'));
+  }
 
   if (search) {
     const term = `%${search}%`;

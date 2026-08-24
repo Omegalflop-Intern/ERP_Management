@@ -117,8 +117,8 @@ export const getAllProducts = async (page = 1, limit = 50, search = '', category
     if (tenantId) allUnitQuery.where('tenant_id', tenantId);
     allUnits = await allUnitQuery;
 
-    if (branchId) {
-      branchUnits = allUnits.filter(u => String(u.branch_id) === String(branchId));
+    if (branchId && branchId !== 'all') {
+      branchUnits = allUnits.filter(u => !u.branch_id || String(u.branch_id) === String(branchId));
     } else {
       branchUnits = allUnits;
     }

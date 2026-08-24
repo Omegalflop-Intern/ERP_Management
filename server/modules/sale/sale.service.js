@@ -239,7 +239,9 @@ export const getAllSales = async (page = 1, limit = 20, filters = {}) => {
   const buildQuery = (query) => {
     applyTenantScope(query, filters.tenantId, 'transactions');
     if (filters.status && filters.status !== 'ALL') query.where('transactions.status', filters.status);
-    if (filters.branchId && filters.branchId !== 'all') query.where('transactions.branch_id', filters.branchId);
+    if (filters.branchId && filters.branchId !== 'all') {
+      query.where((b) => b.where('transactions.branch_id', filters.branchId).orWhereNull('transactions.branch_id'));
+    }
     if (filters.saleType) query.where('transactions.sale_type', filters.saleType);
     if (filters.from) query.where('transactions.created_at', '>=', new Date(filters.from));
     if (filters.to) {

@@ -23,8 +23,8 @@ const getTenantScope = (req) => {
 const getBranchScope = (req) => {
   const branchId = req.selectedBranchId || null;
   return (query, column = 'branch_id') => {
-    if (branchId) {
-      query.where(column, branchId);
+    if (branchId && branchId !== 'all') {
+      query.where((b) => b.where(column, branchId).orWhereNull(column));
     }
   };
 };

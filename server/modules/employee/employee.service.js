@@ -173,7 +173,9 @@ export const getAllEmployees = async (page = 1, limit = 20, search = '', branch 
     .whereNot('employees.email', 'like', '%@temp.omnimanage.local%');
   applyTenantScope(countQuery, tenantId);
   if (branch) countQuery.where('employees.branch', branch);
-  if (branchId) countQuery.where('employees.branch_id', branchId);
+  if (branchId && branchId !== 'all') {
+    countQuery.where((b) => b.where('employees.branch_id', branchId).orWhereNull('employees.branch_id'));
+  }
 
   if (search) {
     const term = `%${search}%`;
@@ -203,7 +205,9 @@ export const getAllEmployees = async (page = 1, limit = 20, search = '', branch 
     );
   applyTenantScope(dataQuery, tenantId);
   if (branch) dataQuery.where('employees.branch', branch);
-  if (branchId) dataQuery.where('employees.branch_id', branchId);
+  if (branchId && branchId !== 'all') {
+    dataQuery.where((b) => b.where('employees.branch_id', branchId).orWhereNull('employees.branch_id'));
+  }
 
   if (search) {
     const term = `%${search}%`;

@@ -151,10 +151,10 @@ export default function Dashboard() {
               <Plus className="w-4 h-4" /> New Sale (POS)
             </button>
             <button
-              onClick={() => navigate('/products')}
+              onClick={() => navigate('/purchases')}
               className="px-3.5 py-2.5 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold rounded-xl text-xs transition-all flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-700"
             >
-              <Package className="w-4 h-4 text-blue-500" /> Stock Items
+              <Receipt className="w-4 h-4 text-purple-500" /> Purchases & Restock
             </button>
             <button
               onClick={() => navigate('/customers/due-collection')}

@@ -53,7 +53,9 @@ function applyTenantScope(query, tenantId) {
 export const getAllRepairs = async (page = 1, limit = 50, status = '', search = '', tenantId = null, branchId = null) => {
   const countQuery = db('repair_tickets').where({ is_deleted: false });
   applyTenantScope(countQuery, tenantId);
-  if (branchId) countQuery.where({ branch_id: branchId });
+  if (branchId && branchId !== 'all') {
+    countQuery.where((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+  }
   if (status) countQuery.where({ status });
   if (search) {
     const term = `%${search}%`;
@@ -72,7 +74,9 @@ export const getAllRepairs = async (page = 1, limit = 50, status = '', search = 
   const offset = (page - 1) * limit;
   const dataQuery = db('repair_tickets').where({ is_deleted: false });
   applyTenantScope(dataQuery, tenantId);
-  if (branchId) dataQuery.where({ branch_id: branchId });
+  if (branchId && branchId !== 'all') {
+    dataQuery.where((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+  }
   if (status) dataQuery.where({ status });
   if (search) {
     const term = `%${search}%`;

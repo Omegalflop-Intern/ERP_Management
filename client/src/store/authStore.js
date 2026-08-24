@@ -12,6 +12,9 @@ export const useAuthStore = create(
 
       login: async (loginField, password) => {
         set({ loading: true });
+        // Clean stale tokens before new login request to prevent 401 loop on cleared DB
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('user');
         try {
           const res = await api.post('/auth/login-direct', { login: loginField, password });
           const data = res.data.data;
@@ -44,6 +47,8 @@ export const useAuthStore = create(
         // 1. Immediately clear local storage and state synchronously to avoid route re-render flickering
         localStorage.removeItem('accessToken');
         localStorage.removeItem('user');
+        localStorage.removeItem('auth-storage');
+        localStorage.removeItem('branch-storage');
         localStorage.removeItem('omni_last_activity');
         set({ user: null, token: null });
 

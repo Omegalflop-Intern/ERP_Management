@@ -56,7 +56,9 @@ function applyTenantScope(query, tenantId, tablePrefix = 'warranty_claims') {
 export const getAllClaims = async (page = 1, limit = 20, status = '', search = '', tenantId = null, branchId = null) => {
   const countQuery = db('warranty_claims').where({ 'warranty_claims.is_deleted': false });
   applyTenantScope(countQuery, tenantId, 'warranty_claims');
-  if (branchId) countQuery.where('warranty_claims.branch_id', branchId);
+  if (branchId && branchId !== 'all') {
+    countQuery.where((b) => b.where('warranty_claims.branch_id', branchId).orWhereNull('warranty_claims.branch_id'));
+  }
   if (status) countQuery.where('warranty_claims.status', status);
 
   const countRes = await countQuery.count({ total: '*' }).first();
@@ -77,7 +79,9 @@ export const getAllClaims = async (page = 1, limit = 20, status = '', search = '
       'users.id as u_id', 'users.username as u_username'
     );
   applyTenantScope(dataQuery, tenantId, 'warranty_claims');
-  if (branchId) dataQuery.where('warranty_claims.branch_id', branchId);
+  if (branchId && branchId !== 'all') {
+    dataQuery.where((b) => b.where('warranty_claims.branch_id', branchId).orWhereNull('warranty_claims.branch_id'));
+  }
   if (status) dataQuery.where('warranty_claims.status', status);
 
   const rows = await dataQuery.orderBy('warranty_claims.created_at', 'desc').limit(limit).offset(offset);
