@@ -11,32 +11,61 @@ import {
   CreditCard,
   Building,
 } from 'lucide-react';
-import { getAssetUrl } from '../../lib/api';
+import api, { getAssetUrl } from '../../lib/api';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 export function DocumentVaultModal({ tenant, onClose, onVerifyKyc }) {
   const [reason, setReason] = useState('');
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const qc = useQueryClient();
 
   if (!tenant) return null;
   const kyc = tenant.kycDocuments || {};
+  const tenantId = tenant._id || tenant.id;
 
   const handleApprove = async () => {
     setLoading(true);
     try {
-      await onVerifyKyc(tenant._id, 'APPROVED');
+      if (typeof onVerifyKyc === 'function') {
+        await onVerifyKyc(tenantId, 'APPROVED');
+      } else {
+        await api.patch(`/tenants/${tenantId}/verify-kyc`, { status: 'APPROVED' });
+        toast.success('KYC approved successfully!');
+        qc.invalidateQueries({ queryKey: ['sa-tenants'] });
+        qc.invalidateQueries({ queryKey: ['sa-kyc'] });
+        qc.invalidateQueries({ queryKey: ['sa-stats'] });
+        qc.invalidateQueries({ queryKey: ['tenants'] });
+      }
       onClose();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to approve KYC');
     } finally {
       setLoading(false);
     }
   };
 
   const handleReject = async () => {
-    if (!reason.trim()) return;
+    if (!reason.trim()) {
+      toast.error('Please specify a rejection reason');
+      return;
+    }
     setLoading(true);
     try {
-      await onVerifyKyc(tenant._id, 'REJECTED', reason);
+      if (typeof onVerifyKyc === 'function') {
+        await onVerifyKyc(tenantId, 'REJECTED', reason);
+      } else {
+        await api.patch(`/tenants/${tenantId}/verify-kyc`, { status: 'REJECTED', rejectionReason: reason });
+        toast.success('KYC rejected');
+        qc.invalidateQueries({ queryKey: ['sa-tenants'] });
+        qc.invalidateQueries({ queryKey: ['sa-kyc'] });
+        qc.invalidateQueries({ queryKey: ['sa-stats'] });
+        qc.invalidateQueries({ queryKey: ['tenants'] });
+      }
       onClose();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to reject KYC');
     } finally {
       setLoading(false);
     }
