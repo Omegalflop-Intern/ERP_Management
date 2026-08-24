@@ -144,8 +144,8 @@ export const getProductById = async (id, tenantId = null, branchId = null) => {
   const allUnits = await allUnitQuery;
 
   let branchUnits = allUnits;
-  if (branchId) {
-    branchUnits = allUnits.filter(u => String(u.branch_id) === String(branchId));
+  if (branchId && branchId !== 'all') {
+    branchUnits = allUnits.filter(u => !u.branch_id || String(u.branch_id) === String(branchId));
   }
 
   const availIMEIs = branchUnits.map(u => u.imei_or_serial);

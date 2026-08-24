@@ -82,7 +82,9 @@ export const getAllCustomers = async (page = 1, limit = 20, search = '', tenantI
 export const getCustomerById = async (id, tenantId = null, branchId = null) => {
   const query = db('customers').where({ id, is_deleted: false });
   applyTenantScope(query, tenantId);
-  if (branchId) query.where('branch_id', branchId);
+  if (branchId && branchId !== 'all') {
+    query.where((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+  }
   const row = await query.first();
   if (!row) throw ApiError.notFound('Customer not found');
   return formatCustomer(row);

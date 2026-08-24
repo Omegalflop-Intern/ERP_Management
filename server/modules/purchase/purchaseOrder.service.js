@@ -126,7 +126,9 @@ export const getPurchaseOrderById = async (id, tenantId = null, branchId = null)
       'suppliers.credit_balance as s_credit_balance'
     );
   applyTenantScope(dataQuery, tenantId);
-  if (branchId) dataQuery.where('purchase_orders.branch_id', branchId);
+  if (branchId && branchId !== 'all') {
+    dataQuery.where((b) => b.where('purchase_orders.branch_id', branchId).orWhereNull('purchase_orders.branch_id'));
+  }
 
   const row = await dataQuery.first();
   if (!row) throw ApiError.notFound('Purchase order not found');
@@ -342,7 +344,9 @@ export const updatePurchaseOrder = async (id, data, tenantId = null, branchId = 
   if (Object.keys(updateFields).length > 0) {
     const poUpdate = db('purchase_orders').where({ id });
     if (tenantId) poUpdate.andWhere('tenant_id', tenantId);
-    if (branchId) poUpdate.andWhere('branch_id', branchId);
+    if (branchId && branchId !== 'all') {
+      poUpdate.andWhere((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+    }
     await poUpdate.update(updateFields);
   }
 
@@ -405,7 +409,9 @@ export const receiveGoods = async (id, grnEntries, receivedBy = 'system', tenant
 
   const poReceiveUpdate = db('purchase_orders').where({ id });
   if (tenantId) poReceiveUpdate.andWhere('tenant_id', tenantId);
-  if (branchId) poReceiveUpdate.andWhere('branch_id', branchId);
+  if (branchId && branchId !== 'all') {
+    poReceiveUpdate.andWhere((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+  }
   await poReceiveUpdate.update({
     status,
     line_items: JSON.stringify(currentLineItems),
@@ -500,7 +506,9 @@ export const returnToSupplier = async (id, returnPayload, reason = '', returnedB
 
   const poUpdate = db('purchase_orders').where({ id });
   if (tenantId) poUpdate.andWhere('tenant_id', tenantId);
-  if (branchId) poUpdate.andWhere('branch_id', branchId);
+  if (branchId && branchId !== 'all') {
+    poUpdate.andWhere((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+  }
   await poUpdate.update({
     return_logs: JSON.stringify(currentReturnLogs),
     returned_count: newReturnedCount,
@@ -538,8 +546,10 @@ export const deletePurchaseOrder = async (id, tenantId = null, branchId = null) 
 
   const poDel = db('purchase_orders').where({ id });
   if (tenantId) poDel.andWhere('tenant_id', tenantId);
-  if (branchId) poDel.andWhere('branch_id', branchId);
-  await poDel.update({ is_deleted: true });
+  if (branchId && branchId !== 'all') {
+    poDel.andWhere((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+  }
+  await poDel.update({ is_deleted: true, status: 'CANCELLED' });
   return { ...order, isDeleted: true };
 };
 
@@ -559,11 +569,15 @@ export const payPurchaseOrderDue = async (id, { amount, paymentMethod = 'CASH', 
 
   const newPaid = Number(order.paidAmount || 0) + payAmount;
   const newDue = Math.max(0, currentDue - payAmount);
+  const status = newDue === 0 ? 'PAID' : order.status;
 
   const poUpdate = db('purchase_orders').where({ id });
   if (tenantId) poUpdate.andWhere('tenant_id', tenantId);
-  if (branchId) poUpdate.andWhere('branch_id', branchId);
+  if (branchId && branchId !== 'all') {
+    poUpdate.andWhere((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+  }
   await poUpdate.update({
+    status,
     paid_amount: newPaid,
     due_amount: newDue,
     payment_method: paymentMethod || order.paymentMethod || 'CASH',

@@ -9,6 +9,8 @@ npm install
 npm run dev       # node --watch server.js
 npm run seed      # seed default roles + settings
 npm run test      # NODE_ENV=test node --test tests/*.test.js
+npm run db:migrate  # run migrations
+npm run db:reset    # reset database
 npm start         # production
 
 # Client (port 3000) — Vite dev server proxies /api and /uploads to :5000
@@ -32,16 +34,16 @@ No root-level scripts. Run client/server from their own directories.
 - **Stray top-level dir**: `server/services/pdf.service.js` exists outside the module pattern — shared utility.
 - **Validation**: Zod schemas in `*.validator.js`, enforced by `server/middleware/validate.middleware.js`.
 - **Auth**: Bearer JWT (or httpOnly cookies). `authenticate` sets `req.user`. `authorize(...roles)` checks role name strings. `requirePermission(...perms)` checks role.permissions array. MFA (TOTP) is implemented.
-- **Real-time**: Node.js `EventEmitter` (server) + SSE via `server/modules/sse/` (not Socket.io). Browser-side EventEmitter in `client/src/utils/EventEmitter.js`. Events defined in `server/events/index.js`.
+- **Real-time**: Node.js `EventEmitter` (server) + SSE via `server/modules/sse/` (not Socket.io). Browser-side SSE via native `EventSource` in `client/src/hooks/useSSE.js`. Events defined in `server/events/index.js`.
 - **Responses**: Standard shape `{ success, message, data, pagination? }`. Use `ApiResponse` helper and `ApiError` class (both in `server/utils/http/`).
 - **API docs**: Swagger UI at **`/api-docs`** (not `/api/docs`). Config in `server/config/swagger.config.js`. The root `/api` route redirects browsers to `/api/docs` which is a dead link — use `/api-docs` directly.
 - **Multi-tenancy**: Subdomain-based tenant extraction via `server/middleware/subdomain.middleware.js`. Tenant management in `server/modules/tenant/`.
 
 ## Environment
 
-- **Server env**: `server/.env` (loaded via `server/config/env.config.js`, validated with Zod). Required: `JWT_SECRET` (min 10 chars). Optional: SMTP vars for OTP emails.
+- **Server env**: `server/.env` (loaded via `server/config/env.config.js`, validated with Zod). Required: `JWT_SECRET` (min 10 chars). DB vars: `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` (MySQL/MariaDB). Optional: SMTP vars for OTP emails.
 - **Client env**: `client/.env` with `VITE_API_URL` (default `http://localhost:5000/api/v1`). Vite exposes only `VITE_*` vars.
-- **MongoDB**: `MONGODB_URI` in server env. Defaults to `mongodb://127.0.0.1:27017/omni_manage`.
+- **Database**: MySQL/MariaDB via Knex (`server/config/db.knex.js`). NOT MongoDB — `.env.example` is stale. Defaults: `localhost:3306`.
 - **CORS**: Allows `APP_URL`, `CLIENT_URL`, `ALLOWED_ORIGIN`, `localhost:3000`, `localhost:5173`. Permissive in dev; strict in production.
 
 ## Frontend Conventions
@@ -59,14 +61,14 @@ No root-level scripts. Run client/server from their own directories.
 - Server is flat in `server/` (not `server/src/` as PROJECT-SPEC.md or older deployment configs suggest).
 - **Swagger docs path**: Mounts at `/api-docs`, not `/api/docs`. The README and root route reference `/api/docs` but that path 404s.
 - Frontend login uses `/auth/login-direct` (bypasses OTP). OTP flow exists on backend (`/auth/login` + `/auth/verify-otp`) but frontend currently skips it.
-- MongoDB connect warns about "memory DB fallback" but does not implement one — it just returns `false`.
+- `.env.example` files still reference MongoDB (`MONGODB_URI`) but the actual DB is MySQL/MariaDB — use `DB_HOST`/`DB_PORT`/`DB_USER`/`DB_PASSWORD`/`DB_NAME` instead.
 - User model stores password in `passwordHash` (with `select: false`); you must explicitly `.select('+passwordHash')` when needed.
 - Tests exist in `server/tests/` but no CI or pre-commit hooks. Run `npm run test` in server dir to verify.
 - Lockfiles: client has both `package-lock.json` and `pnpm-lock.yaml`. Use npm unless pnpm is explicitly needed.
 
-## Server Modules (32)
+## Server Modules (34)
 
-`accounting`, `attendance`, `audit`, `auth`, `branch`, `catalog`, `contact`, `customer`, `documentVault`, `employee`, `expense`, `imei`, `investor`, `leave`, `loan`, `notification`, `payroll`, `plans`, `product`, `purchase`, `repair`, `report`, `role`, `sale`, `settings`, `sse`, `stock`, `supplier`, `tenant`, `user`, `warranty`, `wholesale`
+`accounting`, `attendance`, `audit`, `auth`, `branch`, `catalog`, `contact`, `customer`, `documentVault`, `employee`, `expense`, `imei`, `investor`, `leave`, `loan`, `notification`, `payroll`, `plans`, `product`, `purchase`, `repair`, `report`, `role`, `sale`, `settings`, `sse`, `stock`, `superAdmin`, `supplier`, `tenant`, `ticket`, `user`, `warranty`, `wholesale`
 
 ## Security Notes
 

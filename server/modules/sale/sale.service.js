@@ -308,7 +308,9 @@ export const getSaleById = async (id, tenantId = null, branchId = null) => {
       'customers.email as c_email', 'customers.address as c_address'
     );
   applyTenantScope(dataQuery, tenantId, 'transactions');
-  if (branchId) dataQuery.where('transactions.branch_id', branchId);
+  if (branchId && branchId !== 'all') {
+    dataQuery.where((b) => b.where('transactions.branch_id', branchId).orWhereNull('transactions.branch_id'));
+  }
 
   const row = await dataQuery.first();
   if (!row) throw ApiError.notFound('Sale not found');
@@ -326,7 +328,9 @@ export const getSaleByInvoice = async (invoiceQuery, tenantId = null, branchId =
       'customers.id as c_id', 'customers.name as c_name', 'customers.phone as c_phone'
     );
   applyTenantScope(dataQuery, tenantId, 'transactions');
-  if (branchId) dataQuery.where('transactions.branch_id', branchId);
+  if (branchId && branchId !== 'all') {
+    dataQuery.where((b) => b.where('transactions.branch_id', branchId).orWhereNull('transactions.branch_id'));
+  }
 
   const row = await dataQuery.first();
   if (!row) throw ApiError.notFound(`No sale found matching "${invoiceQuery}"`);
@@ -440,7 +444,9 @@ export const updateSale = async (id, data, tenantId = null, branchId = null) => 
   updateFields.updated_at = new Date();
   const txUpdate = db('transactions').where({ id });
   if (tenantId) txUpdate.andWhere('tenant_id', tenantId);
-  if (branchId) txUpdate.andWhere('branch_id', branchId);
+  if (branchId && branchId !== 'all') {
+    txUpdate.andWhere((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+  }
   await txUpdate.update(updateFields);
 
   return getSaleById(id, tenantId, branchId);
@@ -477,7 +483,9 @@ export const deleteSale = async (id, tenantId = null, branchId = null) => {
 
   const txDel = db('transactions').where({ id });
   if (tenantId) txDel.andWhere('tenant_id', tenantId);
-  if (branchId) txDel.andWhere('branch_id', branchId);
+  if (branchId && branchId !== 'all') {
+    txDel.andWhere((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+  }
   await txDel.update({ is_deleted: true, status: 'CANCELLED', updated_at: new Date() });
 
   return { ...sale, isDeleted: true, status: 'CANCELLED' };
@@ -509,7 +517,9 @@ export const processReturn = async (id, data, tenantId = null, branchId = null) 
   const existingLogs = sale.returnLogs || [];
   const txUpdate = db('transactions').where({ id });
   if (tenantId) txUpdate.andWhere('tenant_id', tenantId);
-  if (branchId) txUpdate.andWhere('branch_id', branchId);
+  if (branchId && branchId !== 'all') {
+    txUpdate.andWhere((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+  }
   await txUpdate.update({
     returned_amount: newReturnedAmount,
     return_logs: JSON.stringify([...existingLogs, returnLog]),
