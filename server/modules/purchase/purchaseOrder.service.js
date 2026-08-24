@@ -210,7 +210,7 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
           category: rawItem.category || 'General',
           cost_price: uCost,
           selling_price: sPrice,
-          wholesale_price: wPrice > 0 ? wPrice : (sPrice > 0 ? sPrice : 0),
+          wholesale_price: wPrice > 0 ? wPrice : null,
           stock_quantity: 0,
           min_stock_alert: 5,
           is_deleted: false,
@@ -280,7 +280,7 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
       receivedQty: qty,
       unitCost: uCost,
       sellingPrice: sPrice,
-      wholesalePrice: wPrice > 0 ? wPrice : (prod?.wholesale_price || sPrice),
+      wholesalePrice: wPrice > 0 ? wPrice : (prod?.wholesale_price || 0),
       totalCost: qty * uCost,
       imeis: Array.isArray(imeis) ? imeis : [],
     });

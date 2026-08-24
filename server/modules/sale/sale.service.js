@@ -534,21 +534,42 @@ export const processReturn = async (id, data, tenantId = null, branchId = null) 
   if (branchId && branchId !== 'all') {
     txUpdate.andWhere((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
   }
+
+  // Update payment_breakdown.dueAmount to reflect the return
+  let pb = {};
+  try { pb = typeof sale.payment_breakdown === 'string' ? JSON.parse(sale.payment_breakdown) : (sale.paymentBreakdown || sale.payment_breakdown || {}); } catch { pb = {}; }
+  const oldDue = Number(pb.dueAmount || 0);
+  const newDue = Math.max(0, oldDue - refundAmount);
+  pb.dueAmount = newDue;
+  if (refundAmount > 0 && pb.cash !== undefined) {
+    pb.changeAmount = 0;
+  }
+
   await txUpdate.update({
     returned_amount: newReturnedAmount,
     return_logs: JSON.stringify([...existingLogs, returnLog]),
+    payment_breakdown: JSON.stringify(pb),
     status: newReturnedAmount >= sale.netTotal ? 'RETURNED' : 'PARTIAL_RETURN',
     updated_at: new Date(),
   });
 
-  if (sale.customerId && refundAmount > 0) {
+  // Recalculate customer due_balance from ALL their transactions
+  if (sale.customerId) {
     const custId = typeof sale.customerId === 'object' ? (sale.customerId?.id || sale.customerId?._id) : sale.customerId;
     if (custId) {
-      const custQuery = db('customers').where({ id: custId });
-      if (tenantId) custQuery.andWhere('tenant_id', tenantId);
-      await custQuery.decrement('due_balance', refundAmount);
+      const allSalesQuery = db('transactions').where({ customer_id: custId, is_deleted: false });
+      if (tenantId) allSalesQuery.andWhere('tenant_id', tenantId);
+      const allSales = await allSalesQuery.select('payment_breakdown');
+      const freshDueBalance = allSales.reduce((sum, s) => {
+        const spb = typeof s.payment_breakdown === 'string' ? (() => { try { return JSON.parse(s.payment_breakdown); } catch { return {}; } })() : (s.payment_breakdown || {});
+        return sum + Number(spb.dueAmount || 0);
+      }, 0);
+      const custUpdate = db('customers').where({ id: custId });
+      if (tenantId) custUpdate.andWhere('tenant_id', tenantId);
+      await custUpdate.update({ due_balance: Math.max(0, freshDueBalance) });
     }
   }
 
-  return { ...sale, returnedAmount: newReturnedAmount, refundAmount };
+  const returnInvoiceNumber = `RET-${sale.invoiceNumber || sale.invoice_number || id}-${Date.now().toString(36).toUpperCase().slice(-4)}`;
+  return { ...sale, returnedAmount: newReturnedAmount, refundAmount, returnInvoiceNumber, paymentBreakdown: pb };
 };

@@ -302,6 +302,25 @@ function EmployeeModal({ editEmp, onClose }) {
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, [onClose]);
+
+  const { data: employees = [] } = useQuery({
+    queryKey: ['employees'],
+    queryFn: async () => {
+      const { data } = await api.get('/employees', { params: { limit: 200 } });
+      return data?.data || [];
+    },
+    enabled: !editEmp,
+  });
+
+  const generateEmpId = () => {
+    const existing = (employees || []).map((e) => {
+      const match = String(e.employeeId || '').match(/EMP-(\d+)/);
+      return match ? Number(match[1]) : 0;
+    });
+    const maxNum = existing.length > 0 ? Math.max(...existing) : 0;
+    return `EMP-${String(maxNum + 1).padStart(3, '0')}`;
+  };
+
   const [form, setForm] = useState({
     name: editEmp?.name || '',
     phone: editEmp?.phone || '',
@@ -320,6 +339,12 @@ function EmployeeModal({ editEmp, onClose }) {
     nidNumber: editEmp?.nidNumber || '',
     userId: editEmp?.user?._id || editEmp?.user || '',
   });
+
+  useEffect(() => {
+    if (!editEmp && employees.length > 0 && !form.employeeId) {
+      setForm((prev) => ({ ...prev, employeeId: generateEmpId() }));
+    }
+  }, [employees, editEmp]);
 
   const mutation = useMutation({
     mutationFn: async (data) => {
@@ -370,16 +395,28 @@ function EmployeeModal({ editEmp, onClose }) {
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
-                Employee ID *
+                Employee ID * <span className="text-[10px] text-blue-500 normal-case font-normal">(auto-generated)</span>
               </label>
-              <input
-                type="text"
-                required
-                value={form.employeeId}
-                onChange={(e) => setForm({ ...form, employeeId: e.target.value })}
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-[#2563EB]"
-                placeholder="EMP-001"
-              />
+              <div className="flex gap-1">
+                <input
+                  type="text"
+                  required
+                  value={form.employeeId}
+                  onChange={(e) => setForm({ ...form, employeeId: e.target.value })}
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-mono focus:outline-none focus:border-[#2563EB]"
+                  placeholder="EMP-001"
+                />
+                {!editEmp && (
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, employeeId: generateEmpId() })}
+                    className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                    title="Generate new ID"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
@@ -521,8 +558,8 @@ function EmployeeModal({ editEmp, onClose }) {
                   required
                   value={form.userId}
                   onChange={(e) => setForm({ ...form, userId: e.target.value })}
-                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-[#2563EB]"
-                  placeholder="MongoDB ObjectId of user"
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-mono focus:outline-none focus:border-[#2563EB]"
+                  placeholder="Enter user ID"
                 />
               </div>
             )}

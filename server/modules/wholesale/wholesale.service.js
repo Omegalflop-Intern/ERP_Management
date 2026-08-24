@@ -168,15 +168,41 @@ export const deletePrice = async (id, tenantId = null) => {
 
 // Orders
 export const getAllOrders = async (page = 1, limit = 20, filters = {}, tenantId = null, branchId = null) => {
+  // Fetch from wholesale_orders table
+  const wsQuery = db('wholesale_orders').where('wholesale_orders.is_deleted', false);
+  applyTenantScope(wsQuery, tenantId, 'wholesale_orders');
+  if (branchId) wsQuery.where('wholesale_orders.branch_id', branchId);
+  if (filters.status) wsQuery.where('wholesale_orders.status', filters.status);
+  const wsRows = await wsQuery.select('wholesale_orders.id as _src_id');
+
+  // Fetch wholesale-type sales from transactions table
+  const txQuery = db('transactions').where({ is_deleted: false, sale_type: 'WHOLESALE' });
+  applyTenantScope(txQuery, tenantId, 'transactions');
+  if (branchId) txQuery.where('transactions.branch_id', branchId);
+  if (filters.status) txQuery.where('transactions.status', filters.status);
+  const txRows = await txQuery.select('transactions.id as _src_id');
+
+  const totalCount = wsRows.length + txRows.length;
+
   const countQuery = db('wholesale_orders').where('wholesale_orders.is_deleted', false);
   applyTenantScope(countQuery, tenantId, 'wholesale_orders');
   if (branchId) countQuery.where('wholesale_orders.branch_id', branchId);
   if (filters.status) countQuery.where('wholesale_orders.status', filters.status);
-
   const countRes = await countQuery.count({ total: '*' }).first();
-  const total = Number(countRes?.total || 0);
+  const wsCount = Number(countRes?.total || 0);
+
+  const txCountQuery = db('transactions').where({ is_deleted: false, sale_type: 'WHOLESALE' });
+  applyTenantScope(txCountQuery, tenantId, 'transactions');
+  if (branchId) txCountQuery.where('transactions.branch_id', branchId);
+  if (filters.status) txCountQuery.where('transactions.status', filters.status);
+  const txCountRes = await txCountQuery.count({ total: '*' }).first();
+  const txCount = Number(txCountRes?.total || 0);
+
+  const total = wsCount + txCount;
 
   const offset = (page - 1) * limit;
+
+  // Fetch wholesale_orders
   const dataQuery = db('wholesale_orders')
     .leftJoin('customers', 'wholesale_orders.customer_id', 'customers.id')
     .leftJoin('users', 'wholesale_orders.created_by', 'users.id')
@@ -189,12 +215,65 @@ export const getAllOrders = async (page = 1, limit = 20, filters = {}, tenantId 
   applyTenantScope(dataQuery, tenantId, 'wholesale_orders');
   if (branchId) dataQuery.where('wholesale_orders.branch_id', branchId);
   if (filters.status) dataQuery.where('wholesale_orders.status', filters.status);
+  const wsOrderRows = await dataQuery.orderBy('wholesale_orders.created_at', 'desc').limit(limit).offset(offset);
 
-  const rows = await dataQuery.orderBy('wholesale_orders.created_at', 'desc').limit(limit).offset(offset);
+  // Fetch wholesale-type transactions
+  const txDataQuery = db('transactions')
+    .leftJoin('customers', 'transactions.customer_id', 'customers.id')
+    .leftJoin('users', 'transactions.created_by', 'users.id')
+    .where({ 'transactions.is_deleted': false, 'transactions.sale_type': 'WHOLESALE' })
+    .select(
+      'transactions.*',
+      'customers.id as c_id', 'customers.name as c_name', 'customers.phone as c_phone', 'customers.company_name as c_company',
+      'users.id as u_id', 'users.username as u_username'
+    );
+  applyTenantScope(txDataQuery, tenantId, 'transactions');
+  if (branchId) txDataQuery.where('transactions.branch_id', branchId);
+  if (filters.status) txDataQuery.where('transactions.status', filters.status);
+  const txOrderRows = await txDataQuery.orderBy('transactions.created_at', 'desc').limit(limit).offset(offset);
 
-  const orders = rows.map((row) => {
+  const allRows = [...wsOrderRows, ...txOrderRows]
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, limit);
+
+  const orders = allRows.map((row) => {
     const cRow = row.c_id ? { id: row.c_id, name: row.c_name, phone: row.c_phone, company_name: row.c_company } : null;
     const uRow = row.u_id ? { id: row.u_id, username: row.u_username } : null;
+    // Check if this is a transactions row (has invoice_number) or wholesale_orders row (has order_number)
+    if (row.invoice_number && !row.order_number) {
+      // Convert transactions row to wholesale order format
+      let pb = {};
+      try { pb = typeof row.payment_breakdown === 'string' ? JSON.parse(row.payment_breakdown) : (row.payment_breakdown || {}); } catch { pb = {}; }
+      let items = [];
+      try { items = typeof row.line_items === 'string' ? JSON.parse(row.line_items) : (row.line_items || []); } catch { items = []; }
+      const wsItems = items.map(it => ({
+        productId: it.productId,
+        name: it.description || it.name || 'Product',
+        quantity: it.qty || it.quantity || 1,
+        unitPrice: it.unitPrice || 0,
+        total: (it.unitPrice || 0) * (it.qty || it.quantity || 1),
+      }));
+      return {
+        _id: String(row.id),
+        id: row.id,
+        tenantId: row.tenant_id || null,
+        orderNumber: row.invoice_number,
+        customer: cRow || null,
+        items: wsItems,
+        subTotal: Number(row.sub_total || 0),
+        discount: Number(row.discount || 0),
+        grandTotal: Number(row.grand_total || row.net_total || 0),
+        paidAmount: Number(row.paid_amount || 0),
+        dueAmount: Number(pb.dueAmount || 0),
+        paymentMethod: row.payment_method || 'CASH',
+        status: row.status || 'COMPLETED',
+        notes: row.notes || '',
+        createdBy: uRow || null,
+        isFromSale: true,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      };
+    }
     return formatWholesaleOrder(row, cRow, uRow);
   });
 

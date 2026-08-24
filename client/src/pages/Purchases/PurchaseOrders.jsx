@@ -1250,13 +1250,29 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
   };
 
   const updateItem = (key, field, val) => {
-    if (!returnSelection[key]) return;
-    setReturnSelection({
-      ...returnSelection,
-      [key]: {
-        ...returnSelection[key],
-        [field]: val,
-      },
+    setReturnSelection((prev) => {
+      if (!prev[key]) return prev;
+      return {
+        ...prev,
+        [key]: {
+          ...prev[key],
+          [field]: val,
+        },
+      };
+    });
+  };
+
+  const updateItemQty = (key, qty, unitCost) => {
+    setReturnSelection((prev) => {
+      if (!prev[key]) return prev;
+      return {
+        ...prev,
+        [key]: {
+          ...prev[key],
+          qty,
+          refundAmount: qty * (unitCost || 0),
+        },
+      };
     });
   };
 
@@ -1307,7 +1323,11 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
             {lineItems.map((item, idx) => {
               const key = `item-${idx}`;
               const isSelected = !!returnSelection[key];
-              const maxQty = Number(item.qty || 1);
+              const purchasedQty = Number(item.qty || 1);
+              const alreadyReturned = Number(item.returnedQty || 0);
+              const maxQty = Math.max(0, purchasedQty - alreadyReturned);
+              const selectedQty = Number(returnSelection[key]?.qty || 0);
+              const refundTotal = selectedQty * Number(item.unitCost || 0);
 
               return (
                 <div
@@ -1331,48 +1351,67 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
                           {item.description || item.name}
                         </div>
                         <div className="text-[11px] text-slate-600 dark:text-slate-400 font-mono font-medium">
-                          Purchased: {item.qty} pcs @ ৳{Number(item.unitCost || 0).toLocaleString()}
+                          Purchased: {purchasedQty} pcs @ ৳{Number(item.unitCost || 0).toLocaleString()} each
                         </div>
+                        {!isSelected && maxQty > 0 && (
+                          <div className="text-[10px] text-rose-500 dark:text-rose-400 font-medium mt-0.5">
+                            Click to select return quantity (up to {maxQty} pcs)
+                          </div>
+                        )}
+                        {alreadyReturned > 0 && (
+                          <div className="text-[10px] text-amber-500 dark:text-amber-400 font-medium mt-0.5">
+                            Already returned: {alreadyReturned} pcs
+                          </div>
+                        )}
                       </div>
                     </label>
 
-                    <div className="font-mono font-bold text-xs text-slate-900 dark:text-slate-100">
-                      Total: ৳{Number(item.totalCost || (item.qty * item.unitCost) || 0).toLocaleString()}
+                    <div className="text-right shrink-0">
+                      {isSelected ? (
+                        <div className="font-mono font-bold text-xs text-rose-600 dark:text-rose-400">
+                          Return: ৳{refundTotal.toLocaleString()}
+                        </div>
+                      ) : (
+                        <div className="font-mono font-bold text-xs text-slate-900 dark:text-slate-100">
+                          Total: ৳{Number(item.totalCost || (item.qty * item.unitCost) || 0).toLocaleString()}
+                        </div>
+                      )}
                     </div>
                   </div>
 
                   {isSelected && (
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2.5 border-t border-rose-200 dark:border-rose-900/40">
                       <div>
-                        <Label className="text-[11px] text-slate-700 dark:text-slate-300 font-bold">Return Qty (Max {maxQty})</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          max={maxQty}
-                          value={returnSelection[key]?.qty === undefined ? '' : returnSelection[key]?.qty}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            if (val === '') {
-                              updateItem(key, 'qty', '');
-                              return;
-                            }
-                            const num = Number(val);
-                            const q = Math.min(maxQty, Math.max(1, isNaN(num) ? 1 : num));
-                            updateItem(key, 'qty', q);
-                            updateItem(key, 'refundAmount', q * (item.unitCost || 0));
-                          }}
-                          onBlur={() => {
-                            const current = Number(returnSelection[key]?.qty);
-                            if (!current || isNaN(current) || current < 1) {
-                              updateItem(key, 'qty', 1);
-                              updateItem(key, 'refundAmount', 1 * (item.unitCost || 0));
-                            }
-                          }}
-                          className="h-8 text-xs font-mono font-bold rounded-xl mt-1 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-slate-100 border-slate-300 dark:border-slate-700"
-                        />
+                        <Label className="text-[11px] text-slate-700 dark:text-slate-300 font-bold">Return Qty (pcs)</Label>
+                        <div className="flex items-center gap-1 mt-1">
+                          <Input
+                            type="number"
+                            min="1"
+                            max={maxQty}
+                            value={returnSelection[key]?.qty === undefined ? '' : returnSelection[key]?.qty}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === '') {
+                                updateItem(key, 'qty', '');
+                                return;
+                              }
+                              const num = Number(val);
+                              const q = Math.min(maxQty, Math.max(1, isNaN(num) ? 1 : num));
+                              updateItemQty(key, q, item.unitCost);
+                            }}
+                            onBlur={() => {
+                              const current = Number(returnSelection[key]?.qty);
+                              if (!current || isNaN(current) || current < 1) {
+                                updateItemQty(key, 1, item.unitCost);
+                              }
+                            }}
+                            className="h-8 text-xs font-mono font-bold rounded-xl bg-white dark:bg-[#1e293b] text-slate-900 dark:text-slate-100 border-slate-300 dark:border-slate-700"
+                          />
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium shrink-0">/ {maxQty}</span>
+                        </div>
                       </div>
                       <div>
-                        <Label className="text-[11px] text-slate-700 dark:text-slate-300 font-bold">Refund / Credit (৳)</Label>
+                        <Label className="text-[11px] text-slate-700 dark:text-slate-300 font-bold">Refund Amount (৳)</Label>
                         <Input
                           type="number"
                           min="0"
