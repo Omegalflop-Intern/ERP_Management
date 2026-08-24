@@ -533,7 +533,9 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
   const isEdit = Boolean(initialData);
 
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
-  const [isQuickCustomer, setIsQuickCustomer] = useState(customers.length === 0 || !isEdit);
+  const [isQuickCustomer, setIsQuickCustomer] = useState(false);
+  const [customerDevices, setCustomerDevices] = useState([]);
+  const [loadingDevices, setLoadingDevices] = useState(false);
 
   const [form, setForm] = useState({
     customerName: initialData?.customerName || '',
@@ -567,8 +569,12 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
     },
   });
 
-  const handleCustomerSelect = (custId) => {
+  const handleCustomerSelect = async (custId) => {
     setSelectedCustomerId(custId);
+    if (!custId) {
+      setCustomerDevices([]);
+      return;
+    }
     const found = customers.find((c) => String(c._id || c.id) === String(custId));
     if (found) {
       setForm((prev) => ({
@@ -577,6 +583,55 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
         customerPhone: found.phone || '',
         customerEmail: found.email || '',
       }));
+
+      // Auto-fetch customer's purchase history & devices
+      try {
+        setLoadingDevices(true);
+        const res = await api.get(`/customers/${found._id || found.id}/history`);
+        const historySales = res.data?.data?.sales || [];
+        const devices = [];
+        historySales.forEach((s) => {
+          (s.lineItems || []).forEach((item) => {
+            devices.push({
+              model: item.description || item.name || 'Purchased Device',
+              imei: item.imeiOrSerial || '',
+              invoice: s.invoiceNumber,
+              date: s.createdAt,
+            });
+          });
+        });
+
+        // Also check if any serialized items in `imeis` match this customer
+        (imeis || []).forEach((im) => {
+          if (im.customerName === found.name || im.customerPhone === found.phone) {
+            if (!devices.some((d) => d.imei === im.imeiOrSerial)) {
+              devices.unshift({
+                model: im.productName || im.product?.name || 'Device',
+                imei: im.imeiOrSerial,
+                invoice: 'IMEI Record',
+                date: im.createdAt,
+              });
+            }
+          }
+        });
+
+        setCustomerDevices(devices);
+
+        // If customer has purchased devices, auto-fill the latest one!
+        if (devices.length > 0 && !isEdit) {
+          const latest = devices[0];
+          setForm((prev) => ({
+            ...prev,
+            deviceModel: latest.model,
+            imeiOrSerial: latest.imei || prev.imeiOrSerial,
+          }));
+          toast.success(`Auto-linked device: ${latest.model}${latest.imei ? ` (${latest.imei})` : ''}`);
+        }
+      } catch (err) {
+        console.error('Failed to fetch customer device history', err);
+      } finally {
+        setLoadingDevices(false);
+      }
     }
   };
 
@@ -645,18 +700,25 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
                   onClick={() => setIsQuickCustomer(!isQuickCustomer)}
                   className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 hover:underline font-semibold"
                 >
-                  {isQuickCustomer ? 'Select Existing Customer' : '+ Type New Customer Details'}
+                  {isQuickCustomer ? 'Select from Existing Customer List' : '+ Type New Customer Details'}
                 </button>
               )}
             </div>
 
             {!isQuickCustomer && customers.length > 0 && (
               <div className="space-y-1.5">
-                <Label className="text-[11px] text-slate-500">Pick from Existing Customer Directory</Label>
+                <div className="flex items-center justify-between">
+                  <Label className="text-[11px] text-slate-500">Pick Existing Customer to Auto-Find Devices</Label>
+                  {loadingDevices && (
+                    <span className="text-[10px] text-blue-600 animate-pulse font-medium">
+                      Finding customer devices...
+                    </span>
+                  )}
+                </div>
                 <select
                   value={selectedCustomerId}
                   onChange={(e) => handleCustomerSelect(e.target.value)}
-                  className="w-full px-3 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:border-blue-500"
+                  className="w-full px-3 py-2 bg-white dark:bg-[#1e293b] border border-blue-200 dark:border-blue-800 rounded-xl text-xs text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:border-blue-500"
                 >
                   <option value="">-- Choose Existing Customer --</option>
                   {customers.map((c) => (
@@ -707,6 +769,52 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
             <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
               <Smartphone className="w-3.5 h-3.5 text-blue-600" /> Device & Issue Details *
             </span>
+
+            {/* Auto-found Customer Devices (Chips) */}
+            {customerDevices.length > 0 && (
+              <div className="p-3 bg-blue-50/80 dark:bg-blue-950/40 rounded-xl border border-blue-200/80 dark:border-blue-800/80 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-blue-800 dark:text-blue-300 flex items-center gap-1.5">
+                    <Smartphone className="w-3.5 h-3.5" /> Customer's Purchased Devices ({customerDevices.length})
+                  </span>
+                  <span className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">
+                    Click device to auto-fill
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {customerDevices.map((dev, idx) => {
+                    const isSelected =
+                      form.deviceModel === dev.model &&
+                      (!dev.imei || form.imeiOrSerial === dev.imei);
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          setForm((prev) => ({
+                            ...prev,
+                            deviceModel: dev.model,
+                            imeiOrSerial: dev.imei || prev.imeiOrSerial,
+                          }));
+                          toast.info(`Selected ${dev.model}`);
+                        }}
+                        className={`text-left px-3 py-1.5 rounded-xl text-xs transition border cursor-pointer ${
+                          isSelected
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-sm font-semibold'
+                            : 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 border-blue-200 dark:border-blue-800 hover:border-blue-400 shadow-xs'
+                        }`}
+                      >
+                        <div className="font-semibold truncate max-w-[220px]">{dev.model}</div>
+                        <div className={`text-[10px] ${isSelected ? 'text-blue-100' : 'text-slate-500 dark:text-slate-400'}`}>
+                          {dev.imei ? `IMEI: ${dev.imei}` : `Inv: ${dev.invoice}`}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label className="text-[11px] font-semibold">Device Model / Brand *</Label>
@@ -724,7 +832,10 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
                   <Input
                     placeholder="Type or select IMEI..."
                     value={form.imeiOrSerial}
-                    onChange={(e) => setForm({ ...form, imeiOrSerial: e.target.value })}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      handleImeiSelect(val);
+                    }}
                     className="h-9 text-xs rounded-xl font-mono bg-white dark:bg-[#1e293b]"
                     list="imei-options"
                   />

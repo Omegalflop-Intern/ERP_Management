@@ -43,10 +43,10 @@ export function formatTransaction(row, customerRow = null) {
     supplierId: row.supplier_id ? String(row.supplier_id) : null,
     lineItems: parseJSON(row.line_items),
     returnLogs: parseJSON(row.return_logs),
-    customerName: row.customer_name || '',
-    customerPhone: row.customer_phone || '',
-    customerEmail: row.customer_email || '',
-    customerAddress: row.customer_address || '',
+    customerName: row.customer_name || customerRow?.name || 'Walk-in Customer',
+    customerPhone: row.customer_phone || customerRow?.phone || 'N/A',
+    customerEmail: row.customer_email || customerRow?.email || '',
+    customerAddress: row.customer_address || customerRow?.address || '',
     subTotal: Number(row.sub_total || 0),
     discount: Number(row.discount || 0),
     tax: Number(row.tax || 0),
@@ -236,10 +236,41 @@ export const createSale = async (data, createdBy = 'system') => {
 };
 
 export const getAllSales = async (page = 1, limit = 20, filters = {}) => {
-  const countQuery = db('transactions').where({ 'transactions.is_deleted': false, 'transactions.tx_type': 'SALE' });
-  applyTenantScope(countQuery, filters.tenantId, 'transactions');
-  if (filters.status) countQuery.where('transactions.status', filters.status);
-  if (filters.branchId) countQuery.where('transactions.branch_id', filters.branchId);
+  const buildQuery = (query) => {
+    applyTenantScope(query, filters.tenantId, 'transactions');
+    if (filters.status && filters.status !== 'ALL') query.where('transactions.status', filters.status);
+    if (filters.branchId && filters.branchId !== 'all') query.where('transactions.branch_id', filters.branchId);
+    if (filters.saleType) query.where('transactions.sale_type', filters.saleType);
+    if (filters.from) query.where('transactions.created_at', '>=', new Date(filters.from));
+    if (filters.to) {
+      const toDate = new Date(filters.to);
+      toDate.setHours(23, 59, 59, 999);
+      query.where('transactions.created_at', '<=', toDate);
+    }
+    if (filters.customer || filters.search) {
+      const term = `%${filters.customer || filters.search}%`;
+      query.andWhere((b) => {
+        b.where('transactions.invoice_number', 'like', term)
+          .orWhere('transactions.customer_name', 'like', term)
+          .orWhere('transactions.customer_phone', 'like', term)
+          .orWhere('customers.name', 'like', term)
+          .orWhere('customers.phone', 'like', term);
+      });
+    }
+    if (filters.paymentMethod) {
+      const pMethod = filters.paymentMethod.toLowerCase();
+      if (pMethod === 'due') {
+        query.where('transactions.payment_breakdown', 'like', '%"dueAmount":%').andWhereNot('transactions.payment_breakdown', 'like', '%"dueAmount":0%');
+      } else {
+        query.where('transactions.payment_breakdown', 'like', `%"${pMethod}":%`).andWhereNot('transactions.payment_breakdown', 'like', `%"${pMethod}":0%`);
+      }
+    }
+  };
+
+  const countQuery = db('transactions')
+    .leftJoin('customers', 'transactions.customer_id', 'customers.id')
+    .where({ 'transactions.is_deleted': false, 'transactions.tx_type': 'SALE' });
+  buildQuery(countQuery);
 
   const countRes = await countQuery.count({ total: '*' }).first();
   const total = Number(countRes?.total || 0);
@@ -253,9 +284,7 @@ export const getAllSales = async (page = 1, limit = 20, filters = {}) => {
       'customers.id as c_id', 'customers.name as c_name', 'customers.phone as c_phone',
       'customers.email as c_email', 'customers.address as c_address'
     );
-  applyTenantScope(dataQuery, filters.tenantId, 'transactions');
-  if (filters.status) dataQuery.where('transactions.status', filters.status);
-  if (filters.branchId) dataQuery.where('transactions.branch_id', filters.branchId);
+  buildQuery(dataQuery);
 
   const rows = await dataQuery.orderBy('transactions.created_at', 'desc').limit(limit).offset(offset);
 

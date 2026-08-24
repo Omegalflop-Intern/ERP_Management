@@ -241,10 +241,13 @@ export default function SalesList() {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <div className="text-sm text-gray-900 dark:text-gray-100">
-                          {s.customerName}
+                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
+                          {s.customerName || 'Walk-in Customer'}
+                          {!s.customerId && (!s.customerName || s.customerName === 'Walk-in Customer') && (
+                            <span className="text-[10px] px-1.5 py-0.2 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded font-normal">Walk-in</span>
+                          )}
                         </div>
-                        <div className="text-xs text-gray-500">{s.customerPhone}</div>
+                        <div className="text-xs text-gray-500">{s.customerPhone && s.customerPhone !== 'N/A' ? s.customerPhone : 'No phone recorded'}</div>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
                         {s.lineItems?.length || 0}
