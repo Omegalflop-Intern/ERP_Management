@@ -872,32 +872,83 @@ input[type="checkbox"]:focus {
   border-radius: 18px !important;
 }
 
-[data-mode="liquidglass"] .neu-btn {
-  background: linear-gradient(
-    145deg,
-    rgba(255, 255, 255, 0.75),
-    rgba(255, 255, 255, 0.4)
-  ) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.6) !important;
-  box-shadow:
-    0 2px 8px rgba(15, 23, 42, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
-  border-radius: 12px !important;
-  transition: all 0.2s ease !important;
-}
-
-[data-mode="liquidglass"] .neu-btn:hover {
+/* --- LIQUID GLASS BUTTONS (LIGHT & DARK 3D DEPTH) --- */
+[data-mode="liquidglass"] .neu-btn:not([class*="bg-"]):not([class*="text-white"]):not(.btn-primary) {
   background: linear-gradient(
     145deg,
     rgba(255, 255, 255, 0.85),
-    rgba(255, 255, 255, 0.52)
+    rgba(241, 245, 249, 0.65)
   ) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  border: 1px solid rgba(203, 213, 225, 0.8) !important;
+  box-shadow:
+    0 2px 8px rgba(15, 23, 42, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
+  border-radius: 12px !important;
+  color: #0f172a !important;
+  transition: all 0.2s ease !important;
+}
+
+[data-mode="liquidglass"] .neu-btn:not([class*="bg-"]):not([class*="text-white"]):not(.btn-primary):hover {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.95),
+    rgba(241, 245, 249, 0.8)
+  ) !important;
+  border-color: rgba(148, 163, 184, 0.9) !important;
   box-shadow:
     0 4px 16px rgba(15, 23, 42, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
+    inset 0 1px 0 rgba(255, 255, 255, 1) !important;
+  color: #020617 !important;
   transform: translateY(-1px) !important;
+}
+
+/* Dark Mode Liquid Glass Buttons */
+[data-mode="liquidglass"][data-theme="dark"] .neu-btn:not([class*="bg-"]):not([class*="text-white"]):not(.btn-primary),
+.dark[data-mode="liquidglass"] .neu-btn:not([class*="bg-"]):not([class*="text-white"]):not(.btn-primary),
+[data-mode="liquidglass"] .dark .neu-btn:not([class*="bg-"]):not([class*="text-white"]):not(.btn-primary) {
+  background: linear-gradient(
+    145deg,
+    rgba(30, 41, 59, 0.85),
+    rgba(15, 23, 42, 0.75)
+  ) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  border-radius: 12px !important;
+  color: #f1f5f9 !important;
+  transition: all 0.2s ease !important;
+}
+
+[data-mode="liquidglass"][data-theme="dark"] .neu-btn:not([class*="bg-"]):not([class*="text-white"]):not(.btn-primary):hover,
+.dark[data-mode="liquidglass"] .neu-btn:not([class*="bg-"]):not([class*="text-white"]):not(.btn-primary):hover,
+[data-mode="liquidglass"] .dark .neu-btn:not([class*="bg-"]):not([class*="text-white"]):not(.btn-primary):hover {
+  background: linear-gradient(
+    145deg,
+    rgba(51, 65, 85, 0.9),
+    rgba(30, 41, 59, 0.85)
+  ) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Accent & Colored Buttons in Liquid Glass 3D */
+[data-mode="liquidglass"] .neu-btn[class*="bg-"],
+[data-mode="liquidglass"] .neu-btn[class*="text-white"],
+[data-mode="liquidglass"] .neu-btn.btn-primary {
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow:
+    0 4px 14px rgba(37, 99, 235, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  color: #ffffff !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1015,14 +1066,6 @@ input[type="checkbox"]:focus {
   -webkit-backdrop-filter: none !important;
 }
 
-[data-mode="liquidglass"][data-theme="dark"] .neu-btn:hover {
-  background: linear-gradient(
-    145deg,
-    rgba(255, 255, 255, 0.14),
-    rgba(255, 255, 255, 0.07)
-  ) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
-}
 
 [data-mode="liquidglass"] .neu-input,
 [data-mode="liquidglass"]
