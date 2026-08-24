@@ -33,6 +33,7 @@ export function DocumentVaultModal({ tenant, onClose, onVerifyKyc }) {
       } else {
         await api.patch(`/tenants/${tenantId}/verify-kyc`, { status: 'APPROVED' });
         toast.success('KYC approved successfully!');
+        qc.invalidateQueries({ queryKey: ['sa-shops'] });
         qc.invalidateQueries({ queryKey: ['sa-tenants'] });
         qc.invalidateQueries({ queryKey: ['sa-kyc'] });
         qc.invalidateQueries({ queryKey: ['sa-stats'] });
@@ -58,6 +59,7 @@ export function DocumentVaultModal({ tenant, onClose, onVerifyKyc }) {
       } else {
         await api.patch(`/tenants/${tenantId}/verify-kyc`, { status: 'REJECTED', rejectionReason: reason });
         toast.success('KYC rejected');
+        qc.invalidateQueries({ queryKey: ['sa-shops'] });
         qc.invalidateQueries({ queryKey: ['sa-tenants'] });
         qc.invalidateQueries({ queryKey: ['sa-kyc'] });
         qc.invalidateQueries({ queryKey: ['sa-stats'] });
