@@ -373,7 +373,10 @@ export default function PurchaseOrders() {
             queryClient.invalidateQueries(['purchase-orders']);
             queryClient.invalidateQueries(['products']);
             queryClient.invalidateQueries(['products-list']);
+            queryClient.invalidateQueries(['product-search-pos']);
             queryClient.invalidateQueries(['stock-overview']);
+            queryClient.invalidateQueries(['imei-search']);
+            queryClient.invalidateQueries(['suppliers-list']);
           }}
         />
       )}
@@ -756,11 +759,14 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                         >
                           <option value="new">+ Type New Product Name Below</option>
                           <optgroup label="Select from Store Catalog">
-                            {products.map((p) => (
-                              <option key={p._id || p.id} value={p._id || p.id}>
-                                {p.name} (In stock: {p.stock || 0})
-                              </option>
-                            ))}
+                            {products.map((p) => {
+                              const qty = p.stockQuantity ?? p.stock ?? 0;
+                              return (
+                                <option key={p._id || p.id} value={p._id || p.id}>
+                                  {p.name} (In stock: {qty})
+                                </option>
+                              );
+                            })}
                           </optgroup>
                         </select>
 
