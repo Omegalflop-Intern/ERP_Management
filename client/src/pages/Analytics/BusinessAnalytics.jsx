@@ -25,6 +25,7 @@ import {
   YAxis,
 } from 'recharts';
 import api from '../../lib/api';
+import ChartTooltip from '../../components/charts/ChartTooltip';
 
 const COLORS = ['#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e'];
 
@@ -148,9 +149,10 @@ export default function BusinessAnalytics() {
                 <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                 <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip />
+                <Tooltip content={<ChartTooltip isCurrency={true} />} />
                 <Area
                   type="monotone"
+                  name="Revenue"
                   dataKey="revenue"
                   stroke="#6366f1"
                   fill="#6366f1"
@@ -158,6 +160,7 @@ export default function BusinessAnalytics() {
                 />
                 <Area
                   type="monotone"
+                  name="Orders"
                   dataKey="sales"
                   stroke="#8b5cf6"
                   fill="#8b5cf6"
@@ -188,7 +191,7 @@ export default function BusinessAnalytics() {
                     <Cell key={index} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip content={<ChartTooltip unit="transactions" />} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
@@ -207,8 +210,8 @@ export default function BusinessAnalytics() {
                 <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                 <XAxis type="number" tick={{ fontSize: 12 }} />
                 <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={100} />
-                <Tooltip />
-                <Bar dataKey="soldQty" fill="#6366f1" radius={[0, 4, 4, 0]} />
+                <Tooltip content={<ChartTooltip unit="pcs sold" />} />
+                <Bar dataKey="soldQty" name="Units Sold" fill="#6366f1" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -233,7 +236,7 @@ export default function BusinessAnalytics() {
                     <Cell key={index} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip content={<ChartTooltip unit="items" />} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>

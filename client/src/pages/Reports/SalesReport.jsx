@@ -24,6 +24,7 @@ import {
 } from 'recharts';
 import DatePicker from '../../components/ui/DatePicker';
 import api from '../../lib/api';
+import ChartTooltip from '../../components/charts/ChartTooltip';
 
 const COLORS = ['#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e'];
 
@@ -394,15 +395,8 @@ export default function SalesReport() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.3} />
                   <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#9ca3af' }} />
                   <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} />
-                  <Tooltip
-                    contentStyle={{
-                      background: '#1f2937',
-                      border: '1px solid #374151',
-                      borderRadius: '8px',
-                      color: '#f3f4f6',
-                    }}
-                  />
-                  <Bar dataKey="total" fill="#dc2626" radius={[4, 4, 0, 0]} />
+                  <Tooltip content={<ChartTooltip isCurrency={true} />} />
+                  <Bar dataKey="total" name="Daily Sales" fill="#dc2626" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -435,14 +429,7 @@ export default function SalesReport() {
                       <Cell key={i} fill={COLORS[i % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      background: '#1f2937',
-                      border: '1px solid #374151',
-                      borderRadius: '8px',
-                      color: '#f3f4f6',
-                    }}
-                  />
+                  <Tooltip content={<ChartTooltip isCurrency={true} />} />
                 </PieChart>
               </ResponsiveContainer>
               <div className="space-y-2">

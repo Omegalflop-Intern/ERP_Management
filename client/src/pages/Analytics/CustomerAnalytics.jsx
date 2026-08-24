@@ -13,6 +13,7 @@ import {
   YAxis,
 } from 'recharts';
 import api from '../../lib/api';
+import ChartTooltip from '../../components/charts/ChartTooltip';
 
 const _COLORS = ['#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e'];
 
@@ -94,7 +95,7 @@ export default function CustomerAnalytics() {
                 <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                 <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip />
+                <Tooltip content={<ChartTooltip unit="users" />} />
                 <Line
                   type="monotone"
                   dataKey="newCustomers"
@@ -142,8 +143,8 @@ export default function CustomerAnalytics() {
               <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
               <XAxis dataKey="name" tick={{ fontSize: 12 }} />
               <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip />
-              <Bar dataKey="totalSpent" fill="#6366f1" radius={[4, 4, 0, 0]} name="Total Spent (৳)" />
+              <Tooltip content={<ChartTooltip isCurrency={true} />} />
+              <Bar dataKey="totalSpent" fill="#6366f1" radius={[4, 4, 0, 0]} name="Total Spent" />
             </BarChart>
           </ResponsiveContainer>
         </div>
