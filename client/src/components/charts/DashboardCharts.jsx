@@ -120,9 +120,11 @@ export default function DashboardCharts({
               <span className="font-extrabold text-white font-mono">
                 {typeof entry.value === 'number' &&
                 entry.name !== 'Sales Count' &&
-                entry.name !== 'Units'
+                entry.name !== 'Units' &&
+                !entry.name?.toLowerCase().includes('count') &&
+                !entry.name?.toLowerCase().includes('item')
                   ? `৳${entry.value.toLocaleString()}`
-                  : entry.value?.toLocaleString()}
+                  : `${entry.value?.toLocaleString()} pcs`}
               </span>
             </div>
           ))}
@@ -413,7 +415,7 @@ export default function DashboardCharts({
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(val, name) => [`${val} units`, name]}
+                    formatter={(val, name) => [`${val} pcs (units)`, name]}
                     contentStyle={{
                       borderRadius: 12,
                       background: isDark ? '#0F172A' : '#FFFFFF',
@@ -421,6 +423,14 @@ export default function DashboardCharts({
                       color: isDark ? '#F8FAFC' : '#0F172A',
                       fontSize: 12,
                       boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
+                    }}
+                    itemStyle={{
+                      color: isDark ? '#F8FAFC' : '#0F172A',
+                      fontWeight: 600,
+                    }}
+                    labelStyle={{
+                      color: isDark ? '#94A3B8' : '#64748B',
+                      fontWeight: 700,
                     }}
                   />
                   <Legend wrapperStyle={{ fontSize: 11, paddingTop: 5 }} />
