@@ -472,15 +472,35 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
 
     const methods = [];
     const names = activeList.map((a) => (a.name || '').toLowerCase());
-    if (names.some((n) => n.includes('cash'))) methods.push({ value: 'CASH', label: 'Cash Payment' });
-    if (names.some((n) => n.includes('bank') || n.includes('card'))) methods.push({ value: 'BANK', label: 'Bank Transfer / Card' });
-    if (names.some((n) => n.includes('bkash'))) methods.push({ value: 'BKASH', label: 'bKash Merchant' });
-    if (names.some((n) => n.includes('nagad'))) methods.push({ value: 'NAGAD', label: 'Nagad' });
-    if (names.some((n) => n.includes('rocket'))) methods.push({ value: 'ROCKET', label: 'Rocket' });
+    const codes = activeList.map((a) => String(a.code || ''));
 
+    if (names.some((n) => n.includes('cash')) || codes.includes('1000')) {
+      methods.push({ value: 'CASH', label: 'Cash Payment' });
+    }
+    if (names.some((n) => n.includes('bank') || n.includes('card')) || codes.includes('1010')) {
+      methods.push({ value: 'BANK', label: 'Bank Transfer / Card' });
+    }
+    if (names.some((n) => n.includes('bkash')) || codes.includes('1011')) {
+      methods.push({ value: 'BKASH', label: 'bKash Merchant' });
+    }
+    if (names.some((n) => n.includes('nagad')) || codes.includes('1012')) {
+      methods.push({ value: 'NAGAD', label: 'Nagad' });
+    }
+    if (names.some((n) => n.includes('rocket')) || codes.includes('1013')) {
+      methods.push({ value: 'ROCKET', label: 'Rocket' });
+    }
+
+    // Only allow custom liquid bank/wallet sub-accounts (exclude receivables, inventory, liabilities, equity, fixed assets)
     activeList.forEach((a) => {
+      const code = String(a.code || '');
       const n = (a.name || '').toLowerCase();
-      if (!n.includes('cash') && !n.includes('bkash') && !n.includes('nagad') && !n.includes('rocket') && !n.includes('bank') && (a.type === 'ASSET' || a.subType === 'CURRENT_ASSET')) {
+      const isLiquidSubAccount =
+        !['1000', '1010', '1011', '1012', '1013', '1020', '1030', '2000', '3000', '4000', '5000', '6000'].includes(code) &&
+        !code.startsWith('AST-') &&
+        !['FURNITURE', 'EQUIPMENT', 'ELECTRONICS', 'FIXED_ASSET', 'NON_CURRENT_ASSET', 'ACCOUNTS_RECEIVABLE', 'INVENTORY'].includes(a.subType) &&
+        (n.includes('bank') || n.includes('cash') || n.includes('wallet') || n.includes('mfs') || n.includes('card'));
+
+      if (isLiquidSubAccount) {
         methods.push({ value: a.name.toUpperCase(), label: `${a.name} (${a.code})` });
       }
     });
