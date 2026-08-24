@@ -536,11 +536,25 @@ export const verifyKyc = async (id, status, rejectionReason) => {
   const row = await db('tenants').where({ id, is_deleted: false }).first();
   if (!row) throw ApiError.notFound('Shop tenant account not found');
 
+  const isApproved = status === 'APPROVED';
+  const newTenantStatus = isApproved ? 'ACTIVE' : (status === 'REJECTED' ? 'REJECTED' : row.status);
+
   await db('tenants').where({ id }).update({
     kyc_status: status,
+    status: newTenantStatus,
     rejection_reason: status === 'REJECTED' ? rejectionReason : null,
     reviewed_at: new Date(),
   });
+
+  if (isApproved) {
+    await db('users').where({ tenant_id: id }).update({
+      is_active: true,
+      is_verified: true,
+      is_deleted: false,
+    });
+  } else if (status === 'REJECTED') {
+    await db('users').where({ tenant_id: id }).update({ is_active: false });
+  }
 
   return getTenantById(id);
 };

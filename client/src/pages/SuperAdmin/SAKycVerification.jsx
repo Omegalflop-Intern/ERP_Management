@@ -42,6 +42,8 @@ export default function SAKycVerification() {
       toast.success(`KYC ${vars.status === 'APPROVED' ? 'approved' : 'rejected'}`);
       qc.invalidateQueries({ queryKey: ['sa-kyc'] });
       qc.invalidateQueries({ queryKey: ['sa-stats'] });
+      qc.invalidateQueries({ queryKey: ['sa-tenants'] });
+      qc.invalidateQueries({ queryKey: ['tenants'] });
     },
     onError: (e) => toast.error(e.response?.data?.message || 'KYC update failed'),
   });
