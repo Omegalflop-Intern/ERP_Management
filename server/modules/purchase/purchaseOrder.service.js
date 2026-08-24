@@ -1,7 +1,7 @@
 import { db } from '../../config/db.knex.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { getPagination } from '../../utils/http/pagination.js';
-import { createAutomatedExpenseJournal, createAutomatedPurchaseJournal } from '../accounting/accounting.service.js';
+import { createAutomatedExpenseJournal, createAutomatedPurchaseJournal, validateWalletBalance } from '../accounting/accounting.service.js';
 
 const generatePoNumber = () => 'PO-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
 
@@ -183,6 +183,9 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
     const pName = rawItem.productName || rawItem.name || rawItem.description || 'Gadget Item';
     const uCost = Number(rawItem.unitCost || 0);
     const sPrice = Number(rawItem.sellingPrice || rawItem.unitPrice || (uCost > 0 ? Math.round(uCost * 1.25) : 0));
+    const wPrice = rawItem.wholesalePrice !== undefined && rawItem.wholesalePrice !== ''
+      ? Number(rawItem.wholesalePrice)
+      : (rawItem.wholesale_price !== undefined && rawItem.wholesale_price !== '' ? Number(rawItem.wholesale_price) : 0);
     const qty = Number(rawItem.qty || 1);
 
     // If no productId or if productId is new, find or create product in store
@@ -207,6 +210,7 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
           category: rawItem.category || 'General',
           cost_price: uCost,
           selling_price: sPrice,
+          wholesale_price: wPrice > 0 ? wPrice : (sPrice > 0 ? sPrice : 0),
           stock_quantity: 0,
           min_stock_alert: 5,
           is_deleted: false,
@@ -224,11 +228,15 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
     if (prod) {
       const pUpdate = db('products').where({ id: pId });
       if (tenantId) pUpdate.andWhere('tenant_id', tenantId);
-      await pUpdate.update({
+      const updateData = {
         stock_quantity: Number(prod.stock_quantity || 0) + qty,
         cost_price: uCost > 0 ? uCost : prod.cost_price,
         selling_price: sPrice > 0 ? sPrice : prod.selling_price,
-      });
+      };
+      if (wPrice > 0) {
+        updateData.wholesale_price = wPrice;
+      }
+      await pUpdate.update(updateData);
     }
 
     // If IMEIs are provided at purchase time, insert them into inventory_units
@@ -272,6 +280,7 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
       receivedQty: qty,
       unitCost: uCost,
       sellingPrice: sPrice,
+      wholesalePrice: wPrice > 0 ? wPrice : (prod?.wholesale_price || sPrice),
       totalCost: qty * uCost,
       imeis: Array.isArray(imeis) ? imeis : [],
     });
@@ -283,6 +292,11 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
   const netTotal = Math.max(0, subTotal - discount + tax);
   const paidAmount = Number(data.paidAmount || 0);
   const dueAmount = Math.max(0, netTotal - paidAmount);
+
+  if (paidAmount > 0) {
+    const paymentMethod = data.paymentMethod || 'CASH';
+    await validateWalletBalance(paymentMethod, paidAmount, tenantId);
+  }
 
   const [insertedId] = await db('purchase_orders').insert({
     tenant_id: tenantId,
@@ -565,6 +579,10 @@ export const payPurchaseOrderDue = async (id, { amount, paymentMethod = 'CASH', 
   const currentDue = Number(order.dueAmount || 0);
   if (payAmount > currentDue) {
     throw ApiError.badRequest(`Payment amount (৳${payAmount}) cannot exceed current due balance of ৳${currentDue}`);
+  }
+
+  if (payAmount > 0) {
+    await validateWalletBalance(paymentMethod, payAmount, tenantId);
   }
 
   const newPaid = Number(order.paidAmount || 0) + payAmount;

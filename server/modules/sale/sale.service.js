@@ -1,6 +1,7 @@
 import { db } from '../../config/db.knex.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { getPagination } from '../../utils/http/pagination.js';
+import { validateWalletBalance } from '../accounting/accounting.service.js';
 import emitter, { EVENTS } from '../../events/index.js';
 import crypto from 'crypto';
 
@@ -127,6 +128,19 @@ export const createSale = async (data, createdBy = 'system') => {
 
   if (rawDigital > netTotal + 0.01) {
     throw ApiError.badRequest(`Digital payment amount (৳${rawDigital}) exceeds sale net total (৳${netTotal})`);
+  }
+
+  const tenantIdForWallet = data.tenantId || null;
+  const walletPayments = [
+    { method: 'bkash', amount: data.paymentBreakdown?.bkash },
+    { method: 'rocket', amount: data.paymentBreakdown?.rocket },
+    { method: 'nagad', amount: data.paymentBreakdown?.nagad },
+    { method: 'bank', amount: data.paymentBreakdown?.bank },
+  ];
+  for (const wp of walletPayments) {
+    if (Number(wp.amount || 0) > 0) {
+      await validateWalletBalance(wp.method, wp.amount, tenantIdForWallet);
+    }
   }
 
   const changeAmount = Math.max(0, totalPaidRaw - netTotal);
@@ -498,9 +512,9 @@ export const processReturn = async (id, data, tenantId = null, branchId = null) 
   let refundAmount = 0;
 
   for (const ri of returnItems) {
-    const lineItem = sale.lineItems.find(li => li.productId === ri.productId);
+    const lineItem = sale.lineItems.find(li => String(li.productId) === String(ri.productId));
     if (!lineItem) throw ApiError.badRequest(`Line item not found for product ${ri.productId}`);
-    const qty = Math.abs(ri.qty || 1);
+    const qty = Math.abs(ri.quantity || ri.qty || 1);
     refundAmount += (lineItem.unitPrice * qty);
   }
 

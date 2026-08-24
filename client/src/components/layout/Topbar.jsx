@@ -91,18 +91,17 @@ function UserAvatar({ user, size = 'md', online = true }) {
 }
 
 function BranchSwitcher({ user }) {
-  const {
-    activeBranchId,
-    branches,
-    fetchBranches,
-    setActiveBranchId,
-    syncUserBranch,
-    tenantPlan,
-    maxBranches,
-  } = useBranchStore();
+  const activeBranchId = useBranchStore((s) => s.activeBranchId);
+  const branches = useBranchStore((s) => s.branches);
+  const fetchBranches = useBranchStore((s) => s.fetchBranches);
+  const setActiveBranchId = useBranchStore((s) => s.setActiveBranchId);
+  const syncUserBranch = useBranchStore((s) => s.syncUserBranch);
+  const tenantPlan = useBranchStore((s) => s.tenantPlan);
+  const maxBranches = useBranchStore((s) => s.maxBranches);
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
+  const qc = useQueryClient();
 
   useEffect(() => {
     fetchBranches();
@@ -180,6 +179,7 @@ function BranchSwitcher({ user }) {
             <button
               onClick={() => {
                 setActiveBranchId('all');
+                qc.invalidateQueries();
                 setIsOpen(false);
               }}
               className={`w-full flex items-center justify-between px-3 py-2.5 text-xs text-left hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors ${
@@ -205,6 +205,7 @@ function BranchSwitcher({ user }) {
                   key={bId}
                   onClick={() => {
                     setActiveBranchId(bId, b.name);
+                    qc.invalidateQueries();
                     setIsOpen(false);
                   }}
                   className={`w-full flex items-center justify-between px-3 py-2.5 text-xs text-left hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors ${
@@ -384,7 +385,7 @@ function GlobalSearch() {
             : ''
         }`}
       >
-        <Search className="w-4 h-4 text-slate-400 mr-2 flex-shrink-0" />
+        <Search className="w-4 h-4 text-slate-600 dark:text-slate-300 mr-2 flex-shrink-0 stroke-[2]" />
         <input
           ref={inputRef}
           type="text"
@@ -638,7 +639,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
   const { user, logout, setUser } = useAuth();
   const { theme, toggleTheme, designMode, toggleDesignMode } = useTheme();
   const { activeBranchId, branches = [], maxBranches = 2, setActiveBranchId } = useBranchStore();
-  const styled = designMode === 'glass';
+  const styled = designMode === 'liquidglass' || designMode === 'glassmorphismpro' || designMode === 'neumorphism';
   const location = useLocation();
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -705,10 +706,15 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
   const { data: notifData } = useQuery({
     queryKey: ['notifications'],
     queryFn: async () => {
-      const r = await api.get('/notifications', { params: { limit: 15 } });
-      return r.data?.data;
+      try {
+        const r = await api.get('/notifications', { params: { limit: 15 } });
+        return r.data?.data || { notifications: [], unreadCount: 0 };
+      } catch {
+        return { notifications: [], unreadCount: 0 };
+      }
     },
-    refetchInterval: 15000,
+    refetchInterval: 20000,
+    retry: 2,
     enabled: !!user,
   });
 
@@ -735,16 +741,16 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
           onClick={onToggleSidebar}
           className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors lg:hidden ${styled ? 'neu-btn !p-2' : ''}`}
         >
-          <PanelLeftOpen className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+          <PanelLeftOpen className="w-5 h-5 text-slate-700 dark:text-slate-200 stroke-[2]" />
         </button>
         <button
           onClick={onToggleCollapse}
           className={`hidden lg:flex p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${styled ? 'neu-btn !p-2' : ''}`}
         >
           {collapsed ? (
-            <PanelLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+            <PanelLeft className="w-5 h-5 text-slate-700 dark:text-slate-200 stroke-[2]" />
           ) : (
-            <PanelLeftClose className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+            <PanelLeftClose className="w-5 h-5 text-slate-700 dark:text-slate-200 stroke-[2]" />
           )}
         </button>
         <div className="flex items-center gap-2 font-bold text-xl text-[#2563EB] dark:text-blue-400">
@@ -803,7 +809,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
             }}
             className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${styled ? 'neu-btn !p-2' : ''}`}
           >
-            <Palette className="w-5 h-5 text-gray-500 dark:text-gray-300" />
+            <Palette className="w-5 h-5 text-slate-700 dark:text-slate-200 stroke-[2]" />
           </button>
           {showMobileSettings && (
             <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-[110] overflow-hidden">
@@ -861,7 +867,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
             }}
             className={`relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${styled ? 'neu-btn !p-2' : ''}`}
           >
-            <Bell className="w-5 h-5 text-gray-500 dark:text-gray-300" />
+            <Bell className="w-5 h-5 text-slate-700 dark:text-slate-200 stroke-[2]" />
             {notifData?.unreadCount > 0 && (
               <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#2563EB] text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
                 {notifData.unreadCount > 9 ? '9+' : notifData.unreadCount}

@@ -92,7 +92,7 @@ export const getAllPayroll = async (page = 1, limit = 20, branch = '', month = '
   return { payrolls, pagination: getPagination(total, page, limit) };
 };
 
-export const generatePayroll = async (month, year, employeeIds = [], tenantId = null, branchId = null) => {
+export const generatePayroll = async (month, year, employeeIds = [], tenantId = null, branchId = null, customAllowances = null, customDeductions = null) => {
   let empQuery = db('employees').where('employees.is_deleted', false).where('employees.is_active', true);
   if (tenantId) empQuery.where((b) => b.where('employees.tenant_id', tenantId).orWhereNull('employees.tenant_id'));
   if (branchId) empQuery.where('employees.branch_id', branchId);
@@ -117,10 +117,14 @@ export const generatePayroll = async (month, year, employeeIds = [], tenantId = 
     }
 
     const basicSalary = Number(employee.salary || 0);
-    const allowances = { houseRent: Math.round(basicSalary * 0.1), medical: 1000 };
-    const deductions = { tax: Math.round(basicSalary * 0.02) };
-    const totalAllowances = Object.values(allowances).reduce((a, b) => a + b, 0);
-    const totalDeductions = Object.values(deductions).reduce((a, b) => a + b, 0);
+    const allowances = customAllowances && typeof customAllowances === 'object' && Object.keys(customAllowances).length > 0
+      ? customAllowances
+      : { housing: Math.round(basicSalary * 0.1), transport: 0, medical: 1000, food: 0, other: 0 };
+    const deductions = customDeductions && typeof customDeductions === 'object' && Object.keys(customDeductions).length > 0
+      ? customDeductions
+      : { advance: 0, loan: 0, tax: Math.round(basicSalary * 0.02), absentDeduction: 0, other: 0 };
+    const totalAllowances = Object.values(allowances).reduce((a, b) => a + Number(b || 0), 0);
+    const totalDeductions = Object.values(deductions).reduce((a, b) => a + Number(b || 0), 0);
     const netSalary = Math.max(0, basicSalary + totalAllowances - totalDeductions);
 
     const [insertedId] = await db('payrolls').insert({

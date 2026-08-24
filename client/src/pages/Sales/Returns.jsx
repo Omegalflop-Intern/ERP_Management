@@ -84,10 +84,12 @@ export default function Returns() {
   const onSelectSale = (sale) => {
     setSelectedSale(sale);
     setReturnItems(
-      sale.lineItems.map((item) => ({
-        lineItemId: item._id,
+      sale.lineItems.map((item, idx) => ({
+        lineItemId: item._id || item.id || idx,
+        productId: item.productId?._id || item.productId,
         imeiOrSerial: item.imeiOrSerial || '',
         quantity: item.qty,
+        maxQty: item.qty,
         reason: 'defective',
         notes: '',
         selected: false,
@@ -103,7 +105,8 @@ export default function Returns() {
 
   const updateReturnQty = (index, qty) => {
     const updated = [...returnItems];
-    updated[index].quantity = Math.min(qty, updated[index].quantity);
+    const maxQty = updated[index].maxQty || updated[index].quantity;
+    updated[index].quantity = Math.max(0, Math.min(qty, maxQty));
     setReturnItems(updated);
   };
 
@@ -117,7 +120,7 @@ export default function Returns() {
     const items = returnItems
       .filter((i) => i.selected)
       .map((i) => ({
-        lineItemId: i.lineItemId,
+        productId: i.productId,
         imeiOrSerial: i.imeiOrSerial,
         quantity: i.quantity,
         reason: i.reason,

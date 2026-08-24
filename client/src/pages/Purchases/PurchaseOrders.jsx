@@ -444,6 +444,51 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
   const [taxType, setTaxType] = useState('FLAT'); // 'FLAT' or 'PERCENT'
   const [notes, setNotes] = useState('');
 
+  const { data: activeAccountsRes } = useQuery({
+    queryKey: ['pos-active-accounts'],
+    queryFn: async () => {
+      try {
+        const { data } = await api.get('/accounting/accounts');
+        return data?.data || [];
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const availablePaymentMethods = useMemo(() => {
+    const activeList = (activeAccountsRes || []).filter((a) => a.isActive !== false);
+    if (!activeList.length) {
+      return [
+        { value: 'CASH', label: 'Cash Payment' },
+        { value: 'BANK', label: 'Bank Transfer / Card' },
+        { value: 'BKASH', label: 'bKash Merchant' },
+        { value: 'NAGAD', label: 'Nagad' },
+        { value: 'ROCKET', label: 'Rocket' },
+        { value: 'CREDIT', label: 'Supplier Credit (Pay Later)' },
+      ];
+    }
+
+    const methods = [];
+    const names = activeList.map((a) => (a.name || '').toLowerCase());
+    if (names.some((n) => n.includes('cash'))) methods.push({ value: 'CASH', label: 'Cash Payment' });
+    if (names.some((n) => n.includes('bank') || n.includes('card'))) methods.push({ value: 'BANK', label: 'Bank Transfer / Card' });
+    if (names.some((n) => n.includes('bkash'))) methods.push({ value: 'BKASH', label: 'bKash Merchant' });
+    if (names.some((n) => n.includes('nagad'))) methods.push({ value: 'NAGAD', label: 'Nagad' });
+    if (names.some((n) => n.includes('rocket'))) methods.push({ value: 'ROCKET', label: 'Rocket' });
+
+    activeList.forEach((a) => {
+      const n = (a.name || '').toLowerCase();
+      if (!n.includes('cash') && !n.includes('bkash') && !n.includes('nagad') && !n.includes('rocket') && !n.includes('bank') && (a.type === 'ASSET' || a.subType === 'CURRENT_ASSET')) {
+        methods.push({ value: a.name.toUpperCase(), label: `${a.name} (${a.code})` });
+      }
+    });
+
+    methods.push({ value: 'CREDIT', label: 'Supplier Credit (Pay Later)' });
+    return methods;
+  }, [activeAccountsRes]);
+
   const availableCategories = useMemo(() => {
     const existing = products.map((p) => p.category).filter(Boolean);
     return Array.from(new Set([...CATEGORIES, ...existing]));
@@ -457,6 +502,7 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
       qty: 1,
       unitCost: '',
       sellingPrice: '',
+      wholesalePrice: '',
       showImei: false,
       imeiText: '',
     },
@@ -483,6 +529,7 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
         qty: 1,
         unitCost: '',
         sellingPrice: '',
+        wholesalePrice: '',
         showImei: false,
         imeiText: '',
       },
@@ -506,6 +553,7 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
           category: selected.category || 'Smartphones',
           unitCost: Number(selected.costPrice || selected.cost_price || 0) || '',
           sellingPrice: Number(selected.sellingPrice || selected.selling_price || 0) || '',
+          wholesalePrice: Number(selected.wholesalePrice || selected.wholesale_price || 0) || '',
         };
       } else {
         next[index] = {
@@ -514,6 +562,7 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
           productName: '',
           unitCost: '',
           sellingPrice: '',
+          wholesalePrice: '',
         };
       }
       return next;
@@ -597,6 +646,7 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
         qty: Number(it.qty || 1),
         unitCost: Number(it.unitCost || 0),
         sellingPrice: Number(it.sellingPrice || (Number(it.unitCost) * 1.25)),
+        wholesalePrice: it.wholesalePrice !== undefined && it.wholesalePrice !== '' ? Number(it.wholesalePrice) : undefined,
         imeis,
       };
     });
@@ -743,9 +793,9 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                     key={index}
                     className="p-4 bg-slate-50/60 dark:bg-slate-900/30 rounded-2xl border border-slate-200/90 dark:border-slate-800 hover:border-blue-400/50 dark:hover:border-blue-600/50 transition-all space-y-3 shadow-xs"
                   >
-                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
-                      {/* Product Selector / Name (4 cols) */}
-                      <div className="sm:col-span-4 space-y-1.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end">
+                      {/* Product Selector / Name (3 cols) */}
+                      <div className="sm:col-span-3 space-y-1.5">
                         <Label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center justify-between">
                           <span>Product / Item Name *</span>
                           <span className="text-[10px] text-blue-600 dark:text-blue-400 lowercase font-normal">
@@ -755,7 +805,7 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                         <select
                           value={item.productId || (item.productName ? 'new' : '')}
                           onChange={(e) => handleProductSelect(index, e.target.value)}
-                          className="w-full px-3 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:border-blue-500"
+                          className="w-full px-2.5 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:border-blue-500"
                         >
                           <option value="new">+ Type New Product Name Below</option>
                           <optgroup label="Select from Store Catalog">
@@ -797,7 +847,7 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                               handleLineChange(index, 'category', e.target.value);
                             }
                           }}
-                          className="w-full px-2.5 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 font-medium focus:outline-none"
+                          className="w-full px-2 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 font-medium focus:outline-none"
                         >
                           {availableCategories.map((c) => (
                             <option key={c} value={c}>{c}</option>
@@ -832,10 +882,10 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                         />
                       </div>
 
-                      {/* Unit Cost (2 cols) */}
+                      {/* Unit Cost (1.5 cols) */}
                       <div className="sm:col-span-2 space-y-1.5">
                         <Label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-right block">
-                          Cost Price (৳) *
+                          Cost (৳) *
                         </Label>
                         <Input
                           type="number"
@@ -849,7 +899,7 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                       </div>
 
                       {/* Retail Price (1.5 cols) */}
-                      <div className="sm:col-span-1 space-y-1.5">
+                      <div className="sm:col-span-1.5 space-y-1.5">
                         <Label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-right block">
                           Retail (৳)
                         </Label>
@@ -863,8 +913,23 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                         />
                       </div>
 
-                      {/* Line Total & Remove Action (1.5 cols) */}
-                      <div className="sm:col-span-2 flex items-center justify-end gap-2.5 pb-1">
+                      {/* Wholesale Price (1.5 cols) */}
+                      <div className="sm:col-span-1.5 space-y-1.5">
+                        <Label className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider text-right block">
+                          Wholesale (৳)
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={item.wholesalePrice === 0 ? '' : item.wholesalePrice}
+                          onChange={(e) => handleLineChange(index, 'wholesalePrice', e.target.value === '' ? '' : Number(e.target.value))}
+                          className="h-9 text-xs font-mono font-bold text-right rounded-xl bg-white dark:bg-[#1e293b] border-indigo-200 dark:border-indigo-900/50"
+                        />
+                      </div>
+
+                      {/* Line Total & Remove Action (1 col) */}
+                      <div className="sm:col-span-1 flex items-center justify-end gap-1 pb-1">
                         <div className="text-right flex-1">
                           <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Subtotal</div>
                           <div className="font-mono font-black text-xs text-slate-900 dark:text-slate-100 whitespace-nowrap">
@@ -875,7 +940,7 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                           type="button"
                           disabled={lineItems.length <= 1}
                           onClick={() => handleRemoveLine(index)}
-                          className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 disabled:opacity-20 transition-colors"
+                          className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 disabled:opacity-20 transition-colors"
                           title="Remove item"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -939,12 +1004,9 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                     onChange={(e) => setPaymentMethod(e.target.value)}
                     className="w-full mt-1 px-3 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100"
                   >
-                    <option value="CASH">Cash Payment</option>
-                    <option value="BANK">Bank Transfer / Card</option>
-                    <option value="BKASH">bKash Merchant</option>
-                    <option value="NAGAD">Nagad</option>
-                    <option value="ROCKET">Rocket</option>
-                    <option value="CREDIT">Supplier Credit (Pay Later)</option>
+                    {availablePaymentMethods.map((m) => (
+                      <option key={m.value} value={m.value}>{m.label}</option>
+                    ))}
                   </select>
                 </div>
 
@@ -1204,7 +1266,10 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const items = Object.values(returnSelection);
+    const items = Object.values(returnSelection).map((it) => ({
+      ...it,
+      qty: Math.max(1, Number(it.qty || 1)),
+    }));
     if (items.length === 0) {
       toast.error('Please select at least 1 item to return');
       return;
@@ -1219,24 +1284,24 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
           <DialogTitle className="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-bold text-base">
             <RotateCcw className="w-5 h-5 shrink-0" /> Return Products to Supplier
           </DialogTitle>
-          <DialogDescription className="text-xs">
-            Return items from PO <strong className="font-mono">{po.poNumber}</strong> back to vendor. Store stock will be deducted and supplier balance adjusted.
+          <DialogDescription className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+            Return items from PO <strong className="font-mono text-slate-800 dark:text-slate-200">{po.poNumber}</strong> back to vendor. Store stock will be deducted and supplier balance adjusted.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           <div>
-            <Label className="text-xs font-semibold">General Return Reason</Label>
+            <Label className="text-xs font-bold text-slate-800 dark:text-slate-200">General Return Reason</Label>
             <Input
               value={generalReason}
               onChange={(e) => setGeneralReason(e.target.value)}
               placeholder="e.g. Factory fault, damaged parcel, wrong batch"
-              className="h-9 text-xs mt-1 rounded-xl bg-slate-50 dark:bg-slate-900"
+              className="h-9 text-xs mt-1 rounded-xl bg-slate-50 dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 font-medium"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs font-bold uppercase text-slate-500 tracking-wider">
+            <Label className="text-xs font-bold uppercase text-slate-700 dark:text-slate-300 tracking-wider">
               Select Line Items to Return
             </Label>
             {lineItems.map((item, idx) => {
@@ -1249,7 +1314,7 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
                   key={key}
                   className={`p-3.5 rounded-2xl border transition-all space-y-2.5 ${
                     isSelected
-                      ? 'bg-rose-50/60 dark:bg-rose-950/30 border-rose-300 dark:border-rose-800'
+                      ? 'bg-rose-50/70 dark:bg-rose-950/40 border-rose-300 dark:border-rose-800 shadow-xs'
                       : 'bg-slate-50/60 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800'
                   }`}
                 >
@@ -1265,13 +1330,13 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
                         <div className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">
                           {item.description || item.name}
                         </div>
-                        <div className="text-[10px] text-slate-400 font-mono">
+                        <div className="text-[11px] text-slate-600 dark:text-slate-400 font-mono font-medium">
                           Purchased: {item.qty} pcs @ ৳{Number(item.unitCost || 0).toLocaleString()}
                         </div>
                       </div>
                     </label>
 
-                    <div className="font-mono font-bold text-xs text-slate-700 dark:text-slate-300">
+                    <div className="font-mono font-bold text-xs text-slate-900 dark:text-slate-100">
                       Total: ৳{Number(item.totalCost || (item.qty * item.unitCost) || 0).toLocaleString()}
                     </div>
                   </div>
@@ -1279,37 +1344,50 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
                   {isSelected && (
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2.5 border-t border-rose-200 dark:border-rose-900/40">
                       <div>
-                        <Label className="text-[10px] text-slate-500 font-semibold">Return Qty (Max {maxQty})</Label>
+                        <Label className="text-[11px] text-slate-700 dark:text-slate-300 font-bold">Return Qty (Max {maxQty})</Label>
                         <Input
                           type="number"
                           min="1"
                           max={maxQty}
-                          value={returnSelection[key]?.qty}
+                          value={returnSelection[key]?.qty === undefined ? '' : returnSelection[key]?.qty}
                           onChange={(e) => {
-                            const q = Math.min(maxQty, Math.max(1, Number(e.target.value)));
+                            const val = e.target.value;
+                            if (val === '') {
+                              updateItem(key, 'qty', '');
+                              return;
+                            }
+                            const num = Number(val);
+                            const q = Math.min(maxQty, Math.max(1, isNaN(num) ? 1 : num));
                             updateItem(key, 'qty', q);
                             updateItem(key, 'refundAmount', q * (item.unitCost || 0));
                           }}
-                          className="h-8 text-xs font-mono font-bold rounded-xl mt-1 bg-white dark:bg-[#1e293b]"
+                          onBlur={() => {
+                            const current = Number(returnSelection[key]?.qty);
+                            if (!current || isNaN(current) || current < 1) {
+                              updateItem(key, 'qty', 1);
+                              updateItem(key, 'refundAmount', 1 * (item.unitCost || 0));
+                            }
+                          }}
+                          className="h-8 text-xs font-mono font-bold rounded-xl mt-1 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-slate-100 border-slate-300 dark:border-slate-700"
                         />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-slate-500 font-semibold">Refund / Credit (৳)</Label>
+                        <Label className="text-[11px] text-slate-700 dark:text-slate-300 font-bold">Refund / Credit (৳)</Label>
                         <Input
                           type="number"
                           min="0"
                           value={returnSelection[key]?.refundAmount}
                           onChange={(e) => updateItem(key, 'refundAmount', Number(e.target.value))}
-                          className="h-8 text-xs font-mono rounded-xl mt-1 text-right font-black text-rose-600 bg-white dark:bg-[#1e293b]"
+                          className="h-8 text-xs font-mono rounded-xl mt-1 text-right font-black text-rose-600 dark:text-rose-400 bg-white dark:bg-[#1e293b] border-slate-300 dark:border-slate-700"
                         />
                       </div>
                       <div>
-                        <Label className="text-[10px] text-slate-500 font-semibold">Item Notes</Label>
+                        <Label className="text-[11px] text-slate-700 dark:text-slate-300 font-bold">Item Notes</Label>
                         <Input
                           placeholder="Specific defect details..."
                           value={returnSelection[key]?.notes}
                           onChange={(e) => updateItem(key, 'notes', e.target.value)}
-                          className="h-8 text-xs rounded-xl mt-1 bg-white dark:bg-[#1e293b]"
+                          className="h-8 text-xs rounded-xl mt-1 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-slate-100 border-slate-300 dark:border-slate-700"
                         />
                       </div>
                     </div>
@@ -1320,8 +1398,8 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
           </div>
 
           <div className="border-t border-slate-100 dark:border-slate-800 pt-3 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="text-xs font-bold">
-              Total Credit Refund: <span className="text-rose-600 font-mono text-base">৳{totalRefund.toLocaleString()}</span>
+            <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
+              Total Credit Refund: <span className="text-rose-600 dark:text-rose-400 font-mono text-base font-extrabold ml-1">৳{totalRefund.toLocaleString()}</span>
             </div>
             <div className="flex gap-2 w-full sm:w-auto">
               <Button type="button" variant="outline" size="sm" onClick={onClose} className="rounded-xl flex-1 sm:flex-none">

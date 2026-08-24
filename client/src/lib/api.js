@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useBranchStore } from '../store/branchStore';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
 const SERVER_URL = API_URL ? API_URL.replace(/\/api\/v1\/?$/, '') : '';
@@ -14,16 +15,12 @@ api.interceptors.request.use((config) => {
   if (token) config.headers.Authorization = `Bearer ${token}`;
 
   try {
-    const rawBranchStorage = localStorage.getItem('branch-storage');
-    if (rawBranchStorage) {
-      const parsed = JSON.parse(rawBranchStorage);
-      const activeBranchId = parsed?.state?.activeBranchId;
-      if (activeBranchId && activeBranchId !== 'all') {
-        config.headers['X-Branch-Id'] = activeBranchId;
-      }
+    const activeBranchId = useBranchStore.getState().activeBranchId;
+    if (activeBranchId && activeBranchId !== 'all') {
+      config.headers['X-Branch-Id'] = activeBranchId;
     }
   } catch {
-    // Ignore storage parse errors
+    // Ignore store access errors
   }
 
   return config;

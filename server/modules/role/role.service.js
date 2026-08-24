@@ -136,8 +136,15 @@ export const updateRole = async (id, data, tenantId = null) => {
 
   if (Object.keys(updateFields).length > 0) {
     const q = db('roles').where({ id });
-    if (tenantId) q.andWhere('tenant_id', tenantId);
-    await q.update(updateFields);
+    if (tenantId) {
+      q.andWhere(function () {
+        this.where('tenant_id', tenantId).orWhere(function () {
+          this.whereNull('tenant_id').andWhere('is_system', true);
+        });
+      });
+    }
+    const updated = await q.update(updateFields);
+    if (updated === 0) throw ApiError.notFound('Role not found or access denied');
   }
 
   return getRoleById(id, tenantId);

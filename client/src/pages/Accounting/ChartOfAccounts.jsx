@@ -98,34 +98,125 @@ export default function ChartOfAccounts() {
     },
   });
 
+  const { data: purchasesRes } = useQuery({
+    queryKey: ['purchases-channel-balances'],
+    queryFn: async () => {
+      try {
+        const res = await api.get('/purchase-orders', { params: { limit: 1000 } });
+        return res.data?.data || [];
+      } catch {
+        return [];
+      }
+    },
+  });
+
+  const { data: expensesRes } = useQuery({
+    queryKey: ['expenses-channel-balances'],
+    queryFn: async () => {
+      try {
+        const res = await api.get('/expenses', { params: { limit: 1000 } });
+        return res.data?.data || [];
+      } catch {
+        return [];
+      }
+    },
+  });
+
   const channelBalances = React.useMemo(() => {
-    const salesList = salesRes || [];
+    // 1. Starting balances from Chart of Accounts
     let cash = 0,
       bkash = 0,
       nagad = 0,
       rocket = 0,
-      bank = 0,
-      refunds = 0;
+      bank = 0;
+
+    (accounts || []).forEach((a) => {
+      const name = (a.name || '').toLowerCase();
+      const code = String(a.code || '');
+      const bal = Number(a.balance || 0);
+      if (name.includes('cash') || code === '1000') cash += bal;
+      else if (name.includes('bkash') || code === '1011') bkash += bal;
+      else if (name.includes('nagad') || code === '1012') nagad += bal;
+      else if (name.includes('rocket') || code === '1013') rocket += bal;
+      else if (name.includes('bank') || code === '1010') bank += bal;
+    });
+
+    // 2. Incoming from Sales
+    let refunds = 0;
+    const salesList = Array.isArray(salesRes) ? salesRes : (salesRes?.sales || salesRes?.data || []);
     salesList.forEach((s) => {
-      cash += s.paymentBreakdown?.cash || 0;
-      bkash += s.paymentBreakdown?.bkash || 0;
-      nagad += s.paymentBreakdown?.nagad || 0;
-      rocket += s.paymentBreakdown?.rocket || 0;
-      bank += s.paymentBreakdown?.bank || 0;
-      refunds += s.returnedAmount || 0;
+      const pb = s.paymentBreakdown || {};
+      const paid = Number(s.paidAmount !== undefined ? s.paidAmount : (s.totalAmount || 0));
+      const method = String(s.paymentMethod || '').toUpperCase();
+
+      if (pb.cash !== undefined && pb.cash > 0) {
+        cash += Number(pb.cash);
+      } else if (method === 'CASH' && paid > 0) {
+        cash += paid;
+      }
+
+      if (pb.bkash !== undefined && pb.bkash > 0) {
+        bkash += Number(pb.bkash);
+      } else if (method === 'BKASH' && paid > 0) {
+        bkash += paid;
+      }
+
+      if (pb.nagad !== undefined && pb.nagad > 0) {
+        nagad += Number(pb.nagad);
+      } else if (method === 'NAGAD' && paid > 0) {
+        nagad += paid;
+      }
+
+      if (pb.rocket !== undefined && pb.rocket > 0) {
+        rocket += Number(pb.rocket);
+      } else if (method === 'ROCKET' && paid > 0) {
+        rocket += paid;
+      }
+
+      if (pb.bank !== undefined && pb.bank > 0) {
+        bank += Number(pb.bank);
+      } else if ((method === 'BANK' || method === 'CARD') && paid > 0) {
+        bank += paid;
+      }
+
+      refunds += Number(s.returnedAmount || 0);
+    });
+
+    // 3. Deduct Outgoing Purchases
+    const purchasesList = Array.isArray(purchasesRes) ? purchasesRes : (purchasesRes?.purchaseOrders || purchasesRes?.data || []);
+    purchasesList.forEach((p) => {
+      const paid = Number(p.paidAmount || (p.status === 'RECEIVED' ? p.totalCost || p.totalAmount : 0) || 0);
+      const method = String(p.paymentMethod || 'CASH').toUpperCase();
+      if (method === 'CASH') cash = Math.max(0, cash - paid);
+      else if (method === 'BKASH') bkash = Math.max(0, bkash - paid);
+      else if (method === 'NAGAD') nagad = Math.max(0, nagad - paid);
+      else if (method === 'ROCKET') rocket = Math.max(0, rocket - paid);
+      else if (method === 'BANK' || method === 'CARD') bank = Math.max(0, bank - paid);
+    });
+
+    // 4. Deduct Outgoing Expenses
+    const expensesList = Array.isArray(expensesRes) ? expensesRes : (expensesRes?.expenses || expensesRes?.data || []);
+    expensesList.forEach((e) => {
+      const paid = Number(e.amount || 0);
+      const method = String(e.paymentMethod || 'CASH').toUpperCase();
+      if (method === 'CASH') cash = Math.max(0, cash - paid);
+      else if (method === 'BKASH') bkash = Math.max(0, bkash - paid);
+      else if (method === 'NAGAD') nagad = Math.max(0, nagad - paid);
+      else if (method === 'ROCKET') rocket = Math.max(0, rocket - paid);
+      else if (method === 'BANK' || method === 'CARD') bank = Math.max(0, bank - paid);
     });
 
     const netCash = Math.max(0, cash - refunds);
     return {
       cash: netCash,
-      bkash,
-      nagad,
-      rocket,
-      bank,
+      bkash: Math.max(0, bkash),
+      nagad: Math.max(0, nagad),
+      rocket: Math.max(0, rocket),
+      bank: Math.max(0, bank),
       refunds,
-      totalLiquid: netCash + bkash + nagad + rocket + bank,
+      totalLiquid: netCash + Math.max(0, bkash) + Math.max(0, nagad) + Math.max(0, rocket) + Math.max(0, bank),
     };
-  }, [salesRes]);
+  }, [accounts, salesRes, purchasesRes, expensesRes]);
 
   return (
     <div className="space-y-6">
@@ -451,6 +542,7 @@ function AccountForm({ account, onClose, onSuccess }) {
     name: account?.name || '',
     type: account?.type || 'ASSET',
     subType: account?.subType || 'CURRENT_ASSET',
+    balance: account?.balance !== undefined ? account.balance : '',
     description: account?.description || '',
     isActive: account?.isActive !== false,
   });
@@ -470,8 +562,12 @@ function AccountForm({ account, onClose, onSuccess }) {
           name: form.name,
           description: form.description,
           isActive: form.isActive,
+          balance: Number(form.balance || 0),
         });
-      return api.post('/accounting/accounts', form);
+      return api.post('/accounting/accounts', {
+        ...form,
+        balance: Number(form.balance || 0),
+      });
     },
     onSuccess: () => {
       toast.success(account ? 'Account updated' : 'Account created');
@@ -487,11 +583,11 @@ function AccountForm({ account, onClose, onSuccess }) {
     ? 'neu-input w-full px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none'
     : 'w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]';
   const btnPrimary = styled
-    ? 'flex-1 py-2 bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white font-medium rounded-lg text-sm transition-colors flex items-center justify-center gap-2'
-    : 'flex-1 py-2 bg-red-700 hover:bg-red-600 disabled:opacity-50 text-white font-medium rounded-lg text-sm transition-colors flex items-center justify-center gap-2';
+    ? 'flex-1 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 shadow-xs'
+    : 'flex-1 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 shadow-xs';
   const btnSecondary = styled
-    ? 'flex-1 py-2 neu-btn text-gray-700 dark:text-gray-300 font-medium rounded-lg text-sm transition-colors'
-    : 'flex-1 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-lg text-sm transition-colors';
+    ? 'flex-1 py-2 neu-btn text-gray-700 dark:text-gray-300 font-medium rounded-xl text-sm transition-colors'
+    : 'flex-1 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-xl text-sm transition-colors';
 
   return (
     <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
@@ -575,6 +671,19 @@ function AccountForm({ account, onClose, onSuccess }) {
               </div>
             </div>
           )}
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
+              Opening / Current Balance (৳)
+            </label>
+            <input
+              type="number"
+              value={form.balance}
+              onChange={(e) => setForm({ ...form, balance: e.target.value })}
+              className={inputClass}
+              placeholder="e.g. 50000"
+            />
+          </div>
+
           <div>
             <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
               Description

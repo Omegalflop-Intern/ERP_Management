@@ -20,16 +20,16 @@ function SidebarLink({ item, isCollapsed, onNavigate }) {
       title={isCollapsed ? item.label : undefined}
       onClick={onNavigate}
       className={({ isActive }) =>
-        `w-full flex items-center gap-2.5 rounded-lg text-[13px] transition-all duration-150 py-2 ${
-          isCollapsed ? 'justify-center px-2' : 'px-2.5'
+        `w-full flex items-center gap-2.5 rounded-xl text-[13px] transition-all duration-150 py-2.5 group ${
+          isCollapsed ? 'justify-center px-2' : 'px-3'
         } ${
           isActive
-            ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold'
-            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/60 dark:hover:bg-slate-800/40'
+            ? 'bg-blue-600/15 text-blue-700 dark:text-blue-400 font-bold border border-blue-500/20 shadow-xs'
+            : 'text-slate-800 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 font-medium'
         }`
       }
     >
-      <item.icon className="w-4 h-4 shrink-0 stroke-[1.8]" />
+      <item.icon className="w-4 h-4 shrink-0 stroke-[2] text-slate-700 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
       {!isCollapsed && <span className="truncate">{item.label}</span>}
     </NavLink>
   );
@@ -47,46 +47,46 @@ function SubmenuGroup({ item, isCollapsed, openSubmenus, toggleSubmenu, location
         type="button"
         onClick={() => toggleSubmenu(item.label)}
         title={isCollapsed ? item.label : undefined}
-        className={`w-full flex items-center justify-between rounded-lg text-[13px] transition-all duration-150 py-2 ${
-          isCollapsed ? 'justify-center px-2' : 'px-2.5'
+        className={`w-full flex items-center justify-between rounded-xl text-[13px] transition-all duration-150 py-2.5 group ${
+          isCollapsed ? 'justify-center px-2' : 'px-3'
         } ${
           hasActiveChild
-            ? 'text-blue-600 dark:text-blue-400 font-semibold bg-blue-500/5'
-            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/60 dark:hover:bg-slate-800/40'
+            ? 'text-blue-700 dark:text-blue-400 font-bold bg-blue-600/10 border border-blue-500/20'
+            : 'text-slate-800 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 font-medium'
         }`}
       >
         <div className="flex items-center gap-2.5 min-w-0">
-          <item.icon className="w-4 h-4 shrink-0 stroke-[1.8]" />
+          <item.icon className="w-4 h-4 shrink-0 stroke-[2] text-slate-700 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
           {!isCollapsed && <span className="truncate">{item.label}</span>}
         </div>
 
         {!isCollapsed && (
-          <span className="shrink-0 text-slate-400 dark:text-slate-500 ml-1">
+          <span className="shrink-0 text-slate-500 dark:text-slate-400 ml-1">
             {isOpen ? (
-              <ChevronDown className="w-3.5 h-3.5" />
+              <ChevronDown className="w-3.5 h-3.5 stroke-[2]" />
             ) : (
-              <ChevronRight className="w-3.5 h-3.5" />
+              <ChevronRight className="w-3.5 h-3.5 stroke-[2]" />
             )}
           </span>
         )}
       </button>
 
       {!isCollapsed && isOpen && (
-        <div className="pl-4 mt-0.5 space-y-0.5 border-l border-slate-200 dark:border-slate-800 ml-4 py-0.5">
+        <div className="pl-3.5 mt-1 space-y-0.5 border-l-2 border-blue-500/20 dark:border-blue-500/30 ml-4 py-0.5">
           {item.children.map((child) => (
             <NavLink
               key={child.path}
               to={child.path}
               onClick={onNavigate}
               className={({ isActive }) =>
-                `flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs transition-all duration-150 ${
+                `flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition-all duration-150 group ${
                   isActive
-                    ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100/40 dark:hover:bg-slate-800/30'
+                    ? 'bg-blue-600/15 text-blue-700 dark:text-blue-400 font-semibold border border-blue-500/20'
+                    : 'text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100/60 dark:hover:bg-slate-800/40 font-medium'
                 }`
               }
             >
-              <child.icon className="w-3.5 h-3.5 shrink-0 stroke-[1.6]" />
+              <child.icon className="w-3.5 h-3.5 shrink-0 stroke-[2] text-slate-700 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
               <span className="truncate">{child.label}</span>
             </NavLink>
           ))}

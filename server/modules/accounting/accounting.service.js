@@ -226,6 +226,32 @@ export const seedDefaultAccounts = async (tenantId = null) => {
   return { message: 'Default accounts seeded', count };
 };
 
+const PAYMENT_METHOD_TO_ACCOUNT_CODE = {
+  cash: '1000',
+  bank: '1010',
+  bkash: '1011',
+  nagad: '1012',
+  rocket: '1013',
+};
+
+export const getWalletBalance = async (paymentMethod, tenantId = null) => {
+  const method = String(paymentMethod || 'cash').toLowerCase();
+  const accountCode = PAYMENT_METHOD_TO_ACCOUNT_CODE[method] || '1000';
+  const query = db('accounts').where({ code: accountCode, is_deleted: false });
+  if (tenantId) query.andWhere('tenant_id', tenantId);
+  const account = await query.first();
+  return account ? Number(account.balance || 0) : 0;
+};
+
+export const validateWalletBalance = async (paymentMethod, amount, tenantId = null) => {
+  const balance = await getWalletBalance(paymentMethod, tenantId);
+  if (Number(amount || 0) > balance) {
+    const methodName = String(paymentMethod || 'cash').toUpperCase();
+    throw ApiError.badRequest(`Insufficient ${methodName} balance! Available: ৳${balance.toLocaleString()}, Required: ৳${Number(amount).toLocaleString()}`);
+  }
+  return balance;
+};
+
 // Journal Entries
 export const getAllJournalEntries = async (page = 1, limit = 20, search = '', status = '', from = '', to = '', tenantId = null, branchId = null) => {
   const countQuery = db('journal_entries').where({ is_deleted: false });
@@ -680,6 +706,7 @@ export const createAutomatedSaleJournal = async (sale) => {
         description: `Sale Invoice #${ref} (${sale.customer_name || 'Walk-in'})`,
         reference: ref,
         lines,
+        status: 'DRAFT',
       });
     }
   } catch (err) {
@@ -745,6 +772,7 @@ export const createAutomatedExpenseJournal = async (expense) => {
           { accountId: expenseAcct.id, code: expenseAcct.code, accountName: expenseAcct.name, debit: amt, credit: 0 },
           { accountId: creditAcct.id, code: creditAcct.code, accountName: creditAcct.name, debit: 0, credit: amt },
         ],
+        status: 'DRAFT',
       });
     }
   } catch (err) {
@@ -784,6 +812,7 @@ export const createAutomatedDueCollectionJournal = async (sale, collectedAmount,
           { accountId: debitAcct.id, code: debitAcct.code, accountName: debitAcct.name, debit: amt, credit: 0 },
           { accountId: arAcct.id, code: arAcct.code, accountName: arAcct.name, debit: 0, credit: amt },
         ],
+        status: 'DRAFT',
       });
     }
   } catch (err) {
@@ -1049,6 +1078,7 @@ export const createAutomatedPurchaseJournal = async (purchaseOrder, createdBy = 
         description: `Product Purchase PO #${poNumber}`,
         reference: ref,
         lines,
+        status: 'DRAFT',
       });
     }
   } catch (err) {
@@ -1094,6 +1124,7 @@ export const createAutomatedServiceJournal = async (repairTicket, amountPaid, pa
           { accountId: debitAcct.id, code: debitAcct.code, accountName: debitAcct.name, debit: amt, credit: 0 },
           { accountId: revAcct.id, code: revAcct.code, accountName: revAcct.name, debit: 0, credit: amt },
         ],
+        status: 'DRAFT',
       });
     }
   } catch (err) {

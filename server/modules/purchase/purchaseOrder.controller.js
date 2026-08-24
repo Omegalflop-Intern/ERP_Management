@@ -69,8 +69,8 @@ export const returnToSupplier = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
     const branchId = req.selectedBranchId || null;
-    const { imeiOrSerials, reason } = req.body;
-    const result = await purchaseOrderService.returnToSupplier(req.params.id, imeiOrSerials, reason, req.user?.username || 'system', tenantId, branchId);
+    const { reason } = req.body;
+    const result = await purchaseOrderService.returnToSupplier(req.params.id, req.body, reason, req.user?.username || 'system', tenantId, branchId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'RETURN_TO_SUPPLIER', module: 'purchase', entityId: req.params.id, entityType: 'PurchaseOrder', details: { returnedCount: result.returnedCount, totalRefund: result.totalRefund }, req });
     return ApiResponse.success(res, result, 'Product(s) returned to supplier successfully');
   } catch (error) { next(error); }

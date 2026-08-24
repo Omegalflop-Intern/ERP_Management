@@ -10,6 +10,7 @@ import {
   ShoppingCart,
   Sparkles,
   TrendingUp,
+  Truck,
   Users,
   Wrench,
 } from 'lucide-react';
@@ -226,10 +227,16 @@ export default function Dashboard() {
                 color: 'text-emerald-600 dark:text-emerald-400',
               },
               {
+                label: 'Purchase & Restock',
+                path: '/purchases',
+                icon: Truck,
+                color: 'text-purple-600 dark:text-purple-400',
+              },
+              {
                 label: 'Stock & Items',
                 path: '/products',
                 icon: Package,
-                color: 'text-purple-600 dark:text-purple-400',
+                color: 'text-indigo-600 dark:text-indigo-400',
               },
               {
                 label: 'Due Collection',
