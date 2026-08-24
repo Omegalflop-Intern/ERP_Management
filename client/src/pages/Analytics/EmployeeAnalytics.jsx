@@ -17,6 +17,7 @@ import {
   YAxis,
 } from 'recharts';
 import api from '../../lib/api';
+import ChartTooltip from '../../components/charts/ChartTooltip';
 
 const COLORS = ['#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e'];
 
