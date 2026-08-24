@@ -1,7 +1,7 @@
 import { db } from '../../config/db.knex.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { getPagination } from '../../utils/http/pagination.js';
-import { createAutomatedExpenseJournal, createAutomatedPurchaseJournal, validateWalletBalance } from '../accounting/accounting.service.js';
+import { createAutomatedExpenseJournal, createAutomatedPurchaseJournal } from '../accounting/accounting.service.js';
 
 const generatePoNumber = () => 'PO-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
 
@@ -293,11 +293,6 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
   const paidAmount = Number(data.paidAmount || 0);
   const dueAmount = Math.max(0, netTotal - paidAmount);
 
-  if (paidAmount > 0) {
-    const paymentMethod = data.paymentMethod || 'CASH';
-    await validateWalletBalance(paymentMethod, paidAmount, tenantId);
-  }
-
   const [insertedId] = await db('purchase_orders').insert({
     tenant_id: tenantId,
     branch_id: branchId,
@@ -579,10 +574,6 @@ export const payPurchaseOrderDue = async (id, { amount, paymentMethod = 'CASH', 
   const currentDue = Number(order.dueAmount || 0);
   if (payAmount > currentDue) {
     throw ApiError.badRequest(`Payment amount (৳${payAmount}) cannot exceed current due balance of ৳${currentDue}`);
-  }
-
-  if (payAmount > 0) {
-    await validateWalletBalance(paymentMethod, payAmount, tenantId);
   }
 
   const newPaid = Number(order.paidAmount || 0) + payAmount;

@@ -706,7 +706,7 @@ export const createAutomatedSaleJournal = async (sale) => {
         description: `Sale Invoice #${ref} (${sale.customer_name || 'Walk-in'})`,
         reference: ref,
         lines,
-        status: 'DRAFT',
+        status: 'POSTED',
       });
     }
   } catch (err) {
@@ -772,7 +772,7 @@ export const createAutomatedExpenseJournal = async (expense) => {
           { accountId: expenseAcct.id, code: expenseAcct.code, accountName: expenseAcct.name, debit: amt, credit: 0 },
           { accountId: creditAcct.id, code: creditAcct.code, accountName: creditAcct.name, debit: 0, credit: amt },
         ],
-        status: 'DRAFT',
+        status: 'POSTED',
       });
     }
   } catch (err) {
@@ -812,7 +812,7 @@ export const createAutomatedDueCollectionJournal = async (sale, collectedAmount,
           { accountId: debitAcct.id, code: debitAcct.code, accountName: debitAcct.name, debit: amt, credit: 0 },
           { accountId: arAcct.id, code: arAcct.code, accountName: arAcct.name, debit: 0, credit: amt },
         ],
-        status: 'DRAFT',
+        status: 'POSTED',
       });
     }
   } catch (err) {
@@ -985,6 +985,23 @@ export const syncHistoricalJournals = async (tenantId = null) => {
     // ignore
   }
 
+  // Clean up any legacy duplicate inventory purchase expenses
+  try {
+    const dupExpenses = await db('expenses')
+      .where('category', 'Inventory Purchase')
+      .orWhere('title', 'like', '%Product Restock Purchase%')
+      .select('id');
+    if (dupExpenses.length > 0) {
+      const expIds = dupExpenses.map(e => e.id);
+      await db('expenses').whereIn('id', expIds).delete();
+      for (const eId of expIds) {
+        await db('journal_entries').where('reference', `EXP-${eId}`).delete();
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
+
   // 3. Sync Purchase Orders
   const poQuery = db('purchase_orders').where({ is_deleted: false });
   applyTenantScope(poQuery, tenantId, 'purchase_orders');
@@ -1006,7 +1023,73 @@ export const syncHistoricalJournals = async (tenantId = null) => {
   return { message: `Successfully synced ${syncedCount} journal entries into ledger`, syncedCount };
 };
 
-export const createAutomatedReturnJournal = async (sale, refundAmount, returnInvoiceNumber, opts = {}) => {};
+export const createAutomatedReturnJournal = async (sale, refundAmount, returnInvoiceNumber, opts = {}) => {
+  try {
+    const tenantId = sale.tenant_id || sale.tenantId || null;
+    const ref = returnInvoiceNumber || `RET-${sale.invoice_number || sale.invoiceNo || sale.id}`;
+    const existing = await db('journal_entries').where({ reference: ref, is_deleted: false }).first();
+    if (existing) return existing;
+
+    await seedDefaultAccounts(tenantId);
+    const acctsQuery = db('accounts').where({ is_deleted: false });
+    applyTenantScope(acctsQuery, tenantId, 'accounts');
+    const accounts = await acctsQuery;
+    const acctMap = {};
+    for (const a of accounts) acctMap[a.code] = a;
+
+    const refund = Number(refundAmount || 0);
+    if (refund <= 0) return null;
+
+    const lines = [];
+    // Debit Sales Revenue (or Sales Returns) 4000
+    if (acctMap['4000']) {
+      lines.push({ accountId: acctMap['4000'].id, code: '4000', accountName: 'Sales Revenue', debit: refund, credit: 0 });
+    }
+
+    // Credit Cash, Bank, Wallet, or Accounts Receivable
+    let pb = {};
+    try { pb = typeof sale.payment_breakdown === 'string' ? JSON.parse(sale.payment_breakdown) : (sale.paymentBreakdown || sale.payment_breakdown || {}); } catch { pb = {}; }
+    const dueAmount = Number(pb.dueAmount || sale.due_amount || sale.dueAmount || 0);
+
+    if (dueAmount > 0 && acctMap['1020']) {
+      const dueReduction = Math.min(dueAmount, refund);
+      lines.push({ accountId: acctMap['1020'].id, code: '1020', accountName: 'Accounts Receivable', debit: 0, credit: dueReduction });
+      const remainingRefund = refund - dueReduction;
+      if (remainingRefund > 0 && acctMap['1000']) {
+        lines.push({ accountId: acctMap['1000'].id, code: '1000', accountName: 'Cash', debit: 0, credit: remainingRefund });
+      }
+    } else if (acctMap['1000']) {
+      lines.push({ accountId: acctMap['1000'].id, code: '1000', accountName: 'Cash', debit: 0, credit: refund });
+    }
+
+    // Restore Inventory & reverse COGS if cost is available
+    let items = [];
+    try { items = typeof sale.line_items === 'string' ? JSON.parse(sale.line_items) : (sale.lineItems || sale.items || []); } catch { items = []; }
+    let cogsRestored = 0;
+    for (const it of items) {
+      const qty = Number(it.quantity || it.qty || 1);
+      const uCost = Number(it.unitCost || 0);
+      cogsRestored += (uCost * qty);
+    }
+    if (cogsRestored > 0 && acctMap['1030'] && acctMap['5000']) {
+      lines.push({ accountId: acctMap['1030'].id, code: '1030', accountName: 'Inventory', debit: cogsRestored, credit: 0 });
+      lines.push({ accountId: acctMap['5000'].id, code: '5000', accountName: 'Cost of Goods Sold', debit: 0, credit: cogsRestored });
+    }
+
+    if (lines.length >= 2) {
+      return await createJournalEntry({
+        tenantId,
+        date: new Date(),
+        description: `Sales Return (${ref}) - Customer: ${sale.customer_name || sale.customer?.name || 'Customer'}`,
+        reference: ref,
+        lines,
+        status: 'POSTED',
+      });
+    }
+  } catch (err) {
+    console.error('[Accounting Auto-Journal Sale Return Error]:', err.message);
+  }
+};
 export const createAutomatedPurchaseReturnJournal = async (purchaseOrder, refundAmount) => {};
 export const createAutomatedPurchaseJournal = async (purchaseOrder, createdBy = 'system') => {
   try {
@@ -1020,27 +1103,7 @@ export const createAutomatedPurchaseJournal = async (purchaseOrder, createdBy = 
     const dueAmount = Number(purchaseOrder.dueAmount || purchaseOrder.due_amount || 0);
     const method = String(purchaseOrder.paymentMethod || purchaseOrder.payment_method || 'cash').toLowerCase();
 
-    // 1. Record in `expenses` table for Cash Outflow (Purchases) if paidAmount > 0
-    if (paidAmount > 0) {
-      const existingExp = await db('expenses').where({ voucher_number: poNumber, is_deleted: false }).first();
-      if (!existingExp) {
-        await db('expenses').insert({
-          tenant_id: tenantId,
-          branch_id: branchId,
-          title: `Product Restock Purchase (PO #${poNumber})`,
-          category: 'Inventory Purchase',
-          amount: paidAmount,
-          payment_method: method,
-          date: purchaseOrder.createdAt || purchaseOrder.created_at || new Date(),
-          voucher_number: poNumber,
-          notes: `Product restock cost paid for PO #${poNumber}`,
-          recorded_by: createdBy,
-          is_deleted: false,
-        });
-      }
-    }
-
-    // 2. Double-entry Journal Entry
+    // Double-entry Journal Entry for Purchase
     const existingEntry = await db('journal_entries').where({ reference: ref, is_deleted: false }).first();
     if (existingEntry) return existingEntry;
 
@@ -1078,7 +1141,7 @@ export const createAutomatedPurchaseJournal = async (purchaseOrder, createdBy = 
         description: `Product Purchase PO #${poNumber}`,
         reference: ref,
         lines,
-        status: 'DRAFT',
+        status: 'POSTED',
       });
     }
   } catch (err) {
@@ -1131,4 +1194,175 @@ export const createAutomatedServiceJournal = async (repairTicket, amountPaid, pa
     console.error('[AUTO-JOURNAL] Failed to create repair service journal:', err.message);
   }
   return null;
+};
+
+export const getCashFlowStatement = async (from = '', to = '', tenantId = null, branchId = null) => {
+  const fromDate = from ? new Date(from + 'T00:00:00') : new Date(new Date().setDate(1));
+  const toDate = to ? new Date(to + 'T23:59:59') : new Date();
+
+  // Operating Activities - cash from sales, expenses, due collections, repair services
+  const salesQuery = db('transactions')
+    .where({ tx_type: 'SALE', is_deleted: false, status: 'COMPLETED' })
+    .whereBetween('created_at', [fromDate, toDate]);
+  applyTenantScope(salesQuery, tenantId, 'transactions');
+  if (branchId && branchId !== 'all') salesQuery.andWhere((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+
+  const salesRows = await salesQuery.select('payment_breakdown', 'returned_amount', 'net_total', 'created_at');
+  let cashFromSales = 0;
+  let creditSales = 0;
+  for (const s of salesRows) {
+    const pb = typeof s.payment_breakdown === 'string' ? (() => { try { return JSON.parse(s.payment_breakdown); } catch { return {}; } })() : (s.payment_breakdown || {});
+    const netTotal = Number(s.net_total || 0);
+    const returned = Number(s.returned_amount || 0);
+    const cashPaid = (Number(pb.cash || 0) + Number(pb.bank || 0) + Number(pb.bkash || 0) + Number(pb.nagad || 0) + Number(pb.rocket || 0));
+    cashFromSales += Math.max(0, cashPaid - returned);
+    const dueAmt = Number(pb.dueAmount || 0);
+    if (dueAmt > 0) creditSales += dueAmt;
+  }
+
+  // Due collections
+  const dueQuery = db('transactions')
+    .where({ tx_type: 'SALE', is_deleted: false })
+    .whereBetween('created_at', [fromDate, toDate]);
+  applyTenantScope(dueQuery, tenantId, 'transactions');
+  if (branchId && branchId !== 'all') dueQuery.andWhere((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+  const dueRows = await dueQuery.select('payment_breakdown', 'created_at');
+  let dueCollected = 0;
+  for (const d of dueRows) {
+    const pb = typeof d.payment_breakdown === 'string' ? (() => { try { return JSON.parse(d.payment_breakdown); } catch { return {}; } })() : (d.payment_breakdown || {});
+    dueCollected += Number(pb.dueCollected || 0);
+  }
+
+  // Repair service income
+  const repairQuery = db('repair_tickets')
+    .where({ is_deleted: false })
+    .whereBetween('created_at', [fromDate, toDate]);
+  applyTenantScope(repairQuery, tenantId, 'repair_tickets');
+  if (branchId && branchId !== 'all') repairQuery.andWhere((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+  const repairRows = await repairQuery.select('advance_paid', 'estimated_cost', 'status', 'created_at');
+  let repairIncome = 0;
+  for (const r of repairRows) {
+    if (r.status === 'DELIVERED') repairIncome += Number(r.estimated_cost || 0);
+    else repairIncome += Number(r.advance_paid || 0);
+  }
+
+  // Expenses paid
+  const expenseQuery = db('expenses')
+    .where({ is_deleted: false })
+    .whereBetween('created_at', [fromDate, toDate]);
+  applyTenantScope(expenseQuery, tenantId, 'expenses');
+  if (branchId && branchId !== 'all') expenseQuery.andWhere('branch_id', branchId);
+  const expenseRows = await expenseQuery.select('amount', 'payment_method', 'category', 'created_at');
+  let totalExpensesPaid = 0;
+  const expensesByCategory = {};
+  for (const e of expenseRows) {
+    const amt = Number(e.amount || 0);
+    totalExpensesPaid += amt;
+    expensesByCategory[e.category || 'Other'] = (expensesByCategory[e.category || 'Other'] || 0) + amt;
+  }
+
+  // Payroll paid
+  const payrollQuery = db('payrolls')
+    .where({ payment_status: 'PAID', is_deleted: false })
+    .whereBetween('paid_at', [fromDate, toDate]);
+  applyTenantScope(payrollQuery, tenantId, 'payrolls');
+  if (branchId && branchId !== 'all') payrollQuery.andWhere('branch_id', branchId);
+  const payrollRows = await payrollQuery.select('net_pay', 'paid_at');
+  let payrollPaid = 0;
+  for (const p of payrollRows) payrollPaid += Number(p.net_pay || 0);
+
+  // Investing Activities - asset purchases
+  const assetQuery = db('accounts')
+    .where({ type: 'ASSET', is_deleted: false })
+    .where('code', 'LIKE', 'AST-%')
+    .whereBetween('created_at', [fromDate, toDate]);
+  applyTenantScope(assetQuery, tenantId, 'accounts');
+  const assetRows = await assetQuery.select('balance', 'created_at', 'name');
+  let assetPurchases = 0;
+  const assetList = [];
+  for (const a of assetRows) {
+    const cost = Number(a.balance || 0);
+    assetPurchases += cost;
+    assetList.push({ name: a.name, amount: cost });
+  }
+
+  // Financing Activities - investor deposits/withdrawals, loan disbursements/repayments
+  const investorQuery = db('investor_transactions')
+    .whereBetween('created_at', [fromDate, toDate]);
+  applyTenantScope(investorQuery, tenantId, 'investor_transactions');
+  const investorRows = await investorQuery.select('type', 'amount', 'created_at');
+  let investorDeposits = 0;
+  let investorWithdrawals = 0;
+  for (const inv of investorRows) {
+    if (['DEPOSIT', 'PROFIT_REINVESTMENT'].includes(inv.type)) investorDeposits += Number(inv.amount || 0);
+    else investorWithdrawals += Number(inv.amount || 0);
+  }
+
+  // Loan disbursements and repayments
+  const loanQuery = db('loans')
+    .where({ is_deleted: false })
+    .whereBetween('created_at', [fromDate, toDate]);
+  applyTenantScope(loanQuery, tenantId, 'loans');
+  const loanRows = await loanQuery.select('type', 'loan_amount', 'created_at');
+  let loanDisbursed = 0;
+  for (const l of loanRows) {
+    if (l.type === 'LOAN_TAKEN') loanDisbursed += Number(l.loan_amount || 0);
+  }
+
+  // Summarize
+  const totalOperatingIn = cashFromSales + dueCollected + repairIncome;
+  const totalOperatingOut = totalExpensesPaid + payrollPaid;
+  const netOperatingCash = totalOperatingIn - totalOperatingOut;
+
+  const totalInvestingIn = 0;
+  const totalInvestingOut = assetPurchases;
+  const netInvestingCash = totalInvestingIn - totalInvestingOut;
+
+  const totalFinancingIn = investorDeposits + loanDisbursed;
+  const totalFinancingOut = investorWithdrawals;
+  const netFinancingCash = totalFinancingIn - totalFinancingOut;
+
+  const netCashChange = netOperatingCash + netInvestingCash + netFinancingCash;
+
+  return {
+    period: { from: fromDate, to: toDate },
+    operating: {
+      inflows: {
+        sales: cashFromSales,
+        dueCollections: dueCollected,
+        repairServices: repairIncome,
+        total: totalOperatingIn,
+      },
+      outflows: {
+        expenses: totalExpensesPaid,
+        payroll: payrollPaid,
+        total: totalOperatingOut,
+      },
+      netCashFlow: netOperatingCash,
+      expensesByCategory,
+    },
+    investing: {
+      inflows: { total: totalInvestingIn },
+      outflows: {
+        assetPurchases,
+        assets: assetList,
+        total: totalInvestingOut,
+      },
+      netCashFlow: netInvestingCash,
+    },
+    financing: {
+      inflows: {
+        investorDeposits,
+        loanDisbursements: loanDisbursed,
+        total: totalFinancingIn,
+      },
+      outflows: {
+        investorWithdrawals,
+        total: totalFinancingOut,
+      },
+      netCashFlow: netFinancingCash,
+    },
+    netCashChange,
+    isPositive: netCashChange >= 0,
+  };
 };

@@ -3,7 +3,9 @@ import {
   Building2,
   Calendar,
   DollarSign,
+  FileImage,
   Filter,
+  Paperclip,
   Pencil,
   PieChart,
   Plus,
@@ -11,6 +13,7 @@ import {
   Search,
   Tag,
   Trash2,
+  Upload,
   X,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
@@ -36,10 +39,12 @@ const DEFAULT_CATEGORIES = [
 
 import PageHeader from '../../components/layout/PageHeader';
 import EmptyState from '../../components/ui/EmptyState';
+import RecurringExpenses from './RecurringExpenses';
 
 export default function Expenses() {
   const { styled } = useTheme();
   const qc = useQueryClient();
+  const [activeTab, setActiveTab] = useState('expenses');
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [dateFrom, setDateFrom] = useState('');
@@ -48,6 +53,8 @@ export default function Expenses() {
   const [editingExpense, setEditingExpense] = useState(null);
   const [categoryChoice, setCategoryChoice] = useState('Shop Rent');
   const [customCategoryInput, setCustomCategoryInput] = useState('');
+  const [addReceipts, setAddReceipts] = useState([]);
+  const [addUploading, setAddUploading] = useState(false);
 
   useEffect(() => {
     if (!showAddModal && !editingExpense) return;
@@ -148,6 +155,36 @@ export default function Expenses() {
         }
       />
 
+      {/* Tabs */}
+      <div className="flex gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl w-fit">
+        <button
+          onClick={() => setActiveTab('expenses')}
+          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+            activeTab === 'expenses'
+              ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
+              : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+          }`}
+        >
+          <Receipt className="w-4 h-4 inline mr-1.5" />
+          Expenses
+        </button>
+        <button
+          onClick={() => setActiveTab('recurring')}
+          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+            activeTab === 'recurring'
+              ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
+              : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+          }`}
+        >
+          <Calendar className="w-4 h-4 inline mr-1.5" />
+          Recurring
+        </button>
+      </div>
+
+      {activeTab === 'recurring' ? (
+        <RecurringExpenses />
+      ) : (
+      <>
       {/* Summary Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className={cardCls}>
@@ -268,7 +305,15 @@ export default function Expenses() {
                     {e.paymentMethod}
                   </td>
                   <td className="px-4 py-3 text-xs text-gray-500">
-                    {e.voucherNumber ? `Voucher: ${e.voucherNumber}` : e.notes || 'N/A'}
+                    <div className="flex items-center gap-1.5">
+                      {e.voucherNumber ? `Voucher: ${e.voucherNumber}` : e.notes || 'N/A'}
+                      {e.receipts?.length > 0 && (
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                          <Paperclip className="w-2.5 h-2.5" />
+                          {e.receipts.length}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-right flex items-center justify-end gap-1">
                     <button
@@ -337,6 +382,7 @@ export default function Expenses() {
                   paymentMethod: fd.get('paymentMethod'),
                   voucherNumber: fd.get('voucherNumber'),
                   notes: fd.get('notes'),
+                  receipts: addReceipts,
                 });
               }}
               className="space-y-3.5 text-sm"
@@ -421,6 +467,59 @@ export default function Expenses() {
                   <input name="voucherNumber" placeholder="e.g. VCH-00412" className={inputCls} />
                 </div>
               </div>
+              {/* Receipt Upload */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+                  Receipts / Proof
+                </label>
+                <div className="flex items-center gap-2">
+                  <label className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm ${addUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                    <Upload className="w-4 h-4 text-gray-400" />
+                    <span className="text-gray-500">{addUploading ? 'Uploading...' : 'Attach receipt (image/PDF)'}</span>
+                    <input
+                      type="file"
+                      accept="image/*,.pdf"
+                      multiple
+                      className="hidden"
+                      onChange={async (e) => {
+                        const files = Array.from(e.target.files || []);
+                        if (files.length === 0) return;
+                        setAddUploading(true);
+                        try {
+                          const fd = new FormData();
+                          files.forEach(f => fd.append('receipts', f));
+                          const res = await api.post('/expenses/upload-receipts', fd, {
+                            headers: { 'Content-Type': 'multipart/form-data' },
+                          });
+                          const urls = res.data?.data?.urls || [];
+                          setAddReceipts(prev => [...prev, ...urls]);
+                          toast.success(`${urls.length} receipt(s) uploaded`);
+                        } catch (err) {
+                          toast.error(err.response?.data?.message || 'Upload failed');
+                        } finally {
+                          setAddUploading(false);
+                          e.target.value = '';
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+                {addReceipts.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {addReceipts.map((url, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-1.5">
+                        <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-blue-500 hover:underline truncate">
+                          <FileImage className="w-3.5 h-3.5 shrink-0" />
+                          <span className="truncate">Receipt {idx + 1}</span>
+                        </a>
+                        <button type="button" onClick={() => setAddReceipts(prev => prev.filter((_, i) => i !== idx))} className="text-red-400 hover:text-red-600 ml-2">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
                   Notes / Description
@@ -460,6 +559,8 @@ export default function Expenses() {
           inputCls={inputCls}
         />
       )}
+      </>
+      )}
     </div>
   );
 }
@@ -479,6 +580,33 @@ function EditExpenseModal({
   const [paymentMethod, setPaymentMethod] = useState(expense.paymentMethod || 'Cash');
   const [voucherNumber, setVoucherNumber] = useState(expense.voucherNumber || '');
   const [notes, setNotes] = useState(expense.notes || '');
+  const [receipts, setReceipts] = useState(expense.receipts || []);
+  const [uploading, setUploading] = useState(false);
+
+  const handleReceiptUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      files.forEach(f => fd.append('receipts', f));
+      const res = await api.post('/expenses/upload-receipts', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      const urls = res.data?.data?.urls || [];
+      setReceipts(prev => [...prev, ...urls]);
+      toast.success(`${urls.length} receipt(s) uploaded`);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Upload failed');
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const removeReceipt = (idx) => {
+    setReceipts(prev => prev.filter((_, i) => i !== idx));
+  };
 
   return (
     <div
@@ -507,6 +635,7 @@ function EditExpenseModal({
               paymentMethod,
               voucherNumber,
               notes,
+              receipts,
             });
           }}
           className="space-y-3.5 text-sm"
@@ -586,6 +715,40 @@ function EditExpenseModal({
               Notes / Description
             </label>
             <input value={notes} onChange={(e) => setNotes(e.target.value)} className={inputCls} />
+          </div>
+          {/* Receipt Upload */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+              Receipts / Proof
+            </label>
+            <div className="flex items-center gap-2">
+              <label className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                <Upload className="w-4 h-4 text-gray-400" />
+                <span className="text-gray-500">{uploading ? 'Uploading...' : 'Attach receipt'}</span>
+                <input
+                  type="file"
+                  accept="image/*,.pdf"
+                  multiple
+                  className="hidden"
+                  onChange={handleReceiptUpload}
+                />
+              </label>
+            </div>
+            {receipts.length > 0 && (
+              <div className="mt-2 space-y-1">
+                {receipts.map((url, idx) => (
+                  <div key={idx} className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-1.5">
+                    <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-blue-500 hover:underline truncate">
+                      <FileImage className="w-3.5 h-3.5 shrink-0" />
+                      <span className="truncate">Receipt {idx + 1}</span>
+                    </a>
+                    <button type="button" onClick={() => removeReceipt(idx)} className="text-red-400 hover:text-red-600 ml-2">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <div className="flex gap-3 pt-2">
             <button

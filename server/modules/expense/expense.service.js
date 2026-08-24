@@ -3,6 +3,8 @@ import { ApiError } from '../../utils/http/ApiError.js';
 
 export function formatExpense(row) {
   if (!row) return null;
+  let receipts = [];
+  try { receipts = typeof row.receipts === 'string' ? JSON.parse(row.receipts) : (row.receipts || []); } catch { receipts = []; }
   return {
     _id: String(row.id),
     id: row.id,
@@ -16,6 +18,7 @@ export function formatExpense(row) {
     voucherNumber: row.voucher_number || '',
     notes: row.notes || '',
     recordedBy: row.recorded_by || '',
+    receipts,
     isDeleted: Boolean(row.is_deleted),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -117,6 +120,8 @@ export const createExpense = async (data, recordedBy = 'system', tenantId = null
     }
   }
 
+  const receipts = data.receipts || [];
+
   const [insertedId] = await db('expenses').insert({
     tenant_id: tenantId || data.tenantId || null,
     branch_id: data.branchId || null,
@@ -128,6 +133,7 @@ export const createExpense = async (data, recordedBy = 'system', tenantId = null
     voucher_number: data.voucherNumber || null,
     notes: data.notes || null,
     recorded_by: recordedBy,
+    receipts: JSON.stringify(receipts),
     is_deleted: false,
   });
 
@@ -153,6 +159,7 @@ export const updateExpense = async (id, data, tenantId = null, branchId = null) 
   }
   if (data.paymentMethod !== undefined) updateFields.payment_method = data.paymentMethod;
   if (data.notes !== undefined) updateFields.notes = data.notes;
+  if (data.receipts !== undefined) updateFields.receipts = JSON.stringify(data.receipts);
 
   if (Object.keys(updateFields).length > 0) {
     const q = db('expenses').where({ id });

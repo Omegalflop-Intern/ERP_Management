@@ -2,12 +2,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Database,
   Edit,
-  Filter,
+  HelpCircle,
   Landmark,
   Plus,
   RefreshCw,
   Search,
   Smartphone,
+  ToggleLeft,
+  ToggleRight,
   Trash2,
 } from 'lucide-react';
 import React, { useState } from 'react';
@@ -24,12 +26,20 @@ const TYPE_COLORS = {
   REVENUE: 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400',
   EXPENSE: 'bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400',
 };
+const TYPE_DESCRIPTIONS = {
+  ASSET: 'What the shop owns (cash, bank, inventory)',
+  LIABILITY: 'What the shop owes (loans, credit)',
+  EQUITY: 'Owner investment and retained earnings',
+  REVENUE: 'Money earned from sales',
+  EXPENSE: 'Money spent on operations',
+};
 
 export default function ChartOfAccounts() {
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('ALL');
   const [showForm, setShowForm] = useState(false);
   const [editAccount, setEditAccount] = useState(null);
+  const [showHelp, setShowHelp] = useState(false);
   const { styled } = useTheme();
   const queryClient = useQueryClient();
 
@@ -65,303 +75,168 @@ export default function ChartOfAccounts() {
     mutationFn: async ({ id, isActive }) => api.put(`/accounting/accounts/${id}`, { isActive }),
     onSuccess: (_, variables) => {
       toast.success(
-        `Account "${variables.name || 'Account'}" set to ${
-          variables.isActive ? 'ACTIVE (ON)' : 'DISABLED (OFF)'
-        }`,
+        `Account "${variables.name || 'Account'}" ${variables.isActive ? 'enabled' : 'disabled'}`,
         { duration: 1500 }
       );
       queryClient.invalidateQueries(['accounts']);
       queryClient.invalidateQueries(['pos-active-accounts']);
     },
-    onError: (e) => toast.error(e.response?.data?.message || 'Failed to update account status'),
+    onError: (e) => toast.error(e.response?.data?.message || 'Failed to update'),
   });
 
   const accounts = data?.data || [];
   const cardClass = styled
     ? 'neu-card p-5'
     : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-4';
-  const innerCardClass = styled
-    ? 'neu-card-sm p-4'
-    : 'bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 p-4';
   const inputClass = styled
     ? 'neu-input w-full pl-10 pr-4 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none'
     : 'w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]';
-  const btnClass = styled
-    ? 'neu-btn px-4 py-2 text-white font-medium rounded-lg text-sm transition-all flex items-center gap-2 !bg-[#2563EB] hover:!bg-[#1D4ED8]'
-    : 'flex items-center gap-2 px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-medium rounded-lg text-sm transition-all';
-
-  const { data: salesRes } = useQuery({
-    queryKey: ['sales-channel-balances'],
-    queryFn: async () => {
-      const res = await api.get('/sales', { params: { limit: 1000 } });
-      return res.data?.data || [];
-    },
-  });
-
-  const { data: purchasesRes } = useQuery({
-    queryKey: ['purchases-channel-balances'],
-    queryFn: async () => {
-      try {
-        const res = await api.get('/purchase-orders', { params: { limit: 1000 } });
-        return res.data?.data || [];
-      } catch {
-        return [];
-      }
-    },
-  });
-
-  const { data: expensesRes } = useQuery({
-    queryKey: ['expenses-channel-balances'],
-    queryFn: async () => {
-      try {
-        const res = await api.get('/expenses', { params: { limit: 1000 } });
-        return res.data?.data || [];
-      } catch {
-        return [];
-      }
-    },
-  });
 
   const channelBalances = React.useMemo(() => {
-    // 1. Starting balances from Chart of Accounts
-    let cash = 0,
-      bkash = 0,
-      nagad = 0,
-      rocket = 0,
-      bank = 0;
-
+    let cash = 0, bkash = 0, nagad = 0, rocket = 0, bank = 0;
     (accounts || []).forEach((a) => {
       const name = (a.name || '').toLowerCase();
       const code = String(a.code || '');
       const bal = Number(a.balance || 0);
-      if (name.includes('cash') || code === '1000') cash += bal;
-      else if (name.includes('bkash') || code === '1011') bkash += bal;
-      else if (name.includes('nagad') || code === '1012') nagad += bal;
-      else if (name.includes('rocket') || code === '1013') rocket += bal;
-      else if (name.includes('bank') || code === '1010') bank += bal;
+      if (code === '1000' || name === 'cash' || name.includes('cash on hand')) cash = bal;
+      else if (code === '1010' || name.includes('bank')) bank = bal;
+      else if (code === '1011' || name.includes('bkash')) bkash = bal;
+      else if (code === '1012' || name.includes('nagad')) nagad = bal;
+      else if (code === '1013' || name.includes('rocket')) rocket = bal;
     });
-
-    // 2. Incoming from Sales
-    let refunds = 0;
-    const salesList = Array.isArray(salesRes) ? salesRes : (salesRes?.sales || salesRes?.data || []);
-    salesList.forEach((s) => {
-      const pb = s.paymentBreakdown || {};
-      const paid = Number(s.paidAmount !== undefined ? s.paidAmount : (s.totalAmount || 0));
-      const method = String(s.paymentMethod || '').toUpperCase();
-
-      if (pb.cash !== undefined && pb.cash > 0) {
-        cash += Number(pb.cash);
-      } else if (method === 'CASH' && paid > 0) {
-        cash += paid;
-      }
-
-      if (pb.bkash !== undefined && pb.bkash > 0) {
-        bkash += Number(pb.bkash);
-      } else if (method === 'BKASH' && paid > 0) {
-        bkash += paid;
-      }
-
-      if (pb.nagad !== undefined && pb.nagad > 0) {
-        nagad += Number(pb.nagad);
-      } else if (method === 'NAGAD' && paid > 0) {
-        nagad += paid;
-      }
-
-      if (pb.rocket !== undefined && pb.rocket > 0) {
-        rocket += Number(pb.rocket);
-      } else if (method === 'ROCKET' && paid > 0) {
-        rocket += paid;
-      }
-
-      if (pb.bank !== undefined && pb.bank > 0) {
-        bank += Number(pb.bank);
-      } else if ((method === 'BANK' || method === 'CARD') && paid > 0) {
-        bank += paid;
-      }
-
-      refunds += Number(s.returnedAmount || 0);
-    });
-
-    // 3. Deduct Outgoing Purchases
-    const purchasesList = Array.isArray(purchasesRes) ? purchasesRes : (purchasesRes?.purchaseOrders || purchasesRes?.data || []);
-    purchasesList.forEach((p) => {
-      const paid = Number(p.paidAmount || (p.status === 'RECEIVED' ? p.totalCost || p.totalAmount : 0) || 0);
-      const method = String(p.paymentMethod || 'CASH').toUpperCase();
-      if (method === 'CASH') cash = Math.max(0, cash - paid);
-      else if (method === 'BKASH') bkash = Math.max(0, bkash - paid);
-      else if (method === 'NAGAD') nagad = Math.max(0, nagad - paid);
-      else if (method === 'ROCKET') rocket = Math.max(0, rocket - paid);
-      else if (method === 'BANK' || method === 'CARD') bank = Math.max(0, bank - paid);
-    });
-
-    // 4. Deduct Outgoing Expenses
-    const expensesList = Array.isArray(expensesRes) ? expensesRes : (expensesRes?.expenses || expensesRes?.data || []);
-    expensesList.forEach((e) => {
-      const paid = Number(e.amount || 0);
-      const method = String(e.paymentMethod || 'CASH').toUpperCase();
-      if (method === 'CASH') cash = Math.max(0, cash - paid);
-      else if (method === 'BKASH') bkash = Math.max(0, bkash - paid);
-      else if (method === 'NAGAD') nagad = Math.max(0, nagad - paid);
-      else if (method === 'ROCKET') rocket = Math.max(0, rocket - paid);
-      else if (method === 'BANK' || method === 'CARD') bank = Math.max(0, bank - paid);
-    });
-
-    const netCash = Math.max(0, cash - refunds);
-    return {
-      cash: netCash,
-      bkash: Math.max(0, bkash),
-      nagad: Math.max(0, nagad),
-      rocket: Math.max(0, rocket),
-      bank: Math.max(0, bank),
-      refunds,
-      totalLiquid: netCash + Math.max(0, bkash) + Math.max(0, nagad) + Math.max(0, rocket) + Math.max(0, bank),
-    };
-  }, [accounts, salesRes, purchasesRes, expensesRes]);
+    return { cash, bkash, nagad, rocket, bank, totalLiquid: cash + bkash + nagad + rocket + bank };
+  }, [accounts]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Chart of Accounts &amp; Ledger
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <Landmark className="w-6 h-6 text-blue-600" /> Chart of Accounts
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Track liquid cash, bank balances, mobile banking, and account balances
+            Manage your shop's financial accounts — cash, bank, expenses, and more
           </p>
         </div>
         <div className="flex gap-2">
+          <button
+            onClick={() => setShowHelp(!showHelp)}
+            className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg transition-all ${
+              showHelp
+                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+            }`}
+          >
+            <HelpCircle className="w-4 h-4" /> Guide
+          </button>
           {accounts.length === 0 && (
             <button
               onClick={() => seedMutation.mutate()}
               disabled={seedMutation.isPending}
-              className={
-                styled
-                  ? 'neu-btn px-4 py-2 text-blue-700 dark:text-blue-400 font-medium rounded-lg text-sm flex items-center gap-2'
-                  : 'flex items-center gap-2 px-4 py-2 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 font-medium rounded-lg text-sm hover:bg-blue-200 transition-colors'
-              }
+              className="flex items-center gap-1.5 px-3 py-2 bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 font-semibold rounded-lg text-xs hover:bg-emerald-200 transition-colors"
             >
-              {seedMutation.isPending ? (
-                <RefreshCw className="w-4 h-4 animate-spin" />
-              ) : (
-                <Database className="w-4 h-4" />
-              )}
-              Seed Defaults
+              {seedMutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
+              Quick Setup
             </button>
           )}
           <button
-            onClick={() => {
-              setEditAccount(null);
-              setShowForm(true);
-            }}
-            className={btnClass}
+            onClick={() => { setEditAccount(null); setShowForm(true); }}
+            className="flex items-center gap-1.5 px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold rounded-lg text-xs transition-all"
           >
             <Plus className="w-4 h-4" /> Add Account
           </button>
         </div>
       </div>
 
-      {/* Real-time Payment Channel Liquid Balances Card */}
+      {/* Beginner Guide */}
+      {showHelp && (
+        <div className={`${cardClass} border-l-4 border-blue-500`}>
+          <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100 mb-2">Quick Guide for Beginners</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs text-gray-600 dark:text-gray-400">
+            <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+              <strong className="text-blue-700 dark:text-blue-300">1. Seed Defaults First</strong>
+              <p className="mt-1">Click "Quick Setup" to create standard accounts (Cash, Bank, bKash, etc.)</p>
+            </div>
+            <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20">
+              <strong className="text-emerald-700 dark:text-emerald-300">2. Enable Payment Methods</strong>
+              <p className="mt-1">Toggle ON the payment methods you accept (bKash, Nagad, Rocket, etc.)</p>
+            </div>
+            <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20">
+              <strong className="text-amber-700 dark:text-amber-300">3. Disable Unused Accounts</strong>
+              <p className="mt-1">Toggle OFF accounts you don't use to keep your POS checkout clean</p>
+            </div>
+          </div>
+          <div className="mt-3 p-2 rounded-lg bg-gray-50 dark:bg-gray-800 text-xs text-gray-500">
+            <strong>Tip:</strong> The "ON/OFF" toggle controls which accounts appear as payment options during checkout. 
+            Disabling an account doesn't delete it — it just hides it from the POS.
+          </div>
+        </div>
+      )}
+
+      {/* Payment Channel Balances */}
       <div className={cardClass}>
         <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3 mb-3">
           <div>
             <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100 flex items-center gap-2">
-              <Landmark className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> Liquid Cash
-              &amp; Payment Method Channel Balances
+              <Smartphone className="w-4 h-4 text-emerald-600" /> Payment Channel Balances
             </h3>
-            <p className="text-xs text-gray-400">
-              Real-time incoming sales revenue minus returns across all payment methods
-            </p>
+            <p className="text-xs text-gray-400">Current balance in each payment method</p>
           </div>
           <div className="text-right">
-            <span className="text-xs text-gray-400">Total Liquid Assets:</span>
+            <span className="text-xs text-gray-400">Total:</span>
             <div className="text-lg font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
               ৳{channelBalances.totalLiquid.toLocaleString()}
             </div>
           </div>
         </div>
-
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-          <div className="p-3 rounded-xl bg-emerald-50/70 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/40">
-            <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 uppercase flex items-center gap-1 mb-1">
-              <Landmark className="w-3 h-3 text-emerald-600" /> Cash in Hand (Net)
-            </span>
-            <div className="text-base font-mono font-extrabold text-emerald-700 dark:text-emerald-300">
-              ৳{channelBalances.cash.toLocaleString()}
-            </div>
-            {channelBalances.refunds > 0 && (
-              <span className="text-[9px] text-red-500 font-semibold block mt-0.5">
-                (-৳{channelBalances.refunds.toLocaleString()} refunded)
+          {[
+            { label: 'Cash', value: channelBalances.cash, color: 'emerald', icon: '💵' },
+            { label: 'bKash', value: channelBalances.bkash, color: 'pink', icon: '📱' },
+            { label: 'Nagad', value: channelBalances.nagad, color: 'amber', icon: '📱' },
+            { label: 'Rocket', value: channelBalances.rocket, color: 'purple', icon: '🚀' },
+            { label: 'Bank', value: channelBalances.bank, color: 'blue', icon: '🏦' },
+          ].map((ch) => (
+            <div key={ch.label} className={`p-3 rounded-xl bg-${ch.color}-50/70 dark:bg-${ch.color}-900/20 border border-${ch.color}-200 dark:border-${ch.color}-800/40`}>
+              <span className={`text-[10px] font-bold text-${ch.color}-800 dark:text-${ch.color}-300 uppercase`}>
+                {ch.icon} {ch.label}
               </span>
-            )}
-          </div>
-
-          <div className="p-3 rounded-xl bg-pink-50/70 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-800/40">
-            <span className="text-[10px] font-bold text-pink-800 dark:text-pink-300 uppercase flex items-center gap-1 mb-1">
-              <Smartphone className="w-3 h-3 text-pink-600" /> bKash Merchant
-            </span>
-            <div className="text-base font-mono font-extrabold text-pink-700 dark:text-pink-300">
-              ৳{channelBalances.bkash.toLocaleString()}
+              <div className={`text-base font-mono font-extrabold text-${ch.color}-700 dark:text-${ch.color}-300`}>
+                ৳{ch.value.toLocaleString()}
+              </div>
             </div>
-          </div>
-
-          <div className="p-3 rounded-xl bg-amber-50/70 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40">
-            <span className="text-[10px] font-bold text-amber-800 dark:text-amber-300 uppercase flex items-center gap-1 mb-1">
-              <Smartphone className="w-3 h-3 text-amber-600" /> Nagad Merchant
-            </span>
-            <div className="text-base font-mono font-extrabold text-amber-700 dark:text-amber-300">
-              ৳{channelBalances.nagad.toLocaleString()}
-            </div>
-          </div>
-
-          <div className="p-3 rounded-xl bg-purple-50/70 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800/40">
-            <span className="text-[10px] font-bold text-purple-800 dark:text-purple-300 uppercase flex items-center gap-1 mb-1">
-              <Smartphone className="w-3 h-3 text-purple-600" /> Rocket Account
-            </span>
-            <div className="text-base font-mono font-extrabold text-purple-700 dark:text-purple-300">
-              ৳{channelBalances.rocket.toLocaleString()}
-            </div>
-          </div>
-
-          <div className="p-3 rounded-xl bg-blue-50/70 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/40">
-            <span className="text-[10px] font-bold text-blue-800 dark:text-blue-300 uppercase flex items-center gap-1 mb-1">
-              <Landmark className="w-3 h-3 text-blue-600" /> Bank Account
-            </span>
-            <div className="text-base font-mono font-extrabold text-blue-700 dark:text-blue-300">
-              ৳{channelBalances.bank.toLocaleString()}
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
+      {/* Type Summary Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {ACCOUNT_TYPES.filter((t) => t !== 'ALL').map((t) => {
           const total = accounts.filter((a) => a.type === t).reduce((s, a) => s + a.balance, 0);
+          const activeCount = accounts.filter((a) => a.type === t && a.isActive !== false).length;
           return (
-            <div key={t} className={cardClass}>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                  {t}
-                </span>
-                <span
-                  className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${TYPE_COLORS[t]}`}
-                >
-                  {accounts.filter((a) => a.type === t).length}
+            <div key={t} className={`${cardClass} cursor-pointer hover:shadow-md transition-shadow`} onClick={() => setTypeFilter(t)}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-bold text-gray-500 uppercase">{t}</span>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${TYPE_COLORS[t]}`}>
+                  {activeCount}/{accounts.filter((a) => a.type === t).length}
                 </span>
               </div>
-              <div className="text-lg font-bold text-gray-900 dark:text-gray-100">
-                ৳{total.toLocaleString()}
-              </div>
+              <div className="text-sm font-bold text-gray-900 dark:text-gray-100">৳{total.toLocaleString()}</div>
+              <div className="text-[10px] text-gray-400 mt-0.5">{TYPE_DESCRIPTIONS[t]}</div>
             </div>
           );
         })}
       </div>
 
+      {/* Search & Filter */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1 max-w-md">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Search by name or code..."
+            placeholder="Search accounts by name or code..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className={inputClass}
@@ -380,155 +255,118 @@ export default function ChartOfAccounts() {
         </div>
       </div>
 
-      <div className={innerCardClass}>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-800">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
-                  Code
-                </th>
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
-                  Account Name
-                </th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
-                  Type
-                </th>
-                <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
-                  Status (POS)
-                </th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
-                  Balance
-                </th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
-                  Actions
-                </th>
+      {/* Accounts Table */}
+      <div className={`${cardClass} overflow-x-auto p-0`}>
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-gray-200 dark:border-gray-800">
+              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Code</th>
+              <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Account Name</th>
+              <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Type</th>
+              <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase">
+                <span className="flex items-center justify-center gap-1" title="Toggle ON/OFF to show or hide this account in POS checkout">
+                  POS Status
+                </span>
+              </th>
+              <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Balance</th>
+              <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i} className="border-b border-gray-100 dark:border-gray-800/50">
+                  {Array.from({ length: 6 }).map((__, j) => (
+                    <td key={j} className="px-4 py-3">
+                      <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                    </td>
+                  ))}
+                </tr>
+              ))
+            ) : accounts.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-4 py-12 text-center text-gray-500">
+                  <Landmark className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p className="font-medium">No accounts found</p>
+                  <p className="text-xs mt-1">Click "Quick Setup" to create standard accounts, or "Add Account" to create custom ones.</p>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i} className="border-b border-gray-100 dark:border-gray-800/50">
-                    {Array.from({ length: 5 }).map((__, j) => (
-                      <td key={j} className="px-4 py-3">
-                        <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                      </td>
-                    ))}
-                  </tr>
-                ))
-              ) : accounts.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-4 py-12 text-center text-gray-500 dark:text-gray-400"
-                  >
-                    <Landmark className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                    <p>No accounts found. Click "Seed Defaults" to set up basic accounts.</p>
+            ) : (
+              accounts.map((a) => (
+                <tr
+                  key={a._id}
+                  className={`border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30 ${a.isActive === false ? 'opacity-60' : ''}`}
+                >
+                  <td className="px-4 py-3">
+                    <span className="text-sm font-mono font-bold text-gray-900 dark:text-gray-100">{a.code}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{a.name}</div>
+                    {a.description && <div className="text-xs text-gray-500">{a.description}</div>}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${TYPE_COLORS[a.type]}`}>
+                      {a.type}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        toggleStatusMutation.mutate({
+                          id: a._id,
+                          isActive: a.isActive === false ? true : false,
+                          name: a.name,
+                        })
+                      }
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                        a.isActive !== false
+                          ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-900/70'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                      }`}
+                      title={a.isActive !== false ? `Click to disable ${a.name} in POS` : `Click to enable ${a.name} in POS`}
+                    >
+                      {a.isActive !== false ? (
+                        <ToggleRight className="w-4 h-4" />
+                      ) : (
+                        <ToggleLeft className="w-4 h-4" />
+                      )}
+                      {a.isActive !== false ? 'ON' : 'OFF'}
+                    </button>
+                  </td>
+                  <td className={`px-4 py-3 text-right text-sm font-semibold ${a.balance >= 0 ? 'text-gray-900 dark:text-gray-100' : 'text-red-600 dark:text-red-400'}`}>
+                    ৳{a.balance.toLocaleString()}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        onClick={() => { setEditAccount(a); setShowForm(true); }}
+                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                        title="Edit account"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => confirmDelete(`Delete "${a.name}"?`, () => deleteMutation.mutate(a._id))}
+                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                        title="Delete account"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
-              ) : (
-                accounts.map((a) => (
-                  <tr
-                    key={a._id}
-                    className="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30"
-                  >
-                    <td className="px-4 py-3">
-                      <span className="text-sm font-mono font-bold text-gray-900 dark:text-gray-100">
-                        {a.code}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {a.name}
-                      </div>
-                      {a.description && (
-                        <div className="text-xs text-gray-500">{a.description}</div>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${TYPE_COLORS[a.type]}`}
-                      >
-                        {a.type}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          toggleStatusMutation.mutate({
-                            id: a._id,
-                            isActive: a.isActive === false ? true : false,
-                            name: a.name,
-                          })
-                        }
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold transition-all shadow-xs ${
-                          a.isActive !== false
-                            ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-slate-700'
-                        }`}
-                        title={
-                          a.isActive !== false
-                            ? 'Click to Disable in POS'
-                            : 'Click to Enable in POS'
-                        }
-                      >
-                        <span
-                          className={`w-2 h-2 rounded-full ${
-                            a.isActive !== false ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
-                          }`}
-                        />
-                        {a.isActive !== false ? 'ON (Active)' : 'OFF (Disabled)'}
-                      </button>
-                    </td>
-                    <td
-                      className={`px-4 py-3 text-right text-sm font-semibold ${a.type === 'ASSET' || a.type === 'EXPENSE' ? (a.balance >= 0 ? 'text-gray-900 dark:text-gray-100' : 'text-red-600 dark:text-red-400') : a.balance >= 0 ? 'text-gray-900 dark:text-gray-100' : 'text-red-600 dark:text-red-400'}`}
-                    >
-                      ৳{a.balance.toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => {
-                            setEditAccount(a);
-                            setShowForm(true);
-                          }}
-                          className="p-1.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() =>
-                            confirmDelete(`Delete account "${a.name}"?`, () =>
-                              deleteMutation.mutate(a._id)
-                            )
-                          }
-                          className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
       {showForm && (
         <AccountForm
           account={editAccount}
-          onClose={() => {
-            setShowForm(false);
-            setEditAccount(null);
-          }}
-          onSuccess={() => {
-            setShowForm(false);
-            setEditAccount(null);
-            queryClient.invalidateQueries(['accounts']);
-          }}
+          onClose={() => { setShowForm(false); setEditAccount(null); }}
+          onSuccess={() => { setShowForm(false); setEditAccount(null); queryClient.invalidateQueries(['accounts']); }}
         />
       )}
     </div>
@@ -555,15 +393,23 @@ function AccountForm({ account, onClose, onSuccess }) {
     EXPENSE: ['COST_OF_GOODS', 'OPERATING_EXPENSE', 'OTHER_EXPENSE'],
   };
 
+  const TYPE_HELP = {
+    ASSET: 'Things your shop owns (cash, equipment, inventory)',
+    LIABILITY: 'Money your shop owes (loans, supplier credit)',
+    EQUITY: 'Owner investment and business profits',
+    REVENUE: 'Money earned from sales and services',
+    EXPENSE: 'Money spent to run the shop (rent, utilities)',
+  };
+
   const mutation = useMutation({
     mutationFn: async () => {
-      if (account)
+      if (account) {
         return api.put(`/accounting/accounts/${account._id}`, {
           name: form.name,
           description: form.description,
           isActive: form.isActive,
-          balance: Number(form.balance || 0),
         });
+      }
       return api.post('/accounting/accounts', {
         ...form,
         balance: Number(form.balance || 0),
@@ -577,40 +423,25 @@ function AccountForm({ account, onClose, onSuccess }) {
   });
 
   const inputClass = styled
-    ? 'neu-input w-full px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none'
-    : 'w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]';
-  const selectClass = styled
-    ? 'neu-input w-full px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none'
-    : 'w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]';
-  const btnPrimary = styled
-    ? 'flex-1 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 shadow-xs'
-    : 'flex-1 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 shadow-xs';
-  const btnSecondary = styled
-    ? 'flex-1 py-2 neu-btn text-gray-700 dark:text-gray-300 font-medium rounded-xl text-sm transition-colors'
-    : 'flex-1 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-xl text-sm transition-colors';
+    ? 'neu-input w-full px-3 py-2 text-sm'
+    : 'w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:border-[#2563EB]';
 
   return (
-    <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-md flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-md flex items-center justify-center p-4" onClick={onClose}>
       <div
         className={`w-full max-w-md ${styled ? 'neu-card p-0' : 'bg-white dark:bg-[#111827] rounded-2xl border border-gray-200 dark:border-gray-800 shadow-xl'} max-h-[90vh] overflow-y-auto`}
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
           <h3 className="font-bold text-gray-900 dark:text-gray-100">
-            {account ? 'Edit Account' : 'Add Account'}
+            {account ? 'Edit Account' : 'Add New Account'}
           </h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-xl"
-          >
-            ✕
-          </button>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
         </div>
         <div className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
-                Code *
-              </label>
+              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Code *</label>
               <input
                 type="text"
                 value={form.code}
@@ -619,125 +450,99 @@ function AccountForm({ account, onClose, onSuccess }) {
                 className={`${inputClass} ${account ? 'opacity-50' : ''}`}
                 placeholder="e.g. 1000"
               />
+              {!account && <p className="text-[10px] text-gray-400 mt-1">Use 1xxx for Assets, 2xxx for Liabilities, etc.</p>}
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
-                Name *
-              </label>
+              <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Name *</label>
               <input
                 type="text"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 className={inputClass}
-                placeholder="Account name"
+                placeholder="e.g. Cash in Hand"
               />
             </div>
           </div>
           {!account && (
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
-                  Type *
-                </label>
+                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Type *</label>
                 <select
                   value={form.type}
-                  onChange={(e) =>
-                    setForm({ ...form, type: e.target.value, subType: SUBTYPES[e.target.value][0] })
-                  }
-                  className={selectClass}
+                  onChange={(e) => setForm({ ...form, type: e.target.value, subType: SUBTYPES[e.target.value][0] })}
+                  className={inputClass}
                 >
                   {['ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE'].map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
+                    <option key={t} value={t}>{t}</option>
                   ))}
                 </select>
+                <p className="text-[10px] text-gray-400 mt-1">{TYPE_HELP[form.type]}</p>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
-                  Sub Type *
-                </label>
+                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Sub Type *</label>
                 <select
                   value={form.subType}
                   onChange={(e) => setForm({ ...form, subType: e.target.value })}
-                  className={selectClass}
+                  className={inputClass}
                 >
                   {(SUBTYPES[form.type] || []).map((st) => (
-                    <option key={st} value={st}>
-                      {st.replace(/_/g, ' ')}
-                    </option>
+                    <option key={st} value={st}>{st.replace(/_/g, ' ')}</option>
                   ))}
                 </select>
               </div>
             </div>
           )}
           <div>
-            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
-              Opening / Current Balance (৳)
-            </label>
+            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Opening Balance (৳)</label>
             <input
               type="number"
               value={form.balance}
               onChange={(e) => setForm({ ...form, balance: e.target.value })}
               className={inputClass}
               placeholder="e.g. 50000"
+              disabled={!!account}
             />
+            {!account && <p className="text-[10px] text-gray-400 mt-1">Starting balance for this account (leave 0 if unsure)</p>}
           </div>
-
           <div>
-            <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-1">
-              Description
-            </label>
+            <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Description</label>
             <input
               type="text"
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               className={inputClass}
-              placeholder="Optional description"
+              placeholder="Optional note about this account"
             />
           </div>
 
-          {/* Active Status Toggle */}
-          <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+          {/* POS Toggle */}
+          <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
             <div>
-              <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">
-                POS Sales Payment Status
-              </span>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                {form.isActive
-                  ? 'Active (ON — Displays in POS)'
-                  : 'Disabled (OFF — Hidden from POS)'}
+              <span className="text-xs font-bold text-gray-800 dark:text-gray-200 block">Show in POS Checkout</span>
+              <span className="text-[11px] text-gray-500">
+                {form.isActive ? 'ON — This account appears as a payment option' : 'OFF — Hidden from payment options'}
               </span>
             </div>
             <button
               type="button"
               onClick={() => setForm({ ...form, isActive: !form.isActive })}
-              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
-                form.isActive ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-700'
-              }`}
+              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${form.isActive ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'}`}
             >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  form.isActive ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.isActive ? 'translate-x-6' : 'translate-x-1'}`} />
             </button>
           </div>
+
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className={btnSecondary}>
+            <button type="button" onClick={onClose} className="flex-1 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium rounded-xl text-sm">
               Cancel
             </button>
             <button
               onClick={() => mutation.mutate()}
               disabled={mutation.isPending || !form.code || !form.name}
-              className={btnPrimary}
+              className="flex-1 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white font-semibold rounded-xl text-sm flex items-center justify-center gap-2"
             >
-              {mutation.isPending ? (
-                <RefreshCw className="w-4 h-4 animate-spin" />
-              ) : (
-                <Plus className="w-4 h-4" />
-              )}
-              {account ? 'Update' : 'Create'}
+              {mutation.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+              {account ? 'Update Account' : 'Create Account'}
             </button>
           </div>
         </div>

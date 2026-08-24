@@ -37,6 +37,7 @@ const JournalEntries = lazy(() => import('./pages/Accounting/JournalEntries'));
 const BalanceSheetPage = lazy(() => import('./pages/Accounting/BalanceSheet'));
 const ProfitLossPage = lazy(() => import('./pages/Accounting/ProfitLoss'));
 const TrialBalancePage = lazy(() => import('./pages/Accounting/TrialBalance'));
+const CashFlowPage = lazy(() => import('./pages/Accounting/CashFlowStatement'));
 const InvestorsPage = lazy(() => import('./pages/Accounting/Investors'));
 const ExpensesPage = lazy(() => import('./pages/Accounting/Expenses'));
 const AssetsPage = lazy(() => import('./pages/Accounting/AssetsPage'));
@@ -404,6 +405,14 @@ export default function App() {
               </RoleBasedRoute>
             }
           />
+          <Route
+            path="reports/cash-flow"
+            element={
+              <RoleBasedRoute permissions={['accounting:view']}>
+                <CashFlowPage />
+              </RoleBasedRoute>
+            }
+          />
 
           {/* Clean Financial Routes */}
           <Route
@@ -583,6 +592,14 @@ export default function App() {
             element={
               <RoleBasedRoute permissions={['accounting:view']}>
                 <TrialBalancePage />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="accounting/cash-flow"
+            element={
+              <RoleBasedRoute permissions={['accounting:view']}>
+                <CashFlowPage />
               </RoleBasedRoute>
             }
           />

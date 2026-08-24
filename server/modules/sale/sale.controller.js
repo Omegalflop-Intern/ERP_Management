@@ -1,5 +1,6 @@
 import * as saleService from './sale.service.js';
 import { ApiResponse } from '../../utils/http/ApiResponse.js';
+import { ApiError } from '../../utils/http/ApiError.js';
 import { logAction } from '../../utils/auth/auditLog.js';
 import { generateInvoicePdfBuffer } from '../../services/pdf.service.js';
 

@@ -1,5 +1,6 @@
 import {
   ArrowRightLeft,
+  Banknote,
   BarChart3,
   BookOpen,
   Building,
@@ -198,6 +199,12 @@ export const menuItems = [
             path: '/reports/trial-balance',
             label: 'Trial Balance',
             icon: Receipt,
+            permissions: ['accounting:view'],
+          },
+          {
+            path: '/reports/cash-flow',
+            label: 'Cash Flow Statement',
+            icon: Banknote,
             permissions: ['accounting:view'],
           },
         ],

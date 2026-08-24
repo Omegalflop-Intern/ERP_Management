@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Receipt, RefreshCw } from 'lucide-react';
-import React, { useState } from 'react';
+import { Download, Receipt, RefreshCw } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
 
@@ -29,6 +28,7 @@ export default function TrialBalance() {
           </p>
         </div>
         <button
+          type="button"
           onClick={() => refetch()}
           className={
             styled
@@ -37,6 +37,33 @@ export default function TrialBalance() {
           }
         >
           <RefreshCw className="w-4 h-4" /> Refresh
+        </button>
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              const res = await api.get('/accounting/reports/trial-balance/pdf', {
+                responseType: 'blob',
+              });
+              const url = window.URL.createObjectURL(
+                new Blob([res.data], { type: 'application/pdf' })
+              );
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = 'trial-balance.pdf';
+              a.click();
+              window.URL.revokeObjectURL(url);
+            } catch {
+              /* ignore */
+            }
+          }}
+          className={
+            styled
+              ? 'neu-btn px-4 py-2 text-sm flex items-center gap-2'
+              : 'flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium rounded-lg text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors'
+          }
+        >
+          <Download className="w-4 h-4" /> PDF
         </button>
       </div>
 

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import {
-  ArrowRight,
   DollarSign,
+  Download,
   PackageCheck,
   Receipt,
   RefreshCw,
@@ -9,7 +9,7 @@ import {
   TrendingDown,
   TrendingUp,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import DatePicker from '../../components/ui/DatePicker';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
@@ -49,8 +49,8 @@ export default function ProfitLoss() {
             <TrendingUp className="w-6 h-6 text-emerald-600" /> Profit & Loss Statement
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            Financial statement showing revenue, product purchase costs (COGS), stock purchases, operating expenses,
-            and net profit
+            Financial statement showing revenue, product purchase costs (COGS), stock purchases,
+            operating expenses, and net profit
           </p>
         </div>
         <div className="flex items-end gap-3">
@@ -67,6 +67,7 @@ export default function ProfitLoss() {
             <DatePicker value={to} onChange={setTo} placeholder="To Date" />
           </div>
           <button
+            type="button"
             onClick={() => refetch()}
             className={
               styled
@@ -75,6 +76,35 @@ export default function ProfitLoss() {
             }
           >
             <RefreshCw className="w-4 h-4 text-gray-500" />
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                const res = await api.get('/accounting/reports/profit-loss/pdf', {
+                  params: { from, to },
+                  responseType: 'blob',
+                });
+                const url = window.URL.createObjectURL(
+                  new Blob([res.data], { type: 'application/pdf' })
+                );
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'profit-loss.pdf';
+                a.click();
+                window.URL.revokeObjectURL(url);
+              } catch {
+                /* ignore */
+              }
+            }}
+            className={
+              styled
+                ? 'neu-btn p-2.5'
+                : 'p-2.5 bg-gray-100 dark:bg-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors'
+            }
+            title="Download PDF"
+          >
+            <Download className="w-4 h-4 text-gray-500" />
           </button>
         </div>
       </div>
@@ -148,9 +178,7 @@ export default function ProfitLoss() {
               <div className="text-2xl font-bold text-red-600 dark:text-red-400 mt-2 font-mono">
                 ৳{expensesTotal.toLocaleString()}
               </div>
-              <div className="text-[11px] text-gray-400 mt-1">
-                Rent, Utilities, Food & Costs
-              </div>
+              <div className="text-[11px] text-gray-400 mt-1">Rent, Utilities, Food & Costs</div>
             </div>
           </div>
 

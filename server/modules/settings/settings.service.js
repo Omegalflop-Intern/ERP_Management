@@ -138,6 +138,14 @@ export const seedDefaultsForTenant = async (tenantId, tenantData) => {
       });
     }
   }
+
+  // Auto-seed default Chart of Accounts for new tenant
+  try {
+    const { seedDefaultAccounts } = await import('../accounting/accounting.service.js');
+    await seedDefaultAccounts(tenantId);
+  } catch (err) {
+    console.error('[Tenant Seed] Failed to seed accounts:', err.message);
+  }
 };
 
 function parseValue(val) {

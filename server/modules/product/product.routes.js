@@ -99,6 +99,7 @@ router.get('/', productController.getAllProducts);
  *       404:
  *         description: Product not found
  */
+router.get('/export', productController.exportProducts);
 router.get('/:id', productController.getProductById);
 router.get('/:id/imei-units', productController.getProductIMEIUnits);
 
@@ -258,7 +259,6 @@ router.delete('/:id', authorize('ADMIN'), productController.deleteProduct);
  *               type: string
  *               format: binary
  */
-router.get('/export', productController.exportProducts);
 
 /**
  * @swagger

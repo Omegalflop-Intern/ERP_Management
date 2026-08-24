@@ -1,6 +1,8 @@
 import { db } from '../../config/db.knex.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { getPagination } from '../../utils/http/pagination.js';
+import emitter, { EVENTS } from '../../events/index.js';
+import { createAutomatedReturnJournal } from '../accounting/accounting.service.js';
 
 const genOrderNumber = async (tenantId = null) => {
   const countQuery = db('wholesale_orders');
@@ -220,12 +222,10 @@ export const getAllOrders = async (page = 1, limit = 20, filters = {}, tenantId 
   // Fetch wholesale-type transactions
   const txDataQuery = db('transactions')
     .leftJoin('customers', 'transactions.customer_id', 'customers.id')
-    .leftJoin('users', 'transactions.created_by', 'users.id')
     .where({ 'transactions.is_deleted': false, 'transactions.sale_type': 'WHOLESALE' })
     .select(
       'transactions.*',
-      'customers.id as c_id', 'customers.name as c_name', 'customers.phone as c_phone', 'customers.company_name as c_company',
-      'users.id as u_id', 'users.username as u_username'
+      'customers.id as c_id', 'customers.name as c_name', 'customers.phone as c_phone', 'customers.company_name as c_company'
     );
   applyTenantScope(txDataQuery, tenantId, 'transactions');
   if (branchId) txDataQuery.where('transactions.branch_id', branchId);
@@ -238,7 +238,7 @@ export const getAllOrders = async (page = 1, limit = 20, filters = {}, tenantId 
 
   const orders = allRows.map((row) => {
     const cRow = row.c_id ? { id: row.c_id, name: row.c_name, phone: row.c_phone, company_name: row.c_company } : null;
-    const uRow = row.u_id ? { id: row.u_id, username: row.u_username } : null;
+    const uRow = row.u_id ? { id: row.u_id, username: row.u_username } : (row.cashier_username ? { username: row.cashier_username } : null);
     // Check if this is a transactions row (has invoice_number) or wholesale_orders row (has order_number)
     if (row.invoice_number && !row.order_number) {
       // Convert transactions row to wholesale order format
@@ -372,4 +372,253 @@ export const getOrdersStats = async (tenantId = null) => {
   const totalPaid = Math.max(0, totalRevenue - totalDue);
 
   return { totalOrders, totalRevenue, totalPaid, totalDue };
+};
+
+export const collectOrderDue = async (id, data, tenantId = null) => {
+  const amount = Number(data.amount || 0);
+  if (isNaN(amount) || amount <= 0) throw ApiError.badRequest('Please enter a valid payment amount');
+
+  // 1. Check wholesale_orders table
+  const wsQ = db('wholesale_orders').where({ id, is_deleted: false });
+  applyTenantScope(wsQ, tenantId, 'wholesale_orders');
+  const wsOrder = await wsQ.first();
+
+  if (wsOrder) {
+    const oldDue = Number(wsOrder.due_amount || 0);
+    const pay = Math.min(amount, oldDue);
+    const newPaid = Number(wsOrder.paid_amount || 0) + pay;
+    const newDue = Math.max(0, oldDue - pay);
+    const newStatus = newDue === 0 ? 'COMPLETED' : wsOrder.status;
+
+    await db('wholesale_orders').where({ id }).update({
+      paid_amount: newPaid,
+      due_amount: newDue,
+      status: newStatus,
+      updated_at: new Date(),
+    });
+
+    // Recalculate customer due
+    if (wsOrder.customer_id) {
+      await recalculateCustomerBalance(wsOrder.customer_id, tenantId);
+    }
+
+    const updated = await getOrderById(id, tenantId);
+    return { success: true, collectedAmount: pay, order: updated };
+  }
+
+  // 2. Fallback: check transactions table
+  const txQ = db('transactions').where({ id, is_deleted: false });
+  applyTenantScope(txQ, tenantId, 'transactions');
+  const tx = await txQ.first();
+  if (!tx) throw ApiError.notFound('Wholesale order not found');
+
+  let pb = {};
+  try { pb = typeof tx.payment_breakdown === 'string' ? JSON.parse(tx.payment_breakdown) : (tx.payment_breakdown || {}); } catch { pb = {}; }
+  const oldDue = Number(pb.dueAmount || 0);
+  const pay = Math.min(amount, oldDue);
+  pb.dueAmount = Math.max(0, oldDue - pay);
+  const pMethod = (data.paymentMethod || 'cash').toLowerCase();
+  pb[pMethod] = (Number(pb[pMethod]) || 0) + pay;
+
+  await db('transactions').where({ id }).update({
+    payment_breakdown: JSON.stringify(pb),
+    updated_at: new Date(),
+  });
+
+  if (tx.customer_id) {
+    await recalculateCustomerBalance(tx.customer_id, tenantId);
+  }
+
+  return { success: true, collectedAmount: pay };
+};
+
+export const processOrderReturn = async (id, data, username = 'system', tenantId = null) => {
+  const returnItems = data.items || [];
+  if (!returnItems.length) throw ApiError.badRequest('Please specify items to return');
+
+  let refundAmount = 0;
+  const returnInvoiceNumber = `RET-WS-${id}-${Date.now().toString(36).toUpperCase().slice(-4)}`;
+
+  // 1. Restock products in inventory
+  for (const ri of returnItems) {
+    const pId = ri.productId?._id || ri.productId?.id || ri.productId;
+    const qty = Math.abs(Number(ri.quantity || ri.qty || 1));
+    const uPrice = Number(ri.unitPrice || ri.price || 0);
+    refundAmount += (uPrice * qty);
+
+    if (pId) {
+      await db('products').where({ id: pId }).increment('stock_quantity', qty);
+      emitter.emit(EVENTS.STOCK_UPDATED, { id: pId, name: ri.name || 'Wholesale Product', tenantId });
+      emitter.emit(EVENTS.PRODUCT_MUTATED, { id: pId, tenantId });
+    }
+
+    if (ri.imeiOrSerial) {
+      await db('imei_records').where({ imei: ri.imeiOrSerial }).update({ status: 'AVAILABLE', updated_at: new Date() });
+    }
+  }
+
+  refundAmount = Number(refundAmount.toFixed(2));
+
+  // 2. Check wholesale_orders table
+  const wsQ = db('wholesale_orders').where({ id, is_deleted: false });
+  applyTenantScope(wsQ, tenantId, 'wholesale_orders');
+  const wsOrder = await wsQ.first();
+
+  let customerId = null;
+  let customerName = null;
+  let customerPhone = null;
+
+  if (wsOrder) {
+    customerId = wsOrder.customer_id;
+    const oldDue = Number(wsOrder.due_amount || 0);
+    const dueReduction = Math.min(oldDue, refundAmount);
+    const newDue = Math.max(0, oldDue - dueReduction);
+    const cashRefund = refundAmount - dueReduction;
+    const newPaid = Math.max(0, Number(wsOrder.paid_amount || 0) - cashRefund);
+    const newGrandTotal = Math.max(0, Number(wsOrder.grand_total || 0) - refundAmount);
+
+    let existingItems = [];
+    try { existingItems = typeof wsOrder.items === 'string' ? JSON.parse(wsOrder.items) : (wsOrder.items || []); } catch { existingItems = []; }
+
+    const returnLog = {
+      date: new Date().toISOString(),
+      returnInvoiceNumber,
+      items: returnItems,
+      refundAmount,
+      reason: data.reason || 'Wholesale Customer Return',
+      notes: data.notes || '',
+    };
+
+    let existingLogs = [];
+    try { existingLogs = typeof wsOrder.return_logs === 'string' ? JSON.parse(wsOrder.return_logs) : (wsOrder.return_logs || []); } catch { existingLogs = []; }
+
+    await db('wholesale_orders').where({ id }).update({
+      grand_total: newGrandTotal,
+      due_amount: newDue,
+      paid_amount: newPaid,
+      status: newGrandTotal === 0 ? 'RETURNED' : (newDue === 0 ? 'COMPLETED' : 'PARTIAL_RETURN'),
+      updated_at: new Date(),
+    });
+
+    if (customerId) {
+      const cRow = await db('customers').where({ id: customerId }).first();
+      if (cRow) {
+        customerName = cRow.name;
+        customerPhone = cRow.phone;
+      }
+    }
+  } else {
+    // Check transactions table
+    const txQ = db('transactions').where({ id, is_deleted: false });
+    applyTenantScope(txQ, tenantId, 'transactions');
+    const tx = await txQ.first();
+    if (!tx) throw ApiError.notFound('Wholesale order or transaction not found');
+
+    customerId = tx.customer_id;
+    customerName = tx.customer_name;
+    customerPhone = tx.customer_phone;
+
+    let pb = {};
+    try { pb = typeof tx.payment_breakdown === 'string' ? JSON.parse(tx.payment_breakdown) : (tx.payment_breakdown || {}); } catch { pb = {}; }
+    const oldDue = Number(pb.dueAmount || 0);
+    const newDue = Math.max(0, oldDue - refundAmount);
+    pb.dueAmount = newDue;
+
+    const newReturnedAmount = Number(tx.returned_amount || 0) + refundAmount;
+    let existingLogs = [];
+    try { existingLogs = typeof tx.return_logs === 'string' ? JSON.parse(tx.return_logs) : (tx.return_logs || []); } catch { existingLogs = []; }
+
+    existingLogs.push({
+      date: new Date().toISOString(),
+      returnInvoiceNumber,
+      items: returnItems,
+      refundAmount,
+      reason: data.reason || 'Wholesale Customer Return',
+    });
+
+    await db('transactions').where({ id }).update({
+      returned_amount: newReturnedAmount,
+      return_logs: JSON.stringify(existingLogs),
+      payment_breakdown: JSON.stringify(pb),
+      status: newReturnedAmount >= Number(tx.net_total || 0) ? 'RETURNED' : 'PARTIAL_RETURN',
+      updated_at: new Date(),
+    });
+  }
+
+  // 3. Record official RETURN transaction row for Customer Ledger & CRM
+  try {
+    await db('transactions').insert({
+      tenant_id: tenantId || null,
+      invoice_number: returnInvoiceNumber,
+      tx_type: 'RETURN',
+      sale_type: 'WHOLESALE',
+      status: 'COMPLETED',
+      customer_id: customerId || null,
+      customer_name: customerName || 'Wholesale Customer',
+      customer_phone: customerPhone || null,
+      line_items: JSON.stringify(returnItems),
+      sub_total: -refundAmount,
+      discount: 0,
+      tax: 0,
+      net_total: -refundAmount,
+      returned_amount: refundAmount,
+      payment_breakdown: JSON.stringify({ refundAmount, wholesaleOrderId: id }),
+      cashier_username: username || 'system',
+      created_at: new Date(),
+      updated_at: new Date(),
+    });
+  } catch (err) {
+    console.error('[Wholesale Return Tx Insert Error]:', err.message);
+  }
+
+  // 4. Recalculate customer due balance & total purchases
+  if (customerId) {
+    await recalculateCustomerBalance(customerId, tenantId);
+    emitter.emit(EVENTS.CUSTOMER_MUTATED, { id: customerId, tenantId });
+  }
+
+  // 5. Automated Accounting Journal Entry
+  createAutomatedReturnJournal({
+    id,
+    tenant_id: tenantId,
+    invoice_number: returnInvoiceNumber,
+    customer_name: customerName,
+    payment_breakdown: { dueAmount: refundAmount },
+    line_items: returnItems,
+  }, refundAmount, returnInvoiceNumber).catch((err) =>
+    console.error('[Wholesale Return Accounting Error]:', err.message)
+  );
+
+  return { success: true, refundAmount, returnInvoiceNumber };
+};
+
+const recalculateCustomerBalance = async (customerId, tenantId = null) => {
+  // Sales Due
+  const salesQuery = db('transactions').where({ customer_id: customerId, is_deleted: false, tx_type: 'SALE' });
+  if (tenantId) salesQuery.andWhere('tenant_id', tenantId);
+  const allSales = await salesQuery.select('payment_breakdown', 'net_total', 'returned_amount');
+
+  let totalDue = allSales.reduce((sum, s) => {
+    const spb = typeof s.payment_breakdown === 'string' ? (() => { try { return JSON.parse(s.payment_breakdown); } catch { return {}; } })() : (s.payment_breakdown || {});
+    return sum + Number(spb.dueAmount || 0);
+  }, 0);
+
+  let totalPurchases = allSales.reduce((sum, s) => {
+    return sum + Math.max(0, Number(s.net_total || 0) - Number(s.returned_amount || 0));
+  }, 0);
+
+  // Wholesale Orders Due
+  const wsQuery = db('wholesale_orders').where({ customer_id: customerId, is_deleted: false });
+  if (tenantId) wsQuery.andWhere('tenant_id', tenantId);
+  const wsOrders = await wsQuery.select('due_amount', 'grand_total');
+
+  totalDue += wsOrders.reduce((sum, o) => sum + Number(o.due_amount || 0), 0);
+  totalPurchases += wsOrders.reduce((sum, o) => sum + Number(o.grand_total || 0), 0);
+
+  const custUpdate = db('customers').where({ id: customerId });
+  if (tenantId) custUpdate.andWhere('tenant_id', tenantId);
+  await custUpdate.update({
+    due_balance: Math.max(0, totalDue),
+    total_purchases: Math.max(0, totalPurchases),
+  });
 };

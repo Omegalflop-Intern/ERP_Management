@@ -1,23 +1,21 @@
 import { useQuery } from '@tanstack/react-query';
 import {
   AlertTriangle,
-  ArrowRight,
   CheckCircle2,
   CreditCard,
-  DollarSign,
+  Download,
   FileText,
   PieChart,
   Printer,
   RefreshCw,
   Scale,
   ShieldCheck,
-  TrendingUp,
   Wallet,
 } from 'lucide-react';
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import PageHeader from '../../components/layout/PageHeader';
-import DatePicker from '../../components/ui/DatePicker';
 import { Button } from '../../components/ui/button';
+import DatePicker from '../../components/ui/DatePicker';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
 
@@ -70,7 +68,9 @@ export default function BalanceSheet() {
               className="rounded-xl h-10 px-3 border-slate-200 dark:border-slate-800"
               title="Refresh Statement"
             >
-              <RefreshCw className={`w-4 h-4 text-slate-600 dark:text-slate-300 ${isFetching ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`w-4 h-4 text-slate-600 dark:text-slate-300 ${isFetching ? 'animate-spin' : ''}`}
+              />
             </Button>
 
             <Button
@@ -78,6 +78,30 @@ export default function BalanceSheet() {
               className="gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl shadow-md text-xs font-semibold px-4 h-10"
             >
               <Printer className="w-4 h-4" /> Print Statement
+            </Button>
+            <Button
+              onClick={async () => {
+                try {
+                  const res = await api.get('/accounting/reports/balance-sheet/pdf', {
+                    params: { asOfDate: asOf },
+                    responseType: 'blob',
+                  });
+                  const url = window.URL.createObjectURL(
+                    new Blob([res.data], { type: 'application/pdf' })
+                  );
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'balance-sheet.pdf';
+                  a.click();
+                  window.URL.revokeObjectURL(url);
+                } catch {
+                  /* ignore */
+                }
+              }}
+              variant="outline"
+              className="gap-2 rounded-xl text-xs font-semibold px-4 h-10"
+            >
+              <Download className="w-4 h-4" /> PDF
             </Button>
           </div>
         }
@@ -90,7 +114,10 @@ export default function BalanceSheet() {
               <div className="h-6 w-32 bg-slate-200 dark:bg-slate-800 rounded-xl animate-pulse mb-4" />
               <div className="space-y-3">
                 {Array.from({ length: 5 }).map((__, j) => (
-                  <div key={j} className="h-5 w-full bg-slate-100 dark:bg-slate-800/60 rounded-lg animate-pulse" />
+                  <div
+                    key={j}
+                    className="h-5 w-full bg-slate-100 dark:bg-slate-800/60 rounded-lg animate-pulse"
+                  />
                 ))}
               </div>
             </div>
@@ -156,15 +183,19 @@ export default function BalanceSheet() {
           </div>
 
           {/* High-Impact Equation & Audit Status Banner */}
-          <div className={`p-5 rounded-2xl border transition-all ${
-            isBalanced
-              ? 'bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-transparent border-emerald-300 dark:border-emerald-800/50'
-              : 'bg-gradient-to-r from-rose-500/10 via-amber-500/5 to-transparent border-rose-300 dark:border-rose-800/50'
-          }`}>
+          <div
+            className={`p-5 rounded-2xl border transition-all ${
+              isBalanced
+                ? 'bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-transparent border-emerald-300 dark:border-emerald-800/50'
+                : 'bg-gradient-to-r from-rose-500/10 via-amber-500/5 to-transparent border-rose-300 dark:border-rose-800/50'
+            }`}
+          >
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <ShieldCheck className={`w-5 h-5 ${isBalanced ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600'}`} />
+                  <ShieldCheck
+                    className={`w-5 h-5 ${isBalanced ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600'}`}
+                  />
                   <h3 className="text-sm font-extrabold uppercase tracking-wider text-slate-900 dark:text-slate-100">
                     Accounting Equation Audit Status
                   </h3>
@@ -180,17 +211,23 @@ export default function BalanceSheet() {
               <div className="flex items-center gap-3 bg-white/80 dark:bg-slate-900/80 p-3 rounded-xl border border-slate-200 dark:border-slate-800 backdrop-blur-xs font-mono text-xs">
                 <div className="text-center">
                   <div className="text-[10px] text-slate-400 font-sans uppercase">Assets</div>
-                  <div className="font-bold text-blue-600 dark:text-blue-400">৳{totalAssets.toLocaleString()}</div>
+                  <div className="font-bold text-blue-600 dark:text-blue-400">
+                    ৳{totalAssets.toLocaleString()}
+                  </div>
                 </div>
                 <div className="font-bold text-slate-400 text-sm">=</div>
                 <div className="text-center">
                   <div className="text-[10px] text-slate-400 font-sans uppercase">Liabilities</div>
-                  <div className="font-bold text-rose-600 dark:text-rose-400">৳{totalLiabilities.toLocaleString()}</div>
+                  <div className="font-bold text-rose-600 dark:text-rose-400">
+                    ৳{totalLiabilities.toLocaleString()}
+                  </div>
                 </div>
                 <div className="font-bold text-slate-400 text-sm">+</div>
                 <div className="text-center">
                   <div className="text-[10px] text-slate-400 font-sans uppercase">Equity</div>
-                  <div className="font-bold text-purple-600 dark:text-purple-400">৳{totalEquity.toLocaleString()}</div>
+                  <div className="font-bold text-purple-600 dark:text-purple-400">
+                    ৳{totalEquity.toLocaleString()}
+                  </div>
                 </div>
                 <div className="pl-2 border-l border-slate-200 dark:border-slate-800">
                   {isBalanced ? (
@@ -214,7 +251,9 @@ export default function BalanceSheet() {
               <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2">
                   <Wallet className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  <h3 className="font-bold text-base text-blue-600 dark:text-blue-400">Assets (1000 Series)</h3>
+                  <h3 className="font-bold text-base text-blue-600 dark:text-blue-400">
+                    Assets (1000 Series)
+                  </h3>
                 </div>
                 <span className="font-mono font-bold text-base text-slate-900 dark:text-slate-100">
                   ৳{totalAssets.toLocaleString()}
@@ -222,13 +261,21 @@ export default function BalanceSheet() {
               </div>
 
               <div className="space-y-3">
-                {(!data.assets?.accounts || data.assets.accounts.length === 0) ? (
-                  <div className="text-center py-6 text-xs text-slate-400">No asset accounts recorded</div>
+                {!data.assets?.accounts || data.assets.accounts.length === 0 ? (
+                  <div className="text-center py-6 text-xs text-slate-400">
+                    No asset accounts recorded
+                  </div>
                 ) : (
                   data.assets.accounts.map((a) => {
-                    const pct = totalAssets > 0 ? Math.min(100, Math.max(0, (a.balance / totalAssets) * 100)) : 0;
+                    const pct =
+                      totalAssets > 0
+                        ? Math.min(100, Math.max(0, (a.balance / totalAssets) * 100))
+                        : 0;
                     return (
-                      <div key={a._id || a.id} className="space-y-1 py-1 border-b border-slate-100 dark:border-slate-800/60 last:border-0">
+                      <div
+                        key={a._id || a.id}
+                        className="space-y-1 py-1 border-b border-slate-100 dark:border-slate-800/60 last:border-0"
+                      >
                         <div className="flex items-center justify-between text-xs">
                           <div className="font-medium text-slate-800 dark:text-slate-200 flex items-center gap-1.5 truncate max-w-[200px]">
                             <span className="font-mono text-[11px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-bold">
@@ -260,7 +307,9 @@ export default function BalanceSheet() {
               <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2">
                   <CreditCard className="w-4 h-4 text-rose-600 dark:text-rose-400" />
-                  <h3 className="font-bold text-base text-rose-600 dark:text-rose-400">Liabilities (2000 Series)</h3>
+                  <h3 className="font-bold text-base text-rose-600 dark:text-rose-400">
+                    Liabilities (2000 Series)
+                  </h3>
                 </div>
                 <span className="font-mono font-bold text-base text-slate-900 dark:text-slate-100">
                   ৳{totalLiabilities.toLocaleString()}
@@ -268,13 +317,21 @@ export default function BalanceSheet() {
               </div>
 
               <div className="space-y-3">
-                {(!data.liabilities?.accounts || data.liabilities.accounts.length === 0) ? (
-                  <div className="text-center py-6 text-xs text-slate-400">No liability accounts recorded</div>
+                {!data.liabilities?.accounts || data.liabilities.accounts.length === 0 ? (
+                  <div className="text-center py-6 text-xs text-slate-400">
+                    No liability accounts recorded
+                  </div>
                 ) : (
                   data.liabilities.accounts.map((a) => {
-                    const pct = totalLiabilities > 0 ? Math.min(100, Math.max(0, (a.balance / totalLiabilities) * 100)) : 0;
+                    const pct =
+                      totalLiabilities > 0
+                        ? Math.min(100, Math.max(0, (a.balance / totalLiabilities) * 100))
+                        : 0;
                     return (
-                      <div key={a._id || a.id} className="space-y-1 py-1 border-b border-slate-100 dark:border-slate-800/60 last:border-0">
+                      <div
+                        key={a._id || a.id}
+                        className="space-y-1 py-1 border-b border-slate-100 dark:border-slate-800/60 last:border-0"
+                      >
                         <div className="flex items-center justify-between text-xs">
                           <div className="font-medium text-slate-800 dark:text-slate-200 flex items-center gap-1.5 truncate max-w-[200px]">
                             <span className="font-mono text-[11px] px-1.5 py-0.5 rounded bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 font-bold">
@@ -306,7 +363,9 @@ export default function BalanceSheet() {
               <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2">
                   <PieChart className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                  <h3 className="font-bold text-base text-purple-600 dark:text-purple-400">Equity (3000 Series)</h3>
+                  <h3 className="font-bold text-base text-purple-600 dark:text-purple-400">
+                    Equity (3000 Series)
+                  </h3>
                 </div>
                 <span className="font-mono font-bold text-base text-slate-900 dark:text-slate-100">
                   ৳{totalEquity.toLocaleString()}
@@ -314,13 +373,21 @@ export default function BalanceSheet() {
               </div>
 
               <div className="space-y-3">
-                {(!data.equity?.accounts || data.equity.accounts.length === 0) ? (
-                  <div className="text-center py-6 text-xs text-slate-400">No equity accounts recorded</div>
+                {!data.equity?.accounts || data.equity.accounts.length === 0 ? (
+                  <div className="text-center py-6 text-xs text-slate-400">
+                    No equity accounts recorded
+                  </div>
                 ) : (
                   data.equity.accounts.map((a) => {
-                    const pct = totalEquity > 0 ? Math.min(100, Math.max(0, (a.balance / totalEquity) * 100)) : 0;
+                    const pct =
+                      totalEquity > 0
+                        ? Math.min(100, Math.max(0, (a.balance / totalEquity) * 100))
+                        : 0;
                     return (
-                      <div key={a._id || a.id} className="space-y-1 py-1 border-b border-slate-100 dark:border-slate-800/60 last:border-0">
+                      <div
+                        key={a._id || a.id}
+                        className="space-y-1 py-1 border-b border-slate-100 dark:border-slate-800/60 last:border-0"
+                      >
                         <div className="flex items-center justify-between text-xs">
                           <div className="font-medium text-slate-800 dark:text-slate-200 flex items-center gap-1.5 truncate max-w-[200px]">
                             <span className="font-mono text-[11px] px-1.5 py-0.5 rounded bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 font-bold">
@@ -351,7 +418,9 @@ export default function BalanceSheet() {
       ) : (
         <div className="text-center py-12 text-slate-400 bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800">
           <FileText className="w-12 h-12 mx-auto mb-3 opacity-50 text-slate-400" />
-          <p className="text-sm font-medium">Select a date and click refresh to load balance sheet statement</p>
+          <p className="text-sm font-medium">
+            Select a date and click refresh to load balance sheet statement
+          </p>
         </div>
       )}
     </div>

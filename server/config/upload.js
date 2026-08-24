@@ -93,6 +93,21 @@ export const uploadDocument = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // Enforce 5MB limit
 }).single('file');
 
+const receiptStorage = multer.diskStorage({
+  destination: (req, file, cb) => { const dir = path.join(UPLOADS_ROOT, 'receipts'); ensureDir(dir); cb(null, dir); },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    const ext = path.extname(file.originalname);
+    cb(null, `receipt-${uniqueSuffix}${ext}`);
+  },
+});
+
+export const uploadReceipt = multer({
+  storage: receiptStorage,
+  fileFilter: docFileFilter,
+  limits: { fileSize: 10 * 1024 * 1024 },
+}).array('receipts', 5);
+
 export const validateUploadedFile = async (req) => {
   if (!req.file) return;
   

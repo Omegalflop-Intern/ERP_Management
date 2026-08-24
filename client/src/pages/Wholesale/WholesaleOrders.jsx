@@ -90,6 +90,10 @@ export default function WholesaleOrders() {
       setReturnOrder(null);
       qc.invalidateQueries({ queryKey: ['wholesale-orders'] });
       qc.invalidateQueries({ queryKey: ['wholesale-stats'] });
+      qc.invalidateQueries({ queryKey: ['customers'] });
+      qc.invalidateQueries({ queryKey: ['sales'] });
+      qc.invalidateQueries({ queryKey: ['products'] });
+      qc.invalidateQueries({ queryKey: ['recent-sales-returns'] });
     },
     onError: (e) => toast.error(e.response?.data?.message || 'Failed to process return'),
   });
@@ -471,12 +475,20 @@ export default function WholesaleOrders() {
                 e.preventDefault();
                 const itemsToReturn = Object.entries(returnItems)
                   .filter(([_, qty]) => Number(qty) > 0)
-                  .map(([lineItemId, qty]) => ({
-                    lineItemId,
-                    quantity: Number(qty),
-                    reason: returnReason,
-                    notes: returnNotes,
-                  }));
+                  .map(([lineItemId, qty]) => {
+                    const item = (returnOrder.items || []).find(
+                      (it) => String(it._id || it.productId) === String(lineItemId)
+                    );
+                    return {
+                      lineItemId,
+                      productId: item?.productId?._id || item?.productId || lineItemId,
+                      name: item?.product?.name || item?.description || item?.name || 'Wholesale Item',
+                      quantity: Number(qty),
+                      unitPrice: Number(item?.unitPrice || 0),
+                      reason: returnReason,
+                      notes: returnNotes,
+                    };
+                  });
 
                 if (itemsToReturn.length === 0) {
                   toast.warning('Please enter return quantity (>0) for at least one item');
@@ -484,7 +496,7 @@ export default function WholesaleOrders() {
                 }
 
                 processReturnMutation.mutate({
-                  id: returnOrder._id,
+                  id: returnOrder._id || returnOrder.id,
                   data: { items: itemsToReturn },
                 });
               }}

@@ -1,10 +1,12 @@
 import { Router } from 'express';
 import * as accountingController from './accounting.controller.js';
+import * as accountingService from './accounting.service.js';
 import { validate } from '../../middleware/validate.middleware.js';
 import { authenticate } from '../../middleware/auth.middleware.js';
 import { checkTenantStatus } from '../../middleware/tenant.middleware.js';
 import { authorize } from '../../middleware/role.middleware.js';
 import { createAccountSchema, updateAccountSchema, createJournalEntrySchema, postJournalEntrySchema } from './accounting.validator.js';
+import { generateBalanceSheetPdf, generateProfitLossPdf, generateTrialBalancePdf, generateCashFlowPdf } from '../../services/financialReportPdf.service.js';
 
 const router = Router();
 
@@ -32,6 +34,53 @@ router.delete('/journal-entries/:id', authorize('ADMIN'), accountingController.d
 router.get('/reports/balance-sheet', accountingController.getBalanceSheet);
 router.get('/reports/profit-loss', accountingController.getProfitLoss);
 router.get('/reports/trial-balance', accountingController.getTrialBalance);
+router.get('/reports/cash-flow', accountingController.getCashFlowStatement);
+
+// PDF Exports
+router.get('/reports/balance-sheet/pdf', async (req, res, next) => {
+  try {
+    const tenantId = req.user?.tenantId || null;
+    const branchId = req.selectedBranchId || null;
+    const data = await accountingService.getBalanceSheet(req.query.asOfDate || '', tenantId, branchId);
+    const pdf = await generateBalanceSheetPdf(data, tenantId);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=balance-sheet.pdf');
+    res.send(pdf);
+  } catch (err) { next(err); }
+});
+router.get('/reports/profit-loss/pdf', async (req, res, next) => {
+  try {
+    const tenantId = req.user?.tenantId || null;
+    const branchId = req.selectedBranchId || null;
+    const data = await accountingService.getProfitLoss(req.query.from || '', req.query.to || '', tenantId, branchId);
+    const pdf = await generateProfitLossPdf(data, tenantId);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=profit-loss.pdf');
+    res.send(pdf);
+  } catch (err) { next(err); }
+});
+router.get('/reports/trial-balance/pdf', async (req, res, next) => {
+  try {
+    const tenantId = req.user?.tenantId || null;
+    const branchId = req.selectedBranchId || null;
+    const data = await accountingService.getTrialBalance(tenantId, branchId);
+    const pdf = await generateTrialBalancePdf(data, tenantId);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=trial-balance.pdf');
+    res.send(pdf);
+  } catch (err) { next(err); }
+});
+router.get('/reports/cash-flow/pdf', async (req, res, next) => {
+  try {
+    const tenantId = req.user?.tenantId || null;
+    const branchId = req.selectedBranchId || null;
+    const data = await accountingService.getCashFlowStatement(req.query.from || '', req.query.to || '', tenantId, branchId);
+    const pdf = await generateCashFlowPdf(data, tenantId);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename=cash-flow.pdf');
+    res.send(pdf);
+  } catch (err) { next(err); }
+});
 
 // Assets
 router.get('/assets', accountingController.getAssets);

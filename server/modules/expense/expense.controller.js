@@ -24,6 +24,16 @@ export const createExpense = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
+export const uploadReceipts = async (req, res, next) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return ApiResponse.badRequest(res, 'No receipt files uploaded');
+    }
+    const urls = req.files.map(f => `/uploads/receipts/${f.filename}`);
+    return ApiResponse.success(res, { urls }, 'Receipts uploaded successfully');
+  } catch (error) { next(error); }
+};
+
 export const updateExpense = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;

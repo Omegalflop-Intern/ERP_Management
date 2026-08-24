@@ -21,6 +21,13 @@ export const getAllAccounts = async (req, res, next) => {
     const { page = 1, limit = 100, search = '', type = '' } = req.query;
     const tenantId = req.user?.tenantId || null;
     const branchId = req.selectedBranchId || null;
+
+    try {
+      await accountingService.syncHistoricalJournals(tenantId);
+    } catch (err) {
+      console.error('[Accounts Sync Error]:', err.message);
+    }
+
     const result = await accountingService.getAllAccounts(Number(page), Number(limit), search, type, tenantId, branchId);
     return ApiResponse.paginated(res, result.accounts, result.pagination.total, result.pagination.page, result.pagination.limit);
   } catch (error) { next(error); }
@@ -177,6 +184,16 @@ export const getTrialBalance = async (req, res, next) => {
     const tenantId = req.user?.tenantId || null;
     const branchId = req.selectedBranchId || null;
     const data = await accountingService.getTrialBalance(tenantId, branchId);
+    return ApiResponse.success(res, data);
+  } catch (error) { next(error); }
+};
+
+export const getCashFlowStatement = async (req, res, next) => {
+  try {
+    const { from = '', to = '' } = req.query;
+    const tenantId = req.user?.tenantId || null;
+    const branchId = req.selectedBranchId || null;
+    const data = await accountingService.getCashFlowStatement(from, to, tenantId, branchId);
     return ApiResponse.success(res, data);
   } catch (error) { next(error); }
 };

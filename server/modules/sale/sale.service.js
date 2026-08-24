@@ -1,7 +1,7 @@
 import { db } from '../../config/db.knex.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { getPagination } from '../../utils/http/pagination.js';
-import { validateWalletBalance } from '../accounting/accounting.service.js';
+import { validateWalletBalance, createAutomatedReturnJournal } from '../accounting/accounting.service.js';
 import emitter, { EVENTS } from '../../events/index.js';
 import crypto from 'crypto';
 
@@ -510,12 +510,27 @@ export const processReturn = async (id, data, tenantId = null, branchId = null) 
 
   const returnItems = data.items || [];
   let refundAmount = 0;
+  const returnInvoiceNumber = `RET-${sale.invoiceNumber || sale.invoice_number || id}-${Date.now().toString(36).toUpperCase().slice(-4)}`;
 
   for (const ri of returnItems) {
-    const lineItem = sale.lineItems.find(li => String(li.productId) === String(ri.productId));
-    if (!lineItem) throw ApiError.badRequest(`Line item not found for product ${ri.productId}`);
+    const pId = ri.productId?._id || ri.productId?.id || ri.productId;
+    const lineItem = (sale.lineItems || []).find(li => String(li.productId?._id || li.productId?.id || li.productId) === String(pId));
+    if (!lineItem) throw ApiError.badRequest(`Line item not found for product ${pId}`);
     const qty = Math.abs(ri.quantity || ri.qty || 1);
     refundAmount += (lineItem.unitPrice * qty);
+
+    // 1. Restock Product in inventory
+    if (pId) {
+      await db('products').where({ id: pId }).increment('stock_quantity', qty);
+      emitter.emit(EVENTS.STOCK_UPDATED, { id: pId, name: lineItem.description || lineItem.name, tenantId });
+      emitter.emit(EVENTS.PRODUCT_MUTATED, { id: pId, tenantId });
+    }
+
+    // 2. If IMEI item, mark IMEI back to AVAILABLE
+    const imeiVal = ri.imeiOrSerial || lineItem.imeiOrSerial;
+    if (imeiVal) {
+      await db('imei_records').where({ imei: imeiVal }).update({ status: 'AVAILABLE', updated_at: new Date() });
+    }
   }
 
   refundAmount = Number(refundAmount.toFixed(2));
@@ -523,9 +538,10 @@ export const processReturn = async (id, data, tenantId = null, branchId = null) 
 
   const returnLog = {
     date: new Date().toISOString(),
+    returnInvoiceNumber,
     items: returnItems,
     refundAmount,
-    reason: data.reason || '',
+    reason: data.reason || 'Customer / Wholesale Return',
   };
 
   const existingLogs = sale.returnLogs || [];
@@ -553,23 +569,67 @@ export const processReturn = async (id, data, tenantId = null, branchId = null) 
     updated_at: new Date(),
   });
 
-  // Recalculate customer due_balance from ALL their transactions
+  // Insert a RETURN transaction row for Customer Ledger & Reports
+  try {
+    await db('transactions').insert({
+      tenant_id: tenantId || sale.tenantId || null,
+      branch_id: branchId || sale.branchId || null,
+      invoice_number: returnInvoiceNumber,
+      tx_type: 'RETURN',
+      sale_type: sale.saleType || 'RETAIL',
+      status: 'COMPLETED',
+      customer_id: typeof sale.customerId === 'object' ? (sale.customerId?.id || sale.customerId?._id) : sale.customerId,
+      customer_name: sale.customerName || sale.customer?.name || null,
+      customer_phone: sale.customerPhone || sale.customer?.phone || null,
+      customer_email: sale.customerEmail || sale.customer?.email || null,
+      customer_address: sale.customerAddress || sale.customer?.address || null,
+      line_items: JSON.stringify(returnItems),
+      sub_total: -refundAmount,
+      discount: 0,
+      tax: 0,
+      net_total: -refundAmount,
+      returned_amount: refundAmount,
+      payment_breakdown: JSON.stringify({ refundAmount, originalInvoice: sale.invoiceNumber }),
+      cashier_username: sale.cashierUsername || 'system',
+      created_at: new Date(),
+      updated_at: new Date(),
+    });
+  } catch (err) {
+    console.error('[Sale Return Tx Insert Error]:', err.message);
+  }
+
+  // Recalculate customer due_balance & total_purchases from ALL their transactions
   if (sale.customerId) {
     const custId = typeof sale.customerId === 'object' ? (sale.customerId?.id || sale.customerId?._id) : sale.customerId;
     if (custId) {
-      const allSalesQuery = db('transactions').where({ customer_id: custId, is_deleted: false });
+      const allSalesQuery = db('transactions').where({ customer_id: custId, is_deleted: false, tx_type: 'SALE' });
       if (tenantId) allSalesQuery.andWhere('tenant_id', tenantId);
-      const allSales = await allSalesQuery.select('payment_breakdown');
+      const allSales = await allSalesQuery.select('payment_breakdown', 'net_total', 'returned_amount');
+      
       const freshDueBalance = allSales.reduce((sum, s) => {
         const spb = typeof s.payment_breakdown === 'string' ? (() => { try { return JSON.parse(s.payment_breakdown); } catch { return {}; } })() : (s.payment_breakdown || {});
         return sum + Number(spb.dueAmount || 0);
       }, 0);
+
+      const freshPurchases = allSales.reduce((sum, s) => {
+        return sum + Math.max(0, Number(s.net_total || 0) - Number(s.returned_amount || 0));
+      }, 0);
+
       const custUpdate = db('customers').where({ id: custId });
       if (tenantId) custUpdate.andWhere('tenant_id', tenantId);
-      await custUpdate.update({ due_balance: Math.max(0, freshDueBalance) });
+      await custUpdate.update({
+        due_balance: Math.max(0, freshDueBalance),
+        total_purchases: Math.max(0, freshPurchases),
+      });
+
+      emitter.emit(EVENTS.CUSTOMER_MUTATED, { id: custId, tenantId });
     }
   }
 
-  const returnInvoiceNumber = `RET-${sale.invoiceNumber || sale.invoice_number || id}-${Date.now().toString(36).toUpperCase().slice(-4)}`;
+  // Create Double-Entry Accounting Journal for Return
+  createAutomatedReturnJournal(sale, refundAmount, returnInvoiceNumber).catch((err) =>
+    console.error('[Sale Return Accounting Error]:', err.message)
+  );
+
   return { ...sale, returnedAmount: newReturnedAmount, refundAmount, returnInvoiceNumber, paymentBreakdown: pb };
 };
