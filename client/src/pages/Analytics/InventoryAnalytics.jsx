@@ -14,6 +14,7 @@ import {
   YAxis,
 } from 'recharts';
 import api from '../../lib/api';
+import ChartTooltip from '../../components/charts/ChartTooltip';
 
 const _COLORS = ['#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e'];
 
@@ -95,8 +96,8 @@ export default function InventoryAnalytics() {
                 <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                 <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip />
-                <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                <Tooltip content={<ChartTooltip unit="pcs" />} />
+                <Bar dataKey="value" name="Stock Count" fill="#6366f1" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -110,10 +111,10 @@ export default function InventoryAnalytics() {
                 <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                 <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip />
+                <Tooltip content={<ChartTooltip unit="pcs" />} />
                 <Legend />
-                <Line type="monotone" dataKey="inbound" stroke="#10b981" strokeWidth={2} />
-                <Line type="monotone" dataKey="outbound" stroke="#ef4444" strokeWidth={2} />
+                <Line type="monotone" name="Inbound (Restock)" dataKey="inbound" stroke="#10b981" strokeWidth={2} />
+                <Line type="monotone" name="Outbound (Sold)" dataKey="outbound" stroke="#ef4444" strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
           </div>
