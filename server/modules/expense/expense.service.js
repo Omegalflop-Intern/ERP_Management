@@ -87,7 +87,7 @@ export const getAvailableCashBalance = async (tenantId = null, branchId = null) 
 
   const invQuery = db('investors').where({ is_deleted: false });
   if (tenantId) invQuery.andWhere('tenant_id', tenantId);
-  const investorsRes = await invQuery.sum({ total: 'total_investment' }).first();
+  const investorsRes = await invQuery.sum({ total: 'total_invested' }).first();
   const totalInvCash = Number(investorsRes?.total || 0);
 
   const expQuery = db('expenses').where({ is_deleted: false });
