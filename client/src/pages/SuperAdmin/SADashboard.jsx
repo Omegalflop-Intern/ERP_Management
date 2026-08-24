@@ -89,18 +89,26 @@ function StatCard({ icon: Icon, label, value, sub, color, trend }) {
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-slate-900 text-white p-3 rounded-xl shadow-xl text-xs border border-slate-800 space-y-1.5">
-        <p className="font-bold text-slate-300">{label}</p>
-        {payload.map((entry, index) => (
-          <p
-            key={index}
-            style={{ color: entry.color }}
-            className="font-semibold flex items-center justify-between gap-4"
-          >
-            <span>{entry.name}:</span>
-            <span className="font-extrabold">{entry.value} shop(s)</span>
-          </p>
-        ))}
+      <div className="bg-slate-900/95 dark:bg-slate-950/95 text-white p-3 rounded-xl shadow-xl text-xs border border-slate-700/80 space-y-1.5 min-w-[140px] z-50">
+        {label && <p className="font-bold text-slate-300 pb-1 border-b border-slate-800">{label}</p>}
+        {payload.map((entry, index) => {
+          const name = entry.name || entry.payload?.name || 'Item';
+          return (
+            <p
+              key={index}
+              className="font-semibold flex items-center justify-between gap-4"
+            >
+              <span className="flex items-center gap-1.5 text-slate-300">
+                <span
+                  className="w-2.5 h-2.5 rounded-full"
+                  style={{ backgroundColor: entry.color || entry.payload?.fill }}
+                />
+                {name}:
+              </span>
+              <span className="font-extrabold text-white font-mono">{entry.value} shop(s)</span>
+            </p>
+          );
+        })}
       </div>
     );
   }

@@ -99,7 +99,7 @@ export default function EmployeeAnalytics() {
                 <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                 <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip />
+                <Tooltip content={<ChartTooltip isCurrency={true} />} />
                 <Bar dataKey="totalRevenue" fill="#6366f1" radius={[4, 4, 0, 0]} name="Total Revenue (৳)" />
               </BarChart>
             </ResponsiveContainer>
@@ -114,7 +114,7 @@ export default function EmployeeAnalytics() {
                 <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                 <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip />
+                <Tooltip content={<ChartTooltip unit="staff" />} />
                 <Legend />
                 <Line
                   type="monotone"
@@ -157,7 +157,7 @@ export default function EmployeeAnalytics() {
                     <Cell key={index} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip content={<ChartTooltip unit="employees" />} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
