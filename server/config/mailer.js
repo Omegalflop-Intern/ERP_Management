@@ -64,47 +64,41 @@ export const sendOTPEmail = async (toEmail, otpCode, userName = '') => {
     text: `Hello ${displayName},\n\nYour verification code is: ${otpCode}\n\nThis code expires in 10 minutes.\n\nIf you did not request this, please ignore this email.\n\nThank you,\n${SENDER_NAME}\n${COMPANY_ADDRESS || ''}`,
     html: `
       <!DOCTYPE html>
-      <html>
+      <html lang="en">
       <head><meta charset="utf-8"></head>
-      <body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif;">
-        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:30px 0;">
+      <body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',system-ui,sans-serif;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:32px 16px;">
           <tr><td align="center">
-            <table width="480" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #e0e0e0;">
+            <table width="480" cellpadding="0" cellspacing="0" style="max-width:480px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
               <tr>
-                <td style="background:#1a1a2e;padding:24px 32px;text-align:center;">
-                  <h1 style="margin:0;color:#ffffff;font-size:18px;font-weight:700;">${SENDER_NAME}</h1>
+                <td style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);padding:28px 32px;text-align:center;">
+                  <div style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;">${SENDER_NAME}</div>
+                  <div style="font-size:12px;color:#94a3b8;margin-top:2px;">Account Security & Verification</div>
                 </td>
               </tr>
               <tr>
                 <td style="padding:32px;">
-                  <p style="margin:0 0 16px;color:#333;font-size:14px;">Hello <strong>${displayName}</strong>,</p>
-                  <p style="margin:0 0 20px;color:#555;font-size:14px;line-height:1.6;">
-                    We received a request to verify your email address. Please use the code below:
+                  <p style="margin:0 0 14px;color:#0f172a;font-size:15px;">Hello <strong>${displayName}</strong>,</p>
+                  <p style="margin:0 0 24px;color:#475569;font-size:14px;line-height:1.6;">
+                    Please use the one-time verification code below to verify your account:
                   </p>
-                  <table width="100%" cellpadding="0" cellspacing="0">
-                    <tr>
-                      <td style="background:#f8f8f8;border:2px solid #1a1a2e;padding:16px;text-align:center;">
-                        <p style="margin:0 0 6px;color:#888;font-size:11px;text-transform:uppercase;letter-spacing:2px;">Verification Code</p>
-                        <div style="font-size:32px;font-weight:800;letter-spacing:8px;color:#1a1a2e;font-family:'Courier New',monospace;">
-                          ${otpCode}
-                        </div>
-                      </td>
-                    </tr>
-                  </table>
-                  <p style="margin:20px 0 0;color:#888;font-size:12px;">
-                    This code expires in 10 minutes. If you did not request this, please ignore this email.
-                  </p>
+                  <div style="background:#f8fafc;border:2px dashed #cbd5e1;border-radius:10px;padding:20px;text-align:center;margin-bottom:24px;">
+                    <div style="font-size:11px;font-weight:700;color:#64748b;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;">Verification Code</div>
+                    <div style="font-size:36px;font-weight:800;letter-spacing:10px;color:#0f172a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',system-ui,sans-serif;">
+                      ${otpCode}
+                    </div>
+                  </div>
+                  <div style="background:#eff6ff;border-left:4px solid #3b82f6;padding:12px 16px;border-radius:4px;color:#1e40af;font-size:12px;line-height:1.5;">
+                    ⏱ This code will expire in <strong>10 minutes</strong>. If you did not request this code, please ignore this email.
+                  </div>
                 </td>
               </tr>
               <tr>
-                <td style="background:#f8f8f8;border-top:1px solid #e0e0e0;padding:16px 32px;text-align:center;">
-                  <p style="margin:0;color:#999;font-size:11px;">
-                    &copy; ${new Date().getFullYear()} ${SENDER_NAME}. All rights reserved.
-                  </p>
-                  ${addressBlock}
-                  <p style="margin:4px 0 0;color:#bbb;font-size:10px;">
-                    This is an automated email. Please do not reply.
-                  </p>
+                <td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:20px 32px;text-align:center;">
+                  <div style="font-size:11px;color:#94a3b8;">
+                    © ${new Date().getFullYear()} ${SENDER_NAME}. All rights reserved.<br>
+                    This is an automated security email.
+                  </div>
                 </td>
               </tr>
             </table>
@@ -133,55 +127,49 @@ export const sendPasswordResetEmail = async (toEmail, resetLink, userName = '') 
     from: `"${SENDER_NAME}" <${SENDER_EMAIL}>`,
     to: toEmail,
     replyTo: SUPPORT_EMAIL,
-    subject: `Password Reset Request - ${SENDER_NAME}`,
+    subject: `🔐 Password Reset Request - ${SENDER_NAME}`,
     headers: baseHeaders,
     text: `Hello ${displayName},\n\nYou requested a password reset. Click the link below:\n\n${resetLink}\n\nThis link expires in 1 hour.\n\nIf you did not request this, please ignore this email.\n\nThank you,\n${SENDER_NAME}\n${COMPANY_ADDRESS || ''}`,
     html: `
       <!DOCTYPE html>
-      <html>
+      <html lang="en">
       <head><meta charset="utf-8"></head>
-      <body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif;">
-        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:30px 0;">
+      <body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',system-ui,sans-serif;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:32px 16px;">
           <tr><td align="center">
-            <table width="480" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #e0e0e0;">
+            <table width="480" cellpadding="0" cellspacing="0" style="max-width:480px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
               <tr>
-                <td style="background:#1a1a2e;padding:24px 32px;text-align:center;">
-                  <h1 style="margin:0;color:#ffffff;font-size:18px;font-weight:700;">${SENDER_NAME}</h1>
+                <td style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);padding:28px 32px;text-align:center;">
+                  <div style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;">${SENDER_NAME}</div>
+                  <div style="font-size:12px;color:#94a3b8;margin-top:2px;">Password Reset Request</div>
                 </td>
               </tr>
               <tr>
                 <td style="padding:32px;">
-                  <p style="margin:0 0 16px;color:#333;font-size:14px;">Hello <strong>${displayName}</strong>,</p>
-                  <p style="margin:0 0 20px;color:#555;font-size:14px;line-height:1.6;">
-                    We received a password reset request for your account. Click the button below to reset your password.
+                  <p style="margin:0 0 14px;color:#0f172a;font-size:15px;">Hello <strong>${displayName}</strong>,</p>
+                  <p style="margin:0 0 24px;color:#475569;font-size:14px;line-height:1.6;">
+                    We received a request to reset your password. Click the button below to set a new password:
                   </p>
-                  <table width="100%" cellpadding="0" cellspacing="0">
-                    <tr>
-                      <td align="center" style="padding:8px 0 20px;">
-                        <a href="${resetLink}" style="display:inline-block;padding:12px 32px;background:#1a1a2e;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;">
-                          Reset Password
-                        </a>
-                      </td>
-                    </tr>
-                  </table>
-                  <p style="margin:0 0 8px;color:#888;font-size:12px;">Or copy this link into your browser:</p>
-                  <p style="margin:0 0 20px;color:#1a1a2e;font-size:11px;word-break:break-all;background:#f8f8f8;padding:10px;border:1px solid #e0e0e0;font-family:'Courier New',monospace;">
-                    ${resetLink}
-                  </p>
-                  <p style="margin:0;color:#888;font-size:12px;">
-                    This link expires in 1 hour. If you did not request this, please ignore this email.
-                  </p>
+                  <div style="text-align:center;margin-bottom:24px;">
+                    <a href="${resetLink}" style="display:inline-block;padding:14px 36px;background:#0f172a;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;border-radius:8px;letter-spacing:0.3px;">
+                      Reset Password ↗
+                    </a>
+                  </div>
+                  <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 16px;margin-bottom:20px;">
+                    <div style="font-size:11px;color:#64748b;margin-bottom:4px;">Or copy and paste this link:</div>
+                    <div style="font-size:11px;color:#0f172a;word-break:break-all;">${resetLink}</div>
+                  </div>
+                  <div style="background:#fffbeb;border-left:4px solid #f59e0b;padding:12px 16px;border-radius:4px;color:#b45309;font-size:12px;line-height:1.5;">
+                    ⏱ This link will expire in <strong>1 hour</strong>. If you did not request a password reset, please ignore this message.
+                  </div>
                 </td>
               </tr>
               <tr>
-                <td style="background:#f8f8f8;border-top:1px solid #e0e0e0;padding:16px 32px;text-align:center;">
-                  <p style="margin:0;color:#999;font-size:11px;">
-                    &copy; ${new Date().getFullYear()} ${SENDER_NAME}. All rights reserved.
-                  </p>
-                  ${addressBlock}
-                  <p style="margin:4px 0 0;color:#bbb;font-size:10px;">
-                    This is an automated email. Please do not reply.
-                  </p>
+                <td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:20px 32px;text-align:center;">
+                  <div style="font-size:11px;color:#94a3b8;">
+                    © ${new Date().getFullYear()} ${SENDER_NAME}. All rights reserved.<br>
+                    This is an automated notification.
+                  </div>
                 </td>
               </tr>
             </table>
@@ -634,57 +622,126 @@ export const sendCustomerRepairEmail = async (toEmail, customerName, repairData)
   if (!transporter) await initMailer();
 
   const customer = customerName || 'Valued Customer';
-  const jobNo = repairData.jobNo || repairData._id || 'Repair Job';
+  const jobNo = repairData.jobNo || repairData.ticketNumber || repairData.ticket_number || repairData._id || 'RPR';
   const status = repairData.status || 'Updated';
+  const tenantId = repairData.tenantId || repairData.tenant_id || null;
+
+  let shopName = SENDER_NAME;
+  let shopPhone = '';
+  let shopAddress = COMPANY_ADDRESS;
+  let shopEmail = SENDER_EMAIL;
+  let shopLogo = '';
+  try {
+    if (tenantId) {
+      const tenant = await db('tenants').where({ id: tenantId, is_deleted: false }).first();
+      if (tenant) {
+        shopName = tenant.shop_name || shopName;
+        shopPhone = tenant.phone || '';
+        shopEmail = tenant.email || shopEmail;
+      }
+      const settingsRows = await db('settings')
+        .where({ tenant_id: tenantId })
+        .whereIn('key', ['companyAddress', 'companyLogo', 'companyPhone'])
+        .select('key', 'value');
+      for (const s of settingsRows) {
+        try {
+          const val = JSON.parse(s.value);
+          if (s.key === 'companyAddress' && val) shopAddress = val;
+          if (s.key === 'companyLogo' && val) shopLogo = val;
+          if (s.key === 'companyPhone' && val) shopPhone = shopPhone || val;
+        } catch { /* ignore */ }
+      }
+    }
+  } catch { /* non-blocking */ }
+
+  const statusColors = {
+    PENDING: { bg: '#fef3c7', text: '#d97706' },
+    IN_PROGRESS: { bg: '#e0f2fe', text: '#0284c7' },
+    COMPLETED: { bg: '#d1fae5', text: '#059669' },
+    DELIVERED: { bg: '#e0e7ff', text: '#4338ca' },
+    CANCELLED: { bg: '#fee2e2', text: '#dc2626' },
+  };
+  const color = statusColors[status] || { bg: '#f1f5f9', text: '#475569' };
+
+  const logoHtml = shopLogo
+    ? `<img src="${shopLogo}" alt="${shopName}" style="height:36px;max-width:140px;object-fit:contain;margin-bottom:8px;display:block;margin:0 auto 8px;">`
+    : '';
 
   const mailOptions = {
-    from: `"${SENDER_NAME}" <${SENDER_EMAIL}>`,
+    from: `"${shopName}" <${SENDER_EMAIL}>`,
     to: toEmail,
-    replyTo: SUPPORT_EMAIL,
-    subject: `Repair Status Update (${status}) - ${SENDER_NAME}`,
+    replyTo: shopEmail !== SENDER_EMAIL ? shopEmail : SUPPORT_EMAIL,
+    subject: `🔧 Repair Update #${jobNo} (${status}) — ${shopName}`,
     headers: baseHeaders,
-    text: `Dear ${customer},\n\nYour device repair status has been updated to: ${status}\n\nDevice: ${repairData.brand || ''} ${repairData.model || 'Device'}\nIssue: ${repairData.problemDescription || 'N/A'}\nJob Sheet: ${jobNo}\n\nPlease bring your repair claim receipt when picking up your device.\n\nThank you,\n${SENDER_NAME}\n${COMPANY_ADDRESS || ''}`,
+    text: `Dear ${customer},\n\nYour device repair status has been updated to: ${status}\n\nDevice: ${repairData.brand || ''} ${repairData.model || repairData.deviceModel || 'Device'}\nJob Sheet: #${jobNo}\nIssue: ${repairData.problemDescription || repairData.issueDescription || 'N/A'}\n\nPlease bring your repair claim ticket when picking up your device.\n\nThank you,\n${shopName}\n${shopAddress || ''}`,
     html: `
       <!DOCTYPE html>
-      <html>
+      <html lang="en">
       <head><meta charset="utf-8"></head>
-      <body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif;">
-        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:30px 0;">
+      <body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',system-ui,sans-serif;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:32px 16px;">
           <tr><td align="center">
-            <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #e0e0e0;">
+            <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
               <tr>
-                <td style="background:#1a1a2e;padding:24px 32px;text-align:center;">
-                  <h1 style="margin:0;color:#ffffff;font-size:18px;font-weight:700;">Device Repair Service Update</h1>
-                  <p style="margin:6px 0 0;color:#aaa;font-size:12px;">Job Sheet #${jobNo}</p>
+                <td style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);padding:32px 36px;text-align:center;">
+                  ${logoHtml}
+                  <div style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;">${shopName} Service Center</div>
+                  <div style="font-size:12px;color:#94a3b8;margin-top:4px;">
+                    ${shopPhone ? `📞 ${shopPhone}` : ''}
+                    ${shopPhone && shopAddress ? ' &nbsp;·&nbsp; ' : ''}
+                    ${shopAddress ? `📍 ${shopAddress}` : ''}
+                  </div>
+                  <div style="margin-top:20px;display:inline-block;">
+                    <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:10px 24px;display:inline-block;">
+                      <div style="font-size:11px;color:#94a3b8;font-weight:600;letter-spacing:1px;text-transform:uppercase;">Job Sheet</div>
+                      <div style="font-size:18px;font-weight:700;color:#ffffff;margin-top:2px;">#${jobNo}</div>
+                    </div>
+                  </div>
                 </td>
               </tr>
               <tr>
-                <td style="padding:32px;">
-                  <p style="margin:0 0 16px;color:#333;font-size:14px;">Dear <strong>${customer}</strong>,</p>
-                  <p style="margin:0 0 20px;color:#555;font-size:14px;line-height:1.6;">
-                    Your device repair status has been updated to <strong style="text-transform:uppercase;">${status}</strong>.
+                <td style="padding:28px 36px;">
+                  <p style="margin:0 0 16px;color:#0f172a;font-size:15px;">Dear <strong>${customer}</strong>,</p>
+                  <p style="margin:0 0 20px;color:#475569;font-size:14px;line-height:1.6;">
+                    Your device repair service status has been updated:
                   </p>
-                  <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;background:#f0f4ff;border:1px solid #c0d0e8;">
-                    <tr>
-                      <td style="padding:16px;">
-                        <p style="margin:0 0 6px;color:#333;font-size:13px;"><strong>Device:</strong> ${repairData.brand || ''} ${repairData.model || 'Device'}</p>
-                        <p style="margin:0 0 6px;color:#333;font-size:13px;"><strong>Reported Issue:</strong> ${repairData.problemDescription || 'N/A'}</p>
-                        <p style="margin:0;color:#333;font-size:13px;"><strong>Current Status:</strong> <strong style="color:#0055aa;">${status}</strong></p>
-                      </td>
-                    </tr>
-                  </table>
-                  <p style="margin:0;color:#888;font-size:12px;">Please bring your repair claim receipt when picking up your repaired device.</p>
+                  <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:20px;margin-bottom:24px;">
+                    <div style="margin-bottom:12px;">
+                      <span style="display:inline-block;padding:6px 14px;background:${color.bg};color:${color.text};border-radius:20px;font-size:12px;font-weight:700;text-transform:uppercase;">
+                        ${status}
+                      </span>
+                    </div>
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding:4px 0;font-size:13px;color:#64748b;width:120px;">Device:</td>
+                        <td style="padding:4px 0;font-size:13px;font-weight:600;color:#0f172a;">${repairData.brand || ''} ${repairData.model || repairData.deviceModel || 'Device'}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:4px 0;font-size:13px;color:#64748b;">Reported Issue:</td>
+                        <td style="padding:4px 0;font-size:13px;color:#0f172a;">${repairData.problemDescription || repairData.issueDescription || 'N/A'}</td>
+                      </tr>
+                      ${repairData.estimatedCost ? `
+                      <tr>
+                        <td style="padding:4px 0;font-size:13px;color:#64748b;">Estimated Cost:</td>
+                        <td style="padding:4px 0;font-size:13px;font-weight:700;color:#059669;">৳${Number(repairData.estimatedCost).toLocaleString()}</td>
+                      </tr>` : ''}
+                    </table>
+                  </div>
+                  <div style="background:#eff6ff;border-left:4px solid #3b82f6;padding:12px 16px;border-radius:4px;color:#1e40af;font-size:12px;line-height:1.5;">
+                    ℹ Please bring your repair claim slip when picking up your repaired gadget from the service counter.
+                  </div>
                 </td>
               </tr>
               <tr>
-                <td style="background:#f8f8f8;border-top:1px solid #e0e0e0;padding:16px 32px;text-align:center;">
-                  <p style="margin:0;color:#999;font-size:11px;">
-                    &copy; ${new Date().getFullYear()} ${SENDER_NAME} Service Center
-                  </p>
-                  ${addressBlock}
-                  <p style="margin:4px 0 0;color:#bbb;font-size:10px;">
-                    This is an automated email. Please do not reply.
-                  </p>
+                <td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:20px 36px;text-align:center;">
+                  <div style="font-size:13px;color:#0f172a;font-weight:600;margin-bottom:4px;">${shopName} Service Care</div>
+                  <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;">
+                    Questions? Contact us at ${shopEmail}
+                  </div>
+                  <div style="font-size:10px;color:#cbd5e1;">
+                    © ${new Date().getFullYear()} ${shopName}. All rights reserved.<br>
+                    This is an automated notification.
+                  </div>
                 </td>
               </tr>
             </table>
@@ -697,7 +754,7 @@ export const sendCustomerRepairEmail = async (toEmail, customerName, repairData)
 
   try {
     const info = await transporter.sendMail(mailOptions);
-    console.log(`[Customer Repair] Update sent to ${toEmail} for ${jobNo}`);
+    console.log(`[Customer Repair] Update sent to ${toEmail} for ${jobNo} (shop: ${shopName})`);
     return { success: true, messageId: info.messageId };
   } catch (err) {
     console.error(`[Customer Repair Error]: ${err.message}`);
