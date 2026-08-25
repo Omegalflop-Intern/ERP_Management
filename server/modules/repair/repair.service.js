@@ -166,12 +166,18 @@ export const collectRepairDue = async (id, { amount, paymentMethod = 'CASH', not
     throw ApiError.badRequest('Payment amount must be greater than 0');
   }
 
-  const currentDue = Math.max(0, Number(ticket.estimatedCost || 0) - Number(ticket.advancePaid || 0));
-  if (payAmount > currentDue && currentDue > 0) {
-    throw ApiError.badRequest(`Payment amount (৳${payAmount}) cannot exceed remaining repair due balance of ৳${currentDue}`);
+  const estimatedCost = Number(ticket.estimatedCost || 0);
+  const alreadyPaid = Number(ticket.advancePaid || 0);
+  const remainingDue = Math.max(0, estimatedCost - alreadyPaid);
+
+  // Bug #33 fixed: Check against actual remaining due (estimatedCost - advancePaid).
+  // The old check (payAmount > currentDue && currentDue > 0) allowed overpayment when
+  // currentDue was already 0 or when estimatedCost was 0 (unknown cost repairs).
+  if (estimatedCost > 0 && payAmount > remainingDue) {
+    throw ApiError.badRequest(`Payment amount (৳${payAmount}) exceeds remaining repair due balance of ৳${remainingDue}`);
   }
 
-  const newAdvance = Number(ticket.advancePaid || 0) + payAmount;
+  const newAdvance = alreadyPaid + payAmount;
 
   const q = db('repair_tickets').where({ id });
   if (tenantId) q.andWhere('tenant_id', tenantId);

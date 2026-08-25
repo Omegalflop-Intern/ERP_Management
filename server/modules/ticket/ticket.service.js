@@ -280,7 +280,9 @@ export const deleteTicket = async (id, tenantId = null) => {
   if (tenantId) query.andWhere('tenant_id', tenantId);
   const ticket = await query.first();
   if (!ticket) throw ApiError.notFound('Support ticket not found');
-  await db('tickets').where({ id }).del();
+  // Bug #11 fixed: Use soft-delete to preserve audit trail.
+  // Hard .del() breaks reporting and is inconsistent with all other 33 modules.
+  await db('tickets').where({ id }).update({ is_deleted: true, updated_at: new Date() });
   return { success: true };
 };
 
@@ -289,6 +291,7 @@ export const bulkDeleteTickets = async (ticketIds = [], tenantId = null) => {
   if (!Array.isArray(ticketIds) || ticketIds.length === 0) return { deletedCount: 0 };
   const query = db('tickets').whereIn('id', ticketIds);
   if (tenantId) query.andWhere('tenant_id', tenantId);
-  const deletedCount = await query.del();
+  // Bug #11 fixed: Use soft-delete for bulk operations as well.
+  const deletedCount = await query.update({ is_deleted: true, updated_at: new Date() });
   return { deletedCount };
 };

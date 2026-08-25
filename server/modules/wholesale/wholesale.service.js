@@ -390,7 +390,10 @@ export const collectOrderDue = async (id, data, tenantId = null) => {
     const newDue = Math.max(0, oldDue - pay);
     const newStatus = newDue === 0 ? 'COMPLETED' : wsOrder.status;
 
-    await db('wholesale_orders').where({ id }).update({
+    // Bug #20 fixed: Added tenant_id filter to prevent cross-tenant data mutation.
+    const wsUpQ = db('wholesale_orders').where({ id });
+    if (tenantId) wsUpQ.andWhere('tenant_id', tenantId);
+    await wsUpQ.update({
       paid_amount: newPaid,
       due_amount: newDue,
       status: newStatus,
@@ -420,7 +423,10 @@ export const collectOrderDue = async (id, data, tenantId = null) => {
   const pMethod = (data.paymentMethod || 'cash').toLowerCase();
   pb[pMethod] = (Number(pb[pMethod]) || 0) + pay;
 
-  await db('transactions').where({ id }).update({
+  // Bug #20 fixed: Added tenant_id filter to prevent cross-tenant data mutation on transactions.
+  const txUpQ = db('transactions').where({ id });
+  if (tenantId) txUpQ.andWhere('tenant_id', tenantId);
+  await txUpQ.update({
     payment_breakdown: JSON.stringify(pb),
     updated_at: new Date(),
   });
@@ -492,11 +498,14 @@ export const processOrderReturn = async (id, data, username = 'system', tenantId
     let existingLogs = [];
     try { existingLogs = typeof wsOrder.return_logs === 'string' ? JSON.parse(wsOrder.return_logs) : (wsOrder.return_logs || []); } catch { existingLogs = []; }
 
+    // Bug #36 fixed: Save return_logs to wholesale_orders (was building returnLog but
+    // never persisting it to the database - all return history was lost on every request).
     await db('wholesale_orders').where({ id }).update({
       grand_total: newGrandTotal,
       due_amount: newDue,
       paid_amount: newPaid,
       status: newGrandTotal === 0 ? 'RETURNED' : (newDue === 0 ? 'COMPLETED' : 'PARTIAL_RETURN'),
+      return_logs: JSON.stringify([...existingLogs, returnLog]),
       updated_at: new Date(),
     });
 

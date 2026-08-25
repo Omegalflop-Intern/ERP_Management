@@ -86,20 +86,18 @@ export const getAllInvestors = async (tenantId = null, branchId = null) => {
   };
 };
 
-export const createInvestor = async (data, tenantIdOrRecordedBy = null, branchIdOrTenantId = null) => {
-  let tenantId = data.tenantId || null;
-  let branchId = data.branchId || null;
-
-  if (tenantIdOrRecordedBy !== null && tenantIdOrRecordedBy !== undefined && tenantIdOrRecordedBy !== 'admin_test' && tenantIdOrRecordedBy !== 'system') {
-    tenantId = tenantIdOrRecordedBy;
-  }
-  if (branchIdOrTenantId !== null && branchIdOrTenantId !== undefined) {
-    tenantId = branchIdOrTenantId;
-  }
+// Bug #17 fixed: Refactored signature from confusing dual-purpose positional parameters
+// (tenantIdOrRecordedBy, branchIdOrTenantId) to explicit (data, tenantId, branchId).
+// Guard: if tenantId is a non-numeric sentinel string (e.g. 'system', 'admin_test'),
+// treat it as null — it was the old code's hacky recorded_by workaround.
+export const createInvestor = async (data, tenantId = null, branchId = null) => {
+  const isNumericTenant = (v) => v !== null && v !== undefined && !isNaN(Number(v));
+  const resolvedTenantId = isNumericTenant(tenantId) ? tenantId : (isNumericTenant(data.tenantId) ? data.tenantId : null);
+  const resolvedBranchId = isNumericTenant(branchId) ? branchId : (isNumericTenant(data.branchId) ? data.branchId : null);
 
   const initialCap = Number(data.initialCapital || 0);
   const [insertedId] = await db('investors').insert({
-    tenant_id: tenantId,
+    tenant_id: resolvedTenantId,
     name: data.name,
     phone: data.phone,
     email: data.email || null,
@@ -115,19 +113,19 @@ export const createInvestor = async (data, tenantIdOrRecordedBy = null, branchId
 
   if (data.initialCapital && Number(data.initialCapital) > 0) {
     await db('investor_transactions').insert({
-      tenant_id: tenantId || data.tenantId || null,
+      tenant_id: resolvedTenantId,
       investor_id: insertedId,
       type: 'DEPOSIT',
       amount: Number(data.initialCapital),
       payment_method: data.paymentMethod || 'cash',
       reference: 'Initial Investment Deposit',
       notes: 'Initial capital investment on creation',
-      recorded_by: (typeof tenantIdOrRecordedBy === 'string' && (tenantIdOrRecordedBy === 'admin_test' || tenantIdOrRecordedBy === 'system')) ? tenantIdOrRecordedBy : 'System',
+      recorded_by: data.recordedBy || 'system',
       is_deleted: false,
     });
   }
 
-  return getInvestorById(insertedId, tenantId || data.tenantId || null);
+  return getInvestorById(insertedId, resolvedTenantId);
 };
 
 export const getInvestorById = async (id, tenantId = null) => {

@@ -18,7 +18,7 @@ router.use(checkTenantStatus);
 router.get('/platform', requireSuperAdmin, settingsController.getPlatformSettings);
 router.put('/platform', requireSuperAdmin, settingsController.updatePlatformSettings);
 
-router.use(authorize('ADMIN'));
+router.use(authorize('ADMIN', 'MANAGER'));
 
 router.get('/', settingsController.getAllSettings);
 router.get('/array', settingsController.getSettingsArray);

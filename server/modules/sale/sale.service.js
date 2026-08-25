@@ -6,11 +6,12 @@ import emitter, { EVENTS } from '../../events/index.js';
 import crypto from 'crypto';
 
 const generateInvoiceNumber = async (tenantId = null) => {
-  const query = db('transactions').where({ tx_type: 'SALE' });
-  if (tenantId) query.where('tenant_id', tenantId);
-  const countRes = await query.count({ count: '*' }).first();
-  const num = (Number(countRes?.count || 0) + 1).toString().padStart(5, '0');
-  return `INV-${new Date().getFullYear()}-${num}`;
+  // Bug #2 fixed: Use timestamp + random suffix instead of COUNT(*)+1 to avoid race conditions
+  // with concurrent sales producing duplicate invoice numbers.
+  const year = new Date().getFullYear();
+  const ts = Date.now().toString(36).toUpperCase();
+  const rand = Math.random().toString(36).substring(2, 5).toUpperCase();
+  return `INV-${year}-${ts}-${rand}`;
 };
 
 function parseJSON(str) {
@@ -22,7 +23,13 @@ function parseJSON(str) {
 
 export function formatTransaction(row, customerRow = null) {
   if (!row) return null;
-  const breakdown = typeof row.payment_breakdown === 'string' ? JSON.parse(row.payment_breakdown) : (row.payment_breakdown || {});
+  // Bug #16 fixed: wrap JSON.parse in try/catch to prevent 500 on malformed payment_breakdown
+  let breakdown = {};
+  try {
+    breakdown = typeof row.payment_breakdown === 'string' ? JSON.parse(row.payment_breakdown) : (row.payment_breakdown || {});
+  } catch {
+    breakdown = {};
+  }
 
   return {
     _id: String(row.id),
@@ -157,45 +164,6 @@ export const createSale = async (data, createdBy = 'system') => {
   const invoiceNumber = await generateInvoiceNumber(tenantId);
   const soldDate = new Date();
 
-  for (const item of data.items) {
-    if (item.imeiOrSerial) {
-      const unitQuery = db('inventory_units').where({ imei_or_serial: item.imeiOrSerial, status: 'Available', is_deleted: false });
-      if (tenantId) unitQuery.where('tenant_id', tenantId);
-      const unit = await unitQuery.first();
-      if (unit) {
-        let history = [];
-        try { history = typeof unit.passport_history === 'string' ? JSON.parse(unit.passport_history) : (unit.passport_history || []); } catch { history = []; }
-        history.push({
-          event: 'SOLD',
-          details: `Sold on ${invoiceNumber}`,
-          amount: item.unitPrice,
-          performedBy: createdBy,
-          timestamp: soldDate.toISOString(),
-        });
-
-        const unitUpdate = db('inventory_units').where({ id: unit.id });
-        if (tenantId) unitUpdate.andWhere('tenant_id', tenantId);
-        await unitUpdate.update({
-          status: 'Sold',
-          sold_invoice_number: invoiceNumber,
-          sold_at: soldDate,
-          sold_to_customer_id: customerId,
-          passport_history: JSON.stringify(history),
-        });
-
-        const prodCountQuery = db('inventory_units').where({ product_id: item.productId, status: 'Available', is_deleted: false });
-        if (tenantId) prodCountQuery.andWhere('tenant_id', tenantId);
-        const availCountRes = await prodCountQuery.count({ count: '*' }).first();
-        const prodUpdate = db('products').where({ id: item.productId });
-        if (tenantId) prodUpdate.andWhere('tenant_id', tenantId);
-        await prodUpdate.update({ stock_quantity: Number(availCountRes?.count || 0) });
-      }
-    } else {
-      const requestedQty = Math.abs(item.qty || 1);
-      await db('products').where({ id: item.productId }).decrement('stock_quantity', requestedQty);
-    }
-  }
-
   const paymentBreakdown = {
     cash: data.paymentBreakdown?.cash || 0,
     bkash: data.paymentBreakdown?.bkash || 0,
@@ -206,43 +174,90 @@ export const createSale = async (data, createdBy = 'system') => {
     changeAmount,
   };
 
-  const [insertedId] = await db('transactions').insert({
-    tenant_id: tenantId,
-    branch_id: data.branchId || null,
-    invoice_number: invoiceNumber,
-    tx_type: 'SALE',
-    sale_type: data.saleType || 'RETAIL',
-    status: 'COMPLETED',
-    customer_id: customerId,
-    line_items: JSON.stringify(lineItems),
-    return_logs: JSON.stringify([]),
-    customer_name: data.customerName || customerObj?.name || 'Walk-in Customer',
-    customer_phone: data.customerPhone || customerObj?.phone || 'N/A',
-    customer_email: data.customerEmail || customerObj?.email || null,
-    customer_address: data.customerAddress || customerObj?.address || null,
-    sub_total: subTotal,
-    discount: data.discount || 0,
-    tax: data.tax || 0,
-    net_total: netTotal,
-    returned_amount: 0,
-    payment_breakdown: JSON.stringify(paymentBreakdown),
-    cashier_username: createdBy,
-    seller_name: data.sellerName || createdBy,
-    seller_id: data.sellerId || null,
-    notes: data.notes || null,
-    public_token: crypto.randomBytes(24).toString('hex'),
-    token_expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    is_deleted: false,
-  });
+  // Bug #1 fixed: Wrap all mutation steps in a DB transaction.
+  // Previously: if the customer.update() at the end threw, the IMEI status was already
+  // marked 'Sold' and stock_quantity was already decremented — leaving the DB corrupted.
+  let insertedId;
+  await db.transaction(async (trx) => {
+    for (const item of data.items) {
+      if (item.imeiOrSerial) {
+        const unitQuery = trx('inventory_units').where({ imei_or_serial: item.imeiOrSerial, status: 'Available', is_deleted: false });
+        if (tenantId) unitQuery.where('tenant_id', tenantId);
+        const unit = await unitQuery.first();
+        if (unit) {
+          let history = [];
+          try { history = typeof unit.passport_history === 'string' ? JSON.parse(unit.passport_history) : (unit.passport_history || []); } catch { history = []; }
+          history.push({
+            event: 'SOLD',
+            details: `Sold on ${invoiceNumber}`,
+            amount: item.unitPrice,
+            performedBy: createdBy,
+            timestamp: soldDate.toISOString(),
+          });
 
-  if (customerObj) {
-    const custUpdate = db('customers').where({ id: customerObj.id });
-    if (tenantId) custUpdate.andWhere('tenant_id', tenantId);
-    await custUpdate.update({
-      total_purchases: Number(customerObj.total_purchases || 0) + netTotal,
-      due_balance: Number(customerObj.due_balance || 0) + dueAmount,
+          const unitUpdate = trx('inventory_units').where({ id: unit.id });
+          if (tenantId) unitUpdate.andWhere('tenant_id', tenantId);
+          await unitUpdate.update({
+            status: 'Sold',
+            sold_invoice_number: invoiceNumber,
+            sold_at: soldDate,
+            sold_to_customer_id: customerId,
+            passport_history: JSON.stringify(history),
+          });
+
+          const prodCountQuery = trx('inventory_units').where({ product_id: item.productId, status: 'Available', is_deleted: false });
+          if (tenantId) prodCountQuery.andWhere('tenant_id', tenantId);
+          const availCountRes = await prodCountQuery.count({ count: '*' }).first();
+          const prodUpdate = trx('products').where({ id: item.productId });
+          if (tenantId) prodUpdate.andWhere('tenant_id', tenantId);
+          await prodUpdate.update({ stock_quantity: Number(availCountRes?.count || 0) });
+        }
+      } else {
+        const requestedQty = Math.abs(item.qty || 1);
+        const prodDecrQuery = trx('products').where({ id: item.productId });
+        if (tenantId) prodDecrQuery.andWhere('tenant_id', tenantId);
+        await prodDecrQuery.decrement('stock_quantity', requestedQty);
+      }
+    }
+
+    [insertedId] = await trx('transactions').insert({
+      tenant_id: tenantId,
+      branch_id: data.branchId || null,
+      invoice_number: invoiceNumber,
+      tx_type: 'SALE',
+      sale_type: data.saleType || 'RETAIL',
+      status: 'COMPLETED',
+      customer_id: customerId,
+      line_items: JSON.stringify(lineItems),
+      return_logs: JSON.stringify([]),
+      customer_name: data.customerName || customerObj?.name || 'Walk-in Customer',
+      customer_phone: data.customerPhone || customerObj?.phone || 'N/A',
+      customer_email: data.customerEmail || customerObj?.email || null,
+      customer_address: data.customerAddress || customerObj?.address || null,
+      sub_total: subTotal,
+      discount: data.discount || 0,
+      tax: data.tax || 0,
+      net_total: netTotal,
+      returned_amount: 0,
+      payment_breakdown: JSON.stringify(paymentBreakdown),
+      cashier_username: createdBy,
+      seller_name: data.sellerName || createdBy,
+      seller_id: data.sellerId || null,
+      notes: data.notes || null,
+      public_token: crypto.randomBytes(24).toString('hex'),
+      token_expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      is_deleted: false,
     });
-  }
+
+    if (customerObj) {
+      const custUpdate = trx('customers').where({ id: customerObj.id });
+      if (tenantId) custUpdate.andWhere('tenant_id', tenantId);
+      await custUpdate.update({
+        total_purchases: Number(customerObj.total_purchases || 0) + netTotal,
+        due_balance: Number(customerObj.due_balance || 0) + dueAmount,
+      });
+    }
+  });
 
   const sale = await getSaleById(insertedId, tenantId, data.branchId || null);
   emitter.emit(EVENTS.SALE_COMPLETED, { ...sale, tenantId });
@@ -472,27 +487,50 @@ export const deleteSale = async (id, tenantId = null, branchId = null) => {
 
   // 1. Restore product stock & inventory units (IMEIs)
   for (const item of sale.lineItems || []) {
-    if (item.productId) {
+    if (item.imeiOrSerial) {
+      // IMEI items: restore inventory_unit status and recalculate stock from count
+      const unitQuery = db('inventory_units').where({ imei_or_serial: item.imeiOrSerial });
+      if (tenantId) unitQuery.andWhere('tenant_id', tenantId);
+      await unitQuery.update({ status: 'Available', sold_invoice_number: null, sold_at: null, sold_to_customer_id: null, updated_at: new Date() });
+
+      // Recalculate stock_quantity for this product from live Available count
+      if (item.productId) {
+        const availCountQ = db('inventory_units').where({ product_id: item.productId, status: 'Available', is_deleted: false });
+        if (tenantId) availCountQ.andWhere('tenant_id', tenantId);
+        const availRes = await availCountQ.count({ count: '*' }).first();
+        const prodUpdQ = db('products').where({ id: item.productId });
+        if (tenantId) prodUpdQ.andWhere('tenant_id', tenantId);
+        await prodUpdQ.update({ stock_quantity: Number(availRes?.count || 0) });
+      }
+    } else if (item.productId) {
+      // Non-IMEI items: simple increment with tenant scope
       const prodQuery = db('products').where({ id: item.productId });
       if (tenantId) prodQuery.andWhere('tenant_id', tenantId);
       await prodQuery.increment('stock_quantity', Math.abs(item.qty || 1));
     }
-    if (item.imeiOrSerial) {
-      const unitQuery = db('inventory_units').where({ imei_or_serial: item.imeiOrSerial });
-      if (tenantId) unitQuery.andWhere('tenant_id', tenantId);
-      await unitQuery.update({ status: 'Available', sale_price: null, updated_at: new Date() });
-    }
   }
 
-  // 2. Restore customer due balance if any
-  const dueAmount = sale.paymentBreakdown?.dueAmount || 0;
-  if (sale.customerId && dueAmount > 0) {
-    const custId = typeof sale.customerId === 'object' ? (sale.customerId?.id || sale.customerId?._id) : sale.customerId;
-    if (custId) {
-      const custQuery = db('customers').where({ id: custId });
-      if (tenantId) custQuery.andWhere('tenant_id', tenantId);
-      await custQuery.decrement('due_balance', dueAmount);
+  // 2. Restore customer due balance and total_purchases
+  const custId = typeof sale.customerId === 'object' ? (sale.customerId?.id || sale.customerId?._id) : sale.customerId;
+  if (custId) {
+    const custQuery = db('customers').where({ id: custId });
+    if (tenantId) custQuery.andWhere('tenant_id', tenantId);
+    const dueAmount = sale.paymentBreakdown?.dueAmount || 0;
+    if (dueAmount > 0) {
+      await custQuery.clone().decrement('due_balance', dueAmount);
     }
+    // Bug #15 fixed: also decrement total_purchases by the sale net total
+    await custQuery.clone().decrement('total_purchases', Math.max(0, sale.netTotal || 0));
+  }
+
+  // Bug #26 fixed: soft-delete related RETURN transactions for this sale invoice
+  try {
+    const retDelQ = db('transactions').where({ tx_type: 'RETURN', is_deleted: false });
+    if (tenantId) retDelQ.andWhere('tenant_id', tenantId);
+    retDelQ.where('invoice_number', 'like', `RET-${sale.invoiceNumber}%`);
+    await retDelQ.update({ is_deleted: true, status: 'CANCELLED', updated_at: new Date() });
+  } catch (err) {
+    console.error('[deleteSale] Failed to soft-delete RETURN transactions:', err.message);
   }
 
   const txDel = db('transactions').where({ id });
@@ -520,16 +558,22 @@ export const processReturn = async (id, data, tenantId = null, branchId = null) 
     refundAmount += (lineItem.unitPrice * qty);
 
     // 1. Restock Product in inventory
+    // Bug #19 fixed: add tenant_id filter to prevent cross-tenant stock increment
     if (pId) {
-      await db('products').where({ id: pId }).increment('stock_quantity', qty);
+      const stockIncrQ = db('products').where({ id: pId });
+      if (tenantId) stockIncrQ.andWhere('tenant_id', tenantId);
+      await stockIncrQ.increment('stock_quantity', qty);
       emitter.emit(EVENTS.STOCK_UPDATED, { id: pId, name: lineItem.description || lineItem.name, tenantId });
       emitter.emit(EVENTS.PRODUCT_MUTATED, { id: pId, tenantId });
     }
 
-    // 2. If IMEI item, mark IMEI back to AVAILABLE
+    // 2. If IMEI item, mark IMEI back to Available in inventory_units
+    // Bug #4 fixed: was incorrectly writing to imei_records table; all IMEI ops use inventory_units
     const imeiVal = ri.imeiOrSerial || lineItem.imeiOrSerial;
     if (imeiVal) {
-      await db('imei_records').where({ imei: imeiVal }).update({ status: 'AVAILABLE', updated_at: new Date() });
+      const imeiRetQ = db('inventory_units').where({ imei_or_serial: imeiVal });
+      if (tenantId) imeiRetQ.andWhere('tenant_id', tenantId);
+      await imeiRetQ.update({ status: 'Available', sold_invoice_number: null, sold_at: null, sold_to_customer_id: null, updated_at: new Date() });
     }
   }
 

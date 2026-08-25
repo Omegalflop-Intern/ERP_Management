@@ -1,6 +1,7 @@
 import { db } from '../../config/db.knex.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { getPagination } from '../../utils/http/pagination.js';
+import { createAutomatedExpenseJournal } from '../accounting/accounting.service.js';
 
 function parseJSON(str) {
   if (typeof str === 'string') {
@@ -176,6 +177,23 @@ export const markAsPaid = async (id, paidBy = null, tenantId = null, branchId = 
   const empQuery = db('employees').where({ id: payroll.employee_id, is_deleted: false });
   applyTenantScope(empQuery, tenantId, 'employees');
   const employee = await empQuery.first();
+
+  // Bug #37 fixed: Create an accounting journal entry for the payroll payment
+  // so salary expenses are reflected in the general ledger.
+  try {
+    await createAutomatedExpenseJournal({
+      tenantId,
+      branchId,
+      expenseCategory: 'Staff Salaries & Payroll',
+      amount: Number(updated.net_salary || updated.net_pay || 0),
+      paymentMethod: 'CASH',
+      notes: `Payroll payment — ${employee?.full_name || employee?.name || `Employee #${payroll.employee_id}`} (${updated.month}/${updated.year})`,
+      createdBy: paidBy || 'system',
+    });
+  } catch (err) {
+    console.error('[Payroll] Failed to create accounting journal for payroll payment:', err.message);
+  }
+
   return formatPayroll(updated, employee);
 };
 

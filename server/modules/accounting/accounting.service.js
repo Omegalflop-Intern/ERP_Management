@@ -383,6 +383,9 @@ export const postJournalEntry = async (id, postedBy = 'system', tenantId = null,
     const jePost = db('journal_entries').where({ id });
     if (tenantId) jePost.andWhere('tenant_id', tenantId);
     if (branchId && branchId !== 'all') jePost.andWhere('branch_id', branchId);
+    // Bug #24 fixed: Update status in DB FIRST before applying to accounts.
+    // This prevents double-applying balances if applyLinesToAccounts throws midway
+    // and the entry is later retried with status still = DRAFT.
     await jePost.update({ status: 'POSTED', posted_by: postedBy });
     await applyLinesToAccounts(parseJSON(entry.lines), false, tenantId);
   }
@@ -552,10 +555,12 @@ export const getProfitLoss = async (from = '', to = '', tenantId = null, branchI
     if (from) poQuery.where('created_at', '>=', new Date(from + 'T00:00:00'));
     if (to) poQuery.where('created_at', '<=', new Date(to + 'T23:59:59'));
 
-    const poRows = await poQuery.select('id', 'total_cost', 'grand_total', 'paid_amount');
+    // Bug #9 fixed: P&L was querying non-existent columns 'total_cost' and 'grand_total'.
+    // The purchase_orders table uses 'sub_total' and 'net_total'.
+    const poRows = await poQuery.select('id', 'sub_total', 'net_total', 'paid_amount');
     purchasesCount = poRows.length;
     for (const po of poRows) {
-      totalPurchasesCost += Number(po.grand_total || po.total_cost || 0);
+      totalPurchasesCost += Number(po.net_total || po.sub_total || 0);
     }
   } catch (err) {
     // Non-blocking if table missing
@@ -598,18 +603,28 @@ export const recalculateAllAccountBalances = async (tenantId = null) => {
   applyTenantScope(acctQuery, tenantId, 'accounts');
   const allAccounts = await acctQuery;
 
-  for (const acct of allAccounts) {
-    await db('accounts').where({ id: acct.id }).update({ balance: 0 });
-  }
+  // Bug #27 fixed: Wrap balance reset + replay in a transaction to prevent a window
+  // of time where all account balances are 0 (causing stale reads during the operation).
+  await db.transaction(async (trx) => {
+    for (const acct of allAccounts) {
+      await trx('accounts').where({ id: acct.id }).update({ balance: 0 });
+    }
 
-  const jeQuery = db('journal_entries').where({ is_deleted: false, status: 'POSTED' });
-  applyTenantScope(jeQuery, tenantId, 'journal_entries');
-  const postedEntries = await jeQuery;
+    const jeQuery = trx('journal_entries').where({ is_deleted: false, status: 'POSTED' });
+    if (tenantId) jeQuery.where('tenant_id', tenantId);
+    const postedEntries = await jeQuery;
 
-  for (const entry of postedEntries) {
-    const lines = parseJSON(entry.lines);
-    await applyLinesToAccounts(lines, false, tenantId);
-  }
+    for (const entry of postedEntries) {
+      const lines = parseJSON(entry.lines);
+      for (const line of lines) {
+        if (line.accountId && (line.debit || line.credit)) {
+          await trx('accounts')
+            .where({ id: line.accountId })
+            .increment('balance', Number(line.debit || 0) - Number(line.credit || 0));
+        }
+      }
+    }
+  });
 };
 
 export const getTrialBalance = async (tenantId = null, branchId = null) => {
@@ -1011,17 +1026,26 @@ export const syncHistoricalJournals = async (tenantId = null) => {
     // ignore
   }
 
+  // Bug #12 fixed: Use soft-delete (is_deleted = true) instead of hard .delete()
+  // to maintain audit trail. Also add tenant scope to prevent cross-tenant data loss.
   // Clean up any legacy duplicate inventory purchase expenses
   try {
-    const dupExpenses = await db('expenses')
+    const dupExpQuery = db('expenses')
       .where('category', 'Inventory Purchase')
-      .orWhere('title', 'like', '%Product Restock Purchase%')
-      .select('id');
+      .orWhere('title', 'like', '%Product Restock Purchase%');
+    if (tenantId) dupExpQuery.andWhere('tenant_id', tenantId);
+    const dupExpenses = await dupExpQuery.select('id');
     if (dupExpenses.length > 0) {
       const expIds = dupExpenses.map(e => e.id);
-      await db('expenses').whereIn('id', expIds).delete();
+      // Soft-delete expenses
+      const expDelQ = db('expenses').whereIn('id', expIds);
+      if (tenantId) expDelQ.andWhere('tenant_id', tenantId);
+      await expDelQ.update({ is_deleted: true, updated_at: new Date() });
+      // Soft-delete related journal entries
       for (const eId of expIds) {
-        await db('journal_entries').where('reference', `EXP-${eId}`).delete();
+        const jeDelQ = db('journal_entries').where('reference', `EXP-${eId}`);
+        if (tenantId) jeDelQ.andWhere('tenant_id', tenantId);
+        await jeDelQ.update({ is_deleted: true });
       }
     }
   } catch (e) {
@@ -1108,15 +1132,17 @@ export const createAutomatedReturnJournal = async (sale, refundAmount, returnInv
         date: new Date(),
         description: `Sales Return (${ref}) - Customer: ${sale.customer_name || sale.customer?.name || 'Customer'}`,
         reference: ref,
-        lines,
-        status: 'POSTED',
-      });
+          status: 'POSTED',
+        });
+      }
+    } catch (err) {
+      console.error('[Accounting Auto-Journal Sale Return Error]:', err.message);
     }
-  } catch (err) {
-    console.error('[Accounting Auto-Journal Sale Return Error]:', err.message);
-  }
-};
+  };
+
 export const createAutomatedPurchaseReturnJournal = async (purchaseOrder, refundAmount) => {};
+// Bug #10 fixed: createAutomatedServiceJournal now creates POSTED journals.
+// Previously used DRAFT status, so repair revenue was never reflected in the ledger.
 export const createAutomatedPurchaseJournal = async (purchaseOrder, createdBy = 'system') => {
   try {
     const tenantId = purchaseOrder.tenantId || purchaseOrder.tenant_id || null;
@@ -1244,7 +1270,8 @@ export const createAutomatedServiceJournal = async (repairTicket, amountPaid, pa
           { accountId: debitAcct.id, code: debitAcct.code, accountName: debitAcct.name, debit: amt, credit: 0 },
           { accountId: revAcct.id, code: revAcct.code, accountName: revAcct.name, debit: 0, credit: amt },
         ],
-        status: 'DRAFT',
+        // Bug #10 fixed: Changed DRAFT → POSTED so repair revenue actually appears in the ledger.
+        status: 'POSTED',
       });
     }
   } catch (err) {
@@ -1290,17 +1317,23 @@ export const getCashFlowStatement = async (from = '', to = '', tenantId = null, 
     dueCollected += Number(pb.dueCollected || 0);
   }
 
-  // Repair service income
-  const repairQuery = db('repair_tickets')
-    .where({ is_deleted: false })
-    .whereBetween('created_at', [fromDate, toDate]);
-  applyTenantScope(repairQuery, tenantId, 'repair_tickets');
-  if (branchId && branchId !== 'all') repairQuery.andWhere((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
-  const repairRows = await repairQuery.select('advance_paid', 'estimated_cost', 'status', 'created_at');
+  // Bug #23 fixed: Removed direct repair_tickets query that was double-counting repair income.
+  // Repair service revenue is already captured in POSTED journal entries (RPR- references).
+  // Using journal entries as the single source of truth prevents double-counting.
   let repairIncome = 0;
-  for (const r of repairRows) {
-    if (r.status === 'DELIVERED') repairIncome += Number(r.estimated_cost || 0);
-    else repairIncome += Number(r.advance_paid || 0);
+  try {
+    const repairJeQuery = db('journal_entries')
+      .where({ is_deleted: false, status: 'POSTED' })
+      .where('reference', 'like', 'RPR-%')
+      .whereBetween('created_at', [fromDate, toDate]);
+    applyTenantScope(repairJeQuery, tenantId, 'journal_entries');
+    if (branchId && branchId !== 'all') repairJeQuery.andWhere((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+    const repairJeRows = await repairJeQuery.select('total_credit', 'total_debit');
+    for (const rj of repairJeRows) {
+      repairIncome += Number(rj.total_credit || 0);
+    }
+  } catch (err) {
+    // Non-blocking if journal_entries not available
   }
 
   // Expenses paid

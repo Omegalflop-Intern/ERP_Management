@@ -15,13 +15,16 @@ export const authorize = (...roles) => {
       }
 
       if (roles.length > 0 && !roles.includes(userRoleName)) {
+        // Bug #8 fixed: Removed perms.length > 0 fallback. Previously any role with ANY
+        // permission passed ADMIN-only routes (CASHIER → ADMIN privilege escalation).
+        // Now ONLY roles with wildcard '*' permission can bypass role enforcement.
         const roleId = req.user.role;
         if (roleId) {
           const role = await db('roles').where({ id: roleId, is_deleted: false }).first();
           if (role) {
             let perms = role.permissions;
             if (typeof perms === 'string') { try { perms = JSON.parse(perms); } catch { perms = []; } }
-            if (Array.isArray(perms) && (perms.includes('*') || perms.length > 0)) {
+            if (Array.isArray(perms) && perms.includes('*')) {
               return next();
             }
           }

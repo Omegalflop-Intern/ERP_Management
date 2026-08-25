@@ -1,7 +1,9 @@
 import { EventEmitter } from 'events';
 
 const emitter = new EventEmitter();
-emitter.setMaxListeners(20);
+// Bug #28 fixed: Increased from 20 to 100. In production with many concurrent SSE
+// clients, 20 listeners is easily hit and causes spam of MaxListenersExceededWarning.
+emitter.setMaxListeners(100);
 
 export const EVENTS = {
   STOCK_UPDATED: 'stock:updated',

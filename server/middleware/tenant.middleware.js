@@ -26,8 +26,10 @@ export const checkTenantStatus = async (req, res, next) => {
       return next();
     }
 
+    // Bug #31 fixed: Removed silent next() for null tenantId on non-admin users.
+    // A non-admin user without a tenant has no business accessing tenant-scoped routes.
     if (!tenantId) {
-      return next();
+      return next(ApiError.forbidden('No tenant context found. Access denied.'));
     }
 
     const tenant = await db('tenants').where({ id: tenantId }).first();

@@ -122,6 +122,15 @@ export const createTransfer = async (data, transferredBy = 'system', tenantId = 
     });
   }
 
+  // Bug #35 fixed: For non-IMEI transfers, decrement source branch stock_quantity.
+  // IMEI items are already handled above by marking the unit as 'Transferred'.
+  if (!data.imeiOrSerial && data.productId) {
+    const qty = Number(data.quantity || 1);
+    const srcDecrQ = db('products').where({ id: data.productId });
+    if (tenantId) srcDecrQ.andWhere('tenant_id', tenantId);
+    await srcDecrQ.decrement('stock_quantity', qty);
+  }
+
   const [insertedId] = await db('stock_transfers').insert({
     tenant_id: tenantId || data.tenantId || null,
     transfer_number: transferNumber,

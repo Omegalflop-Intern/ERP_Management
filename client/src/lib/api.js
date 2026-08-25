@@ -75,7 +75,10 @@ api.interceptors.response.use(
           {},
           { withCredentials: true }
         );
-        const token = res.data?.data?.token;
+        // Bug #34 fixed: Server returns { data: { accessToken, refreshToken } }
+        // but client was looking for .token (which doesn't exist), causing silent logout
+        // on every token refresh attempt.
+        const token = res.data?.data?.accessToken || res.data?.accessToken;
 
         if (token) {
           localStorage.setItem('accessToken', token);

@@ -74,6 +74,11 @@ export const getSalePdf = async (req, res, next) => {
     const tenantId = req.user?.tenantId || null;
     const sale = await saleService.getSaleById(req.params.id, tenantId, req.selectedBranchId);
     const pdfBuffer = await generateInvoicePdfBuffer(sale);
+    // Bug #25 fixed: Null-check pdfBuffer before attempting to read .length or send it.
+    // generateInvoicePdfBuffer can return null if PDF generation fails.
+    if (!pdfBuffer || pdfBuffer.length === 0) {
+      return next(ApiError.internal('Failed to generate PDF. Please try again.'));
+    }
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `inline; filename="${sale.invoiceNumber}.pdf"`);
     res.setHeader('Content-Length', pdfBuffer.length);

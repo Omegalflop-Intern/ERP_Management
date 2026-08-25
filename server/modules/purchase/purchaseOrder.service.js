@@ -381,11 +381,14 @@ export const receiveGoods = async (id, grnEntries, receivedBy = 'system', tenant
   const order = await getPurchaseOrderById(id, tenantId, branchId);
   if (!order) throw ApiError.notFound('Purchase order not found');
 
+  // Only validate IMEI duplicates for entries that have an imeiOrSerial
   for (const entry of grnEntries) {
-    const imeiQuery = db('inventory_units').where({ imei_or_serial: entry.imeiOrSerial, is_deleted: false });
-    if (tenantId) imeiQuery.where('tenant_id', tenantId);
-    const existing = await imeiQuery.first();
-    if (existing) throw ApiError.conflict(`IMEI ${entry.imeiOrSerial} already exists in inventory`);
+    if (entry.imeiOrSerial) {
+      const imeiQuery = db('inventory_units').where({ imei_or_serial: entry.imeiOrSerial, is_deleted: false });
+      if (tenantId) imeiQuery.where('tenant_id', tenantId);
+      const existing = await imeiQuery.first();
+      if (existing) throw ApiError.conflict(`IMEI/Serial ${entry.imeiOrSerial} already exists in inventory`);
+    }
   }
 
   const receivedByLineItem = {};
@@ -393,27 +396,44 @@ export const receiveGoods = async (id, grnEntries, receivedBy = 'system', tenant
     const key = String(entry.productId);
     receivedByLineItem[key] = (receivedByLineItem[key] || 0) + 1;
 
-    const history = [{
-      event: 'PURCHASED',
-      details: `Received via GRN — ${order.poNumber}`,
-      performedBy: receivedBy,
-      amount: entry.purchasePrice,
-      timestamp: new Date().toISOString(),
-    }];
+    if (entry.imeiOrSerial) {
+      // IMEI-tracked item: insert inventory_unit record
+      const history = [{
+        event: 'PURCHASED',
+        details: `Received via GRN — ${order.poNumber}`,
+        performedBy: receivedBy,
+        amount: entry.purchasePrice,
+        timestamp: new Date().toISOString(),
+      }];
 
-    await db('inventory_units').insert({
-      tenant_id: tenantId || order.tenantId || null,
-      branch_id: order.branch_id || order.branchId || null,
-      imei_or_serial: entry.imeiOrSerial,
-      product_id: entry.productId,
-      supplier_id: order.supplierId?.id || order.supplierId,
-      purchase_price: entry.purchasePrice,
-      current_selling_price: entry.sellingPrice,
-      warranty_months: entry.warrantyMonths || 12,
-      passport_history: JSON.stringify(history),
-      status: 'Available',
-      is_deleted: false,
-    });
+      await db('inventory_units').insert({
+        tenant_id: tenantId || order.tenantId || null,
+        branch_id: order.branch_id || order.branchId || null,
+        imei_or_serial: entry.imeiOrSerial,
+        product_id: entry.productId,
+        supplier_id: order.supplierId?.id || order.supplierId,
+        purchase_price: entry.purchasePrice,
+        current_selling_price: entry.sellingPrice,
+        warranty_months: entry.warrantyMonths || 12,
+        passport_history: JSON.stringify(history),
+        status: 'Available',
+        is_deleted: false,
+      });
+
+      // Recalculate product stock_quantity from Available inventory_units count
+      const availCountQ = db('inventory_units').where({ product_id: entry.productId, status: 'Available', is_deleted: false });
+      if (tenantId) availCountQ.andWhere('tenant_id', tenantId);
+      const availRes = await availCountQ.count({ count: '*' }).first();
+      const prodUpdQ = db('products').where({ id: entry.productId });
+      if (tenantId) prodUpdQ.andWhere('tenant_id', tenantId);
+      await prodUpdQ.update({ stock_quantity: Number(availRes?.count || 0) });
+    } else {
+      // Bug #22 fixed: Non-IMEI item — increment products.stock_quantity directly
+      const qty = Number(entry.qty || entry.quantity || 1);
+      const prodIncrQ = db('products').where({ id: entry.productId });
+      if (tenantId) prodIncrQ.andWhere('tenant_id', tenantId);
+      await prodIncrQ.increment('stock_quantity', qty);
+    }
   }
 
   const currentLineItems = order.lineItems || [];
@@ -640,6 +660,41 @@ export const returnToSupplier = async (id, returnPayload, reason = '', returnedB
 export const deletePurchaseOrder = async (id, tenantId = null, branchId = null) => {
   const order = await getPurchaseOrderById(id, tenantId, branchId);
   if (!order) throw ApiError.notFound('Purchase order not found');
+
+  // Bug #5 fixed: Restore stock_quantity before soft-deleting a received PO
+  if (['RECEIVED', 'PARTIALLY_RECEIVED', 'COMPLETED'].includes(order.status)) {
+    const lineItems = order.lineItems || [];
+    for (const item of lineItems) {
+      const pId = item.productId?._id || item.productId?.id || item.productId;
+      const receivedQty = Number(item.receivedQty || 0);
+      if (pId && receivedQty > 0) {
+        // For IMEI-tracked items, check if inventory_units exist and update status
+        const grnEntries = order.grnEntries || [];
+        const itemImeis = grnEntries.filter((g) => String(g.productId) === String(pId));
+        if (itemImeis.length > 0) {
+          for (const g of itemImeis) {
+            if (g.imeiOrSerial) {
+              const uq = db('inventory_units').where({ imei_or_serial: g.imeiOrSerial, status: 'Available' });
+              if (tenantId) uq.andWhere('tenant_id', tenantId);
+              await uq.update({ is_deleted: true, updated_at: new Date() });
+            }
+          }
+          // Recalculate stock after removing IMEI units
+          const availCountQ = db('inventory_units').where({ product_id: pId, status: 'Available', is_deleted: false });
+          if (tenantId) availCountQ.andWhere('tenant_id', tenantId);
+          const availRes = await availCountQ.count({ count: '*' }).first();
+          const prodUpdQ = db('products').where({ id: pId });
+          if (tenantId) prodUpdQ.andWhere('tenant_id', tenantId);
+          await prodUpdQ.update({ stock_quantity: Number(availRes?.count || 0) });
+        } else {
+          // Non-IMEI: decrement stock_quantity
+          const prodDecrQ = db('products').where({ id: pId });
+          if (tenantId) prodDecrQ.andWhere('tenant_id', tenantId);
+          await prodDecrQ.decrement('stock_quantity', receivedQty);
+        }
+      }
+    }
+  }
 
   const poDel = db('purchase_orders').where({ id });
   if (tenantId) poDel.andWhere('tenant_id', tenantId);

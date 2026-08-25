@@ -11,6 +11,7 @@ export const authenticate = async (req, res, next) => {
     } else if (req.cookies?.accessToken) {
       token = req.cookies.accessToken;
     } else if (req.query?.token) {
+      // SSE EventSource cannot set headers — query string is the only auth method
       token = req.query.token;
     }
     if (!token) throw ApiError.unauthorized('No token provided');

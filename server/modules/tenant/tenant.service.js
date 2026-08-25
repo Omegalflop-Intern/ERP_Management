@@ -335,7 +335,12 @@ async function generateUniqueSubdomain(shopName, initialSubdomain) {
  */
 async function createShopOwnerAdminUser(tenantId, data, isSuperAdmin = false) {
   const emailLower = data.email.toLowerCase().trim();
-  const rawPassword = data.password || '123456';
+  // Bug #6 fixed: Removed hardcoded '123456' default password. Password is now required.
+  // In production, the caller (super admin form or self-registration) must always provide one.
+  if (!data.password || data.password.trim().length < 6) {
+    throw ApiError.badRequest('A secure password (min 6 characters) is required to create the shop admin account.');
+  }
+  const rawPassword = data.password;
   const passwordHash = await bcrypt.hash(rawPassword, 10);
   const baseUsername = (data.username || emailLower.split('@')[0] || `owner_${tenantId}`)
     .toLowerCase()

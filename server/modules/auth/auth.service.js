@@ -5,13 +5,16 @@ import { generateAccessToken, generateRefreshToken, verifyToken } from '../../ut
 import { ApiError } from '../../utils/http/ApiError.js';
 import { sendOTPEmail, sendPasswordResetEmail } from '../../config/mailer.js';
 
+// Bug #29 fixed: Use crypto.randomInt for cryptographically secure OTP generation.
+// Math.random() is predictable and should never be used for security codes.
 export const generateOTP = () => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return crypto.randomInt(100000, 999999).toString();
 };
 
-export const sendOTP = async (recipient, otpCode) => {
+// Bug #32 fixed: sendOTP now accepts and uses recipientName for personalised emails
+export const sendOTP = async (recipient, otpCode, recipientName = '') => {
   if (recipient && recipient.includes('@')) {
-    return sendOTPEmail(recipient, otpCode);
+    return sendOTPEmail(recipient, otpCode, recipientName);
   }
   const { sendSMS } = await import('../../config/sms.js');
   return sendSMS(recipient, `Your ERP verification OTP is: ${otpCode}`);
@@ -204,7 +207,8 @@ export const loginInitiate = async (identifier, password, tenantId = null) => {
   const isMatch = await bcrypt.compare(password, userRow.password_hash);
   if (!isMatch) throw ApiError.unauthorized('Invalid username or password');
 
-  const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+  // loginInitiate also needs secure OTP (Bug #29 fixed consistently here too)
+  const otpCode = crypto.randomInt(100000, 999999).toString();
   const otpQ = db('users').where({ id: userRow.id });
   if (tenantId) otpQ.andWhere('tenant_id', tenantId);
   await otpQ.update({
@@ -353,10 +357,25 @@ export const verifyEmail = async (email, otpCode, tenantId = null) => {
   return verifyOTP(email, otpCode, tenantId);
 };
 
+// Bug #13/#14/#18 fixed: resendVerificationOTP was generating OTP and sending it by email
+// but never saving otp_code + otp_expires_at to the DB. Verification always failed.
 export const resendVerificationOTP = async (email, tenantId = null) => {
-  const user = await findUserByLogin(email, tenantId);
+  const normalizedEmail = (email || '').trim().toLowerCase();
+  const query = db('users').where({ email: normalizedEmail, is_deleted: false });
+  if (tenantId) query.where('tenant_id', tenantId);
+  const user = await query.first();
   if (!user) throw ApiError.notFound('User not found');
+
   const otpCode = generateOTP();
-  await sendOTP(user.email, otpCode);
+  // Save OTP to DB so verifyOTP can validate it
+  const otpSaveQ = db('users').where({ id: user.id });
+  if (tenantId) otpSaveQ.andWhere('tenant_id', tenantId);
+  await otpSaveQ.update({
+    otp_code: otpCode,
+    otp_expires_at: new Date(Date.now() + 10 * 60 * 1000),
+    otp_attempts: 0,
+  });
+
+  await sendOTP(user.email, otpCode, user.full_name || user.username);
   return { email: user.email };
 };
