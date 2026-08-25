@@ -110,9 +110,35 @@ export const getAllAccounts = async (page = 1, limit = 100, search = '', type = 
 
   const rows = await dataQuery.orderBy('accounts.code', 'asc').limit(limit).offset(offset);
 
+  // Get journal entry counts and last activity per account from JSON lines
+  const accountIds = rows.map((r) => r.id);
+  let journalCounts = {};
+  let lastTransactions = {};
+  if (accountIds.length > 0) {
+    const jeRows = await db('journal_entries')
+      .where('is_deleted', false)
+      .select('id', 'date', 'lines');
+    for (const je of jeRows) {
+      let lines = [];
+      try { lines = typeof je.lines === 'string' ? JSON.parse(je.lines) : (je.lines || []); } catch { lines = []; }
+      for (const line of lines) {
+        const acctId = line.accountId || line.account_id;
+        if (acctId && accountIds.includes(acctId)) {
+          journalCounts[acctId] = (journalCounts[acctId] || 0) + 1;
+          if (!lastTransactions[acctId] || new Date(je.date) > new Date(lastTransactions[acctId])) {
+            lastTransactions[acctId] = je.date;
+          }
+        }
+      }
+    }
+  }
+
   const accounts = rows.map((row) => {
     const parentRow = row.p_id ? { id: row.p_id, code: row.p_code, name: row.p_name } : null;
-    return formatAccount(row, parentRow);
+    const formatted = formatAccount(row, parentRow);
+    formatted.journalEntryCount = journalCounts[row.id] || 0;
+    formatted.lastTransactionDate = lastTransactions[row.id] || null;
+    return formatted;
   });
 
   return { accounts, pagination: getPagination(total, page, limit) };

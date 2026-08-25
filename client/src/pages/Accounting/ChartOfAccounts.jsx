@@ -265,9 +265,10 @@ export default function ChartOfAccounts() {
               <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Type</th>
               <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase">
                 <span className="flex items-center justify-center gap-1" title="Toggle ON/OFF to show or hide this account in POS checkout">
-                  POS Status
+                  POS
                 </span>
               </th>
+              <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase" title="Number of journal entries">Entries</th>
               <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Balance</th>
               <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
             </tr>
@@ -276,7 +277,7 @@ export default function ChartOfAccounts() {
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i} className="border-b border-gray-100 dark:border-gray-800/50">
-                  {Array.from({ length: 6 }).map((__, j) => (
+                  {Array.from({ length: 7 }).map((__, j) => (
                     <td key={j} className="px-4 py-3">
                       <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
                     </td>
@@ -285,7 +286,7 @@ export default function ChartOfAccounts() {
               ))
             ) : accounts.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-12 text-center text-gray-500">
+                <td colSpan={7} className="px-4 py-12 text-center text-gray-500">
                   <Landmark className="w-12 h-12 mx-auto mb-3 opacity-50" />
                   <p className="font-medium">No accounts found</p>
                   <p className="text-xs mt-1">Click "Quick Setup" to create standard accounts, or "Add Account" to create custom ones.</p>
@@ -302,7 +303,9 @@ export default function ChartOfAccounts() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{a.name}</div>
-                    {a.description && <div className="text-xs text-gray-500">{a.description}</div>}
+                    {a.subType && <div className="text-[10px] text-gray-400 font-mono">{a.subType.replace(/_/g, ' ')}</div>}
+                    {a.description && <div className="text-[11px] text-gray-500 mt-0.5">{a.description}</div>}
+                    {a.parentId && a.parentId.name && <div className="text-[10px] text-gray-400">Parent: {a.parentId.name}</div>}
                   </td>
                   <td className="px-4 py-3 text-center">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${TYPE_COLORS[a.type]}`}>
@@ -319,20 +322,26 @@ export default function ChartOfAccounts() {
                           name: a.name,
                         })
                       }
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                      className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold transition-all ${
                         a.isActive !== false
-                          ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200 dark:hover:bg-emerald-900/70'
-                          : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                          ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200'
                       }`}
                       title={a.isActive !== false ? `Click to disable ${a.name} in POS` : `Click to enable ${a.name} in POS`}
                     >
-                      {a.isActive !== false ? (
-                        <ToggleRight className="w-4 h-4" />
-                      ) : (
-                        <ToggleLeft className="w-4 h-4" />
-                      )}
+                      {a.isActive !== false ? <ToggleRight className="w-3 h-3" /> : <ToggleLeft className="w-3 h-3" />}
                       {a.isActive !== false ? 'ON' : 'OFF'}
                     </button>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <div className="text-xs font-mono text-gray-600 dark:text-gray-400">
+                      {a.journalEntryCount || 0}
+                    </div>
+                    {a.lastTransactionDate && (
+                      <div className="text-[9px] text-gray-400">
+                        {new Date(a.lastTransactionDate).toLocaleDateString('en-BD', { month: 'short', day: 'numeric' })}
+                      </div>
+                    )}
                   </td>
                   <td className={`px-4 py-3 text-right text-sm font-semibold ${a.balance >= 0 ? 'text-gray-900 dark:text-gray-100' : 'text-red-600 dark:text-red-400'}`}>
                     ৳{a.balance.toLocaleString()}
