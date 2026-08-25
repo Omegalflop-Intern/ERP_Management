@@ -587,7 +587,6 @@ export const sendCustomerInvoiceEmail = async (toEmail, customerName, invoiceDat
             </div>
           </td>
         </tr>
-
       </table>
     </td></tr>
   </table>

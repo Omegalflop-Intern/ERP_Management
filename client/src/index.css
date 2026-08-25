@@ -1419,13 +1419,15 @@ input[type="checkbox"]:focus {
     top: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
+    min-height: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
     background: #ffffff !important;
     box-shadow: none !important;
     border: none !important;
     z-index: 999999 !important;
-    display: block !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
 
   #printable-receipt {
