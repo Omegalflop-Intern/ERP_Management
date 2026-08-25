@@ -1,7 +1,7 @@
 import { db } from '../../config/db.knex.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { getPagination } from '../../utils/http/pagination.js';
-import { validateWalletBalance, createAutomatedReturnJournal } from '../accounting/accounting.service.js';
+import { createAutomatedReturnJournal } from '../accounting/accounting.service.js';
 import emitter, { EVENTS } from '../../events/index.js';
 import crypto from 'crypto';
 
@@ -135,19 +135,6 @@ export const createSale = async (data, createdBy = 'system') => {
 
   if (rawDigital > netTotal + 0.01) {
     throw ApiError.badRequest(`Digital payment amount (৳${rawDigital}) exceeds sale net total (৳${netTotal})`);
-  }
-
-  const tenantIdForWallet = data.tenantId || null;
-  const walletPayments = [
-    { method: 'bkash', amount: data.paymentBreakdown?.bkash },
-    { method: 'rocket', amount: data.paymentBreakdown?.rocket },
-    { method: 'nagad', amount: data.paymentBreakdown?.nagad },
-    { method: 'bank', amount: data.paymentBreakdown?.bank },
-  ];
-  for (const wp of walletPayments) {
-    if (Number(wp.amount || 0) > 0) {
-      await validateWalletBalance(wp.method, wp.amount, tenantIdForWallet);
-    }
   }
 
   const changeAmount = Math.max(0, totalPaidRaw - netTotal);
@@ -451,19 +438,22 @@ export const updateSale = async (id, data, tenantId = null, branchId = null) => 
         custId = existing.customerId;
       }
 
-      let custDueQuery = null;
+      // Bug #30 fixed: Recalculate customer due_balance from scratch instead of
+      // incrementing/decrementing (stale-read lost-update pattern under concurrent updates).
       if (custId && !isNaN(Number(custId))) {
-        custDueQuery = db('customers').where({ id: Number(custId) });
-      } else if (existing.customerPhone) {
-        custDueQuery = db('customers').where({ phone: existing.customerPhone, is_deleted: false });
-      }
-      if (custDueQuery) {
-        if (tenantId) custDueQuery.andWhere('tenant_id', tenantId);
-        if (dueDiff > 0) {
-          await custDueQuery.increment('due_balance', dueDiff);
-        } else {
-          await custDueQuery.decrement('due_balance', Math.abs(dueDiff));
-        }
+        const freshSalesQ = db('transactions').where({ customer_id: Number(custId), is_deleted: false, tx_type: 'SALE' });
+        if (tenantId) freshSalesQ.andWhere('tenant_id', tenantId);
+        const allSales = await freshSalesQ.select('payment_breakdown');
+        const freshDue = allSales.reduce((sum, s) => {
+          let pb = {};
+          try { pb = typeof s.payment_breakdown === 'string' ? JSON.parse(s.payment_breakdown) : (s.payment_breakdown || {}); } catch { pb = {}; }
+          return sum + Number(pb.dueAmount || 0);
+        }, 0);
+        // Adjust for the current sale's new due (not yet saved to DB)
+        const adjustedDue = Math.max(0, freshDue - oldDue + dueAmount);
+        const custUpdateQ = db('customers').where({ id: Number(custId) });
+        if (tenantId) custUpdateQ.andWhere('tenant_id', tenantId);
+        await custUpdateQ.update({ due_balance: adjustedDue });
       }
     }
   }

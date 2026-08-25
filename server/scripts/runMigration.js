@@ -24,6 +24,8 @@ import * as addBranchIdToAuditLogs from '../migrations/20260812000019_add_branch
 import * as addBranchIdToSharedTables from '../migrations/20260812000020_add_branch_id_to_shared_tables.js';
 import * as addBranchIdToJournalEntries from '../migrations/20260816000001_add_branch_id_to_journal_entries.js';
 import * as alterProductsBrandDefault from '../migrations/20260816000002_alter_products_brand_default.js';
+import * as addReceiptsToExpenses from '../migrations/20260824000001_add_receipts_to_expenses.js';
+import * as createRecurringExpensesTable from '../migrations/20260824000002_create_recurring_expenses_table.js';
 
 async function ensureDatabase() {
   try {
@@ -92,8 +94,12 @@ export async function runAutoMigrations({ verbose = true } = {}) {
   await addBranchIdToJournalEntries.up(db);
   log('🔄 Running migration 22: alter products brand default value...');
   await alterProductsBrandDefault.up(db);
+  log('🔄 Running migration 23: add receipts column to expenses...');
+  await addReceiptsToExpenses.up(db);
+  log('🔄 Running migration 24: create recurring_expenses table...');
+  await createRecurringExpensesTable.up(db);
 
-  if (verbose) console.log('✅ All 22 migrations completed successfully!');
+  if (verbose) console.log('✅ All 24 migrations completed successfully!');
   return true;
 }
 

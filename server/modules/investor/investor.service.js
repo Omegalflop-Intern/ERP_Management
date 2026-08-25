@@ -86,14 +86,16 @@ export const getAllInvestors = async (tenantId = null, branchId = null) => {
   };
 };
 
-// Bug #17 fixed: Refactored signature from confusing dual-purpose positional parameters
-// (tenantIdOrRecordedBy, branchIdOrTenantId) to explicit (data, tenantId, branchId).
-// Guard: if tenantId is a non-numeric sentinel string (e.g. 'system', 'admin_test'),
-// treat it as null — it was the old code's hacky recorded_by workaround.
-export const createInvestor = async (data, tenantId = null, branchId = null) => {
-  const isNumericTenant = (v) => v !== null && v !== undefined && !isNaN(Number(v));
-  const resolvedTenantId = isNumericTenant(tenantId) ? tenantId : (isNumericTenant(data.tenantId) ? data.tenantId : null);
-  const resolvedBranchId = isNumericTenant(branchId) ? branchId : (isNumericTenant(data.branchId) ? data.branchId : null);
+// Bug #17 fixed: Clarified the true calling convention. All callsites use:
+//   createInvestor(data, recordedBy_string, tenantId)
+// The old parameter names (tenantIdOrRecordedBy, branchIdOrTenantId) were confusing,
+// causing the risk of wrong tenant assignment. Now named explicitly.
+export const createInvestor = async (data, recordedBy = 'system', tenantId = null) => {
+  // tenantId: prefer explicit param (3rd arg), fallback to data.tenantId
+  const resolvedTenantId = (tenantId !== null && tenantId !== undefined && !isNaN(Number(tenantId)))
+    ? tenantId
+    : (data.tenantId && !isNaN(Number(data.tenantId)) ? data.tenantId : null);
+  const resolvedBranchId = (data.branchId && !isNaN(Number(data.branchId))) ? data.branchId : null;
 
   const initialCap = Number(data.initialCapital || 0);
   const [insertedId] = await db('investors').insert({
@@ -120,7 +122,7 @@ export const createInvestor = async (data, tenantId = null, branchId = null) => 
       payment_method: data.paymentMethod || 'cash',
       reference: 'Initial Investment Deposit',
       notes: 'Initial capital investment on creation',
-      recorded_by: data.recordedBy || 'system',
+      recorded_by: typeof recordedBy === 'string' ? recordedBy : 'system',
       is_deleted: false,
     });
   }
