@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   Smartphone,
@@ -57,28 +57,57 @@ import { toast } from 'sonner';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
 import api from '../../lib/api';
 
-function AnimatedCounter({ end, suffix = '', prefix = '', duration = 2000 }) {
+function AnimatedCounter({ end, suffix = '', prefix = '', duration = 2200 }) {
   const [count, setCount] = useState(0);
+  const [hasStarted, setHasStarted] = useState(false);
+  const ref = useRef(null);
 
   useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setHasStarted(true);
+        }
+      },
+      { threshold: 0.15 }
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!hasStarted) return;
+
     let startTimestamp = null;
-    const target = typeof end === 'number' ? end : parseInt(end, 10) || 0;
+    const target = typeof end === 'number' ? end : parseFloat(end) || 0;
+    const isDecimal = String(end).includes('.');
 
     const step = (timestamp) => {
       if (!startTimestamp) startTimestamp = timestamp;
       const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-      setCount(Math.floor(progress * target));
+      // Smooth ease-out cubic curve
+      const easeProgress = 1 - Math.pow(1 - progress, 3);
+      const currentVal = easeProgress * target;
+
+      setCount(isDecimal ? parseFloat(currentVal.toFixed(1)) : Math.floor(currentVal));
+
       if (progress < 1) {
         window.requestAnimationFrame(step);
+      } else {
+        setCount(target);
       }
     };
     window.requestAnimationFrame(step);
-  }, [end, duration]);
+  }, [hasStarted, end, duration]);
 
   return (
-    <span>
+    <span ref={ref}>
       {prefix}
-      {count.toLocaleString()}
+      {typeof count === 'number' ? count.toLocaleString() : count}
       {suffix}
     </span>
   );
@@ -475,18 +504,28 @@ export default function LandingPage() {
     }
   };
 
-  const navLinks = [
-    { id: 'home', label: 'Home', icon: Layers },
-    { id: 'features', label: 'Features', icon: Zap },
-    { id: 'modules', label: 'Modules', icon: Box },
-    { id: 'pricing', label: 'Pricing', icon: CreditCard },
-    { id: 'about', label: 'About', icon: Building2 },
-    { id: 'contact', label: 'Contact', icon: MessageSquare },
+  const [pagesDropdownOpen, setPagesDropdownOpen] = useState(false);
+
+  const mainNavLinks = [
+    { id: 'home', label: 'Home', icon: Layers, isScroll: true },
+    { id: 'features', label: 'Features', icon: Zap, isScroll: true },
+    { id: 'modules', label: 'Modules', icon: Box, isScroll: true },
+    { id: 'pricing', label: 'Pricing', icon: CreditCard, isScroll: true },
+  ];
+
+  const publicPageLinks = [
+    { label: 'About Us', to: '/about', icon: Building2, desc: 'Our mission, vision & gadget ERP story' },
+    { label: 'Contact Support', to: '/contact', icon: MessageSquare, desc: 'Sales inquiries & 24/7 technical help' },
+    { label: 'Developer Profile', to: '/developer', icon: Code, desc: 'Architect portfolio & tech stack' },
+    { label: 'Terms of Service', to: '/terms', icon: Scale, desc: 'SaaS licensing & tenant guidelines' },
+    { label: 'Privacy Policy', to: '/privacy', icon: Shield, desc: 'Data encryption & isolation protocols' },
+    { label: 'Refund Policy', to: '/refund', icon: FileText, desc: 'Subscription billing & refund terms' },
   ];
 
   const scrollTo = (id) => {
     setActiveTab(id);
     setMobileMenuOpen(false);
+    setPagesDropdownOpen(false);
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
 
@@ -516,14 +555,15 @@ export default function LandingPage() {
             </div>
           </button>
 
+          {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-1 p-1 bg-white/5 border border-white/5 rounded-full">
-            {navLinks.map((tab) => {
+            {mainNavLinks.map((tab) => {
               const Icon = tab.icon;
               return (
                 <button
                   key={tab.id}
                   onClick={() => scrollTo(tab.id)}
-                  className={`px-4 py-1.5 rounded-full font-bold text-[11px] transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                  className={`px-3.5 py-1.5 rounded-full font-bold text-[11px] transition-all flex items-center gap-1.5 whitespace-nowrap ${
                     activeTab === tab.id
                       ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
                       : 'text-slate-400 hover:text-white hover:bg-white/5'
@@ -534,6 +574,72 @@ export default function LandingPage() {
                 </button>
               );
             })}
+
+            <Link
+              to="/about"
+              className="px-3.5 py-1.5 rounded-full font-bold text-[11px] text-slate-400 hover:text-white hover:bg-white/5 transition-all flex items-center gap-1.5 whitespace-nowrap"
+            >
+              <Building2 className="h-3.5 w-3.5" />
+              About
+            </Link>
+
+            <Link
+              to="/contact"
+              className="px-3.5 py-1.5 rounded-full font-bold text-[11px] text-slate-400 hover:text-white hover:bg-white/5 transition-all flex items-center gap-1.5 whitespace-nowrap"
+            >
+              <MessageSquare className="h-3.5 w-3.5" />
+              Contact
+            </Link>
+
+            {/* Pages & Legal Dropdown */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setPagesDropdownOpen(!pagesDropdownOpen)}
+                className="px-3.5 py-1.5 rounded-full font-bold text-[11px] text-slate-400 hover:text-white hover:bg-white/5 transition-all flex items-center gap-1 whitespace-nowrap"
+              >
+                <span>Legal & Pages</span>
+                <ChevronRight
+                  className={`h-3.5 w-3.5 transition-transform duration-200 ${
+                    pagesDropdownOpen ? 'rotate-90 text-indigo-400' : ''
+                  }`}
+                />
+              </button>
+
+              {pagesDropdownOpen && (
+                <div
+                  onMouseLeave={() => setPagesDropdownOpen(false)}
+                  className="absolute right-0 top-full mt-2 w-64 p-2 bg-[#0e0e24] border border-white/10 rounded-2xl shadow-2xl backdrop-blur-2xl space-y-1 animate-in fade-in zoom-in-95 duration-150 z-50"
+                >
+                  <div className="px-3 py-1.5 text-[9px] font-black uppercase tracking-wider text-slate-400 border-b border-white/5">
+                    Platform Documentation & Legal
+                  </div>
+                  {publicPageLinks.map((p) => {
+                    const Icon = p.icon;
+                    return (
+                      <Link
+                        key={p.to}
+                        to={p.to}
+                        onClick={() => setPagesDropdownOpen(false)}
+                        className="flex items-start gap-2.5 p-2.5 rounded-xl hover:bg-white/5 text-slate-300 hover:text-white transition-all group"
+                      >
+                        <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-colors shrink-0 mt-0.5">
+                          <Icon className="h-3.5 w-3.5" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-white group-hover:text-indigo-300 transition-colors">
+                            {p.label}
+                          </div>
+                          <div className="text-[10px] text-slate-400 leading-tight truncate">
+                            {p.desc}
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </nav>
 
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
@@ -570,45 +676,72 @@ export default function LandingPage() {
           </div>
         </div>
 
+        {/* Mobile Navigation Drawer */}
         {mobileMenuOpen && (
-          <div className="lg:hidden pt-3 pb-3 border-t border-white/10 space-y-2.5 animate-in fade-in slide-in-from-top-2 duration-200">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-1 flex items-center justify-between">
-              <span>Navigation Menu</span>
-              <span className="text-[9px] text-indigo-400 font-extrabold">OmniManage ERP</span>
+          <div className="lg:hidden pt-3 pb-4 border-t border-white/10 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200 max-h-[80vh] overflow-y-auto">
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-1 mb-2 flex items-center justify-between">
+                <span>Landing Sections</span>
+                <span className="text-[9px] text-indigo-400 font-extrabold">OmniManage ERP</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                {mainNavLinks.map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => scrollTo(tab.id)}
+                      className={`p-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all ${
+                        isActive
+                          ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-600/20'
+                          : 'text-slate-300 bg-white/5 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-white' : 'text-indigo-400'}`} />
+                      <span>{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-              {navLinks.map((tab) => {
-                const Icon = tab.icon;
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => scrollTo(tab.id)}
-                    className={`p-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all ${
-                      isActive
-                        ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-600/20'
-                        : 'text-slate-300 bg-white/5 hover:bg-white/10 hover:text-white'
-                    }`}
-                  >
-                    <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-white' : 'text-indigo-400'}`} />
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
+
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-1 mb-2">
+                Public Pages & Legal
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                {publicPageLinks.map((p) => {
+                  const Icon = p.icon;
+                  return (
+                    <Link
+                      key={p.to}
+                      to={p.to}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-slate-300 hover:text-white flex items-center gap-2.5 transition-all text-xs font-semibold"
+                    >
+                      <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 shrink-0">
+                        <Icon className="h-3.5 w-3.5" />
+                      </div>
+                      <span>{p.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
 
             <div className="pt-2 border-t border-white/10 flex items-center gap-2">
               <Link
                 to="/login"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex-1 py-2 rounded-xl font-bold text-xs text-center text-slate-200 bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
+                className="flex-1 py-2.5 rounded-xl font-bold text-xs text-center text-slate-200 bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
               >
                 Sign In
               </Link>
               <Link
                 to="/register-shop"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex-1 py-2 rounded-xl font-bold text-xs text-center text-white bg-gradient-to-r from-indigo-600 to-violet-600 shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-1.5"
+                className="flex-1 py-2.5 rounded-xl font-bold text-xs text-center text-white bg-gradient-to-r from-indigo-600 to-violet-600 shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-1.5"
               >
                 <span>Register Shop</span>
                 <ArrowRight className="h-3.5 w-3.5" />

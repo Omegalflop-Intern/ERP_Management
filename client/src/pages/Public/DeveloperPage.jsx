@@ -222,14 +222,29 @@ export default function DeveloperPage() {
             </div>
 
             {/* Profile Avatar Card */}
-            <div className="relative shrink-0">
-              <div className="w-48 h-48 sm:w-56 sm:h-56 rounded-2xl bg-cyan-300 border-4 border-black p-3 shadow-[8px_8px_0px_0px_#000] flex flex-col items-center justify-center text-center">
-                <div className="w-24 h-24 rounded-xl bg-white border-3 border-black flex items-center justify-center font-black text-3xl shadow-[4px_4px_0px_0px_#000] mb-3">
-                  SD
+            <div className="relative shrink-0 group">
+              <div className="w-52 h-56 sm:w-60 sm:h-64 rounded-3xl bg-cyan-300 border-4 border-black p-4 shadow-[8px_8px_0px_0px_#000] flex flex-col items-center justify-center text-center transition-transform hover:-translate-y-1">
+                <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-2xl bg-white border-3 border-black shadow-[4px_4px_0px_0px_#000] mb-3 overflow-hidden">
+                  <img
+                    src="https://github.com/salahuddingfx.png"
+                    alt="Salah Uddin Kader"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      const fallback = e.target.parentElement.querySelector('.avatar-fallback');
+                      if (fallback) fallback.style.display = 'flex';
+                    }}
+                  />
+                  <div
+                    className="avatar-fallback w-full h-full bg-amber-300 items-center justify-center font-black text-3xl text-black"
+                    style={{ display: 'none' }}
+                  >
+                    SD
+                  </div>
                 </div>
-                <div className="font-black text-sm uppercase tracking-wider">Salahuddin</div>
-                <div className="font-bold text-xs bg-yellow-300 border border-black px-2 py-0.5 rounded-md mt-1">
-                  @salahuddingfx
+                <div className="font-black text-sm uppercase tracking-wider text-black">Salah Uddin Kader</div>
+                <div className="font-bold text-xs bg-yellow-300 border border-black px-2.5 py-0.5 rounded-md mt-1 shadow-[2px_2px_0px_0px_#000]">
+                  Full-Stack Architect
                 </div>
               </div>
             </div>

@@ -1,5 +1,5 @@
-import { lazy, Suspense } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { lazy, Suspense, useEffect } from 'react';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import RoleBasedRoute from './components/auth/RoleBasedRoute';
 import DashboardLayout from './components/layout/DashboardLayout';
@@ -7,6 +7,23 @@ import { useAuth } from './context/AuthContext';
 import { useInactivityLogout } from './hooks/useInactivityLogout';
 import { useSSE } from './hooks/useSSE';
 import { detectSubdomain } from './utils/subdomain';
+
+function ScrollToTop() {
+  const { pathname, search, hash } = useLocation();
+
+  useEffect(() => {
+    if (!hash) {
+      window.scrollTo(0, 0);
+    } else {
+      const el = document.getElementById(hash.replace('#', ''));
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  }, [pathname, search, hash]);
+
+  return null;
+}
 
 // Lazy-loaded pages
 const Login = lazy(() => import('./pages/Auth/Login'));
@@ -211,6 +228,7 @@ export default function App() {
 
   return (
     <Suspense fallback={<PageSkeletonLoader />}>
+      <ScrollToTop />
       <Routes>
         <Route
           path="/login"
