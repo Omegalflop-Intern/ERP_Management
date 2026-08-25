@@ -668,7 +668,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
       .catch(() => {});
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Fetch tenant info (shop name + plan) for the logged-in shop user
+  // Fetch tenant info (shop name + plan + logo) for the logged-in shop user
   const { data: tenantInfo } = useQuery({
     queryKey: ['my-tenant-info', user?.tenantId],
     queryFn: async () => {
@@ -678,6 +678,24 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
     enabled: !!user?.tenantId,
     staleTime: 5 * 60 * 1000,
   });
+
+  // Fetch settings for companyLogo fallback
+  const { data: settings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: async () => {
+      const res = await api.get('/settings');
+      return res.data?.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const [logoError, setLogoError] = useState(false);
+  const shopLogo = tenantInfo?.logo || user?.tenant?.logo || settings?.companyLogo;
+
+  useEffect(() => {
+    setLogoError(false);
+  }, [shopLogo]);
+
   const userMenuRef = useRef(null);
   const mobileSettingsRef = useRef(null);
 
@@ -755,9 +773,18 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
         </button>
         <div className="flex items-center gap-2 font-bold text-xl text-[#2563EB] dark:text-blue-400">
           <div
-            className={`w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/40 flex items-center justify-center text-[#2563EB] dark:text-blue-400 ${styled ? 'neu-icon !bg-blue-50 !border-none' : ''}`}
+            className={`w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/40 flex items-center justify-center text-[#2563EB] dark:text-blue-400 overflow-hidden shrink-0 ${styled ? 'neu-icon !bg-blue-50 !border-none' : ''}`}
           >
-            <Building2 className="w-5 h-5" />
+            {shopLogo && !logoError ? (
+              <img
+                src={getAssetUrl(shopLogo)}
+                alt="Logo"
+                className="w-full h-full object-cover"
+                onError={() => setLogoError(true)}
+              />
+            ) : (
+              <Building2 className="w-5 h-5" />
+            )}
           </div>
           <span className="hidden md:inline-flex items-center gap-1.5 font-extrabold text-base tracking-tight text-slate-800 dark:text-slate-100">
             <span>
