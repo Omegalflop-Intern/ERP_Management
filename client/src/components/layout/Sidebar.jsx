@@ -102,6 +102,11 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 1024);
   const [openSubmenus, setOpenSubmenus] = useState({});
   const [logoError, setLogoError] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
+
+  useEffect(() => {
+    setAvatarError(false);
+  }, [user?.avatar]);
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 1024);
@@ -271,8 +276,21 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
             className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40 transition-colors"
             title="Profile"
           >
-            <div className="w-7 h-7 rounded-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 font-medium text-xs shrink-0">
-              {user?.fullName ? user.fullName.charAt(0).toUpperCase() : <User className="w-3.5 h-3.5" />}
+            <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 font-bold text-xs shrink-0 overflow-hidden border border-slate-200/60 dark:border-slate-700/60">
+              {user?.avatar && !avatarError ? (
+                <img
+                  src={getAssetUrl(user.avatar)}
+                  alt={user?.fullName || user?.username || 'User'}
+                  className="w-full h-full object-cover"
+                  onError={() => setAvatarError(true)}
+                />
+              ) : user?.fullName ? (
+                user.fullName.charAt(0).toUpperCase()
+              ) : user?.username ? (
+                user.username.charAt(0).toUpperCase()
+              ) : (
+                <User className="w-3.5 h-3.5" />
+              )}
             </div>
 
             {!isCollapsed && (
