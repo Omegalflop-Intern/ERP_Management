@@ -382,94 +382,246 @@ export const sendCustomerInvoiceEmail = async (toEmail, customerName, invoiceDat
   if (!transporter) await initMailer();
 
   const customer = customerName || 'Valued Customer';
-  const invoiceNo = invoiceData.invoiceNo || 'Receipt';
-  const grandTotal = invoiceData.grandTotal ? `\u09F3${Number(invoiceData.grandTotal).toLocaleString()}` : '\u09F30';
+  // Fix: was falling back to literal string 'Receipt' instead of showing no invoice number
+  const invoiceNo = invoiceData.invoiceNo || invoiceData.invoiceNumber || `INV-${Date.now()}`;
+  const netTotal = Number(invoiceData.grandTotal || invoiceData.netTotal || 0);
+  const subTotal = Number(invoiceData.subTotal || netTotal);
+  const discount = Number(invoiceData.discount || 0);
+  const tax = Number(invoiceData.tax || 0);
+  const fmt = (n) => `\u09F3${Number(n || 0).toLocaleString('en-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-  const mailOptions = {
-    from: `"${SENDER_NAME}" <${SENDER_EMAIL}>`,
-    to: toEmail,
-    replyTo: SUPPORT_EMAIL,
-    subject: `Purchase Receipt ${invoiceNo} - ${SENDER_NAME}`,
-    headers: baseHeaders,
-    attachments: invoiceData.pdfBuffer
-      ? [
-          {
-            filename: `${invoiceNo}.pdf`,
-            content: invoiceData.pdfBuffer,
-            contentType: 'application/pdf',
-          },
-        ]
-      : [],
-    text: `Dear ${customer},\n\nThank you for your purchase at ${SENDER_NAME}.\n\nInvoice: ${invoiceNo}\nTotal: ${grandTotal}\nStatus: ${invoiceData.paymentStatus || 'Completed'}\n\n${invoiceData.invoiceLink || ''}\n\nThank you,\n${SENDER_NAME}\n${COMPANY_ADDRESS || ''}`,
-    html: `
-      <!DOCTYPE html>
-      <html>
-      <head><meta charset="utf-8"></head>
-      <body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif;">
-        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:30px 0;">
-          <tr><td align="center">
-            <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #e0e0e0;">
+  const paymentBreakdown = invoiceData.paymentBreakdown || {};
+  const dueAmount = Number(paymentBreakdown.dueAmount || invoiceData.dueAmount || 0);
+  const isPaid = dueAmount <= 0;
+  const paymentStatus = isPaid ? 'Paid' : `Due: ${fmt(dueAmount)}`;
+  const statusColor = isPaid ? '#059669' : '#dc2626';
+  const statusBg = isPaid ? '#d1fae5' : '#fee2e2';
+
+  const saleDate = invoiceData.createdAt
+    ? new Date(invoiceData.createdAt).toLocaleDateString('en-BD', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+    : new Date().toLocaleDateString('en-BD', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+  // Fetch tenant shop info from DB using tenantId
+  let shopName = SENDER_NAME;
+  let shopPhone = '';
+  let shopAddress = COMPANY_ADDRESS;
+  let shopEmail = SENDER_EMAIL;
+  let shopLogo = '';
+  try {
+    if (invoiceData.tenantId) {
+      const tenant = await db('tenants').where({ id: invoiceData.tenantId, is_deleted: false }).first();
+      if (tenant) {
+        shopName = tenant.shop_name || shopName;
+        shopPhone = tenant.phone || '';
+        shopEmail = tenant.email || shopEmail;
+      }
+      // Also check settings table for company address/logo
+      const settingsRows = await db('settings')
+        .where({ tenant_id: invoiceData.tenantId })
+        .whereIn('key', ['companyAddress', 'companyLogo', 'companyPhone'])
+        .select('key', 'value');
+      for (const s of settingsRows) {
+        try {
+          const val = JSON.parse(s.value);
+          if (s.key === 'companyAddress' && val) shopAddress = val;
+          if (s.key === 'companyLogo' && val) shopLogo = val;
+          if (s.key === 'companyPhone' && val) shopPhone = shopPhone || val;
+        } catch { /* ignore */ }
+      }
+    }
+  } catch { /* non-blocking — use defaults */ }
+
+  // Line items table rows
+  const lineItems = Array.isArray(invoiceData.lineItems) ? invoiceData.lineItems : [];
+  const lineItemsHtml = lineItems.length > 0
+    ? lineItems.map((item, i) => `
+      <tr style="background:${i % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+        <td style="padding:10px 14px;font-size:13px;color:#1e293b;border-bottom:1px solid #e2e8f0;">
+          ${item.description || item.name || 'Item'}
+          ${item.imeiOrSerial ? `<br><span style="font-size:11px;color:#64748b;">IMEI/S/N: ${item.imeiOrSerial}</span>` : ''}
+        </td>
+        <td style="padding:10px 14px;font-size:13px;color:#64748b;border-bottom:1px solid #e2e8f0;text-align:center;">${Number(item.qty || 1)}</td>
+        <td style="padding:10px 14px;font-size:13px;color:#475569;border-bottom:1px solid #e2e8f0;text-align:right;">${fmt(item.unitPrice)}</td>
+        <td style="padding:10px 14px;font-size:13px;font-weight:700;color:#0f172a;border-bottom:1px solid #e2e8f0;text-align:right;">${fmt(item.totalPrice || (Number(item.unitPrice || 0) * Number(item.qty || 1)))}</td>
+      </tr>`).join('')
+    : `<tr><td colspan="4" style="padding:16px;text-align:center;color:#94a3b8;font-size:13px;">No items</td></tr>`;
+
+  // Payment method pills
+  const paymentMethods = [];
+  if (Number(paymentBreakdown.cash || 0) > 0) paymentMethods.push(`Cash: ${fmt(paymentBreakdown.cash)}`);
+  if (Number(paymentBreakdown.bkash || 0) > 0) paymentMethods.push(`bKash: ${fmt(paymentBreakdown.bkash)}`);
+  if (Number(paymentBreakdown.nagad || 0) > 0) paymentMethods.push(`Nagad: ${fmt(paymentBreakdown.nagad)}`);
+  if (Number(paymentBreakdown.rocket || 0) > 0) paymentMethods.push(`Rocket: ${fmt(paymentBreakdown.rocket)}`);
+  if (Number(paymentBreakdown.bank || 0) > 0) paymentMethods.push(`Bank: ${fmt(paymentBreakdown.bank)}`);
+  const paymentMethodsHtml = paymentMethods.length > 0
+    ? paymentMethods.map(m => `<span style="display:inline-block;padding:3px 10px;background:#e0f2fe;color:#0369a1;border-radius:20px;font-size:11px;font-weight:600;margin:2px;">${m}</span>`).join(' ')
+    : '<span style="color:#94a3b8;font-size:12px;">N/A</span>';
+
+  const logoHtml = shopLogo
+    ? `<img src="${shopLogo}" alt="${shopName}" style="height:36px;max-width:140px;object-fit:contain;margin-bottom:8px;display:block;margin:0 auto 8px;">`
+    : '';
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Invoice ${invoiceNo} — ${shopName}</title>
+</head>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',system-ui,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:32px 16px;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+
+        <!-- HEADER -->
+        <tr>
+          <td style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);padding:32px 36px;text-align:center;">
+            ${logoHtml}
+            <div style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;">${shopName}</div>
+            <div style="font-size:12px;color:#94a3b8;margin-top:4px;">
+              ${shopPhone ? `📞 ${shopPhone}` : ''}
+              ${shopPhone && shopAddress ? ' &nbsp;·&nbsp; ' : ''}
+              ${shopAddress ? `📍 ${shopAddress}` : ''}
+            </div>
+            <div style="margin-top:20px;display:inline-block;">
+              <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:10px 24px;display:inline-block;">
+                <div style="font-size:11px;color:#94a3b8;font-weight:600;letter-spacing:1px;text-transform:uppercase;">Sales Receipt</div>
+                <div style="font-size:18px;font-weight:700;color:#ffffff;margin-top:2px;">${invoiceNo}</div>
+              </div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- STATUS BADGE + CUSTOMER INFO -->
+        <tr>
+          <td style="padding:24px 36px 0;">
+            <table width="100%" cellpadding="0" cellspacing="0">
               <tr>
-                <td style="background:#1a1a2e;padding:24px 32px;text-align:center;">
-                  <h1 style="margin:0;color:#ffffff;font-size:18px;font-weight:700;">Thank You for Your Purchase!</h1>
-                  <p style="margin:6px 0 0;color:#aaa;font-size:12px;">Invoice #${invoiceNo}</p>
+                <td>
+                  <div style="font-size:13px;color:#64748b;margin-bottom:2px;">Bill To</div>
+                  <div style="font-size:16px;font-weight:700;color:#0f172a;">${customer}</div>
+                  ${invoiceData.customerPhone ? `<div style="font-size:12px;color:#64748b;margin-top:2px;">📞 ${invoiceData.customerPhone}</div>` : ''}
+                  ${invoiceData.customerAddress ? `<div style="font-size:12px;color:#64748b;">📍 ${invoiceData.customerAddress}</div>` : ''}
                 </td>
-              </tr>
-              <tr>
-                <td style="padding:32px;">
-                  <p style="margin:0 0 16px;color:#333;font-size:14px;">Dear <strong>${customer}</strong>,</p>
-                  <p style="margin:0 0 20px;color:#555;font-size:14px;line-height:1.6;">
-                    Thank you for shopping at <strong>${SENDER_NAME}</strong>. Here is your transaction summary:
-                  </p>
-                  <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;border:1px solid #e0e0e0;">
-                    <tr style="background:#f8f8f8;">
-                      <td style="padding:10px 14px;border-bottom:1px solid #e0e0e0;color:#555;font-size:13px;">Invoice Number</td>
-                      <td style="padding:10px 14px;border-bottom:1px solid #e0e0e0;text-align:right;font-weight:700;color:#333;font-size:13px;">${invoiceNo}</td>
-                    </tr>
-                    <tr>
-                      <td style="padding:10px 14px;border-bottom:1px solid #e0e0e0;color:#555;font-size:13px;">Total Amount</td>
-                      <td style="padding:10px 14px;border-bottom:1px solid #e0e0e0;text-align:right;color:#c00;font-weight:700;font-size:15px;">${grandTotal}</td>
-                    </tr>
-                    <tr style="background:#f8f8f8;">
-                      <td style="padding:10px 14px;color:#555;font-size:13px;">Payment Status</td>
-                      <td style="padding:10px 14px;text-align:right;color:#1a7a1a;font-weight:700;font-size:13px;">${invoiceData.paymentStatus || 'Completed'}</td>
-                    </tr>
-                  </table>
-                  ${invoiceData.invoiceLink ? `
-                  <table width="100%" cellpadding="0" cellspacing="0">
-                    <tr>
-                      <td align="center" style="padding:8px 0 16px;">
-                        <a href="${invoiceData.invoiceLink}" style="display:inline-block;padding:10px 28px;background:#1a1a2e;color:#ffffff;font-size:13px;font-weight:700;text-decoration:none;">
-                          View Invoice
-                        </a>
-                      </td>
-                    </tr>
-                  </table>` : ''}
-                  <p style="margin:0;color:#888;font-size:12px;">If you have any questions, please contact our support team.</p>
-                </td>
-              </tr>
-              <tr>
-                <td style="background:#f8f8f8;border-top:1px solid #e0e0e0;padding:16px 32px;text-align:center;">
-                  <p style="margin:0;color:#999;font-size:11px;">
-                    &copy; ${new Date().getFullYear()} ${SENDER_NAME}. All rights reserved.
-                  </p>
-                  ${addressBlock}
-                  <p style="margin:4px 0 0;color:#bbb;font-size:10px;">
-                    This is an automated email. Please do not reply.
-                  </p>
+                <td style="text-align:right;vertical-align:top;">
+                  <span style="display:inline-block;padding:6px 14px;background:${statusBg};color:${statusColor};border-radius:20px;font-size:12px;font-weight:700;">${paymentStatus}</span>
+                  <div style="font-size:11px;color:#94a3b8;margin-top:6px;">${saleDate}</div>
+                  ${invoiceData.cashierUsername ? `<div style="font-size:11px;color:#94a3b8;">Cashier: ${invoiceData.cashierUsername}</div>` : ''}
                 </td>
               </tr>
             </table>
-          </td></tr>
-        </table>
-      </body>
-      </html>
-    `,
+          </td>
+        </tr>
+
+        <!-- DIVIDER -->
+        <tr><td style="padding:16px 36px 0;"><div style="border-top:1px solid #e2e8f0;"></div></td></tr>
+
+        <!-- LINE ITEMS TABLE -->
+        <tr>
+          <td style="padding:20px 36px;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">
+              <thead>
+                <tr style="background:#f8fafc;">
+                  <th style="padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:#64748b;letter-spacing:0.5px;text-transform:uppercase;border-bottom:2px solid #e2e8f0;">Item</th>
+                  <th style="padding:10px 14px;text-align:center;font-size:11px;font-weight:700;color:#64748b;letter-spacing:0.5px;text-transform:uppercase;border-bottom:2px solid #e2e8f0;">Qty</th>
+                  <th style="padding:10px 14px;text-align:right;font-size:11px;font-weight:700;color:#64748b;letter-spacing:0.5px;text-transform:uppercase;border-bottom:2px solid #e2e8f0;">Unit Price</th>
+                  <th style="padding:10px 14px;text-align:right;font-size:11px;font-weight:700;color:#64748b;letter-spacing:0.5px;text-transform:uppercase;border-bottom:2px solid #e2e8f0;">Total</th>
+                </tr>
+              </thead>
+              <tbody>${lineItemsHtml}</tbody>
+            </table>
+          </td>
+        </tr>
+
+        <!-- TOTALS SECTION -->
+        <tr>
+          <td style="padding:0 36px 20px;">
+            <table cellpadding="0" cellspacing="0" style="margin-left:auto;min-width:240px;">
+              ${subTotal !== netTotal ? `
+              <tr>
+                <td style="padding:5px 14px 5px 0;font-size:13px;color:#64748b;">Subtotal</td>
+                <td style="padding:5px 0;font-size:13px;color:#0f172a;text-align:right;">${fmt(subTotal)}</td>
+              </tr>` : ''}
+              ${discount > 0 ? `
+              <tr>
+                <td style="padding:5px 14px 5px 0;font-size:13px;color:#64748b;">Discount</td>
+                <td style="padding:5px 0;font-size:13px;color:#dc2626;text-align:right;">- ${fmt(discount)}</td>
+              </tr>` : ''}
+              ${tax > 0 ? `
+              <tr>
+                <td style="padding:5px 14px 5px 0;font-size:13px;color:#64748b;">Tax</td>
+                <td style="padding:5px 0;font-size:13px;color:#0f172a;text-align:right;">+ ${fmt(tax)}</td>
+              </tr>` : ''}
+              <tr>
+                <td colspan="2" style="padding-top:8px;"><div style="border-top:2px solid #0f172a;"></div></td>
+              </tr>
+              <tr>
+                <td style="padding:8px 14px 8px 0;font-size:15px;font-weight:800;color:#0f172a;">Grand Total</td>
+                <td style="padding:8px 0;font-size:18px;font-weight:800;color:#0f172a;text-align:right;">${fmt(netTotal)}</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- PAYMENT METHODS -->
+        <tr>
+          <td style="padding:0 36px 24px;">
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px 16px;">
+              <div style="font-size:11px;font-weight:700;color:#64748b;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:8px;">Payment Method</div>
+              <div>${paymentMethodsHtml}</div>
+              ${dueAmount > 0 ? `<div style="margin-top:8px;font-size:12px;color:#dc2626;font-weight:600;">⚠ Due Balance: ${fmt(dueAmount)}</div>` : ''}
+            </div>
+          </td>
+        </tr>
+
+        <!-- VIEW INVOICE BUTTON -->
+        ${invoiceData.invoiceLink ? `
+        <tr>
+          <td style="padding:0 36px 24px;text-align:center;">
+            <a href="${invoiceData.invoiceLink}" style="display:inline-block;padding:12px 32px;background:#0f172a;color:#ffffff;font-size:13px;font-weight:700;text-decoration:none;border-radius:8px;letter-spacing:0.3px;">
+              View Full Invoice Online ↗
+            </a>
+          </td>
+        </tr>` : ''}
+
+        <!-- FOOTER -->
+        <tr>
+          <td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:20px 36px;text-align:center;">
+            <div style="font-size:13px;color:#0f172a;font-weight:600;margin-bottom:4px;">Thank you for shopping at ${shopName}! 🙏</div>
+            <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;">
+              For support, reply to this email or contact us at ${shopEmail}
+            </div>
+            <div style="font-size:10px;color:#cbd5e1;">
+              © ${new Date().getFullYear()} ${shopName}. All rights reserved.<br>
+              This is an automated receipt. Please do not reply directly to this email.
+            </div>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  const text = `Dear ${customer},\n\nThank you for your purchase at ${shopName}!\n\nInvoice: ${invoiceNo}\nDate: ${saleDate}\nTotal: ${fmt(netTotal)}\nStatus: ${paymentStatus}\n\n${invoiceData.invoiceLink ? `View invoice: ${invoiceData.invoiceLink}\n\n` : ''}${shopPhone ? `Contact: ${shopPhone}\n` : ''}${shopAddress ? `Address: ${shopAddress}\n` : ''}\nThank you,\n${shopName}`;
+
+  const mailOptions = {
+    from: `"${shopName}" <${SENDER_EMAIL}>`,
+    to: toEmail,
+    replyTo: shopEmail !== SENDER_EMAIL ? shopEmail : SUPPORT_EMAIL,
+    subject: `🧾 Receipt ${invoiceNo} — ${shopName}`,
+    headers: baseHeaders,
+    attachments: invoiceData.pdfBuffer
+      ? [{ filename: `Receipt-${invoiceNo}.pdf`, content: invoiceData.pdfBuffer, contentType: 'application/pdf' }]
+      : [],
+    text,
+    html,
   };
 
   try {
     const info = await transporter.sendMail(mailOptions);
-    console.log(`[Customer Invoice] Receipt sent to ${toEmail} for ${invoiceNo}`);
+    console.log(`[Customer Invoice] Receipt sent to ${toEmail} for ${invoiceNo} (shop: ${shopName})`);
     return { success: true, messageId: info.messageId };
   } catch (err) {
     console.error(`[Customer Invoice Error]: ${err.message}`);

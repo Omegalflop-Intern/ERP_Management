@@ -24,9 +24,12 @@ import * as addBranchIdToAuditLogs from '../migrations/20260812000019_add_branch
 import * as addBranchIdToSharedTables from '../migrations/20260812000020_add_branch_id_to_shared_tables.js';
 import * as addBranchIdToJournalEntries from '../migrations/20260816000001_add_branch_id_to_journal_entries.js';
 import * as alterProductsBrandDefault from '../migrations/20260816000002_alter_products_brand_default.js';
+import * as addReceiptsToExpenses from '../migrations/20260824000001_add_receipts_to_expenses.js';
+import * as createRecurringExpensesTable from '../migrations/20260824000002_create_recurring_expenses_table.js';
 
 import { seedDefaultRoles } from '../modules/role/role.service.js';
 import { seedSubscriptionPlans } from '../modules/plans/plans.service.js';
+import { seedDefaultAccounts } from '../modules/accounting/accounting.service.js';
 
 const SEED_PASSWORD = process.env.SEED_PASSWORD || 'admin123';
 
@@ -80,12 +83,16 @@ async function resetDatabase() {
     await addBranchIdToSharedTables.up(db);
     await addBranchIdToJournalEntries.up(db);
     await alterProductsBrandDefault.up(db);
+    await addReceiptsToExpenses.up(db);
+    await createRecurringExpensesTable.up(db);
     console.log('✅ Schema created successfully!');
 
-    // 3. Seed default roles, subscription plans, and super admins
+    // 3. Seed default roles, subscription plans, system accounts, and super admins
     console.log('🌱 Seeding initial system data...');
     await seedDefaultRoles();
     await seedSubscriptionPlans();
+    await seedDefaultAccounts(null);
+    console.log('  📊 Default Chart of Accounts seeded');
 
     const adminRole = await db('roles').where({ name: 'ADMIN' }).first();
     const passwordHash = await bcrypt.hash(SEED_PASSWORD, 10);

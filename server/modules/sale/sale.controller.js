@@ -18,29 +18,35 @@ export const createSale = async (req, res, next) => {
 
     // Fire-and-forget email notification with public invoice link AND attached PDF
     if (sale.customerEmail) {
+      const invoiceEmailData = {
+        invoiceNo: sale.invoiceNumber,
+        grandTotal: sale.netTotal,
+        netTotal: sale.netTotal,
+        subTotal: sale.subTotal,
+        discount: sale.discount,
+        tax: sale.tax,
+        lineItems: sale.lineItems || [],
+        paymentBreakdown: sale.paymentBreakdown || {},
+        createdAt: sale.createdAt,
+        cashierUsername: sale.cashierUsername,
+        customerPhone: sale.customerPhone,
+        customerAddress: sale.customerAddress,
+        tenantId: sale.tenantId,
+        invoiceLink: `${process.env.CLIENT_URL || process.env.APP_URL || ''}/invoice/${sale.publicToken}`,
+      };
+
       generateInvoicePdfBuffer(sale)
         .then((pdfBuffer) => {
           import('../../config/mailer.js')
             .then(({ sendCustomerInvoiceEmail }) =>
-              sendCustomerInvoiceEmail(sale.customerEmail, sale.customerName, {
-                invoiceNo: sale.invoiceNumber,
-                grandTotal: sale.netTotal,
-                paymentStatus: sale.paymentBreakdown?.dueAmount > 0 ? 'Due' : 'Paid',
-                invoiceLink: `${process.env.CLIENT_URL || process.env.APP_URL || ''}/invoice/${sale.publicToken}`,
-                pdfBuffer,
-              })
+              sendCustomerInvoiceEmail(sale.customerEmail, sale.customerName, { ...invoiceEmailData, pdfBuffer })
             )
             .catch(() => {});
         })
         .catch(() => {
           import('../../config/mailer.js')
             .then(({ sendCustomerInvoiceEmail }) =>
-              sendCustomerInvoiceEmail(sale.customerEmail, sale.customerName, {
-                invoiceNo: sale.invoiceNumber,
-                grandTotal: sale.netTotal,
-                paymentStatus: sale.paymentBreakdown?.dueAmount > 0 ? 'Due' : 'Paid',
-                invoiceLink: `${process.env.CLIENT_URL || process.env.APP_URL || ''}/invoice/${sale.publicToken}`,
-              })
+              sendCustomerInvoiceEmail(sale.customerEmail, sale.customerName, invoiceEmailData)
             )
             .catch(() => {});
         });

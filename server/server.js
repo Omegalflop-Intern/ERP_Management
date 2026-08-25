@@ -158,9 +158,25 @@ if (!process.env.NODE_WATCH && process.env.NODE_ENV === 'production') {
     const customerName = data?.customerName || data?.sale?.customer?.name || data?.customer?.name;
 
     if (customerEmail) {
-      sendCustomerInvoiceEmail(customerEmail, customerName, data?.sale || data).catch((err) =>
-        console.error('[Customer Mail Error]:', err.message)
-      );
+      const saleObj = data?.sale || data;
+      sendCustomerInvoiceEmail(customerEmail, customerName, {
+        invoiceNo: saleObj.invoiceNumber || saleObj.invoiceNo || invoiceNo,
+        grandTotal: saleObj.netTotal || saleObj.grandTotal || amount,
+        netTotal: saleObj.netTotal || saleObj.grandTotal || amount,
+        subTotal: saleObj.subTotal,
+        discount: saleObj.discount,
+        tax: saleObj.tax,
+        lineItems: saleObj.lineItems || [],
+        paymentBreakdown: saleObj.paymentBreakdown || {},
+        createdAt: saleObj.createdAt,
+        cashierUsername: saleObj.cashierUsername,
+        customerPhone: saleObj.customerPhone,
+        customerAddress: saleObj.customerAddress,
+        tenantId: saleObj.tenantId || eventTenantId,
+        invoiceLink: saleObj.publicToken
+          ? `${process.env.CLIENT_URL || process.env.APP_URL || ''}/invoice/${saleObj.publicToken}`
+          : null,
+      }).catch((err) => console.error('[Customer Mail Error]:', err.message));
     }
 
     sendAdminNotificationEmail(
