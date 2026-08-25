@@ -451,16 +451,24 @@ export const getBalanceSheet = async (asOf = '', tenantId = null, branchId = nul
   const assets = accounts.filter(a => a.type === 'ASSET');
   const liabilities = accounts.filter(a => a.type === 'LIABILITY');
   const equity = accounts.filter(a => a.type === 'EQUITY');
+  const revenue = accounts.filter(a => a.type === 'REVENUE');
+  const expenses = accounts.filter(a => a.type === 'EXPENSE');
 
-  const totalAssets = assets.reduce((sum, a) => sum + a.balance, 0);
-  const totalLiabilities = liabilities.reduce((sum, a) => sum + a.balance, 0);
-  const totalEquity = equity.reduce((sum, a) => sum + a.balance, 0);
+  const totalAssets = assets.reduce((sum, a) => sum + Number(a.balance || 0), 0);
+  const totalLiabilities = liabilities.reduce((sum, a) => sum + (-Number(a.balance || 0)), 0);
+  const baseEquity = equity.reduce((sum, a) => sum + (-Number(a.balance || 0)), 0);
+
+  // Retained Earnings = Total Revenue (Credit) - Total Operating Expenses & COGS (Debit)
+  const totalRevenue = revenue.reduce((sum, a) => sum + (-Number(a.balance || 0)), 0);
+  const totalExpenses = expenses.reduce((sum, a) => sum + Number(a.balance || 0), 0);
+  const retainedEarnings = totalRevenue - totalExpenses;
+  const totalEquity = baseEquity + retainedEarnings;
 
   return {
     asOf: asOf ? new Date(asOf) : new Date(),
     assets: { accounts: assets, total: totalAssets },
     liabilities: { accounts: liabilities, total: totalLiabilities },
-    equity: { accounts: equity, total: totalEquity },
+    equity: { accounts: equity, total: totalEquity, baseEquity, retainedEarnings },
     totalLiabilitiesAndEquity: totalLiabilities + totalEquity,
     balanced: Math.abs(totalAssets - (totalLiabilities + totalEquity)) < 0.01,
   };
@@ -1361,14 +1369,39 @@ export const getCashFlowStatement = async (from = '', to = '', tenantId = null, 
   }
 
   // Payroll paid
-  const payrollQuery = db('payrolls')
-    .where({ payment_status: 'PAID', is_deleted: false })
-    .whereBetween('paid_at', [fromDate, toDate]);
-  applyTenantScope(payrollQuery, tenantId, 'payrolls');
-  if (branchId && branchId !== 'all') payrollQuery.andWhere('branch_id', branchId);
-  const payrollRows = await payrollQuery.select('net_pay', 'paid_at');
   let payrollPaid = 0;
-  for (const p of payrollRows) payrollPaid += Number(p.net_pay || 0);
+  try {
+    const payrollQuery = db('payrolls')
+      .where('is_deleted', false)
+      .whereIn('status', ['paid', 'PAID']);
+    applyTenantScope(payrollQuery, tenantId, 'payrolls');
+    if (branchId && branchId !== 'all') payrollQuery.andWhere('branch_id', branchId);
+    if (fromDate && toDate) {
+      payrollQuery.where((b) => {
+        b.whereBetween('paid_date', [fromDate, toDate]).orWhereBetween('created_at', [fromDate, toDate]);
+      });
+    }
+    const payrollRows = await payrollQuery.select('net_salary');
+    for (const p of payrollRows) payrollPaid += Number(p.net_salary || 0);
+  } catch (err) {
+    // Non-blocking fallback
+  }
+
+  // Supplier payments for stock purchase orders
+  let supplierPayments = 0;
+  try {
+    const poQuery = db('purchase_orders')
+      .where({ is_deleted: false })
+      .whereBetween('created_at', [fromDate, toDate]);
+    applyTenantScope(poQuery, tenantId, 'purchase_orders');
+    if (branchId && branchId !== 'all') poQuery.andWhere('branch_id', branchId);
+    const poRows = await poQuery.select('paid_amount');
+    for (const po of poRows) {
+      supplierPayments += Number(po.paid_amount || 0);
+    }
+  } catch (err) {
+    // Non-blocking fallback
+  }
 
   // Investing Activities - asset purchases
   const assetQuery = db('accounts')
@@ -1410,7 +1443,7 @@ export const getCashFlowStatement = async (from = '', to = '', tenantId = null, 
 
   // Summarize
   const totalOperatingIn = cashFromSales + dueCollected + repairIncome;
-  const totalOperatingOut = totalExpensesPaid + payrollPaid;
+  const totalOperatingOut = totalExpensesPaid + payrollPaid + supplierPayments;
   const netOperatingCash = totalOperatingIn - totalOperatingOut;
 
   const totalInvestingIn = 0;
@@ -1435,6 +1468,7 @@ export const getCashFlowStatement = async (from = '', to = '', tenantId = null, 
       outflows: {
         expenses: totalExpensesPaid,
         payroll: payrollPaid,
+        supplierPayments,
         total: totalOperatingOut,
       },
       netCashFlow: netOperatingCash,
@@ -1460,6 +1494,12 @@ export const getCashFlowStatement = async (from = '', to = '', tenantId = null, 
         total: totalFinancingOut,
       },
       netCashFlow: netFinancingCash,
+    },
+    summary: {
+      operating: netOperatingCash,
+      investing: netInvestingCash,
+      financing: netFinancingCash,
+      netChangeInCash: netCashChange,
     },
     netCashChange,
     isPositive: netCashChange >= 0,
