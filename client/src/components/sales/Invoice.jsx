@@ -537,7 +537,7 @@ export function InvoiceA4Full({ sale }) {
 
         <div className="flex justify-between items-center text-[10px] text-slate-500 pt-2 border-t border-slate-200">
           <div>
-            Printed on: {new Date().toLocaleString('en-BD')} | {companyInfo.invoiceFooter}
+            Printed on: {new Date().toLocaleString('en-BD')} | {companyInfo.invoiceFooter} • <span className="font-semibold text-slate-700">Powered by OmniManage ERP Suite</span>
           </div>
           <div className="flex items-center gap-2">
             <QRCodeCanvas value={qrData} size={54} />
@@ -770,7 +770,7 @@ export function InvoiceA4Half({ sale }) {
             </div>
           </div>
         </div>
-        <p className="text-center text-[8px] text-slate-500">{companyInfo.invoiceFooter}</p>
+        <p className="text-center text-[8px] text-slate-500">{companyInfo.invoiceFooter} • <span className="font-semibold text-slate-700">Powered by OmniManage ERP Suite</span></p>
       </div>
     </div>
   );
@@ -853,6 +853,7 @@ export function InvoiceReceipt({ sale }) {
           <QRCodeCanvas value={qrData} size={64} />
         </div>
         <p className="text-[9px] text-slate-500 pt-1">{companyInfo.invoiceFooter}</p>
+        <p className="text-[8px] text-slate-400 font-sans">Powered by OmniManage ERP Suite</p>
       </div>
     </div>
   );
@@ -928,6 +929,7 @@ export function InvoiceThermal({ sale }) {
           <QRCodeCanvas value={qrData} size={54} />
         </div>
         <p className="text-[7px]">{companyInfo.invoiceFooter}</p>
+        <p className="text-[6.5px] text-slate-400 font-sans">Powered by OmniManage ERP Suite</p>
       </div>
     </div>
   );

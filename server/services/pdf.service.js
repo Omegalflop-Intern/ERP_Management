@@ -342,7 +342,7 @@ export async function generateInvoicePdfBuffer(sale) {
       doc.strokeColor('#CBD5E1').lineWidth(0.5).moveTo(startX, bottomY).lineTo(endX, bottomY).stroke();
 
       const printTimeStr = new Date().toLocaleString('en-BD');
-      doc.fillColor('#64748B').font('Helvetica').fontSize(6.5).text(`Printed on: ${printTimeStr} | ${companyInfo.invoiceFooter}`, startX, bottomY + 5);
+      doc.fillColor('#64748B').font('Helvetica').fontSize(6.5).text(`Printed on: ${printTimeStr} | ${companyInfo.invoiceFooter} • Powered by OmniManage ERP Suite`, startX, bottomY + 5);
 
       if (qrBuffer) {
         doc.image(qrBuffer, endX - 22, bottomY + 2, { width: 18, height: 18 });

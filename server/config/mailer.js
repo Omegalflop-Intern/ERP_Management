@@ -245,8 +245,9 @@ export const sendAdminNotificationEmail = async (subject, title, detailsHtml) =>
                 </td>
               </tr>
               <tr>
-                <td style="background:#f8f8f8;border-top:1px solid #e0e0e0;padding:12px;text-align:center;color:#999;font-size:10px;">
-                  &copy; ${new Date().getFullYear()} ${APP_NAME}. System Event Notification
+                <td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:16px;text-align:center;color:#94a3b8;font-size:11px;">
+                  © ${new Date().getFullYear()} ${APP_NAME}. System Event Notification<br>
+                  <span style="color:#64748b;font-weight:600;">⚡ Powered by OmniManage ERP Suite</span>
                 </td>
               </tr>
             </table>
@@ -299,19 +300,19 @@ export const sendTicketCreatedAdminEmail = async (ticketData) => {
     replyTo: SUPPORT_EMAIL,
     subject: `[Support Ticket] New Ticket #${ticketNumber} from ${shopName || 'Shop'}`,
     headers: { ...baseHeaders, 'X-Priority': priority === 'URGENT' ? '1' : '3' },
-    text: `New Support Ticket Submitted\n\nTicket #: ${ticketNumber}\nShop: ${shopName} (${shopSubdomain || 'N/A'})\nCategory: ${category}\nPriority: ${priority}\nSubject: ${subject}\n\nDescription:\n${description}\n\nSubmitted By: ${createdByName}`,
+    text: `New Support Ticket Submitted\n\nTicket #: ${ticketNumber}\nShop: ${shopName} (${shopSubdomain || 'N/A'})\nCategory: ${category}\nPriority: ${priority}\nSubject: ${subject}\n\nDescription:\n${description}\n\nSubmitted By: ${createdByName}\n\nPowered by OmniManage ERP Suite`,
     html: `
       <!DOCTYPE html>
-      <html>
+      <html lang="en">
       <head><meta charset="utf-8"></head>
-      <body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif;">
-        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:30px 0;">
+      <body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',system-ui,sans-serif;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:32px 16px;">
           <tr><td align="center">
-            <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #e0e0e0;border-radius:8px;overflow:hidden;">
+            <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
               <tr>
-                <td style="background:#1a1a2e;padding:24px 32px;">
+                <td style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);padding:24px 32px;">
                   <h2 style="margin:0;color:#ffffff;font-size:18px;font-weight:700;">Support Ticket Submitted</h2>
-                  <p style="margin:6px 0 0;color:#3b82f6;font-size:13px;font-weight:600;">#${ticketNumber} &bull; ${priority} Priority</p>
+                  <p style="margin:6px 0 0;color:#60a5fa;font-size:13px;font-weight:600;">#${ticketNumber} &bull; ${priority} Priority</p>
                 </td>
               </tr>
               <tr>
@@ -343,7 +344,8 @@ export const sendTicketCreatedAdminEmail = async (ticketData) => {
               </tr>
               <tr>
                 <td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:16px;text-align:center;color:#94a3b8;font-size:11px;">
-                  &copy; ${new Date().getFullYear()} ${APP_NAME}. System Automated Notification
+                  © ${new Date().getFullYear()} ${APP_NAME}. System Automated Notification<br>
+                  <span style="color:#64748b;font-weight:600;">⚡ Powered by OmniManage ERP Suite</span>
                 </td>
               </tr>
             </table>
@@ -579,9 +581,9 @@ export const sendCustomerInvoiceEmail = async (toEmail, customerName, invoiceDat
             <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;">
               For support, reply to this email or contact us at ${shopEmail}
             </div>
-            <div style="font-size:10px;color:#cbd5e1;">
+            <div style="font-size:10px;color:#94a3b8;line-height:1.6;">
               © ${new Date().getFullYear()} ${shopName}. All rights reserved.<br>
-              This is an automated receipt. Please do not reply directly to this email.
+              <span style="display:inline-block;margin-top:4px;color:#64748b;font-weight:600;letter-spacing:0.3px;">⚡ Powered by OmniManage ERP Suite</span>
             </div>
           </td>
         </tr>
@@ -592,7 +594,7 @@ export const sendCustomerInvoiceEmail = async (toEmail, customerName, invoiceDat
 </body>
 </html>`;
 
-  const text = `Dear ${customer},\n\nThank you for your purchase at ${shopName}!\n\nInvoice: ${invoiceNo}\nDate: ${saleDate}\nTotal: ${fmt(netTotal)}\nStatus: ${paymentStatus}\n\n${invoiceData.invoiceLink ? `View invoice: ${invoiceData.invoiceLink}\n\n` : ''}${shopPhone ? `Contact: ${shopPhone}\n` : ''}${shopAddress ? `Address: ${shopAddress}\n` : ''}\nThank you,\n${shopName}`;
+  const text = `Dear ${customer},\n\nThank you for your purchase at ${shopName}!\n\nInvoice: ${invoiceNo}\nDate: ${saleDate}\nTotal: ${fmt(netTotal)}\nStatus: ${paymentStatus}\n\n${invoiceData.invoiceLink ? `View invoice: ${invoiceData.invoiceLink}\n\n` : ''}${shopPhone ? `Contact: ${shopPhone}\n` : ''}${shopAddress ? `Address: ${shopAddress}\n` : ''}\nThank you,\n${shopName}\nPowered by OmniManage ERP Suite`;
 
   const mailOptions = {
     from: `"${shopName}" <${SENDER_EMAIL}>`,
@@ -673,7 +675,7 @@ export const sendCustomerRepairEmail = async (toEmail, customerName, repairData)
     replyTo: shopEmail !== SENDER_EMAIL ? shopEmail : SUPPORT_EMAIL,
     subject: `🔧 Repair Update #${jobNo} (${status}) — ${shopName}`,
     headers: baseHeaders,
-    text: `Dear ${customer},\n\nYour device repair status has been updated to: ${status}\n\nDevice: ${repairData.brand || ''} ${repairData.model || repairData.deviceModel || 'Device'}\nJob Sheet: #${jobNo}\nIssue: ${repairData.problemDescription || repairData.issueDescription || 'N/A'}\n\nPlease bring your repair claim ticket when picking up your device.\n\nThank you,\n${shopName}\n${shopAddress || ''}`,
+    text: `Dear ${customer},\n\nYour device repair status has been updated to: ${status}\n\nDevice: ${repairData.brand || ''} ${repairData.model || repairData.deviceModel || 'Device'}\nJob Sheet: #${jobNo}\nIssue: ${repairData.problemDescription || repairData.issueDescription || 'N/A'}\n\nPlease bring your repair claim ticket when picking up your device.\n\nThank you,\n${shopName}\n${shopAddress || ''}\nPowered by OmniManage ERP Suite`,
     html: `
       <!DOCTYPE html>
       <html lang="en">
@@ -738,9 +740,9 @@ export const sendCustomerRepairEmail = async (toEmail, customerName, repairData)
                   <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;">
                     Questions? Contact us at ${shopEmail}
                   </div>
-                  <div style="font-size:10px;color:#cbd5e1;">
+                  <div style="font-size:10px;color:#94a3b8;line-height:1.6;">
                     © ${new Date().getFullYear()} ${shopName}. All rights reserved.<br>
-                    This is an automated notification.
+                    <span style="display:inline-block;margin-top:4px;color:#64748b;font-weight:600;letter-spacing:0.3px;">⚡ Powered by OmniManage ERP Suite</span>
                   </div>
                 </td>
               </tr>
