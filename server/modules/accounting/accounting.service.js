@@ -1101,9 +1101,7 @@ export const createAutomatedPurchaseJournal = async (purchaseOrder, createdBy = 
     const netTotal = Number(purchaseOrder.netTotal || purchaseOrder.net_total || 0);
     const paidAmount = Number(purchaseOrder.paidAmount || purchaseOrder.paid_amount || 0);
     const dueAmount = Number(purchaseOrder.dueAmount || purchaseOrder.due_amount || 0);
-    const method = String(purchaseOrder.paymentMethod || purchaseOrder.payment_method || 'cash').toLowerCase();
 
-    // Double-entry Journal Entry for Purchase
     const existingEntry = await db('journal_entries').where({ reference: ref, is_deleted: false }).first();
     if (existingEntry) return existingEntry;
 
@@ -1114,21 +1112,54 @@ export const createAutomatedPurchaseJournal = async (purchaseOrder, createdBy = 
     const acctMap = {};
     for (const a of accounts) acctMap[a.code] = a;
 
+    // Parse payment breakdown for split payments
+    let pb = {};
+    try { pb = typeof purchaseOrder.payment_breakdown === 'string' ? JSON.parse(purchaseOrder.payment_breakdown) : (purchaseOrder.paymentBreakdown || purchaseOrder.payment_breakdown || {}); } catch { pb = {}; }
+
+    const cash = Number(pb.cash || 0);
+    const bkash = Number(pb.bkash || 0);
+    const nagad = Number(pb.nagad || 0);
+    const rocket = Number(pb.rocket || 0);
+    const bank = Number(pb.bank || 0);
+
+    // Fallback: if no payment_breakdown, use single method
+    const method = String(purchaseOrder.paymentMethod || purchaseOrder.payment_method || 'cash').toLowerCase();
+    let fallbackPaid = paidAmount;
+    if (cash + bkash + nagad + rocket + bank === 0 && paidAmount > 0) {
+      if (method.includes('bank')) { /* already default */ }
+      else if (method.includes('bkash')) { /* handled via map below */ }
+      else if (method.includes('nagad')) { /* handled via map below */ }
+      else if (method.includes('rocket')) { /* handled via map below */ }
+    }
+
     const invAcct = acctMap['1030']; // Inventory Asset
     const apAcct = acctMap['2000'];  // Accounts Payable
-    let payAcct = acctMap['1000'];   // Cash
-    if (method.includes('bank') && acctMap['1010']) payAcct = acctMap['1010'];
-    else if (method.includes('bkash') && acctMap['1011']) payAcct = acctMap['1011'];
-    else if (method.includes('nagad') && acctMap['1012']) payAcct = acctMap['1012'];
-    else if (method.includes('rocket') && acctMap['1013']) payAcct = acctMap['1013'];
 
     const lines = [];
+    // Debit Inventory for full amount
     if (invAcct && netTotal > 0) {
       lines.push({ accountId: invAcct.id, code: invAcct.code, accountName: invAcct.name, debit: netTotal, credit: 0 });
     }
-    if (payAcct && paidAmount > 0) {
-      lines.push({ accountId: payAcct.id, code: payAcct.code, accountName: payAcct.name, debit: 0, credit: paidAmount });
+
+    // Credit each payment method account
+    if (cash > 0 && acctMap['1000']) lines.push({ accountId: acctMap['1000'].id, code: '1000', accountName: 'Cash', debit: 0, credit: cash });
+    if (bank > 0 && acctMap['1010']) lines.push({ accountId: acctMap['1010'].id, code: '1010', accountName: 'Bank Account', debit: 0, credit: bank });
+    if (bkash > 0 && acctMap['1011']) lines.push({ accountId: acctMap['1011'].id, code: '1011', accountName: 'bKash Account', debit: 0, credit: bkash });
+    if (nagad > 0 && acctMap['1012']) lines.push({ accountId: acctMap['1012'].id, code: '1012', accountName: 'Nagad Account', debit: 0, credit: nagad });
+    if (rocket > 0 && acctMap['1013']) lines.push({ accountId: acctMap['1013'].id, code: '1013', accountName: 'Rocket Account', debit: 0, credit: rocket });
+
+    // Fallback: single payment method (no breakdown provided)
+    const totalSplit = cash + bkash + nagad + rocket + bank;
+    if (totalSplit === 0 && paidAmount > 0) {
+      let payAcct = acctMap['1000'];
+      if (method.includes('bank') && acctMap['1010']) payAcct = acctMap['1010'];
+      else if (method.includes('bkash') && acctMap['1011']) payAcct = acctMap['1011'];
+      else if (method.includes('nagad') && acctMap['1012']) payAcct = acctMap['1012'];
+      else if (method.includes('rocket') && acctMap['1013']) payAcct = acctMap['1013'];
+      if (payAcct) lines.push({ accountId: payAcct.id, code: payAcct.code, accountName: payAcct.name, debit: 0, credit: paidAmount });
     }
+
+    // Credit Accounts Payable for due amount
     if (apAcct && dueAmount > 0) {
       lines.push({ accountId: apAcct.id, code: apAcct.code, accountName: apAcct.name, debit: 0, credit: dueAmount });
     }

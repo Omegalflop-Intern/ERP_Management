@@ -44,6 +44,7 @@ export function formatPurchaseOrder(row, supplierRow = null) {
     paidAmount: Number(row.paid_amount || 0),
     dueAmount: Number(row.due_amount || 0),
     paymentMethod: row.payment_method || 'CREDIT',
+    paymentBreakdown: parseJSON(row.payment_breakdown),
     expectedDeliveryDate: row.expected_delivery_date || null,
     receivedDate: row.received_date || null,
     notes: row.notes || '',
@@ -290,8 +291,21 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
   const discount = Number(data.discount || 0);
   const tax = Number(data.tax || 0);
   const netTotal = Math.max(0, subTotal - discount + tax);
-  const paidAmount = Number(data.paidAmount || 0);
+
+  // Support split payments: paymentBreakdown = { cash: 10000, bkash: 5000, bank: 5000 }
+  const pb = data.paymentBreakdown || {};
+  const paymentBreakdown = {
+    cash: Number(pb.cash || 0),
+    bkash: Number(pb.bkash || 0),
+    nagad: Number(pb.nagad || 0),
+    rocket: Number(pb.rocket || 0),
+    bank: Number(pb.bank || 0),
+  };
+  const paidAmount = Number(data.paidAmount || 0) || (paymentBreakdown.cash + paymentBreakdown.bkash + paymentBreakdown.nagad + paymentBreakdown.rocket + paymentBreakdown.bank);
   const dueAmount = Math.max(0, netTotal - paidAmount);
+  // Primary payment method: whichever has the highest amount, or fallback to data.paymentMethod
+  const methodAmounts = Object.entries(paymentBreakdown).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+  const primaryMethod = methodAmounts.length > 0 ? methodAmounts[0][0].toUpperCase() : (data.paymentMethod || 'CREDIT');
 
   const [insertedId] = await db('purchase_orders').insert({
     tenant_id: tenantId,
@@ -309,7 +323,8 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
     net_total: netTotal,
     paid_amount: paidAmount,
     due_amount: dueAmount,
-    payment_method: data.paymentMethod || 'CREDIT',
+    payment_method: primaryMethod,
+    payment_breakdown: JSON.stringify(paymentBreakdown),
     expected_delivery_date: data.expectedDeliveryDate ? new Date(data.expectedDeliveryDate) : new Date(),
     received_date: new Date(),
     notes: data.notes || null,

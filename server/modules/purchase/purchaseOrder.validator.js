@@ -15,6 +15,14 @@ const lineItemSchema = z.object({
   receivedQty: z.number().optional(),
 });
 
+const paymentBreakdownSchema = z.object({
+  cash: z.number().min(0).default(0),
+  bkash: z.number().min(0).default(0),
+  nagad: z.number().min(0).default(0),
+  rocket: z.number().min(0).default(0),
+  bank: z.number().min(0).default(0),
+}).optional();
+
 export const createPurchaseOrderSchema = z.object({
   supplierId: z.union([z.string(), z.number()]).optional(),
   supplierName: z.string().optional(),
@@ -24,8 +32,9 @@ export const createPurchaseOrderSchema = z.object({
   lineItems: z.array(lineItemSchema).min(1),
   discount: z.number().min(0).default(0),
   tax: z.number().min(0).default(0),
-  paymentMethod: z.enum(['CASH', 'BANK', 'BKASH', 'ROCKET', 'NAGAD', 'CREDIT']).default('CREDIT'),
+  paymentMethod: z.enum(['CASH', 'BANK', 'BKASH', 'ROCKET', 'NAGAD', 'CREDIT', 'SPLIT']).default('CREDIT'),
   paidAmount: z.number().min(0).default(0),
+  paymentBreakdown: paymentBreakdownSchema,
   expectedDeliveryDate: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
 });

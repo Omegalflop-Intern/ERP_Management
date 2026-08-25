@@ -1,20 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  AlertCircle,
   Building,
-  Check,
   CheckCircle2,
-  ChevronDown,
   CreditCard,
-  DollarSign,
-  Download,
   Eye,
-  FileText,
-  Minus,
   Package,
-  Pencil,
   Plus,
-  Printer,
   RefreshCw,
   RotateCcw,
   Search,
@@ -22,14 +13,10 @@ import {
   Tag,
   Trash2,
   Truck,
-  User,
-  X,
-  Zap,
 } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import PageHeader from '../../components/layout/PageHeader';
-import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import {
   Dialog,
@@ -150,30 +137,42 @@ export default function PurchaseOrders() {
       {/* KPI Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
-          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Purchases</div>
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            Total Purchases
+          </div>
           <div className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-1.5 font-mono">
             ৳{summary.totalPurchases.toLocaleString()}
           </div>
-          <div className="text-[11px] text-slate-400 mt-1 font-medium">{orders.length} orders recorded</div>
+          <div className="text-[11px] text-slate-400 mt-1 font-medium">
+            {orders.length} orders recorded
+          </div>
           <div className="absolute right-3 top-3 w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-blue-600">
             <Truck className="w-4 h-4" />
           </div>
         </div>
 
         <div className="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
-          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Paid</div>
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            Total Paid
+          </div>
           <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1.5 font-mono">
             ৳{summary.totalPaid.toLocaleString()}
           </div>
-          <div className="text-[11px] text-emerald-600/80 mt-1 font-medium">Disbursed to suppliers</div>
+          <div className="text-[11px] text-emerald-600/80 mt-1 font-medium">
+            Disbursed to suppliers
+          </div>
           <div className="absolute right-3 top-3 w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-600">
             <CheckCircle2 className="w-4 h-4" />
           </div>
         </div>
 
         <div className="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
-          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Supplier Payable Due</div>
-          <div className={`text-2xl font-black mt-1.5 font-mono ${summary.totalDue > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}`}>
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            Supplier Payable Due
+          </div>
+          <div
+            className={`text-2xl font-black mt-1.5 font-mono ${summary.totalDue > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}`}
+          >
             ৳{summary.totalDue.toLocaleString()}
           </div>
           <div className="text-[11px] text-slate-400 mt-1 font-medium">Outstanding vendor dues</div>
@@ -183,11 +182,15 @@ export default function PurchaseOrders() {
         </div>
 
         <div className="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
-          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Returned to Supplier</div>
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            Returned to Supplier
+          </div>
           <div className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1.5 font-mono">
             ৳{summary.totalReturned.toLocaleString()}
           </div>
-          <div className="text-[11px] text-amber-600/80 mt-1 font-medium">Credit / refunds processed</div>
+          <div className="text-[11px] text-amber-600/80 mt-1 font-medium">
+            Credit / refunds processed
+          </div>
           <div className="absolute right-3 top-3 w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/50 flex items-center justify-center text-amber-600">
             <RotateCcw className="w-4 h-4" />
           </div>
@@ -263,25 +266,47 @@ export default function PurchaseOrders() {
                   <td colSpan={9} className="px-4 py-16 text-center text-slate-400">
                     <Truck className="w-12 h-12 mx-auto mb-2 opacity-30" />
                     <p className="font-semibold text-sm">No purchase orders found</p>
-                    <p className="text-xs text-slate-500 mt-1">Click "New Restock Purchase" to record inventory stock.</p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      Click "New Restock Purchase" to record inventory stock.
+                    </p>
                   </td>
                 </tr>
               ) : (
                 orders.map((po) => {
-                  const supplierName = po.supplierId?.name || (typeof po.supplierId === 'string' ? po.supplierId : 'Supplier');
+                  const supplierName =
+                    po.supplierId?.name ||
+                    (typeof po.supplierId === 'string' ? po.supplierId : 'Supplier');
                   const supplierPhone = po.supplierId?.phone || '';
-                  const totalItems = (po.lineItems || []).reduce((acc, it) => acc + Number(it.qty || 1), 0);
+                  const totalItems = (po.lineItems || []).reduce(
+                    (acc, it) => acc + Number(it.qty || 1),
+                    0
+                  );
                   const returnedAmount = Number(po.returnedAmount || 0);
 
                   return (
-                    <tr key={po._id || po.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors">
+                    <tr
+                      key={po._id || po.id}
+                      className="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors"
+                    >
                       <td className="px-4 py-3.5">
-                        <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{po.poNumber}</span>
-                        {po.notes && <div className="text-[10px] text-slate-400 truncate max-w-[140px]">{po.notes}</div>}
+                        <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
+                          {po.poNumber}
+                        </span>
+                        {po.notes && (
+                          <div className="text-[10px] text-slate-400 truncate max-w-[140px]">
+                            {po.notes}
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3.5">
-                        <div className="font-semibold text-slate-900 dark:text-slate-100">{supplierName}</div>
-                        {supplierPhone && <div className="text-[10px] text-slate-400 font-mono">{supplierPhone}</div>}
+                        <div className="font-semibold text-slate-900 dark:text-slate-100">
+                          {supplierName}
+                        </div>
+                        {supplierPhone && (
+                          <div className="text-[10px] text-slate-400 font-mono">
+                            {supplierPhone}
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3.5">
                         <div className="font-medium text-slate-700 dark:text-slate-300">
@@ -296,14 +321,22 @@ export default function PurchaseOrders() {
                       <td className="px-4 py-3.5 text-right font-mono font-bold text-slate-900 dark:text-slate-100">
                         ৳{Number(po.netTotal || 0).toLocaleString()}
                         {returnedAmount > 0 && (
-                          <div className="text-[10px] text-amber-600 font-semibold">-৳{returnedAmount.toLocaleString()} ret.</div>
+                          <div className="text-[10px] text-amber-600 font-semibold">
+                            -৳{returnedAmount.toLocaleString()} ret.
+                          </div>
                         )}
                       </td>
                       <td className="px-4 py-3.5 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
                         ৳{Number(po.paidAmount || 0).toLocaleString()}
                       </td>
                       <td className="px-4 py-3.5 text-right font-mono font-bold">
-                        <span className={Number(po.dueAmount || 0) > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}>
+                        <span
+                          className={
+                            Number(po.dueAmount || 0) > 0
+                              ? 'text-rose-600 dark:text-rose-400'
+                              : 'text-slate-400'
+                          }
+                        >
                           ৳{Number(po.dueAmount || 0).toLocaleString()}
                         </span>
                       </td>
@@ -438,6 +471,14 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
 
   const [paymentMethod, setPaymentMethod] = useState('CASH');
   const [paidAmount, setPaidAmount] = useState('');
+  const [paymentBreakdown, setPaymentBreakdown] = useState({
+    cash: '',
+    bkash: '',
+    nagad: '',
+    rocket: '',
+    bank: '',
+  });
+  const [useSplitPayment, setUseSplitPayment] = useState(false);
   const [discount, setDiscount] = useState('');
   const [discountType, setDiscountType] = useState('FLAT'); // 'FLAT' or 'PERCENT'
   const [tax, setTax] = useState('');
@@ -495,10 +536,35 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
       const code = String(a.code || '');
       const n = (a.name || '').toLowerCase();
       const isLiquidSubAccount =
-        !['1000', '1010', '1011', '1012', '1013', '1020', '1030', '2000', '3000', '4000', '5000', '6000'].includes(code) &&
+        ![
+          '1000',
+          '1010',
+          '1011',
+          '1012',
+          '1013',
+          '1020',
+          '1030',
+          '2000',
+          '3000',
+          '4000',
+          '5000',
+          '6000',
+        ].includes(code) &&
         !code.startsWith('AST-') &&
-        !['FURNITURE', 'EQUIPMENT', 'ELECTRONICS', 'FIXED_ASSET', 'NON_CURRENT_ASSET', 'ACCOUNTS_RECEIVABLE', 'INVENTORY'].includes(a.subType) &&
-        (n.includes('bank') || n.includes('cash') || n.includes('wallet') || n.includes('mfs') || n.includes('card'));
+        ![
+          'FURNITURE',
+          'EQUIPMENT',
+          'ELECTRONICS',
+          'FIXED_ASSET',
+          'NON_CURRENT_ASSET',
+          'ACCOUNTS_RECEIVABLE',
+          'INVENTORY',
+        ].includes(a.subType) &&
+        (n.includes('bank') ||
+          n.includes('cash') ||
+          n.includes('wallet') ||
+          n.includes('mfs') ||
+          n.includes('card'));
 
       if (isLiquidSubAccount) {
         methods.push({ value: a.name.toUpperCase(), label: `${a.name} (${a.code})` });
@@ -598,7 +664,7 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
   };
 
   const subTotal = useMemo(() => {
-    return lineItems.reduce((sum, it) => sum + (Number(it.qty || 1) * Number(it.unitCost || 0)), 0);
+    return lineItems.reduce((sum, it) => sum + Number(it.qty || 1) * Number(it.unitCost || 0), 0);
   }, [lineItems]);
 
   const calculatedDiscount = useMemo(() => {
@@ -618,10 +684,22 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
   }, [subTotal, calculatedDiscount, tax, taxType]);
 
   const netTotal = Math.max(0, subTotal - calculatedDiscount + calculatedTax);
-  const dueAmount = Math.max(0, netTotal - Number(paidAmount || 0));
+  const splitTotal = useSplitPayment
+    ? Number(paymentBreakdown.cash || 0) +
+      Number(paymentBreakdown.bkash || 0) +
+      Number(paymentBreakdown.nagad || 0) +
+      Number(paymentBreakdown.rocket || 0) +
+      Number(paymentBreakdown.bank || 0)
+    : 0;
+  const totalPaid = useSplitPayment ? splitTotal : Number(paidAmount || 0);
+  const dueAmount = Math.max(0, netTotal - totalPaid);
 
   const handlePayInFull = () => {
-    setPaidAmount(netTotal);
+    if (useSplitPayment) {
+      setPaymentBreakdown({ cash: String(netTotal), bkash: '', nagad: '', rocket: '', bank: '' });
+    } else {
+      setPaidAmount(netTotal);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -639,7 +717,7 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
           phone: newSupplierPhone || 'N/A',
         });
         finalSupplierId = supRes.data?.data?._id || supRes.data?.data?.id;
-      } catch (err) {
+      } catch (_err) {
         toast.error('Failed to create new supplier');
         return;
       }
@@ -665,8 +743,11 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
         category: it.category || 'General',
         qty: Number(it.qty || 1),
         unitCost: Number(it.unitCost || 0),
-        sellingPrice: Number(it.sellingPrice || (Number(it.unitCost) * 1.25)),
-        wholesalePrice: it.wholesalePrice !== undefined && it.wholesalePrice !== '' ? Number(it.wholesalePrice) : undefined,
+        sellingPrice: Number(it.sellingPrice || Number(it.unitCost) * 1.25),
+        wholesalePrice:
+          it.wholesalePrice !== undefined && it.wholesalePrice !== ''
+            ? Number(it.wholesalePrice)
+            : undefined,
         imeis,
       };
     });
@@ -676,8 +757,17 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
       lineItems: processedLines,
       discount: Number(calculatedDiscount.toFixed(2)),
       tax: Number(calculatedTax.toFixed(2)),
-      paymentMethod,
-      paidAmount: Number(paidAmount || 0),
+      paymentMethod: useSplitPayment ? 'SPLIT' : paymentMethod,
+      paidAmount: totalPaid,
+      paymentBreakdown: useSplitPayment
+        ? {
+            cash: Number(paymentBreakdown.cash || 0),
+            bkash: Number(paymentBreakdown.bkash || 0),
+            nagad: Number(paymentBreakdown.nagad || 0),
+            rocket: Number(paymentBreakdown.rocket || 0),
+            bank: Number(paymentBreakdown.bank || 0),
+          }
+        : undefined,
       notes,
     });
   };
@@ -805,7 +895,10 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
               {lineItems.map((item, index) => {
                 const lineTotal = Number(item.qty || 1) * Number(item.unitCost || 0);
                 const imeisCount = item.imeiText
-                  ? item.imeiText.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean).length
+                  ? item.imeiText
+                      .split(/[\n,]+/)
+                      .map((s) => s.trim())
+                      .filter(Boolean).length
                   : 0;
 
                 return (
@@ -857,7 +950,7 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                           Category
                         </Label>
                         <select
-                          value={item.isCustomCategory ? 'custom' : (item.category || 'Smartphones')}
+                          value={item.isCustomCategory ? 'custom' : item.category || 'Smartphones'}
                           onChange={(e) => {
                             if (e.target.value === 'custom') {
                               handleLineChange(index, 'isCustomCategory', true);
@@ -870,7 +963,9 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                           className="w-full px-2 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 font-medium focus:outline-none"
                         >
                           {availableCategories.map((c) => (
-                            <option key={c} value={c}>{c}</option>
+                            <option key={c} value={c}>
+                              {c}
+                            </option>
                           ))}
                           <option value="custom">+ Type Custom Category...</option>
                         </select>
@@ -897,7 +992,9 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                           required
                           placeholder="1"
                           value={item.qty}
-                          onChange={(e) => handleLineChange(index, 'qty', Math.max(1, Number(e.target.value)))}
+                          onChange={(e) =>
+                            handleLineChange(index, 'qty', Math.max(1, Number(e.target.value)))
+                          }
                           className="h-9 text-xs font-mono font-bold text-center rounded-xl bg-white dark:bg-[#1e293b]"
                         />
                       </div>
@@ -913,7 +1010,13 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                           required
                           placeholder="0"
                           value={item.unitCost === 0 ? '' : item.unitCost}
-                          onChange={(e) => handleLineChange(index, 'unitCost', e.target.value === '' ? '' : Number(e.target.value))}
+                          onChange={(e) =>
+                            handleLineChange(
+                              index,
+                              'unitCost',
+                              e.target.value === '' ? '' : Number(e.target.value)
+                            )
+                          }
                           className="h-9 text-xs font-mono font-bold text-right rounded-xl bg-white dark:bg-[#1e293b]"
                         />
                       </div>
@@ -928,7 +1031,13 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                           min="0"
                           placeholder="0"
                           value={item.sellingPrice === 0 ? '' : item.sellingPrice}
-                          onChange={(e) => handleLineChange(index, 'sellingPrice', e.target.value === '' ? '' : Number(e.target.value))}
+                          onChange={(e) =>
+                            handleLineChange(
+                              index,
+                              'sellingPrice',
+                              e.target.value === '' ? '' : Number(e.target.value)
+                            )
+                          }
                           className="h-9 text-xs font-mono font-bold text-right rounded-xl bg-white dark:bg-[#1e293b]"
                         />
                       </div>
@@ -943,7 +1052,13 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                           min="0"
                           placeholder="0"
                           value={item.wholesalePrice === 0 ? '' : item.wholesalePrice}
-                          onChange={(e) => handleLineChange(index, 'wholesalePrice', e.target.value === '' ? '' : Number(e.target.value))}
+                          onChange={(e) =>
+                            handleLineChange(
+                              index,
+                              'wholesalePrice',
+                              e.target.value === '' ? '' : Number(e.target.value)
+                            )
+                          }
                           className="h-9 text-xs font-mono font-bold text-right rounded-xl bg-white dark:bg-[#1e293b] border-indigo-200 dark:border-indigo-900/50"
                         />
                       </div>
@@ -951,7 +1066,9 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                       {/* Line Total & Remove Action (1 col) */}
                       <div className="sm:col-span-1 flex items-center justify-end gap-1 pb-1">
                         <div className="text-right flex-1">
-                          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Subtotal</div>
+                          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                            Subtotal
+                          </div>
                           <div className="font-mono font-black text-xs text-slate-900 dark:text-slate-100 whitespace-nowrap">
                             ৳{lineTotal.toLocaleString()}
                           </div>
@@ -976,12 +1093,21 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                         className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 flex items-center gap-1.5 font-semibold"
                       >
                         <Tag className="w-3.5 h-3.5" />
-                        {item.showImei ? 'Close IMEI / Serial Box' : `+ Add IMEI / Serial Numbers ${imeisCount > 0 ? `(${imeisCount} entered)` : '(Optional)'}`}
+                        {item.showImei
+                          ? 'Close IMEI / Serial Box'
+                          : `+ Add IMEI / Serial Numbers ${imeisCount > 0 ? `(${imeisCount} entered)` : '(Optional)'}`}
                       </button>
 
                       {Number(item.sellingPrice || 0) > 0 && Number(item.unitCost || 0) > 0 && (
                         <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                          Est. Margin: +৳{(Number(item.sellingPrice) - Number(item.unitCost)).toLocaleString()} ({Math.round(((Number(item.sellingPrice) - Number(item.unitCost)) / Number(item.unitCost)) * 100)}%)
+                          Est. Margin: +৳
+                          {(Number(item.sellingPrice) - Number(item.unitCost)).toLocaleString()} (
+                          {Math.round(
+                            ((Number(item.sellingPrice) - Number(item.unitCost)) /
+                              Number(item.unitCost)) *
+                              100
+                          )}
+                          %)
                         </span>
                       )}
                     </div>
@@ -989,7 +1115,8 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                     {item.showImei && (
                       <div className="bg-white dark:bg-[#1e293b] p-3 rounded-xl border border-blue-200 dark:border-blue-900/50 space-y-1">
                         <Label className="text-[11px] text-slate-600 dark:text-slate-300 font-semibold">
-                          Enter or Scan IMEI / Serials ({item.qty} units expected, separated by commas or line breaks):
+                          Enter or Scan IMEI / Serials ({item.qty} units expected, separated by
+                          commas or line breaks):
                         </Label>
                         <textarea
                           rows={2}
@@ -1015,20 +1142,77 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                   <CreditCard className="w-4 h-4 text-blue-600" /> Payment & Billing Info
                 </span>
 
-                <div>
-                  <Label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
-                    Payment Method
-                  </Label>
-                  <select
-                    value={paymentMethod}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="w-full mt-1 px-3 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100"
+                {/* Split Payment Toggle */}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setUseSplitPayment(!useSplitPayment)}
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all border ${
+                      useSplitPayment
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'bg-white dark:bg-[#1e293b] text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-700'
+                    }`}
                   >
-                    {availablePaymentMethods.map((m) => (
-                      <option key={m.value} value={m.value}>{m.label}</option>
-                    ))}
-                  </select>
+                    {useSplitPayment ? 'Multi-Payment ON' : 'Split Payment'}
+                  </button>
+                  {useSplitPayment && (
+                    <span className="text-[10px] text-blue-500 font-medium">
+                      Split across multiple methods
+                    </span>
+                  )}
                 </div>
+
+                {!useSplitPayment ? (
+                  <div>
+                    <Label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                      Payment Method
+                    </Label>
+                    <select
+                      value={paymentMethod}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      className="w-full mt-1 px-3 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100"
+                    >
+                      {availablePaymentMethods.map((m) => (
+                        <option key={m.value} value={m.value}>
+                          {m.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {[
+                      { key: 'cash', label: 'Cash', icon: '💵', color: 'emerald' },
+                      { key: 'bkash', label: 'bKash', icon: '📱', color: 'pink' },
+                      { key: 'nagad', label: 'Nagad', icon: '📱', color: 'orange' },
+                      { key: 'rocket', label: 'Rocket', icon: '🚀', color: 'purple' },
+                      { key: 'bank', label: 'Bank', icon: '🏦', color: 'blue' },
+                    ].map((pm) => (
+                      <div key={pm.key} className="flex items-center gap-2">
+                        <span className="text-xs w-20 shrink-0">
+                          {pm.icon} {pm.label}
+                        </span>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="any"
+                          placeholder="0"
+                          value={paymentBreakdown[pm.key] || ''}
+                          onChange={(e) =>
+                            setPaymentBreakdown((prev) => ({ ...prev, [pm.key]: e.target.value }))
+                          }
+                          className="h-7 text-xs font-mono text-right rounded-lg bg-white dark:bg-[#1e293b] flex-1"
+                        />
+                      </div>
+                    ))}
+                    <div className="flex justify-between text-[10px] font-bold pt-1 border-t border-slate-200 dark:border-slate-700">
+                      <span className="text-slate-500">Split Total:</span>
+                      <span className="font-mono text-blue-600 dark:text-blue-400">
+                        ৳{splitTotal.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <Label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
@@ -1058,7 +1242,9 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                 {/* Discount input with Flat / Percent toggle */}
                 <div className="flex justify-between items-center gap-2">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-slate-600 dark:text-slate-400 font-medium">Discount:</span>
+                    <span className="text-slate-600 dark:text-slate-400 font-medium">
+                      Discount:
+                    </span>
                     <div className="inline-flex rounded-lg p-0.5 bg-slate-200 dark:bg-slate-800 text-[10px] font-bold">
                       <button
                         type="button"
@@ -1096,7 +1282,9 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                       step="any"
                       placeholder={discountType === 'PERCENT' ? '0%' : '0 ৳'}
                       value={discount === 0 ? '' : discount}
-                      onChange={(e) => setDiscount(e.target.value === '' ? '' : Number(e.target.value))}
+                      onChange={(e) =>
+                        setDiscount(e.target.value === '' ? '' : Number(e.target.value))
+                      }
                       className="h-7 w-28 text-xs font-mono text-right rounded-lg bg-white dark:bg-[#1e293b]"
                     />
                   </div>
@@ -1105,7 +1293,9 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                 {/* Tax / VAT input with Flat / Percent toggle */}
                 <div className="flex justify-between items-center gap-2">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-slate-600 dark:text-slate-400 font-medium">Tax / VAT:</span>
+                    <span className="text-slate-600 dark:text-slate-400 font-medium">
+                      Tax / VAT:
+                    </span>
                     <div className="inline-flex rounded-lg p-0.5 bg-slate-200 dark:bg-slate-800 text-[10px] font-bold">
                       <button
                         type="button"
@@ -1160,7 +1350,9 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                 <div className="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-1.5">
                   <div className="flex justify-between items-center gap-2">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-emerald-600 dark:text-emerald-400">Paid Now:</span>
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                        Paid Now:
+                      </span>
                       <button
                         type="button"
                         onClick={handlePayInFull}
@@ -1169,22 +1361,37 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                         ⚡ Pay in Full
                       </button>
                     </div>
-                    <Input
-                      type="number"
-                      min="0"
-                      max={netTotal}
-                      placeholder="0"
-                      value={paidAmount === 0 ? '' : paidAmount}
-                      onChange={(e) => setPaidAmount(e.target.value === '' ? '' : Number(e.target.value))}
-                      className="h-7 w-32 text-xs font-mono text-right rounded-lg bg-white dark:bg-[#1e293b] border-emerald-500 font-black text-emerald-600"
-                    />
+                    {!useSplitPayment && (
+                      <Input
+                        type="number"
+                        min="0"
+                        max={netTotal}
+                        placeholder="0"
+                        value={paidAmount === 0 ? '' : paidAmount}
+                        onChange={(e) =>
+                          setPaidAmount(e.target.value === '' ? '' : Number(e.target.value))
+                        }
+                        className="h-7 w-32 text-xs font-mono text-right rounded-lg bg-white dark:bg-[#1e293b] border-emerald-500 font-black text-emerald-600"
+                      />
+                    )}
+                    {useSplitPayment && (
+                      <span className="font-mono font-black text-emerald-600 text-sm">
+                        ৳{splitTotal.toLocaleString()}
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex justify-between font-bold text-xs pt-1">
-                    <span className={dueAmount > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}>
+                    <span
+                      className={
+                        dueAmount > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'
+                      }
+                    >
                       Supplier Due Balance:
                     </span>
-                    <span className={`font-mono font-bold ${dueAmount > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}`}>
+                    <span
+                      className={`font-mono font-bold ${dueAmount > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}`}
+                    >
                       ৳{dueAmount.toLocaleString()}
                     </span>
                   </div>
@@ -1198,7 +1405,9 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
             <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-blue-500" />
               <span>
-                Total <strong>{lineItems.reduce((acc, it) => acc + Number(it.qty || 1), 0)} units</strong> ready to restock
+                Total{' '}
+                <strong>{lineItems.reduce((acc, it) => acc + Number(it.qty || 1), 0)} units</strong>{' '}
+                ready to restock
               </span>
             </div>
 
@@ -1217,7 +1426,9 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                 className="flex-1 sm:flex-none bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold px-6 py-2 shadow-md gap-2"
               >
                 <CheckCircle2 className="w-4 h-4" />
-                {mutation.isPending ? 'Processing Restock...' : `Confirm Purchase (৳${netTotal.toLocaleString()})`}
+                {mutation.isPending
+                  ? 'Processing Restock...'
+                  : `Confirm Purchase (৳${netTotal.toLocaleString()})`}
               </Button>
             </div>
           </div>
@@ -1297,7 +1508,11 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
   };
 
   const totalRefund = useMemo(() => {
-    return Object.values(returnSelection).reduce((sum, it) => sum + (Number(it.refundAmount) || (Number(it.unitCost || 0) * Number(it.qty || 1))), 0);
+    return Object.values(returnSelection).reduce(
+      (sum, it) =>
+        sum + (Number(it.refundAmount) || Number(it.unitCost || 0) * Number(it.qty || 1)),
+      0
+    );
   }, [returnSelection]);
 
   const handleSubmit = (e) => {
@@ -1321,13 +1536,17 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
             <RotateCcw className="w-5 h-5 shrink-0" /> Return Products to Supplier
           </DialogTitle>
           <DialogDescription className="text-xs text-slate-600 dark:text-slate-400 font-medium">
-            Return items from PO <strong className="font-mono text-slate-800 dark:text-slate-200">{po.poNumber}</strong> back to vendor. Store stock will be deducted and supplier balance adjusted.
+            Return items from PO{' '}
+            <strong className="font-mono text-slate-800 dark:text-slate-200">{po.poNumber}</strong>{' '}
+            back to vendor. Store stock will be deducted and supplier balance adjusted.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           <div>
-            <Label className="text-xs font-bold text-slate-800 dark:text-slate-200">General Return Reason</Label>
+            <Label className="text-xs font-bold text-slate-800 dark:text-slate-200">
+              General Return Reason
+            </Label>
             <Input
               value={generalReason}
               onChange={(e) => setGeneralReason(e.target.value)}
@@ -1371,7 +1590,8 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
                           {item.description || item.name}
                         </div>
                         <div className="text-[11px] text-slate-600 dark:text-slate-400 font-mono font-medium">
-                          Purchased: {purchasedQty} pcs @ ৳{Number(item.unitCost || 0).toLocaleString()} each
+                          Purchased: {purchasedQty} pcs @ ৳
+                          {Number(item.unitCost || 0).toLocaleString()} each
                         </div>
                         {!isSelected && maxQty > 0 && (
                           <div className="text-[10px] text-rose-500 dark:text-rose-400 font-medium mt-0.5">
@@ -1393,7 +1613,8 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
                         </div>
                       ) : (
                         <div className="font-mono font-bold text-xs text-slate-900 dark:text-slate-100">
-                          Total: ৳{Number(item.totalCost || (item.qty * item.unitCost) || 0).toLocaleString()}
+                          Total: ৳
+                          {Number(item.totalCost || item.qty * item.unitCost || 0).toLocaleString()}
                         </div>
                       )}
                     </div>
@@ -1402,13 +1623,19 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
                   {isSelected && (
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2.5 border-t border-rose-200 dark:border-rose-900/40">
                       <div>
-                        <Label className="text-[11px] text-slate-700 dark:text-slate-300 font-bold">Return Qty (pcs)</Label>
+                        <Label className="text-[11px] text-slate-700 dark:text-slate-300 font-bold">
+                          Return Qty (pcs)
+                        </Label>
                         <div className="flex items-center gap-1 mt-1">
                           <Input
                             type="number"
                             min="1"
                             max={maxQty}
-                            value={returnSelection[key]?.qty === undefined ? '' : returnSelection[key]?.qty}
+                            value={
+                              returnSelection[key]?.qty === undefined
+                                ? ''
+                                : returnSelection[key]?.qty
+                            }
                             onChange={(e) => {
                               const val = e.target.value;
                               if (val === '') {
@@ -1416,22 +1643,26 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
                                 return;
                               }
                               const num = Number(val);
-                              const q = Math.min(maxQty, Math.max(1, isNaN(num) ? 1 : num));
+                              const q = Math.min(maxQty, Math.max(1, Number.isNaN(num) ? 1 : num));
                               updateItemQty(key, q, item.unitCost);
                             }}
                             onBlur={() => {
                               const current = Number(returnSelection[key]?.qty);
-                              if (!current || isNaN(current) || current < 1) {
+                              if (!current || Number.isNaN(current) || current < 1) {
                                 updateItemQty(key, 1, item.unitCost);
                               }
                             }}
                             className="h-8 text-xs font-mono font-bold rounded-xl bg-white dark:bg-[#1e293b] text-slate-900 dark:text-slate-100 border-slate-300 dark:border-slate-700"
                           />
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium shrink-0">/ {maxQty}</span>
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium shrink-0">
+                            / {maxQty}
+                          </span>
                         </div>
                       </div>
                       <div>
-                        <Label className="text-[11px] text-slate-700 dark:text-slate-300 font-bold">Refund Amount (৳)</Label>
+                        <Label className="text-[11px] text-slate-700 dark:text-slate-300 font-bold">
+                          Refund Amount (৳)
+                        </Label>
                         <Input
                           type="number"
                           min="0"
@@ -1441,7 +1672,9 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
                         />
                       </div>
                       <div>
-                        <Label className="text-[11px] text-slate-700 dark:text-slate-300 font-bold">Item Notes</Label>
+                        <Label className="text-[11px] text-slate-700 dark:text-slate-300 font-bold">
+                          Item Notes
+                        </Label>
                         <Input
                           placeholder="Specific defect details..."
                           value={returnSelection[key]?.notes}
@@ -1458,10 +1691,19 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
 
           <div className="border-t border-slate-100 dark:border-slate-800 pt-3 flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
-              Total Credit Refund: <span className="text-rose-600 dark:text-rose-400 font-mono text-base font-extrabold ml-1">৳{totalRefund.toLocaleString()}</span>
+              Total Credit Refund:{' '}
+              <span className="text-rose-600 dark:text-rose-400 font-mono text-base font-extrabold ml-1">
+                ৳{totalRefund.toLocaleString()}
+              </span>
             </div>
             <div className="flex gap-2 w-full sm:w-auto">
-              <Button type="button" variant="outline" size="sm" onClick={onClose} className="rounded-xl flex-1 sm:flex-none">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onClose}
+                className="rounded-xl flex-1 sm:flex-none"
+              >
                 Cancel
               </Button>
               <Button
@@ -1484,7 +1726,8 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
 // MODAL 3: VIEW PURCHASE ORDER & GOODS RECEIPT SLIP
 // ----------------------------------------------------------------------
 function ViewPurchaseModal({ po, onClose, onReturn }) {
-  const supplierName = po.supplierId?.name || (typeof po.supplierId === 'string' ? po.supplierId : 'Supplier');
+  const supplierName =
+    po.supplierId?.name || (typeof po.supplierId === 'string' ? po.supplierId : 'Supplier');
   const supplierPhone = po.supplierId?.phone || '';
   const supplierAddress = po.supplierId?.address || '';
   const lineItems = po.lineItems || [];
@@ -1516,8 +1759,12 @@ function ViewPurchaseModal({ po, onClose, onReturn }) {
         <div className="space-y-4 pt-2">
           {/* Supplier Info */}
           <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 text-xs">
-            <div className="font-bold text-slate-900 dark:text-slate-100 text-sm">{supplierName}</div>
-            {supplierPhone && <div className="text-slate-500 font-mono mt-0.5">Phone: {supplierPhone}</div>}
+            <div className="font-bold text-slate-900 dark:text-slate-100 text-sm">
+              {supplierName}
+            </div>
+            {supplierPhone && (
+              <div className="text-slate-500 font-mono mt-0.5">Phone: {supplierPhone}</div>
+            )}
             {supplierAddress && <div className="text-slate-400 mt-0.5">{supplierAddress}</div>}
           </div>
 
@@ -1536,7 +1783,9 @@ function ViewPurchaseModal({ po, onClose, onReturn }) {
                 {lineItems.map((item, idx) => (
                   <tr key={idx}>
                     <td className="px-3.5 py-2.5">
-                      <div className="font-semibold text-slate-900 dark:text-slate-100">{item.description || item.name}</div>
+                      <div className="font-semibold text-slate-900 dark:text-slate-100">
+                        {item.description || item.name}
+                      </div>
                       {item.imeis?.length > 0 && (
                         <div className="text-[10px] text-blue-600 dark:text-blue-400 font-mono mt-0.5">
                           IMEIs: {item.imeis.join(', ')}
@@ -1544,9 +1793,11 @@ function ViewPurchaseModal({ po, onClose, onReturn }) {
                       )}
                     </td>
                     <td className="px-3.5 py-2.5 text-center font-bold">{item.qty}</td>
-                    <td className="px-3.5 py-2.5 text-right font-mono">৳{Number(item.unitCost || 0).toLocaleString()}</td>
+                    <td className="px-3.5 py-2.5 text-right font-mono">
+                      ৳{Number(item.unitCost || 0).toLocaleString()}
+                    </td>
                     <td className="px-3.5 py-2.5 text-right font-mono font-bold text-slate-900 dark:text-slate-100">
-                      ৳{Number(item.totalCost || (item.qty * item.unitCost) || 0).toLocaleString()}
+                      ৳{Number(item.totalCost || item.qty * item.unitCost || 0).toLocaleString()}
                     </td>
                   </tr>
                 ))}
@@ -1557,15 +1808,55 @@ function ViewPurchaseModal({ po, onClose, onReturn }) {
           {/* Financials & Notes */}
           <div className="grid grid-cols-2 gap-3 text-xs">
             <div className="bg-slate-50 dark:bg-slate-900/40 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-1">
-              <div>Payment Method: <strong>{po.paymentMethod}</strong></div>
-              <div>Paid: <strong className="text-emerald-600">৳{Number(po.paidAmount || 0).toLocaleString()}</strong></div>
-              <div>Due: <strong className={Number(po.dueAmount || 0) > 0 ? 'text-rose-600' : 'text-slate-500'}>৳{Number(po.dueAmount || 0).toLocaleString()}</strong></div>
-              {po.notes && <div className="text-[11px] text-slate-400 pt-1 border-t">Notes: {po.notes}</div>}
+              <div>
+                Payment Method: <strong>{po.paymentMethod}</strong>
+              </div>
+              <div>
+                Paid:{' '}
+                <strong className="text-emerald-600">
+                  ৳{Number(po.paidAmount || 0).toLocaleString()}
+                </strong>
+              </div>
+              {po.paymentBreakdown &&
+                (() => {
+                  const pb =
+                    typeof po.paymentBreakdown === 'string'
+                      ? JSON.parse(po.paymentBreakdown)
+                      : po.paymentBreakdown;
+                  const parts = Object.entries(pb).filter(([, v]) => v > 0);
+                  return parts.length > 0 ? (
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      {parts.map(([k, v]) => (
+                        <span
+                          key={k}
+                          className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
+                        >
+                          {k}: ৳{Number(v).toLocaleString()}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null;
+                })()}
+              <div>
+                Due:{' '}
+                <strong
+                  className={Number(po.dueAmount || 0) > 0 ? 'text-rose-600' : 'text-slate-500'}
+                >
+                  ৳{Number(po.dueAmount || 0).toLocaleString()}
+                </strong>
+              </div>
+              {po.notes && (
+                <div className="text-[11px] text-slate-400 pt-1 border-t">Notes: {po.notes}</div>
+              )}
             </div>
 
             <div className="bg-slate-50 dark:bg-slate-900/40 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-1 text-right">
               <div>Subtotal: ৳{Number(po.subTotal || 0).toLocaleString()}</div>
-              {po.discount > 0 && <div className="text-rose-600">Discount: -৳{Number(po.discount).toLocaleString()}</div>}
+              {po.discount > 0 && (
+                <div className="text-rose-600">
+                  Discount: -৳{Number(po.discount).toLocaleString()}
+                </div>
+              )}
               {po.tax > 0 && <div>Tax: +৳{Number(po.tax).toLocaleString()}</div>}
               <div className="text-sm font-black text-slate-900 dark:text-slate-100 pt-1 border-t">
                 Net Total: ৳{Number(po.netTotal || 0).toLocaleString()}
@@ -1582,8 +1873,12 @@ function ViewPurchaseModal({ po, onClose, onReturn }) {
               <div className="divide-y divide-amber-200/60 dark:divide-amber-900/40">
                 {returnLogs.map((r, i) => (
                   <div key={i} className="py-1 flex justify-between text-[11px]">
-                    <span>{r.description} ({r.qty} pcs) — {r.reason}</span>
-                    <span className="font-bold text-rose-600 font-mono">-৳{Number(r.refundAmount || 0).toLocaleString()}</span>
+                    <span>
+                      {r.description} ({r.qty} pcs) — {r.reason}
+                    </span>
+                    <span className="font-bold text-rose-600 font-mono">
+                      -৳{Number(r.refundAmount || 0).toLocaleString()}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -1624,7 +1919,9 @@ function PayPODueModal({ po, onClose, onSuccess }) {
   const mutation = useMutation({
     mutationFn: async (payload) => api.post(`/purchase-orders/${po._id || po.id}/pay-due`, payload),
     onSuccess: () => {
-      toast.success(`Supplier payment of ৳${Number(amount).toLocaleString()} recorded successfully!`);
+      toast.success(
+        `Supplier payment of ৳${Number(amount).toLocaleString()} recorded successfully!`
+      );
       onSuccess();
     },
     onError: (err) => {
@@ -1668,15 +1965,23 @@ function PayPODueModal({ po, onClose, onSuccess }) {
           <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 space-y-2">
             <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400">
               <span>Total Order Cost:</span>
-              <span className="font-mono font-bold text-slate-900 dark:text-slate-100">৳{Number(po.netTotal || 0).toLocaleString()}</span>
+              <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
+                ৳{Number(po.netTotal || 0).toLocaleString()}
+              </span>
             </div>
             <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400">
               <span>Already Paid:</span>
-              <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">৳{Number(po.paidAmount || 0).toLocaleString()}</span>
+              <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                ৳{Number(po.paidAmount || 0).toLocaleString()}
+              </span>
             </div>
             <div className="flex justify-between text-xs pt-1.5 border-t border-slate-200 dark:border-slate-700/80">
-              <span className="font-bold text-slate-800 dark:text-slate-200">Current Due Payable:</span>
-              <span className="font-mono font-bold text-rose-600 dark:text-rose-400 text-sm">৳{due.toLocaleString()}</span>
+              <span className="font-bold text-slate-800 dark:text-slate-200">
+                Current Due Payable:
+              </span>
+              <span className="font-mono font-bold text-rose-600 dark:text-rose-400 text-sm">
+                ৳{due.toLocaleString()}
+              </span>
             </div>
           </div>
 
@@ -1734,7 +2039,13 @@ function PayPODueModal({ po, onClose, onSuccess }) {
           </div>
 
           <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-            <Button type="button" variant="outline" size="sm" onClick={onClose} className="rounded-xl">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onClose}
+              className="rounded-xl"
+            >
               Cancel
             </Button>
             <Button
