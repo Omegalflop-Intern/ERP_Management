@@ -858,10 +858,13 @@ export default function LandingPage() {
                 const monthlyPrice = plan.monthlyPrice ?? plan.priceMonthly;
                 const yearlyPrice = plan.yearlyPrice ?? plan.priceYearly;
                 const isPop = plan.isPopular || plan.popular;
+                const isEnterprise = plan.name === 'ENTERPRISE' || (!monthlyPrice && plan.name !== 'FREE');
+                const isFree = plan.name === 'FREE' && !monthlyPrice;
+
                 return (
                   <div
                     key={i}
-                    className={`relative rounded-2xl p-6 bg-white/[0.02] border flex flex-col justify-between space-y-5 transition-all ${
+                    className={`relative rounded-2xl p-6 bg-white/[0.02] border flex flex-col justify-between space-y-5 transition-all duration-300 hover:-translate-y-1 ${
                       isPop
                         ? 'border-indigo-500/50 shadow-xl shadow-indigo-600/10'
                         : 'border-white/5 hover:border-white/10'
@@ -878,7 +881,23 @@ export default function LandingPage() {
                       </h3>
                       <p className="text-xs text-slate-400 leading-relaxed">{plan.description}</p>
                       <div className="pt-1 min-h-[58px] flex flex-col justify-center">
-                        {billingCycle === 'yearly' ? (
+                        {isEnterprise ? (
+                          <div>
+                            <div className="text-2xl font-black text-amber-400">
+                              Contact for Pricing
+                            </div>
+                            <div className="text-[11px] font-semibold text-slate-400 mt-0.5">
+                              Tailored enterprise SLA & custom setups
+                            </div>
+                          </div>
+                        ) : isFree ? (
+                          <div>
+                            <div className="text-3xl font-black text-white">Free</div>
+                            <div className="text-[11px] font-semibold text-emerald-400 mt-0.5">
+                              Free forever • No credit card required
+                            </div>
+                          </div>
+                        ) : billingCycle === 'yearly' ? (
                           <div>
                             <div className="flex items-baseline gap-1">
                               <span className="text-3xl font-black text-white">
@@ -933,14 +952,16 @@ export default function LandingPage() {
                       </ul>
                     </div>
                     <Link
-                      to="/register-shop"
+                      to={isEnterprise ? '/contact' : '/register-shop'}
                       className={`w-full py-3 rounded-xl font-bold text-xs text-center transition-all ${
                         isPop
                           ? 'text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 shadow-lg shadow-indigo-600/20'
-                          : 'text-slate-300 bg-white/5 hover:bg-white/10 border border-white/10'
+                          : isEnterprise
+                            ? 'text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30'
+                            : 'text-slate-300 bg-white/5 hover:bg-white/10 border border-white/10'
                       }`}
                     >
-                      Start Plan Now
+                      {isEnterprise ? 'Contact Sales' : isFree ? 'Get Started Free' : 'Start 14-Day Free Trial'}
                     </Link>
                   </div>
                 );

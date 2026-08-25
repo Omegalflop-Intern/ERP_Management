@@ -24,6 +24,7 @@ export function formatSubscriptionPlan(row) {
     maxStorageMB: Number(row.max_storage_mb || 100),
     sortOrder: Number(row.sort_order || 0),
     features: Array.isArray(features) ? features : [],
+    isPublic: Boolean(row.is_public !== undefined ? row.is_public : true),
     isActive: Boolean(row.is_active),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -44,6 +45,7 @@ export const DEFAULT_PLANS = [
     maxCustomers: 200,
     maxStorageMB: 100,
     sortOrder: 0,
+    isPublic: true,
     features: ['POS & Sales', 'Product & Inventory', 'Up to 2 Users', '1 Branch', 'Basic Reports', 'Email Support'],
   },
   {
@@ -59,6 +61,7 @@ export const DEFAULT_PLANS = [
     maxCustomers: 1000,
     maxStorageMB: 500,
     sortOrder: 1,
+    isPublic: true,
     features: ['Everything in Free', 'IMEI / Serial Tracking', 'Customer CRM & Due', 'Supplier Management', 'Purchase Orders', 'Up to 5 Users', '2 Branches', 'Repair Job Sheets', 'SMS & Email Invoices', 'Priority Email Support'],
   },
   {
@@ -74,6 +77,7 @@ export const DEFAULT_PLANS = [
     maxCustomers: 5000,
     maxStorageMB: 2000,
     sortOrder: 2,
+    isPublic: true,
     features: ['Everything in Starter', 'Double-Entry Accounting', 'Payroll & HR Module', 'Attendance Tracking', 'Leave Management', 'Wholesale Orders', 'Warranty Claims', 'Investor & Loan Tracking', 'Document Vault', 'Up to 20 Users', '5 Branches', 'Advanced Analytics', 'Chat Support'],
   },
   {
@@ -89,6 +93,7 @@ export const DEFAULT_PLANS = [
     maxCustomers: -1,
     maxStorageMB: -1,
     sortOrder: 3,
+    isPublic: true,
     features: ['Everything in Pro', 'Unlimited Branches', 'Unlimited Users', 'Custom Branding & Logo', 'API Access', 'Dedicated Account Manager', 'Custom Integrations', 'SLA Guarantee', 'On-premise Option', 'Priority Phone Support'],
   },
 ];
@@ -105,9 +110,11 @@ export const getAllPlans = async (page = 1, limit = 50) => {
 };
 
 export const getActivePlans = async () => {
-  const rows = await db('subscription_plans').where({ is_active: true }).orderBy('sort_order', 'asc');
+  const rows = await db('subscription_plans')
+    .where({ is_active: true, is_public: true })
+    .orderBy('sort_order', 'asc');
   if (rows.length > 0) return rows.map(formatSubscriptionPlan);
-  return DEFAULT_PLANS;
+  return DEFAULT_PLANS.filter(p => p.isPublic !== false);
 };
 
 export const getPlanById = async (id) => {
@@ -125,16 +132,17 @@ export const createPlan = async (data) => {
     name,
     display_name: data.displayName || name,
     description: data.description || '',
-    monthly_price: data.monthlyPrice || 0,
-    yearly_price: data.yearlyPrice || 0,
-    trial_days: data.trialDays || 0,
-    max_branches: data.maxBranches || 1,
-    max_users: data.maxUsers || 2,
-    max_products: data.maxProducts || 500,
-    max_customers: data.maxCustomers || 200,
-    max_storage_mb: data.maxStorageMB || 100,
-    sort_order: data.sortOrder || 0,
+    monthly_price: data.monthlyPrice !== undefined ? Number(data.monthlyPrice) : 0,
+    yearly_price: data.yearlyPrice !== undefined ? Number(data.yearlyPrice) : 0,
+    trial_days: data.trialDays !== undefined ? Number(data.trialDays) : 0,
+    max_branches: data.maxBranches !== undefined ? Number(data.maxBranches) : 1,
+    max_users: data.maxUsers !== undefined ? Number(data.maxUsers) : 2,
+    max_products: data.maxProducts !== undefined ? Number(data.maxProducts) : 500,
+    max_customers: data.maxCustomers !== undefined ? Number(data.maxCustomers) : 200,
+    max_storage_mb: data.maxStorageMB !== undefined ? Number(data.maxStorageMB) : 100,
+    sort_order: data.sortOrder !== undefined ? Number(data.sortOrder) : 0,
     features: JSON.stringify(data.features || []),
+    is_public: data.isPublic !== undefined ? Boolean(data.isPublic) : true,
     is_active: data.isActive !== undefined ? Boolean(data.isActive) : true,
   });
 
@@ -148,11 +156,18 @@ export const updatePlan = async (id, data) => {
   const updateFields = {};
   if (data.displayName !== undefined) updateFields.display_name = data.displayName;
   if (data.description !== undefined) updateFields.description = data.description;
-  if (data.monthlyPrice !== undefined) updateFields.monthly_price = data.monthlyPrice;
-  if (data.yearlyPrice !== undefined) updateFields.yearly_price = data.yearlyPrice;
-  if (data.maxBranches !== undefined) updateFields.max_branches = data.maxBranches;
-  if (data.maxUsers !== undefined) updateFields.max_users = data.maxUsers;
+  if (data.monthlyPrice !== undefined) updateFields.monthly_price = Number(data.monthlyPrice);
+  if (data.yearlyPrice !== undefined) updateFields.yearly_price = Number(data.yearlyPrice);
+  if (data.trialDays !== undefined) updateFields.trial_days = Number(data.trialDays);
+  if (data.maxBranches !== undefined) updateFields.max_branches = Number(data.maxBranches);
+  if (data.maxUsers !== undefined) updateFields.max_users = Number(data.maxUsers);
+  if (data.maxProducts !== undefined) updateFields.max_products = Number(data.maxProducts);
+  if (data.maxCustomers !== undefined) updateFields.max_customers = Number(data.maxCustomers);
+  if (data.maxStorageMB !== undefined) updateFields.max_storage_mb = Number(data.maxStorageMB);
+  if (data.sortOrder !== undefined) updateFields.sort_order = Number(data.sortOrder);
   if (data.features !== undefined) updateFields.features = JSON.stringify(data.features);
+  if (data.isPublic !== undefined) updateFields.is_public = Boolean(data.isPublic);
+  if (data.isActive !== undefined) updateFields.is_active = Boolean(data.isActive);
 
   if (Object.keys(updateFields).length > 0) {
     await db('subscription_plans').where({ id }).update(updateFields);
