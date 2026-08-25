@@ -92,19 +92,82 @@ export default function ChartOfAccounts() {
     ? 'neu-input w-full pl-10 pr-4 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none'
     : 'w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:border-[#2563EB]';
 
-  const channelBalances = React.useMemo(() => {
-    let cash = 0, bkash = 0, nagad = 0, rocket = 0, bank = 0;
-    (accounts || []).forEach((a) => {
-      const name = (a.name || '').toLowerCase();
-      const code = String(a.code || '');
-      const bal = Number(a.balance || 0);
-      if (code === '1000' || name === 'cash' || name.includes('cash on hand')) cash = bal;
-      else if (code === '1010' || name.includes('bank')) bank = bal;
-      else if (code === '1011' || name.includes('bkash')) bkash = bal;
-      else if (code === '1012' || name.includes('nagad')) nagad = bal;
-      else if (code === '1013' || name.includes('rocket')) rocket = bal;
+  const channels = React.useMemo(() => {
+    const configs = [
+      {
+        label: 'Cash',
+        key: 'cash',
+        icon: '💵',
+        code: '1000',
+        matcher: (name, code) => code === '1000' || name === 'cash' || name.includes('cash on hand'),
+        activeBg: 'bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/40 text-emerald-800 dark:text-emerald-300',
+        valColor: 'text-emerald-700 dark:text-emerald-300',
+      },
+      {
+        label: 'bKash',
+        key: 'bkash',
+        icon: '📱',
+        code: '1011',
+        matcher: (name, code) => code === '1011' || name.includes('bkash'),
+        activeBg: 'bg-pink-50/70 dark:bg-pink-950/20 border-pink-200 dark:border-pink-800/40 text-pink-800 dark:text-pink-300',
+        valColor: 'text-pink-700 dark:text-pink-300',
+      },
+      {
+        label: 'Nagad',
+        key: 'nagad',
+        icon: '📱',
+        code: '1012',
+        matcher: (name, code) => code === '1012' || name.includes('nagad'),
+        activeBg: 'bg-amber-50/70 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/40 text-amber-800 dark:text-amber-300',
+        valColor: 'text-amber-700 dark:text-amber-300',
+      },
+      {
+        label: 'Rocket',
+        key: 'rocket',
+        icon: '🚀',
+        code: '1013',
+        matcher: (name, code) => code === '1013' || name.includes('rocket'),
+        activeBg: 'bg-purple-50/70 dark:bg-purple-950/20 border-purple-200 dark:border-purple-800/40 text-purple-800 dark:text-purple-300',
+        valColor: 'text-purple-700 dark:text-purple-300',
+      },
+      {
+        label: 'Bank',
+        key: 'bank',
+        icon: '🏦',
+        code: '1010',
+        matcher: (name, code) => code === '1010' || name.includes('bank'),
+        activeBg: 'bg-blue-50/70 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800/40 text-blue-800 dark:text-blue-300',
+        valColor: 'text-blue-700 dark:text-blue-300',
+      },
+    ];
+
+    let totalLiquid = 0;
+    let totalInflow = 0;
+    let totalOutflow = 0;
+
+    const items = configs.map((cfg) => {
+      const foundAccount = (accounts || []).find((a) => {
+        const name = (a.name || '').toLowerCase();
+        const code = String(a.code || '');
+        return cfg.matcher(name, code);
+      });
+      const balance = Number(foundAccount?.balance || 0);
+      const inflow = Number(foundAccount?.totalDebit || 0);
+      const outflow = Number(foundAccount?.totalCredit || 0);
+      totalLiquid += balance;
+      totalInflow += inflow;
+      totalOutflow += outflow;
+      return {
+        ...cfg,
+        account: foundAccount,
+        balance,
+        inflow,
+        outflow,
+        isActive: foundAccount ? foundAccount.isActive !== false : true,
+      };
     });
-    return { cash, bkash, nagad, rocket, bank, totalLiquid: cash + bkash + nagad + rocket + bank };
+
+    return { items, totalLiquid, totalInflow, totalOutflow };
   }, [accounts]);
 
   return (
@@ -181,32 +244,128 @@ export default function ChartOfAccounts() {
             <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100 flex items-center gap-2">
               <Smartphone className="w-4 h-4 text-emerald-600" /> Payment Channel Balances
             </h3>
-            <p className="text-xs text-gray-400">Current balance in each payment method</p>
+            <p className="text-xs text-gray-400">Current balance in each payment method with Sales/Cost breakdown</p>
           </div>
-          <div className="text-right">
-            <span className="text-xs text-gray-400">Total:</span>
-            <div className="text-lg font-mono font-extrabold text-emerald-600 dark:text-emerald-400">
-              ৳{channelBalances.totalLiquid.toLocaleString()}
+          <div className="text-right flex items-center gap-4">
+            <div className="hidden sm:block text-right text-[11px] font-mono leading-tight">
+              <div className="text-emerald-600 dark:text-emerald-400 font-bold">
+                In (Sales): +৳{channels.totalInflow.toLocaleString()}
+              </div>
+              <div className="text-rose-600 dark:text-rose-400 font-bold">
+                Out (Cost): -৳{channels.totalOutflow.toLocaleString()}
+              </div>
+            </div>
+            <div className="text-right pl-3 border-l border-gray-200 dark:border-gray-800">
+              <span className="text-xs text-gray-400">Net Liquid:</span>
+              <div className={`text-lg font-mono font-extrabold ${
+                channels.totalLiquid < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'
+              }`}>
+                ৳{channels.totalLiquid.toLocaleString()}
+              </div>
             </div>
           </div>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-          {[
-            { label: 'Cash', value: channelBalances.cash, color: 'emerald', icon: '💵' },
-            { label: 'bKash', value: channelBalances.bkash, color: 'pink', icon: '📱' },
-            { label: 'Nagad', value: channelBalances.nagad, color: 'amber', icon: '📱' },
-            { label: 'Rocket', value: channelBalances.rocket, color: 'purple', icon: '🚀' },
-            { label: 'Bank', value: channelBalances.bank, color: 'blue', icon: '🏦' },
-          ].map((ch) => (
-            <div key={ch.label} className={`p-3 rounded-xl bg-${ch.color}-50/70 dark:bg-${ch.color}-900/20 border border-${ch.color}-200 dark:border-${ch.color}-800/40`}>
-              <span className={`text-[10px] font-bold text-${ch.color}-800 dark:text-${ch.color}-300 uppercase`}>
-                {ch.icon} {ch.label}
-              </span>
-              <div className={`text-base font-mono font-extrabold text-${ch.color}-700 dark:text-${ch.color}-300`}>
-                ৳{ch.value.toLocaleString()}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          {channels.items.map((ch) => {
+            const acc = ch.account;
+            const isAccountActive = ch.isActive;
+            return (
+              <div
+                key={ch.label}
+                className={`p-3 rounded-xl transition-all duration-200 border relative flex flex-col justify-between ${
+                  !isAccountActive
+                    ? 'bg-gray-100/70 dark:bg-gray-800/40 border-gray-300/80 dark:border-gray-700/60 opacity-80'
+                    : ch.balance < 0
+                      ? 'bg-rose-50/40 dark:bg-rose-950/20 border-rose-200 dark:border-rose-800/40 hover:shadow-md'
+                      : `${ch.activeBg} hover:shadow-md`
+                }`}
+              >
+                {/* Header Row */}
+                <div className="flex items-center justify-between gap-1 mb-1">
+                  <span className={`text-[11px] font-bold uppercase truncate ${
+                    !isAccountActive ? 'text-gray-500 dark:text-gray-400' : ''
+                  }`}>
+                    {ch.icon} {ch.label}
+                  </span>
+
+                  {acc ? (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleStatusMutation.mutate({
+                          id: acc._id || acc.id,
+                          isActive: !isAccountActive,
+                          name: acc.name || ch.label,
+                        });
+                      }}
+                      disabled={toggleStatusMutation.isPending}
+                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-extrabold transition-all cursor-pointer ${
+                        isAccountActive
+                          ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-200'
+                          : 'bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 hover:bg-amber-200'
+                      }`}
+                      title={isAccountActive ? `Click to pause/disable ${ch.label} in POS` : `Click to activate ${ch.label} in POS`}
+                    >
+                      {isAccountActive ? (
+                        <>
+                          <ToggleRight className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                          <span>ON</span>
+                        </>
+                      ) : (
+                        <>
+                          <ToggleLeft className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                          <span>PAUSED</span>
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <span className="text-[9px] font-medium text-gray-400">UNSET</span>
+                  )}
+                </div>
+
+                {/* Net Balance */}
+                <div className="my-1">
+                  <div className="flex items-baseline justify-between gap-1">
+                    <span className={`text-base font-mono font-extrabold ${
+                      ch.balance < 0
+                        ? 'text-rose-600 dark:text-rose-400'
+                        : !isAccountActive
+                          ? 'text-gray-500 dark:text-gray-400'
+                          : ch.valColor
+                    }`}>
+                      ৳{ch.balance.toLocaleString()}
+                    </span>
+                    {ch.balance < 0 && (
+                      <span className="text-[8px] font-extrabold uppercase px-1 py-0.2 rounded bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300">
+                        Overdraft
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Inflow vs Outflow Breakdown */}
+                <div className="my-1.5 bg-black/5 dark:bg-white/5 rounded-lg p-1.5 text-[10px] font-mono space-y-0.5">
+                  <div className="flex items-center justify-between text-emerald-600 dark:text-emerald-400 font-semibold">
+                    <span className="text-gray-500 dark:text-gray-400 font-sans text-[9px]">Sales (In):</span>
+                    <span>+৳{ch.inflow.toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-rose-600 dark:text-rose-400 font-semibold">
+                    <span className="text-gray-500 dark:text-gray-400 font-sans text-[9px]">Cost (Out):</span>
+                    <span>-৳{ch.outflow.toLocaleString()}</span>
+                  </div>
+                </div>
+
+                {/* Footer Row */}
+                <div className="flex items-center justify-between text-[10px] text-gray-400 dark:text-gray-500 pt-1 border-t border-black/5 dark:border-white/5">
+                  <span className="font-mono">#{acc?.code || ch.code}</span>
+                  <span className={isAccountActive ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-amber-600 dark:text-amber-400 font-semibold'}>
+                    {isAccountActive ? 'Active' : 'Disabled'}
+                  </span>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

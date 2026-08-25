@@ -114,10 +114,15 @@ export const getAllAccounts = async (page = 1, limit = 100, search = '', type = 
   const accountIds = rows.map((r) => r.id);
   let journalCounts = {};
   let lastTransactions = {};
+  let totalDebits = {};
+  let totalCredits = {};
   if (accountIds.length > 0) {
-    const jeRows = await db('journal_entries')
+    const jeQuery = db('journal_entries')
       .where('is_deleted', false)
+      .andWhere('status', 'POSTED')
       .select('id', 'date', 'lines');
+    applyTenantScope(jeQuery, tenantId, 'journal_entries');
+    const jeRows = await jeQuery;
     for (const je of jeRows) {
       let lines = [];
       try { lines = typeof je.lines === 'string' ? JSON.parse(je.lines) : (je.lines || []); } catch { lines = []; }
@@ -125,6 +130,8 @@ export const getAllAccounts = async (page = 1, limit = 100, search = '', type = 
         const acctId = line.accountId || line.account_id;
         if (acctId && accountIds.includes(acctId)) {
           journalCounts[acctId] = (journalCounts[acctId] || 0) + 1;
+          totalDebits[acctId] = (totalDebits[acctId] || 0) + Number(line.debit || 0);
+          totalCredits[acctId] = (totalCredits[acctId] || 0) + Number(line.credit || 0);
           if (!lastTransactions[acctId] || new Date(je.date) > new Date(lastTransactions[acctId])) {
             lastTransactions[acctId] = je.date;
           }
@@ -138,6 +145,8 @@ export const getAllAccounts = async (page = 1, limit = 100, search = '', type = 
     const formatted = formatAccount(row, parentRow);
     formatted.journalEntryCount = journalCounts[row.id] || 0;
     formatted.lastTransactionDate = lastTransactions[row.id] || null;
+    formatted.totalDebit = totalDebits[row.id] || 0;
+    formatted.totalCredit = totalCredits[row.id] || 0;
     return formatted;
   });
 
