@@ -81,26 +81,33 @@ export const getSuperAdminAuditLogs = async (page = 1, limit = 50, filters = {})
   return { logs, pagination: getPagination(total, page, limit) };
 };
 
-export const getAuditLogStats = async () => {
-  const totalRes = await db('audit_logs').count({ count: '*' }).first();
+export const getAuditLogStats = async (tenantId = null, branchId = null) => {
+  const baseQuery = () => {
+    const q = db('audit_logs');
+    if (tenantId) q.where('tenant_id', tenantId);
+    if (branchId && branchId !== 'all') q.where('branch_id', branchId);
+    return q;
+  };
+
+  const totalRes = await baseQuery().count({ count: '*' }).first();
   const totalLogs = Number(totalRes?.count || 0);
 
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
-  const todayRes = await db('audit_logs').where('created_at', '>=', todayStart).count({ count: '*' }).first();
+  const todayRes = await baseQuery().where('created_at', '>=', todayStart).count({ count: '*' }).first();
   const todayLogs = Number(todayRes?.count || 0);
 
   const weekStart = new Date();
   weekStart.setDate(weekStart.getDate() - weekStart.getDay());
   weekStart.setHours(0, 0, 0, 0);
-  const weekRes = await db('audit_logs').where('created_at', '>=', weekStart).count({ count: '*' }).first();
+  const weekRes = await baseQuery().where('created_at', '>=', weekStart).count({ count: '*' }).first();
   const weekLogs = Number(weekRes?.count || 0);
 
-  const loginRes = await db('audit_logs').where('action', 'like', '%LOGIN%').count({ count: '*' }).first();
+  const loginRes = await baseQuery().where('action', 'like', '%LOGIN%').count({ count: '*' }).first();
   const loginAttempts = Number(loginRes?.count || 0);
 
-  const actionRows = await db('audit_logs').select('action').count({ count: '*' }).groupBy('action').orderBy('count', 'desc').limit(10);
-  const moduleRows = await db('audit_logs').select('module').count({ count: '*' }).groupBy('module').orderBy('count', 'desc').limit(10);
+  const actionRows = await baseQuery().select('action').count({ count: '*' }).groupBy('action').orderBy('count', 'desc').limit(10);
+  const moduleRows = await baseQuery().select('module').count({ count: '*' }).groupBy('module').orderBy('count', 'desc').limit(10);
 
   return {
     totalLogs,

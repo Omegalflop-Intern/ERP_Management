@@ -94,7 +94,8 @@ export const deleteOrder = async (req, res, next) => {
 export const getOrdersStats = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const stats = await wholesaleService.getOrdersStats(tenantId);
+    const branchId = req.selectedBranchId || null;
+    const stats = await wholesaleService.getOrdersStats(tenantId, branchId);
     return ApiResponse.success(res, stats);
   } catch (error) { next(error); }
 };

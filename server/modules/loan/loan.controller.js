@@ -6,7 +6,8 @@ export const getAllLoans = async (req, res, next) => {
   try {
     const type = req.query.type || 'LOAN_TAKEN';
     const tenantId = req.user?.tenantId || null;
-    const result = await loanService.getAllLoans(type, tenantId);
+    const branchId = req.selectedBranchId || null;
+    const result = await loanService.getAllLoans(type, tenantId, branchId);
     return ApiResponse.success(res, result);
   } catch (error) { next(error); }
 };

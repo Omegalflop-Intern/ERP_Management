@@ -360,9 +360,10 @@ export const deleteOrder = async (id, tenantId = null) => {
   return { ...order, isDeleted: true };
 };
 
-export const getOrdersStats = async (tenantId = null) => {
+export const getOrdersStats = async (tenantId = null, branchId = null) => {
   const query = db('wholesale_orders').where({ is_deleted: false });
   applyTenantScope(query, tenantId, 'wholesale_orders');
+  if (branchId && branchId !== 'all') query.where('wholesale_orders.branch_id', branchId);
 
   const countRes = await query.count({ totalOrders: '*' }).sum({ totalRevenue: 'grand_total' }).sum({ totalDue: 'due_amount' }).first();
 
