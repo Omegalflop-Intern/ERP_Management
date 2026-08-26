@@ -12,6 +12,7 @@ import {
   RefreshCw,
   Save,
   Settings as SettingsIcon,
+  Share2,
   Upload,
 } from 'lucide-react';
 import React, { useState } from 'react';
@@ -32,8 +33,19 @@ const settingGroups = [
       'companyAddress',
       'companyPhone',
       'companyEmail',
-      'binVat',
       'companyLogo',
+    ],
+  },
+  {
+    key: 'social',
+    label: 'Social & Online Links',
+    icon: Share2,
+    keys: [
+      'websiteUrl',
+      'facebookUrl',
+      'instagramUrl',
+      'whatsappNumber',
+      'youtubeUrl',
     ],
   },
   {
@@ -60,8 +72,12 @@ const fieldLabels = {
   companyAddress: 'Company Address',
   companyPhone: 'Company Phone',
   companyEmail: 'Company Email',
-  binVat: 'BIN / VAT Reg No',
   companyLogo: 'Company Logo',
+  websiteUrl: 'Official Website URL',
+  facebookUrl: 'Facebook Page URL',
+  instagramUrl: 'Instagram Profile URL',
+  whatsappNumber: 'WhatsApp Business Number',
+  youtubeUrl: 'YouTube Channel URL',
   currency: 'Currency',
   currencySymbol: 'Currency Symbol',
   defaultVatRate: 'Default VAT Rate (%)',

@@ -131,7 +131,7 @@ export const fallbackCompanyInfo = {
   address: 'Level 3, Shop 304, Multiplan Center, New Elephant Road, Dhaka-1205',
   phone: '+880 1700-000000, +880 1800-000000',
   email: 'sales@omnimanage.bd',
-  binVat: 'BIN: 004829103-0101',
+  binVat: '',
   invoiceFooter: 'Thank you for shopping with us!',
 };
 
@@ -156,7 +156,7 @@ export function useCompanyInfo() {
     address: settings?.companyAddress || fallbackCompanyInfo.address,
     phone: settings?.companyPhone || fallbackCompanyInfo.phone,
     email: settings?.companyEmail || fallbackCompanyInfo.email,
-    binVat: settings?.binVat || fallbackCompanyInfo.binVat,
+    binVat: settings?.binVat || '',
     invoiceFooter: settings?.invoiceFooter || fallbackCompanyInfo.invoiceFooter,
   };
 }
@@ -233,7 +233,7 @@ export function InvoiceA4Full({ sale }) {
       <div>
         {/* TOP BRANDING & INVOICE META */}
         <div className="flex justify-between items-start mb-3 print:break-inside-avoid">
-          <div className="space-y-0.5">
+          <div className="space-y-1">
             <div className="flex items-center gap-2.5">
               {companyInfo.logo && (
                 <img
@@ -246,34 +246,36 @@ export function InvoiceA4Full({ sale }) {
                   className="h-8 w-auto max-w-[80px] object-contain flex-shrink-0"
                 />
               )}
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-black tracking-tight text-slate-900">
+              <div>
+                <h1 className="text-2xl font-black tracking-tight text-slate-900 leading-none">
                   {companyInfo.name}
                 </h1>
-                <span className="bg-slate-900 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded">
-                  Retail ERP
-                </span>
+                {sale.branch?.name && (
+                  <p className="text-xs font-bold text-blue-600 dark:text-blue-400 mt-0.5">
+                    {sale.branch.name}
+                  </p>
+                )}
               </div>
             </div>
-            {companyInfo.slogan && (
-              <p className="text-xs font-medium text-slate-600">{companyInfo.slogan}</p>
+            {companyInfo.slogan && !sale.branch?.name && (
+              <p className="text-xs font-medium text-slate-500">{companyInfo.slogan}</p>
             )}
-            {companyInfo.address && (
+            {(sale.branch?.address || companyInfo.address) && (
               <p className="text-xs text-slate-500 max-w-sm leading-relaxed">
-                {companyInfo.address}
+                {sale.branch?.address || companyInfo.address}
               </p>
             )}
             <div className="text-xs text-slate-500 flex flex-wrap gap-x-2 gap-y-0.5 pt-0.5">
-              {companyInfo.phone && (
+              {(sale.branch?.phone || companyInfo.phone) && (
                 <span>
-                  <strong>Phone:</strong> {companyInfo.phone}
+                  <strong>Phone:</strong> {sale.branch?.phone || companyInfo.phone}
                 </span>
               )}
-              {companyInfo.email && (
+              {(sale.branch?.email || companyInfo.email) && (
                 <>
                   <span>•</span>
                   <span>
-                    <strong>Email:</strong> {companyInfo.email}
+                    <strong>Email:</strong> {sale.branch?.email || companyInfo.email}
                   </span>
                 </>
               )}
@@ -289,10 +291,8 @@ export function InvoiceA4Full({ sale }) {
           </div>
 
           <div className="text-right flex flex-col items-end space-y-1">
-            <div
-              className={`inline-block text-white font-extrabold px-3 py-1 text-xs tracking-wider uppercase rounded-md shadow-sm ${sale.saleType === 'WHOLESALE' ? 'bg-amber-600' : 'bg-slate-900'}`}
-            >
-              {sale.saleType === 'WHOLESALE' ? 'WHOLESALE (B2B) INVOICE' : 'RETAIL (B2C) INVOICE'}
+            <div className="text-sm font-black tracking-wider uppercase text-slate-900 border-b-2 border-slate-900 pb-0.5">
+              {sale.saleType === 'WHOLESALE' ? 'WHOLESALE INVOICE' : 'INVOICE'}
             </div>
             <div className="pt-0.5">
               <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">
@@ -584,27 +584,27 @@ export function InvoiceA4Half({ sale }) {
                   className="h-7 w-auto max-w-[100px] object-contain"
                 />
               )}
-              <div className="flex items-center gap-1.5">
-                <h1 className="text-base font-black tracking-tight text-slate-900">
+              <div>
+                <h1 className="text-base font-black tracking-tight text-slate-900 leading-none">
                   {companyInfo.name}
                 </h1>
-                <span className="bg-slate-900 text-white text-[8px] uppercase font-bold px-1.5 py-0.5 rounded">
-                  ERP
-                </span>
+                {sale.branch?.name && (
+                  <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400 mt-0.5">
+                    {sale.branch.name}
+                  </p>
+                )}
               </div>
             </div>
-            {companyInfo.address && (
-              <p className="text-[9px] text-slate-600">{companyInfo.address}</p>
+            {(sale.branch?.address || companyInfo.address) && (
+              <p className="text-[9px] text-slate-600">{sale.branch?.address || companyInfo.address}</p>
             )}
             <p className="text-[9px] text-slate-500">
-              Phone: {companyInfo.phone} {companyInfo.binVat && `| ${companyInfo.binVat}`}
+              Phone: {sale.branch?.phone || companyInfo.phone} {companyInfo.binVat && `| ${companyInfo.binVat}`}
             </p>
           </div>
           <div className="text-right">
-            <span
-              className={`text-white font-extrabold px-2 py-0.5 text-[9px] uppercase rounded ${sale.saleType === 'WHOLESALE' ? 'bg-amber-600' : 'bg-slate-900'}`}
-            >
-              {sale.saleType === 'WHOLESALE' ? 'WHOLESALE (B2B)' : 'RETAIL INVOICE'}
+            <span className="text-slate-900 font-extrabold text-[10px] uppercase border-b border-slate-900 pb-0.5">
+              {sale.saleType === 'WHOLESALE' ? 'WHOLESALE' : 'INVOICE'}
             </span>
             <p className="text-xs font-mono font-bold text-slate-900 mt-1">{sale.invoiceNumber}</p>
             <p className="text-[9px] text-slate-500">

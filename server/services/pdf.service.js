@@ -83,46 +83,53 @@ export async function generateInvoicePdfBuffer(sale) {
         }
       }
 
-      doc.fillColor('#0F172A').font('Helvetica-Bold').fontSize(16).text(companyInfo.name, headerTextX, y);
-      const nameWidth = doc.widthOfString(companyInfo.name);
-      doc.roundedRect(headerTextX + nameWidth + 6, y + 2, 50, 12, 3).fill('#0F172A');
-      doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(6).text('RETAIL ERP', headerTextX + nameWidth + 10, y + 5);
-      y += 22;
+      const shopName = companyInfo.name;
+      const branchName = sale.branch?.name || '';
+      const branchAddress = sale.branch?.address || companyInfo.address;
+      const branchPhone = sale.branch?.phone || companyInfo.phone;
+      const branchEmail = sale.branch?.email || companyInfo.email;
 
-      if (companyInfo.slogan) {
+      doc.fillColor('#0F172A').font('Helvetica-Bold').fontSize(16).text(shopName, headerTextX, y);
+      y += 18;
+
+      if (branchName) {
+        doc.fillColor('#2563EB').font('Helvetica-Bold').fontSize(9).text(branchName, headerTextX, y);
+        y += 13;
+      } else if (companyInfo.slogan) {
         doc.fillColor('#64748B').font('Helvetica').fontSize(8).text(companyInfo.slogan, startX, y);
         y += 11;
       }
-      if (companyInfo.address) {
-        doc.fillColor('#64748B').font('Helvetica').fontSize(7.5).text(companyInfo.address, startX, y);
+
+      if (branchAddress) {
+        doc.fillColor('#64748B').font('Helvetica').fontSize(7.5).text(branchAddress, startX, y);
         y += 11;
       }
       const contactLine = [
-        companyInfo.phone && `Phone: ${companyInfo.phone}`,
-        companyInfo.email && `Email: ${companyInfo.email}`,
+        branchPhone && `Phone: ${branchPhone}`,
+        branchEmail && `Email: ${branchEmail}`,
         companyInfo.binVat && `${companyInfo.binVat}`,
       ].filter(Boolean).join('  •  ');
       if (contactLine) {
         doc.fillColor('#64748B').font('Helvetica').fontSize(7.5).text(contactLine, startX, y);
       }
 
-      // Top Right: Retail Invoice Badge & Metadata
+      // Top Right: Minimal Clean Invoice Title & Metadata
       const rightMetaX = 420;
       const rightMetaY = 35;
 
-      doc.roundedRect(rightMetaX, rightMetaY, 140, 18, 4).fill('#0F172A');
-      doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(8.5).text('RETAIL INVOICE', rightMetaX, rightMetaY + 5, { width: 140, align: 'center' });
+      const invoiceTitle = sale.saleType === 'WHOLESALE' ? 'WHOLESALE INVOICE' : 'INVOICE';
+      doc.fillColor('#0F172A').font('Helvetica-Bold').fontSize(11).text(invoiceTitle, rightMetaX, rightMetaY, { width: 140, align: 'right' });
 
-      doc.fillColor('#64748B').font('Helvetica-Bold').fontSize(6.5).text('INVOICE NO', rightMetaX, rightMetaY + 23, { width: 140, align: 'right' });
-      doc.fillColor('#0F172A').font('Courier-Bold').fontSize(12).text(sale.invoiceNumber || 'INV-0000', rightMetaX, rightMetaY + 31, { width: 140, align: 'right' });
+      doc.fillColor('#64748B').font('Helvetica-Bold').fontSize(6.5).text('INVOICE NO', rightMetaX, rightMetaY + 16, { width: 140, align: 'right' });
+      doc.fillColor('#0F172A').font('Courier-Bold').fontSize(12).text(sale.invoiceNumber || 'INV-0000', rightMetaX, rightMetaY + 24, { width: 140, align: 'right' });
 
       const dateStr = sale.createdAt ? new Date(sale.createdAt).toLocaleDateString('en-BD', { month: 'short', day: '2-digit', year: 'numeric' }) : new Date().toLocaleDateString();
       const timeStr = sale.createdAt ? new Date(sale.createdAt).toLocaleTimeString('en-BD', { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString();
 
-      doc.fillColor('#475569').font('Helvetica').fontSize(7.5).text(`Date: ${dateStr}`, rightMetaX, rightMetaY + 46, { width: 140, align: 'right' });
-      doc.text(`Time: ${timeStr}`, rightMetaX, rightMetaY + 56, { width: 140, align: 'right' });
+      doc.fillColor('#475569').font('Helvetica').fontSize(7.5).text(`Date: ${dateStr}`, rightMetaX, rightMetaY + 40, { width: 140, align: 'right' });
+      doc.text(`Time: ${timeStr}`, rightMetaX, rightMetaY + 50, { width: 140, align: 'right' });
       if (sale.cashierUsername) {
-        doc.fillColor('#64748B').fontSize(7).text(`Served By: ${sale.cashierUsername}`, rightMetaX, rightMetaY + 66, { width: 140, align: 'right' });
+        doc.fillColor('#64748B').fontSize(7).text(`Served By: ${sale.cashierUsername}`, rightMetaX, rightMetaY + 60, { width: 140, align: 'right' });
       }
 
       // Full Width Horizontal Divider Line

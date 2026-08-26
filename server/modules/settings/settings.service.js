@@ -10,7 +10,7 @@ export const defaultSettings = [
   { key: 'companyPhone', value: '+880 1700-000000', category: 'company' },
   { key: 'companyEmail', value: 'sales@omnimanage.bd', category: 'company' },
   { key: 'companyLogo', value: '', category: 'company' },
-  { key: 'binVat', value: 'BIN: 004829103-0101', category: 'company' },
+  { key: 'binVat', value: '', category: 'company' },
   { key: 'currency', value: 'BDT', category: 'finance' },
   { key: 'currencySymbol', value: '৳', category: 'finance' },
   { key: 'defaultVatRate', value: 15, category: 'finance' },

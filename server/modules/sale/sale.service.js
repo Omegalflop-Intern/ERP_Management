@@ -322,11 +322,14 @@ export const getAllSales = async (page = 1, limit = 20, filters = {}) => {
   const offset = (page - 1) * limit;
   const dataQuery = db('transactions')
     .leftJoin('customers', 'transactions.customer_id', 'customers.id')
+    .leftJoin('branches', 'transactions.branch_id', 'branches.id')
     .where({ 'transactions.is_deleted': false, 'transactions.tx_type': 'SALE' })
     .select(
       'transactions.*',
       'customers.id as c_id', 'customers.name as c_name', 'customers.phone as c_phone',
-      'customers.email as c_email', 'customers.address as c_address'
+      'customers.email as c_email', 'customers.address as c_address',
+      'branches.id as b_id', 'branches.name as b_name', 'branches.address as b_address',
+      'branches.phone as b_phone', 'branches.email as b_email'
     );
   buildQuery(dataQuery);
 
@@ -343,11 +346,14 @@ export const getAllSales = async (page = 1, limit = 20, filters = {}) => {
 export const getSaleById = async (id, tenantId = null, branchId = null) => {
   const dataQuery = db('transactions')
     .leftJoin('customers', 'transactions.customer_id', 'customers.id')
+    .leftJoin('branches', 'transactions.branch_id', 'branches.id')
     .where({ 'transactions.id': id, 'transactions.is_deleted': false })
     .select(
       'transactions.*',
       'customers.id as c_id', 'customers.name as c_name', 'customers.phone as c_phone',
-      'customers.email as c_email', 'customers.address as c_address'
+      'customers.email as c_email', 'customers.address as c_address',
+      'branches.id as b_id', 'branches.name as b_name', 'branches.address as b_address',
+      'branches.phone as b_phone', 'branches.email as b_email'
     );
   applyTenantScope(dataQuery, tenantId, 'transactions');
   if (branchId && branchId !== 'all') {
@@ -364,10 +370,14 @@ export const getSaleById = async (id, tenantId = null, branchId = null) => {
 export const getSaleByInvoice = async (invoiceQuery, tenantId = null, branchId = null) => {
   const dataQuery = db('transactions')
     .leftJoin('customers', 'transactions.customer_id', 'customers.id')
+    .leftJoin('branches', 'transactions.branch_id', 'branches.id')
     .where({ 'transactions.invoice_number': invoiceQuery, 'transactions.is_deleted': false })
     .select(
       'transactions.*',
-      'customers.id as c_id', 'customers.name as c_name', 'customers.phone as c_phone'
+      'customers.id as c_id', 'customers.name as c_name', 'customers.phone as c_phone',
+      'customers.email as c_email', 'customers.address as c_address',
+      'branches.id as b_id', 'branches.name as b_name', 'branches.address as b_address',
+      'branches.phone as b_phone', 'branches.email as b_email'
     );
   applyTenantScope(dataQuery, tenantId, 'transactions');
   if (branchId && branchId !== 'all') {
@@ -383,16 +393,26 @@ export const getSaleByInvoice = async (invoiceQuery, tenantId = null, branchId =
 
 export const getSaleByPublicToken = async (token) => {
   const query = db('transactions')
-    .where({ public_token: token, is_deleted: false });
+    .leftJoin('customers', 'transactions.customer_id', 'customers.id')
+    .leftJoin('branches', 'transactions.branch_id', 'branches.id')
+    .where({ 'transactions.public_token': token, 'transactions.is_deleted': false })
+    .select(
+      'transactions.*',
+      'customers.id as c_id', 'customers.name as c_name', 'customers.phone as c_phone',
+      'customers.email as c_email', 'customers.address as c_address',
+      'branches.id as b_id', 'branches.name as b_name', 'branches.address as b_address',
+      'branches.phone as b_phone', 'branches.email as b_email'
+    );
 
   // Optional expiry check if token_expires_at is populated
   query.andWhere((builder) => {
-    builder.whereNull('token_expires_at').orWhere('token_expires_at', '>=', new Date());
+    builder.whereNull('transactions.token_expires_at').orWhere('transactions.token_expires_at', '>=', new Date());
   });
 
   const row = await query.first();
   if (!row) throw ApiError.notFound('Invoice not found or link has expired');
-  return formatTransaction(row);
+  const cRow = row.c_id ? { id: row.c_id, name: row.c_name, phone: row.c_phone } : null;
+  return formatTransaction(row, cRow);
 };
 
 export const updateSale = async (id, data, tenantId = null, branchId = null) => {

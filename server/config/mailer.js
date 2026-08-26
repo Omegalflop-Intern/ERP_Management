@@ -391,12 +391,17 @@ export const sendCustomerInvoiceEmail = async (toEmail, customerName, invoiceDat
     ? new Date(invoiceData.createdAt).toLocaleDateString('en-BD', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
     : new Date().toLocaleDateString('en-BD', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-  // Fetch tenant shop info from DB using tenantId
+  // Fetch tenant shop & branch info from DB using tenantId and branchId
   let shopName = SENDER_NAME;
   let shopPhone = '';
   let shopAddress = COMPANY_ADDRESS;
   let shopEmail = SENDER_EMAIL;
   let shopLogo = '';
+  let branchName = '';
+  let branchAddress = '';
+  let branchPhone = '';
+  let socials = { facebook: '', instagram: '', whatsapp: '', youtube: '', website: '' };
+
   try {
     if (invoiceData.tenantId) {
       const tenant = await db('tenants').where({ id: invoiceData.tenantId, is_deleted: false }).first();
@@ -405,21 +410,43 @@ export const sendCustomerInvoiceEmail = async (toEmail, customerName, invoiceDat
         shopPhone = tenant.phone || '';
         shopEmail = tenant.email || shopEmail;
       }
-      // Also check settings table for company address/logo
+      // Check settings table for company address, logo, and social links
       const settingsRows = await db('settings')
         .where({ tenant_id: invoiceData.tenantId })
-        .whereIn('key', ['companyAddress', 'companyLogo', 'companyPhone'])
+        .whereIn('key', ['companyAddress', 'companyLogo', 'companyPhone', 'facebookUrl', 'instagramUrl', 'whatsappNumber', 'youtubeUrl', 'websiteUrl', 'socialLinks'])
         .select('key', 'value');
       for (const s of settingsRows) {
         try {
-          const val = JSON.parse(s.value);
+          const val = typeof s.value === 'string' ? JSON.parse(s.value) : s.value;
           if (s.key === 'companyAddress' && val) shopAddress = val;
           if (s.key === 'companyLogo' && val) shopLogo = val;
           if (s.key === 'companyPhone' && val) shopPhone = shopPhone || val;
+          if (s.key === 'facebookUrl' && val) socials.facebook = val;
+          if (s.key === 'instagramUrl' && val) socials.instagram = val;
+          if (s.key === 'whatsappNumber' && val) socials.whatsapp = val;
+          if (s.key === 'youtubeUrl' && val) socials.youtube = val;
+          if (s.key === 'websiteUrl' && val) socials.website = val;
+          if (s.key === 'socialLinks' && val && typeof val === 'object') {
+            socials = { ...socials, ...val };
+          }
         } catch { /* ignore */ }
+      }
+
+      // If branch is provided, fetch branch specific location and phone
+      const bId = invoiceData.branch?.id || invoiceData.branchId;
+      if (bId) {
+        const branch = await db('branches').where({ id: bId, is_deleted: false }).first();
+        if (branch) {
+          branchName = branch.name || '';
+          branchAddress = branch.address || '';
+          branchPhone = branch.phone || '';
+        }
       }
     }
   } catch { /* non-blocking — use defaults */ }
+
+  const effectiveAddress = branchAddress || shopAddress;
+  const effectivePhone = branchPhone || shopPhone;
 
   // Line items table rows
   const lineItems = Array.isArray(invoiceData.lineItems) ? invoiceData.lineItems : [];
@@ -468,10 +495,11 @@ export const sendCustomerInvoiceEmail = async (toEmail, customerName, invoiceDat
           <td style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);padding:32px 36px;text-align:center;">
             ${logoHtml}
             <div style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;">${shopName}</div>
+            ${branchName ? `<div style="font-size:13px;font-weight:700;color:#93c5fd;margin-top:2px;">${branchName}</div>` : ''}
             <div style="font-size:12px;color:#94a3b8;margin-top:4px;">
-              ${shopPhone ? `📞 ${shopPhone}` : ''}
-              ${shopPhone && shopAddress ? ' &nbsp;·&nbsp; ' : ''}
-              ${shopAddress ? `📍 ${shopAddress}` : ''}
+              ${effectivePhone ? `📞 ${effectivePhone}` : ''}
+              ${effectivePhone && effectiveAddress ? ' &nbsp;·&nbsp; ' : ''}
+              ${effectiveAddress ? `📍 ${effectiveAddress}` : ''}
             </div>
             <div style="margin-top:20px;display:inline-block;">
               <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:10px 24px;display:inline-block;">
@@ -576,11 +604,23 @@ export const sendCustomerInvoiceEmail = async (toEmail, customerName, invoiceDat
 
         <!-- FOOTER -->
         <tr>
-          <td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:20px 36px;text-align:center;">
-            <div style="font-size:13px;color:#0f172a;font-weight:600;margin-bottom:4px;">Thank you for shopping at ${shopName}! 🙏</div>
-            <div style="font-size:11px;color:#94a3b8;margin-bottom:8px;">
-              For support, reply to this email or contact us at ${shopEmail}
+          <td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:24px 36px;text-align:center;">
+            <div style="font-size:13px;color:#0f172a;font-weight:700;margin-bottom:4px;">Thank you for shopping with ${shopName}${branchName ? ` (${branchName})` : ''}! 🙏</div>
+            <div style="font-size:11px;color:#64748b;margin-bottom:12px;">
+              For customer support, contact us at ${shopEmail || effectivePhone}
             </div>
+
+            <!-- SOCIAL MEDIA LINKS -->
+            ${(socials.facebook || socials.instagram || socials.whatsapp || socials.youtube || socials.website) ? `
+            <div style="margin-bottom:16px;padding:8px 12px;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;display:inline-block;">
+              <span style="font-size:11px;font-weight:700;color:#475569;margin-right:6px;display:inline-block;">Connect with us:</span>
+              ${socials.website ? `<a href="${socials.website.startsWith('http') ? socials.website : `https://${socials.website}`}" style="display:inline-block;margin:0 3px;padding:3px 8px;background:#f1f5f9;color:#0f172a;text-decoration:none;border-radius:4px;font-size:11px;font-weight:600;">🌐 Website</a>` : ''}
+              ${socials.facebook ? `<a href="${socials.facebook.startsWith('http') ? socials.facebook : `https://${socials.facebook}`}" style="display:inline-block;margin:0 3px;padding:3px 8px;background:#eff6ff;color:#1d4ed8;text-decoration:none;border-radius:4px;font-size:11px;font-weight:600;">📘 Facebook</a>` : ''}
+              ${socials.instagram ? `<a href="${socials.instagram.startsWith('http') ? socials.instagram : `https://${socials.instagram}`}" style="display:inline-block;margin:0 3px;padding:3px 8px;background:#fdf2f8;color:#be185d;text-decoration:none;border-radius:4px;font-size:11px;font-weight:600;">📷 Instagram</a>` : ''}
+              ${socials.whatsapp ? `<a href="${socials.whatsapp.startsWith('http') ? socials.whatsapp : `https://wa.me/${socials.whatsapp.replace(/[^0-9]/g, '')}`}" style="display:inline-block;margin:0 3px;padding:3px 8px;background:#f0fdf4;color:#15803d;text-decoration:none;border-radius:4px;font-size:11px;font-weight:600;">💬 WhatsApp</a>` : ''}
+              ${socials.youtube ? `<a href="${socials.youtube.startsWith('http') ? socials.youtube : `https://${socials.youtube}`}" style="display:inline-block;margin:0 3px;padding:3px 8px;background:#fef2f2;color:#b91c1c;text-decoration:none;border-radius:4px;font-size:11px;font-weight:600;">▶️ YouTube</a>` : ''}
+            </div>` : ''}
+
             <div style="font-size:10px;color:#94a3b8;line-height:1.6;">
               © ${new Date().getFullYear()} ${shopName}. All rights reserved.<br>
               <span style="display:inline-block;margin-top:4px;color:#64748b;font-weight:600;letter-spacing:0.3px;">⚡ Powered by OmniManage ERP Suite</span>

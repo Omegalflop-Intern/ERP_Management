@@ -177,19 +177,19 @@ export const generateA4Invoice = async (sale, element = null) => {
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(100, 116, 139);
   doc.text(companyInfo.slogan, 14, 25);
-  doc.text(companyInfo.address, 14, 29);
-  doc.text(
-    `Phone: ${companyInfo.phone}  |  Email: ${companyInfo.email}  |  ${companyInfo.binVat}`,
-    14,
-    33
-  );
+  const contactParts = [
+    companyInfo.phone && `Phone: ${companyInfo.phone}`,
+    companyInfo.email && `Email: ${companyInfo.email}`,
+    companyInfo.binVat && `${companyInfo.binVat}`,
+  ].filter(Boolean);
+  if (contactParts.length > 0) {
+    doc.text(contactParts.join('  |  '), 14, 33);
+  }
 
-  doc.setFillColor(15, 23, 42);
-  doc.roundedRect(pageWidth - 64, 15, 50, 7, 1, 1, 'F');
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.setTextColor(255, 255, 255);
-  doc.text('RETAIL INVOICE', pageWidth - 39, 20, { align: 'center' });
+  doc.setFontSize(10);
+  doc.setTextColor(15, 23, 42);
+  doc.text('INVOICE', pageWidth - 14, 20, { align: 'right' });
 
   doc.setFontSize(9);
   doc.setTextColor(15, 23, 42);

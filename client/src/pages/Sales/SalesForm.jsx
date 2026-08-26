@@ -847,7 +847,7 @@ export default function SalesForm() {
                         'Omni-Manage'}
                     </h4>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                      {tenantInfo?.address || 'Official Retail Sales Invoice'}
+                      {tenantInfo?.address || 'Sales Invoice'}
                     </p>
                   </div>
                   <div className="text-right">
@@ -895,8 +895,8 @@ export default function SalesForm() {
                       Type:{' '}
                       <span className="font-bold text-blue-600 dark:text-blue-400">
                         {selectedCustomerObj?.customerType === 'B2B'
-                          ? 'Wholesale (B2B)'
-                          : 'Retail (B2C)'}
+                          ? 'Wholesale'
+                          : 'Invoice'}
                       </span>
                     </p>
                   </div>
