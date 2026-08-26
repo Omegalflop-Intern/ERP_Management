@@ -21,7 +21,7 @@ function parseJSON(str) {
   return str || [];
 }
 
-export function formatTransaction(row, customerRow = null) {
+export function formatTransaction(row, customerRow = null, branchRow = null) {
   if (!row) return null;
   // Bug #16 fixed: wrap JSON.parse in try/catch to prevent 500 on malformed payment_breakdown
   let breakdown = {};
@@ -31,11 +31,28 @@ export function formatTransaction(row, customerRow = null) {
     breakdown = {};
   }
 
+  const branchObj = branchRow ? {
+    _id: String(branchRow.id),
+    id: branchRow.id,
+    name: branchRow.name,
+    address: branchRow.address || '',
+    phone: branchRow.phone || '',
+    email: branchRow.email || '',
+  } : (row.b_id ? {
+    _id: String(row.b_id),
+    id: row.b_id,
+    name: row.b_name,
+    address: row.b_address || '',
+    phone: row.b_phone || '',
+    email: row.b_email || '',
+  } : (row.branch_id ? { _id: String(row.branch_id), id: row.branch_id } : null));
+
   return {
     _id: String(row.id),
     id: row.id,
     tenantId: row.tenant_id || null,
     branchId: row.branch_id ? String(row.branch_id) : null,
+    branch: branchObj,
     invoiceNumber: row.invoice_number,
     txType: row.tx_type,
     saleType: row.sale_type || 'RETAIL',
