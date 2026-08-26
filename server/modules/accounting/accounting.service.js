@@ -366,6 +366,23 @@ async function applyLinesToAccounts(lines = [], reverse = false, tenantId = null
   }
 }
 
+export const validatePaymentMethodActive = async (method, tenantId) => {
+  const methodStr = String(method || 'cash').toLowerCase();
+  let code = '1000';
+  let label = 'Cash';
+  if (methodStr.includes('bank')) { code = '1010'; label = 'Bank Account'; }
+  else if (methodStr.includes('bkash')) { code = '1011'; label = 'bKash Account'; }
+  else if (methodStr.includes('nagad')) { code = '1012'; label = 'Nagad Account'; }
+  else if (methodStr.includes('rocket')) { code = '1013'; label = 'Rocket Account'; }
+
+  const query = db('accounts').where({ code, is_deleted: false });
+  if (tenantId) query.andWhere('tenant_id', tenantId);
+  const account = await query.first();
+  if (account && !account.is_active) {
+    throw ApiError.badRequest(`${label} is currently deactivated/paused! Please enable it in the Chart of Accounts first.`);
+  }
+};
+
 export const createJournalEntry = async (data) => {
   const tenantId = data.tenantId || null;
   const branchId = data.branchId || null;

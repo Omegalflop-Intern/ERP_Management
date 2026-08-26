@@ -112,11 +112,16 @@ export const createExpense = async (data, recordedBy = 'system', tenantId = null
   const amount = Number(data.amount);
   if (isNaN(amount) || amount <= 0) throw ApiError.badRequest('Expense amount must be greater than 0');
 
+  const resolvedTenant = tenantId || data.tenantId || null;
+  // Validate payment method is active/enabled
+  const { validatePaymentMethodActive } = await import('../accounting/accounting.service.js');
+  await validatePaymentMethodActive(data.paymentMethod || 'cash', resolvedTenant);
+
   const method = (data.paymentMethod || 'cash').toLowerCase();
   if (method === 'cash' && process.env.NODE_ENV !== 'test') {
     const availableCash = await getAvailableCashBalance(tenantId || data.tenantId, data.branchId);
     if (availableCash < amount) {
-      throw ApiError.badRequest(`Insufficient cash in hand! Available cash balance is ৳${availableCash.toLocaleString()}, but expense amount is ৳${amount.toLocaleString()}.`);
+      console.warn(`[Expense Warning] Insufficient cash in hand. Available: ৳${availableCash}, Required: ৳${amount}`);
     }
   }
 
@@ -140,6 +145,15 @@ export const createExpense = async (data, recordedBy = 'system', tenantId = null
   const rowQ = db('expenses').where({ id: insertedId });
   if (tenantId) rowQ.andWhere('tenant_id', tenantId);
   const row = await rowQ.first();
+
+  // Create automated journal entry instantly
+  try {
+    const { createAutomatedExpenseJournal } = await import('../accounting/accounting.service.js');
+    await createAutomatedExpenseJournal(row);
+  } catch (err) {
+    console.error('[Expense Auto-Journal Error]:', err.message);
+  }
+
   return formatExpense(row);
 };
 
@@ -170,6 +184,23 @@ export const updateExpense = async (id, data, tenantId = null, branchId = null) 
   const uq = db('expenses').where({ id });
   if (tenantId) uq.andWhere('tenant_id', tenantId);
   const updated = await uq.first();
+
+  // Re-create the journal entry with updated values
+  try {
+    const { voidJournalEntry, createAutomatedExpenseJournal } = await import('../accounting/accounting.service.js');
+    const jeRef = `EXP-${id}`;
+    const je = await db('journal_entries').where({ reference: jeRef, tenant_id: tenantId, is_deleted: false }).first();
+    if (je) {
+      if (je.status !== 'VOID') {
+        await voidJournalEntry(je.id, 'system', tenantId);
+      }
+      await db('journal_entries').where({ id: je.id }).delete();
+    }
+    await createAutomatedExpenseJournal(updated);
+  } catch (err) {
+    console.error('[Expense Update Journal Error]:', err.message);
+  }
+
   return formatExpense(updated);
 };
 
@@ -183,6 +214,19 @@ export const deleteExpense = async (id, tenantId = null, branchId = null) => {
   const dq = db('expenses').where({ id });
   if (tenantId) dq.andWhere('tenant_id', tenantId);
   await dq.update({ is_deleted: true });
+
+  // Void the corresponding journal entry
+  try {
+    const { voidJournalEntry } = await import('../accounting/accounting.service.js');
+    const jeRef = `EXP-${id}`;
+    const je = await db('journal_entries').where({ reference: jeRef, tenant_id: tenantId, is_deleted: false }).first();
+    if (je && je.status !== 'VOID') {
+      await voidJournalEntry(je.id, 'system', tenantId);
+    }
+  } catch (err) {
+    console.error('[Expense Reversal Error]:', err.message);
+  }
+
   return { ...formatExpense(expense), isDeleted: true };
 };
 

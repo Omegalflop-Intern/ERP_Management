@@ -132,6 +132,10 @@ export const createLoan = async (data, arg2 = null, arg3 = null) => {
     });
   }
 
+  // Validate payment method/account is active
+  const { validatePaymentMethodActive } = await import('../accounting/accounting.service.js');
+  await validatePaymentMethodActive(data.accountNumber || 'cash', resolvedTenantId);
+
   const [insertedId] = await db('loans').insert({
     tenant_id: resolvedTenantId,
     branch_id: resolvedBranchId,
@@ -150,6 +154,13 @@ export const createLoan = async (data, arg2 = null, arg3 = null) => {
     notes: data.notes || null,
     is_deleted: false,
   });
+
+  const createdLoan = await db('loans').where({ id: insertedId }).first();
+  try {
+    await createAutomatedLoanJournal(createdLoan);
+  } catch (err) {
+    console.error('[Loan Journal Error]:', err.message);
+  }
 
   return getLoanById(insertedId, resolvedTenantId);
 };
@@ -184,6 +195,11 @@ export const repayLoanInstalment = async (loanId, data, username = 'system', ten
   const newRepaid = loan.repaidAmount + amount;
   const status = newRepaid >= loan.loanAmount ? 'Fully Repaid' : 'Active';
 
+  // Validate repayment payment method/account is active
+  const resolvedTenant = tenantId || loan.tenantId || null;
+  const { validatePaymentMethodActive } = await import('../accounting/accounting.service.js');
+  await validatePaymentMethodActive(data.paymentMethod || 'cash', resolvedTenant);
+
   const q1 = db('loans').where({ id: loanId });
   if (tenantId) q1.andWhere('tenant_id', tenantId);
   await q1.update({
@@ -203,6 +219,14 @@ export const repayLoanInstalment = async (loanId, data, username = 'system', ten
     is_deleted: false,
   });
 
+  try {
+    const createdRep = await db('loan_repayments').where({ id: repId }).first();
+    const fullLoan = await db('loans').where({ id: loanId }).first();
+    await createAutomatedLoanRepaymentJournal(createdRep, fullLoan);
+  } catch (err) {
+    console.error('[Loan Repayment Journal Error]:', err.message);
+  }
+
   const updatedLoan = await getLoanById(loanId, tenantId);
   const repQuery = db('loan_repayments').where({ id: repId });
   if (tenantId) repQuery.andWhere('tenant_id', tenantId);
@@ -218,5 +242,161 @@ export const deleteLoan = async (id, tenantId = null) => {
   const q2 = db('loans').where({ id });
   if (tenantId) q2.andWhere('tenant_id', tenantId);
   await q2.update({ is_deleted: true });
+
+  try {
+    const { voidJournalEntry } = await import('../accounting/accounting.service.js');
+    
+    const creRef = `LOAN-CRT-${id}`;
+    const creJe = await db('journal_entries').where({ reference: creRef, tenant_id: tenantId, is_deleted: false }).first();
+    if (creJe && creJe.status !== 'VOID') {
+      await voidJournalEntry(creJe.id, 'system', tenantId);
+    }
+
+    const reps = await db('loan_repayments').where({ loan_id: id, is_deleted: false });
+    for (const r of reps) {
+      const repRef = `LOAN-REP-${r.id}`;
+      const repJe = await db('journal_entries').where({ reference: repRef, tenant_id: tenantId, is_deleted: false }).first();
+      if (repJe && repJe.status !== 'VOID') {
+        await voidJournalEntry(repJe.id, 'system', tenantId);
+      }
+    }
+  } catch (err) {
+    console.error('[Loan Deletion Reversal Error]:', err.message);
+  }
+
   return { ...loan, isDeleted: true };
+};
+
+export const createAutomatedLoanJournal = async (loan) => {
+  try {
+    const { createJournalEntry, seedDefaultAccounts } = await import('../accounting/accounting.service.js');
+    const tenantId = loan.tenant_id || loan.tenantId || null;
+    const amount = Number(loan.loan_amount || 0);
+    if (amount <= 0) return null;
+
+    const ref = `LOAN-CRT-${loan.id}`;
+    const existing = await db('journal_entries').where({ reference: ref, is_deleted: false }).first();
+    if (existing) return existing;
+
+    await seedDefaultAccounts(tenantId);
+    
+    const acctsQuery = db('accounts').where({ is_deleted: false });
+    if (tenantId) acctsQuery.andWhere('tenant_id', tenantId);
+    const accounts = await acctsQuery;
+    const acctMap = {};
+    for (const a of accounts) acctMap[a.code] = a;
+
+    const method = String(loan.account_number || 'cash').toLowerCase();
+    let assetAcct = acctMap['1000'];
+    if (method.includes('bank') && acctMap['1010']) assetAcct = acctMap['1010'];
+    else if (method.includes('bkash') && acctMap['1011']) assetAcct = acctMap['1011'];
+    else if (method.includes('nagad') && acctMap['1012']) assetAcct = acctMap['1012'];
+    else if (method.includes('rocket') && acctMap['1013']) assetAcct = acctMap['1013'];
+
+    const type = String(loan.type).toUpperCase();
+
+    if (type === 'LOAN_TAKEN') {
+      const payAcct = acctMap['2000'];
+      if (assetAcct && payAcct) {
+        return await createJournalEntry({
+          tenantId,
+          branchId: loan.branch_id || null,
+          date: loan.borrowed_date || new Date(),
+          description: `Loan Taken from ${loan.provider_name}`,
+          reference: ref,
+          lines: [
+            { accountId: assetAcct.id, code: assetAcct.code, accountName: assetAcct.name, debit: amount, credit: 0 },
+            { accountId: payAcct.id, code: payAcct.code, accountName: payAcct.name, debit: 0, credit: amount }
+          ],
+          status: 'POSTED',
+        });
+      }
+    } else if (type === 'LOAN_GIVEN') {
+      const recAcct = acctMap['1020'];
+      if (assetAcct && recAcct) {
+        return await createJournalEntry({
+          tenantId,
+          branchId: loan.branch_id || null,
+          date: loan.borrowed_date || new Date(),
+          description: `Loan Given to ${loan.provider_name}`,
+          reference: ref,
+          lines: [
+            { accountId: recAcct.id, code: recAcct.code, accountName: recAcct.name, debit: amount, credit: 0 },
+            { accountId: assetAcct.id, code: assetAcct.code, accountName: assetAcct.name, debit: 0, credit: amount }
+          ],
+          status: 'POSTED',
+        });
+      }
+    }
+  } catch (err) {
+    console.error('[AUTO-JOURNAL] Failed to create loan journal:', err.message);
+  }
+  return null;
+};
+
+export const createAutomatedLoanRepaymentJournal = async (repayment, loan) => {
+  try {
+    const { createJournalEntry, seedDefaultAccounts } = await import('../accounting/accounting.service.js');
+    const tenantId = repayment.tenant_id || repayment.tenantId || null;
+    const amount = Number(repayment.amount || 0);
+    if (amount <= 0) return null;
+
+    const ref = `LOAN-REP-${repayment.id}`;
+    const existing = await db('journal_entries').where({ reference: ref, is_deleted: false }).first();
+    if (existing) return existing;
+
+    await seedDefaultAccounts(tenantId);
+    
+    const acctsQuery = db('accounts').where({ is_deleted: false });
+    if (tenantId) acctsQuery.andWhere('tenant_id', tenantId);
+    const accounts = await acctsQuery;
+    const acctMap = {};
+    for (const a of accounts) acctMap[a.code] = a;
+
+    const method = String(repayment.payment_method || 'cash').toLowerCase();
+    let assetAcct = acctMap['1000'];
+    if (method.includes('bank') && acctMap['1010']) assetAcct = acctMap['1010'];
+    else if (method.includes('bkash') && acctMap['1011']) assetAcct = acctMap['1011'];
+    else if (method.includes('nagad') && acctMap['1012']) assetAcct = acctMap['1012'];
+    else if (method.includes('rocket') && acctMap['1013']) assetAcct = acctMap['1013'];
+
+    const type = String(loan.type).toUpperCase();
+
+    if (type === 'LOAN_TAKEN') {
+      const payAcct = acctMap['2000'];
+      if (assetAcct && payAcct) {
+        return await createJournalEntry({
+          tenantId,
+          branchId: loan.branch_id || null,
+          date: repayment.date || new Date(),
+          description: `Loan Repayment to ${loan.provider_name}`,
+          reference: ref,
+          lines: [
+            { accountId: payAcct.id, code: payAcct.code, accountName: payAcct.name, debit: amount, credit: 0 },
+            { accountId: assetAcct.id, code: assetAcct.code, accountName: assetAcct.name, debit: 0, credit: amount }
+          ],
+          status: 'POSTED',
+        });
+      }
+    } else if (type === 'LOAN_GIVEN') {
+      const recAcct = acctMap['1020'];
+      if (assetAcct && recAcct) {
+        return await createJournalEntry({
+          tenantId,
+          branchId: loan.branch_id || null,
+          date: repayment.date || new Date(),
+          description: `Loan Repayment received from ${loan.provider_name}`,
+          reference: ref,
+          lines: [
+            { accountId: assetAcct.id, code: assetAcct.code, accountName: assetAcct.name, debit: amount, credit: 0 },
+            { accountId: recAcct.id, code: recAcct.code, accountName: recAcct.name, debit: 0, credit: amount }
+          ],
+          status: 'POSTED',
+        });
+      }
+    }
+  } catch (err) {
+    console.error('[AUTO-JOURNAL] Failed to create loan repayment journal:', err.message);
+  }
+  return null;
 };

@@ -62,6 +62,27 @@ export default function Loans() {
     },
   });
 
+  const { data: accountsData } = useQuery({
+    queryKey: ['accounts-list'],
+    queryFn: async () => {
+      const res = await api.get('/accounting/accounts', { params: { limit: 200 } });
+      return res.data?.data || [];
+    }
+  });
+
+  const isMethodActive = (method) => {
+    if (!accountsData || accountsData.length === 0) return true;
+    const methodStr = String(method).toLowerCase();
+    let code = '1000';
+    if (methodStr.includes('bank')) code = '1010';
+    else if (methodStr.includes('bkash')) code = '1011';
+    else if (methodStr.includes('nagad')) code = '1012';
+    else if (methodStr.includes('rocket')) code = '1013';
+
+    const acct = accountsData.find(a => a.code === code);
+    return acct ? Boolean(acct.isActive ?? acct.is_active) : true;
+  };
+
   const loans = loanData?.loans || [];
   const summary = loanData?.summary || {};
 
@@ -604,11 +625,17 @@ export default function Loans() {
                   onChange={(e) => setRepayForm({ ...repayForm, paymentMethod: e.target.value })}
                   className={inputCls}
                 >
-                  <option value="cash">Cash</option>
-                  <option value="bank">Bank Transfer</option>
-                  <option value="bkash">bKash</option>
-                  <option value="nagad">Nagad</option>
-                  <option value="rocket">Rocket</option>
+                  {[
+                    { value: 'cash', label: 'Cash' },
+                    { value: 'bank', label: 'Bank Transfer' },
+                    { value: 'bkash', label: 'bKash' },
+                    { value: 'nagad', label: 'Nagad' },
+                    { value: 'rocket', label: 'Rocket' }
+                  ].map(m => (
+                    <option key={m.value} value={m.value} disabled={!isMethodActive(m.value)}>
+                      {m.label} {!isMethodActive(m.value) ? '(Deactivated)' : ''}
+                    </option>
+                  ))}
                 </select>
               </div>
               <div>

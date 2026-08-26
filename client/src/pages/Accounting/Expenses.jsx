@@ -122,7 +122,26 @@ export default function Expenses() {
   const summary = expenseData?.summary || {};
   const totalOpExpenses = Number(summary.totalExpense || 0);
   const totalCombinedOutflow = totalOpExpenses + totalPurchasesCost;
+  const { data: accountsData } = useQuery({
+    queryKey: ['accounts-list'],
+    queryFn: async () => {
+      const res = await api.get('/accounting/accounts', { params: { limit: 200 } });
+      return res.data?.data || [];
+    }
+  });
 
+  const isMethodActive = (method) => {
+    if (!accountsData || accountsData.length === 0) return true;
+    const methodStr = String(method).toLowerCase();
+    let code = '1000';
+    if (methodStr.includes('bank')) code = '1010';
+    else if (methodStr.includes('bkash')) code = '1011';
+    else if (methodStr.includes('nagad')) code = '1012';
+    else if (methodStr.includes('rocket')) code = '1013';
+
+    const acct = accountsData.find(a => a.code === code);
+    return acct ? Boolean(acct.isActive ?? acct.is_active) : true;
+  };
   // Combined sorted list for all outgoings
   const combinedOutgoings = [
     ...expenses.map((e) => ({
@@ -769,12 +788,18 @@ export default function Expenses() {
                     Payment Method
                   </label>
                   <select name="paymentMethod" defaultValue="Cash" className={inputCls}>
-                    <option value="Cash">Cash</option>
-                    <option value="bKash">bKash</option>
-                    <option value="Nagad">Nagad</option>
-                    <option value="Rocket">Rocket</option>
-                    <option value="Bank Transfer">Bank Transfer</option>
-                    <option value="Card">Card</option>
+                    {[
+                      { value: 'Cash', label: 'Cash' },
+                      { value: 'bKash', label: 'bKash' },
+                      { value: 'Nagad', label: 'Nagad' },
+                      { value: 'Rocket', label: 'Rocket' },
+                      { value: 'Bank Transfer', label: 'Bank Transfer' },
+                      { value: 'Card', label: 'Card' }
+                    ].map(m => (
+                      <option key={m.value} value={m.value} disabled={!isMethodActive(m.value)}>
+                        {m.label} {!isMethodActive(m.value) ? '(Deactivated)' : ''}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div>
@@ -1006,12 +1031,18 @@ function EditExpenseModal({
                 onChange={(e) => setPaymentMethod(e.target.value)}
                 className={inputCls}
               >
-                <option value="Cash">Cash</option>
-                <option value="bKash">bKash</option>
-                <option value="Nagad">Nagad</option>
-                <option value="Rocket">Rocket</option>
-                <option value="Bank Transfer">Bank Transfer</option>
-                <option value="Card">Card</option>
+                {[
+                  { value: 'Cash', label: 'Cash' },
+                  { value: 'bKash', label: 'bKash' },
+                  { value: 'Nagad', label: 'Nagad' },
+                  { value: 'Rocket', label: 'Rocket' },
+                  { value: 'Bank Transfer', label: 'Bank Transfer' },
+                  { value: 'Card', label: 'Card' }
+                ].map(m => (
+                  <option key={m.value} value={m.value} disabled={!isMethodActive(m.value)}>
+                    {m.label} {!isMethodActive(m.value) ? '(Deactivated)' : ''}
+                  </option>
+                ))}
               </select>
             </div>
             <div>

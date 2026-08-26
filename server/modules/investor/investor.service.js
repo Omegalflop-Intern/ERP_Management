@@ -99,6 +99,11 @@ export const createInvestor = async (data, recordedBy = 'system', tenantId = nul
     : (data.tenantId && !isNaN(Number(data.tenantId)) ? data.tenantId : null);
   const resolvedBranchId = (data.branchId && !isNaN(Number(data.branchId))) ? data.branchId : null;
 
+  if (data.initialCapital && Number(data.initialCapital) > 0) {
+    const { validatePaymentMethodActive } = await import('../accounting/accounting.service.js');
+    await validatePaymentMethodActive(data.paymentMethod || 'cash', resolvedTenantId);
+  }
+
   const initialCap = Number(data.initialCapital || 0);
   const [insertedId] = await db('investors').insert({
     tenant_id: resolvedTenantId,
@@ -117,7 +122,7 @@ export const createInvestor = async (data, recordedBy = 'system', tenantId = nul
   });
 
   if (data.initialCapital && Number(data.initialCapital) > 0) {
-    await db('investor_transactions').insert({
+    const [txId] = await db('investor_transactions').insert({
       tenant_id: resolvedTenantId,
       investor_id: insertedId,
       type: 'DEPOSIT',
@@ -128,6 +133,12 @@ export const createInvestor = async (data, recordedBy = 'system', tenantId = nul
       recorded_by: typeof recordedBy === 'string' ? recordedBy : 'system',
       is_deleted: false,
     });
+    try {
+      const createdTx = await db('investor_transactions').where({ id: txId }).first();
+      await createAutomatedInvestorJournal(createdTx);
+    } catch (err) {
+      console.error('[Investor Initial Journal Error]:', err.message);
+    }
   }
 
   return getInvestorById(insertedId, resolvedTenantId);
@@ -163,6 +174,10 @@ export const addInvestorTransaction = async (investorId, txData, username, tenan
   if (!['DEPOSIT', 'WITHDRAWAL', 'PROFIT_SHARE', 'PROFIT_PAYOUT', 'PROFIT_REINVESTMENT'].includes(type)) {
     throw ApiError.badRequest('Invalid transaction type');
   }
+
+  const resolvedTenant = tenantId || investor.tenantId || null;
+  const { validatePaymentMethodActive } = await import('../accounting/accounting.service.js');
+  await validatePaymentMethodActive(txData.paymentMethod || 'cash', resolvedTenant);
 
   let totalInvested = investor.totalInvested;
   let totalWithdrawn = investor.totalWithdrawn;
@@ -201,6 +216,13 @@ export const addInvestorTransaction = async (investorId, txData, username, tenan
     is_deleted: false,
   });
 
+  try {
+    const createdTx = await db('investor_transactions').where({ id: txId }).first();
+    await createAutomatedInvestorJournal(createdTx);
+  } catch (err) {
+    console.error('[Investor Transaction Journal Error]:', err.message);
+  }
+
   const updatedInvestor = await getInvestorById(investorId, tenantId);
   const txReQuery = db('investor_transactions').where({ id: txId });
   if (tenantId) txReQuery.andWhere('tenant_id', tenantId);
@@ -238,6 +260,23 @@ export const deleteInvestor = async (id, tenantId = null) => {
   const invDel = db('investors').where({ id });
   if (tenantId) invDel.andWhere('tenant_id', tenantId);
   await invDel.update({ is_deleted: true });
+
+  try {
+    const { voidJournalEntry } = await import('../accounting/accounting.service.js');
+    const txs = await db('investor_transactions').where({ investor_id: id, is_deleted: false });
+    await db('investor_transactions').where({ investor_id: id }).update({ is_deleted: true });
+    
+    for (const tx of txs) {
+      const jeRef = `INV-TX-${tx.id}`;
+      const je = await db('journal_entries').where({ reference: jeRef, tenant_id: tenantId, is_deleted: false }).first();
+      if (je && je.status !== 'VOID') {
+        await voidJournalEntry(je.id, 'system', tenantId);
+      }
+    }
+  } catch (err) {
+    console.error('[Investor Deletion Reversal Error]:', err.message);
+  }
+
   return { ...investor, isDeleted: true };
 };
 
@@ -266,4 +305,65 @@ export const getAllTransactions = async (tenantId = null, branchId = null) => {
     const inv = r.inv_id ? { id: r.inv_id, name: r.inv_name, phone: r.inv_phone, share_percentage: r.inv_share_percentage } : null;
     return formatInvestorTransaction(r, inv);
   });
+};
+
+export const createAutomatedInvestorJournal = async (tx) => {
+  try {
+    const { createJournalEntry, seedDefaultAccounts } = await import('../accounting/accounting.service.js');
+    const tenantId = tx.tenant_id || tx.tenantId || null;
+    const amount = Number(tx.amount || 0);
+    if (amount <= 0) return null;
+
+    const ref = `INV-TX-${tx.id}`;
+    const existing = await db('journal_entries').where({ reference: ref, is_deleted: false }).first();
+    if (existing) return existing;
+
+    await seedDefaultAccounts(tenantId);
+    
+    const acctsQuery = db('accounts').where({ is_deleted: false });
+    if (tenantId) acctsQuery.andWhere('tenant_id', tenantId);
+    const accounts = await acctsQuery;
+    const acctMap = {};
+    for (const a of accounts) acctMap[a.code] = a;
+
+    const method = String(tx.payment_method || tx.paymentMethod || 'cash').toLowerCase();
+    let assetAcct = acctMap['1000'];
+    if (method.includes('bank') && acctMap['1010']) assetAcct = acctMap['1010'];
+    else if (method.includes('bkash') && acctMap['1011']) assetAcct = acctMap['1011'];
+    else if (method.includes('nagad') && acctMap['1012']) assetAcct = acctMap['1012'];
+    else if (method.includes('rocket') && acctMap['1013']) assetAcct = acctMap['1013'];
+
+    const capitalAcct = acctMap['3000'];
+    const type = String(tx.type).toUpperCase();
+
+    if (assetAcct && capitalAcct) {
+      let lines = [];
+      if (type === 'DEPOSIT' || type === 'PROFIT_REINVESTMENT') {
+        lines = [
+          { accountId: assetAcct.id, code: assetAcct.code, accountName: assetAcct.name, debit: amount, credit: 0 },
+          { accountId: capitalAcct.id, code: capitalAcct.code, accountName: capitalAcct.name, debit: 0, credit: amount }
+        ];
+      } else if (type === 'WITHDRAWAL' || type === 'PROFIT_SHARE' || type === 'PROFIT_PAYOUT') {
+        lines = [
+          { accountId: capitalAcct.id, code: capitalAcct.code, accountName: capitalAcct.name, debit: amount, credit: 0 },
+          { accountId: assetAcct.id, code: assetAcct.code, accountName: assetAcct.name, debit: 0, credit: amount }
+        ];
+      }
+
+      if (lines.length === 2) {
+        return await createJournalEntry({
+          tenantId,
+          branchId: null,
+          date: tx.date || tx.created_at || new Date(),
+          description: `Investor Capital Transaction (${tx.type}): Ref ${tx.reference || tx.id}`,
+          reference: ref,
+          lines,
+          status: 'POSTED',
+        });
+      }
+    }
+  } catch (err) {
+    console.error('[AUTO-JOURNAL] Failed to create investor transaction journal:', err.message);
+  }
+  return null;
 };
