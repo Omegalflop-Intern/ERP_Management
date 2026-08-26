@@ -685,9 +685,11 @@ function JournalEntryDetail({ entry, onClose }) {
                 {entry.lines?.map((l, idx) => (
                   <tr key={idx}>
                     <td className="px-4 py-2.5">
-                      <span className="font-mono text-xs text-slate-500">{l.accountId?.code}</span>
+                      <span className="font-mono text-xs text-slate-500">
+                        {l.accountId?.code || l.code || ''}
+                      </span>
                       <span className="ml-2 font-medium text-slate-900 dark:text-slate-100">
-                        {l.accountId?.name}
+                        {l.accountId?.name || l.accountName || l.account?.name || ''}
                       </span>
                     </td>
                     <td className="px-4 py-2.5 text-right font-mono text-emerald-600 dark:text-emerald-400 font-bold">

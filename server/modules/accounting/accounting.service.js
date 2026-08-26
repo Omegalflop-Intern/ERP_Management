@@ -1074,11 +1074,6 @@ export const syncHistoricalJournals = async (tenantId = null) => {
         cogs += (uCost * qty);
       }
 
-      if (cogs > 0 && acctMap['5000'] && acctMap['1030']) {
-        lines.push({ accountId: acctMap['5000'].id, code: '5000', accountName: 'Cost of Goods Sold', debit: cogs, credit: 0 });
-        lines.push({ accountId: acctMap['1030'].id, code: '1030', accountName: 'Inventory', debit: 0, credit: cogs });
-      }
-
       if (lines.length >= 2) {
         await createJournalEntry({
           tenantId: sale.tenant_id || tenantId,
@@ -1089,6 +1084,24 @@ export const syncHistoricalJournals = async (tenantId = null) => {
           lines,
         });
         syncedCount++;
+      }
+
+      if (cogs > 0 && acctMap['5000'] && acctMap['1030']) {
+        const cogsRef = `COGS-${ref}`;
+        const existingCogs = await db('journal_entries').where({ reference: cogsRef, is_deleted: false }).first();
+        if (!existingCogs) {
+          await createJournalEntry({
+            tenantId: sale.tenant_id || tenantId,
+            branchId: sale.branch_id || null,
+            date: sale.created_at,
+            description: `COGS Recognition for #${ref}`,
+            reference: cogsRef,
+            lines: [
+              { accountId: acctMap['5000'].id, code: '5000', accountName: 'Cost of Goods Sold', debit: cogs, credit: 0 },
+              { accountId: acctMap['1030'].id, code: '1030', accountName: 'Inventory', debit: 0, credit: cogs },
+            ],
+          });
+        }
       }
     }
   }
