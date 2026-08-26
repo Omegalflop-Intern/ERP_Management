@@ -214,7 +214,7 @@ export default function Loans() {
             {loanType === 'LOAN_TAKEN' ? 'Outstanding Payable' : 'Outstanding Receivable'}
           </div>
           <div className="text-2xl font-bold text-red-600 mt-1">
-            ৳{(summary.activeDueBalance || 0).toLocaleString()}
+            ৳{(summary.totalRemaining || 0).toLocaleString()}
           </div>
         </div>
         <div className={cardCls}>
@@ -226,9 +226,9 @@ export default function Loans() {
           </div>
         </div>
         <div className={cardCls}>
-          <div className="text-xs text-gray-500 uppercase font-semibold">Active Accounts</div>
+          <div className="text-xs text-gray-500 uppercase font-semibold">Active Debt Records</div>
           <div className="text-2xl font-bold text-amber-600 mt-1">
-            {summary.activeLoans || 0} Accounts
+            {summary.activeCount || 0} Records
           </div>
         </div>
       </div>
@@ -329,14 +329,28 @@ export default function Loans() {
                   </div>
                 </div>
 
-                {loan.dueDate && (
-                  <div className="mt-3 flex items-center justify-between text-xs text-gray-500 bg-gray-50 dark:bg-gray-900/50 p-2 rounded-lg">
-                    <span>Target Due Date:</span>
-                    <strong className="text-amber-600 font-mono">
-                      {new Date(loan.dueDate).toLocaleDateString()}
+                <div className="mt-3 space-y-1 text-xs text-gray-500 bg-gray-50 dark:bg-gray-900/50 p-2.5 rounded-xl border border-gray-100 dark:border-gray-800">
+                  <div className="flex items-center justify-between">
+                    <span>Start Date:</span>
+                    <strong className="font-mono text-gray-700 dark:text-gray-300">
+                      {loan.borrowedDate ? new Date(loan.borrowedDate).toLocaleDateString() : 'N/A'}
                     </strong>
                   </div>
-                )}
+                  <div className="flex items-center justify-between">
+                    <span>Target Due Date:</span>
+                    <strong className="text-amber-600 font-mono">
+                      {loan.dueDate ? new Date(loan.dueDate).toLocaleDateString() : 'N/A'}
+                    </strong>
+                  </div>
+                  {loan.installmentCount > 0 && (
+                    <div className="flex items-center justify-between pt-1 mt-1 border-t border-dashed border-gray-200 dark:border-gray-800">
+                      <span>Installment Plan:</span>
+                      <strong className="text-blue-600 dark:text-blue-400">
+                        {loan.installmentCount} Inst. (৳{Math.round(loan.loanAmount / loan.installmentCount).toLocaleString()}/mo)
+                      </strong>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Actions & Buttons */}

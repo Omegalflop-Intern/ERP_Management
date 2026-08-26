@@ -323,11 +323,28 @@ export default function Investors() {
                       </span>
                     </div>
 
-                    {investor.email && (
-                      <div className="flex items-center gap-1.5 text-xs text-gray-400 mt-2">
-                        <Mail className="w-3.5 h-3.5" /> {investor.email}
+                    <div className="mt-3 space-y-1 text-xs text-gray-500 bg-gray-50 dark:bg-gray-900/50 p-2.5 rounded-xl border border-gray-100 dark:border-gray-800">
+                      <div className="flex items-center justify-between">
+                        <span>Partner Since:</span>
+                        <strong className="font-mono text-gray-700 dark:text-gray-300">
+                          {investor.createdAt ? new Date(investor.createdAt).toLocaleDateString() : 'N/A'}
+                        </strong>
                       </div>
-                    )}
+                      <div className="flex items-center justify-between">
+                        <span>Equity Share:</span>
+                        <strong className="text-red-600 dark:text-red-400">
+                          {investor.sharePercentage || 0}% Equity
+                        </strong>
+                      </div>
+                      {investor.email && (
+                        <div className="flex items-center justify-between pt-1 border-t border-dashed border-gray-200 dark:border-gray-800">
+                          <span>Email:</span>
+                          <span className="text-gray-600 dark:text-gray-400 truncate max-w-[150px]">
+                            {investor.email}
+                          </span>
+                        </div>
+                      )}
+                    </div>
 
                     <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800 grid grid-cols-3 gap-2 text-center">
                       <div className="bg-gray-50 dark:bg-gray-900 p-2 rounded-xl">
