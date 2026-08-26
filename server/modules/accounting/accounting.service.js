@@ -475,13 +475,16 @@ export const getBalanceSheet = async (asOf = '', tenantId = null, branchId = nul
 };
 
 export const getProfitLoss = async (from = '', to = '', tenantId = null, branchId = null) => {
+  const fromDateStr = from ? (from.includes('T') ? from.split('T')[0] : from) : '';
+  const toDateStr = to ? (to.includes('T') ? to.split('T')[0] : to) : '';
+
   // 1. Fetch completed sales transactions
   const revQuery = db('transactions')
     .where({ tx_type: 'SALE', is_deleted: false, status: 'COMPLETED' });
   applyTenantScope(revQuery, tenantId, 'transactions');
   if (branchId && branchId !== 'all') revQuery.where('branch_id', branchId);
-  if (from) revQuery.where('created_at', '>=', new Date(from + 'T00:00:00'));
-  if (to) revQuery.where('created_at', '<=', new Date(to + 'T23:59:59'));
+  if (fromDateStr) revQuery.whereRaw('DATE(created_at) >= ?', [fromDateStr]);
+  if (toDateStr) revQuery.whereRaw('DATE(created_at) <= ?', [toDateStr]);
 
   const salesRows = await revQuery.select(
     'id', 'invoice_number', 'sub_total', 'discount', 'tax', 'net_total',
@@ -494,11 +497,11 @@ export const getProfitLoss = async (from = '', to = '', tenantId = null, branchI
   let totalReturns = 0;
 
   // Cache products cost price for fallback
-  const allProducts = await db('products')
-    .where('is_deleted', false)
-    .select('id', 'cost_price', 'selling_price');
+  const prodsQuery = db('products').where('is_deleted', false);
+  applyTenantScope(prodsQuery, tenantId, 'products');
+  const prods = await prodsQuery;
   const productCostMap = {};
-  for (const p of allProducts) {
+  for (const p of prods) {
     productCostMap[p.id] = Number(p.cost_price || 0);
   }
 
@@ -530,8 +533,8 @@ export const getProfitLoss = async (from = '', to = '', tenantId = null, branchI
   const expQuery = db('expenses').where({ is_deleted: false });
   applyTenantScope(expQuery, tenantId, 'expenses');
   if (branchId && branchId !== 'all') expQuery.where('branch_id', branchId);
-  if (from) expQuery.where('created_at', '>=', new Date(from + 'T00:00:00'));
-  if (to) expQuery.where('created_at', '<=', new Date(to + 'T23:59:59'));
+  if (fromDateStr) expQuery.whereRaw('DATE(created_at) >= ?', [fromDateStr]);
+  if (toDateStr) expQuery.whereRaw('DATE(created_at) <= ?', [toDateStr]);
 
   const expRows = await expQuery.select('id', 'title', 'category', 'amount');
   let totalExpenses = 0;
@@ -549,8 +552,8 @@ export const getProfitLoss = async (from = '', to = '', tenantId = null, branchI
     const payQuery = db('payrolls').where({ is_deleted: false, payment_status: 'PAID' });
     applyTenantScope(payQuery, tenantId, 'payrolls');
     if (branchId && branchId !== 'all') payQuery.where('branch_id', branchId);
-    if (from) payQuery.where('created_at', '>=', new Date(from + 'T00:00:00'));
-    if (to) payQuery.where('created_at', '<=', new Date(to + 'T23:59:59'));
+    if (fromDateStr) payQuery.whereRaw('DATE(created_at) >= ?', [fromDateStr]);
+    if (toDateStr) payQuery.whereRaw('DATE(created_at) <= ?', [toDateStr]);
 
     const payRows = await payQuery.sum({ total: 'net_salary' }).first();
     const payrollTotal = Number(payRows?.total || 0);
@@ -566,18 +569,20 @@ export const getProfitLoss = async (from = '', to = '', tenantId = null, branchI
   let totalPurchasesCost = 0;
   let purchasesCount = 0;
   try {
-    const poQuery = db('purchase_orders').where({ is_deleted: false }).whereIn('status', ['RECEIVED', 'COMPLETED', 'ORDERED', 'PARTIAL']);
+    const poQuery = db('purchase_orders').where({ is_deleted: false }).whereNot('status', 'CANCELLED');
     applyTenantScope(poQuery, tenantId, 'purchase_orders');
     if (branchId && branchId !== 'all') poQuery.where('branch_id', branchId);
-    if (from) poQuery.where('created_at', '>=', new Date(from + 'T00:00:00'));
-    if (to) poQuery.where('created_at', '<=', new Date(to + 'T23:59:59'));
+    if (fromDateStr) poQuery.whereRaw('DATE(created_at) >= ?', [fromDateStr]);
+    if (toDateStr) poQuery.whereRaw('DATE(created_at) <= ?', [toDateStr]);
 
     // Bug #9 fixed: P&L was querying non-existent columns 'total_cost' and 'grand_total'.
     // The purchase_orders table uses 'sub_total' and 'net_total'.
-    const poRows = await poQuery.select('id', 'sub_total', 'net_total', 'paid_amount');
+    const poRows = await poQuery.select('id', 'sub_total', 'net_total', 'paid_amount', 'returned_amount');
     purchasesCount = poRows.length;
     for (const po of poRows) {
-      totalPurchasesCost += Number(po.net_total || po.sub_total || 0);
+      const net = Number(po.net_total || po.sub_total || 0);
+      const ret = Number(po.returned_amount || 0);
+      totalPurchasesCost += Math.max(0, net - ret);
     }
   } catch (err) {
     // Non-blocking if table missing

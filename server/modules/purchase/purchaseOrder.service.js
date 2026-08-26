@@ -178,7 +178,11 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
   if (!supplier) throw ApiError.notFound('Supplier not found or could not be created');
 
   const rawItems = data.lineItems || [];
-  const rawSubTotal = rawItems.reduce((sum, it) => sum + (Number(it.qty || 1) * Number(it.unitCost || 0)), 0);
+  const rawSubTotal = rawItems.reduce((sum, it) => {
+    const gross = (Number(it.qty || 1) * Number(it.unitCost || 0));
+    const itDisc = Number(it.discount || 0);
+    return sum + Math.max(0, gross - itDisc);
+  }, 0);
   const discount = Number(data.discount || 0);
   const tax = Number(data.tax || 0);
   const netTotal = Math.max(0, rawSubTotal - discount + tax);
@@ -190,13 +194,16 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
     let pId = rawItem.productId;
     const pName = rawItem.productName || rawItem.name || rawItem.description || 'Gadget Item';
     const uCost = Number(rawItem.unitCost || 0);
-    // Calculate actual effective landed unit cost after PO discount
-    const effectiveUnitCost = Math.round(uCost * discountRatio * 100) / 100;
+    const qty = Number(rawItem.qty || 1);
+    const lineDisc = Number(rawItem.discount || 0);
+    const lineGross = qty * uCost;
+    const lineNet = Math.max(0, lineGross - lineDisc);
+    // Calculate actual effective landed unit cost after per-item discount and overall PO discount
+    const effectiveUnitCost = qty > 0 ? Math.round((lineNet / qty) * discountRatio) : Math.round(uCost * discountRatio);
     const sPrice = Number(rawItem.sellingPrice || rawItem.unitPrice || (uCost > 0 ? Math.round(uCost * 1.25) : 0));
     const wPrice = rawItem.wholesalePrice !== undefined && rawItem.wholesalePrice !== ''
       ? Number(rawItem.wholesalePrice)
       : (rawItem.wholesale_price !== undefined && rawItem.wholesale_price !== '' ? Number(rawItem.wholesale_price) : 0);
-    const qty = Number(rawItem.qty || 1);
 
     // If no productId or if productId is new, find or create product in store
     if (!pId || String(pId).toLowerCase() === 'new' || isNaN(Number(pId))) {

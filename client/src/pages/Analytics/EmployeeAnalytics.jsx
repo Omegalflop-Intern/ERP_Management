@@ -94,45 +94,59 @@ export default function EmployeeAnalytics() {
         <div className="p-6 rounded-2xl border bg-card">
           <h3 className="text-lg font-semibold mb-4">Sales Revenue by Employee</h3>
           <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={analytics?.salesByEmployee || []}>
-                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip content={<ChartTooltip isCurrency={true} />} />
-                <Bar dataKey="totalRevenue" fill="#6366f1" radius={[4, 4, 0, 0]} name="Total Revenue (৳)" />
-              </BarChart>
-            </ResponsiveContainer>
+            {(analytics?.salesByEmployee || []).length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-sm font-medium bg-muted/20 rounded-xl border border-dashed">
+                <Users className="w-8 h-8 mb-2 opacity-40" />
+                No employee sales recorded yet
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={analytics.salesByEmployee}>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip content={<ChartTooltip isCurrency={true} />} />
+                  <Bar dataKey="totalRevenue" fill="#6366f1" radius={[4, 4, 0, 0]} name="Total Revenue (৳)" />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
 
         <div className="p-6 rounded-2xl border bg-card">
           <h3 className="text-lg font-semibold mb-4">Attendance Trend</h3>
           <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={analytics?.attendanceTrend || [{ date: 'Today', present: stats.presentToday || 1, absent: 0, late: 0 }]}>
-                <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip content={<ChartTooltip unit="staff" />} />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="present"
-                  stroke="#10b981"
-                  strokeWidth={2}
-                  name="Present"
-                />
-                <Line
-                  type="monotone"
-                  dataKey="absent"
-                  stroke="#ef4444"
-                  strokeWidth={2}
-                  name="Absent"
-                />
-                <Line type="monotone" dataKey="late" stroke="#f59e0b" strokeWidth={2} name="Late" />
-              </LineChart>
-            </ResponsiveContainer>
+            {(analytics?.attendanceTrend || []).length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-sm font-medium bg-muted/20 rounded-xl border border-dashed">
+                <Clock className="w-8 h-8 mb-2 opacity-40" />
+                No attendance logs found for this period
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={analytics.attendanceTrend}>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip content={<ChartTooltip unit="staff" />} />
+                  <Legend />
+                  <Line
+                    type="monotone"
+                    dataKey="present"
+                    stroke="#10b981"
+                    strokeWidth={2}
+                    name="Present"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="absent"
+                    stroke="#ef4444"
+                    strokeWidth={2}
+                    name="Absent"
+                  />
+                  <Line type="monotone" dataKey="late" stroke="#f59e0b" strokeWidth={2} name="Late" />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
       </div>
@@ -142,47 +156,61 @@ export default function EmployeeAnalytics() {
         <div className="p-6 rounded-2xl border bg-card">
           <h3 className="text-lg font-semibold mb-4">Department Distribution</h3>
           <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={analytics?.departmentDistribution || []}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={100}
-                  paddingAngle={2}
-                  dataKey="count"
-                  nameKey="department"
-                >
-                  {(analytics?.departmentDistribution || []).map((_entry, index) => (
-                    <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip content={<ChartTooltip unit="employees" />} />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+            {(analytics?.departmentDistribution || []).length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-muted-foreground text-sm font-medium bg-muted/20 rounded-xl border border-dashed">
+                <Users className="w-8 h-8 mb-2 opacity-40" />
+                No department data available
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={analytics.departmentDistribution}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    paddingAngle={2}
+                    dataKey="count"
+                    nameKey="department"
+                  >
+                    {analytics.departmentDistribution.map((_entry, index) => (
+                      <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<ChartTooltip unit="employees" />} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
 
         <div className="p-6 rounded-2xl border bg-card">
           <h3 className="text-lg font-semibold mb-4">Top Performers</h3>
-          <div className="space-y-3">
-            {(analytics?.salesByEmployee || analytics?.employees || []).slice(0, 5).map((emp, i) => (
-              <div key={emp.id || i} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-sm font-bold text-indigo-600">
-                  {i + 1}
+          {(analytics?.salesByEmployee || []).length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-[240px] text-muted-foreground text-sm font-medium bg-muted/20 rounded-xl border border-dashed">
+              <TrendingUp className="w-8 h-8 mb-2 opacity-40" />
+              No sales recorded by staff yet
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {analytics.salesByEmployee.slice(0, 5).map((emp, i) => (
+                <div key={emp.name || i} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                  <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-sm font-bold text-indigo-600">
+                    {i + 1}
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-medium">{emp.name}</div>
+                    <div className="text-xs text-muted-foreground">Staff</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-medium text-emerald-600 dark:text-emerald-400">৳{Number(emp.totalRevenue || 0).toLocaleString()}</div>
+                    <div className="text-xs text-muted-foreground">{emp.salesCount || 0} Sales</div>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <div className="font-medium">{emp.name}</div>
-                  <div className="text-xs text-muted-foreground">{emp.department || emp.designation || 'Staff'}</div>
-                </div>
-                <div className="text-right">
-                  <div className="font-medium text-emerald-600 dark:text-emerald-400">৳{(emp.totalRevenue || emp.salary || 0).toLocaleString()}</div>
-                  <div className="text-xs text-muted-foreground">{emp.salesCount ? `${emp.salesCount} Sales` : 'Active Staff'}</div>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -90,12 +90,18 @@ export const createBranch = async (data, tenantId = null) => {
   if (effectiveTenantId) {
     const tenant = await db('tenants').where({ id: effectiveTenantId }).select('max_branches', 'plan').first();
     if (tenant) {
+      const planName = (tenant.plan || 'STARTER').toUpperCase();
+      let limit = tenant.max_branches;
+      if (limit === undefined || limit === null) {
+        limit = planName === 'ENTERPRISE' ? 999 : (planName === 'PRO' ? 5 : (planName === 'STARTER' ? 2 : 1));
+      } else {
+        limit = Number(limit);
+      }
       const countRes = await db('branches').where({ tenant_id: effectiveTenantId, is_deleted: false }).count({ count: '*' }).first();
       const currentCount = Number(countRes?.count || 0);
-      const limit = tenant.max_branches || 2;
-      if (currentCount >= limit) {
+      if (limit !== 999 && limit !== -1 && currentCount >= limit) {
         throw ApiError.forbidden(
-          `Your plan (${tenant.plan || 'STARTER'}) allows a maximum of ${limit} branch${limit === 1 ? '' : 'es'}. Please upgrade your subscription.`
+          `Your plan limit of ${limit} branch${limit === 1 ? '' : 'es'} has been reached. Please contact your system admin to increase the limit.`
         );
       }
     }

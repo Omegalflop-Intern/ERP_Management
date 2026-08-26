@@ -337,9 +337,9 @@ function EditTenantModal({ tenant, onClose, onSuccess }) {
 
   const PLAN_LIMITS = {
     FREE: { branches: 1, users: 2 },
-    STARTER: { branches: 3, users: 5 },
-    PRO: { branches: 6, users: 25 },
-    ENTERPRISE: { branches: 11, users: 999 },
+    STARTER: { branches: 2, users: 5 },
+    PRO: { branches: 5, users: 20 },
+    ENTERPRISE: { branches: 999, users: 999 },
   };
 
   const handlePlanChange = (newPlan) => {
@@ -602,7 +602,7 @@ function EditTenantModal({ tenant, onClose, onSuccess }) {
                     <input
                       type="number"
                       min="1"
-                      max="50"
+                      max="9999"
                       value={form.maxBranches}
                       onChange={(e) => setForm({ ...form, maxBranches: e.target.value })}
                       className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -615,7 +615,7 @@ function EditTenantModal({ tenant, onClose, onSuccess }) {
                     <input
                       type="number"
                       min="1"
-                      max="500"
+                      max="9999"
                       value={form.maxUsers}
                       onChange={(e) => setForm({ ...form, maxUsers: e.target.value })}
                       className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"

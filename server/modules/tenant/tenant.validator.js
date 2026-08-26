@@ -51,7 +51,7 @@ export const updateTenantSchema = z.object({
     .or(z.literal('')),
   phone: z.string().min(6).max(20).trim().optional(),
   password: z.string().min(6, 'Password must be at least 6 characters').optional().or(z.literal('')),
-  plan: z.enum(['FREE', 'STARTER', 'PRO', 'ENTERPRISE']).optional(),
+  plan: z.enum(['FREE', 'STARTER', 'PRO', 'BUSINESS', 'ENTERPRISE']).optional(),
   subdomain: z
     .string()
     .transform((val) => (val && val.trim() ? val.trim().toLowerCase() : undefined))
@@ -66,8 +66,8 @@ export const updateTenantSchema = z.object({
     )
     .optional(),
   customDomain: z.string().toLowerCase().optional(),
-  maxBranches: z.number().int().min(1).max(50).optional(),
-  maxUsers: z.number().int().min(1).max(500).optional(),
+  maxBranches: z.number().int().min(1).max(9999).optional(),
+  maxUsers: z.number().int().min(1).max(9999).optional(),
   expiresAt: z.string().datetime({ offset: true }).or(z.null()).optional(),
   notes: z.string().max(500).optional(),
   nidNumber: z.string().optional(),

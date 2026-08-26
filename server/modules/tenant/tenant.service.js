@@ -8,15 +8,18 @@ export function formatTenant(row) {
   if (!row) return null;
 
   const planName = (row.plan || 'STARTER').toUpperCase();
-  let defaultBranches = 3;
+  let defaultBranches = 2;
   let defaultUsers = 5;
 
   if (planName === 'ENTERPRISE') {
-    defaultBranches = 11;
+    defaultBranches = 999;
     defaultUsers = 999;
   } else if (planName === 'PRO' || planName === 'BUSINESS') {
-    defaultBranches = 6;
-    defaultUsers = 25;
+    defaultBranches = 5;
+    defaultUsers = 20;
+  } else if (planName === 'FREE') {
+    defaultBranches = 1;
+    defaultUsers = 2;
   }
 
   return {
@@ -28,7 +31,7 @@ export function formatTenant(row) {
     username: row.owner_username || row.username || '',
     email: row.email,
     phone: row.phone,
-    plan: row.plan || 'STARTER',
+    plan: planName,
     status: row.status || 'PENDING_KYC',
     maxBranches: Number(row.max_branches ?? defaultBranches),
     maxUsers: Number(row.max_users ?? defaultUsers),
@@ -390,15 +393,28 @@ export const createTenant = async (data, isSuperAdmin = false) => {
     expiresAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
   }
 
-  const initialStatus = isSuperAdmin ? (data.status || 'ACTIVE') : 'PENDING_KYC';
-  const initialKycStatus = isSuperAdmin ? 'APPROVED' : 'PENDING';
+  const planName = (data.plan || 'STARTER').toUpperCase();
+  let maxBranches = data.maxBranches !== undefined ? Number(data.maxBranches) : 2;
+  let maxUsers = data.maxUsers !== undefined ? Number(data.maxUsers) : 5;
+  if (data.maxBranches === undefined) {
+    if (planName === 'ENTERPRISE') maxBranches = 999;
+    else if (planName === 'PRO' || planName === 'BUSINESS') maxBranches = 5;
+    else if (planName === 'FREE') maxBranches = 1;
+  }
+  if (data.maxUsers === undefined) {
+    if (planName === 'ENTERPRISE') maxUsers = 999;
+    else if (planName === 'PRO' || planName === 'BUSINESS') maxUsers = 20;
+    else if (planName === 'FREE') maxUsers = 2;
+  }
 
   const [insertedId] = await db('tenants').insert({
     shop_name: data.shopName,
     owner_name: data.ownerName,
     email: emailLower,
     phone: data.phone,
-    plan: data.plan || 'STARTER',
+    plan: planName,
+    max_branches: maxBranches,
+    max_users: maxUsers,
     subdomain,
     custom_domain: customDomain,
     status: initialStatus,

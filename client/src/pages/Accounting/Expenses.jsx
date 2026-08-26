@@ -1,22 +1,30 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  ArrowUpRight,
+  Boxes,
   Building2,
   Calendar,
   DollarSign,
+  ExternalLink,
   FileImage,
   Filter,
+  Layers,
+  Package,
   Paperclip,
   Pencil,
   PieChart,
   Plus,
   Receipt,
   Search,
+  ShoppingCart,
   Tag,
   Trash2,
+  TrendingDown,
   Upload,
   X,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import DatePicker from '../../components/ui/DatePicker';
 import { NumberInput } from '../../components/ui/NumberInput';
@@ -90,8 +98,63 @@ export default function Expenses() {
     },
   });
 
+  // Query product purchase orders for complete stock costing integration
+  const { data: purchaseData, isLoading: isPurchaseLoading } = useQuery({
+    queryKey: ['costing-purchases', dateFrom, dateTo, search],
+    queryFn: async () => {
+      const res = await api.get('/purchase-orders', {
+        params: { from: dateFrom, to: dateTo, search, limit: 100 },
+      });
+      return res.data?.data;
+    },
+  });
+
+  const rawPurchaseOrders = purchaseData?.orders || (Array.isArray(purchaseData) ? purchaseData : []);
+  const purchaseOrders = rawPurchaseOrders.filter((po) => po.status !== 'CANCELLED');
+
+  const totalPurchasesCost = purchaseOrders.reduce((sum, po) => {
+    const net = Number(po.netTotal || po.net_total || po.subTotal || 0);
+    const ret = Number(po.returnedAmount || po.returned_amount || 0);
+    return sum + Math.max(0, net - ret);
+  }, 0);
+
   const expenses = expenseData?.expenses || [];
   const summary = expenseData?.summary || {};
+  const totalOpExpenses = Number(summary.totalExpense || 0);
+  const totalCombinedOutflow = totalOpExpenses + totalPurchasesCost;
+
+  // Combined sorted list for all outgoings
+  const combinedOutgoings = [
+    ...expenses.map((e) => ({
+      id: `exp-${e._id}`,
+      type: 'EXPENSE',
+      date: e.date || e.createdAt,
+      title: e.title,
+      category: e.category,
+      amount: Number(e.amount || 0),
+      method: e.paymentMethod,
+      details: e.voucherNumber ? `Voucher #${e.voucherNumber}` : e.notes || 'Operating Expense',
+      ref: e,
+    })),
+    ...purchaseOrders.map((po) => {
+      const net = Number(po.netTotal || po.net_total || po.subTotal || 0);
+      const ret = Number(po.returnedAmount || po.returned_amount || 0);
+      const netCost = Math.max(0, net - ret);
+      const supplierName = typeof po.supplierId === 'object' ? po.supplierId?.name : (po.supplier_name || 'Supplier');
+      const itemNames = (po.lineItems || []).map((li) => `${li.name || li.description} × ${li.qty}`).join(', ');
+      return {
+        id: `po-${po.id || po._id}`,
+        type: 'PURCHASE',
+        date: po.createdAt || po.created_at,
+        title: `Product Restock: ${itemNames || po.poNumber}`,
+        category: 'Stock Restock',
+        amount: netCost,
+        method: po.paymentMethod || 'CASH',
+        details: `${po.poNumber} • ${supplierName}${ret > 0 ? ` (Net after ৳${ret.toLocaleString()} return)` : ''}`,
+        ref: po,
+      };
+    }),
+  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   const createExpenseMutation = useMutation({
     mutationFn: async (data) => api.post('/expenses', data),
@@ -138,209 +201,463 @@ export default function Expenses() {
     <div className="space-y-6">
       <PageHeader
         title="Shop Costing & Expenses"
-        subtitle="Track shop operating costs, rent, utilities, food, marketing, salaries, and custom maintenance expenses."
+        subtitle="Track shop operating costs, rent, utilities, food, marketing, salaries, and inventory product restock costs."
         icon={Receipt}
         breadcrumbs={['Finance & Accounts', 'Shop Costing & Expenses']}
         actions={
-          <button
-            onClick={() => {
-              setCategoryChoice(categories[0] || 'Shop Rent');
-              setCustomCategoryInput('');
-              setShowAddModal(true);
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl text-xs transition-all shadow-xs"
-          >
-            <Plus className="w-4 h-4" /> Record New Expense
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/purchases"
+              className="flex items-center gap-2 px-4 py-2 border border-indigo-500/30 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 font-semibold rounded-xl text-xs transition-all"
+            >
+              <ShoppingCart className="w-4 h-4" /> New Product Purchase
+            </Link>
+            <button
+              onClick={() => {
+                setCategoryChoice(categories[0] || 'Shop Rent');
+                setCustomCategoryInput('');
+                setShowAddModal(true);
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl text-xs transition-all shadow-xs"
+            >
+              <Plus className="w-4 h-4" /> Record New Expense
+            </button>
+          </div>
         }
       />
 
       {/* Tabs */}
-      <div className="flex gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl w-fit">
+      <div className="flex flex-wrap gap-1 p-1 bg-gray-100 dark:bg-gray-800/80 rounded-xl w-fit border border-gray-200 dark:border-gray-700">
         <button
           onClick={() => setActiveTab('expenses')}
-          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 ${
             activeTab === 'expenses'
-              ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
+              ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-xs'
               : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
           }`}
         >
-          <Receipt className="w-4 h-4 inline mr-1.5" />
-          Expenses
+          <Receipt className="w-4 h-4" />
+          Operating Expenses
+        </button>
+        <button
+          onClick={() => setActiveTab('purchases')}
+          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 ${
+            activeTab === 'purchases'
+              ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-xs'
+              : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+          }`}
+        >
+          <Package className="w-4 h-4" />
+          Product Restock Costs ({purchaseOrders.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('combined')}
+          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 ${
+            activeTab === 'combined'
+              ? 'bg-white dark:bg-gray-700 text-emerald-600 dark:text-emerald-400 shadow-xs'
+              : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+          }`}
+        >
+          <Layers className="w-4 h-4" />
+          All Shop Outgoings ({combinedOutgoings.length})
         </button>
         <button
           onClick={() => setActiveTab('recurring')}
-          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-1.5 ${
             activeTab === 'recurring'
-              ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
+              ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-xs'
               : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
           }`}
         >
-          <Calendar className="w-4 h-4 inline mr-1.5" />
+          <Calendar className="w-4 h-4" />
           Recurring
         </button>
       </div>
 
-      {activeTab === 'recurring' ? (
-        <RecurringExpenses />
-      ) : (
-      <>
       {/* Summary Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className={cardCls}>
-          <div className="text-xs text-gray-500 uppercase font-semibold">Total Expenses</div>
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-500 uppercase font-semibold">Operating Expenses</span>
+            <span className="p-1.5 bg-red-100 dark:bg-red-900/30 text-red-600 rounded-lg text-xs font-bold">OPEX</span>
+          </div>
           <div className="text-2xl font-bold text-red-600 mt-1">
-            ৳{(summary.totalExpense || 0).toLocaleString()}
+            ৳{totalOpExpenses.toLocaleString()}
+          </div>
+          <div className="text-xs text-muted-foreground mt-1">
+            {summary.count || 0} Expense Entries
           </div>
         </div>
+
         <div className={cardCls}>
-          <div className="text-xs text-gray-500 uppercase font-semibold">Expense Entries</div>
-          <div className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">
-            {summary.count || 0} Records
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-500 uppercase font-semibold">Product Restock Cost</span>
+            <span className="p-1.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 rounded-lg text-xs font-bold">STOCK</span>
+          </div>
+          <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">
+            ৳{totalPurchasesCost.toLocaleString()}
+          </div>
+          <div className="text-xs text-muted-foreground mt-1">
+            {purchaseOrders.length} Purchase Orders
           </div>
         </div>
+
         <div className={cardCls}>
-          <div className="text-xs text-gray-500 uppercase font-semibold">Top Cost Category</div>
-          <div className="text-lg font-bold text-amber-600 mt-1 truncate">
-            {Object.entries(summary.categoryBreakdown || {}).sort((a, b) => b[1] - a[1])[0]?.[0] ||
-              'N/A'}
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-500 uppercase font-semibold">Total Shop Outgoings</span>
+            <span className="p-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 rounded-lg text-xs font-bold">ALL</span>
+          </div>
+          <div className="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">
+            ৳{totalCombinedOutflow.toLocaleString()}
+          </div>
+          <div className="text-xs text-muted-foreground mt-1">
+            Expenses + Stock Restocks
           </div>
         </div>
+
         <div className={cardCls}>
-          <div className="text-xs text-gray-500 uppercase font-semibold">Rent & Utilities</div>
-          <div className="text-xl font-bold text-blue-600 mt-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-500 uppercase font-semibold">Rent & Utilities</span>
+            <span className="p-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-lg text-xs font-bold">FIXED</span>
+          </div>
+          <div className="text-2xl font-bold text-blue-600 mt-1">
             ৳
             {(
               (summary.categoryBreakdown?.['Shop Rent'] || 0) +
               (summary.categoryBreakdown?.['Electricity & Utility'] || 0)
             ).toLocaleString()}
           </div>
+          <div className="text-xs text-muted-foreground mt-1 truncate">
+            Top: {Object.entries(summary.categoryBreakdown || {}).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A'}
+          </div>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search expense title, voucher # or notes..."
-            className={`${inputCls} pl-10`}
-          />
-        </div>
-        <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          className={`${inputCls} md:w-56`}
-        >
-          <option value="ALL">All Categories ({categories.length})</option>
-          {categories.map((cat) => (
-            <option key={cat} value={cat}>
-              {cat}
-            </option>
-          ))}
-        </select>
-        <div className="flex items-center gap-2">
-          <DatePicker value={dateFrom} onChange={setDateFrom} placeholder="From Date" />
-          <span className="text-gray-400">—</span>
-          <DatePicker value={dateTo} onChange={setDateTo} placeholder="To Date" />
-        </div>
-      </div>
+      {/* Tab 1: Operating Expenses */}
+      {activeTab === 'expenses' && (
+        <>
+          {/* Filters */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search expense title, voucher # or notes..."
+                className={`${inputCls} pl-10`}
+              />
+            </div>
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className={`${inputCls} md:w-56`}
+            >
+              <option value="ALL">All Categories ({categories.length})</option>
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+            <div className="flex items-center gap-2">
+              <DatePicker value={dateFrom} onChange={setDateFrom} placeholder="From Date" />
+              <span className="text-gray-400">—</span>
+              <DatePicker value={dateTo} onChange={setDateTo} placeholder="To Date" />
+            </div>
+          </div>
 
-      {/* Expenses Table */}
-      <div className={`${cardCls} overflow-x-auto p-0`}>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-200 dark:border-gray-800 text-left bg-gray-50/50 dark:bg-gray-900/50">
-              <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Date</th>
-              <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">
-                Title / Purpose
-              </th>
-              <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Category</th>
-              <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Amount</th>
-              <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Method</th>
-              <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">
-                Voucher / Notes
-              </th>
-              <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 text-right">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading ? (
-              <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-gray-400 animate-pulse">
-                  Loading shop expenses...
-                </td>
-              </tr>
-            ) : expenses.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
-                  No expense records found
-                </td>
-              </tr>
-            ) : (
-              expenses.map((e) => (
-                <tr
-                  key={e._id}
-                  className="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30"
-                >
-                  <td className="px-4 py-3 text-xs text-gray-500">
-                    {new Date(e.date || e.createdAt).toLocaleDateString()}
-                  </td>
-                  <td className="px-4 py-3 font-semibold text-gray-900 dark:text-gray-100">
-                    {e.title}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
-                      {e.category}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 font-mono font-bold text-red-600 dark:text-red-400">
-                    ৳{e.amount?.toLocaleString()}
-                  </td>
-                  <td className="px-4 py-3 text-xs uppercase font-semibold text-gray-500">
-                    {e.paymentMethod}
-                  </td>
-                  <td className="px-4 py-3 text-xs text-gray-500">
-                    <div className="flex items-center gap-1.5">
-                      {e.voucherNumber ? `Voucher: ${e.voucherNumber}` : e.notes || 'N/A'}
-                      {e.receipts?.length > 0 && (
-                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
-                          <Paperclip className="w-2.5 h-2.5" />
-                          {e.receipts.length}
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-right flex items-center justify-end gap-1">
-                    <button
-                      onClick={() => setEditingExpense(e)}
-                      className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-blue-500 transition-colors"
-                      title="Edit Expense"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() =>
-                        confirmDelete(`Delete expense "${e.title}"?`, () =>
-                          deleteExpenseMutation.mutate(e._id)
-                        )
-                      }
-                      className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-red-500 transition-colors"
-                      title="Delete Entry"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </td>
+          {/* Expenses Table */}
+          <div className={`${cardCls} overflow-x-auto p-0`}>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-800 text-left bg-gray-50/50 dark:bg-gray-900/50">
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Date</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Title / Purpose</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Category</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Amount</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Method</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Voucher / Notes</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 text-right">Actions</th>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-8 text-center text-gray-400 animate-pulse">
+                      Loading shop expenses...
+                    </td>
+                  </tr>
+                ) : expenses.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
+                      No expense records found
+                    </td>
+                  </tr>
+                ) : (
+                  expenses.map((e) => (
+                    <tr
+                      key={e._id}
+                      className="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30"
+                    >
+                      <td className="px-4 py-3 text-xs text-gray-500">
+                        {new Date(e.date || e.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3 font-semibold text-gray-900 dark:text-gray-100">
+                        {e.title}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                          {e.category}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 font-mono font-bold text-red-600 dark:text-red-400">
+                        ৳{e.amount?.toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3 text-xs uppercase font-semibold text-gray-500">
+                        {e.paymentMethod}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-gray-500">
+                        <div className="flex items-center gap-1.5">
+                          {e.voucherNumber ? `Voucher: ${e.voucherNumber}` : e.notes || 'N/A'}
+                          {e.receipts?.length > 0 && (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                              <Paperclip className="w-2.5 h-2.5" />
+                              {e.receipts.length}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => setEditingExpense(e)}
+                          className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-blue-500 transition-colors"
+                          title="Edit Expense"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() =>
+                            confirmDelete(`Delete expense "${e.title}"?`, () =>
+                              deleteExpenseMutation.mutate(e._id)
+                            )
+                          }
+                          className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-red-500 transition-colors"
+                          title="Delete Entry"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      {/* Tab 2: Product Restock Costs */}
+      {activeTab === 'purchases' && (
+        <>
+          {/* Filters */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by PO #, product name, or supplier..."
+                className={`${inputCls} pl-10`}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <DatePicker value={dateFrom} onChange={setDateFrom} placeholder="From Date" />
+              <span className="text-gray-400">—</span>
+              <DatePicker value={dateTo} onChange={setDateTo} placeholder="To Date" />
+            </div>
+          </div>
+
+          {/* Purchases Table */}
+          <div className={`${cardCls} overflow-x-auto p-0`}>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-800 text-left bg-gray-50/50 dark:bg-gray-900/50">
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Date & PO #</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Supplier</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Purchased Products</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Net Cost (৳)</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Payment</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Status</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {isPurchaseLoading ? (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-8 text-center text-gray-400 animate-pulse">
+                      Loading product purchases...
+                    </td>
+                  </tr>
+                ) : purchaseOrders.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
+                      No product restock purchases found
+                    </td>
+                  </tr>
+                ) : (
+                  purchaseOrders.map((po) => {
+                    const net = Number(po.netTotal || po.net_total || po.subTotal || 0);
+                    const ret = Number(po.returnedAmount || po.returned_amount || 0);
+                    const netCost = Math.max(0, net - ret);
+                    const supplierName = typeof po.supplierId === 'object' ? po.supplierId?.name : (po.supplier_name || 'Supplier');
+                    const supplierPhone = typeof po.supplierId === 'object' ? po.supplierId?.phone : '';
+
+                    return (
+                      <tr
+                        key={po.id || po._id}
+                        className="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30"
+                      >
+                        <td className="px-4 py-3">
+                          <div className="font-semibold text-gray-900 dark:text-gray-100">{po.poNumber}</div>
+                          <div className="text-xs text-gray-500">{new Date(po.createdAt || po.created_at).toLocaleDateString()}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="font-medium text-gray-900 dark:text-gray-100">{supplierName}</div>
+                          {supplierPhone && <div className="text-xs text-gray-500">{supplierPhone}</div>}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-wrap gap-1.5 max-w-md">
+                            {(po.lineItems || []).map((li, idx) => {
+                              const retCount = (po.returnLogs || []).reduce((sum, rl) => {
+                                const pidMatch = String(rl.productId) === String(li.productId || li.id);
+                                return pidMatch ? sum + Number(rl.qty || 0) : sum;
+                              }, 0);
+                              const activeQty = Math.max(0, Number(li.qty || 1) - retCount);
+
+                              return (
+                                <span
+                                  key={idx}
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-medium bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200/50 dark:border-indigo-800/50"
+                                >
+                                  <span>{li.name || li.description}</span>
+                                  <span className="font-bold text-indigo-900 dark:text-indigo-100">
+                                    ×{activeQty} in-stock
+                                  </span>
+                                  {retCount > 0 && (
+                                    <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold">
+                                      ({li.qty} bought, {retCount} ret.)
+                                    </span>
+                                  )}
+                                  <span className="text-[10px] opacity-70">(@৳{Math.round(Number(li.unitCost || 0)).toLocaleString()})</span>
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 font-mono">
+                          <div className="font-bold text-indigo-600 dark:text-indigo-400">৳{netCost.toLocaleString()} Net</div>
+                          {ret > 0 && (
+                            <div className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold">
+                              was ৳{net.toLocaleString()} gross (-৳{ret.toLocaleString()} ret.)
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-xs">
+                          <span className="uppercase font-semibold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">
+                            {po.paymentMethod || 'CASH'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                            {po.status || 'RECEIVED'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <Link
+                            to="/purchases"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
+                          >
+                            Details <ExternalLink className="w-3 h-3" />
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      {/* Tab 3: All Shop Outgoings Combined */}
+      {activeTab === 'combined' && (
+        <>
+          <div className={`${cardCls} overflow-x-auto p-0`}>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-800 text-left bg-gray-50/50 dark:bg-gray-900/50">
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Date</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Type</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Description / Details</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Category</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Amount</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Payment</th>
+                </tr>
+              </thead>
+              <tbody>
+                {combinedOutgoings.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
+                      No outgoing records found
+                    </td>
+                  </tr>
+                ) : (
+                  combinedOutgoings.map((row) => (
+                    <tr
+                      key={row.id}
+                      className="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30"
+                    >
+                      <td className="px-4 py-3 text-xs text-gray-500">
+                        {new Date(row.date).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3">
+                        {row.type === 'EXPENSE' ? (
+                          <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800">
+                            OPERATING EXPENSE
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                            PRODUCT RESTOCK
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="font-semibold text-gray-900 dark:text-gray-100">{row.title}</div>
+                        <div className="text-xs text-gray-500">{row.details}</div>
+                      </td>
+                      <td className="px-4 py-3 text-xs font-medium text-gray-600 dark:text-gray-300">
+                        {row.category}
+                      </td>
+                      <td className="px-4 py-3 font-mono font-bold">
+                        <span className={row.type === 'EXPENSE' ? 'text-red-600 dark:text-red-400' : 'text-indigo-600 dark:text-indigo-400'}>
+                          ৳{row.amount.toLocaleString()}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-xs uppercase font-semibold text-gray-500">
+                        {row.method}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      {/* Tab 4: Recurring Expenses */}
+      {activeTab === 'recurring' && <RecurringExpenses />}
 
       {/* Record Expense Modal */}
       {showAddModal && (
@@ -558,8 +875,6 @@ export default function Expenses() {
           cardCls={cardCls}
           inputCls={inputCls}
         />
-      )}
-      </>
       )}
     </div>
   );

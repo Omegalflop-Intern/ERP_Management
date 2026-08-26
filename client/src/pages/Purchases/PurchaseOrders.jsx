@@ -111,11 +111,12 @@ export default function PurchaseOrders() {
   const products = productsData || [];
 
   const summary = useMemo(() => {
-    const totalPurchases = orders.reduce((acc, o) => acc + (Number(o.netTotal) || 0), 0);
+    const grossPurchases = orders.reduce((acc, o) => acc + (Number(o.netTotal || o.subTotal) || 0), 0);
+    const totalReturned = orders.reduce((acc, o) => acc + (Number(o.returnedAmount) || 0), 0);
+    const netPurchases = Math.max(0, grossPurchases - totalReturned);
     const totalPaid = orders.reduce((acc, o) => acc + (Number(o.paidAmount) || 0), 0);
     const totalDue = orders.reduce((acc, o) => acc + (Number(o.dueAmount) || 0), 0);
-    const totalReturned = orders.reduce((acc, o) => acc + (Number(o.returnedAmount) || 0), 0);
-    return { totalPurchases, totalPaid, totalDue, totalReturned };
+    return { grossPurchases, netPurchases, totalPurchases: netPurchases, totalPaid, totalDue, totalReturned };
   }, [orders]);
 
   return (
@@ -139,13 +140,19 @@ export default function PurchaseOrders() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
           <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-            Total Purchases
+            Net Active Purchases
           </div>
           <div className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-1.5 font-mono">
-            ৳{summary.totalPurchases.toLocaleString()}
+            ৳{summary.netPurchases.toLocaleString()}
           </div>
-          <div className="text-[11px] text-slate-400 mt-1 font-medium">
-            {orders.length} orders recorded
+          <div className="text-[11px] mt-1 font-medium truncate">
+            {summary.totalReturned > 0 ? (
+              <span className="text-amber-600 dark:text-amber-400 font-semibold">
+                ৳{summary.grossPurchases.toLocaleString()} gross • -৳{summary.totalReturned.toLocaleString()} ret.
+              </span>
+            ) : (
+              <span className="text-slate-400">{orders.length} orders recorded</span>
+            )}
           </div>
           <div className="absolute right-3 top-3 w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-blue-600">
             <Truck className="w-4 h-4" />
@@ -278,11 +285,14 @@ export default function PurchaseOrders() {
                     po.supplierId?.name ||
                     (typeof po.supplierId === 'string' ? po.supplierId : 'Supplier');
                   const supplierPhone = po.supplierId?.phone || '';
-                  const totalItems = (po.lineItems || []).reduce(
+                  const totalBoughtUnits = (po.lineItems || []).reduce(
                     (acc, it) => acc + Number(it.qty || 1),
                     0
                   );
+                  const returnedUnits = Number(po.returnedCount || 0);
+                  const activeUnits = Math.max(0, totalBoughtUnits - returnedUnits);
                   const returnedAmount = Number(po.returnedAmount || 0);
+                  const netTotalCost = Math.max(0, Number(po.netTotal || 0) - returnedAmount);
 
                   return (
                     <tr
@@ -311,19 +321,21 @@ export default function PurchaseOrders() {
                       </td>
                       <td className="px-4 py-3.5">
                         <div className="font-medium text-slate-700 dark:text-slate-300">
-                          {po.lineItems?.length || 0} product(s) ({totalItems} pcs)
+                          {po.lineItems?.length || 0} product(s) ({activeUnits} in-stock{returnedUnits > 0 ? `, ${returnedUnits} ret.` : ''})
                         </div>
                         {po.lineItems?.length > 0 && (
-                          <div className="text-[10px] text-slate-400 truncate max-w-[200px]">
-                            {po.lineItems.map((it) => it.description || it.name).join(', ')}
+                          <div className="text-[10px] text-slate-400 truncate max-w-[220px]">
+                            {po.lineItems.map((it) => `${it.description || it.name} (${it.qty} bought)`).join(', ')}
                           </div>
                         )}
                       </td>
-                      <td className="px-4 py-3.5 text-right font-mono font-bold text-slate-900 dark:text-slate-100">
-                        ৳{Number(po.netTotal || 0).toLocaleString()}
+                      <td className="px-4 py-3.5 text-right font-mono">
+                        <div className="font-bold text-slate-900 dark:text-slate-100">
+                          ৳{netTotalCost.toLocaleString()}
+                        </div>
                         {returnedAmount > 0 && (
                           <div className="text-[10px] text-amber-600 font-semibold">
-                            -৳{returnedAmount.toLocaleString()} ret.
+                            was ৳{Number(po.netTotal || 0).toLocaleString()} (-৳{returnedAmount.toLocaleString()} ret.)
                           </div>
                         )}
                       </td>
@@ -467,6 +479,7 @@ export default function PurchaseOrders() {
 function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
   const [supplierId, setSupplierId] = useState(suppliers[0]?._id || suppliers[0]?.id || '');
   const [newSupplierName, setNewSupplierName] = useState('');
+  const [newSupplierCompany, setNewSupplierCompany] = useState('');
   const [newSupplierPhone, setNewSupplierPhone] = useState('');
   const [isQuickSupplier, setIsQuickSupplier] = useState(suppliers.length === 0);
 
@@ -618,10 +631,17 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
     return Array.from(new Set([...CATEGORIES, ...existing]));
   }, [products]);
 
+  const availableBrands = useMemo(() => {
+    const existing = products.map((p) => p.brand).filter(Boolean);
+    const defaults = ['Apple', 'Samsung', 'Xiaomi', 'Realme', 'OnePlus', 'Anker', 'Havit', 'Baseus', 'Joyroom', 'Remax', 'Generic'];
+    return Array.from(new Set([...defaults, ...existing]));
+  }, [products]);
+
   const [lineItems, setLineItems] = useState([
     {
       productId: '',
       productName: '',
+      brand: '',
       category: 'Smartphones',
       qty: 1,
       unitCost: '',
@@ -649,9 +669,11 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
       {
         productId: '',
         productName: '',
+        brand: '',
         category: 'Smartphones',
         qty: 1,
         unitCost: '',
+        discount: '',
         sellingPrice: '',
         wholesalePrice: '',
         showImei: false,
@@ -674,8 +696,10 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
           ...next[index],
           productId: selected._id || selected.id,
           productName: selected.name,
+          brand: selected.brand || '',
           category: selected.category || 'Smartphones',
           unitCost: Number(selected.costPrice || selected.cost_price || 0) || '',
+          discount: '',
           sellingPrice: Number(selected.sellingPrice || selected.selling_price || 0) || '',
           wholesalePrice: Number(selected.wholesalePrice || selected.wholesale_price || 0) || '',
         };
@@ -684,7 +708,9 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
           ...next[index],
           productId: 'new',
           productName: '',
+          brand: '',
           unitCost: '',
+          discount: '',
           sellingPrice: '',
           wholesalePrice: '',
         };
@@ -702,7 +728,11 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
   };
 
   const subTotal = useMemo(() => {
-    return lineItems.reduce((sum, it) => sum + Number(it.qty || 1) * Number(it.unitCost || 0), 0);
+    return lineItems.reduce((sum, it) => {
+      const gross = Number(it.qty || 1) * Number(it.unitCost || 0);
+      const disc = Number(it.discount || 0);
+      return sum + Math.max(0, gross - disc);
+    }, 0);
   }, [lineItems]);
 
   const calculatedDiscount = useMemo(() => {
@@ -752,6 +782,7 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
       try {
         const supRes = await api.post('/suppliers', {
           name: newSupplierName,
+          company: newSupplierCompany || newSupplierName,
           phone: newSupplierPhone || 'N/A',
         });
         finalSupplierId = supRes.data?.data?._id || supRes.data?.data?.id;
@@ -804,9 +835,11 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
         productId: it.productId && it.productId !== 'new' ? it.productId : undefined,
         productName: it.productName || 'Gadget Item',
         description: it.productName || 'Gadget Item',
+        brand: it.brand || undefined,
         category: it.category || 'General',
         qty: Number(it.qty || 1),
         unitCost: Number(it.unitCost || 0),
+        discount: Number(it.discount || 0),
         sellingPrice: Number(it.sellingPrice || Number(it.unitCost) * 1.25),
         wholesalePrice:
           it.wholesalePrice !== undefined && it.wholesalePrice !== ''
@@ -905,16 +938,33 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <Label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
                     Supplier / Vendor Name *
                   </Label>
                   <Input
                     required
-                    placeholder="e.g. Dhaka Gadget Distributors"
+                    placeholder="e.g. Tech Diversity"
                     value={newSupplierName}
-                    onChange={(e) => setNewSupplierName(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setNewSupplierName(val);
+                      if (!newSupplierCompany || newSupplierCompany === newSupplierName) {
+                        setNewSupplierCompany(val);
+                      }
+                    }}
+                    className="h-9 text-xs rounded-xl mt-1 bg-white dark:bg-[#1e293b]"
+                  />
+                </div>
+                <div>
+                  <Label className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                    Company / Enterprise
+                  </Label>
+                  <Input
+                    placeholder="e.g. Tech Diversity Ltd"
+                    value={newSupplierCompany}
+                    onChange={(e) => setNewSupplierCompany(e.target.value)}
                     className="h-9 text-xs rounded-xl mt-1 bg-white dark:bg-[#1e293b]"
                   />
                 </div>
@@ -957,7 +1007,10 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
             {/* Structured Table for Products */}
             <div className="space-y-3">
               {lineItems.map((item, index) => {
-                const lineTotal = Number(item.qty || 1) * Number(item.unitCost || 0);
+                const lineGross = Number(item.qty || 1) * Number(item.unitCost || 0);
+                const lineDisc = Number(item.discount || 0);
+                const lineTotal = Math.max(0, lineGross - lineDisc);
+                const effectiveCost = Number(item.qty || 1) > 0 ? Math.round(lineTotal / Number(item.qty || 1)) : Number(item.unitCost || 0);
                 const imeisCount = item.imeiText
                   ? item.imeiText
                       .split(/[\n,]+/)
@@ -970,9 +1023,9 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                     key={index}
                     className="p-4 bg-slate-50/60 dark:bg-slate-900/30 rounded-2xl border border-slate-200/90 dark:border-slate-800 hover:border-blue-400/50 dark:hover:border-blue-600/50 transition-all space-y-3 shadow-xs"
                   >
-                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end">
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-end">
                       {/* Product Selector / Name (3 cols) */}
-                      <div className="sm:col-span-3 space-y-1.5">
+                      <div className="sm:col-span-3 space-y-1">
                         <Label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center justify-between">
                           <span>Product / Item Name *</span>
                           <span className="text-[10px] text-blue-600 dark:text-blue-400 lowercase font-normal">
@@ -1000,16 +1053,52 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                         {(!item.productId || item.productId === 'new') && (
                           <Input
                             required
-                            placeholder="Type new gadget name / model..."
+                            placeholder="Type product model/name..."
                             value={item.productName}
                             onChange={(e) => handleLineChange(index, 'productName', e.target.value)}
-                            className="h-8 text-xs rounded-xl bg-white dark:bg-[#1e293b] mt-1"
+                            className="h-8 text-xs rounded-xl bg-white dark:bg-[#1e293b] mt-1 border-blue-400"
                           />
                         )}
                       </div>
 
-                      {/* Category (2 cols) */}
-                      <div className="sm:col-span-2 space-y-1.5">
+                      {/* Brand (2 cols) */}
+                      <div className="sm:col-span-2 space-y-1">
+                        <Label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                          Brand
+                        </Label>
+                        <select
+                          value={item.isCustomBrand ? 'custom' : item.brand || 'Generic'}
+                          onChange={(e) => {
+                            if (e.target.value === 'custom') {
+                              handleLineChange(index, 'isCustomBrand', true);
+                              handleLineChange(index, 'brand', '');
+                            } else {
+                              handleLineChange(index, 'isCustomBrand', false);
+                              handleLineChange(index, 'brand', e.target.value);
+                            }
+                          }}
+                          className="w-full px-2 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 font-medium focus:outline-none"
+                        >
+                          {availableBrands.map((b) => (
+                            <option key={b} value={b}>
+                              {b}
+                            </option>
+                          ))}
+                          <option value="custom">+ Custom Brand...</option>
+                        </select>
+
+                        {item.isCustomBrand && (
+                          <Input
+                            placeholder="Enter brand..."
+                            value={item.brand}
+                            onChange={(e) => handleLineChange(index, 'brand', e.target.value)}
+                            className="h-8 text-xs rounded-xl bg-white dark:bg-[#1e293b] mt-1 border-blue-400"
+                          />
+                        )}
+                      </div>
+
+                      {/* Category (1 col) */}
+                      <div className="sm:col-span-1 space-y-1">
                         <Label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                           Category
                         </Label>
@@ -1031,13 +1120,13 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                               {c}
                             </option>
                           ))}
-                          <option value="custom">+ Type Custom Category...</option>
+                          <option value="custom">+ Custom...</option>
                         </select>
 
                         {item.isCustomCategory && (
                           <Input
                             required
-                            placeholder="Enter category name..."
+                            placeholder="Category..."
                             value={item.category}
                             onChange={(e) => handleLineChange(index, 'category', e.target.value)}
                             className="h-8 text-xs rounded-xl bg-white dark:bg-[#1e293b] mt-1 border-blue-400"
@@ -1046,7 +1135,7 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                       </div>
 
                       {/* Qty (1 col) */}
-                      <div className="sm:col-span-1 space-y-1.5">
+                      <div className="sm:col-span-1 space-y-1">
                         <Label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-center block">
                           Qty *
                         </Label>
@@ -1063,8 +1152,8 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                         />
                       </div>
 
-                      {/* Unit Cost (1.5 cols) */}
-                      <div className="sm:col-span-2 space-y-1.5">
+                      {/* Unit Cost (1 col) */}
+                      <div className="sm:col-span-1 space-y-1">
                         <Label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-right block">
                           Cost (৳) *
                         </Label>
@@ -1085,8 +1174,29 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                         />
                       </div>
 
+                      {/* Per-Item Discount (1 col) */}
+                      <div className="sm:col-span-1 space-y-1">
+                        <Label className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider text-right block">
+                          Disc (৳)
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={item.discount === 0 ? '' : item.discount}
+                          onChange={(e) =>
+                            handleLineChange(
+                              index,
+                              'discount',
+                              e.target.value === '' ? '' : Number(e.target.value)
+                            )
+                          }
+                          className="h-9 text-xs font-mono font-bold text-right rounded-xl bg-white dark:bg-[#1e293b] border-amber-300 dark:border-amber-900/50"
+                        />
+                      </div>
+
                       {/* Retail Price (1 col) */}
-                      <div className="sm:col-span-1 space-y-1.5">
+                      <div className="sm:col-span-1 space-y-1">
                         <Label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-right block">
                           Retail (৳)
                         </Label>
@@ -1107,7 +1217,7 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                       </div>
 
                       {/* Wholesale Price (1 col) */}
-                      <div className="sm:col-span-1 space-y-1.5">
+                      <div className="sm:col-span-1 space-y-1">
                         <Label className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider text-right block">
                           Wholesale (৳)
                         </Label>
@@ -1127,13 +1237,13 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                         />
                       </div>
 
-                      {/* Line Total & Remove Action (2 cols) */}
-                      <div className="sm:col-span-2 flex items-center justify-end gap-2 pb-0.5">
+                      {/* Line Total & Remove Action (1 col) */}
+                      <div className="sm:col-span-1 flex items-center justify-end gap-1 pb-0.5">
                         <div className="text-right flex-1 min-w-0">
                           <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                             Subtotal
                           </div>
-                          <div className="font-mono font-black text-xs sm:text-sm text-slate-900 dark:text-slate-100 truncate">
+                          <div className="font-mono font-black text-xs text-slate-900 dark:text-slate-100 truncate">
                             ৳{lineTotal.toLocaleString()}
                           </div>
                         </div>
@@ -1141,10 +1251,10 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                           type="button"
                           disabled={lineItems.length <= 1}
                           onClick={() => handleRemoveLine(index)}
-                          className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 disabled:opacity-20 transition-colors shrink-0"
+                          className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 disabled:opacity-20 transition-colors shrink-0"
                           title="Remove item"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
@@ -1162,14 +1272,12 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                           : `+ Add IMEI / Serial Numbers ${imeisCount > 0 ? `(${imeisCount} entered)` : '(Optional)'}`}
                       </button>
 
-                      {Number(item.sellingPrice || 0) > 0 && Number(item.unitCost || 0) > 0 && (
+                      {Number(item.sellingPrice || 0) > 0 && effectiveCost > 0 && (
                         <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-                          Est. Margin: +৳
-                          {(Number(item.sellingPrice) - Number(item.unitCost)).toLocaleString()} (
+                          Landed Cost: ৳{effectiveCost}/unit • Margin: +৳
+                          {(Number(item.sellingPrice) - effectiveCost).toLocaleString()} (
                           {Math.round(
-                            ((Number(item.sellingPrice) - Number(item.unitCost)) /
-                              Number(item.unitCost)) *
-                              100
+                            ((Number(item.sellingPrice) - effectiveCost) / effectiveCost) * 100
                           )}
                           %)
                         </span>
@@ -1959,7 +2067,9 @@ function ViewPurchaseModal({ po, onClose, onReturn }) {
                 <tr className="bg-slate-50 dark:bg-slate-900 text-slate-500 text-[10px] uppercase font-bold border-b border-slate-200 dark:border-slate-800">
                   <th className="px-3.5 py-2.5 text-left">Product</th>
                   <th className="px-3.5 py-2.5 text-center">Qty</th>
-                  <th className="px-3.5 py-2.5 text-right">Unit Cost</th>
+                  <th className="px-3.5 py-2.5 text-right">Cost (৳)</th>
+                  <th className="px-3.5 py-2.5 text-right">Retail (৳)</th>
+                  <th className="px-3.5 py-2.5 text-right text-indigo-600 dark:text-indigo-400">Wholesale (৳)</th>
                   <th className="px-3.5 py-2.5 text-right">Total</th>
                 </tr>
               </thead>
@@ -1979,6 +2089,12 @@ function ViewPurchaseModal({ po, onClose, onReturn }) {
                     <td className="px-3.5 py-2.5 text-center font-bold">{item.qty}</td>
                     <td className="px-3.5 py-2.5 text-right font-mono">
                       ৳{Number(item.unitCost || 0).toLocaleString()}
+                    </td>
+                    <td className="px-3.5 py-2.5 text-right font-mono text-emerald-600 dark:text-emerald-400 font-semibold">
+                      {Number(item.sellingPrice || 0) > 0 ? `৳${Number(item.sellingPrice).toLocaleString()}` : '-'}
+                    </td>
+                    <td className="px-3.5 py-2.5 text-right font-mono text-indigo-600 dark:text-indigo-400 font-semibold">
+                      {Number(item.wholesalePrice || 0) > 0 ? `৳${Number(item.wholesalePrice).toLocaleString()}` : '-'}
                     </td>
                     <td className="px-3.5 py-2.5 text-right font-mono font-bold text-slate-900 dark:text-slate-100">
                       ৳{Number(item.totalCost || item.qty * item.unitCost || 0).toLocaleString()}

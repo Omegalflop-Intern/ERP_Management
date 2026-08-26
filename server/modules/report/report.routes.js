@@ -42,6 +42,9 @@ router.get('/dashboard', async (req, res, next) => {
     let totalAvailableUnits = 0, totalStockValue = 0;
     let activeRepairsCount = 0, totalCustomers = 0, totalDueAmount = 0;
     let totalExpenses = 0, totalPurchasesCost = 0, totalCogs = 0;
+    let salesTrendData = [];
+    let dueTrendData = [];
+    let brandDistribution = [];
     // Declare lowStockItems here so it is in scope for both the product loop and the final response
     const lowStockItems = [];
 
@@ -55,8 +58,8 @@ router.get('/dashboard', async (req, res, next) => {
       const poQuery = db('purchase_orders').where({ is_deleted: false }).whereNot('status', 'CANCELLED');
       applyScope(poQuery);
       applyBranch(poQuery);
-      const poRes = await poQuery.sum({ total: 'net_total' }).first();
-      totalPurchasesCost = Number(poRes?.total || 0);
+      const poRes = await poQuery.sum({ total: 'net_total' }).sum({ returned: 'returned_amount' }).first();
+      totalPurchasesCost = Math.max(0, Number(poRes?.total || 0) - Number(poRes?.returned || 0));
     } catch {}
 
     try {
@@ -121,6 +124,7 @@ router.get('/dashboard', async (req, res, next) => {
         totalRows.forEach((r) => { totalUnitMap[String(r.product_id)] = Number(r.cnt || 0); });
       }
 
+      const brandCounts = {};
       for (const p of activeProducts) {
         const pIdStr = String(p.id);
         const branchUnits = branchUnitMap[pIdStr] || 0;
@@ -137,6 +141,11 @@ router.get('/dashboard', async (req, res, next) => {
         totalAvailableUnits += availUnits;
         totalStockValue += costVal;
 
+        if (availUnits > 0) {
+          const bName = (p.brand && p.brand.trim()) || 'Generic';
+          brandCounts[bName] = (brandCounts[bName] || 0) + availUnits;
+        }
+
         if (availUnits <= Number(p.min_stock_alert || 2)) {
           lowStockItems.push({
             id: p.id,
@@ -148,6 +157,11 @@ router.get('/dashboard', async (req, res, next) => {
           });
         }
       }
+
+      brandDistribution = Object.entries(brandCounts)
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 6);
     } catch {}
 
     try {
@@ -164,10 +178,6 @@ router.get('/dashboard', async (req, res, next) => {
       totalCustomers = Number(custRes?.count || 0);
       totalDueAmount = Number(custRes?.due || 0);
     } catch {}
-
-    let salesTrendData = [];
-    let dueTrendData = [];
-    let brandDistribution = [];
 
     try {
       const salesTrendQuery = db('transactions')
@@ -208,21 +218,6 @@ router.get('/dashboard', async (req, res, next) => {
         paidAmount: Math.round(Number(r.paidAmount || 0)),
         dueAmount: 0,
       }));
-    } catch {}
-
-    try {
-      const brandQuery = db('products')
-        .where({ is_deleted: false })
-        .select('brand')
-        .sum({ value: 'stock_quantity' })
-        .groupBy('brand')
-        .orderBy('value', 'desc')
-        .limit(6);
-      applyScope(brandQuery);
-      const rawBrands = await brandQuery;
-      brandDistribution = rawBrands
-        .filter((r) => r.brand && Number(r.value || 0) > 0)
-        .map((r) => ({ name: r.brand, value: Number(r.value || 0) }));
     } catch {}
 
     return ApiResponse.success(res, {
@@ -269,7 +264,7 @@ router.get('/analytics', async (req, res, next) => {
     const poQuery = db('purchase_orders').where({ is_deleted: false }).whereNot('status', 'CANCELLED');
     applyScope(poQuery);
     applyBranch(poQuery);
-    const poRes = await poQuery.sum({ total: 'net_total' }).first();
+    const poRes = await poQuery.sum({ total: 'net_total' }).sum({ returned: 'returned_amount' }).first();
 
     const custQuery = db('customers').where({ is_deleted: false });
     applyScope(custQuery);
@@ -321,8 +316,8 @@ router.get('/analytics', async (req, res, next) => {
     const totalSalesCount = Number(salesRes?.count || 0);
     const totalRevenue = Number(salesRes?.revenue || 0);
     const totalExpenses = Number(expRes?.total || 0);
-    const totalPurchases = Number(poRes?.total || 0);
-    const netProfit = totalRevenue - (totalExpenses + totalPurchases);
+    const totalPurchases = Math.max(0, Number(poRes?.total || 0) - Number(poRes?.returned || 0));
+    const netProfit = totalRevenue - totalExpenses;
     const totalCustomers = Number(custRes?.count || 0);
     const totalProducts = Number(prodRes?.count || 0);
 
@@ -551,6 +546,53 @@ router.get('/employees', async (req, res, next) => {
       activeLeavesCount = Number(leaveRes?.count || 0);
     } catch {}
 
+    // Real Attendance Metrics
+    let presentToday = 0;
+    let avgWorkingHours = 0;
+    let attendanceRate = 0;
+    let attendanceTrend = [];
+
+    try {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const attTodayQuery = db('attendances').where({ is_deleted: false }).whereRaw('DATE(date) = ?', [todayStr]);
+      applyScope(attTodayQuery);
+      applyBranch(attTodayQuery);
+      const attTodayRows = await attTodayQuery;
+      presentToday = attTodayRows.filter((a) => a.status === 'PRESENT' || a.status === 'LATE').length;
+
+      const attAllQuery = db('attendances').where({ is_deleted: false });
+      applyScope(attAllQuery);
+      applyBranch(attAllQuery);
+      const attAllRows = await attAllQuery;
+      const totalAttRecords = attAllRows.length;
+      const totalPresentRecords = attAllRows.filter((a) => a.status === 'PRESENT' || a.status === 'LATE').length;
+      attendanceRate = totalAttRecords > 0 ? Math.round((totalPresentRecords / totalAttRecords) * 100 * 10) / 10 : 0;
+
+      const totalHours = attAllRows.reduce((sum, a) => sum + Number(a.working_hours || a.hours_worked || 0), 0);
+      avgWorkingHours = totalPresentRecords > 0 ? Math.round((totalHours / totalPresentRecords) * 10) / 10 : 0;
+
+      // Group attendance by date for last 7 days
+      const trendQuery = db('attendances')
+        .where({ is_deleted: false })
+        .select(db.raw('DATE_FORMAT(date, "%Y-%m-%d") as date_key'))
+        .select(db.raw('DATE_FORMAT(date, "%a %d") as date'))
+        .select(db.raw('SUM(CASE WHEN status IN ("PRESENT", "LATE") THEN 1 ELSE 0 END) as present'))
+        .select(db.raw('SUM(CASE WHEN status = "ABSENT" THEN 1 ELSE 0 END) as absent'))
+        .select(db.raw('SUM(CASE WHEN status = "LATE" THEN 1 ELSE 0 END) as late'))
+        .groupBy('date_key', 'date')
+        .orderBy('date_key', 'asc')
+        .limit(7);
+      applyScope(trendQuery);
+      applyBranch(trendQuery);
+      const trendRows = await trendQuery;
+      attendanceTrend = trendRows.map((r) => ({
+        date: r.date,
+        present: Number(r.present || 0),
+        absent: Number(r.absent || 0),
+        late: Number(r.late || 0),
+      }));
+    } catch {}
+
     // Sales by employee
     const salesByEmpQuery = db('transactions')
       .where({ is_deleted: false, tx_type: 'SALE' })
@@ -586,10 +628,10 @@ router.get('/employees', async (req, res, next) => {
       stats: {
         totalEmployees,
         totalPayrollCost,
-        presentToday: totalEmployees,
-        avgWorkingHours: 8.0,
-        attendanceRate: 94.5,
-        avgAttendanceRate: 94.5,
+        presentToday,
+        avgWorkingHours,
+        attendanceRate,
+        avgAttendanceRate: attendanceRate,
         activeLeavesCount,
       },
       employees: employees.map((e) => ({
@@ -599,12 +641,9 @@ router.get('/employees', async (req, res, next) => {
         department: e.department || 'General',
         salary: Number(e.salary || 0),
       })),
-      salesByEmployee: salesByEmployee.length > 0 ? salesByEmployee : [
-        { name: employees[0]?.name || 'Sales Staff', salesCount: 1, totalRevenue: 10000 }
-      ],
-      departmentDistribution: departmentDistribution.length > 0 ? departmentDistribution : [
-        { department: 'Sales', count: totalEmployees || 1 }
-      ],
+      salesByEmployee,
+      departmentDistribution,
+      attendanceTrend,
     });
   } catch (error) {
     next(error);

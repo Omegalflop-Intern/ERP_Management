@@ -355,7 +355,7 @@ function SupplierForm({ supplier, onClose, onSuccess }) {
     name: supplier?.name || '',
     phone: supplier?.phone || '',
     email: supplier?.email || '',
-    company: supplier?.company || '',
+    company: supplier?.company || supplier?.name || '',
     address: supplier?.address || '',
     paymentTerms: supplier?.paymentTerms || 'CASH',
     notes: supplier?.notes || '',
@@ -363,8 +363,12 @@ function SupplierForm({ supplier, onClose, onSuccess }) {
 
   const mutation = useMutation({
     mutationFn: async () => {
-      if (supplier) return api.put(`/suppliers/${supplier._id || supplier.id}`, form);
-      return api.post('/suppliers', form);
+      const payload = {
+        ...form,
+        company: form.company?.trim() || form.name?.trim() || '',
+      };
+      if (supplier) return api.put(`/suppliers/${supplier._id || supplier.id}`, payload);
+      return api.post('/suppliers', payload);
     },
     onSuccess: () => {
       toast.success(supplier ? 'Supplier updated successfully' : 'Supplier created successfully');
@@ -408,7 +412,14 @@ function SupplierForm({ supplier, onClose, onSuccess }) {
                 required
                 placeholder="e.g. Dhaka Mobile Imports"
                 value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                onChange={(e) => {
+                  const newName = e.target.value;
+                  setForm((prev) => ({
+                    ...prev,
+                    name: newName,
+                    company: (!prev.company || prev.company === prev.name) ? newName : prev.company,
+                  }));
+                }}
                 className="h-10 text-xs rounded-xl bg-white dark:bg-[#1e293b]"
               />
             </div>

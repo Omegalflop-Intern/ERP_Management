@@ -92,7 +92,7 @@ export const createSupplier = async (data, tenantId = null, branchId = null) => 
     name: data.name,
     phone: data.phone,
     email: data.email || null,
-    company: data.company || null,
+    company: data.company || data.name || null,
     address: data.address || null,
     due_balance: data.dueBalance || 0,
     credit_balance: data.creditBalance || 0,

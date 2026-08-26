@@ -9,8 +9,8 @@ export const useBranchStore = create(
       activeBranchId: 'all',
       branches: [],
       loading: false,
-      tenantPlan: 'STARTER',
-      maxBranches: 2,
+      tenantPlan: 'ENTERPRISE',
+      maxBranches: 999,
 
       setActiveBranchId: (branchId, branchName = '') => {
         const current = get().activeBranchId;
@@ -45,9 +45,16 @@ export const useBranchStore = create(
             const tenantRes = await api.get('/tenants/me');
             const tenantData = tenantRes.data?.data;
             if (tenantData) {
+              const plan = (tenantData.plan || 'ENTERPRISE').toUpperCase();
+              const maxB =
+                tenantData.maxBranches !== undefined && tenantData.maxBranches !== null
+                  ? Number(tenantData.maxBranches)
+                  : plan === 'ENTERPRISE'
+                    ? 999
+                    : 2;
               set({
-                tenantPlan: tenantData.plan || 'STARTER',
-                maxBranches: tenantData.maxBranches || 2,
+                tenantPlan: plan,
+                maxBranches: maxB,
               });
             }
           } catch {
