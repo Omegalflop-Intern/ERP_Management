@@ -59,9 +59,9 @@ export function formatJournalEntry(row) {
 
 function applyTenantScope(query, tenantId, tablePrefix = 'accounts') {
   if (tenantId) {
-    query.where((b) => {
-      b.where(`${tablePrefix}.tenant_id`, tenantId).orWhereNull(`${tablePrefix}.tenant_id`);
-    });
+    query.where(`${tablePrefix}.tenant_id`, tenantId);
+  } else {
+    query.whereNull(`${tablePrefix}.tenant_id`);
   }
 }
 
@@ -620,8 +620,12 @@ export const recalculateAllAccountBalances = async (tenantId = null) => {
   applyTenantScope(acctQuery, tenantId, 'accounts');
   const allAccounts = await acctQuery;
 
-  // Bug #27 fixed: Wrap balance reset + replay in a transaction to prevent a window
-  // of time where all account balances are 0 (causing stale reads during the operation).
+  const acctTypeMap = {};
+  for (const acct of allAccounts) {
+    acctTypeMap[acct.id] = acct.type;
+  }
+
+  // Wrap balance reset + replay in a transaction to prevent stale reads during operation
   await db.transaction(async (trx) => {
     for (const acct of allAccounts) {
       await trx('accounts').where({ id: acct.id }).update({ balance: 0 });
@@ -635,9 +639,16 @@ export const recalculateAllAccountBalances = async (tenantId = null) => {
       const lines = parseJSON(entry.lines);
       for (const line of lines) {
         if (line.accountId && (line.debit || line.credit)) {
+          const type = acctTypeMap[line.accountId] || 'ASSET';
+          const debit = Number(line.debit || 0);
+          const credit = Number(line.credit || 0);
+          const delta = (type === 'ASSET' || type === 'EXPENSE')
+            ? (debit - credit)
+            : (credit - debit);
+
           await trx('accounts')
             .where({ id: line.accountId })
-            .increment('balance', Number(line.debit || 0) - Number(line.credit || 0));
+            .increment('balance', delta);
         }
       }
     }
@@ -647,9 +658,10 @@ export const recalculateAllAccountBalances = async (tenantId = null) => {
 export const getTrialBalance = async (tenantId = null, branchId = null) => {
   await seedDefaultAccounts(tenantId);
 
-  // Sync any unsynced assets, sales, or expenses to ensure books are fully balanced
+  // Sync any unsynced historical transactions and recalculate account balances
   try {
     await syncHistoricalJournals(tenantId);
+    await recalculateAllAccountBalances(tenantId);
   } catch (e) {
     console.error('[TrialBalance Sync Error]:', e.message);
   }
