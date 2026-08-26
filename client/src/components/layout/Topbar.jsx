@@ -379,13 +379,13 @@ function GlobalSearch() {
           setIsOpen(true);
           inputRef.current?.focus();
         }}
-        className={`relative flex items-center w-full px-3.5 py-2 rounded-xl border text-xs cursor-text transition-all bg-white dark:bg-[#0d1117] border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 shadow-sm ${
+        className={`relative flex items-center w-full px-3.5 py-2 rounded-xl border text-xs cursor-text transition-all bg-white/80 dark:bg-[#0d1117]/80 backdrop-blur-md border-slate-300/80 dark:border-slate-700/80 hover:border-slate-400 dark:hover:border-slate-600 shadow-xs ${
           isOpen
             ? 'ring-2 ring-[#2563EB]/30 border-[#2563EB] dark:border-blue-500 bg-white dark:bg-[#0d1117]'
             : ''
         }`}
       >
-        <Search className="w-4 h-4 text-slate-600 dark:text-slate-300 mr-2 flex-shrink-0 stroke-[2]" />
+        <Search className="w-4 h-4 text-slate-500 dark:text-slate-400 mr-2 flex-shrink-0 stroke-[2]" />
         <input
           ref={inputRef}
           type="text"
@@ -396,7 +396,7 @@ function GlobalSearch() {
           }}
           onFocus={() => setIsOpen(true)}
           placeholder="Search products, customers, IMEIs, sales... (Ctrl+K)"
-          className="w-full bg-transparent text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none text-xs font-medium"
+          className="global-search-input w-full bg-transparent border-0 ring-0 outline-none text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 text-xs font-medium"
         />
         {query ? (
           <button
