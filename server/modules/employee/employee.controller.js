@@ -54,8 +54,9 @@ export const deleteEmployee = async (req, res, next) => {
 
 export const getEmployeeStats = async (req, res, next) => {
   try {
+    const { branchId } = req.query;
     const tenantId = req.user?.tenantId || null;
-    const effectiveBranchId = req.selectedBranchId || null;
+    const effectiveBranchId = req.selectedBranchId || branchId || req.user?.branchId || null;
     const stats = await employeeService.getEmployeeStats(tenantId, effectiveBranchId);
     return ApiResponse.success(res, stats);
   } catch (error) { next(error); }

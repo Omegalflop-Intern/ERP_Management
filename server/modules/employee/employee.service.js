@@ -174,7 +174,7 @@ export const getAllEmployees = async (page = 1, limit = 20, search = '', branch 
   applyTenantScope(countQuery, tenantId);
   if (branch) countQuery.where('employees.branch', branch);
   if (branchId && branchId !== 'all') {
-    countQuery.where((b) => b.where('employees.branch_id', branchId).orWhereNull('employees.branch_id'));
+    countQuery.where('employees.branch_id', branchId);
   }
 
   if (search) {
@@ -206,7 +206,7 @@ export const getAllEmployees = async (page = 1, limit = 20, search = '', branch 
   applyTenantScope(dataQuery, tenantId);
   if (branch) dataQuery.where('employees.branch', branch);
   if (branchId && branchId !== 'all') {
-    dataQuery.where((b) => b.where('employees.branch_id', branchId).orWhereNull('employees.branch_id'));
+    dataQuery.where('employees.branch_id', branchId);
   }
 
   if (search) {
@@ -338,17 +338,21 @@ export const deleteEmployee = async (id, tenantId = null, branchId = null) => {
 };
 
 export const getEmployeeStats = async (tenantId = null, branchId = null) => {
-  const countQuery = db('employees').where({ is_deleted: false });
+  const countQuery = db('employees').where({ is_deleted: false })
+    .whereNot('name', 'like', '%Temp Admin%')
+    .whereNot('email', 'like', '%@temp.omnimanage.local%');
   applyTenantScope(countQuery, tenantId);
   if (branchId && branchId !== 'all') {
-    countQuery.where((b) => b.where('employees.branch_id', branchId).orWhereNull('employees.branch_id'));
+    countQuery.where('branch_id', branchId);
   }
   const totalRes = await countQuery.count({ count: '*' }).first();
 
-  const activeQuery = db('employees').where({ is_deleted: false, is_active: true });
+  const activeQuery = db('employees').where({ is_deleted: false, is_active: true })
+    .whereNot('name', 'like', '%Temp Admin%')
+    .whereNot('email', 'like', '%@temp.omnimanage.local%');
   applyTenantScope(activeQuery, tenantId);
   if (branchId && branchId !== 'all') {
-    activeQuery.where((b) => b.where('employees.branch_id', branchId).orWhereNull('employees.branch_id'));
+    activeQuery.where('branch_id', branchId);
   }
   const activeRes = await activeQuery.count({ count: '*' }).first();
 
@@ -356,17 +360,21 @@ export const getEmployeeStats = async (tenantId = null, branchId = null) => {
   const active = Number(activeRes?.count || 0);
   const inactive = total - active;
 
-  const deptQuery = db('employees').where({ is_deleted: false });
+  const deptQuery = db('employees').where({ is_deleted: false })
+    .whereNot('name', 'like', '%Temp Admin%')
+    .whereNot('email', 'like', '%@temp.omnimanage.local%');
   applyTenantScope(deptQuery, tenantId);
   if (branchId && branchId !== 'all') {
-    deptQuery.where((b) => b.where('employees.branch_id', branchId).orWhereNull('employees.branch_id'));
+    deptQuery.where('branch_id', branchId);
   }
   const departments = await deptQuery.select('department').count({ count: '*' }).groupBy('department').orderBy('count', 'desc');
 
-  const salaryQuery = db('employees').where({ is_deleted: false });
+  const salaryQuery = db('employees').where({ is_deleted: false })
+    .whereNot('name', 'like', '%Temp Admin%')
+    .whereNot('email', 'like', '%@temp.omnimanage.local%');
   applyTenantScope(salaryQuery, tenantId);
   if (branchId && branchId !== 'all') {
-    salaryQuery.where((b) => b.where('employees.branch_id', branchId).orWhereNull('employees.branch_id'));
+    salaryQuery.where('branch_id', branchId);
   }
   const salaryRes = await salaryQuery.avg({ avg: 'salary' }).sum({ total: 'salary' }).first();
 

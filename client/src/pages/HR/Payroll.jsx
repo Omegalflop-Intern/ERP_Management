@@ -571,7 +571,29 @@ function PayslipModal({ payroll: r, onClose }) {
 }
 
 function PaySalaryModal({ payroll: r, isPending, onConfirm, onClose }) {
-  const [method, setMethod] = useState('CASH');
+  const { data: accountsData } = useQuery({
+    queryKey: ['accounts-list'],
+    queryFn: async () => {
+      const res = await api.get('/accounts', { params: { limit: 100 } });
+      return res.data?.data?.accounts || res.data?.data || [];
+    },
+  });
+
+  const accounts = Array.isArray(accountsData) ? accountsData : [];
+  const activeCodeMap = new Set(
+    accounts.filter((a) => a.isActive !== false && a.is_active !== 0).map((a) => String(a.code))
+  );
+
+  const channels = [
+    { id: 'CASH', label: 'Cash In Hand', code: '1000', icon: '💵' },
+    { id: 'BANK', label: 'Bank Transfer', code: '1010', icon: '🏦' },
+    { id: 'BKASH', label: 'bKash Mobile', code: '1011', icon: '📱' },
+    { id: 'NAGAD', label: 'Nagad Mobile', code: '1012', icon: '📱' },
+    { id: 'ROCKET', label: 'Rocket Mobile', code: '1013', icon: '📱' },
+  ];
+
+  const firstActive = channels.find((c) => activeCodeMap.size === 0 || activeCodeMap.has(c.code));
+  const [method, setMethod] = useState(firstActive?.id || 'CASH');
 
   return (
     <div
@@ -620,30 +642,33 @@ function PaySalaryModal({ payroll: r, isPending, onConfirm, onClose }) {
               Select Payment Channel / Account *
             </label>
             <div className="grid grid-cols-2 gap-2">
-              {[
-                { id: 'CASH', label: 'Cash In Hand', code: '1000', icon: '💵' },
-                { id: 'BANK', label: 'Bank Transfer', code: '1010', icon: '🏦' },
-                { id: 'BKASH', label: 'bKash Mobile', code: '1011', icon: '📱' },
-                { id: 'NAGAD', label: 'Nagad Mobile', code: '1012', icon: '📱' },
-                { id: 'ROCKET', label: 'Rocket Mobile', code: '1013', icon: '📱' },
-              ].map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  onClick={() => setMethod(m.id)}
-                  className={`p-2.5 rounded-xl border text-left flex items-center gap-2 transition-all ${
-                    method === m.id
-                      ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 ring-2 ring-emerald-500/20'
-                      : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300'
-                  }`}
-                >
-                  <span className="text-lg">{m.icon}</span>
-                  <div>
-                    <div className="text-xs font-bold">{m.label}</div>
-                    <div className="text-[10px] text-slate-400 font-mono">Acc: #{m.code}</div>
-                  </div>
-                </button>
-              ))}
+              {channels.map((m) => {
+                const isEnabled = activeCodeMap.size === 0 || activeCodeMap.has(m.code);
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    disabled={!isEnabled}
+                    onClick={() => isEnabled && setMethod(m.id)}
+                    className={`p-2.5 rounded-xl border text-left flex items-center gap-2 transition-all ${
+                      !isEnabled
+                        ? 'opacity-40 bg-slate-100 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 cursor-not-allowed text-slate-400'
+                        : method === m.id
+                          ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 ring-2 ring-emerald-500/20 shadow-xs'
+                          : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    <span className="text-lg">{m.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-bold flex items-center justify-between">
+                        <span className="truncate">{m.label}</span>
+                        {!isEnabled && <span className="text-[9px] text-red-500 font-normal shrink-0">Disabled</span>}
+                      </div>
+                      <div className="text-[10px] text-slate-400 font-mono">Acc: #{m.code}</div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
