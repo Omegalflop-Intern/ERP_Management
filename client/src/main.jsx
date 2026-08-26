@@ -9,9 +9,11 @@ import { ThemeProvider } from './context/ThemeContext';
 import api from './lib/api';
 import { initDevToolsProtection } from './utils/disableDevTools.js';
 import { setupOfflineSync } from './utils/offlineSync.js';
+import { registerServiceWorker } from './utils/registerServiceWorker.js';
 import './index.css';
 
 initDevToolsProtection();
+registerServiceWorker();
 
 const queryClient = new QueryClient({
   defaultOptions: {

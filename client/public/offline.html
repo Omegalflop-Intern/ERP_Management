@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OmniManage — Connection Offline</title>
+  <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(17, 24, 39, 0.75);
+      --card-border: rgba(99, 102, 241, 0.2);
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --primary-glow: rgba(99, 102, 241, 0.35);
+      --accent-cyan: #06b6d4;
+      --danger: #ef4444;
+      --success: #10b981;
+      --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(circle at 20% 15%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 80% 85%, rgba(6, 182, 212, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.6) 0%, transparent 80%);
+      color: var(--text-main);
+      font-family: var(--font-family);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 540px;
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 40px 32px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 40px var(--primary-glow);
+      text-align: center;
+      position: relative;
+      animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+      padding: 6px 16px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 9999px;
+    }
+
+    .brand img {
+      width: 22px;
+      height: 22px;
+    }
+
+    .brand span {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #cbd5e1;
+    }
+
+    /* Radar / Circuit Glow Graphic */
+    .icon-wrapper {
+      position: relative;
+      width: 110px;
+      height: 110px;
+      margin: 0 auto 24px auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .radar-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 2px solid var(--primary);
+      opacity: 0.6;
+      animation: pulseRing 3s ease-out infinite;
+    }
+
+    .radar-ring:nth-child(2) {
+      animation-delay: 1.5s;
+    }
+
+    @keyframes pulseRing {
+      0% { transform: scale(0.6); opacity: 0.8; }
+      100% { transform: scale(1.4); opacity: 0; }
+    }
+
+    .icon-circle {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(6, 182, 212, 0.1));
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 0 15px var(--primary-glow);
+    }
+
+    .icon-circle svg {
+      width: 38px;
+      height: 38px;
+      stroke: #a5b4fc;
+      filter: drop-shadow(0 0 6px rgba(165, 180, 252, 0.5));
+    }
+
+    h1 {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    p.subtitle {
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+    }
+
+    /* Live status badge */
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      color: #fca5a5;
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 28px;
+      transition: all 0.3s ease;
+    }
+
+    .status-pill.online {
+      background: rgba(16, 185, 129, 0.1);
+      border-color: rgba(16, 185, 129, 0.3);
+      color: #6ee7b7;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--danger);
+      box-shadow: 0 0 8px var(--danger);
+    }
+
+    .status-pill.online .status-dot {
+      background-color: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+
+    /* Action buttons */
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      border: none;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 15px var(--primary-glow);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #e2e8f0;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Offline features list */
+    .features-card {
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 16px;
+      text-align: left;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 8px 0;
+    }
+
+    .feature-item:not(:last-child) {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .feature-icon {
+      font-size: 16px;
+      line-height: 1;
+      padding-top: 2px;
+    }
+
+    .feature-text h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #e2e8f0;
+      margin-bottom: 2px;
+    }
+
+    .feature-text p {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .footer {
+      margin-top: 24px;
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    .spin {
+      animation: rotate 1s linear infinite;
+    }
+
+    @keyframes rotate {
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <img src="/logo.svg" alt="OmniManage Logo" onerror="this.style.display='none'" />
+      <span>OmniManage ERP</span>
+    </div>
+
+    <div class="icon-wrapper">
+      <div class="radar-ring"></div>
+      <div class="radar-ring"></div>
+      <div class="icon-circle">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 7.5h.008v.008H12v-.008Z" />
+        </svg>
+      </div>
+    </div>
+
+    <h1 id="title-text">Connection Offline</h1>
+    <p class="subtitle" id="desc-text">
+      OmniManage is unable to reach the server or your internet connection has been interrupted.
+    </p>
+
+    <div class="status-pill" id="status-badge">
+      <div class="status-dot"></div>
+      <span id="status-text">Disconnected • Auto-reconnecting...</span>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="retry-btn" onclick="retryConnection()">
+        <svg id="retry-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+        </svg>
+        <span id="retry-btn-label">Retry Connection</span>
+      </button>
+      <button class="btn btn-secondary" onclick="window.history.back()">
+        Go Back
+      </button>
+    </div>
+
+    <div class="features-card">
+      <div class="feature-item">
+        <span class="feature-icon">🛡️</span>
+        <div class="feature-text">
+          <h4>Data Preserved</h4>
+          <p>Cached inventory, customer records, and local drafts remain safe.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <span class="feature-icon">⚡</span>
+        <div class="feature-text">
+          <h4>Auto Synchronization</h4>
+          <p>Any offline actions will automatically sync as soon as you are reconnected.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      OmniManage Gadget & Mobile Shop ERP
+    </div>
+  </div>
+
+  <script>
+    const statusBadge = document.getElementById('status-badge');
+    const statusText = document.getElementById('status-text');
+    const retryIcon = document.getElementById('retry-icon');
+    const retryBtnLabel = document.getElementById('retry-btn-label');
+
+    async function checkOnline() {
+      if (!navigator.onLine) {
+        setOfflineState('No internet connection');
+        return false;
+      }
+
+      try {
+        // Test lightweight ping
+        const res = await fetch('/favicon.svg?t=' + Date.now(), { method: 'HEAD', cache: 'no-store' });
+        if (res.ok) {
+          setOnlineState();
+          return true;
+        }
+      } catch (e) {
+        // Server still unreachable
+      }
+
+      setOfflineState('Server unreachable • Retrying...');
+      return false;
+    }
+
+    function setOnlineState() {
+      statusBadge.classList.add('online');
+      statusText.textContent = 'Connection Restored! Reloading...';
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 800);
+    }
+
+    function setOfflineState(msg) {
+      statusBadge.classList.remove('online');
+      statusText.textContent = msg;
+    }
+
+    async function retryConnection() {
+      retryIcon.classList.add('spin');
+      retryBtnLabel.textContent = 'Checking...';
+      const isUp = await checkOnline();
+      setTimeout(() => {
+        retryIcon.classList.remove('spin');
+        retryBtnLabel.textContent = 'Retry Connection';
+        if (!isUp) {
+          statusText.textContent = 'Still unreachable. Checking again shortly.';
+        }
+      }, 600);
+    }
+
+    // Auto-listen to network state changes
+    window.addEventListener('online', () => {
+      checkOnline();
+    });
+
+    window.addEventListener('offline', () => {
+      setOfflineState('Disconnected from network');
+    });
+
+    // Check periodically in background
+    setInterval(checkOnline, 5000);
+  </script>
+</body>
+</html>
