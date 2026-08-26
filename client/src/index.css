@@ -1071,10 +1071,18 @@ input[type="checkbox"]:focus {
 }
 
 /* Universal Inputs Transition & Focus States */
-input,
-select,
-textarea {
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+[data-mode] input,
+[data-mode] select,
+[data-mode] textarea {
+  transition: border-color 0.18s ease-in-out, box-shadow 0.18s ease-in-out, background-color 0.18s ease-in-out !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus {
+  outline: none !important;
+  outline-offset: 0 !important;
 }
 
 /* Universal Light Theme Focus */
