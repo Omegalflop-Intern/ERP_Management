@@ -116,6 +116,10 @@ app.use(helmet({
 
 app.use(cors(corsOptions));
 app.use(cookieParser());
+app.use((req, res, next) => {
+  res.setHeader('Permissions-Policy', 'unload=*');
+  next();
+});
 app.use(express.json());
 app.use(extractTenantFromHost);
 

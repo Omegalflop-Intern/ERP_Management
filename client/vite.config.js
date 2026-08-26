@@ -30,6 +30,9 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true,
+    headers: {
+      'Permissions-Policy': 'unload=*',
+    },
     // HTTPS on the Vite dev server (browser ↔ Vite)
     ...(hasClientCerts && {
       https: {
