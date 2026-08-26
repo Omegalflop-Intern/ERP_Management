@@ -34,6 +34,8 @@ const TYPE_DESCRIPTIONS = {
   EXPENSE: 'Money spent on operations',
 };
 
+import { useBranchStore } from '../../store/branchStore';
+
 export default function ChartOfAccounts() {
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('ALL');
@@ -42,12 +44,13 @@ export default function ChartOfAccounts() {
   const [showHelp, setShowHelp] = useState(false);
   const { styled } = useTheme();
   const queryClient = useQueryClient();
+  const activeBranchId = useBranchStore((s) => s.activeBranchId);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['accounts', search, typeFilter],
+    queryKey: ['accounts', search, typeFilter, activeBranchId],
     queryFn: async () => {
       const res = await api.get('/accounting/accounts', {
-        params: { search, type: typeFilter, limit: 200 },
+        params: { search, type: typeFilter, limit: 200, branchId: activeBranchId },
       });
       return res.data;
     },

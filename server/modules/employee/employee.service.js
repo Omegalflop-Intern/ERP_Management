@@ -104,7 +104,7 @@ export const syncUserToEmployee = async (userId, userData = null, tenantId = nul
           designation: existingEmp.designation || designation,
           department: existingEmp.department || department,
           branch: branchName,
-          branch_id: bId || existingEmp.branch_id,
+          branch_id: bId !== undefined ? bId : existingEmp.branch_id,
           tenant_id: tId || existingEmp.tenant_id,
           is_active: user.is_active !== undefined ? Boolean(user.is_active) : true,
           is_deleted: false,
@@ -340,12 +340,16 @@ export const deleteEmployee = async (id, tenantId = null, branchId = null) => {
 export const getEmployeeStats = async (tenantId = null, branchId = null) => {
   const countQuery = db('employees').where({ is_deleted: false });
   applyTenantScope(countQuery, tenantId);
-  if (branchId) countQuery.where('employees.branch_id', branchId);
+  if (branchId && branchId !== 'all') {
+    countQuery.where((b) => b.where('employees.branch_id', branchId).orWhereNull('employees.branch_id'));
+  }
   const totalRes = await countQuery.count({ count: '*' }).first();
 
   const activeQuery = db('employees').where({ is_deleted: false, is_active: true });
   applyTenantScope(activeQuery, tenantId);
-  if (branchId) activeQuery.where('employees.branch_id', branchId);
+  if (branchId && branchId !== 'all') {
+    activeQuery.where((b) => b.where('employees.branch_id', branchId).orWhereNull('employees.branch_id'));
+  }
   const activeRes = await activeQuery.count({ count: '*' }).first();
 
   const total = Number(totalRes?.count || 0);
@@ -354,12 +358,16 @@ export const getEmployeeStats = async (tenantId = null, branchId = null) => {
 
   const deptQuery = db('employees').where({ is_deleted: false });
   applyTenantScope(deptQuery, tenantId);
-  if (branchId) deptQuery.where('employees.branch_id', branchId);
+  if (branchId && branchId !== 'all') {
+    deptQuery.where((b) => b.where('employees.branch_id', branchId).orWhereNull('employees.branch_id'));
+  }
   const departments = await deptQuery.select('department').count({ count: '*' }).groupBy('department').orderBy('count', 'desc');
 
   const salaryQuery = db('employees').where({ is_deleted: false });
   applyTenantScope(salaryQuery, tenantId);
-  if (branchId) salaryQuery.where('employees.branch_id', branchId);
+  if (branchId && branchId !== 'all') {
+    salaryQuery.where((b) => b.where('employees.branch_id', branchId).orWhereNull('employees.branch_id'));
+  }
   const salaryRes = await salaryQuery.avg({ avg: 'salary' }).sum({ total: 'salary' }).first();
 
   return {

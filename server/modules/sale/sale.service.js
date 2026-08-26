@@ -204,6 +204,15 @@ export const createSale = async (data, createdBy = 'system') => {
         const prodDecrQuery = trx('products').where({ id: item.productId });
         if (tenantId) prodDecrQuery.andWhere('tenant_id', tenantId);
         await prodDecrQuery.decrement('stock_quantity', requestedQty);
+
+        if (data.branchId) {
+          const bsQuery = trx('product_branch_stocks').where({ branch_id: data.branchId, product_id: item.productId });
+          if (tenantId) bsQuery.andWhere('tenant_id', tenantId);
+          const bsRow = await bsQuery.first();
+          if (bsRow) {
+            await trx('product_branch_stocks').where({ id: bsRow.id }).decrement('stock_quantity', requestedQty);
+          }
+        }
       }
     }
 

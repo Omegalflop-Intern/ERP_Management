@@ -96,56 +96,74 @@ export const getTransferById = async (id, tenantId = null, branchId = null) => {
 export const createTransfer = async (data, transferredBy = 'system', tenantId = null, branchId = null) => {
   if (data.fromBranchId === data.toBranchId) throw ApiError.badRequest('Source and destination branches cannot be the same');
 
-  const transferNumber = 'TRF-' + Date.now().toString(36).toUpperCase();
+  const itemsToProcess = Array.isArray(data.items) && data.items.length > 0
+    ? data.items
+    : [{ productId: data.productId, imeiOrSerial: data.imeiOrSerial, quantity: data.quantity || 1 }];
 
-  if (data.imeiOrSerial) {
-    const unitQuery = db('inventory_units').where({ imei_or_serial: data.imeiOrSerial, is_deleted: false });
-    applyTenantScope(unitQuery, tenantId, 'inventory_units');
-    const unit = await unitQuery.first();
-    if (!unit) throw ApiError.notFound('IMEI not found');
-    if (unit.status !== 'Available') throw ApiError.badRequest(`IMEI is ${unit.status}, cannot transfer`);
-
-    let history = [];
-    try { history = typeof unit.passport_history === 'string' ? JSON.parse(unit.passport_history) : (unit.passport_history || []); } catch { history = []; }
-    history.push({
-      event: 'TRANSFERRED',
-      details: `Transferred out — ${transferNumber}`,
-      performedBy: transferredBy,
-      timestamp: new Date().toISOString(),
-    });
-
-    const uq1 = db('inventory_units').where({ id: unit.id });
-    if (tenantId) uq1.andWhere('tenant_id', tenantId);
-    await uq1.update({
-      status: 'Transferred',
-      passport_history: JSON.stringify(history),
-    });
+  if (itemsToProcess.length === 0 || !itemsToProcess[0]?.productId) {
+    throw ApiError.badRequest('Please specify at least one product to transfer');
   }
 
-  // Bug #35 fixed: For non-IMEI transfers, decrement source branch stock_quantity.
-  // IMEI items are already handled above by marking the unit as 'Transferred'.
-  if (!data.imeiOrSerial && data.productId) {
-    const qty = Number(data.quantity || 1);
-    const srcDecrQ = db('products').where({ id: data.productId });
-    if (tenantId) srcDecrQ.andWhere('tenant_id', tenantId);
-    await srcDecrQ.decrement('stock_quantity', qty);
+  const createdTransfers = [];
+
+  for (const item of itemsToProcess) {
+    const transferNumber = 'TRF-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substring(2, 5).toUpperCase();
+
+    if (item.imeiOrSerial) {
+      const unitQuery = db('inventory_units').where({ imei_or_serial: item.imeiOrSerial, is_deleted: false });
+      applyTenantScope(unitQuery, tenantId, 'inventory_units');
+      const unit = await unitQuery.first();
+      if (!unit) throw ApiError.notFound(`IMEI "${item.imeiOrSerial}" not found`);
+      if (unit.status !== 'Available') throw ApiError.badRequest(`IMEI "${item.imeiOrSerial}" is ${unit.status}, cannot transfer`);
+
+      let history = [];
+      try { history = typeof unit.passport_history === 'string' ? JSON.parse(unit.passport_history) : (unit.passport_history || []); } catch { history = []; }
+      history.push({
+        event: 'TRANSFERRED',
+        details: `Transferred out — ${transferNumber}`,
+        performedBy: transferredBy,
+        timestamp: new Date().toISOString(),
+      });
+
+      const uq1 = db('inventory_units').where({ id: unit.id });
+      if (tenantId) uq1.andWhere('tenant_id', tenantId);
+      await uq1.update({
+        status: 'Transferred',
+        passport_history: JSON.stringify(history),
+      });
+    }
+
+    if (!item.imeiOrSerial && item.productId) {
+      const qty = Number(item.quantity || 1);
+      const srcStock = await db('product_branch_stocks')
+        .where({ branch_id: data.fromBranchId, product_id: item.productId })
+        .first();
+      if (srcStock) {
+        await db('product_branch_stocks')
+          .where({ id: srcStock.id })
+          .decrement('stock_quantity', qty);
+      }
+    }
+
+    const [insertedId] = await db('stock_transfers').insert({
+      tenant_id: tenantId || data.tenantId || null,
+      transfer_number: transferNumber,
+      from_branch_id: data.fromBranchId,
+      to_branch_id: data.toBranchId,
+      product_id: item.productId,
+      imei_or_serial: item.imeiOrSerial || null,
+      quantity: item.quantity || 1,
+      status: 'PENDING',
+      notes: data.notes || null,
+      transferred_by: transferredBy,
+      is_deleted: false,
+    });
+
+    const formatted = await getTransferById(insertedId, tenantId, branchId);
+    createdTransfers.push(formatted);
   }
 
-  const [insertedId] = await db('stock_transfers').insert({
-    tenant_id: tenantId || data.tenantId || null,
-    transfer_number: transferNumber,
-    from_branch_id: data.fromBranchId,
-    to_branch_id: data.toBranchId,
-    product_id: data.productId,
-    imei_or_serial: data.imeiOrSerial || null,
-    quantity: data.quantity || 1,
-    status: 'PENDING',
-    notes: data.notes || null,
-    transferred_by: transferredBy,
-    is_deleted: false,
-  });
-
-  return getTransferById(insertedId, tenantId, branchId);
+  return createdTransfers.length === 1 ? createdTransfers[0] : createdTransfers;
 };
 
 export const updateTransferStatus = async (id, status, performedBy = 'system', tenantId = null, branchId = null) => {
@@ -181,18 +199,36 @@ export const updateTransferStatus = async (id, status, performedBy = 'system', t
         });
       }
     } else if (productId) {
-      // General quantity transfer: move inventory units from source branch to destination branch
+      const qty = Number(transfer.quantity || 1);
       const availUnits = await db('inventory_units')
         .where({ product_id: productId, is_deleted: false })
         .where((b) => b.where({ branch_id: fromBranchId }).orWhereNull('branch_id'))
         .whereIn('status', ['Available', 'Transferred'])
-        .limit(transfer.quantity || 1);
+        .limit(qty);
 
       if (availUnits.length > 0) {
         const unitIds = availUnits.map((u) => u.id);
         await db('inventory_units')
           .whereIn('id', unitIds)
           .update({ branch_id: toBranchId, status: 'Available' });
+      }
+
+      // Increment destination branch stock in product_branch_stocks
+      const destStock = await db('product_branch_stocks')
+        .where({ branch_id: toBranchId, product_id: productId })
+        .first();
+
+      if (destStock) {
+        await db('product_branch_stocks')
+          .where({ id: destStock.id })
+          .increment('stock_quantity', qty);
+      } else {
+        await db('product_branch_stocks').insert({
+          tenant_id: tenantId || transfer.tenantId || null,
+          branch_id: toBranchId,
+          product_id: productId,
+          stock_quantity: qty,
+        });
       }
     }
     updateFields.delivered_at = new Date();
@@ -217,12 +253,32 @@ export const updateTransferStatus = async (id, status, performedBy = 'system', t
           passport_history: JSON.stringify(history),
         });
       }
+    } else if (transfer.productId) {
+      const pId = transfer.productId?.id || transfer.productId;
+      const fromBranchId = transfer.fromBranchId?.id || transfer.fromBranchId;
+      const qty = Number(transfer.quantity || 1);
+      const srcStock = await db('product_branch_stocks')
+        .where({ branch_id: fromBranchId, product_id: pId })
+        .first();
+      if (srcStock) {
+        await db('product_branch_stocks')
+          .where({ id: srcStock.id })
+          .increment('stock_quantity', qty);
+      } else {
+        await db('product_branch_stocks').insert({
+          tenant_id: tenantId || transfer.tenantId || null,
+          branch_id: fromBranchId,
+          product_id: pId,
+          stock_quantity: qty,
+        });
+      }
     }
   }
 
   const tq = db('stock_transfers').where({ id });
   if (tenantId) tq.andWhere('tenant_id', tenantId);
   await tq.update(updateFields);
+
   const updated = await getTransferById(id, tenantId, branchId);
   emitter.emit(EVENTS.STOCK_UPDATED, { ...updated, tenantId });
   return updated;

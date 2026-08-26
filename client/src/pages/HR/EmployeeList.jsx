@@ -36,25 +36,28 @@ const DESIGNATIONS = [
 import PageHeader from '../../components/layout/PageHeader';
 import EmptyState from '../../components/ui/EmptyState';
 
+import { useBranchStore } from '../../store/branchStore';
+
 export default function EmployeeList() {
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editEmp, setEditEmp] = useState(null);
   const { styled } = useTheme();
   const queryClient = useQueryClient();
+  const activeBranchId = useBranchStore((s) => s.activeBranchId);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['employees', search],
+    queryKey: ['employees', search, activeBranchId],
     queryFn: async () => {
-      const res = await api.get('/employees', { params: { search, limit: 100 } });
+      const res = await api.get('/employees', { params: { search, limit: 100, branchId: activeBranchId } });
       return res.data;
     },
   });
 
   const { data: statsData } = useQuery({
-    queryKey: ['employee-stats'],
+    queryKey: ['employee-stats', activeBranchId],
     queryFn: async () => {
-      const res = await api.get('/employees/stats');
+      const res = await api.get('/employees/stats', { params: { branchId: activeBranchId } });
       return res.data?.data;
     },
   });

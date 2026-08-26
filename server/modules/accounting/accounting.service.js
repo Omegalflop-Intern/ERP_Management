@@ -120,8 +120,11 @@ export const getAllAccounts = async (page = 1, limit = 100, search = '', type = 
     const jeQuery = db('journal_entries')
       .where('is_deleted', false)
       .andWhere('status', 'POSTED')
-      .select('id', 'date', 'lines');
+      .select('id', 'date', 'lines', 'branch_id');
     applyTenantScope(jeQuery, tenantId, 'journal_entries');
+    if (branchId && branchId !== 'all') {
+      jeQuery.where('branch_id', branchId);
+    }
     const jeRows = await jeQuery;
     for (const je of jeRows) {
       let lines = [];
@@ -143,10 +146,21 @@ export const getAllAccounts = async (page = 1, limit = 100, search = '', type = 
   const accounts = rows.map((row) => {
     const parentRow = row.p_id ? { id: row.p_id, code: row.p_code, name: row.p_name } : null;
     const formatted = formatAccount(row, parentRow);
+    const d = totalDebits[row.id] || 0;
+    const c = totalCredits[row.id] || 0;
+
+    if (branchId && branchId !== 'all') {
+      if (['ASSET', 'EXPENSE'].includes(row.type)) {
+        formatted.balance = d - c;
+      } else {
+        formatted.balance = c - d;
+      }
+    }
+
     formatted.journalEntryCount = journalCounts[row.id] || 0;
     formatted.lastTransactionDate = lastTransactions[row.id] || null;
-    formatted.totalDebit = totalDebits[row.id] || 0;
-    formatted.totalCredit = totalCredits[row.id] || 0;
+    formatted.totalDebit = d;
+    formatted.totalCredit = c;
     return formatted;
   });
 

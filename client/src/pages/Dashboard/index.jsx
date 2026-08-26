@@ -22,16 +22,18 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
 
+import { useBranchStore } from '../../store/branchStore';
 import PageHeader from '../../components/layout/PageHeader';
 
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { styled } = useTheme();
+  const activeBranchId = useBranchStore((s) => s.activeBranchId);
   const [period, setPeriod] = React.useState('7d');
 
   const { data: dashboardData, isLoading } = useQuery({
-    queryKey: ['dashboard', period],
+    queryKey: ['dashboard', period, activeBranchId],
     queryFn: async () => {
       const res = await api.get('/finance/dashboard', { params: { period } });
       return res.data;
@@ -40,7 +42,7 @@ export default function Dashboard() {
   });
 
   const { data: recentSales } = useQuery({
-    queryKey: ['recent-sales-dashboard'],
+    queryKey: ['recent-sales-dashboard', activeBranchId],
     queryFn: async () => {
       const res = await api.get('/sales', { params: { limit: 5 } });
       return res.data?.data || [];

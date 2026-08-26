@@ -66,15 +66,13 @@ export const authenticate = async (req, res, next) => {
       permissions: Array.isArray(permissions) ? permissions : [],
     };
 
-    // Extract requested branch from header or query parameter
-    const headerBranchId = req.headers['x-branch-id'] || req.headers['X-Branch-Id'] || req.query.branchId || null;
+    // Extract requested branch from query parameter or header
+    const explicitBranchId = req.query.branchId || req.headers['x-branch-id'] || req.headers['X-Branch-Id'] || null;
 
-    // Enforce role-based branch locking: non-admin users assigned to a specific branch are locked to that branch
-    const isAdmin = roleName.toUpperCase() === 'ADMIN' || isSuperAdmin;
-    if (!isAdmin && userBranchId) {
-      req.selectedBranchId = userBranchId;
-    } else if (headerBranchId && headerBranchId !== 'all') {
-      req.selectedBranchId = String(headerBranchId);
+    if (explicitBranchId && explicitBranchId !== 'all') {
+      req.selectedBranchId = String(explicitBranchId);
+    } else if (userBranchId) {
+      req.selectedBranchId = String(userBranchId);
     } else {
       req.selectedBranchId = null;
     }

@@ -10,7 +10,7 @@ export const getAllProducts = async (req, res, next) => {
   try {
     const { page = 1, limit = 20, search = '', category = '' } = req.query;
     const tenantId = req.user?.tenantId || null;
-    const branchId = req.selectedBranchId || null;
+    const branchId = req.query.branchId !== undefined ? (req.query.branchId || null) : (req.selectedBranchId || null);
     const result = await productService.getAllProducts(Number(page), Number(limit), search, category, tenantId, branchId);
     return ApiResponse.paginated(res, result.products, result.pagination.total, result.pagination.page, result.pagination.limit);
   } catch (error) { next(error); }
@@ -19,7 +19,7 @@ export const getAllProducts = async (req, res, next) => {
 export const getProductById = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const branchId = req.selectedBranchId || null;
+    const branchId = req.query.branchId !== undefined ? (req.query.branchId || null) : (req.selectedBranchId || null);
     const product = await productService.getProductById(req.params.id, tenantId, branchId);
     return ApiResponse.success(res, product);
   } catch (error) { next(error); }

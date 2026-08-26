@@ -256,8 +256,25 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
       await pUpdate.update(updateData);
     }
 
-    // If IMEIs are provided at purchase time, insert them into inventory_units with effective cost
+    // Auto increment branch stock in product_branch_stocks for non-IMEI items
     const imeis = rawItem.imeis || rawItem.imeiList || rawItem.imeiOrSerials || [];
+    if (branchId && (!Array.isArray(imeis) || imeis.length === 0)) {
+      const bsQ = db('product_branch_stocks').where({ branch_id: branchId, product_id: pId });
+      if (tenantId) bsQ.andWhere('tenant_id', tenantId);
+      const bs = await bsQ.first();
+      if (bs) {
+        await db('product_branch_stocks').where({ id: bs.id }).increment('stock_quantity', qty);
+      } else {
+        await db('product_branch_stocks').insert({
+          tenant_id: tenantId,
+          branch_id: branchId,
+          product_id: pId,
+          stock_quantity: qty,
+        });
+      }
+    }
+
+    // If IMEIs are provided at purchase time, insert them into inventory_units with effective cost
     if (Array.isArray(imeis) && imeis.length > 0) {
       for (const imei of imeis) {
         const trimmed = String(imei).trim();

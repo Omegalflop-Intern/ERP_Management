@@ -127,6 +127,7 @@ export const createBranch = async (data, tenantId = null) => {
 
   if (mgrId) {
     await db('users').where({ id: mgrId }).update({ branch_id: insertedId });
+    await db('employees').where({ user_id: mgrId }).update({ branch_id: insertedId, branch: data.name });
   }
 
   return getBranchById(insertedId, effectiveTenantId);
@@ -147,6 +148,7 @@ export const updateBranch = async (id, data, tenantId = null) => {
     updateFields.manager_id = mgrId || null;
     if (mgrId) {
       await db('users').where({ id: mgrId }).update({ branch_id: id });
+      await db('employees').where({ user_id: mgrId }).update({ branch_id: id, branch: data.name || branch.name });
     }
   }
 

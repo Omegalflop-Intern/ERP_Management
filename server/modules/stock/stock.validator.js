@@ -1,12 +1,17 @@
 import { z } from 'zod';
 
 export const createTransferSchema = z.object({
-  fromBranchId: z.string().min(1),
-  toBranchId: z.string().min(1),
-  productId: z.string().min(1),
+  fromBranchId: z.union([z.string(), z.number()]).transform(String),
+  toBranchId: z.union([z.string(), z.number()]).transform(String),
+  productId: z.union([z.string(), z.number()]).transform(String).optional(),
   imeiOrSerial: z.string().optional(),
-  quantity: z.number().min(1).default(1),
+  quantity: z.number().min(1).default(1).optional(),
   notes: z.string().optional(),
+  items: z.array(z.object({
+    productId: z.union([z.string(), z.number()]).transform(String),
+    imeiOrSerial: z.string().optional(),
+    quantity: z.number().min(1).default(1),
+  })).optional(),
 });
 
 export const updateTransferStatusSchema = z.object({

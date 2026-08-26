@@ -100,6 +100,7 @@ router.get('/dashboard', async (req, res, next) => {
 
       let branchUnitMap = {};
       let totalUnitMap = {};
+      let branchBulkStocksMap = {};
 
       if (productIds.length > 0) {
         const branchUnitQ = db('inventory_units')
@@ -122,6 +123,13 @@ router.get('/dashboard', async (req, res, next) => {
         applyScope(totalUnitQ);
         const totalRows = await totalUnitQ;
         totalRows.forEach((r) => { totalUnitMap[String(r.product_id)] = Number(r.cnt || 0); });
+
+        if (req.selectedBranchId && req.selectedBranchId !== 'all') {
+          const bsRows = await db('product_branch_stocks')
+            .whereIn('product_id', productIds)
+            .where('branch_id', req.selectedBranchId);
+          bsRows.forEach((r) => { branchBulkStocksMap[String(r.product_id)] = Number(r.stock_quantity || 0); });
+        }
       }
 
       const brandCounts = {};
@@ -134,7 +142,15 @@ router.get('/dashboard', async (req, res, next) => {
         if (totalUnitsAny > 0) {
           availUnits = branchUnits;
         } else {
-          availUnits = Number(p.stock_quantity || 0);
+          if (req.selectedBranchId && req.selectedBranchId !== 'all') {
+            if (branchBulkStocksMap[pIdStr] !== undefined) {
+              availUnits = branchBulkStocksMap[pIdStr];
+            } else {
+              availUnits = 0;
+            }
+          } else {
+            availUnits = Number(p.stock_quantity || 0);
+          }
         }
 
         const costVal = availUnits * Number(p.cost_price || 0);
@@ -670,6 +686,7 @@ router.get('/inventory', async (req, res, next) => {
     const lowStockItems = [];
 
     let branchUnitCounts = null;
+    let branchBulkStocks = null;
     if (branchId && products.length > 0) {
       const productIds = products.map((p) => p.id);
       const unitRows = await db('inventory_units')
@@ -681,12 +698,28 @@ router.get('/inventory', async (req, res, next) => {
         .groupBy('product_id');
       branchUnitCounts = {};
       unitRows.forEach((r) => { branchUnitCounts[String(r.product_id)] = Number(r.cnt || 0); });
+
+      const bsRows = await db('product_branch_stocks')
+        .whereIn('product_id', productIds)
+        .where('branch_id', branchId);
+      branchBulkStocks = {};
+      bsRows.forEach((r) => { branchBulkStocks[String(r.product_id)] = Number(r.stock_quantity || 0); });
     }
 
     for (const p of products) {
-      const qty = branchUnitCounts !== null
-        ? (branchUnitCounts[String(p.id)] || 0)
-        : Number(p.stock_quantity || 0);
+      let qty = 0;
+      if (branchUnitCounts !== null) {
+        const imeiBranchQty = branchUnitCounts[String(p.id)];
+        if (imeiBranchQty !== undefined && imeiBranchQty > 0) {
+          qty = imeiBranchQty;
+        } else if (branchBulkStocks && branchBulkStocks[String(p.id)] !== undefined) {
+          qty = branchBulkStocks[String(p.id)];
+        } else {
+          qty = 0;
+        }
+      } else {
+        qty = Number(p.stock_quantity || 0);
+      }
       const cost = Number(p.cost_price || 0);
       totalStockValue += qty * cost;
 
@@ -712,6 +745,23 @@ router.get('/inventory', async (req, res, next) => {
       count: value,
     }));
 
+    let inboundToday = 0;
+    let outboundToday = 0;
+    try {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const poQ = db('purchase_orders').where({ is_deleted: false }).whereRaw('DATE(created_at) = ?', [todayStr]);
+      applyScope(poQ);
+      applyBranch(poQ);
+      const poRes = await poQ.sum({ cnt: 'item_count' }).first();
+      inboundToday = Number(poRes?.cnt || 0);
+
+      const txQ = db('transactions').where({ is_deleted: false, tx_type: 'SALE' }).whereRaw('DATE(created_at) = ?', [todayStr]);
+      applyScope(txQ);
+      applyBranch(txQ);
+      const txRes = await txQ.count({ cnt: '*' }).first();
+      outboundToday = Number(txRes?.cnt || 0);
+    } catch {}
+
     return ApiResponse.success(res, {
       stats: {
         totalProducts,
@@ -722,6 +772,9 @@ router.get('/inventory', async (req, res, next) => {
       },
       categoryBreakdown,
       categoryStock: categoryBreakdown,
+      stockMovement: [
+        { date: 'Today', inbound: inboundToday, outbound: outboundToday },
+      ],
       lowStockItems,
     });
   } catch (error) {
