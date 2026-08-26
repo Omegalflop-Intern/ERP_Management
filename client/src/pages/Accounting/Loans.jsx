@@ -34,6 +34,8 @@ export default function Loans() {
   const [loanType, setLoanType] = useState('LOAN_TAKEN'); // 'LOAN_TAKEN' (Lender) | 'LOAN_GIVEN' (Borrower)
   const [showAddLoanModal, setShowAddLoanModal] = useState(false);
   const [loanDueDate, setLoanDueDate] = useState('');
+  const [loanStartDate, setLoanStartDate] = useState('');
+  const [installmentsCount, setInstallmentsCount] = useState(1);
 
   // Repayment Modal State
   const [repayTargetLoan, setRepayTargetLoan] = useState(null);
@@ -91,6 +93,9 @@ export default function Loans() {
     onSuccess: () => {
       toast.success('Loan record created');
       setShowAddLoanModal(false);
+      setLoanStartDate('');
+      setLoanDueDate('');
+      setInstallmentsCount(1);
       qc.invalidateQueries({ queryKey: ['loans'] });
     },
     onError: (e) => toast.error(e.response?.data?.message || 'Failed to create loan record'),
@@ -473,6 +478,7 @@ export default function Loans() {
                   loanAmount: Number(fd.get('loanAmount')),
                   interestRate: Number(fd.get('interestRate')) || 0,
                   installmentCount: Number(fd.get('installmentCount')) || 1,
+                  borrowedDate: loanStartDate || undefined,
                   dueDate: loanDueDate || undefined,
                   notes: fd.get('notes'),
                 });
@@ -514,16 +520,31 @@ export default function Loans() {
                   </label>
                   <input name="phone" placeholder="e.g. 01711..." className={inputCls} />
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
-                    First Due Date
-                  </label>
-                  <DatePicker
-                    value={loanDueDate}
-                    onChange={setLoanDueDate}
-                    placeholder="First Due Date"
-                    className="w-full !rounded-xl"
-                  />
+                <div className={installmentsCount > 1 ? "col-span-1" : "grid grid-cols-2 gap-2"}>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+                      Loan Start Date
+                    </label>
+                    <DatePicker
+                      value={loanStartDate}
+                      onChange={setLoanStartDate}
+                      placeholder="Start Date"
+                      className="w-full !rounded-xl"
+                    />
+                  </div>
+                  {installmentsCount === 1 && (
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+                        Target Due Date
+                      </label>
+                      <DatePicker
+                        value={loanDueDate}
+                        onChange={setLoanDueDate}
+                        placeholder="Target Due Date"
+                        className="w-full !rounded-xl"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -557,10 +578,17 @@ export default function Loans() {
                   <NumberInput
                     min="1"
                     name="installmentCount"
-                    defaultValue="1"
+                    value={installmentsCount}
+                    onChange={(e) => setInstallmentsCount(Math.max(1, Number(e.target.value)))}
                     className={inputCls}
                   />
                 </div>
+
+                {installmentsCount > 1 && (
+                  <div className="col-span-1 sm:col-span-2 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-400 p-3 rounded-xl border border-emerald-100 dark:border-emerald-800/40 text-xs mt-1">
+                    <strong>Monthly Repayment Schedule Enabled:</strong> repayments will be automatically scheduled monthly starting 1 month after the Loan Start Date. No manual due date selection is required.
+                  </div>
+                )}
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
                     Notes / Terms

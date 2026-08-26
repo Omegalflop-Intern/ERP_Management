@@ -1,5 +1,6 @@
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTheme } from '../../context/ThemeContext';
 
 export default function DatePicker({
@@ -30,8 +31,8 @@ export default function DatePicker({
 
   const [popoverStyle, setPopoverStyle] = useState({});
 
-  useEffect(() => {
-    if (isOpen && containerRef.current) {
+  const updatePosition = () => {
+    if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
       const vw = window.innerWidth;
       const vh = window.innerHeight;
@@ -39,36 +40,42 @@ export default function DatePicker({
 
       // If less space below, open upward
       const spaceBelow = vh - rect.bottom;
-      if (spaceBelow < 330 && rect.top > 330) {
-        setOpenUpward(true);
-      } else {
-        setOpenUpward(false);
-      }
+      const openUp = spaceBelow < 330 && rect.top > 330;
+      setOpenUpward(openUp);
 
-      // Small screen or boundary clamping
-      if (vw < 640) {
-        const desiredLeft = Math.max(12, Math.min(rect.left, vw - popoverWidth - 12));
-        const relativeOffset = desiredLeft - rect.left;
-        setPopoverStyle({
-          left: `${relativeOffset}px`,
-          width: `${popoverWidth}px`,
-        });
-      } else {
-        const spaceRight = vw - rect.left;
-        if (spaceRight < 300 && rect.right > 280) {
-          setAlignRight(true);
-          setPopoverStyle({});
-        } else {
-          setAlignRight(false);
-          setPopoverStyle({});
-        }
-      }
+      const top = openUp
+        ? rect.top + window.scrollY - 330
+        : rect.bottom + window.scrollY;
+
+      const left = Math.max(12, Math.min(rect.left + window.scrollX, vw - popoverWidth - 12));
+
+      setPopoverStyle({
+        position: 'absolute',
+        top: `${top}px`,
+        left: `${left}px`,
+        width: `${popoverWidth}px`,
+        zIndex: 999999,
+      });
     }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      updatePosition();
+      window.addEventListener('resize', updatePosition);
+      window.addEventListener('scroll', updatePosition, true);
+    }
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
   }, [isOpen]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (containerRef.current && !containerRef.current.contains(event.target)) {
+      const isInsideContainer = containerRef.current && containerRef.current.contains(event.target);
+      const isInsidePopover = event.target.closest('[data-datepicker-popover]');
+      if (!isInsideContainer && !isInsidePopover) {
         setIsOpen(false);
       }
     };
@@ -179,12 +186,11 @@ export default function DatePicker({
         )}
       </button>
 
-      {isOpen && (
+      {isOpen && createPortal(
         <div
+          data-datepicker-popover="true"
           style={popoverStyle}
-          className={`absolute ${alignRight ? 'right-0 left-auto' : 'left-0 right-auto'} ${
-            openUpward ? 'bottom-full mb-2' : 'top-full mt-2'
-          } z-[99999] p-3 sm:p-4 w-[280px] sm:w-72 max-w-[calc(100vw-1.5rem)] ${popoverCardClass}`}
+          className={`p-3 sm:p-4 w-[280px] sm:w-72 max-w-[calc(100vw-1.5rem)] ${popoverCardClass}`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header Month / Year Navigation */}
@@ -272,7 +278,8 @@ export default function DatePicker({
               Today
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

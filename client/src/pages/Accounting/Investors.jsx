@@ -66,6 +66,7 @@ export default function Investors() {
     initialCapital: '',
     paymentMethod: 'cash',
     notes: '',
+    startDate: '',
   });
 
   // Individual Investor History Modal State
@@ -141,6 +142,7 @@ export default function Investors() {
         initialCapital: 0,
         paymentMethod: 'cash',
         notes: '',
+        startDate: '',
       });
       qc.invalidateQueries({ queryKey: ['investors'] });
     },
@@ -756,17 +758,30 @@ export default function Investors() {
                   />
                 </div>
               </div>
-              <div>
-                <label className="text-xs font-medium text-gray-700 dark:text-gray-300 block mb-1">
-                  Address
-                </label>
-                <input
-                  type="text"
-                  value={newForm.address}
-                  onChange={(e) => setNewForm({ ...newForm, address: e.target.value })}
-                  className={inputCls}
-                  placeholder="Dhaka, Bangladesh"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-gray-700 dark:text-gray-300 block mb-1">
+                    Start Date / Partner Since
+                  </label>
+                  <DatePicker
+                    value={newForm.startDate}
+                    onChange={(val) => setNewForm({ ...newForm, startDate: val })}
+                    placeholder="Registry Date"
+                    className="w-full !rounded-xl"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-700 dark:text-gray-300 block mb-1">
+                    Address
+                  </label>
+                  <input
+                    type="text"
+                    value={newForm.address}
+                    onChange={(e) => setNewForm({ ...newForm, address: e.target.value })}
+                    className={inputCls}
+                    placeholder="Dhaka, Bangladesh"
+                  />
+                </div>
               </div>
               <button
                 type="submit"

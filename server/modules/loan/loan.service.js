@@ -118,14 +118,34 @@ export const createLoan = async (data, arg2 = null, arg3 = null) => {
 
   const schedule = [];
   const perInstallmentAmount = Number((totalWithInterest / installmentCount).toFixed(2));
-  const startDate = data.dueDate ? new Date(data.dueDate) : new Date();
+  
+  const borrowedDate = data.borrowedDate ? new Date(data.borrowedDate) : new Date();
+  let calculatedDueDate = data.dueDate ? new Date(data.dueDate) : null;
 
-  for (let i = 1; i <= installmentCount; i++) {
-    const instDueDate = new Date(startDate);
-    instDueDate.setMonth(instDueDate.getMonth() + (i - 1));
+  if (installmentCount > 1) {
+    for (let i = 1; i <= installmentCount; i++) {
+      const instDueDate = new Date(borrowedDate);
+      instDueDate.setMonth(instDueDate.getMonth() + i);
+      schedule.push({
+        installmentNo: i,
+        dueDate: instDueDate.toISOString(),
+        amount: perInstallmentAmount,
+        status: 'Pending',
+        paidAmount: 0,
+      });
+    }
+    calculatedDueDate = new Date(borrowedDate);
+    calculatedDueDate.setMonth(calculatedDueDate.getMonth() + installmentCount);
+  } else {
+    // Single repayment loan
+    const finalDueDate = calculatedDueDate || new Date(borrowedDate);
+    if (!calculatedDueDate) {
+      finalDueDate.setMonth(finalDueDate.getMonth() + 1);
+      calculatedDueDate = finalDueDate;
+    }
     schedule.push({
-      installmentNo: i,
-      dueDate: instDueDate.toISOString(),
+      installmentNo: 1,
+      dueDate: finalDueDate.toISOString(),
       amount: perInstallmentAmount,
       status: 'Pending',
       paidAmount: 0,
@@ -145,8 +165,8 @@ export const createLoan = async (data, arg2 = null, arg3 = null) => {
     phone: data.phone || null,
     loan_amount: totalWithInterest,
     interest_rate: interestRate,
-    borrowed_date: data.borrowedDate ? new Date(data.borrowedDate) : new Date(),
-    due_date: data.dueDate ? new Date(data.dueDate) : null,
+    borrowed_date: borrowedDate,
+    due_date: calculatedDueDate,
     installment_count: installmentCount,
     installment_schedule: JSON.stringify(schedule),
     repaid_amount: 0,

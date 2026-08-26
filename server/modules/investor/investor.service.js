@@ -105,6 +105,8 @@ export const createInvestor = async (data, recordedBy = 'system', tenantId = nul
   }
 
   const initialCap = Number(data.initialCapital || 0);
+  const dateToUse = data.startDate ? new Date(data.startDate) : new Date();
+
   const [insertedId] = await db('investors').insert({
     tenant_id: resolvedTenantId,
     branch_id: resolvedBranchId,
@@ -119,6 +121,8 @@ export const createInvestor = async (data, recordedBy = 'system', tenantId = nul
     status: data.status || 'Active',
     notes: data.notes || null,
     is_deleted: false,
+    created_at: dateToUse,
+    updated_at: dateToUse,
   });
 
   if (data.initialCapital && Number(data.initialCapital) > 0) {
@@ -132,6 +136,8 @@ export const createInvestor = async (data, recordedBy = 'system', tenantId = nul
       notes: 'Initial capital investment on creation',
       recorded_by: typeof recordedBy === 'string' ? recordedBy : 'system',
       is_deleted: false,
+      created_at: dateToUse,
+      updated_at: dateToUse,
     });
     try {
       const createdTx = await db('investor_transactions').where({ id: txId }).first();
