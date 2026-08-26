@@ -177,12 +177,21 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
 
   if (!supplier) throw ApiError.notFound('Supplier not found or could not be created');
 
+  const rawItems = data.lineItems || [];
+  const rawSubTotal = rawItems.reduce((sum, it) => sum + (Number(it.qty || 1) * Number(it.unitCost || 0)), 0);
+  const discount = Number(data.discount || 0);
+  const tax = Number(data.tax || 0);
+  const netTotal = Math.max(0, rawSubTotal - discount + tax);
+  const discountRatio = rawSubTotal > 0 ? netTotal / rawSubTotal : 1;
+
   const processedLineItems = [];
 
-  for (const rawItem of (data.lineItems || [])) {
+  for (const rawItem of rawItems) {
     let pId = rawItem.productId;
     const pName = rawItem.productName || rawItem.name || rawItem.description || 'Gadget Item';
     const uCost = Number(rawItem.unitCost || 0);
+    // Calculate actual effective landed unit cost after PO discount
+    const effectiveUnitCost = Math.round(uCost * discountRatio * 100) / 100;
     const sPrice = Number(rawItem.sellingPrice || rawItem.unitPrice || (uCost > 0 ? Math.round(uCost * 1.25) : 0));
     const wPrice = rawItem.wholesalePrice !== undefined && rawItem.wholesalePrice !== ''
       ? Number(rawItem.wholesalePrice)
@@ -209,7 +218,7 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
           brand: rawItem.brand || null,
           sku,
           category: rawItem.category || 'General',
-          cost_price: uCost,
+          cost_price: effectiveUnitCost > 0 ? effectiveUnitCost : uCost,
           selling_price: sPrice,
           wholesale_price: wPrice > 0 ? wPrice : null,
           stock_quantity: 0,
@@ -222,7 +231,7 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
       pId = Number(pId);
     }
 
-    // Auto increment stock in products table
+    // Auto increment stock in products table & update cost_price to effective landed cost
     const prodQ = db('products').where({ id: pId, is_deleted: false });
     if (tenantId) prodQ.andWhere('tenant_id', tenantId);
     const prod = await prodQ.first();
@@ -231,7 +240,7 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
       if (tenantId) pUpdate.andWhere('tenant_id', tenantId);
       const updateData = {
         stock_quantity: Number(prod.stock_quantity || 0) + qty,
-        cost_price: uCost > 0 ? uCost : prod.cost_price,
+        cost_price: effectiveUnitCost > 0 ? effectiveUnitCost : (uCost > 0 ? uCost : prod.cost_price),
         selling_price: sPrice > 0 ? sPrice : prod.selling_price,
       };
       if (wPrice > 0) {
@@ -240,7 +249,7 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
       await pUpdate.update(updateData);
     }
 
-    // If IMEIs are provided at purchase time, insert them into inventory_units
+    // If IMEIs are provided at purchase time, insert them into inventory_units with effective cost
     const imeis = rawItem.imeis || rawItem.imeiList || rawItem.imeiOrSerials || [];
     if (Array.isArray(imeis) && imeis.length > 0) {
       for (const imei of imeis) {
@@ -256,14 +265,14 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
             imei_or_serial: trimmed,
             product_id: pId,
             supplier_id: supplier.id,
-            purchase_price: uCost,
+            purchase_price: effectiveUnitCost > 0 ? effectiveUnitCost : uCost,
             current_selling_price: sPrice,
             warranty_months: Number(rawItem.warrantyMonths || 12),
             passport_history: JSON.stringify([{
               event: 'PURCHASED',
               details: `Received via Purchase Restock`,
               performedBy: createdBy,
-              amount: uCost,
+              amount: effectiveUnitCost > 0 ? effectiveUnitCost : uCost,
               timestamp: new Date().toISOString(),
             }]),
             status: 'Available',
@@ -280,17 +289,16 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
       qty,
       receivedQty: qty,
       unitCost: uCost,
+      effectiveUnitCost,
       sellingPrice: sPrice,
       wholesalePrice: wPrice > 0 ? wPrice : (prod?.wholesale_price || 0),
       totalCost: qty * uCost,
+      netCost: qty * effectiveUnitCost,
       imeis: Array.isArray(imeis) ? imeis : [],
     });
   }
 
-  const subTotal = processedLineItems.reduce((sum, item) => sum + item.totalCost, 0);
-  const discount = Number(data.discount || 0);
-  const tax = Number(data.tax || 0);
-  const netTotal = Math.max(0, subTotal - discount + tax);
+  const subTotal = rawSubTotal;
 
   // Support split payments: paymentBreakdown = { cash: 10000, bkash: 5000, bank: 5000 }
   const pb = data.paymentBreakdown || {};
@@ -501,7 +509,7 @@ export const returnToSupplier = async (id, returnPayload, reason = '', returnedB
   for (const item of itemsToReturn) {
     const pId = item.productId || item.productId?._id || item.productId?.id;
     const qty = Number(item.qty || 1);
-    const uCost = Number(item.unitCost || 0);
+    const uCost = Number(item.effectiveUnitCost || item.unitCost || 0);
     const refund = Number(item.refundAmount !== undefined ? item.refundAmount : (uCost * qty) || 0);
 
     totalRefund += refund;
