@@ -24,6 +24,7 @@ export async function up(knex) {
       table.decimal('paid_amount', 14, 2).defaultTo(0);
       table.decimal('due_amount', 14, 2).defaultTo(0);
       table.string('payment_method', 50).defaultTo('CREDIT');
+      table.json('payment_breakdown').nullable();
       table.dateTime('expected_delivery_date').nullable();
       table.dateTime('received_date').nullable();
       table.text('notes').nullable();

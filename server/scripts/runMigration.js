@@ -26,6 +26,7 @@ import * as addBranchIdToJournalEntries from '../migrations/20260816000001_add_b
 import * as alterProductsBrandDefault from '../migrations/20260816000002_alter_products_brand_default.js';
 import * as addReceiptsToExpenses from '../migrations/20260824000001_add_receipts_to_expenses.js';
 import * as createRecurringExpensesTable from '../migrations/20260824000002_create_recurring_expenses_table.js';
+import * as addPaymentBreakdownToPurchaseOrders from '../migrations/20260826000001_add_payment_breakdown_to_purchase_orders.js';
 
 async function ensureDatabase() {
   try {
@@ -98,8 +99,10 @@ export async function runAutoMigrations({ verbose = true } = {}) {
   await addReceiptsToExpenses.up(db);
   log('🔄 Running migration 24: create recurring_expenses table...');
   await createRecurringExpensesTable.up(db);
+  log('🔄 Running migration 25: add payment_breakdown column to purchase_orders...');
+  await addPaymentBreakdownToPurchaseOrders.up(db);
 
-  if (verbose) console.log('✅ All 24 migrations completed successfully!');
+  if (verbose) console.log('✅ All 25 migrations completed successfully!');
   return true;
 }
 

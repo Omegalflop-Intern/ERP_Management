@@ -471,6 +471,9 @@ export const returnToSupplier = async (id, returnPayload, reason = '', returnedB
   if (!order) throw ApiError.notFound('Purchase order not found');
 
   let itemsToReturn = [];
+  let settlementType = 'WALLET_REFUND';
+  let refundMethod = 'CASH';
+
   if (Array.isArray(returnPayload)) {
     if (typeof returnPayload[0] === 'string') {
       itemsToReturn = returnPayload.map((imei) => ({ imeiOrSerial: imei, qty: 1, reason }));
@@ -479,8 +482,12 @@ export const returnToSupplier = async (id, returnPayload, reason = '', returnedB
     }
   } else if (returnPayload && Array.isArray(returnPayload.items)) {
     itemsToReturn = returnPayload.items;
+    settlementType = returnPayload.settlementType || (Number(order.dueAmount || 0) > 0 ? 'ADJUST_DUE' : 'WALLET_REFUND');
+    refundMethod = returnPayload.refundMethod || 'CASH';
   } else if (returnPayload && Array.isArray(returnPayload.imeiOrSerials)) {
     itemsToReturn = returnPayload.imeiOrSerials.map((imei) => ({ imeiOrSerial: imei, qty: 1, reason: returnPayload.reason || reason }));
+    settlementType = returnPayload.settlementType || 'WALLET_REFUND';
+    refundMethod = returnPayload.refundMethod || 'CASH';
   }
 
   if (itemsToReturn.length === 0) {
@@ -534,6 +541,8 @@ export const returnToSupplier = async (id, returnPayload, reason = '', returnedB
       imeiOrSerial: item.imeiOrSerial || null,
       qty,
       refundAmount: refund,
+      settlementType,
+      refundMethod: settlementType === 'WALLET_REFUND' ? refundMethod : undefined,
       reason: item.reason || reason || 'Defective / Return to Supplier',
       notes: item.notes || '',
       returnedAt: new Date().toISOString(),
@@ -548,11 +557,17 @@ export const returnToSupplier = async (id, returnPayload, reason = '', returnedB
   const newReturnedCount = Number(order.returnedCount || 0) + totalReturnedQty;
   const newReturnedAmount = Number(order.returnedAmount || 0) + totalRefund;
 
-  // Recalculate PO financials: refund reduces due amount (or increases paid effectively)
   const currentPaid = Number(order.paidAmount || 0);
   const currentDue = Number(order.dueAmount || 0);
-  const newPoDue = Math.max(0, currentDue - totalRefund);
-  const newPoPaid = currentPaid + (totalRefund > currentDue ? currentDue : totalRefund);
+
+  let newPoDue = currentDue;
+  let newPoPaid = currentPaid;
+
+  if (settlementType === 'ADJUST_DUE') {
+    newPoDue = Math.max(0, currentDue - totalRefund);
+  } else if (settlementType === 'WALLET_REFUND') {
+    newPoPaid = Math.max(0, currentPaid - totalRefund);
+  }
 
   const poUpdate = db('purchase_orders').where({ id });
   if (tenantId) poUpdate.andWhere('tenant_id', tenantId);
@@ -565,13 +580,13 @@ export const returnToSupplier = async (id, returnPayload, reason = '', returnedB
     returned_amount: newReturnedAmount,
     returned_date: new Date(),
     due_amount: newPoDue,
-    paid_amount: Math.min(Number(order.netTotal || 0), newPoPaid),
-    status: newPoDue === 0 ? 'RETURNED' : order.status,
+    paid_amount: newPoPaid,
+    status: newPoDue === 0 && order.status === 'RECEIVED' ? 'RECEIVED' : order.status,
   });
 
-  // Adjust supplier due balance
+  // Adjust supplier due balance if settlementType is ADJUST_DUE
   const supplierId = order.supplierId?.id || order.supplierId;
-  if (supplierId) {
+  if (supplierId && settlementType === 'ADJUST_DUE' && totalRefund > 0) {
     const supQ = db('suppliers').where({ id: supplierId, is_deleted: false });
     if (tenantId) supQ.where('tenant_id', tenantId);
     const supplier = await supQ.first();
@@ -584,12 +599,10 @@ export const returnToSupplier = async (id, returnPayload, reason = '', returnedB
     }
   }
 
-  // Create journal entry for supplier return
-  // If PO was already paid → refund goes back to cash/bank (payment method)
-  // If PO still has due → reduces Accounts Payable
-  if (totalRefund > 0) {
+  // Create automated accounting journal entry for supplier return
+  if (totalRefund > 0 && settlementType !== 'EXCHANGE') {
     try {
-      const { createJournalEntry, seedDefaultAccounts, PAYMENT_METHOD_TO_ACCOUNT_CODE } = await import('../accounting/accounting.service.js');
+      const { createJournalEntry, seedDefaultAccounts } = await import('../accounting/accounting.service.js');
       await seedDefaultAccounts(tenantId);
       const acctsQuery = db('accounts').where({ is_deleted: false });
       if (tenantId) acctsQuery.andWhere('tenant_id', tenantId);
@@ -597,48 +610,43 @@ export const returnToSupplier = async (id, returnPayload, reason = '', returnedB
       const acctMap = {};
       for (const a of accts) acctMap[a.code] = a;
 
-      const currentDue = Number(order.dueAmount || 0);
       const lines = [];
+      const mStr = String(refundMethod || 'CASH').toLowerCase();
 
-      if (currentDue <= 0) {
-        // PO was fully paid — refund goes back to payment method account
-        let pb = {};
-        try { pb = typeof order.paymentBreakdown === 'object' ? order.paymentBreakdown : JSON.parse(order.paymentBreakdown || '{}'); } catch { pb = {}; }
-
-        const cash = Number(pb.cash || 0);
-        const bkash = Number(pb.bkash || 0);
-        const nagad = Number(pb.nagad || 0);
-        const rocket = Number(pb.rocket || 0);
-        const bank = Number(pb.bank || 0);
-        const totalPaid = cash + bkash + nagad + rocket + bank;
-
-        if (totalPaid > 0) {
-          // Split refund proportionally across payment methods
-          const scale = totalRefund / totalPaid;
-          if (cash > 0 && acctMap['1000']) lines.push({ accountId: acctMap['1000'].id, code: '1000', accountName: 'Cash', debit: Math.min(cash, totalRefund) * scale, credit: 0 });
-          if (bank > 0 && acctMap['1010']) lines.push({ accountId: acctMap['1010'].id, code: '1010', accountName: 'Bank Account', debit: bank * scale, credit: 0 });
-          if (bkash > 0 && acctMap['1011']) lines.push({ accountId: acctMap['1011'].id, code: '1011', accountName: 'bKash Account', debit: bkash * scale, credit: 0 });
-          if (nagad > 0 && acctMap['1012']) lines.push({ accountId: acctMap['1012'].id, code: '1012', accountName: 'Nagad Account', debit: nagad * scale, credit: 0 });
-          if (rocket > 0 && acctMap['1013']) lines.push({ accountId: acctMap['1013'].id, code: '1013', accountName: 'Rocket Account', debit: rocket * scale, credit: 0 });
-        } else {
-          // No breakdown — refund to cash by default
-          if (acctMap['1000']) lines.push({ accountId: acctMap['1000'].id, code: '1000', accountName: 'Cash', debit: totalRefund, credit: 0 });
+      if (settlementType === 'WALLET_REFUND') {
+        // Debit chosen wallet account (Cash, Bank, bKash, Nagad, Rocket) -> increases shop funds
+        let walletAcct = acctMap['1000'];
+        if (mStr.includes('bank') && acctMap['1010']) walletAcct = acctMap['1010'];
+        else if (mStr.includes('bkash') && acctMap['1011']) walletAcct = acctMap['1011'];
+        else if (mStr.includes('nagad') && acctMap['1012']) walletAcct = acctMap['1012'];
+        else if (mStr.includes('rocket') && acctMap['1013']) walletAcct = acctMap['1013'];
+        else {
+          const custom = accts.find((a) => a.name.toLowerCase() === mStr || a.code === refundMethod);
+          if (custom) walletAcct = custom;
         }
-      } else {
-        // PO still has due — reduce Accounts Payable
-        if (acctMap['2000']) lines.push({ accountId: acctMap['2000'].id, code: '2000', accountName: 'Accounts Payable', debit: totalRefund, credit: 0 });
+
+        if (walletAcct) {
+          lines.push({ accountId: walletAcct.id, code: walletAcct.code, accountName: walletAcct.name, debit: totalRefund, credit: 0 });
+        }
+      } else if (settlementType === 'ADJUST_DUE') {
+        // Debit Accounts Payable (2000) -> reduces debt to supplier
+        if (acctMap['2000']) {
+          lines.push({ accountId: acctMap['2000'].id, code: '2000', accountName: 'Accounts Payable', debit: totalRefund, credit: 0 });
+        }
       }
 
-      // Credit Inventory in all cases
-      if (acctMap['1030']) lines.push({ accountId: acctMap['1030'].id, code: '1030', accountName: 'Inventory', debit: 0, credit: totalRefund });
+      // Credit Inventory (1030) in all financial returns
+      if (acctMap['1030']) {
+        lines.push({ accountId: acctMap['1030'].id, code: '1030', accountName: 'Inventory', debit: 0, credit: totalRefund });
+      }
 
       if (lines.length >= 2) {
         await createJournalEntry({
           tenantId,
           branchId,
           date: new Date(),
-          description: `Supplier Return PO #${order.poNumber || ''} (${totalReturnedQty} items, ৳${totalRefund.toLocaleString()})`,
-          reference: `PO-RETURN-${id}`,
+          description: `Supplier Return PO #${order.poNumber || ''} (${totalReturnedQty} items, ৳${totalRefund.toLocaleString()} via ${settlementType === 'WALLET_REFUND' ? refundMethod : 'Due Adjustment'})`,
+          reference: `PO-RETURN-${id}-${Date.now().toString(36)}`,
           lines,
           status: 'POSTED',
         });

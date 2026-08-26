@@ -717,9 +717,35 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
           phone: newSupplierPhone || 'N/A',
         });
         finalSupplierId = supRes.data?.data?._id || supRes.data?.data?.id;
-      } catch (_err) {
-        toast.error('Failed to create new supplier');
-        return;
+      } catch (err) {
+        if (err.response?.status === 409 || err.response?.data?.message?.includes('already exists')) {
+          try {
+            const existingListRes = await api.get('/suppliers', {
+              params: { search: newSupplierPhone || newSupplierName, limit: 10 },
+            });
+            const list =
+              existingListRes.data?.data?.suppliers ||
+              existingListRes.data?.data ||
+              [];
+            const matched = list.find(
+              (s) =>
+                (newSupplierPhone && s.phone === newSupplierPhone) ||
+                (s.name && s.name.toLowerCase() === newSupplierName.toLowerCase())
+            ) || list[0];
+            if (matched) {
+              finalSupplierId = matched._id || matched.id;
+            } else {
+              toast.error('Supplier with this phone already exists. Please select it from the dropdown.');
+              return;
+            }
+          } catch {
+            toast.error('Supplier with this phone already exists.');
+            return;
+          }
+        } else {
+          toast.error(err.response?.data?.message || 'Failed to create new supplier');
+          return;
+        }
       }
     }
 
@@ -1446,6 +1472,64 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
   const [returnSelection, setReturnSelection] = useState({});
   const [generalReason, setGeneralReason] = useState('Defective item / Supplier Return');
 
+  const discountRatio = useMemo(() => {
+    const sub = Number(po.subTotal || po.sub_total || 0);
+    const net = Number(po.netTotal || po.net_total || 0);
+    if (sub > 0 && net > 0) return net / sub;
+    return 1;
+  }, [po]);
+
+  const [settlementType, setSettlementType] = useState(
+    Number(po.dueAmount || po.due_amount || 0) > 0 ? 'ADJUST_DUE' : 'WALLET_REFUND'
+  );
+  const [refundMethod, setRefundMethod] = useState('CASH');
+
+  const { data: activeAccountsRes } = useQuery({
+    queryKey: ['pos-active-accounts'],
+    queryFn: async () => {
+      try {
+        const { data } = await api.get('/accounting/accounts');
+        return data?.data || [];
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const availableRefundWallets = useMemo(() => {
+    const activeList = (activeAccountsRes || []).filter((a) => a.isActive !== false);
+    if (!activeList.length) {
+      return [
+        { value: 'CASH', label: 'Cash Account (1000)' },
+        { value: 'BANK', label: 'Bank Account (1010)' },
+        { value: 'BKASH', label: 'bKash Account (1011)' },
+        { value: 'NAGAD', label: 'Nagad Account (1012)' },
+        { value: 'ROCKET', label: 'Rocket Account (1013)' },
+      ];
+    }
+    const methods = [];
+    const names = activeList.map((a) => (a.name || '').toLowerCase());
+    const codes = activeList.map((a) => String(a.code || ''));
+
+    if (names.some((n) => n.includes('cash')) || codes.includes('1000')) {
+      methods.push({ value: 'CASH', label: 'Cash on Hand (1000)' });
+    }
+    if (names.some((n) => n.includes('bank') || n.includes('card')) || codes.includes('1010')) {
+      methods.push({ value: 'BANK', label: 'Bank Account (1010)' });
+    }
+    if (names.some((n) => n.includes('bkash')) || codes.includes('1011')) {
+      methods.push({ value: 'BKASH', label: 'bKash Wallet (1011)' });
+    }
+    if (names.some((n) => n.includes('nagad')) || codes.includes('1012')) {
+      methods.push({ value: 'NAGAD', label: 'Nagad Wallet (1012)' });
+    }
+    if (names.some((n) => n.includes('rocket')) || codes.includes('1013')) {
+      methods.push({ value: 'ROCKET', label: 'Rocket Wallet (1013)' });
+    }
+    return methods.length > 0 ? methods : [{ value: 'CASH', label: 'Cash on Hand' }];
+  }, [activeAccountsRes]);
+
   const mutation = useMutation({
     mutationFn: async (payload) => api.post(`/purchase-orders/${po._id || po.id}/return`, payload),
     onSuccess: (res) => {
@@ -1464,15 +1548,19 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
       delete next[key];
       setReturnSelection(next);
     } else {
+      const rawCost = Number(item.unitCost || 0);
+      const effectiveUnitCost = Math.round(rawCost * discountRatio);
+
       setReturnSelection({
         ...returnSelection,
         [key]: {
           productId: item.productId?._id || item.productId?.id || item.productId,
           description: item.description || item.name,
-          unitCost: Number(item.unitCost || 0),
+          unitCost: effectiveUnitCost,
+          originalUnitCost: rawCost,
           maxQty: Number(item.qty || 1),
           qty: 1,
-          refundAmount: Number(item.unitCost || 0),
+          refundAmount: effectiveUnitCost,
           reason: generalReason,
           notes: '',
         },
@@ -1493,7 +1581,7 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
     });
   };
 
-  const updateItemQty = (key, qty, unitCost) => {
+  const updateItemQty = (key, qty, effectiveCost) => {
     setReturnSelection((prev) => {
       if (!prev[key]) return prev;
       return {
@@ -1501,7 +1589,7 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
         [key]: {
           ...prev[key],
           qty,
-          refundAmount: qty * (unitCost || 0),
+          refundAmount: Math.round(qty * (effectiveCost || 0)),
         },
       };
     });
@@ -1525,7 +1613,12 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
       toast.error('Please select at least 1 item to return');
       return;
     }
-    mutation.mutate({ items, reason: generalReason });
+    mutation.mutate({
+      items,
+      reason: generalReason,
+      settlementType,
+      refundMethod,
+    });
   };
 
   return (
@@ -1543,30 +1636,77 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
-          <div>
-            <Label className="text-xs font-bold text-slate-800 dark:text-slate-200">
-              General Return Reason
-            </Label>
-            <Input
-              value={generalReason}
-              onChange={(e) => setGeneralReason(e.target.value)}
-              placeholder="e.g. Factory fault, damaged parcel, wrong batch"
-              className="h-9 text-xs mt-1 rounded-xl bg-slate-50 dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 font-medium"
-            />
+          {/* Reason & Settlement Options Section */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-50/80 dark:bg-slate-900/40 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
+            <div>
+              <Label className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                General Return Reason
+              </Label>
+              <Input
+                value={generalReason}
+                onChange={(e) => setGeneralReason(e.target.value)}
+                placeholder="e.g. Factory fault, damaged parcel, wrong batch"
+                className="h-9 text-xs mt-1 rounded-xl bg-white dark:bg-[#1e293b] border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 font-medium"
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                Settlement & Refund Flow *
+              </Label>
+              <select
+                value={settlementType}
+                onChange={(e) => setSettlementType(e.target.value)}
+                className="w-full h-9 px-3 mt-1 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 font-semibold focus:outline-none"
+              >
+                <option value="WALLET_REFUND">💵 Receive Cash / Bank / MFS Refund to Wallet</option>
+                <option value="ADJUST_DUE">📑 Deduct from Supplier Due Balance</option>
+                <option value="EXCHANGE">🔄 Item Replacement / Exchange (No Cash Refund)</option>
+              </select>
+            </div>
+
+            {settlementType === 'WALLET_REFUND' && (
+              <div className="sm:col-span-2 pt-2 border-t border-slate-200/60 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                  <DollarSign className="w-3.5 h-3.5" /> Deposit Refund Money Into:
+                </span>
+                <select
+                  value={refundMethod}
+                  onChange={(e) => setRefundMethod(e.target.value)}
+                  className="px-3 py-1.5 bg-white dark:bg-[#1e293b] border border-emerald-300 dark:border-emerald-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 font-bold focus:outline-none shadow-xs"
+                >
+                  {availableRefundWallets.map((w) => (
+                    <option key={w.value} value={w.value}>
+                      {w.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs font-bold uppercase text-slate-700 dark:text-slate-300 tracking-wider">
-              Select Line Items to Return
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-bold uppercase text-slate-700 dark:text-slate-300 tracking-wider">
+                Select Line Items to Return
+              </Label>
+              {discountRatio < 1 && (
+                <span className="text-[10px] text-blue-600 dark:text-blue-400 font-bold bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">
+                  ⚡ Discount Proportionately Applied to Unit Cost
+                </span>
+              )}
+            </div>
+
             {lineItems.map((item, idx) => {
               const key = `item-${idx}`;
               const isSelected = !!returnSelection[key];
               const purchasedQty = Number(item.qty || 1);
               const alreadyReturned = Number(item.returnedQty || 0);
               const maxQty = Math.max(0, purchasedQty - alreadyReturned);
+              const rawCost = Number(item.unitCost || 0);
+              const effectiveCost = Math.round(rawCost * discountRatio);
               const selectedQty = Number(returnSelection[key]?.qty || 0);
-              const refundTotal = selectedQty * Number(item.unitCost || 0);
+              const refundTotal = Number(returnSelection[key]?.refundAmount || (selectedQty * effectiveCost));
 
               return (
                 <div
@@ -1590,8 +1730,12 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
                           {item.description || item.name}
                         </div>
                         <div className="text-[11px] text-slate-600 dark:text-slate-400 font-mono font-medium">
-                          Purchased: {purchasedQty} pcs @ ৳
-                          {Number(item.unitCost || 0).toLocaleString()} each
+                          Purchased: {purchasedQty} pcs @ ৳{rawCost.toLocaleString()}
+                          {discountRatio < 1 && (
+                            <span className="text-emerald-600 dark:text-emerald-400 font-bold ml-1">
+                              (Net Cost: ৳{effectiveCost.toLocaleString()})
+                            </span>
+                          )}
                         </div>
                         {!isSelected && maxQty > 0 && (
                           <div className="text-[10px] text-rose-500 dark:text-rose-400 font-medium mt-0.5">
@@ -1644,12 +1788,12 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
                               }
                               const num = Number(val);
                               const q = Math.min(maxQty, Math.max(1, Number.isNaN(num) ? 1 : num));
-                              updateItemQty(key, q, item.unitCost);
+                              updateItemQty(key, q, effectiveCost);
                             }}
                             onBlur={() => {
                               const current = Number(returnSelection[key]?.qty);
                               if (!current || Number.isNaN(current) || current < 1) {
-                                updateItemQty(key, 1, item.unitCost);
+                                updateItemQty(key, 1, effectiveCost);
                               }
                             }}
                             className="h-8 text-xs font-mono font-bold rounded-xl bg-white dark:bg-[#1e293b] text-slate-900 dark:text-slate-100 border-slate-300 dark:border-slate-700"
@@ -1691,7 +1835,7 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
 
           <div className="border-t border-slate-100 dark:border-slate-800 pt-3 flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
-              Total Credit Refund:{' '}
+              Total Refund Value:{' '}
               <span className="text-rose-600 dark:text-rose-400 font-mono text-base font-extrabold ml-1">
                 ৳{totalRefund.toLocaleString()}
               </span>
