@@ -379,9 +379,9 @@ function GlobalSearch() {
           setIsOpen(true);
           inputRef.current?.focus();
         }}
-        className={`relative flex items-center w-full px-3.5 py-2 rounded-xl border text-xs cursor-text transition-all bg-white/80 dark:bg-[#0d1117]/80 backdrop-blur-md border-slate-300/80 dark:border-slate-700/80 hover:border-slate-400 dark:hover:border-slate-600 shadow-xs ${
+        className={`relative flex items-center w-full px-3.5 py-2 rounded-xl border text-xs cursor-text transition-all bg-white dark:bg-[#0f172a] border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 shadow-xs ${
           isOpen
-            ? 'ring-2 ring-[#2563EB]/30 border-[#2563EB] dark:border-blue-500 bg-white dark:bg-[#0d1117]'
+            ? 'ring-2 ring-[#2563EB]/30 border-[#2563EB] dark:border-blue-500 bg-white dark:bg-[#0f172a]'
             : ''
         }`}
       >
@@ -418,7 +418,7 @@ function GlobalSearch() {
 
       {/* Global Search Results Dropdown Overlay */}
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-[#0d1117] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-[130] max-h-[80vh] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60">
+        <div className="absolute left-0 right-0 sm:-left-12 sm:-right-12 md:-left-20 md:-right-20 top-full mt-2 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-[200] max-h-[75vh] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/80">
           {/* Section: Pages / Quick Navigation */}
           {filteredPages.length > 0 && (
             <div className="p-2">
@@ -752,7 +752,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
   };
 
   return (
-    <header className="h-14 glass-primary rounded-[20px] m-2 px-3 md:px-6 flex items-center justify-between sticky top-2 z-30 shadow-sm">
+    <header className="h-14 glass-primary rounded-[20px] m-2 px-3 md:px-6 flex items-center justify-between sticky top-2 z-[100] shadow-sm">
       {/* Left: menu + brand */}
       <div className="flex items-center gap-2">
         <button

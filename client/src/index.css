@@ -591,542 +591,503 @@ input[type="checkbox"]:focus {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 6: DESIGN SYSTEM MODES (NEUMORPHISM, GLASS, LIQUIDGLASS)
+   SECTION 6: DESIGN SYSTEM MODES (NEUMORPHISM, GLASS, LIQUIDGLASS, AURORA, FLAT)
    ═══════════════════════════════════════════════════════════════ */
 
-/* --- Neumorphism Mode --- */
-[data-mode="neumorphism"] .neu-card {
-  background: #eaeff8 !important;
-  border: none !important;
+/* --- 1. NEUMORPHISM MODE (LIGHT) --- */
+[data-mode="neumorphism"] .neu-card,
+[data-mode="neumorphism"][data-theme="light"] .neu-card {
+  background: #eef2f8 !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
   box-shadow:
-    6px 6px 12px #cdd2de,
-    -6px -6px 12px #ffffff !important;
-  border-radius: 16px !important;
+    4px 4px 10px rgba(163, 177, 198, 0.45),
+    -4px -4px 10px rgba(255, 255, 255, 0.85) !important;
+  border-radius: 14px !important;
 }
 
-[data-mode="neumorphism"] .neu-card-sm {
-  background: #eaeff8 !important;
-  border: none !important;
+[data-mode="neumorphism"] .neu-card-sm,
+[data-mode="neumorphism"][data-theme="light"] .neu-card-sm {
+  background: #eef2f8 !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
   box-shadow:
-    3px 3px 6px #cdd2de,
-    -3px -3px 6px #ffffff !important;
-  border-radius: 12px !important;
-}
-
-[data-mode="neumorphism"] .neu-pressed {
-  background: #eaeff8 !important;
-  border: none !important;
-  box-shadow:
-    inset 3px 3px 6px #cdd2de,
-    inset -3px -3px 6px #ffffff !important;
-  border-radius: 12px !important;
-}
-
-[data-mode="neumorphism"] .neu-btn {
-  background: #eaeff8 !important;
-  border: none !important;
-  box-shadow:
-    3px 3px 6px #cdd2de,
-    -3px -3px 6px #ffffff !important;
-  border-radius: 12px !important;
-  transition: all 0.15s ease !important;
-}
-
-[data-mode="neumorphism"] .neu-btn:hover {
-  box-shadow:
-    1px 1px 3px #cdd2de,
-    -1px -1px 3px #ffffff !important;
-}
-
-[data-mode="neumorphism"] .neu-btn:active,
-[data-mode="neumorphism"] .neu-btn-active {
-  box-shadow:
-    inset 2px 2px 5px #cdd2de,
-    inset -2px -2px 5px #ffffff !important;
-}
-
-[data-mode="neumorphism"] .neu-flat {
-  background: #eaeff8 !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-[data-mode="neumorphism"] .neu-input {
-  background: #eaeff8 !important;
-  border: none !important;
-  box-shadow:
-    inset 2px 2px 5px #cdd2de,
-    inset -2px -2px 5px #ffffff !important;
-  border-radius: 12px !important;
-  color: #1a202c !important;
-  outline: none !important;
-}
-
-[data-mode="neumorphism"] .neu-input:focus {
-  box-shadow:
-    inset 3px 3px 7px #cdd2de,
-    inset -3px -3px 7px #ffffff,
-    0 0 0 2px rgba(220, 38, 38, 0.25) !important;
-}
-
-[data-mode="neumorphism"] .neu-icon {
-  background: #eaeff8 !important;
-  box-shadow:
-    2px 2px 5px #cdd2de,
-    -2px -2px 5px #ffffff !important;
+    2px 2px 6px rgba(163, 177, 198, 0.4),
+    -2px -2px 6px rgba(255, 255, 255, 0.8) !important;
   border-radius: 10px !important;
 }
 
-/* --- Glassmorphism / Glass Mode --- */
+[data-mode="neumorphism"] .neu-pressed,
+[data-mode="neumorphism"][data-theme="light"] .neu-pressed {
+  background: #eef2f8 !important;
+  border: none !important;
+  box-shadow:
+    inset 2px 2px 5px rgba(163, 177, 198, 0.5),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.8) !important;
+  border-radius: 10px !important;
+}
+
+[data-mode="neumorphism"] .neu-btn,
+[data-mode="neumorphism"][data-theme="light"] .neu-btn {
+  background: #eef2f8 !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  box-shadow:
+    2px 2px 6px rgba(163, 177, 198, 0.4),
+    -2px -2px 6px rgba(255, 255, 255, 0.8) !important;
+  border-radius: 10px !important;
+  color: #1e293b !important;
+  transition: all 0.15s ease !important;
+}
+
+[data-mode="neumorphism"] .neu-btn:hover,
+[data-mode="neumorphism"][data-theme="light"] .neu-btn:hover {
+  box-shadow:
+    1px 1px 3px rgba(163, 177, 198, 0.45),
+    -1px -1px 3px rgba(255, 255, 255, 0.9) !important;
+  transform: translateY(-0.5px);
+}
+
+[data-mode="neumorphism"] .neu-btn:active,
+[data-mode="neumorphism"] .neu-btn-active,
+[data-mode="neumorphism"][data-theme="light"] .neu-btn-active {
+  box-shadow:
+    inset 2px 2px 4px rgba(163, 177, 198, 0.5),
+    inset -1px -1px 3px rgba(255, 255, 255, 0.8) !important;
+}
+
+[data-mode="neumorphism"] .neu-flat,
+[data-mode="neumorphism"][data-theme="light"] .neu-flat {
+  background: #eef2f8 !important;
+  border: 1px solid rgba(203, 213, 225, 0.6) !important;
+  box-shadow: none !important;
+  color: #1e293b !important;
+}
+
+[data-mode="neumorphism"] .neu-input,
+[data-mode="neumorphism"][data-theme="light"] .neu-input,
+[data-mode="neumorphism"]:not([data-theme="dark"]):not(.dark) input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+[data-mode="neumorphism"]:not([data-theme="dark"]):not(.dark) select,
+[data-mode="neumorphism"]:not([data-theme="dark"]):not(.dark) textarea {
+  background: #eef2f8 !important;
+  border: 1px solid rgba(203, 213, 225, 0.7) !important;
+  box-shadow:
+    inset 2px 2px 4px rgba(163, 177, 198, 0.4),
+    inset -1px -1px 3px rgba(255, 255, 255, 0.8) !important;
+  border-radius: 10px !important;
+  color: #0f172a !important;
+  outline: none !important;
+}
+
+[data-mode="neumorphism"] .neu-input:focus,
+[data-mode="neumorphism"]:not([data-theme="dark"]):not(.dark) input:focus {
+  border-color: #2563eb !important;
+  box-shadow:
+    inset 2px 2px 4px rgba(163, 177, 198, 0.45),
+    0 0 0 2px rgba(37, 99, 235, 0.2) !important;
+}
+
+[data-mode="neumorphism"] .neu-icon,
+[data-mode="neumorphism"][data-theme="light"] .neu-icon {
+  background: #eef2f8 !important;
+  box-shadow:
+    2px 2px 5px rgba(163, 177, 198, 0.4),
+    -2px -2px 5px rgba(255, 255, 255, 0.8) !important;
+  border-radius: 10px !important;
+  color: #1e293b !important;
+}
+
+/* --- NEUMORPHISM DARK THEME --- */
+[data-mode="neumorphism"][data-theme="dark"] .neu-card,
+.dark[data-mode="neumorphism"] .neu-card,
+[data-mode="neumorphism"] .dark .neu-card {
+  background: #111827 !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  box-shadow:
+    4px 4px 12px rgba(0, 0, 0, 0.4),
+    -2px -2px 8px rgba(30, 41, 59, 0.3) !important;
+  border-radius: 14px !important;
+}
+
+[data-mode="neumorphism"][data-theme="dark"] .neu-card-sm,
+.dark[data-mode="neumorphism"] .neu-card-sm,
+[data-mode="neumorphism"] .dark .neu-card-sm {
+  background: #111827 !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  box-shadow:
+    2px 2px 8px rgba(0, 0, 0, 0.35),
+    -1px -1px 4px rgba(30, 41, 59, 0.25) !important;
+  border-radius: 10px !important;
+}
+
+[data-mode="neumorphism"][data-theme="dark"] .neu-btn,
+.dark[data-mode="neumorphism"] .neu-btn,
+[data-mode="neumorphism"] .dark .neu-btn {
+  background: #1e293b !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+  box-shadow:
+    2px 2px 6px rgba(0, 0, 0, 0.35),
+    -1px -1px 4px rgba(51, 65, 85, 0.25) !important;
+  border-radius: 10px !important;
+  color: #f1f5f9 !important;
+  transition: all 0.15s ease !important;
+}
+
+[data-mode="neumorphism"][data-theme="dark"] .neu-btn:hover,
+.dark[data-mode="neumorphism"] .neu-btn:hover {
+  box-shadow:
+    1px 1px 3px rgba(0, 0, 0, 0.4),
+    -1px -1px 3px rgba(51, 65, 85, 0.3) !important;
+  transform: translateY(-0.5px);
+}
+
+[data-mode="neumorphism"][data-theme="dark"] .neu-btn:active,
+.dark[data-mode="neumorphism"] .neu-btn:active,
+[data-mode="neumorphism"][data-theme="dark"] .neu-btn-active,
+.dark[data-mode="neumorphism"] .neu-btn-active {
+  box-shadow:
+    inset 2px 2px 4px rgba(0, 0, 0, 0.5),
+    inset -1px -1px 2px rgba(255, 255, 255, 0.04) !important;
+}
+
+[data-mode="neumorphism"][data-theme="dark"] .neu-input,
+.dark[data-mode="neumorphism"] .neu-input,
+[data-mode="neumorphism"] .dark .neu-input,
+.dark[data-mode="neumorphism"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+[data-mode="neumorphism"][data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+.dark[data-mode="neumorphism"] select,
+[data-mode="neumorphism"][data-theme="dark"] select,
+.dark[data-mode="neumorphism"] textarea,
+[data-mode="neumorphism"][data-theme="dark"] textarea {
+  background: #0f172a !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow:
+    inset 2px 2px 4px rgba(0, 0, 0, 0.45),
+    inset -1px -1px 2px rgba(255, 255, 255, 0.04) !important;
+  border-radius: 10px !important;
+  color: #f8fafc !important;
+  outline: none !important;
+}
+
+[data-mode="neumorphism"][data-theme="dark"] .neu-input:focus,
+.dark[data-mode="neumorphism"] input:focus {
+  border-color: #3b82f6 !important;
+  box-shadow:
+    inset 2px 2px 4px rgba(0, 0, 0, 0.5),
+    0 0 0 2px rgba(59, 130, 246, 0.25) !important;
+}
+
+[data-mode="neumorphism"][data-theme="dark"] .neu-icon,
+.dark[data-mode="neumorphism"] .neu-icon {
+  background: #1e293b !important;
+  box-shadow:
+    2px 2px 5px rgba(0, 0, 0, 0.35),
+    -1px -1px 3px rgba(51, 65, 85, 0.25) !important;
+  border-radius: 10px !important;
+  color: #f1f5f9 !important;
+}
+
+[data-mode="neumorphism"][data-theme="dark"] .neu-flat,
+.dark[data-mode="neumorphism"] .neu-flat {
+  background: #111827 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: none !important;
+  color: #f1f5f9 !important;
+}
+
+/* --- 2. GLASS / GLASSMORPHISM PRO MODE --- */
+[data-mode="glassmorphismpro"] .neu-card,
+[data-mode="glassmorphism"] .neu-card,
 [data-mode="glass"] .neu-card {
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.65),
-    rgba(255, 255, 255, 0.3)
+    rgba(255, 255, 255, 0.78),
+    rgba(248, 250, 252, 0.5)
   ) !important;
-  backdrop-filter: blur(14px) saturate(180%) brightness(1.05) !important;
-  -webkit-backdrop-filter: blur(14px) saturate(180%) brightness(1.05) !important;
-  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  backdrop-filter: blur(16px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(160%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.75) !important;
   box-shadow:
-    6px 6px 14px rgba(180, 190, 210, 0.18),
-    -6px -6px 14px rgba(255, 255, 255, 0.7),
-    0 8px 32px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.65) !important;
-  border-radius: 18px !important;
-}
-
-[data-mode="glass"][data-theme="dark"] .neu-card {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.55), rgba(15, 23, 42, 0.4)) !important;
-  backdrop-filter: blur(36px) saturate(185%) brightness(0.9) !important;
-  -webkit-backdrop-filter: blur(36px) saturate(185%) brightness(0.9) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  box-shadow:
-    6px 6px 14px rgba(0, 0, 0, 0.3),
-    -6px -6px 14px rgba(40, 50, 70, 0.15),
-    0 8px 32px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
-  border-radius: 18px !important;
-}
-
-[data-mode="glass"] .neu-btn {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.55),
-    rgba(255, 255, 255, 0.25)
-  ) !important;
-  backdrop-filter: blur(12px) saturate(160%) brightness(1.05) !important;
-  -webkit-backdrop-filter: blur(12px) saturate(160%) brightness(1.05) !important;
-  border: 1px solid rgba(255, 255, 255, 0.45) !important;
-  box-shadow:
-    3px 3px 8px rgba(180, 190, 210, 0.15),
-    -3px -3px 8px rgba(255, 255, 255, 0.6),
-    inset 0 1px 0 rgba(255, 255, 255, 0.55) !important;
+    0 4px 20px -2px rgba(15, 23, 42, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
   border-radius: 14px !important;
+}
+
+[data-mode="glassmorphismpro"][data-theme="dark"] .neu-card,
+.dark[data-mode="glassmorphismpro"] .neu-card,
+[data-mode="glass"][data-theme="dark"] .neu-card,
+.dark[data-mode="glass"] .neu-card {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.65), rgba(15, 23, 42, 0.5)) !important;
+  backdrop-filter: blur(20px) saturate(175%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(175%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  box-shadow:
+    0 8px 24px -4px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  border-radius: 14px !important;
+}
+
+[data-mode="glassmorphismpro"] .neu-btn,
+[data-mode="glass"] .neu-btn {
+  background: rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(203, 213, 225, 0.7) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  border-radius: 10px !important;
   transition: all 0.2s ease !important;
 }
 
-[data-mode="glass"][data-theme="dark"] .neu-btn {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.5), rgba(15, 23, 42, 0.35)) !important;
-  backdrop-filter: blur(28px) saturate(170%) brightness(0.92) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(170%) brightness(0.92) !important;
-  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+[data-mode="glassmorphismpro"][data-theme="dark"] .neu-btn,
+.dark[data-mode="glassmorphismpro"] .neu-btn,
+[data-mode="glass"][data-theme="dark"] .neu-btn,
+.dark[data-mode="glass"] .neu-btn {
+  background: rgba(30, 41, 59, 0.7) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25) !important;
+  border-radius: 10px !important;
+  color: #f1f5f9 !important;
+}
+
+[data-mode="glassmorphismpro"] .neu-sidebar,
+[data-mode="glass"] .neu-sidebar {
+  background: rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-right: 1px solid rgba(226, 232, 240, 0.8) !important;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.03) !important;
+}
+
+[data-mode="glassmorphismpro"][data-theme="dark"] .neu-sidebar,
+.dark[data-mode="glassmorphismpro"] .neu-sidebar,
+[data-mode="glass"][data-theme="dark"] .neu-sidebar,
+.dark[data-mode="glass"] .neu-sidebar {
+  background: rgba(15, 23, 42, 0.75) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.07) !important;
+  box-shadow: 2px 0 14px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* --- 3. LIQUID GLASS MODE --- */
+[data-mode="liquidglass"] .glass-primary,
+[data-mode="liquidglass"] .glass-secondary,
+[data-mode="liquidglass"] .liquid-card,
+[data-mode="liquidglass"] .neu-card {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.8),
+    rgba(241, 245, 249, 0.55)
+  ) !important;
+  backdrop-filter: blur(16px) saturate(170%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(170%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.8) !important;
   box-shadow:
-    3px 3px 8px rgba(0, 0, 0, 0.25),
-    -3px -3px 8px rgba(40, 50, 70, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+    0 4px 20px -2px rgba(15, 23, 42, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
   border-radius: 14px !important;
 }
 
-[data-mode="glass"] .neu-sidebar {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.6),
-    rgba(255, 255, 255, 0.3)
-  ) !important;
-  backdrop-filter: blur(14px) saturate(170%) !important;
-  -webkit-backdrop-filter: blur(14px) saturate(170%) !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.4) !important;
-  box-shadow: 3px 0 16px rgba(0, 0, 0, 0.03) !important;
-}
-
-[data-mode="glass"][data-theme="dark"] .neu-sidebar {
-  background: linear-gradient(180deg, rgba(20, 27, 40, 0.6), rgba(10, 15, 25, 0.45)) !important;
-  backdrop-filter: blur(14px) saturate(170%) !important;
-  -webkit-backdrop-filter: blur(14px) saturate(170%) !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
-  box-shadow: 3px 0 16px rgba(0, 0, 0, 0.3) !important;
-}
-
-/* --- Liquid Glass Mode --- */
-[data-mode="liquidglass"] .glass-primary {
+[data-mode="liquidglass"][data-theme="dark"] .glass-primary,
+[data-mode="liquidglass"][data-theme="dark"] .glass-secondary,
+[data-mode="liquidglass"][data-theme="dark"] .liquid-card,
+[data-mode="liquidglass"][data-theme="dark"] .neu-card,
+.dark[data-mode="liquidglass"] .glass-primary,
+.dark[data-mode="liquidglass"] .glass-secondary,
+.dark[data-mode="liquidglass"] .liquid-card,
+.dark[data-mode="liquidglass"] .neu-card {
   background: linear-gradient(
     145deg,
-    rgba(255, 255, 255, 0.72),
-    rgba(255, 255, 255, 0.38)
+    rgba(30, 41, 59, 0.75),
+    rgba(15, 23, 42, 0.6)
   ) !important;
-  backdrop-filter: blur(16px) saturate(180%) brightness(1.02) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(180%) brightness(1.02) !important;
-  border: 1px solid rgba(255, 255, 255, 0.65) !important;
-  box-shadow:
-    0 8px 32px rgba(15, 23, 42, 0.08),
-    0 2px 8px rgba(15, 23, 42, 0.04),
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.9) !important;
-  border-radius: 20px !important;
-}
-
-[data-mode="liquidglass"][data-theme="dark"] .glass-primary {
-  background: linear-gradient(
-    145deg,
-    rgba(255, 255, 255, 0.08),
-    rgba(255, 255, 255, 0.03)
-  ) !important;
-  backdrop-filter: blur(48px) saturate(200%) brightness(0.85) !important;
-  -webkit-backdrop-filter: blur(48px) saturate(200%) brightness(0.85) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.4),
-    0 2px 8px rgba(0, 0, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
-  border-radius: 20px !important;
-}
-
-[data-mode="liquidglass"] .glass-secondary {
-  background: linear-gradient(
-    145deg,
-    rgba(255, 255, 255, 0.65),
-    rgba(255, 255, 255, 0.28)
-  ) !important;
-  backdrop-filter: blur(14px) saturate(175%) brightness(1.02) !important;
-  -webkit-backdrop-filter: blur(14px) saturate(175%) brightness(1.02) !important;
-  border: 1px solid rgba(255, 255, 255, 0.55) !important;
-  box-shadow:
-    0 4px 24px rgba(15, 23, 42, 0.07),
-    0 1px 4px rgba(15, 23, 42, 0.04),
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.85) !important;
-  border-radius: 18px !important;
-}
-
-[data-mode="liquidglass"][data-theme="dark"] .glass-secondary {
-  background: linear-gradient(
-    145deg,
-    rgba(255, 255, 255, 0.07),
-    rgba(255, 255, 255, 0.02)
-  ) !important;
-  backdrop-filter: blur(36px) saturate(190%) brightness(0.87) !important;
-  -webkit-backdrop-filter: blur(36px) saturate(190%) brightness(0.87) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
   border: 1px solid rgba(255, 255, 255, 0.09) !important;
   box-shadow:
-    0 4px 24px rgba(0, 0, 0, 0.38),
-    0 1px 4px rgba(0, 0, 0, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07) !important;
-  border-radius: 18px !important;
+    0 8px 24px -4px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  border-radius: 14px !important;
 }
 
 [data-mode="liquidglass"] .neu-sidebar {
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.82),
-    rgba(255, 255, 255, 0.55)
-  ) !important;
-  backdrop-filter: blur(16px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.55) !important;
-  box-shadow: 4px 0 24px rgba(15, 23, 42, 0.06) !important;
-}
-
-[data-mode="liquidglass"][data-theme="dark"] .neu-sidebar {
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.8), rgba(11, 15, 23, 0.65)) !important;
-  backdrop-filter: blur(60px) saturate(200%) !important;
-  -webkit-backdrop-filter: blur(60px) saturate(200%) !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.07) !important;
-  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4) !important;
-}
-
-[data-mode="liquidglass"] .neu-card {
-  background: linear-gradient(
-    145deg,
-    rgba(255, 255, 255, 0.65),
-    rgba(255, 255, 255, 0.28)
-  ) !important;
-  backdrop-filter: blur(32px) saturate(185%) !important;
-  -webkit-backdrop-filter: blur(32px) saturate(185%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.55) !important;
-  box-shadow:
-    0 4px 20px rgba(15, 23, 42, 0.07),
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.85) !important;
-  border-radius: 18px !important;
-}
-
-[data-mode="liquidglass"][data-theme="dark"] .neu-card {
-  background: linear-gradient(
-    145deg,
-    rgba(255, 255, 255, 0.07),
-    rgba(255, 255, 255, 0.02)
-  ) !important;
-  backdrop-filter: blur(32px) saturate(185%) !important;
-  -webkit-backdrop-filter: blur(32px) saturate(185%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.09) !important;
-  box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07) !important;
-  border-radius: 18px !important;
-}
-
-/* --- LIQUID GLASS BUTTONS (LIGHT & DARK 3D DEPTH) --- */
-[data-mode="liquidglass"] .neu-btn:not([class*="bg-"]):not([class*="text-white"]):not(.btn-primary) {
-  background: linear-gradient(
-    145deg,
     rgba(255, 255, 255, 0.85),
-    rgba(241, 245, 249, 0.65)
+    rgba(248, 250, 252, 0.7)
   ) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-right: 1px solid rgba(226, 232, 240, 0.8) !important;
+  box-shadow: 2px 0 14px rgba(0, 0, 0, 0.03) !important;
+}
+
+[data-mode="liquidglass"][data-theme="dark"] .neu-sidebar,
+.dark[data-mode="liquidglass"] .neu-sidebar {
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.82), rgba(11, 15, 23, 0.7)) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 2px 0 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-mode="liquidglass"] .neu-btn:not([class*="bg-"]):not([class*="text-white"]):not(.btn-primary) {
+  background: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
   border: 1px solid rgba(203, 213, 225, 0.8) !important;
-  box-shadow:
-    0 2px 8px rgba(15, 23, 42, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
-  border-radius: 12px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+  border-radius: 10px !important;
   color: #0f172a !important;
-  transition: all 0.2s ease !important;
+  transition: all 0.15s ease !important;
 }
 
 [data-mode="liquidglass"] .neu-btn:not([class*="bg-"]):not([class*="text-white"]):not(.btn-primary):hover {
-  background: linear-gradient(
-    145deg,
-    rgba(255, 255, 255, 0.95),
-    rgba(241, 245, 249, 0.8)
-  ) !important;
-  border-color: rgba(148, 163, 184, 0.9) !important;
-  box-shadow:
-    0 4px 16px rgba(15, 23, 42, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 1) !important;
-  color: #020617 !important;
-  transform: translateY(-1px) !important;
+  background: #ffffff !important;
+  border-color: #94a3b8 !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06) !important;
+  transform: translateY(-0.5px);
 }
 
-/* Dark Mode Liquid Glass Buttons */
 [data-mode="liquidglass"][data-theme="dark"] .neu-btn:not([class*="bg-"]):not([class*="text-white"]):not(.btn-primary),
-.dark[data-mode="liquidglass"] .neu-btn:not([class*="bg-"]):not([class*="text-white"]):not(.btn-primary),
-[data-mode="liquidglass"] .dark .neu-btn:not([class*="bg-"]):not([class*="text-white"]):not(.btn-primary) {
-  background: linear-gradient(
-    145deg,
-    rgba(30, 41, 59, 0.85),
-    rgba(15, 23, 42, 0.75)
-  ) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
-  box-shadow:
-    0 4px 14px rgba(0, 0, 0, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
-  border-radius: 12px !important;
+.dark[data-mode="liquidglass"] .neu-btn:not([class*="bg-"]):not([class*="text-white"]):not(.btn-primary) {
+  background: rgba(30, 41, 59, 0.75) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.11) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25) !important;
+  border-radius: 10px !important;
   color: #f1f5f9 !important;
-  transition: all 0.2s ease !important;
+  transition: all 0.15s ease !important;
 }
 
 [data-mode="liquidglass"][data-theme="dark"] .neu-btn:not([class*="bg-"]):not([class*="text-white"]):not(.btn-primary):hover,
-.dark[data-mode="liquidglass"] .neu-btn:not([class*="bg-"]):not([class*="text-white"]):not(.btn-primary):hover,
-[data-mode="liquidglass"] .dark .neu-btn:not([class*="bg-"]):not([class*="text-white"]):not(.btn-primary):hover {
-  background: linear-gradient(
-    145deg,
-    rgba(51, 65, 85, 0.9),
-    rgba(30, 41, 59, 0.85)
-  ) !important;
-  border-color: rgba(255, 255, 255, 0.25) !important;
-  box-shadow:
-    0 6px 20px rgba(0, 0, 0, 0.55),
-    inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
-  color: #ffffff !important;
-  transform: translateY(-1px) !important;
+.dark[data-mode="liquidglass"] .neu-btn:not([class*="bg-"]):not([class*="text-white"]):not(.btn-primary):hover {
+  background: rgba(51, 65, 85, 0.85) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3) !important;
+  transform: translateY(-0.5px);
 }
 
-/* Accent & Colored Buttons in Liquid Glass 3D */
-[data-mode="liquidglass"] .neu-btn[class*="bg-"],
-[data-mode="liquidglass"] .neu-btn[class*="text-white"],
-[data-mode="liquidglass"] .neu-btn.btn-primary {
-  border: 1px solid rgba(255, 255, 255, 0.25) !important;
-  box-shadow:
-    0 4px 14px rgba(37, 99, 235, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
-  color: #ffffff !important;
+/* --- 4. AURORA MODE --- */
+[data-mode="aurora"] .glass-primary,
+[data-mode="aurora"] .glass-secondary,
+[data-mode="aurora"] .liquid-card,
+[data-mode="aurora"] .neu-card {
+  background: linear-gradient(135deg, rgba(245, 247, 255, 0.88), rgba(240, 245, 255, 0.7)) !important;
+  border: 1px solid rgba(129, 140, 248, 0.25) !important;
+  box-shadow: 0 4px 20px -2px rgba(99, 102, 241, 0.08) !important;
+  border-radius: 14px !important;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   SECTION 7: UNIVERSAL CARD TRANSFORMATIONS & 3D ELEVATION
-   ═══════════════════════════════════════════════════════════════ */
-
-/* --- 1. LIQUID GLASS MODE (ULTRA 3D DEPTH) --- */
-[data-mode="liquidglass"] .glass-primary,
-[data-mode="liquidglass"] .glass-secondary,
-[data-mode="liquidglass"] .liquid-card,
-[data-mode="liquidglass"] .neu-card {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.65)) !important;
-  backdrop-filter: blur(28px) saturate(190%) brightness(0.95) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(190%) brightness(0.95) !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
-  box-shadow:
-    0 20px 45px -10px rgba(0, 0, 0, 0.7),
-    0 8px 20px -6px rgba(37, 99, 235, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
-  transition:
-    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-[data-mode="liquidglass"][data-theme="light"] .glass-primary,
-[data-mode="liquidglass"][data-theme="light"] .glass-secondary,
-[data-mode="liquidglass"][data-theme="light"] .liquid-card,
-[data-mode="liquidglass"][data-theme="light"] .neu-card {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.9),
-    rgba(241, 245, 249, 0.65)
-  ) !important;
-  backdrop-filter: blur(28px) saturate(190%) brightness(1.03) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(190%) brightness(1.03) !important;
-  border: 1px solid rgba(255, 255, 255, 0.9) !important;
-  box-shadow:
-    0 20px 45px -10px rgba(37, 99, 235, 0.12),
-    0 8px 18px -6px rgba(15, 23, 42, 0.08),
-    inset 0 1.5px 0 rgba(255, 255, 255, 1) !important;
-}
-
-/* --- 2. AURORA MESH GLOW MODE --- */
 [data-mode="aurora"][data-theme="dark"] .glass-primary,
 [data-mode="aurora"][data-theme="dark"] .glass-secondary,
 [data-mode="aurora"][data-theme="dark"] .liquid-card,
-[data-mode="aurora"][data-theme="dark"] .neu-card {
-  background: linear-gradient(135deg, rgba(30, 27, 75, 0.8), rgba(15, 23, 42, 0.7)) !important;
-  border: 1px solid rgba(129, 140, 248, 0.35) !important;
+[data-mode="aurora"][data-theme="dark"] .neu-card,
+.dark[data-mode="aurora"] .glass-primary,
+.dark[data-mode="aurora"] .glass-secondary,
+.dark[data-mode="aurora"] .liquid-card,
+.dark[data-mode="aurora"] .neu-card {
+  background: linear-gradient(135deg, rgba(25, 20, 48, 0.75), rgba(15, 23, 42, 0.65)) !important;
+  border: 1px solid rgba(129, 140, 248, 0.18) !important;
   box-shadow:
-    0 24px 50px -10px rgba(99, 102, 241, 0.3),
-    0 8px 20px -4px rgba(129, 140, 248, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+    0 8px 24px -4px rgba(99, 102, 241, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  border-radius: 14px !important;
 }
 
-[data-mode="aurora"][data-theme="light"] .glass-primary,
-[data-mode="aurora"][data-theme="light"] .glass-secondary,
-[data-mode="aurora"][data-theme="light"] .liquid-card,
-[data-mode="aurora"][data-theme="light"] .neu-card {
-  background: linear-gradient(
-    135deg,
-    rgba(238, 242, 255, 0.9),
-    rgba(245, 243, 255, 0.75)
-  ) !important;
-  border: 1px solid rgba(99, 102, 241, 0.35) !important;
-  box-shadow:
-    0 20px 40px -10px rgba(99, 102, 241, 0.18),
-    inset 0 1.5px 0 rgba(255, 255, 255, 0.9) !important;
-}
-
-/* --- 3. SOFT NEUMORPHISM 3D MODE --- */
-[data-mode="neumorphism"][data-theme="dark"] .glass-primary,
-[data-mode="neumorphism"][data-theme="dark"] .glass-secondary,
-[data-mode="neumorphism"][data-theme="dark"] .liquid-card,
-[data-mode="neumorphism"][data-theme="dark"] .neu-card {
-  background: #111827 !important;
-  border: 1px solid rgba(255, 255, 255, 0.06) !important;
-  box-shadow:
-    8px 8px 20px #060911,
-    -8px -8px 20px #1c273d !important;
-  border-radius: 18px !important;
-}
-
-[data-mode="neumorphism"][data-theme="light"] .glass-primary,
-[data-mode="neumorphism"][data-theme="light"] .glass-secondary,
-[data-mode="neumorphism"][data-theme="light"] .liquid-card,
-[data-mode="neumorphism"][data-theme="light"] .neu-card {
-  background: #eaeff8 !important;
-  border: none !important;
-  box-shadow:
-    8px 8px 18px #cdd2de,
-    -8px -8px 18px #ffffff !important;
-  border-radius: 18px !important;
-}
-
-/* --- 4. GLASSMORPHISM PRO MODE --- */
-[data-mode="glassmorphismpro"][data-theme="dark"] .glass-primary,
-[data-mode="glassmorphismpro"][data-theme="dark"] .glass-secondary,
-[data-mode="glassmorphismpro"][data-theme="dark"] .liquid-card,
-[data-mode="glassmorphismpro"][data-theme="dark"] .neu-card {
-  background: rgba(17, 24, 39, 0.55) !important;
-  backdrop-filter: blur(16px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.16) !important;
-  box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.8) !important;
-}
-
-/* --- 5. MINIMAL FLAT MODE --- */
+/* --- 5. FLAT MODE --- */
 [data-mode="flat"] .glass-primary,
 [data-mode="flat"] .glass-secondary,
 [data-mode="flat"] .liquid-card,
 [data-mode="flat"] .neu-card {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
-}
-
-
-[data-mode="liquidglass"] .neu-input,
-[data-mode="liquidglass"]
-  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
-[data-mode="liquidglass"] select,
-[data-mode="liquidglass"] textarea {
-  background: rgba(255, 255, 255, 0.95) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-  border: 1px solid #94a3b8 !important;
-  box-shadow:
-    inset 0 1px 3px rgba(15, 23, 42, 0.05),
-    0 1px 2px rgba(15, 23, 42, 0.04) !important;
   border-radius: 12px !important;
+}
+
+[data-mode="flat"][data-theme="dark"] .glass-primary,
+[data-mode="flat"][data-theme="dark"] .glass-secondary,
+[data-mode="flat"][data-theme="dark"] .liquid-card,
+[data-mode="flat"][data-theme="dark"] .neu-card,
+.dark[data-mode="flat"] .glass-primary,
+.dark[data-mode="flat"] .glass-secondary,
+.dark[data-mode="flat"] .liquid-card,
+.dark[data-mode="flat"] .neu-card {
+  background: #111827 !important;
+  border: 1px solid #1f2937 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-radius: 12px !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 7: UNIVERSAL INPUTS & CONTROLS FOR ALL DESIGN MODES
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Universal Light Theme Inputs */
+[data-mode="liquidglass"]:not([data-theme="dark"]):not(.dark) input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+[data-mode="glassmorphismpro"]:not([data-theme="dark"]):not(.dark) input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+[data-mode="aurora"]:not([data-theme="dark"]):not(.dark) input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+[data-mode="liquidglass"]:not([data-theme="dark"]):not(.dark) select,
+[data-mode="glassmorphismpro"]:not([data-theme="dark"]):not(.dark) select,
+[data-mode="aurora"]:not([data-theme="dark"]):not(.dark) select,
+[data-mode="liquidglass"]:not([data-theme="dark"]):not(.dark) textarea,
+[data-mode="glassmorphismpro"]:not([data-theme="dark"]):not(.dark) textarea,
+[data-mode="aurora"]:not([data-theme="dark"]):not(.dark) textarea {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(203, 213, 225, 0.85) !important;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  border-radius: 10px !important;
   color: #0f172a !important;
-  font-weight: 600;
+  font-weight: 500;
 }
 
-[data-mode="liquidglass"] input::placeholder,
-[data-mode="liquidglass"] textarea::placeholder {
-  color: #64748b !important;
-  opacity: 0.9 !important;
-}
-
-.dark[data-mode="liquidglass"] .neu-input,
-[data-mode="liquidglass"][data-theme="dark"] .neu-input,
-.dark[data-mode="liquidglass"]
-  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
-[data-mode="liquidglass"][data-theme="dark"]
-  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
-.dark[data-mode="liquidglass"] select,
-[data-mode="liquidglass"][data-theme="dark"] select,
-.dark[data-mode="liquidglass"] textarea,
-[data-mode="liquidglass"][data-theme="dark"] textarea {
+/* Universal Dark Theme Inputs (Fixes blinding white inputs in dark mode) */
+[data-mode][data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+.dark[data-mode] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+[data-mode] .dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+[data-mode][data-theme="dark"] select,
+.dark[data-mode] select,
+[data-mode] .dark select,
+[data-mode][data-theme="dark"] textarea,
+.dark[data-mode] textarea,
+[data-mode] .dark textarea,
+.dark[data-mode] .neu-input,
+[data-mode][data-theme="dark"] .neu-input {
   background: rgba(15, 23, 42, 0.85) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
-  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35) !important;
+  border-radius: 10px !important;
   color: #f8fafc !important;
-  font-weight: 600;
+  font-weight: 500;
 }
 
-.dark[data-mode="liquidglass"] input::placeholder,
-[data-mode="liquidglass"][data-theme="dark"] input::placeholder,
-.dark[data-mode="liquidglass"] textarea::placeholder,
-[data-mode="liquidglass"][data-theme="dark"] textarea::placeholder {
+[data-mode][data-theme="dark"] input::placeholder,
+.dark[data-mode] input::placeholder,
+[data-mode] .dark input::placeholder,
+[data-mode][data-theme="dark"] textarea::placeholder,
+.dark[data-mode] textarea::placeholder,
+[data-mode] .dark textarea::placeholder {
   color: #94a3b8 !important;
-  opacity: 0.85 !important;
+  opacity: 0.8 !important;
 }
 
-/* --- EXCLUDE EMBEDDED TRANSPARENT INPUTS (e.g. GLOBAL SEARCH BAR) --- */
-[data-mode="liquidglass"] input.bg-transparent,
-.dark[data-mode="liquidglass"] input.bg-transparent,
-[data-mode="liquidglass"][data-theme="dark"] input.bg-transparent,
-[data-mode="liquidglass"] .bg-transparent input,
-.dark[data-mode="liquidglass"] .bg-transparent input,
-[data-mode="liquidglass"][data-theme="dark"] .bg-transparent input,
-[data-mode] .global-search-input,
-[data-mode="liquidglass"] .global-search-input,
-.dark[data-mode="liquidglass"] .global-search-input,
-[data-mode="liquidglass"][data-theme="dark"] .global-search-input {
+/* Input Focus States */
+[data-mode] input:focus,
+[data-mode] select:focus,
+[data-mode] textarea:focus {
+  border-color: #3b82f6 !important;
+  outline: none !important;
+}
+
+/* Exclude embedded transparent search bars */
+[data-mode] input.bg-transparent,
+[data-mode] .bg-transparent input,
+[data-mode] .global-search-input {
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
@@ -1135,62 +1096,20 @@ input[type="checkbox"]:focus {
   border-radius: 0 !important;
 }
 
-/* --- UNIVERSAL ICON AND NAV CONTRAST IN LIQUID GLASS --- */
-[data-mode="liquidglass"] svg.lucide,
-[data-mode="liquidglass"] .lucide {
-  stroke-width: 2px;
+/* Nav Active & Utility */
+[data-mode] .neu-nav-active {
+  background: rgba(37, 99, 235, 0.12) !important;
+  border: 1px solid rgba(37, 99, 235, 0.25) !important;
+  border-radius: 10px !important;
+  color: #2563eb !important;
 }
 
-[data-mode="liquidglass"] .neu-icon {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(241, 245, 249, 0.75)) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  border: 1px solid rgba(203, 213, 225, 0.8) !important;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08) !important;
-  color: #0f172a !important;
-}
-
-[data-mode="liquidglass"][data-theme="dark"] .neu-icon,
-.dark[data-mode="liquidglass"] .neu-icon,
-[data-mode="liquidglass"] .dark .neu-icon {
-  background: linear-gradient(145deg, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.75)) !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4) !important;
-  color: #f1f5f9 !important;
-}
-
-[data-mode="liquidglass"] .neu-nav-active {
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.18), rgba(29, 78, 216, 0.1)) !important;
+[data-mode][data-theme="dark"] .neu-nav-active,
+.dark[data-mode] .neu-nav-active {
+  background: rgba(37, 99, 235, 0.2) !important;
   border: 1px solid rgba(37, 99, 235, 0.3) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  box-shadow: 0 2px 12px rgba(37, 99, 235, 0.15) !important;
-  color: #1d4ed8 !important;
-}
-
-[data-mode="liquidglass"][data-theme="dark"] .neu-nav-active,
-.dark[data-mode="liquidglass"] .neu-nav-active,
-[data-mode="liquidglass"] .dark .neu-nav-active {
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.25), rgba(29, 78, 216, 0.15)) !important;
-  border: 1px solid rgba(37, 99, 235, 0.35) !important;
-  box-shadow: 0 2px 12px rgba(37, 99, 235, 0.2) !important;
+  border-radius: 10px !important;
   color: #60a5fa !important;
-}
-
-[data-mode="liquidglass"] .neu-flat {
-  background: rgba(255, 255, 255, 0.7) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  border: 1px solid rgba(203, 213, 225, 0.7) !important;
-  color: #0f172a !important;
-}
-
-[data-mode="liquidglass"][data-theme="dark"] .neu-flat,
-.dark[data-mode="liquidglass"] .neu-flat,
-[data-mode="liquidglass"] .dark .neu-flat {
-  background: rgba(30, 41, 59, 0.6) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  color: #f1f5f9 !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════

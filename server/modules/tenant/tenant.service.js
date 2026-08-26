@@ -407,6 +407,9 @@ export const createTenant = async (data, isSuperAdmin = false) => {
     else if (planName === 'FREE') maxUsers = 2;
   }
 
+  const initialStatus = data.status || (isSuperAdmin ? 'ACTIVE' : 'PENDING_KYC');
+  const initialKycStatus = data.kycStatus || (isSuperAdmin ? 'APPROVED' : 'PENDING');
+
   const [insertedId] = await db('tenants').insert({
     shop_name: data.shopName,
     owner_name: data.ownerName,
