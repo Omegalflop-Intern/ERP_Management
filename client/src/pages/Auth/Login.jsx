@@ -120,15 +120,15 @@ function MultiImageSlideshow({ opacity = 'opacity-35 dark:opacity-45' }) {
           }}
         />
       ))}
-      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-slate-950/20 to-slate-950/60 dark:from-black/60 dark:via-black/30 dark:to-black/80" />
+      <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-white/30 to-white/80 dark:from-black/60 dark:via-black/30 dark:to-black/80" />
     </div>
   );
 }
 
 // --- Flowing Sea Waves Component ---
 function FlowingSeaWaves({ isDark, isHybrid = false }) {
-  const deepColor = isDark ? 'rgba(30, 58, 138, 0.35)' : 'rgba(37, 99, 235, 0.2)';
-  const midColor = isDark ? 'rgba(37, 99, 235, 0.25)' : 'rgba(96, 165, 250, 0.15)';
+  const deepColor = isDark ? 'rgba(30, 58, 138, 0.35)' : 'rgba(37, 99, 235, 0.22)';
+  const midColor = isDark ? 'rgba(37, 99, 235, 0.25)' : 'rgba(96, 165, 250, 0.16)';
   const lightColor = isDark ? 'rgba(96, 165, 250, 0.15)' : 'rgba(191, 219, 254, 0.12)';
   const heightClass = isHybrid ? 'h-[24%]' : 'h-[36%]';
 
@@ -241,9 +241,9 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-slate-900 dark:bg-[#050810] text-slate-900 dark:text-slate-100 font-sans selection:bg-[#2563EB] selection:text-white">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-slate-100 dark:bg-[#050810] text-slate-900 dark:text-slate-100 font-sans selection:bg-[#2563EB] selection:text-white">
       {/* Dynamic Background Base */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-950 dark:from-[#050810] dark:via-[#0b0f19] dark:to-[#050810] z-0" />
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-indigo-50/50 to-blue-50/40 dark:from-[#050810] dark:via-[#0b0f19] dark:to-[#050810] z-0" />
 
       {/* 1. Multi-Image Slideshow Layer */}
       {(bgMode === 'slideshow' || bgMode === 'hybrid') && <MultiImageSlideshow />}
@@ -255,19 +255,19 @@ export default function Login() {
       {(bgMode === 'waves' || bgMode === 'hybrid') && <FlowingSeaWaves isDark={isDark} />}
 
       {/* Glowing Ambient Mesh Orbs */}
-      <div className="absolute top-1/4 left-1/4 w-[450px] h-[450px] bg-blue-600/20 dark:bg-blue-600/15 rounded-full blur-[120px] pointer-events-none animate-pulse" />
-      <div className="absolute bottom-1/4 right-1/4 w-[450px] h-[450px] bg-indigo-600/20 dark:bg-indigo-600/15 rounded-full blur-[120px] pointer-events-none animate-pulse delay-1000" />
+      <div className="absolute top-1/4 left-1/4 w-[450px] h-[450px] bg-blue-500/10 dark:bg-blue-600/15 rounded-full blur-[120px] pointer-events-none animate-pulse" />
+      <div className="absolute bottom-1/4 right-1/4 w-[450px] h-[450px] bg-indigo-500/10 dark:bg-indigo-600/15 rounded-full blur-[120px] pointer-events-none animate-pulse delay-1000" />
 
       {/* Top Bar Controls */}
       <div className="absolute top-5 right-5 z-50 flex items-center gap-3">
         {/* Background Animation Switcher Toolbar */}
-        <div className="hidden sm:flex items-center gap-1 p-1 rounded-2xl bg-white/10 dark:bg-slate-800/80 backdrop-blur-md border border-white/20 dark:border-slate-700/60 shadow-lg text-xs font-semibold text-white">
+        <div className="hidden sm:flex items-center gap-1 p-1 rounded-2xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-md border border-slate-200/80 dark:border-slate-700/60 shadow-lg text-xs font-semibold text-slate-700 dark:text-white">
           <button
             onClick={() => setBgMode('waves')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all ${
               bgMode === 'waves'
                 ? 'bg-[#2563EB] text-white shadow-md'
-                : 'hover:bg-white/15 text-slate-200'
+                : 'hover:bg-slate-100 dark:hover:bg-white/15 text-slate-600 dark:text-slate-200'
             }`}
             title="Flowing Sea Waves Animation"
           >
@@ -278,7 +278,7 @@ export default function Login() {
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all ${
               bgMode === 'particles'
                 ? 'bg-[#2563EB] text-white shadow-md'
-                : 'hover:bg-white/15 text-slate-200'
+                : 'hover:bg-slate-100 dark:hover:bg-white/15 text-slate-600 dark:text-slate-200'
             }`}
             title="Interactive Constellation Particles"
           >
@@ -289,7 +289,7 @@ export default function Login() {
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all ${
               bgMode === 'slideshow'
                 ? 'bg-[#2563EB] text-white shadow-md'
-                : 'hover:bg-white/15 text-slate-200'
+                : 'hover:bg-slate-100 dark:hover:bg-white/15 text-slate-600 dark:text-slate-200'
             }`}
             title="Multi-Image Swapping Background"
           >
@@ -300,7 +300,7 @@ export default function Login() {
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all ${
               bgMode === 'hybrid'
                 ? 'bg-[#2563EB] text-white shadow-md'
-                : 'hover:bg-white/15 text-slate-200'
+                : 'hover:bg-slate-100 dark:hover:bg-white/15 text-slate-600 dark:text-slate-200'
             }`}
             title="Hybrid All-in-One Experience"
           >
@@ -315,41 +315,41 @@ export default function Login() {
       <div className="relative z-20 w-full max-w-md mx-4 py-8">
         {/* Brand Header */}
         <div className="flex justify-center mb-5">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-white/30 dark:bg-white/10 backdrop-blur-2xl border border-white/50 dark:border-white/20 shadow-2xl shadow-blue-500/20">
-            <Smartphone className="w-8 h-8 text-blue-600 dark:text-blue-400 stroke-[2.2]" />
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-white/90 dark:bg-white/10 backdrop-blur-2xl border border-slate-200/80 dark:border-white/20 shadow-xl shadow-blue-500/10">
+            <Smartphone className="w-8 h-8 text-[#2563EB] dark:text-blue-400 stroke-[2.2]" />
           </div>
         </div>
 
-        <h1 className="text-3xl font-black text-white tracking-tight text-center mb-1 drop-shadow-lg">
+        <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight text-center mb-1">
           {displayShopName}
         </h1>
-        <p className="text-xs font-bold uppercase tracking-widest text-blue-200/90 dark:text-blue-300/80 text-center mb-8 drop-shadow">
+        <p className="text-xs font-bold uppercase tracking-widest text-[#2563EB] dark:text-blue-300/80 text-center mb-8">
           Enterprise ERP Suite — Apple macOS Liquid Glass
         </p>
 
         {/* Apple macOS / iOS Liquid Glass Form Card */}
         <form
           onSubmit={handleSubmit}
-          className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-3xl border border-white/60 dark:border-white/15 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] rounded-[32px] p-8 md:p-10 relative overflow-hidden"
+          className="bg-white/90 dark:bg-slate-900/60 backdrop-blur-3xl border border-white/80 dark:border-white/15 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.07)] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] rounded-[32px] p-8 md:p-10 relative overflow-hidden"
         >
           {/* Internal Liquid Shine Highlight */}
-          <div className="absolute -top-24 -left-24 w-48 h-48 bg-white/30 dark:bg-blue-400/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute -top-24 -left-24 w-48 h-48 bg-blue-500/10 dark:bg-blue-400/10 rounded-full blur-2xl pointer-events-none" />
 
           <div className="space-y-5 relative z-10">
             {/* Login Field */}
             <div>
-              <label className="block text-xs font-extrabold text-slate-800 dark:text-slate-200 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-extrabold text-slate-700 dark:text-slate-200 uppercase tracking-wider mb-2">
                 Username / Email / Phone
               </label>
               <div className="relative">
-                <User className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400 stroke-[2.5] z-10 pointer-events-none" />
+                <User className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-[#2563EB] dark:text-blue-400 stroke-[2.5] z-10 pointer-events-none" />
                 <input
                   type="text"
                   required
                   value={loginField}
                   onChange={(e) => setLoginField(e.target.value)}
                   placeholder="Enter username, email or phone"
-                  className="w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm font-semibold transition-all duration-200 bg-white/60 dark:bg-slate-800/80 border border-slate-300/80 dark:border-slate-700/80 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-400 focus:bg-white dark:focus:bg-slate-800 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/25 shadow-xs outline-none"
+                  className="w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm font-semibold transition-all duration-200 bg-slate-50/90 dark:bg-slate-800/80 border border-slate-200/90 dark:border-slate-700/80 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-400 focus:bg-white dark:focus:bg-slate-800 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 shadow-xs outline-none"
                   autoComplete="username"
                 />
               </div>
@@ -358,25 +358,25 @@ export default function Login() {
             {/* Password Field */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-extrabold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                <label className="text-xs font-extrabold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
                   Password
                 </label>
                 <Link
                   to="/forgot-password"
-                  className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline transition-colors"
+                  className="text-xs font-bold text-[#2563EB] dark:text-blue-400 hover:underline transition-colors"
                 >
                   Forgot Password?
                 </Link>
               </div>
               <div className="relative">
-                <Lock className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-blue-600 dark:text-blue-400 stroke-[2.5] z-10 pointer-events-none" />
+                <Lock className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-[#2563EB] dark:text-blue-400 stroke-[2.5] z-10 pointer-events-none" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className="w-full pl-11 pr-11 py-3.5 rounded-2xl text-sm font-semibold transition-all duration-200 bg-white/60 dark:bg-slate-800/80 border border-slate-300/80 dark:border-slate-700/80 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-400 focus:bg-white dark:focus:bg-slate-800 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/25 shadow-xs outline-none"
+                  className="w-full pl-11 pr-11 py-3.5 rounded-2xl text-sm font-semibold transition-all duration-200 bg-slate-50/90 dark:bg-slate-800/80 border border-slate-200/90 dark:border-slate-700/80 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-400 focus:bg-white dark:focus:bg-slate-800 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 shadow-xs outline-none"
                   autoComplete="current-password"
                 />
                 <button
@@ -386,7 +386,7 @@ export default function Login() {
                   tabIndex={-1}
                 >
                   {showPassword ? (
-                    <EyeOff className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    <EyeOff className="w-4 h-4 text-[#2563EB] dark:text-blue-400" />
                   ) : (
                     <Eye className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                   )}
@@ -401,11 +401,11 @@ export default function Login() {
                 id="rememberMe"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 rounded-md cursor-pointer accent-blue-600"
+                className="w-4 h-4 rounded-md cursor-pointer accent-[#2563EB]"
               />
               <label
                 htmlFor="rememberMe"
-                className="text-sm font-bold text-slate-800 dark:text-slate-200 cursor-pointer select-none"
+                className="text-sm font-bold text-slate-700 dark:text-slate-200 cursor-pointer select-none"
               >
                 Remember me
               </label>
@@ -416,7 +416,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 px-6 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.98] shadow-xl shadow-blue-600/30 border border-white/20 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75 disabled:cursor-wait"
+                className="w-full py-3.5 px-6 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.98] shadow-xl shadow-blue-600/25 border border-white/20 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75 disabled:cursor-wait"
               >
                 {loading ? (
                   <>
@@ -434,7 +434,7 @@ export default function Login() {
           </div>
         </form>
 
-        <p className="text-center text-xs font-bold text-slate-300 dark:text-slate-400 mt-6 drop-shadow">
+        <p className="text-center text-xs font-bold text-slate-500 dark:text-slate-400 mt-6">
           &copy; {new Date().getFullYear()} OmniManage. All rights reserved.
         </p>
       </div>

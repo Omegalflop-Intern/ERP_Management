@@ -23,6 +23,7 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import ThemeToggle from '../../components/ui/ThemeToggle';
 import api from '../../lib/api';
 import PasswordInput from '../../components/ui/PasswordInput';
 
@@ -232,32 +233,38 @@ export default function RegisterShop() {
   const whatsappCleanNumber = platformSettings.platformWhatsApp.replace(/[^0-9]/g, '');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background orbs */}
-      <div className="absolute w-[500px] h-[500px] -top-40 -left-40 rounded-full blur-[120px] bg-blue-500/10 animate-drift pointer-events-none" />
+    <div className="min-h-screen bg-slate-100 dark:bg-[#050810] text-slate-900 dark:text-slate-100 flex items-center justify-center p-4 relative overflow-hidden font-sans">
+      {/* Background ambient base */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-indigo-50/50 to-blue-50/40 dark:from-[#050810] dark:via-[#0b0f19] dark:to-[#050810] z-0" />
+      <div className="absolute w-[500px] h-[500px] -top-40 -left-40 rounded-full blur-[120px] bg-blue-500/10 dark:bg-blue-600/15 animate-drift pointer-events-none" />
       <div
-        className="absolute w-[400px] h-[400px] -bottom-32 -right-32 rounded-full blur-[100px] bg-cyan-500/8 animate-drift pointer-events-none"
+        className="absolute w-[400px] h-[400px] -bottom-32 -right-32 rounded-full blur-[100px] bg-cyan-500/10 dark:bg-cyan-500/8 animate-drift pointer-events-none"
         style={{ animationDelay: '3s' }}
       />
 
-      <div className="w-full max-w-3xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] border border-white/[0.1] rounded-2xl shadow-2xl p-6 sm:p-8 space-y-6 backdrop-blur-[36px] saturate-[1.9] relative z-10">
+      {/* Top Bar Controls */}
+      <div className="absolute top-5 right-5 z-50">
+        <ThemeToggle />
+      </div>
+
+      <div className="w-full max-w-3xl bg-white/90 dark:bg-slate-900/70 border border-white/80 dark:border-white/10 rounded-3xl shadow-2xl p-6 sm:p-8 space-y-6 backdrop-blur-[36px] relative z-10 text-slate-900 dark:text-slate-100">
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500/25 to-cyan-500/10 border border-blue-400/30 flex items-center justify-center mx-auto text-[#2563EB] backdrop-blur-xl shadow-lg shadow-blue-500/10">
-            <Smartphone className="w-6 h-6" />
+          <div className="w-14 h-14 rounded-2xl bg-white/90 dark:bg-blue-500/20 border border-slate-200/80 dark:border-blue-400/30 flex items-center justify-center mx-auto text-[#2563EB] dark:text-blue-400 shadow-xl shadow-blue-500/10">
+            <Smartphone className="w-7 h-7" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Register Your Shop</h1>
-          <p className="text-xs text-slate-400">
-            Onboard your shop to the Omni-Manage SaaS Platform
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">Register Your Shop</h1>
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+            Onboard your shop to the OmniManage Enterprise SaaS Platform
           </p>
         </div>
 
         {/* Step Indicator */}
-        <div className="flex items-center justify-between border-b border-white/10 pb-4 text-xs font-semibold text-slate-400">
-          <span className={step >= 1 ? 'text-[#2563EB] font-bold' : ''}>1. Select Plan</span>
-          <span className={step >= 2 ? 'text-[#2563EB] font-bold' : ''}>2. Shop Info</span>
-          <span className={step >= 3 ? 'text-[#2563EB] font-bold' : ''}>3. Owner & NID</span>
-          <span className={step >= 4 ? 'text-[#2563EB] font-bold' : ''}>4. License & Password</span>
+        <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-4 text-xs font-bold text-slate-400 dark:text-slate-500">
+          <span className={step >= 1 ? 'text-[#2563EB] dark:text-blue-400 font-extrabold' : ''}>1. Select Plan</span>
+          <span className={step >= 2 ? 'text-[#2563EB] dark:text-blue-400 font-extrabold' : ''}>2. Shop Info</span>
+          <span className={step >= 3 ? 'text-[#2563EB] dark:text-blue-400 font-extrabold' : ''}>3. Owner & NID</span>
+          <span className={step >= 4 ? 'text-[#2563EB] dark:text-blue-400 font-extrabold' : ''}>4. Password</span>
         </div>
 
         {/* Form Wizard */}
@@ -266,15 +273,15 @@ export default function RegisterShop() {
           {step === 1 && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-300">Choose Subscription Plan *</span>
-                <div className="flex items-center gap-2 bg-white/5 border border-white/10 p-1 rounded-xl">
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Choose Subscription Plan *</span>
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-1 rounded-xl">
                   <button
                     type="button"
                     onClick={() => setBillingCycle('monthly')}
                     className={`px-3 py-1 rounded-lg font-bold text-[10px] transition-all ${
                       billingCycle === 'monthly'
-                        ? 'bg-blue-600 text-white shadow-md'
-                        : 'text-slate-400'
+                        ? 'bg-[#2563EB] text-white shadow-md'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
                     Monthly
@@ -284,12 +291,12 @@ export default function RegisterShop() {
                     onClick={() => setBillingCycle('yearly')}
                     className={`px-3 py-1 rounded-lg font-bold text-[10px] transition-all flex items-center gap-1 ${
                       billingCycle === 'yearly'
-                        ? 'bg-blue-600 text-white shadow-md'
-                        : 'text-slate-400'
+                        ? 'bg-[#2563EB] text-white shadow-md'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
                     <span>Yearly</span>
-                    <span className="px-1 py-0.5 rounded text-[8px] bg-emerald-500/20 text-emerald-400 font-extrabold uppercase">
+                    <span className="px-1 py-0.5 rounded text-[8px] bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-extrabold uppercase">
                       Save 20%
                     </span>
                   </button>
@@ -308,46 +315,46 @@ export default function RegisterShop() {
                     <div
                       key={plan.id}
                       onClick={() => setSelectedPlan(plan.id)}
-                      className={`relative cursor-pointer rounded-xl p-4 border transition-all ${
+                      className={`relative cursor-pointer rounded-2xl p-4 border transition-all ${
                         isSel
-                          ? 'bg-blue-600/20 border-blue-500 shadow-lg shadow-blue-600/20'
-                          : 'bg-white/[0.03] border-white/10 hover:border-white/20'
+                          ? 'bg-blue-50 dark:bg-blue-600/20 border-[#2563EB] dark:border-blue-500 shadow-lg shadow-blue-500/15'
+                          : 'bg-slate-50/80 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
                       }`}
                     >
                       {plan.isPopular && (
-                        <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-[8px] font-black uppercase text-white shadow-md">
+                        <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-[8px] font-black uppercase text-white shadow-md">
                           Popular
                         </span>
                       )}
 
                       <div className="flex items-center justify-between mb-1">
-                        <h3 className="font-extrabold text-sm text-white">{plan.name}</h3>
+                        <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">{plan.name}</h3>
                         <div
                           className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                            isSel ? 'bg-blue-600 border-blue-500' : 'border-slate-600'
+                            isSel ? 'bg-[#2563EB] border-[#2563EB]' : 'border-slate-300 dark:border-slate-600'
                           }`}
                         >
                           {isSel && <Check className="w-2.5 h-2.5 text-white" />}
                         </div>
                       </div>
 
-                      <div className="text-lg font-black text-white my-1">
+                      <div className="text-lg font-black text-slate-900 dark:text-white my-1">
                         {typeof price === 'number' ? `৳${price.toLocaleString()}` : price}
                         {typeof price === 'number' && (
-                          <span className="text-[10px] text-slate-400 font-normal">
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-normal">
                             /{billingCycle === 'yearly' ? 'yr' : 'mo'}
                           </span>
                         )}
                       </div>
 
-                      <div className="text-[10px] text-blue-300 font-bold mb-2">
+                      <div className="text-[10px] text-[#2563EB] dark:text-blue-300 font-bold mb-2">
                         {plan.branches} • {plan.users}
                       </div>
 
-                      <ul className="space-y-1 text-[10px] text-slate-300 border-t border-white/5 pt-2">
+                      <ul className="space-y-1 text-[10px] text-slate-600 dark:text-slate-300 border-t border-slate-200 dark:border-white/5 pt-2">
                         {plan.features.slice(0, 3).map((f, fIdx) => (
                           <li key={fIdx} className="flex items-center gap-1">
-                            <CheckCircle2 className="w-3 h-3 text-blue-400 shrink-0" />
+                            <CheckCircle2 className="w-3 h-3 text-[#2563EB] dark:text-blue-400 shrink-0" />
                             <span className="truncate">{f}</span>
                           </li>
                         ))}
@@ -361,7 +368,7 @@ export default function RegisterShop() {
                 <button
                   type="button"
                   onClick={() => setStep(2)}
-                  className="px-6 py-2.5 bg-[#2563EB] hover:bg-blue-700 text-white font-bold rounded-xl flex items-center gap-1.5 shadow-lg shadow-blue-600/20"
+                  className="px-6 py-3 bg-[#2563EB] hover:bg-blue-700 text-white font-bold rounded-xl flex items-center gap-1.5 shadow-lg shadow-blue-600/25 transition-all"
                 >
                   Next Step: Shop Info <ArrowRight className="w-4 h-4" />
                 </button>
@@ -371,9 +378,9 @@ export default function RegisterShop() {
 
           {/* Step 2: Shop Info */}
           {step === 2 && (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div>
-                <label className="block font-semibold mb-1 text-slate-300">
+                <label className="block font-bold text-xs uppercase tracking-wider mb-1.5 text-slate-700 dark:text-slate-300">
                   Mobile Shop Name *
                 </label>
                 <div className="relative">
@@ -384,13 +391,13 @@ export default function RegisterShop() {
                     value={form.shopName}
                     onChange={(e) => setForm({ ...form, shopName: e.target.value })}
                     placeholder="e.g. Rahim Telecom & Mobile Sales"
-                    className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/50 placeholder-slate-500"
+                    className="w-full pl-9 pr-3 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block font-semibold mb-1 text-slate-300">
+                <label className="block font-bold text-xs uppercase tracking-wider mb-1.5 text-slate-700 dark:text-slate-300">
                   Shop Logo (Optional)
                 </label>
                 <div className="flex items-center gap-3">
@@ -398,13 +405,13 @@ export default function RegisterShop() {
                     type="file"
                     accept="image/*"
                     onChange={(e) => handleFileChange(e, 'logo')}
-                    className="flex-1 text-xs text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-blue-600/90 file:backdrop-blur-md file:text-white file:font-semibold file:text-xs"
+                    className="flex-1 text-xs text-slate-500 dark:text-slate-400 file:mr-2 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white file:font-semibold file:text-xs"
                   />
                   {files.logo && (
                     <img
                       src={URL.createObjectURL(files.logo)}
                       alt="Logo preview"
-                      className="w-10 h-10 rounded-lg object-cover border border-slate-600"
+                      className="w-10 h-10 rounded-lg object-cover border border-slate-300 dark:border-slate-600"
                     />
                   )}
                 </div>
@@ -417,7 +424,7 @@ export default function RegisterShop() {
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className="px-4 py-2.5 bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-white font-semibold rounded-xl flex items-center gap-1.5"
+                  className="px-4 py-2.5 bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white font-semibold rounded-xl flex items-center gap-1.5"
                 >
                   <ArrowLeft className="w-4 h-4" /> Back
                 </button>
@@ -430,7 +437,7 @@ export default function RegisterShop() {
                     }
                     setStep(3);
                   }}
-                  className="px-5 py-2.5 bg-[#2563EB] hover:bg-blue-700 text-white font-semibold rounded-xl flex items-center gap-1.5"
+                  className="px-5 py-2.5 bg-[#2563EB] hover:bg-blue-700 text-white font-semibold rounded-xl flex items-center gap-1.5 shadow-md"
                 >
                   Next Step <ArrowRight className="w-4 h-4" />
                 </button>
@@ -440,10 +447,10 @@ export default function RegisterShop() {
 
           {/* Step 3: Owner Info & NID */}
           {step === 3 && (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold mb-1 text-slate-300">
+                  <label className="block font-bold text-xs uppercase tracking-wider mb-1 text-slate-700 dark:text-slate-300">
                     Owner Full Name *
                   </label>
                   <input
@@ -452,22 +459,22 @@ export default function RegisterShop() {
                     value={form.ownerName}
                     onChange={(e) => setForm({ ...form, ownerName: e.target.value })}
                     placeholder="Abdur Rahim"
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white"
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold mb-1 text-slate-300">Email Address *</label>
+                  <label className="block font-bold text-xs uppercase tracking-wider mb-1 text-slate-700 dark:text-slate-300">Email Address *</label>
                   <input
                     type="email"
                     required
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
                     placeholder="owner@rahimtelecom.com"
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white"
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold mb-1 text-slate-300">Username *</label>
+                  <label className="block font-bold text-xs uppercase tracking-wider mb-1 text-slate-700 dark:text-slate-300">Username *</label>
                   <input
                     type="text"
                     required
@@ -479,22 +486,22 @@ export default function RegisterShop() {
                       })
                     }
                     placeholder="e.g. rahim_owner"
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white"
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold mb-1 text-slate-300">Phone Number *</label>
+                  <label className="block font-bold text-xs uppercase tracking-wider mb-1 text-slate-700 dark:text-slate-300">Phone Number *</label>
                   <input
                     type="text"
                     required
                     value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: e.target.value })}
                     placeholder="01700000000"
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white"
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold mb-1 text-slate-300">
+                  <label className="block font-bold text-xs uppercase tracking-wider mb-1 text-slate-700 dark:text-slate-300">
                     National ID (NID) Number
                   </label>
                   <input
@@ -502,28 +509,28 @@ export default function RegisterShop() {
                     value={form.nidNumber}
                     onChange={(e) => setForm({ ...form, nidNumber: e.target.value })}
                     placeholder="NID 10/17 digit number"
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white"
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                 <div>
-                  <label className="block font-semibold mb-1 text-slate-300">NID Front Image</label>
+                  <label className="block font-bold text-xs uppercase tracking-wider mb-1 text-slate-700 dark:text-slate-300">NID Front Image</label>
                   <input
                     type="file"
                     accept="image/*,.pdf"
                     onChange={(e) => handleFileChange(e, 'nidFront')}
-                    className="w-full text-xs text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-blue-600/90 file:backdrop-blur-md file:text-white"
+                    className="w-full text-xs text-slate-500 dark:text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold mb-1 text-slate-300">NID Back Image</label>
+                  <label className="block font-bold text-xs uppercase tracking-wider mb-1 text-slate-700 dark:text-slate-300">NID Back Image</label>
                   <input
                     type="file"
                     accept="image/*,.pdf"
                     onChange={(e) => handleFileChange(e, 'nidBack')}
-                    className="w-full text-xs text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-blue-600/90 file:backdrop-blur-md file:text-white"
+                    className="w-full text-xs text-slate-500 dark:text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white"
                   />
                 </div>
               </div>
@@ -532,7 +539,7 @@ export default function RegisterShop() {
                 <button
                   type="button"
                   onClick={() => setStep(2)}
-                  className="px-4 py-2.5 bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-white font-semibold rounded-xl flex items-center gap-1.5"
+                  className="px-4 py-2.5 bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white font-semibold rounded-xl flex items-center gap-1.5"
                 >
                   <ArrowLeft className="w-4 h-4" /> Back
                 </button>
@@ -545,7 +552,7 @@ export default function RegisterShop() {
                     }
                     setStep(4);
                   }}
-                  className="px-5 py-2.5 bg-[#2563EB] hover:bg-blue-700 text-white font-semibold rounded-xl flex items-center gap-1.5"
+                  className="px-5 py-2.5 bg-[#2563EB] hover:bg-blue-700 text-white font-semibold rounded-xl flex items-center gap-1.5 shadow-md"
                 >
                   Next Step <ArrowRight className="w-4 h-4" />
                 </button>
@@ -555,9 +562,9 @@ export default function RegisterShop() {
 
           {/* Step 4: Trade License & Password */}
           {step === 4 && (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div>
-                <label className="block font-semibold mb-1 text-slate-300">
+                <label className="block font-bold text-xs uppercase tracking-wider mb-1 text-slate-700 dark:text-slate-300">
                   Trade License Number
                 </label>
                 <input
@@ -565,38 +572,38 @@ export default function RegisterShop() {
                   value={form.tradeLicenseNumber}
                   onChange={(e) => setForm({ ...form, tradeLicenseNumber: e.target.value })}
                   placeholder="e.g. TRAD/DNCC/012345/2026"
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-700 bg-slate-900 text-white"
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-semibold mb-1 text-slate-300">
+                  <label className="block font-bold text-xs uppercase tracking-wider mb-1 text-slate-700 dark:text-slate-300">
                     Trade License Document
                   </label>
                   <input
                     type="file"
                     accept="image/*,.pdf"
                     onChange={(e) => handleFileChange(e, 'tradeLicenseFile')}
-                    className="w-full text-xs text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-blue-600/90 file:backdrop-blur-md file:text-white"
+                    className="w-full text-xs text-slate-500 dark:text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white"
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold mb-1 text-slate-300">
+                  <label className="block font-bold text-xs uppercase tracking-wider mb-1 text-slate-700 dark:text-slate-300">
                     TIN / BIN Certificate Document
                   </label>
                   <input
                     type="file"
                     accept="image/*,.pdf"
                     onChange={(e) => handleFileChange(e, 'tinCertificate')}
-                    className="w-full text-xs text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-blue-600/90 file:backdrop-blur-md file:text-white"
+                    className="w-full text-xs text-slate-500 dark:text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                 <div>
-                  <label className="block font-semibold mb-1 text-slate-300">Password *</label>
+                  <label className="block font-bold text-xs uppercase tracking-wider mb-1 text-slate-700 dark:text-slate-300">Password *</label>
                   <PasswordInput
                     required
                     value={form.password}
@@ -606,7 +613,7 @@ export default function RegisterShop() {
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold mb-1 text-slate-300">
+                  <label className="block font-bold text-xs uppercase tracking-wider mb-1 text-slate-700 dark:text-slate-300">
                     Confirm Password *
                   </label>
                   <PasswordInput
@@ -623,14 +630,14 @@ export default function RegisterShop() {
                 <button
                   type="button"
                   onClick={() => setStep(3)}
-                  className="px-4 py-2.5 bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-white font-semibold rounded-xl flex items-center gap-1.5"
+                  className="px-4 py-2.5 bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] border border-slate-200 dark:border-white/10 text-slate-700 dark:text-white font-semibold rounded-xl flex items-center gap-1.5"
                 >
                   <ArrowLeft className="w-4 h-4" /> Back
                 </button>
                 <button
                   type="submit"
                   disabled={loading || !form.password}
-                  className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl flex items-center gap-1.5 disabled:opacity-50 shadow-lg shadow-blue-500/20 transition-all cursor-pointer"
+                  className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl flex items-center gap-1.5 disabled:opacity-50 shadow-lg shadow-blue-500/25 transition-all cursor-pointer"
                 >
                   {loading ? 'Submitting Registration...' : 'Complete Registration & Apply Plan'}
                 </button>
@@ -639,9 +646,9 @@ export default function RegisterShop() {
           )}
         </form>
 
-        <div className="text-center pt-2 border-t border-slate-700/60 text-xs text-slate-400">
+        <div className="text-center pt-2 border-t border-slate-200 dark:border-slate-700/60 text-xs text-slate-500 dark:text-slate-400">
           Already registered?{' '}
-          <Link to="/login" className="text-[#2563EB] hover:underline font-semibold">
+          <Link to="/login" className="text-[#2563EB] dark:text-blue-400 hover:underline font-bold">
             Sign In Here
           </Link>
         </div>
@@ -649,54 +656,54 @@ export default function RegisterShop() {
 
       {/* ─── SHOP ACTIVATION & SUPPORT POPUP MODAL ──────────────────────── */}
       {showActivationModal && registeredTenantData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-          <div className="relative w-full max-w-lg bg-slate-900 border border-slate-700/80 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 text-slate-100 overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
+          <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 text-slate-900 dark:text-slate-100 overflow-hidden">
             {/* Top Shine */}
             <div className="absolute -top-24 -left-24 w-48 h-48 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
 
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center justify-center">
                   <CheckCircle2 className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-lg text-white">Registration Submitted!</h3>
-                  <p className="text-xs text-slate-400">Contact Support to Activate Your Shop</p>
+                  <h3 className="font-extrabold text-lg text-slate-900 dark:text-white">Registration Submitted!</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Contact Support to Activate Your Shop</p>
                 </div>
               </div>
             </div>
 
             {/* Shop Details Card */}
-            <div className="p-4 rounded-2xl bg-white/[0.04] border border-white/10 space-y-2">
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 space-y-2">
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-400 font-semibold">Shop Name:</span>
-                <span className="font-bold text-white">{registeredTenantData.shopName}</span>
+                <span className="text-slate-500 dark:text-slate-400 font-semibold">Shop Name:</span>
+                <span className="font-bold text-slate-900 dark:text-white">{registeredTenantData.shopName}</span>
               </div>
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-400 font-semibold">Reference ID:</span>
-                <span className="font-mono font-bold text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded border border-yellow-400/30">
+                <span className="text-slate-500 dark:text-slate-400 font-semibold">Reference ID:</span>
+                <span className="font-mono font-bold text-yellow-600 dark:text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded border border-yellow-400/30">
                   {registeredTenantData.shopRefCode}
                 </span>
               </div>
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-400 font-semibold">Selected Plan:</span>
-                <span className="font-bold text-emerald-400 uppercase">
+                <span className="text-slate-500 dark:text-slate-400 font-semibold">Selected Plan:</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400 uppercase">
                   {registeredTenantData.selectedPlan} ({registeredTenantData.billingCycle})
                 </span>
               </div>
             </div>
 
             {/* Instruction Notice */}
-            <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-medium leading-relaxed">
+            <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 text-xs font-medium leading-relaxed">
               <p className="font-bold mb-1 flex items-center gap-1.5">
-                <HelpCircle className="w-4 h-4 text-amber-400" /> Account Activation Pending
+                <HelpCircle className="w-4 h-4 text-amber-500" /> Account Activation Pending
               </p>
               {platformSettings.activationInstructions}
             </div>
 
             {/* Direct Support Actions */}
             <div className="space-y-2.5">
-              <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Contact Support Directly:
               </div>
 
@@ -716,17 +723,17 @@ export default function RegisterShop() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <a
                   href={`tel:${platformSettings.platformPhone}`}
-                  className="py-2.5 px-3 rounded-xl font-bold text-xs text-slate-200 bg-white/5 hover:bg-white/10 border border-white/10 transition-all flex items-center justify-center gap-2"
+                  className="py-2.5 px-3 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 transition-all flex items-center justify-center gap-2"
                 >
-                  <Phone className="w-3.5 h-3.5 text-blue-400" />
+                  <Phone className="w-3.5 h-3.5 text-[#2563EB]" />
                   <span>Call: {platformSettings.platformPhone}</span>
                 </a>
 
                 <a
                   href={`mailto:${platformSettings.platformEmail}?subject=Shop Activation Request (${registeredTenantData.shopRefCode})`}
-                  className="py-2.5 px-3 rounded-xl font-bold text-xs text-slate-200 bg-white/5 hover:bg-white/10 border border-white/10 transition-all flex items-center justify-center gap-2"
+                  className="py-2.5 px-3 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 transition-all flex items-center justify-center gap-2"
                 >
-                  <Mail className="w-3.5 h-3.5 text-blue-400" />
+                  <Mail className="w-3.5 h-3.5 text-[#2563EB]" />
                   <span>Email Support</span>
                 </a>
               </div>
@@ -734,19 +741,19 @@ export default function RegisterShop() {
 
             {/* Payment Numbers */}
             {(platformSettings.bkashNumber || platformSettings.nagadNumber) && (
-              <div className="pt-2 border-t border-slate-800 grid grid-cols-2 gap-2 text-[11px]">
+              <div className="pt-2 border-t border-slate-200 dark:border-slate-800 grid grid-cols-2 gap-2 text-[11px]">
                 {platformSettings.bkashNumber && (
                   <div className="p-2 rounded-lg bg-pink-500/10 border border-pink-500/20 text-center">
-                    <span className="text-pink-400 font-bold block">bKash Merchant</span>
-                    <span className="font-mono text-white font-bold">
+                    <span className="text-pink-600 dark:text-pink-400 font-bold block">bKash Merchant</span>
+                    <span className="font-mono text-slate-900 dark:text-white font-bold">
                       {platformSettings.bkashNumber}
                     </span>
                   </div>
                 )}
                 {platformSettings.nagadNumber && (
                   <div className="p-2 rounded-lg bg-orange-500/10 border border-orange-500/20 text-center">
-                    <span className="text-orange-400 font-bold block">Nagad Merchant</span>
-                    <span className="font-mono text-white font-bold">
+                    <span className="text-orange-600 dark:text-orange-400 font-bold block">Nagad Merchant</span>
+                    <span className="font-mono text-slate-900 dark:text-white font-bold">
                       {platformSettings.nagadNumber}
                     </span>
                   </div>
@@ -755,14 +762,14 @@ export default function RegisterShop() {
             )}
 
             {/* Bottom Actions */}
-            <div className="pt-3 border-t border-slate-800 flex justify-end">
+            <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end">
               <button
                 type="button"
                 onClick={() => {
                   setShowActivationModal(false);
                   navigate(`/verify-email?email=${encodeURIComponent(registeredTenantData.email)}`);
                 }}
-                className="px-6 py-2.5 rounded-xl font-bold text-xs text-white bg-blue-600 hover:bg-blue-500 transition-all shadow-md"
+                className="px-6 py-2.5 rounded-xl font-bold text-xs text-white bg-[#2563EB] hover:bg-blue-700 transition-all shadow-md"
               >
                 Proceed to Verify Email OTP & Sign In
               </button>
