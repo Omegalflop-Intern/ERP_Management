@@ -36,7 +36,7 @@ export const getAllExpenses = async (params = {}, tenantId = null) => {
   const query = db('expenses').where({ is_deleted: false });
   applyTenantScope(query, tenantId);
   if (branchId && branchId !== 'all') {
-    query.where((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+    query.where('branch_id', branchId);
   }
 
   if (category && category !== 'ALL') query.where({ category });

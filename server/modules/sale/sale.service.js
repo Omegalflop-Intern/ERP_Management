@@ -301,6 +301,9 @@ export const getAllSales = async (page = 1, limit = 20, filters = {}) => {
           .orWhere('customers.phone', 'like', term);
       });
     }
+    if (filters.returnable === 'true' || filters.returnable === true) {
+      query.whereNot('transactions.status', 'RETURNED').whereNot('transactions.status', 'CANCELLED');
+    }
     if (filters.paymentMethod) {
       const pMethod = filters.paymentMethod.toLowerCase();
       if (pMethod === 'due') {
@@ -581,6 +584,7 @@ export const deleteSale = async (id, tenantId = null, branchId = null) => {
 
 export const processReturn = async (id, data, tenantId = null, branchId = null) => {
   const sale = await getSaleById(id, tenantId, branchId);
+  const effectiveBranchId = (branchId && branchId !== 'all') ? branchId : (sale.branchId || sale.branch_id || null);
 
   const returnItems = data.items || [];
   let refundAmount = 0;
@@ -593,27 +597,94 @@ export const processReturn = async (id, data, tenantId = null, branchId = null) 
     const qty = Math.abs(ri.quantity || ri.qty || 1);
     refundAmount += (lineItem.unitPrice * qty);
 
-    // 1. Restock Product in inventory
-    // Bug #19 fixed: add tenant_id filter to prevent cross-tenant stock increment
+    // 1. Restock Product in inventory (Catalog & Branch Stock)
     if (pId) {
       const stockIncrQ = db('products').where({ id: pId });
       if (tenantId) stockIncrQ.andWhere('tenant_id', tenantId);
       await stockIncrQ.increment('stock_quantity', qty);
-      emitter.emit(EVENTS.STOCK_UPDATED, { id: pId, name: lineItem.description || lineItem.name, tenantId });
-      emitter.emit(EVENTS.PRODUCT_MUTATED, { id: pId, tenantId });
+
+      // Increment branch stock in product_branch_stocks
+      if (effectiveBranchId) {
+        const bsQ = db('product_branch_stocks').where({ branch_id: effectiveBranchId, product_id: pId });
+        if (tenantId) bsQ.andWhere('tenant_id', tenantId);
+        const bs = await bsQ.first();
+        if (bs) {
+          await db('product_branch_stocks').where({ id: bs.id }).increment('stock_quantity', qty);
+        } else {
+          await db('product_branch_stocks').insert({
+            tenant_id: tenantId,
+            branch_id: effectiveBranchId,
+            product_id: pId,
+            stock_quantity: qty,
+          });
+        }
+      }
+
+      emitter.emit(EVENTS.STOCK_UPDATED, { id: pId, name: lineItem.description || lineItem.name, tenantId, branchId: effectiveBranchId });
+      emitter.emit(EVENTS.PRODUCT_MUTATED, { id: pId, tenantId, branchId: effectiveBranchId });
     }
 
     // 2. If IMEI item, mark IMEI back to Available in inventory_units
-    // Bug #4 fixed: was incorrectly writing to imei_records table; all IMEI ops use inventory_units
     const imeiVal = ri.imeiOrSerial || lineItem.imeiOrSerial;
     if (imeiVal) {
       const imeiRetQ = db('inventory_units').where({ imei_or_serial: imeiVal });
       if (tenantId) imeiRetQ.andWhere('tenant_id', tenantId);
-      await imeiRetQ.update({ status: 'Available', sold_invoice_number: null, sold_at: null, sold_to_customer_id: null, updated_at: new Date() });
+      await imeiRetQ.update({
+        status: 'Available',
+        branch_id: effectiveBranchId,
+        sold_invoice_number: null,
+        sold_at: null,
+        sold_to_customer_id: null,
+        updated_at: new Date(),
+      });
     }
   }
 
   refundAmount = Number(refundAmount.toFixed(2));
+
+  // Handle optional Product Replacement / Exchange
+  const returnAction = data.returnAction || 'REFUND'; // 'REFUND' or 'REPLACEMENT'
+  let replacementItem = data.replacementItem || null;
+  let replacementCost = 0;
+  let priceDifference = 0; // Positive = Customer pays extra, Negative = Shop refunds extra
+
+  if (returnAction === 'REPLACEMENT' && replacementItem && replacementItem.productId) {
+    const replPId = replacementItem.productId;
+    const replQty = Number(replacementItem.quantity || 1);
+    const replPrice = Number(replacementItem.unitPrice || 0);
+    replacementCost = replPrice * replQty;
+    priceDifference = Number((replacementCost - refundAmount).toFixed(2));
+
+    // Deduct stock for replacement product
+    const replStockQ = db('products').where({ id: replPId });
+    if (tenantId) replStockQ.andWhere('tenant_id', tenantId);
+    await replStockQ.decrement('stock_quantity', replQty);
+
+    if (effectiveBranchId) {
+      const replBsQ = db('product_branch_stocks').where({ branch_id: effectiveBranchId, product_id: replPId });
+      if (tenantId) replBsQ.andWhere('tenant_id', tenantId);
+      const replBs = await replBsQ.first();
+      if (replBs) {
+        await db('product_branch_stocks').where({ id: replBs.id }).decrement('stock_quantity', replQty);
+      }
+    }
+
+    if (replacementItem.imeiOrSerial) {
+      const replImeiQ = db('inventory_units').where({ imei_or_serial: replacementItem.imeiOrSerial });
+      if (tenantId) replImeiQ.andWhere('tenant_id', tenantId);
+      await replImeiQ.update({
+        status: 'Sold',
+        sold_invoice_number: returnInvoiceNumber,
+        sold_at: new Date(),
+        sold_to_customer_id: typeof sale.customerId === 'object' ? (sale.customerId?.id || sale.customerId?._id) : sale.customerId,
+        updated_at: new Date(),
+      });
+    }
+
+    emitter.emit(EVENTS.STOCK_UPDATED, { id: replPId, tenantId, branchId: effectiveBranchId });
+    emitter.emit(EVENTS.PRODUCT_MUTATED, { id: replPId, tenantId, branchId: effectiveBranchId });
+  }
+
   const newReturnedAmount = (sale.returnedAmount || 0) + refundAmount;
 
   const returnLog = {
@@ -621,24 +692,36 @@ export const processReturn = async (id, data, tenantId = null, branchId = null) 
     returnInvoiceNumber,
     items: returnItems,
     refundAmount,
+    returnAction,
+    replacementItem,
+    priceDifference,
     reason: data.reason || 'Customer / Wholesale Return',
   };
 
   const existingLogs = sale.returnLogs || [];
   const txUpdate = db('transactions').where({ id });
   if (tenantId) txUpdate.andWhere('tenant_id', tenantId);
-  if (branchId && branchId !== 'all') {
-    txUpdate.andWhere((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+  if (effectiveBranchId) {
+    txUpdate.andWhere((b) => b.where('branch_id', effectiveBranchId).orWhereNull('branch_id'));
   }
 
-  // Update payment_breakdown.dueAmount to reflect the return
+  // Update payment_breakdown.dueAmount to reflect the return / replacement
   let pb = {};
   try { pb = typeof sale.payment_breakdown === 'string' ? JSON.parse(sale.payment_breakdown) : (sale.paymentBreakdown || sale.payment_breakdown || {}); } catch { pb = {}; }
   const oldDue = Number(pb.dueAmount || 0);
-  const newDue = Math.max(0, oldDue - refundAmount);
-  pb.dueAmount = newDue;
-  if (refundAmount > 0 && pb.cash !== undefined) {
-    pb.changeAmount = 0;
+
+  if (returnAction === 'REPLACEMENT') {
+    if (priceDifference > 0) {
+      // Customer has additional due or pays difference
+      pb.dueAmount = oldDue + (data.paymentMethod === 'due' ? priceDifference : 0);
+    } else {
+      pb.dueAmount = Math.max(0, oldDue - Math.abs(priceDifference));
+    }
+  } else {
+    pb.dueAmount = Math.max(0, oldDue - refundAmount);
+    if (refundAmount > 0 && pb.cash !== undefined) {
+      pb.changeAmount = 0;
+    }
   }
 
   await txUpdate.update({
@@ -649,13 +732,14 @@ export const processReturn = async (id, data, tenantId = null, branchId = null) 
     updated_at: new Date(),
   });
 
-  // Insert a RETURN transaction row for Customer Ledger & Reports
+  // Insert a RETURN / EXCHANGE transaction row for Customer Ledger & Reports
   try {
+    const netTxTotal = returnAction === 'REPLACEMENT' ? priceDifference : -refundAmount;
     await db('transactions').insert({
       tenant_id: tenantId || sale.tenantId || null,
-      branch_id: branchId || sale.branchId || null,
+      branch_id: effectiveBranchId,
       invoice_number: returnInvoiceNumber,
-      tx_type: 'RETURN',
+      tx_type: returnAction === 'REPLACEMENT' ? 'EXCHANGE' : 'RETURN',
       sale_type: sale.saleType || 'RETAIL',
       status: 'COMPLETED',
       customer_id: typeof sale.customerId === 'object' ? (sale.customerId?.id || sale.customerId?._id) : sale.customerId,
@@ -664,12 +748,18 @@ export const processReturn = async (id, data, tenantId = null, branchId = null) 
       customer_email: sale.customerEmail || sale.customer?.email || null,
       customer_address: sale.customerAddress || sale.customer?.address || null,
       line_items: JSON.stringify(returnItems),
-      sub_total: -refundAmount,
+      sub_total: netTxTotal,
       discount: 0,
       tax: 0,
-      net_total: -refundAmount,
+      net_total: netTxTotal,
       returned_amount: refundAmount,
-      payment_breakdown: JSON.stringify({ refundAmount, originalInvoice: sale.invoiceNumber }),
+      payment_breakdown: JSON.stringify({
+        refundAmount,
+        returnAction,
+        replacementItem,
+        priceDifference,
+        originalInvoice: sale.invoiceNumber,
+      }),
       cashier_username: sale.cashierUsername || 'system',
       created_at: new Date(),
       updated_at: new Date(),

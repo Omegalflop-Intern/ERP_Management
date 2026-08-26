@@ -57,7 +57,7 @@ export const getAllClaims = async (page = 1, limit = 20, status = '', search = '
   const countQuery = db('warranty_claims').where({ 'warranty_claims.is_deleted': false });
   applyTenantScope(countQuery, tenantId, 'warranty_claims');
   if (branchId && branchId !== 'all') {
-    countQuery.where((b) => b.where('warranty_claims.branch_id', branchId).orWhereNull('warranty_claims.branch_id'));
+    countQuery.where('warranty_claims.branch_id', branchId);
   }
   if (status) countQuery.where('warranty_claims.status', status);
 
@@ -80,7 +80,7 @@ export const getAllClaims = async (page = 1, limit = 20, status = '', search = '
     );
   applyTenantScope(dataQuery, tenantId, 'warranty_claims');
   if (branchId && branchId !== 'all') {
-    dataQuery.where((b) => b.where('warranty_claims.branch_id', branchId).orWhereNull('warranty_claims.branch_id'));
+    dataQuery.where('warranty_claims.branch_id', branchId);
   }
   if (status) dataQuery.where('warranty_claims.status', status);
 

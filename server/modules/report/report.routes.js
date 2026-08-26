@@ -24,7 +24,7 @@ const getBranchScope = (req) => {
   const branchId = req.selectedBranchId || null;
   return (query, column = 'branch_id') => {
     if (branchId && branchId !== 'all') {
-      query.where((b) => b.where(column, branchId).orWhereNull(column));
+      query.where(column, branchId);
     }
   };
 };
@@ -74,17 +74,40 @@ router.get('/dashboard', async (req, res, next) => {
         .where({ is_deleted: false, tx_type: 'SALE' })
         .modify(applyScope)
         .modify(applyBranch)
-        .select('line_items');
+        .select('line_items', 'returned_amount', 'net_total', 'return_logs');
       
       for (const tx of txRows) {
         let items = [];
         try { items = typeof tx.line_items === 'string' ? JSON.parse(tx.line_items) : (tx.line_items || []); } catch {}
         if (Array.isArray(items)) {
+          let txCogs = 0;
+          const prodCostMap = {};
           for (const it of items) {
             const cost = Number(it.unitCost || it.costPrice || 0);
             const q = Number(it.qty || 1);
-            totalCogs += (cost * q);
+            txCogs += (cost * q);
+            const pId = it.productId?._id || it.productId?.id || it.productId;
+            if (pId) prodCostMap[String(pId)] = cost;
           }
+
+          let returnLogs = [];
+          try { returnLogs = typeof tx.return_logs === 'string' ? JSON.parse(tx.return_logs) : (tx.return_logs || []); } catch {}
+          if (Array.isArray(returnLogs) && returnLogs.length > 0) {
+            for (const rLog of returnLogs) {
+              const rItems = rLog.items || [];
+              for (const ri of rItems) {
+                const rpId = ri.productId?._id || ri.productId?.id || ri.productId;
+                const rQty = Number(ri.quantity || ri.qty || 1);
+                const rCost = prodCostMap[String(rpId)] || 0;
+                txCogs = Math.max(0, txCogs - (rCost * rQty));
+              }
+            }
+          } else if (Number(tx.returned_amount || 0) > 0 && Number(tx.net_total || 0) > 0) {
+            const retRatio = Math.min(1, Number(tx.returned_amount) / Number(tx.net_total));
+            txCogs = Math.max(0, txCogs * (1 - retRatio));
+          }
+
+          totalCogs += txCogs;
         }
       }
     } catch {}
@@ -198,9 +221,11 @@ router.get('/dashboard', async (req, res, next) => {
     try {
       const salesTrendQuery = db('transactions')
         .where({ is_deleted: false, tx_type: 'SALE' })
+        .whereNot('status', 'RETURNED')
+        .whereNot('status', 'CANCELLED')
         .select(db.raw('DATE_FORMAT(created_at, "%Y-%m-%d") as date_key'))
         .select(db.raw('DATE_FORMAT(created_at, "%a %d") as day'))
-        .sum({ revenue: 'net_total' })
+        .sum({ revenue: db.raw('GREATEST(0, net_total - COALESCE(returned_amount, 0))') })
         .count({ sales: '*' })
         .groupBy('date_key', 'day')
         .orderBy('date_key', 'asc')
@@ -218,10 +243,11 @@ router.get('/dashboard', async (req, res, next) => {
     try {
       const dueTrendQuery = db('transactions')
         .where({ is_deleted: false, tx_type: 'SALE' })
-        .where('payment_breakdown', 'like', '%"dueAmount"%')
+        .whereNot('status', 'RETURNED')
+        .whereNot('status', 'CANCELLED')
         .select(db.raw('DATE_FORMAT(created_at, "%Y-%m-%d") as date_key'))
         .select(db.raw('DATE_FORMAT(created_at, "%a %d") as day'))
-        .sum({ paidAmount: 'net_total' })
+        .sum({ paidAmount: db.raw('GREATEST(0, net_total - COALESCE(returned_amount, 0))') })
         .count({ transactions: '*' })
         .groupBy('date_key', 'day')
         .orderBy('date_key', 'asc')
@@ -267,10 +293,13 @@ router.get('/analytics', async (req, res, next) => {
     const applyScope = getTenantScope(req);
     const applyBranch = getBranchScope(req);
 
-    const txQuery = db('transactions').where({ is_deleted: false, tx_type: 'SALE' });
+    const txQuery = db('transactions')
+      .where({ is_deleted: false, tx_type: 'SALE' })
+      .whereNot('status', 'RETURNED')
+      .whereNot('status', 'CANCELLED');
     applyScope(txQuery);
     applyBranch(txQuery);
-    const salesRes = await txQuery.count({ count: '*' }).sum({ revenue: 'net_total' }).first();
+    const salesRes = await txQuery.count({ count: '*' }).sum({ revenue: db.raw('GREATEST(0, net_total - COALESCE(returned_amount, 0))') }).first();
 
     const expQuery = db('expenses').where({ is_deleted: false });
     applyScope(expQuery);
@@ -293,6 +322,8 @@ router.get('/analytics', async (req, res, next) => {
 
     const txForPm = db('transactions')
       .where({ is_deleted: false, tx_type: 'SALE' })
+      .whereNot('status', 'RETURNED')
+      .whereNot('status', 'CANCELLED')
       .select('payment_breakdown');
     applyScope(txForPm);
     applyBranch(txForPm);
@@ -377,9 +408,11 @@ router.get('/sales-trend', async (req, res, next) => {
     const applyBranch = getBranchScope(req);
     const query = db('transactions')
       .where({ is_deleted: false, tx_type: 'SALE' })
+      .whereNot('status', 'RETURNED')
+      .whereNot('status', 'CANCELLED')
       .select(db.raw('DATE_FORMAT(created_at, "%Y-%m-%d") as date'))
       .select(db.raw('DATE_FORMAT(created_at, "%a %d") as day'))
-      .sum({ revenue: 'net_total' })
+      .sum({ revenue: db.raw('GREATEST(0, net_total - COALESCE(returned_amount, 0))') })
       .count({ sales: '*' })
       .groupBy('date', 'day')
       .orderBy('date', 'asc')
@@ -413,7 +446,7 @@ router.get('/top-products', async (req, res, next) => {
     // Pull completed sales, parse line_items JSON to aggregate per product
     const txQuery = db('transactions')
       .where({ is_deleted: false, tx_type: 'SALE' })
-      .whereNotIn('status', ['CANCELLED'])
+      .whereNotIn('status', ['CANCELLED', 'RETURNED'])
       .select('line_items', 'net_total');
     applyScope(txQuery);
     applyBranch(txQuery);

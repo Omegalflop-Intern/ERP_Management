@@ -63,7 +63,7 @@ export const getAllInvestors = async (tenantId = null, branchId = null) => {
   const query = db('investors').where({ is_deleted: false });
   applyTenantScope(query, tenantId);
   if (branchId && branchId !== 'all') {
-    query.where((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+    query.where('branch_id', branchId);
   }
   const rows = await query.orderBy('created_at', 'desc');
 
@@ -253,7 +253,7 @@ export const getAllTransactions = async (tenantId = null, branchId = null) => {
     dataQuery.where('investor_transactions.tenant_id', tenantId);
   }
   if (branchId && branchId !== 'all') {
-    dataQuery.where((b) => b.where('investors.branch_id', branchId).orWhereNull('investors.branch_id'));
+    dataQuery.where('investors.branch_id', branchId);
   }
 
   const rows = await dataQuery.orderBy('investor_transactions.created_at', 'desc');

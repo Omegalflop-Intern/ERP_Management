@@ -36,7 +36,7 @@ export const getDocumentsByEntity = async (entityType = null, entityId = null, t
   if (entityId) query.where('entity_id', entityId);
   applyTenantScope(query, tenantId);
   if (branchId && branchId !== 'all') {
-    query.where((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+    query.where('branch_id', branchId);
   }
 
   const rows = await query.orderBy('created_at', 'desc');

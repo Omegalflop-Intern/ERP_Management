@@ -30,7 +30,7 @@ export const getAllRecurringExpenses = async (tenantId = null, branchId = null) 
   const query = db('recurring_expenses').where({ is_deleted: false });
   applyTenantScope(query, tenantId);
   if (branchId && branchId !== 'all') {
-    query.where((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+    query.where('branch_id', branchId);
   }
   const rows = await query.orderBy('next_due_date', 'asc');
   return rows.map(formatRecurringExpense);

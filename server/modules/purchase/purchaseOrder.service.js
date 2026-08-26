@@ -66,7 +66,7 @@ export const getAllPurchaseOrders = async (page = 1, limit = 20, search = '', st
   const countQuery = db('purchase_orders').where('purchase_orders.is_deleted', false);
   applyTenantScope(countQuery, tenantId);
   if (branchId && branchId !== 'all') {
-    countQuery.where((b) => b.where('purchase_orders.branch_id', branchId).orWhereNull('purchase_orders.branch_id'));
+    countQuery.where('purchase_orders.branch_id', branchId);
   }
   if (status && status !== 'ALL') countQuery.where('purchase_orders.status', status);
   if (search) {
@@ -92,7 +92,7 @@ export const getAllPurchaseOrders = async (page = 1, limit = 20, search = '', st
     );
   applyTenantScope(dataQuery, tenantId);
   if (branchId && branchId !== 'all') {
-    dataQuery.where((b) => b.where('purchase_orders.branch_id', branchId).orWhereNull('purchase_orders.branch_id'));
+    dataQuery.where('purchase_orders.branch_id', branchId);
   }
   if (status && status !== 'ALL') dataQuery.where('purchase_orders.status', status);
   if (search) {
@@ -128,7 +128,7 @@ export const getPurchaseOrderById = async (id, tenantId = null, branchId = null)
     );
   applyTenantScope(dataQuery, tenantId);
   if (branchId && branchId !== 'all') {
-    dataQuery.where((b) => b.where('purchase_orders.branch_id', branchId).orWhereNull('purchase_orders.branch_id'));
+    dataQuery.where('purchase_orders.branch_id', branchId);
   }
 
   const row = await dataQuery.first();

@@ -93,7 +93,16 @@ export default function JournalEntries() {
 
   const postedCount = entries.filter((e) => e.status === 'POSTED').length;
   const draftCount = entries.filter((e) => e.status === 'DRAFT').length;
-  const totalVolume = entries.reduce((acc, e) => acc + (e.totalDebit || 0), 0);
+  
+  // Calculate Net Journal Value (Active Inflow - Returns/Refunds)
+  const netJournalValue = entries.reduce((acc, e) => {
+    if (e.status !== 'POSTED') return acc;
+    const debit = Number(e.totalDebit || 0);
+    const desc = String(e.description || '').toLowerCase();
+    const ref = String(e.reference || '').toLowerCase();
+    const isReturn = desc.includes('return') || desc.includes('refund') || ref.startsWith('ret');
+    return isReturn ? acc - debit : acc + debit;
+  }, 0);
 
   return (
     <div className="space-y-6">
@@ -175,10 +184,10 @@ export default function JournalEntries() {
         <div className="glass-secondary rounded-[20px] p-4 flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Total Volume
+              Net Journal Value
             </span>
             <div className="text-2xl font-bold text-slate-900 dark:text-slate-100 font-mono mt-1">
-              ৳{totalVolume.toLocaleString()}
+              ৳{Math.max(0, netJournalValue).toLocaleString()}
             </div>
           </div>
           <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/40 flex items-center justify-center text-purple-600">

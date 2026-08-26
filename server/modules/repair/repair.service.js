@@ -54,7 +54,7 @@ export const getAllRepairs = async (page = 1, limit = 50, status = '', search = 
   const countQuery = db('repair_tickets').where({ is_deleted: false });
   applyTenantScope(countQuery, tenantId);
   if (branchId && branchId !== 'all') {
-    countQuery.where((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+    countQuery.where('branch_id', branchId);
   }
   if (status) countQuery.where({ status });
   if (search) {
@@ -75,7 +75,7 @@ export const getAllRepairs = async (page = 1, limit = 50, status = '', search = 
   const dataQuery = db('repair_tickets').where({ is_deleted: false });
   applyTenantScope(dataQuery, tenantId);
   if (branchId && branchId !== 'all') {
-    dataQuery.where((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+    dataQuery.where('branch_id', branchId);
   }
   if (status) dataQuery.where({ status });
   if (search) {

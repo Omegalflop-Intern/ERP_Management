@@ -18,30 +18,53 @@ import ReturnCreditNote from '../../components/sales/ReturnCreditNote';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
 import { executeClientPrint } from '../../utils/invoiceGenerator';
-import { NumberInput } from '../../components/ui/NumberInput';
+import { useBranchStore } from '../../store/branchStore';
 
 export default function Returns() {
   const navigate = useNavigate();
   const [invoiceSearch, setInvoiceSearch] = useState('');
   const [selectedSale, setSelectedSale] = useState(null);
   const [returnItems, setReturnItems] = useState([]);
+  const [returnAction, setReturnAction] = useState('REFUND'); // 'REFUND' or 'REPLACEMENT'
+  const [replacementItem, setReplacementItem] = useState({
+    productId: '',
+    name: '',
+    unitPrice: 0,
+    imeiOrSerial: '',
+    quantity: 1,
+  });
   const [completedReturnModal, setCompletedReturnModal] = useState(null);
   const creditNoteRef = useRef(null);
   const { styled } = useTheme();
   const queryClient = useQueryClient();
+  const activeBranchId = useBranchStore((s) => s.activeBranchId);
 
-  // Fetch recent sales for 1-click return selection
-  const { data: recentSalesRes, isLoading: loadingRecent } = useQuery({
-    queryKey: ['recent-sales-returns', invoiceSearch],
+  // Fetch store products for replacement option
+  const { data: storeProducts = [] } = useQuery({
+    queryKey: ['products-for-replacement', activeBranchId],
     queryFn: async () => {
-      const params = { limit: 10 };
+      const res = await api.get('/products', { params: { limit: 100 } });
+      return res.data?.data?.products || res.data?.data || [];
+    },
+  });
+
+  // Fetch recent sales for 1-click return selection (strictly returnable sales)
+  const { data: recentSalesRes, isLoading: loadingRecent } = useQuery({
+    queryKey: ['recent-sales-returns', invoiceSearch, activeBranchId],
+    queryFn: async () => {
+      const params = { limit: 10, returnable: true };
       if (invoiceSearch.trim()) params.customer = invoiceSearch.trim();
       const res = await api.get('/sales', { params });
       return res.data?.data || [];
     },
   });
 
-  const recentSales = recentSalesRes || [];
+  const recentSales = (recentSalesRes || []).filter(
+    (sale) =>
+      sale.status !== 'RETURNED' &&
+      sale.status !== 'CANCELLED' &&
+      Number(sale.returnedAmount || 0) < Number(sale.netTotal || 0)
+  );
 
   const searchMutation = useMutation({
     mutationFn: async (query) => {
@@ -55,9 +78,10 @@ export default function Returns() {
   });
 
   const returnMutation = useMutation({
-    mutationFn: async ({ saleId, items }) => api.post(`/sales/${saleId}/return`, { items }),
+    mutationFn: async ({ saleId, items, returnAction, replacementItem }) =>
+      api.post(`/sales/${saleId}/return`, { items, returnAction, replacementItem }),
     onSuccess: (res) => {
-      toast.success(res.data.message || 'Return processed successfully');
+      toast.success(res.data.message || (returnAction === 'REPLACEMENT' ? 'Product replaced successfully' : 'Return processed successfully'));
       const updatedSale = res.data?.data?.sale || selectedSale;
       const returnInvoiceNumber = res.data?.data?.returnInvoiceNumber;
 
@@ -70,19 +94,27 @@ export default function Returns() {
         sale: updatedSale,
         returnInvoiceNumber,
         logs: currentLogs,
+        returnAction,
+        replacementItem,
       });
 
       setSelectedSale(null);
       setReturnItems([]);
+      setReturnAction('REFUND');
+      setReplacementItem({ productId: '', name: '', unitPrice: 0, imeiOrSerial: '', quantity: 1 });
       setInvoiceSearch('');
       queryClient.invalidateQueries(['sales']);
       queryClient.invalidateQueries(['recent-sales-returns']);
+      queryClient.invalidateQueries(['products']);
+      queryClient.invalidateQueries(['stock']);
     },
     onError: (e) => toast.error(e.response?.data?.message || 'Return failed'),
   });
 
   const onSelectSale = (sale) => {
     setSelectedSale(sale);
+    setReturnAction('REFUND');
+    setReplacementItem({ productId: '', name: '', unitPrice: 0, imeiOrSerial: '', quantity: 1 });
     setReturnItems(
       sale.lineItems.map((item, idx) => ({
         lineItemId: item._id || item.id || idx,
@@ -127,7 +159,15 @@ export default function Returns() {
         notes: i.notes,
       }));
     if (items.length === 0) return toast.error('Select at least one item to return');
-    returnMutation.mutate({ saleId: selectedSale._id, items });
+    if (returnAction === 'REPLACEMENT' && !replacementItem.productId) {
+      return toast.error('Please select a replacement product from the catalog');
+    }
+    returnMutation.mutate({
+      saleId: selectedSale._id || selectedSale.id,
+      items,
+      returnAction,
+      replacementItem: returnAction === 'REPLACEMENT' ? replacementItem : undefined,
+    });
   };
 
   const selectedCount = returnItems.filter((i) => i.selected).length;
@@ -410,54 +450,216 @@ export default function Returns() {
               </div>
             </div>
 
-            {/* Return Summary & Process Action */}
-            <div className="pt-2 border-t border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                {selectedCount} item(s) selected for return
+            {/* Return Action Type Selector (Cash Refund vs Product Replacement) */}
+            <div className="pt-3 border-t border-gray-100 dark:border-gray-800 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                  Select Return Resolution / Action
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setReturnAction('REFUND')}
+                    className={`p-3 rounded-xl border text-left flex items-start gap-3 transition-all ${
+                      returnAction === 'REFUND'
+                        ? 'border-red-500 bg-red-50/70 dark:bg-red-950/30 text-red-900 dark:text-red-200 ring-2 ring-red-500/20 shadow-xs'
+                        : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/60'
+                    }`}
+                  >
+                    <div className={`p-2 rounded-lg shrink-0 ${returnAction === 'REFUND' ? 'bg-red-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-500'}`}>
+                      <RotateCcw className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold">1. Money / Cash Refund</div>
+                      <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                        Product is restored into stock & cash/payment is refunded to customer.
+                      </div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setReturnAction('REPLACEMENT')}
+                    className={`p-3 rounded-xl border text-left flex items-start gap-3 transition-all ${
+                      returnAction === 'REPLACEMENT'
+                        ? 'border-blue-500 bg-blue-50/70 dark:bg-blue-950/30 text-blue-900 dark:text-blue-200 ring-2 ring-blue-500/20 shadow-xs'
+                        : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/60'
+                    }`}
+                  >
+                    <div className={`p-2 rounded-lg shrink-0 ${returnAction === 'REPLACEMENT' ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-500'}`}>
+                      <RefreshCw className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold">2. Product Replacement / Exchange</div>
+                      <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                        Exchange for another product with automatic price difference adjustment.
+                      </div>
+                    </div>
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-4 w-full sm:w-auto">
-                <div className="text-right">
-                  <div className="text-xs text-gray-400">Total Refund</div>
-                  <div className="text-xl font-mono font-extrabold text-red-600 dark:text-red-400">
-                    ৳
-                    {returnItems
-                      .filter((i) => i.selected)
-                      .reduce((sum, item) => {
-                        const idx = returnItems.indexOf(item);
-                        const lineItem = selectedSale.lineItems[idx];
-                        if (!lineItem) return sum;
-                        // Calculate effective refund price considering discounts
-                        const hasGlobalDiscount =
-                          selectedSale.subTotal > 0 &&
-                          selectedSale.netTotal < selectedSale.subTotal;
-                        const globalDiscountFactor = hasGlobalDiscount
-                          ? selectedSale.netTotal / selectedSale.subTotal
-                          : 1;
-                        const baseEffectiveUnitPrice =
-                          lineItem.qty > 0
-                            ? (lineItem.totalPrice || 0) / lineItem.qty
-                            : lineItem.unitPrice || 0;
-                        const effectiveUnitPrice = Math.round(
-                          baseEffectiveUnitPrice * globalDiscountFactor
-                        );
-                        return sum + effectiveUnitPrice * item.quantity;
-                      }, 0)
-                      .toLocaleString()}
+
+              {/* Product Replacement Picker */}
+              {returnAction === 'REPLACEMENT' && (
+                <div className="p-4 rounded-xl border border-blue-200 dark:border-blue-900/50 bg-blue-50/40 dark:bg-blue-950/20 space-y-3 animate-in fade-in">
+                  <div className="text-xs font-bold text-blue-900 dark:text-blue-200 flex items-center gap-1.5">
+                    <RefreshCw className="w-3.5 h-3.5" /> Choose Replacement Product from Catalog
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                    <div className="sm:col-span-6 space-y-1">
+                      <label className="block text-[10px] font-bold text-gray-500 uppercase">
+                        Replacement Product *
+                      </label>
+                      <select
+                        value={replacementItem.productId}
+                        onChange={(e) => {
+                          const p = storeProducts.find((x) => String(x.id || x._id) === String(e.target.value));
+                          setReplacementItem({
+                            productId: e.target.value,
+                            name: p ? p.name : '',
+                            unitPrice: p ? Number(p.selling_price || p.sellingPrice || 0) : 0,
+                            imeiOrSerial: '',
+                            quantity: 1,
+                          });
+                        }}
+                        className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-gray-100 font-medium focus:outline-none focus:border-blue-500"
+                      >
+                        <option value="">-- Select Replacement Product --</option>
+                        {storeProducts.map((p) => {
+                          const qty = p.stockQuantity ?? p.stock ?? p.stock_quantity ?? 0;
+                          const price = Number(p.selling_price || p.sellingPrice || 0);
+                          return (
+                            <option key={p.id || p._id} value={p.id || p._id}>
+                              {p.name} — ৳{price.toLocaleString()} (Stock: {qty})
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+
+                    <div className="sm:col-span-3 space-y-1">
+                      <label className="block text-[10px] font-bold text-gray-500 uppercase">
+                        Exchange Price (৳)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={replacementItem.unitPrice || ''}
+                        onChange={(e) =>
+                          setReplacementItem((prev) => ({
+                            ...prev,
+                            unitPrice: Number(e.target.value) || 0,
+                          }))
+                        }
+                        className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-xs font-mono font-bold text-gray-900 dark:text-gray-100"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-3 space-y-1">
+                      <label className="block text-[10px] font-bold text-gray-500 uppercase">
+                        IMEI / Serial (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Enter IMEI..."
+                        value={replacementItem.imeiOrSerial || ''}
+                        onChange={(e) =>
+                          setReplacementItem((prev) => ({
+                            ...prev,
+                            imeiOrSerial: e.target.value,
+                          }))
+                        }
+                        className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-gray-100"
+                      />
+                    </div>
                   </div>
                 </div>
-                <button
-                  onClick={handleReturn}
-                  disabled={selectedCount === 0 || returnMutation.isPending}
-                  className="px-6 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-xs"
-                >
-                  {returnMutation.isPending ? (
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <RotateCcw className="w-4 h-4" />
-                  )}
-                  Confirm Return
-                </button>
-              </div>
+              )}
+
+              {/* Financial Calculation & Confirmation */}
+              {(() => {
+                const totalReturnValue = returnItems
+                  .filter((i) => i.selected)
+                  .reduce((sum, item) => {
+                    const idx = returnItems.indexOf(item);
+                    const lineItem = selectedSale.lineItems[idx];
+                    if (!lineItem) return sum;
+                    const hasGlobalDiscount =
+                      selectedSale.subTotal > 0 &&
+                      selectedSale.netTotal < selectedSale.subTotal;
+                    const globalDiscountFactor = hasGlobalDiscount
+                      ? selectedSale.netTotal / selectedSale.subTotal
+                      : 1;
+                    const baseEffectiveUnitPrice =
+                      lineItem.qty > 0
+                        ? (lineItem.totalPrice || 0) / lineItem.qty
+                        : lineItem.unitPrice || 0;
+                    const effectiveUnitPrice = Math.round(
+                      baseEffectiveUnitPrice * globalDiscountFactor
+                    );
+                    return sum + effectiveUnitPrice * item.quantity;
+                  }, 0);
+
+                const replacementTotal =
+                  returnAction === 'REPLACEMENT'
+                    ? (Number(replacementItem.unitPrice) || 0) * (Number(replacementItem.quantity) || 1)
+                    : 0;
+                const priceDiff = replacementTotal - totalReturnValue;
+
+                return (
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+                    <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                      {selectedCount} item(s) selected for return
+                    </div>
+
+                    <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                      {returnAction === 'REFUND' ? (
+                        <div className="text-right">
+                          <div className="text-xs text-gray-400">Total Refund to Customer</div>
+                          <div className="text-xl font-mono font-extrabold text-red-600 dark:text-red-400">
+                            ৳{totalReturnValue.toLocaleString()}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-right space-y-0.5">
+                          <div className="text-[11px] text-gray-400">
+                            Returned: <strong>৳{totalReturnValue.toLocaleString()}</strong> | Repl: <strong>৳{replacementTotal.toLocaleString()}</strong>
+                          </div>
+                          <div className="text-base font-mono font-extrabold flex items-center gap-1 justify-end">
+                            <span>Balance Diff:</span>
+                            {priceDiff > 0 && (
+                              <span className="text-amber-600 dark:text-amber-400">+৳{priceDiff.toLocaleString()} (Customer Pays)</span>
+                            )}
+                            {priceDiff < 0 && (
+                              <span className="text-emerald-600 dark:text-emerald-400">৳{Math.abs(priceDiff).toLocaleString()} (Refund to Customer)</span>
+                            )}
+                            {priceDiff === 0 && (
+                              <span className="text-blue-600 dark:text-blue-400">৳0 (Even Exchange)</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      <button
+                        onClick={handleReturn}
+                        disabled={selectedCount === 0 || returnMutation.isPending || (returnAction === 'REPLACEMENT' && !replacementItem.productId)}
+                        className={`px-6 py-2.5 disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-xs shrink-0 ${
+                          returnAction === 'REPLACEMENT' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700'
+                        }`}
+                      >
+                        {returnMutation.isPending ? (
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                        ) : returnAction === 'REPLACEMENT' ? (
+                          <RefreshCw className="w-4 h-4" />
+                        ) : (
+                          <RotateCcw className="w-4 h-4" />
+                        )}
+                        {returnAction === 'REPLACEMENT' ? 'Confirm Product Exchange' : 'Confirm Cash Return'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>

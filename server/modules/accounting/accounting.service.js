@@ -445,22 +445,60 @@ export const deleteJournalEntry = async (id, tenantId = null, branchId = null) =
   return { ...entry, isDeleted: true };
 };
 
+export const computeBranchScopedAccountBalances = async (rows, tenantId, branchId) => {
+  const accountIds = rows.map((r) => r.id);
+  let totalDebits = {};
+  let totalCredits = {};
+
+  if (accountIds.length > 0) {
+    const jeQuery = db('journal_entries')
+      .where('is_deleted', false)
+      .andWhere('status', 'POSTED')
+      .select('id', 'date', 'lines', 'branch_id');
+    applyTenantScope(jeQuery, tenantId, 'journal_entries');
+    if (branchId && branchId !== 'all') {
+      jeQuery.where('branch_id', branchId);
+    }
+    const jeRows = await jeQuery;
+    for (const je of jeRows) {
+      let lines = [];
+      try { lines = typeof je.lines === 'string' ? JSON.parse(je.lines) : (je.lines || []); } catch { lines = []; }
+      for (const line of lines) {
+        const acctId = line.accountId || line.account_id;
+        if (acctId && accountIds.includes(acctId)) {
+          totalDebits[acctId] = (totalDebits[acctId] || 0) + Number(line.debit || 0);
+          totalCredits[acctId] = (totalCredits[acctId] || 0) + Number(line.credit || 0);
+        }
+      }
+    }
+  }
+
+  return rows.map((r) => {
+    const formatted = formatAccount(r);
+    const d = totalDebits[r.id] || 0;
+    const c = totalCredits[r.id] || 0;
+    if (branchId && branchId !== 'all') {
+      if (['ASSET', 'EXPENSE'].includes(r.type)) {
+        formatted.balance = d - c;
+      } else {
+        formatted.balance = c - d;
+      }
+    }
+    formatted.totalDebit = d;
+    formatted.totalCredit = c;
+    return formatted;
+  });
+};
+
 export const getBalanceSheet = async (asOf = '', tenantId = null, branchId = null) => {
   await seedDefaultAccounts(tenantId);
 
-  // Sync historical transactions to journal entries & recalculate live account balances
-  try {
-    await syncHistoricalJournals(tenantId);
-    await recalculateAllAccountBalances(tenantId);
-  } catch (err) {
-    console.error('[BalanceSheet Sync Error]:', err.message);
-  }
-
   const accountsQuery = db('accounts').where({ is_deleted: false, is_active: true });
   applyTenantScope(accountsQuery, tenantId, 'accounts');
-  applyBranchScope(accountsQuery, branchId, 'accounts');
   const rows = await accountsQuery.orderBy('code', 'asc');
-  const accounts = rows.map(r => formatAccount(r));
+  
+  // Calculate branch-scoped balances from journal entries
+  const accounts = await computeBranchScopedAccountBalances(rows, tenantId, branchId);
 
   const assets = accounts.filter(a => a.type === 'ASSET');
   const liabilities = accounts.filter(a => a.type === 'LIABILITY');
@@ -494,7 +532,8 @@ export const getProfitLoss = async (from = '', to = '', tenantId = null, branchI
 
   // 1. Fetch completed sales transactions
   const revQuery = db('transactions')
-    .where({ tx_type: 'SALE', is_deleted: false, status: 'COMPLETED' });
+    .where({ tx_type: 'SALE', is_deleted: false })
+    .whereNot('status', 'CANCELLED');
   applyTenantScope(revQuery, tenantId, 'transactions');
   if (branchId && branchId !== 'all') revQuery.where('branch_id', branchId);
   if (fromDateStr) revQuery.whereRaw('DATE(created_at) >= ?', [fromDateStr]);
@@ -502,7 +541,7 @@ export const getProfitLoss = async (from = '', to = '', tenantId = null, branchI
 
   const salesRows = await revQuery.select(
     'id', 'invoice_number', 'sub_total', 'discount', 'tax', 'net_total',
-    'returned_amount', 'line_items', 'created_at'
+    'returned_amount', 'line_items', 'return_logs', 'created_at'
   );
 
   let totalSalesRevenue = 0;
@@ -520,7 +559,7 @@ export const getProfitLoss = async (from = '', to = '', tenantId = null, branchI
   }
 
   for (const sale of salesRows) {
-    const net = Number(sale.net_total || 0) - Number(sale.returned_amount || 0);
+    const net = Math.max(0, Number(sale.net_total || 0) - Number(sale.returned_amount || 0));
     totalSalesRevenue += net;
     totalDiscounts += Number(sale.discount || 0);
     totalReturns += Number(sale.returned_amount || 0);
@@ -532,13 +571,33 @@ export const getProfitLoss = async (from = '', to = '', tenantId = null, branchI
       items = [];
     }
 
+    let txCogs = 0;
     for (const item of items) {
       const qty = Number(item.qty || 1);
       const unitCost = item.unitCost !== undefined && item.unitCost !== null
         ? Number(item.unitCost)
         : (productCostMap[item.productId] || 0);
-      totalCogs += (unitCost * qty);
+      txCogs += (unitCost * qty);
     }
+
+    let returnLogs = [];
+    try { returnLogs = typeof sale.return_logs === 'string' ? JSON.parse(sale.return_logs) : (sale.return_logs || []); } catch {}
+    if (Array.isArray(returnLogs) && returnLogs.length > 0) {
+      for (const rLog of returnLogs) {
+        const rItems = rLog.items || [];
+        for (const ri of rItems) {
+          const rpId = ri.productId?._id || ri.productId?.id || ri.productId;
+          const rQty = Number(ri.quantity || ri.qty || 1);
+          const rCost = productCostMap[String(rpId)] || 0;
+          txCogs = Math.max(0, txCogs - (rCost * rQty));
+        }
+      }
+    } else if (Number(sale.returned_amount || 0) > 0 && Number(sale.net_total || 0) > 0) {
+      const retRatio = Math.min(1, Number(sale.returned_amount) / Number(sale.net_total));
+      txCogs = Math.max(0, txCogs * (1 - retRatio));
+    }
+
+    totalCogs += txCogs;
   }
 
   const grossProfit = totalSalesRevenue - totalCogs;
@@ -589,8 +648,6 @@ export const getProfitLoss = async (from = '', to = '', tenantId = null, branchI
     if (fromDateStr) poQuery.whereRaw('DATE(created_at) >= ?', [fromDateStr]);
     if (toDateStr) poQuery.whereRaw('DATE(created_at) <= ?', [toDateStr]);
 
-    // Bug #9 fixed: P&L was querying non-existent columns 'total_cost' and 'grand_total'.
-    // The purchase_orders table uses 'sub_total' and 'net_total'.
     const poRows = await poQuery.select('id', 'sub_total', 'net_total', 'paid_amount', 'returned_amount');
     purchasesCount = poRows.length;
     for (const po of poRows) {
@@ -599,7 +656,7 @@ export const getProfitLoss = async (from = '', to = '', tenantId = null, branchI
       totalPurchasesCost += Math.max(0, net - ret);
     }
   } catch (err) {
-    // Non-blocking if table missing
+    // Non-blocking if purchase_orders not queried
   }
 
   const netIncome = grossProfit - totalExpenses;
@@ -677,24 +734,17 @@ export const recalculateAllAccountBalances = async (tenantId = null) => {
 export const getTrialBalance = async (tenantId = null, branchId = null) => {
   await seedDefaultAccounts(tenantId);
 
-  // Sync any unsynced historical transactions and recalculate account balances
-  try {
-    await syncHistoricalJournals(tenantId);
-    await recalculateAllAccountBalances(tenantId);
-  } catch (e) {
-    console.error('[TrialBalance Sync Error]:', e.message);
-  }
-
   const query = db('accounts').where({ is_deleted: false, is_active: true });
   applyTenantScope(query, tenantId, 'accounts');
-  applyBranchScope(query, branchId, 'accounts');
   const rows = await query.orderBy('code', 'asc');
+
+  // Compute branch-scoped balances
+  const accountsWithBalances = await computeBranchScopedAccountBalances(rows, tenantId, branchId);
 
   let totalDebit = 0;
   let totalCredit = 0;
 
-  const accounts = rows.map((r) => {
-    const formatted = formatAccount(r);
+  const accounts = accountsWithBalances.map((formatted) => {
     const balance = Number(formatted.balance || 0);
     let debit = 0;
     let credit = 0;
@@ -724,7 +774,7 @@ export const getTrialBalance = async (tenantId = null, branchId = null) => {
   });
 
   return {
-    accounts,
+    accounts: branchId && branchId !== 'all' ? accounts.filter(a => a.debit > 0 || a.credit > 0 || Math.abs(a.balance) > 0) : accounts,
     totalDebit,
     totalCredit,
     balanced: Math.abs(totalDebit - totalCredit) < 0.01,
@@ -775,6 +825,19 @@ export const createAutomatedSaleJournal = async (sale) => {
       lines.push({ accountId: acctMap['4000'].id, code: '4000', accountName: 'Sales Revenue', debit: 0, credit: netTotal });
     }
 
+    if (lines.length >= 2) {
+      await createJournalEntry({
+        tenantId,
+        branchId: sale.branch_id || sale.branchId || null,
+        date: sale.created_at || new Date(),
+        description: `Sale Invoice #${ref} (${sale.customer_name || 'Walk-in'})`,
+        reference: ref,
+        lines,
+        status: 'POSTED',
+      });
+    }
+
+    // Cost of Goods Sold & Inventory Cost Recognition entry (separate entry so invoice amounts are crystal clear)
     let saleItems = [];
     try { saleItems = typeof sale.line_items === 'string' ? JSON.parse(sale.line_items) : (sale.lineItems || sale.items || []); } catch { saleItems = []; }
     let cogs = 0;
@@ -784,19 +847,22 @@ export const createAutomatedSaleJournal = async (sale) => {
       cogs += (uCost * qty);
     }
     if (cogs > 0 && acctMap['5000'] && acctMap['1030']) {
-      lines.push({ accountId: acctMap['5000'].id, code: '5000', accountName: 'Cost of Goods Sold', debit: cogs, credit: 0 });
-      lines.push({ accountId: acctMap['1030'].id, code: '1030', accountName: 'Inventory', debit: 0, credit: cogs });
-    }
-
-    if (lines.length >= 2) {
-      return await createJournalEntry({
-        tenantId,
-        date: sale.created_at || new Date(),
-        description: `Sale Invoice #${ref} (${sale.customer_name || 'Walk-in'})`,
-        reference: ref,
-        lines,
-        status: 'POSTED',
-      });
+      const cogsRef = `COGS-${ref}`;
+      const existingCogs = await db('journal_entries').where({ reference: cogsRef, is_deleted: false }).first();
+      if (!existingCogs) {
+        await createJournalEntry({
+          tenantId,
+          branchId: sale.branch_id || sale.branchId || null,
+          date: sale.created_at || new Date(),
+          description: `COGS Recognition for #${ref}`,
+          reference: cogsRef,
+          lines: [
+            { accountId: acctMap['5000'].id, code: '5000', accountName: 'Cost of Goods Sold', debit: cogs, credit: 0 },
+            { accountId: acctMap['1030'].id, code: '1030', accountName: 'Inventory', debit: 0, credit: cogs },
+          ],
+          status: 'POSTED',
+        });
+      }
     }
   } catch (err) {
     console.error('[AUTO-JOURNAL] Failed to create sale journal:', err.message);
@@ -1016,6 +1082,7 @@ export const syncHistoricalJournals = async (tenantId = null) => {
       if (lines.length >= 2) {
         await createJournalEntry({
           tenantId: sale.tenant_id || tenantId,
+          branchId: sale.branch_id || null,
           date: sale.created_at,
           description: `Sale Invoice #${ref} (${sale.customer_name || 'Walk-in'})`,
           reference: ref,
@@ -1052,6 +1119,7 @@ export const syncHistoricalJournals = async (tenantId = null) => {
         const catStr = exp.category || 'General Expense';
         await createJournalEntry({
           tenantId: exp.tenant_id || tenantId,
+          branchId: exp.branch_id || null,
           date: exp.created_at,
           description: `Expense: ${titleStr} (${catStr})`,
           reference: ref,
@@ -1160,33 +1228,59 @@ export const createAutomatedReturnJournal = async (sale, refundAmount, returnInv
       lines.push({ accountId: acctMap['1000'].id, code: '1000', accountName: 'Cash', debit: 0, credit: refund });
     }
 
-    // Restore Inventory & reverse COGS if cost is available
-    let items = [];
-    try { items = typeof sale.line_items === 'string' ? JSON.parse(sale.line_items) : (sale.lineItems || sale.items || []); } catch { items = []; }
-    let cogsRestored = 0;
-    for (const it of items) {
-      const qty = Number(it.quantity || it.qty || 1);
-      const uCost = Number(it.unitCost || 0);
-      cogsRestored += (uCost * qty);
-    }
-    if (cogsRestored > 0 && acctMap['1030'] && acctMap['5000']) {
-      lines.push({ accountId: acctMap['1030'].id, code: '1030', accountName: 'Inventory', debit: cogsRestored, credit: 0 });
-      lines.push({ accountId: acctMap['5000'].id, code: '5000', accountName: 'Cost of Goods Sold', debit: 0, credit: cogsRestored });
-    }
-
     if (lines.length >= 2) {
-      return await createJournalEntry({
+      await createJournalEntry({
         tenantId,
+        branchId: sale.branch_id || sale.branchId || null,
         date: new Date(),
         description: `Sales Return (${ref}) - Customer: ${sale.customer_name || sale.customer?.name || 'Customer'}`,
         reference: ref,
+        lines,
+        status: 'POSTED',
+      });
+    }
+
+    // Restore Inventory & reverse COGS in a separate restock journal entry
+    let items = [];
+    try { items = typeof sale.line_items === 'string' ? JSON.parse(sale.line_items) : (sale.lineItems || sale.items || []); } catch { items = []; }
+    
+    // Fetch product cost map in case unitCost was not populated on line items
+    const prodIds = items.map(it => it.productId?._id || it.productId?.id || it.productId).filter(Boolean);
+    const prodCostMap = {};
+    if (prodIds.length > 0) {
+      const pRows = await db('products').whereIn('id', prodIds);
+      pRows.forEach(p => { prodCostMap[String(p.id)] = Number(p.cost_price || 0); });
+    }
+
+    let cogsRestored = 0;
+    for (const it of items) {
+      const pId = String(it.productId?._id || it.productId?.id || it.productId);
+      const qty = Number(it.quantity || it.qty || 1);
+      const uCost = it.unitCost !== undefined && Number(it.unitCost) > 0 ? Number(it.unitCost) : (prodCostMap[pId] || 0);
+      cogsRestored += (uCost * qty);
+    }
+    if (cogsRestored > 0 && acctMap['1030'] && acctMap['5000']) {
+      const restockRef = `RESTOCK-${ref}`;
+      const existingRestock = await db('journal_entries').where({ reference: restockRef, is_deleted: false }).first();
+      if (!existingRestock) {
+        await createJournalEntry({
+          tenantId,
+          branchId: sale.branch_id || sale.branchId || null,
+          date: new Date(),
+          description: `Inventory Restock for Return (${ref})`,
+          reference: restockRef,
+          lines: [
+            { accountId: acctMap['1030'].id, code: '1030', accountName: 'Inventory', debit: cogsRestored, credit: 0 },
+            { accountId: acctMap['5000'].id, code: '5000', accountName: 'Cost of Goods Sold', debit: 0, credit: cogsRestored },
+          ],
           status: 'POSTED',
         });
       }
-    } catch (err) {
-      console.error('[Accounting Auto-Journal Sale Return Error]:', err.message);
     }
-  };
+  } catch (err) {
+    console.error('[Accounting Auto-Journal Sale Return Error]:', err.message);
+  }
+};
 
 export const createAutomatedPurchaseReturnJournal = async (purchaseOrder, refundAmount) => {};
 // Bug #10 fixed: createAutomatedServiceJournal now creates POSTED journals.

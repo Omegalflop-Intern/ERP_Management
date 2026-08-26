@@ -38,7 +38,7 @@ export const getAllCustomers = async (page = 1, limit = 20, search = '', tenantI
   const countQuery = db('customers').where('is_deleted', false);
   applyTenantScope(countQuery, tenantId);
   if (branchId && branchId !== 'all') {
-    countQuery.where((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+    countQuery.where('branch_id', branchId);
   }
 
   if (search) {
@@ -59,7 +59,7 @@ export const getAllCustomers = async (page = 1, limit = 20, search = '', tenantI
   const dataQuery = db('customers').where('is_deleted', false);
   applyTenantScope(dataQuery, tenantId);
   if (branchId && branchId !== 'all') {
-    dataQuery.where((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+    dataQuery.where('branch_id', branchId);
   }
 
   if (search) {

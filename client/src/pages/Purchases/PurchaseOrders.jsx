@@ -673,7 +673,6 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
         category: 'Smartphones',
         qty: 1,
         unitCost: '',
-        discount: '',
         sellingPrice: '',
         wholesalePrice: '',
         showImei: false,
@@ -1008,9 +1007,8 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
             <div className="space-y-3">
               {lineItems.map((item, index) => {
                 const lineGross = Number(item.qty || 1) * Number(item.unitCost || 0);
-                const lineDisc = Number(item.discount || 0);
-                const lineTotal = Math.max(0, lineGross - lineDisc);
-                const effectiveCost = Number(item.qty || 1) > 0 ? Math.round(lineTotal / Number(item.qty || 1)) : Number(item.unitCost || 0);
+                const lineTotal = lineGross;
+                const effectiveCost = Number(item.unitCost || 0);
                 const imeisCount = item.imeiText
                   ? item.imeiText
                       .split(/[\n,]+/)
@@ -1097,8 +1095,8 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                         )}
                       </div>
 
-                      {/* Category (1 col) */}
-                      <div className="sm:col-span-1 space-y-1">
+                      {/* Category (2 cols) */}
+                      <div className="sm:col-span-2 space-y-1">
                         <Label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                           Category
                         </Label>
@@ -1171,27 +1169,6 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                             )
                           }
                           className="h-9 text-xs font-mono font-bold text-right rounded-xl bg-white dark:bg-[#1e293b]"
-                        />
-                      </div>
-
-                      {/* Per-Item Discount (1 col) */}
-                      <div className="sm:col-span-1 space-y-1">
-                        <Label className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider text-right block">
-                          Disc (৳)
-                        </Label>
-                        <Input
-                          type="number"
-                          min="0"
-                          placeholder="0"
-                          value={item.discount === 0 ? '' : item.discount}
-                          onChange={(e) =>
-                            handleLineChange(
-                              index,
-                              'discount',
-                              e.target.value === '' ? '' : Number(e.target.value)
-                            )
-                          }
-                          className="h-9 text-xs font-mono font-bold text-right rounded-xl bg-white dark:bg-[#1e293b] border-amber-300 dark:border-amber-900/50"
                         />
                       </div>
 

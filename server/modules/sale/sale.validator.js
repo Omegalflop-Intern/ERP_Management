@@ -69,4 +69,13 @@ export const returnSaleSchema = z.object({
     reason: z.enum(['defective', 'wrong_item', 'change_of_mind', 'other']).default('other'),
     notes: z.string().optional(),
   })).min(1),
+  returnAction: z.enum(['REFUND', 'REPLACEMENT']).default('REFUND').optional(),
+  replacementItem: z.object({
+    productId: z.string().optional(),
+    imeiOrSerial: z.string().optional(),
+    quantity: z.number().min(1).optional(),
+    unitPrice: z.number().min(0).optional(),
+    name: z.string().optional(),
+  }).optional(),
+  paymentMethod: z.string().optional(),
 });

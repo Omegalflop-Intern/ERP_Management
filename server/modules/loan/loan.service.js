@@ -67,7 +67,7 @@ export const getAllLoans = async (type = 'LOAN_TAKEN', tenantId = null, branchId
   const query = db('loans').where({ is_deleted: false });
   applyTenantScope(query, tenantId);
   if (branchId && branchId !== 'all') {
-    query.where((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+    query.where('branch_id', branchId);
   }
   if (type) query.where({ type });
 
