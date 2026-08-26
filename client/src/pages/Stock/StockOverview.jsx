@@ -112,6 +112,7 @@ export default function StockOverview() {
       status: u.status === 'Available' ? 'Available' : 'Sold Out',
       costPrice: u.purchasePrice || prod.costPrice || 0,
       sellingPrice: u.currentSellingPrice || prod.sellingPrice || 0,
+      wholesalePrice: prod.wholesalePrice || 0,
       warrantyMonths: prod.warrantyMonths ?? 12,
       qty: 1,
       isBulk: false,
@@ -131,6 +132,7 @@ export default function StockOverview() {
         status: p.stockQuantity > 0 ? 'Available' : 'Sold Out',
         costPrice: p.costPrice || 0,
         sellingPrice: p.sellingPrice || 0,
+        wholesalePrice: p.wholesalePrice || 0,
         warrantyMonths: p.warrantyMonths ?? 12,
         qty: p.stockQuantity || 0,
         isBulk: true,
@@ -347,7 +349,10 @@ export default function StockOverview() {
                   Cost Price
                 </th>
                 <th className="px-4 py-3.5 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase text-right">
-                  Selling Price
+                  Retail Price
+                </th>
+                <th className="px-4 py-3.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase text-right">
+                  Wholesale Price
                 </th>
                 <th className="px-4 py-3.5 text-xs font-bold text-gray-500 dark:text-gray-400 uppercase text-right">
                   Est. Profit
@@ -358,7 +363,7 @@ export default function StockOverview() {
               {isLoading ? (
                 Array.from({ length: 6 }).map((_, i) => (
                   <tr key={i}>
-                    {Array.from({ length: 7 }).map((__, j) => (
+                    {Array.from({ length: 8 }).map((__, j) => (
                       <td key={j} className="px-4 py-3.5">
                         <div className="h-4 w-20 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
                       </td>
@@ -367,7 +372,7 @@ export default function StockOverview() {
                 ))
               ) : filteredItems.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-gray-400">
+                  <td colSpan={8} className="px-4 py-12 text-center text-gray-400">
                     <Package className="w-12 h-12 mx-auto mb-2 opacity-40" />
                     <p className="text-sm font-semibold">No matching stock items found</p>
                   </td>
@@ -448,6 +453,13 @@ export default function StockOverview() {
                       </td>
                       <td className="px-4 py-3.5 text-right font-mono text-sm font-bold text-emerald-600 dark:text-emerald-400">
                         ৳{item.sellingPrice.toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3.5 text-right font-mono text-sm font-bold text-indigo-600 dark:text-indigo-400">
+                        {Number(item.wholesalePrice || 0) > 0 ? (
+                          `৳${Number(item.wholesalePrice).toLocaleString()}`
+                        ) : (
+                          <span className="text-gray-400 font-normal text-xs">-</span>
+                        )}
                       </td>
                       <td className="px-4 py-3.5 text-right font-mono text-sm font-bold text-blue-600 dark:text-blue-400">
                         +৳{estProfit.toLocaleString()}

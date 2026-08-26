@@ -3,6 +3,7 @@ import {
   Building,
   CheckCircle2,
   CreditCard,
+  DollarSign,
   Eye,
   Package,
   Plus,
@@ -573,6 +574,43 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
 
     methods.push({ value: 'CREDIT', label: 'Supplier Credit (Pay Later)' });
     return methods;
+  }, [activeAccountsRes]);
+
+  const liquidAccounts = useMemo(() => {
+    const activeList = (activeAccountsRes || []).filter((a) => a.isActive !== false);
+    if (!activeList.length) {
+      return [
+        { key: 'cash', code: '1000', name: 'Cash', balance: 0, icon: '💵' },
+        { key: 'bkash', code: '1011', name: 'bKash', balance: 0, icon: '📱' },
+        { key: 'nagad', code: '1012', name: 'Nagad', balance: 0, icon: '📱' },
+        { key: 'rocket', code: '1013', name: 'Rocket', balance: 0, icon: '🚀' },
+        { key: 'bank', code: '1010', name: 'Bank Account', balance: 0, icon: '🏦' },
+      ];
+    }
+    const accounts = [];
+    activeList.forEach((a) => {
+      const code = String(a.code || '');
+      const n = (a.name || '').toLowerCase();
+      const bal = Number(a.balance || 0);
+
+      if (code === '1000' || n.includes('cash')) {
+        accounts.push({ key: 'cash', code: a.code || '1000', name: a.name || 'Cash', balance: bal, icon: '💵' });
+      } else if (code === '1011' || n.includes('bkash')) {
+        accounts.push({ key: 'bkash', code: a.code || '1011', name: a.name || 'bKash', balance: bal, icon: '📱' });
+      } else if (code === '1012' || n.includes('nagad')) {
+        accounts.push({ key: 'nagad', code: a.code || '1012', name: a.name || 'Nagad', balance: bal, icon: '📱' });
+      } else if (code === '1013' || n.includes('rocket')) {
+        accounts.push({ key: 'rocket', code: a.code || '1013', name: a.name || 'Rocket', balance: bal, icon: '🚀' });
+      } else if (code === '1010' || n.includes('bank')) {
+        accounts.push({ key: 'bank', code: a.code || '1010', name: a.name || 'Bank Account', balance: bal, icon: '🏦' });
+      } else if (a.type === 'ASSET' && (n.includes('wallet') || n.includes('mfs') || n.includes('card'))) {
+        const k = (a.code || a.name).toLowerCase().replace(/[^a-z0-9]/g, '_');
+        accounts.push({ key: k, code: a.code, name: a.name, balance: bal, icon: '💳' });
+      }
+    });
+    return accounts.length > 0
+      ? accounts
+      : [{ key: 'cash', code: '1000', name: 'Cash', balance: 0, icon: '💵' }];
   }, [activeAccountsRes]);
 
   const availableCategories = useMemo(() => {
@@ -1206,34 +1244,36 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                     </select>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    {[
-                      { key: 'cash', label: 'Cash', icon: '💵', color: 'emerald' },
-                      { key: 'bkash', label: 'bKash', icon: '📱', color: 'pink' },
-                      { key: 'nagad', label: 'Nagad', icon: '📱', color: 'orange' },
-                      { key: 'rocket', label: 'Rocket', icon: '🚀', color: 'purple' },
-                      { key: 'bank', label: 'Bank', icon: '🏦', color: 'blue' },
-                    ].map((pm) => (
-                      <div key={pm.key} className="flex items-center gap-2">
-                        <span className="text-xs w-20 shrink-0">
-                          {pm.icon} {pm.label}
-                        </span>
+                  <div className="space-y-2.5">
+                    {liquidAccounts.map((acc) => (
+                      <div key={acc.key} className="flex items-center justify-between gap-2 p-1.5 rounded-xl bg-white/60 dark:bg-[#1e293b]/60 border border-slate-200/80 dark:border-slate-800">
+                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                          <span className="text-sm shrink-0">{acc.icon}</span>
+                          <div className="truncate">
+                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate block">
+                              {acc.name}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-mono">
+                              ({acc.code}) • Bal: ৳{acc.balance.toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
                         <Input
                           type="number"
                           min="0"
                           step="any"
                           placeholder="0"
-                          value={paymentBreakdown[pm.key] || ''}
+                          value={paymentBreakdown[acc.key] || ''}
                           onChange={(e) =>
-                            setPaymentBreakdown((prev) => ({ ...prev, [pm.key]: e.target.value }))
+                            setPaymentBreakdown((prev) => ({ ...prev, [acc.key]: e.target.value }))
                           }
-                          className="h-7 text-xs font-mono text-right rounded-lg bg-white dark:bg-[#1e293b] flex-1"
+                          className="h-8 w-28 text-xs font-mono font-bold text-right rounded-lg bg-white dark:bg-[#0f172a] border-slate-300 dark:border-slate-700"
                         />
                       </div>
                     ))}
-                    <div className="flex justify-between text-[10px] font-bold pt-1 border-t border-slate-200 dark:border-slate-700">
+                    <div className="flex justify-between text-[10px] font-bold pt-1.5 border-t border-slate-200 dark:border-slate-700">
                       <span className="text-slate-500">Split Total:</span>
-                      <span className="font-mono text-blue-600 dark:text-blue-400">
+                      <span className="font-mono text-blue-600 dark:text-blue-400 text-xs">
                         ৳{splitTotal.toLocaleString()}
                       </span>
                     </div>

@@ -84,13 +84,22 @@ export default function Dashboard() {
     },
     {
       label: 'Net Profit',
-      value: (stats.totalRevenue || 0) - (stats.totalCostAndExpenses || 0),
+      value:
+        stats.netProfit !== undefined
+          ? stats.netProfit
+          : (stats.totalRevenue || 0) - (stats.totalCogs || 0) - (stats.totalExpenses || 0),
       prefix: '৳',
       suffix: '',
       icon: TrendingUp,
-      color: 'text-teal-600 dark:text-teal-400',
-      bg: 'bg-teal-50 dark:bg-teal-950/40',
-      hint: 'Revenue minus expenses',
+      color:
+        (stats.netProfit || 0) >= 0
+          ? 'text-teal-600 dark:text-teal-400'
+          : 'text-rose-600 dark:text-rose-400',
+      bg:
+        (stats.netProfit || 0) >= 0
+          ? 'bg-teal-50 dark:bg-teal-950/40'
+          : 'bg-rose-50 dark:bg-rose-950/40',
+      hint: 'Revenue - COGS - Expenses',
     },
     {
       label: 'Stock Value',
@@ -104,23 +113,23 @@ export default function Dashboard() {
     },
     {
       label: 'Purchase Cost',
-      value: stats.totalCostAndExpenses || 0,
+      value: stats.totalPurchasesCost || 0,
       prefix: '৳',
       suffix: '',
       icon: Receipt,
       color: 'text-amber-600 dark:text-amber-400',
       bg: 'bg-amber-50 dark:bg-amber-950/40',
-      hint: 'Stock purchase costs',
+      hint: 'Stock inventory purchases',
     },
     {
       label: 'Shop Expenses',
-      value: stats.totalExpenses || stats.totalCostAndExpenses || 0,
+      value: stats.totalExpenses || 0,
       prefix: '৳',
       suffix: '',
       icon: DollarSign,
       color: 'text-rose-600 dark:text-rose-400',
       bg: 'bg-rose-50 dark:bg-rose-950/40',
-      hint: 'Operating expenses',
+      hint: 'Operating expenses (bills, rent, etc.)',
     },
     {
       label: 'Active Repairs',

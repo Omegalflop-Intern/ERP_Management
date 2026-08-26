@@ -41,7 +41,7 @@ router.get('/dashboard', async (req, res, next) => {
     let totalSalesCount = 0, totalRevenue = 0;
     let totalAvailableUnits = 0, totalStockValue = 0;
     let activeRepairsCount = 0, totalCustomers = 0, totalDueAmount = 0;
-    let totalExpenses = 0, totalPurchasesCost = 0, totalCostAndExpenses = 0;
+    let totalExpenses = 0, totalPurchasesCost = 0, totalCogs = 0;
     // Declare lowStockItems here so it is in scope for both the product loop and the final response
     const lowStockItems = [];
 
@@ -57,8 +57,6 @@ router.get('/dashboard', async (req, res, next) => {
       applyBranch(poQuery);
       const poRes = await poQuery.sum({ total: 'net_total' }).first();
       totalPurchasesCost = Number(poRes?.total || 0);
-
-      totalCostAndExpenses = totalExpenses + totalPurchasesCost;
     } catch {}
 
     try {
@@ -68,7 +66,28 @@ router.get('/dashboard', async (req, res, next) => {
       const txCountRes = await txQuery.count({ count: '*' }).sum({ total: 'net_total' }).sum({ returned: 'returned_amount' }).first();
       totalSalesCount = Number(txCountRes?.count || 0);
       totalRevenue = Math.max(0, Number(txCountRes?.total || 0) - Number(txCountRes?.returned || 0));
+
+      const txRows = await db('transactions')
+        .where({ is_deleted: false, tx_type: 'SALE' })
+        .modify(applyScope)
+        .modify(applyBranch)
+        .select('line_items');
+      
+      for (const tx of txRows) {
+        let items = [];
+        try { items = typeof tx.line_items === 'string' ? JSON.parse(tx.line_items) : (tx.line_items || []); } catch {}
+        if (Array.isArray(items)) {
+          for (const it of items) {
+            const cost = Number(it.unitCost || it.costPrice || 0);
+            const q = Number(it.qty || 1);
+            totalCogs += (cost * q);
+          }
+        }
+      }
     } catch {}
+
+    const grossProfit = Math.max(0, totalRevenue - totalCogs);
+    const netProfit = (totalRevenue - totalCogs) - totalExpenses;
 
     try {
       const prodQuery = db('products').where({ is_deleted: false });
@@ -217,7 +236,9 @@ router.get('/dashboard', async (req, res, next) => {
         totalDueAmount,
         totalExpenses,
         totalPurchasesCost,
-        totalCostAndExpenses,
+        totalCogs,
+        grossProfit,
+        netProfit,
       },
       charts: { salesTrendData, dueTrendData, brandDistribution },
       lowStockItems,

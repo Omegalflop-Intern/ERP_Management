@@ -223,7 +223,10 @@ export default function ProductList() {
                   Cost
                 </th>
                 <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
-                  Selling
+                  Retail
+                </th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase">
+                  Wholesale
                 </th>
                 <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
                   Actions
@@ -234,7 +237,7 @@ export default function ProductList() {
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="border-b border-gray-100 dark:border-gray-800/50">
-                    {Array.from({ length: 8 }).map((__, j) => (
+                    {Array.from({ length: 9 }).map((__, j) => (
                       <td key={j} className="px-4 py-3">
                         <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
                       </td>
@@ -244,7 +247,7 @@ export default function ProductList() {
               ) : products.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={8}
+                    colSpan={9}
                     className="px-4 py-12 text-center text-gray-500 dark:text-gray-400"
                   >
                     <Package className="w-12 h-12 mx-auto mb-3 opacity-50" />
@@ -342,6 +345,13 @@ export default function ProductList() {
                       </td>
                       <td className="px-4 py-3 text-right text-sm font-mono font-bold text-green-700 dark:text-green-400">
                         &#2547;{p.sellingPrice?.toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3 text-right text-sm font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                        {Number(p.wholesalePrice || 0) > 0 ? (
+                          `৳${Number(p.wholesalePrice).toLocaleString()}`
+                        ) : (
+                          <span className="text-gray-400 font-normal text-xs">-</span>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-2">
