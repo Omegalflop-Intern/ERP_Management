@@ -7,6 +7,7 @@ import {
   Layers,
   Package,
   Plus,
+  Printer,
   Search,
   Trash2,
   Truck,
@@ -16,6 +17,7 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import api from '../../lib/api';
 import { useBranchStore } from '../../store/branchStore';
+import TransferChallanModal from '../../components/stock/TransferChallanModal';
 
 const STATUSES = ['ALL', 'PENDING', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED'];
 
@@ -45,6 +47,7 @@ const statusConfig = {
 export default function StockTransfer() {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [showCreate, setShowCreate] = useState(false);
+  const [printTransfer, setPrintTransfer] = useState(null);
   const queryClient = useQueryClient();
   const activeBranchId = useBranchStore((s) => s.activeBranchId);
 
@@ -211,28 +214,37 @@ export default function StockTransfer() {
                         {t.createdAt ? new Date(t.createdAt).toLocaleDateString() : 'N/A'}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        {t.status === 'PENDING' && (
-                          <div className="flex items-center justify-end gap-1.5">
-                            <button
-                              onClick={() =>
-                                updateStatusMutation.mutate({ id: t._id || t.id, status: 'IN_TRANSIT' })
-                              }
-                              className="px-2.5 py-1 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg text-xs font-medium transition-colors"
-                            >
-                              Dispatch
-                            </button>
-                            <button
-                              onClick={() =>
-                                updateStatusMutation.mutate({ id: t._id || t.id, status: 'CANCELLED' })
-                              }
-                              className="px-2.5 py-1 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300 rounded-lg text-xs font-medium transition-colors"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        )}
-                        {t.status === 'IN_TRANSIT' && (
-                          <div className="flex items-center justify-end gap-1.5">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setPrintTransfer(t)}
+                            title="Print Transfer Gate Pass / Challan"
+                            className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/50 rounded-lg transition-colors border border-blue-200 dark:border-blue-800/60"
+                          >
+                            <Printer className="w-3.5 h-3.5" />
+                          </button>
+
+                          {t.status === 'PENDING' && (
+                            <>
+                              <button
+                                onClick={() =>
+                                  updateStatusMutation.mutate({ id: t._id || t.id, status: 'IN_TRANSIT' })
+                                }
+                                className="px-2.5 py-1 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg text-xs font-medium transition-colors"
+                              >
+                                Dispatch
+                              </button>
+                              <button
+                                onClick={() =>
+                                  updateStatusMutation.mutate({ id: t._id || t.id, status: 'CANCELLED' })
+                                }
+                                className="px-2.5 py-1 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300 rounded-lg text-xs font-medium transition-colors"
+                              >
+                                Cancel
+                              </button>
+                            </>
+                          )}
+                          {t.status === 'IN_TRANSIT' && (
                             <button
                               onClick={() =>
                                 updateStatusMutation.mutate({ id: t._id || t.id, status: 'DELIVERED' })
@@ -241,11 +253,11 @@ export default function StockTransfer() {
                             >
                               Receive & Deliver
                             </button>
-                          </div>
-                        )}
-                        {(t.status === 'DELIVERED' || t.status === 'CANCELLED') && (
-                          <span className="text-xs text-gray-400">Completed</span>
-                        )}
+                          )}
+                          {(t.status === 'DELIVERED' || t.status === 'CANCELLED') && (
+                            <span className="text-xs text-gray-400 font-medium">Completed</span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -259,10 +271,20 @@ export default function StockTransfer() {
       {showCreate && (
         <CreateTransferModal
           onClose={() => setShowCreate(false)}
-          onSuccess={() => {
+          onSuccess={(newTransfer) => {
             setShowCreate(false);
             queryClient.invalidateQueries(['transfers']);
+            if (newTransfer) {
+              setPrintTransfer(newTransfer);
+            }
           }}
+        />
+      )}
+
+      {printTransfer && (
+        <TransferChallanModal
+          transfer={printTransfer}
+          onClose={() => setPrintTransfer(null)}
         />
       )}
     </div>
@@ -378,9 +400,10 @@ function CreateTransferModal({ onClose, onSuccess }) {
 
   const mutation = useMutation({
     mutationFn: async (payload) => api.post('/stock', payload),
-    onSuccess: () => {
+    onSuccess: (res) => {
       toast.success('Stock transfer batch initiated successfully!');
-      onSuccess();
+      const createdItem = res?.data?.data;
+      onSuccess(Array.isArray(createdItem) ? createdItem[0] : createdItem);
     },
     onError: (e) => toast.error(e.response?.data?.message || 'Failed to create transfer'),
   });

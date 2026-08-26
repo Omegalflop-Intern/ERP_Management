@@ -7,6 +7,7 @@ import {
   Eye,
   Package,
   Plus,
+  Printer,
   RefreshCw,
   RotateCcw,
   Search,
@@ -19,6 +20,7 @@ import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import PageHeader from '../../components/layout/PageHeader';
 import { Button } from '../../components/ui/button';
+import PurchaseInvoiceModal from '../../components/purchases/PurchaseInvoiceModal';
 import {
   Dialog,
   DialogContent,
@@ -62,6 +64,7 @@ export default function PurchaseOrders() {
   const [viewPO, setViewPO] = useState(null);
   const [returnPO, setReturnPO] = useState(null);
   const [payDuePO, setPayDuePO] = useState(null);
+  const [printPO, setPrintPO] = useState(null);
   const queryClient = useQueryClient();
 
   const { data, isLoading, refetch } = useQuery({
@@ -367,10 +370,17 @@ export default function PurchaseOrders() {
                       </td>
                       <td className="px-4 py-3.5 text-right">
                         <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => setPrintPO(po)}
+                            className="p-1.5 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 transition-colors"
+                            title="Print Purchase Bill / Invoice"
+                          >
+                            <Printer className="w-4 h-4" />
+                          </button>
                           {Number(po.dueAmount || 0) > 0 && (
                             <button
                               onClick={() => setPayDuePO(po)}
-                              className="p-1.5 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 transition-colors"
+                              className="p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/40 text-blue-600 dark:text-blue-400 transition-colors"
                               title="Pay Supplier Due"
                             >
                               <CreditCard className="w-4 h-4" />
@@ -414,7 +424,7 @@ export default function PurchaseOrders() {
           suppliers={suppliers}
           products={products}
           onClose={() => setShowCreateModal(false)}
-          onSuccess={() => {
+          onSuccess={(newPo) => {
             setShowCreateModal(false);
             queryClient.invalidateQueries(['purchase-orders']);
             queryClient.invalidateQueries(['products']);
@@ -423,6 +433,9 @@ export default function PurchaseOrders() {
             queryClient.invalidateQueries(['stock-overview']);
             queryClient.invalidateQueries(['imei-search']);
             queryClient.invalidateQueries(['suppliers-list']);
+            if (newPo) {
+              setPrintPO(newPo);
+            }
           }}
         />
       )}
@@ -462,11 +475,24 @@ export default function PurchaseOrders() {
         <ViewPurchaseModal
           po={viewPO}
           onClose={() => setViewPO(null)}
+          onPrint={() => {
+            const current = viewPO;
+            setViewPO(null);
+            setPrintPO(current);
+          }}
           onReturn={() => {
             const current = viewPO;
             setViewPO(null);
             setReturnPO(current);
           }}
+        />
+      )}
+
+      {/* ── 4. PRINT PURCHASE ORDER INVOICE MODAL ── */}
+      {printPO && (
+        <PurchaseInvoiceModal
+          po={printPO}
+          onClose={() => setPrintPO(null)}
         />
       )}
     </div>
@@ -1994,7 +2020,7 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
 // ----------------------------------------------------------------------
 // MODAL 3: VIEW PURCHASE ORDER & GOODS RECEIPT SLIP
 // ----------------------------------------------------------------------
-function ViewPurchaseModal({ po, onClose, onReturn }) {
+function ViewPurchaseModal({ po, onClose, onPrint, onReturn }) {
   const supplierName =
     po.supplierId?.name || (typeof po.supplierId === 'string' ? po.supplierId : 'Supplier');
   const supplierPhone = po.supplierId?.phone || '';
@@ -2015,13 +2041,22 @@ function ViewPurchaseModal({ po, onClose, onReturn }) {
                 Purchased on {new Date(po.createdAt).toLocaleString('en-BD')}
               </DialogDescription>
             </div>
-            <span
-              className={`px-3 py-1 rounded-full text-xs font-bold uppercase border shrink-0 ${
-                STATUS_COLORS[po.status] || STATUS_COLORS.DRAFT
-              }`}
-            >
-              {po.status?.replace(/_/g, ' ')}
-            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onPrint}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold shadow-xs transition-all"
+              >
+                <Printer className="w-3.5 h-3.5" /> Print Invoice
+              </button>
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-bold uppercase border shrink-0 ${
+                  STATUS_COLORS[po.status] || STATUS_COLORS.DRAFT
+                }`}
+              >
+                {po.status?.replace(/_/g, ' ')}
+              </span>
+            </div>
           </div>
         </DialogHeader>
 

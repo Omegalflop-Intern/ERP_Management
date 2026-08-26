@@ -5,6 +5,7 @@ import {
   Clock,
   Eye,
   Plus,
+  Printer,
   RefreshCw,
   Search,
   XCircle,
@@ -13,6 +14,7 @@ import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
+import WarrantyClaimSlipModal from '../../components/crm/WarrantyClaimSlipModal';
 
 const STATUS_COLORS = {
   pending: 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400',
@@ -26,6 +28,7 @@ export default function WarrantyClaims() {
   const [statusFilter, setStatusFilter] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [viewClaim, setViewClaim] = useState(null);
+  const [printClaim, setPrintClaim] = useState(null);
   const { styled } = useTheme();
   const queryClient = useQueryClient();
 
@@ -215,13 +218,23 @@ export default function WarrantyClaims() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => setViewClaim(cl)}
-                        className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-blue-500 transition-colors"
-                        title="View"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setPrintClaim(cl)}
+                          className="p-1.5 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-950/40 text-amber-600 dark:text-amber-400 transition-colors"
+                          title="Print Warranty Claim Token"
+                        >
+                          <Printer className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setViewClaim(cl)}
+                          className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-blue-500 transition-colors"
+                          title="View Claim Details"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -238,7 +251,23 @@ export default function WarrantyClaims() {
           onClose={() => setShowForm(false)}
         />
       )}
-      {viewClaim && <ClaimDetailModal claim={viewClaim} onClose={() => setViewClaim(null)} />}
+      {viewClaim && (
+        <ClaimDetailModal
+          claim={viewClaim}
+          onPrint={() => {
+            const current = viewClaim;
+            setViewClaim(null);
+            setPrintClaim(current);
+          }}
+          onClose={() => setViewClaim(null)}
+        />
+      )}
+      {printClaim && (
+        <WarrantyClaimSlipModal
+          claim={printClaim}
+          onClose={() => setPrintClaim(null)}
+        />
+      )}
     </div>
   );
 }
@@ -380,7 +409,7 @@ function WarrantyClaimModal({ customers, imeis, onClose }) {
   );
 }
 
-function ClaimDetailModal({ claim: cl, onClose }) {
+function ClaimDetailModal({ claim: cl, onClose, onPrint }) {
   const queryClient = useQueryClient();
   const [resolution, setResolution] = useState(cl.resolution || '');
 
@@ -400,11 +429,20 @@ function ClaimDetailModal({ claim: cl, onClose }) {
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 w-full max-w-md"
+        className="bg-white dark:bg-[#111827] rounded-xl border border-gray-200 dark:border-gray-800 w-full max-w-md overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-6 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Claim Details</h2>
+        <div className="p-5 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h2 className="text-base font-bold text-gray-900 dark:text-gray-100">Claim Details</h2>
+            <button
+              type="button"
+              onClick={onPrint}
+              className="flex items-center gap-1 px-2.5 py-1 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-semibold shadow-xs transition-all"
+            >
+              <Printer className="w-3.5 h-3.5" /> Print Token
+            </button>
+          </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             &times;
           </button>
