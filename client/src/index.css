@@ -1077,12 +1077,28 @@ textarea {
   transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
 }
 
-[data-mode] input:focus,
-[data-mode] select:focus,
-[data-mode] textarea:focus {
+/* Universal Light Theme Focus */
+[data-mode]:not([data-theme="dark"]):not(.dark) input:focus,
+[data-mode]:not([data-theme="dark"]):not(.dark) select:focus,
+[data-mode]:not([data-theme="dark"]):not(.dark) textarea:focus {
   border-color: #3b82f6 !important;
   outline: none !important;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04), 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+}
+
+/* Universal Dark Theme Focus */
+[data-mode][data-theme="dark"] input:focus,
+.dark[data-mode] input:focus,
+[data-mode] .dark input:focus,
+[data-mode][data-theme="dark"] select:focus,
+.dark[data-mode] select:focus,
+[data-mode] .dark select:focus,
+[data-mode][data-theme="dark"] textarea:focus,
+.dark[data-mode] textarea:focus,
+[data-mode] .dark textarea:focus {
+  border-color: #3b82f6 !important;
+  outline: none !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35), 0 0 0 2px rgba(59, 130, 246, 0.25) !important;
 }
 
 /* Exclude embedded transparent search bars */
