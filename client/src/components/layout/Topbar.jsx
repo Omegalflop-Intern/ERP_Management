@@ -165,35 +165,35 @@ function BranchSwitcher({ user }) {
       </button>
 
       {isOpen && !isBranchLocked && (
-        <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl z-[115] overflow-hidden">
-          <div className="px-3 py-2.5 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-            <div className="text-xs font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
-              <Building2 className="w-3.5 h-3.5 text-blue-500" /> Switch Active Outlet
+        <div className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-[9999] overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+          <div className="px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700/80 flex items-center justify-between">
+            <div className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+              <Building2 className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Switch Active Outlet
             </div>
-            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
+            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
               {branches.length} / {maxBranches === 999 ? '∞' : maxBranches} ({tenantPlan})
             </span>
           </div>
 
-          <div className="max-h-60 overflow-y-auto py-1">
+          <div className="max-h-64 overflow-y-auto py-1 divide-y divide-slate-100 dark:divide-slate-800/50">
             <button
               onClick={() => {
                 setActiveBranchId('all');
                 qc.invalidateQueries();
                 setIsOpen(false);
               }}
-              className={`w-full flex items-center justify-between px-3 py-2.5 text-xs text-left hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors ${
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 text-xs text-left transition-colors ${
                 activeBranchId === 'all'
-                  ? 'bg-blue-50/80 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-bold'
-                  : 'text-gray-700 dark:text-gray-300'
+                  ? 'bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-400 font-bold'
+                  : 'text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60'
               }`}
             >
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                <span>All Outlets (Main Shop)</span>
+                <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0"></span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">All Outlets (Main Shop)</span>
               </div>
               {activeBranchId === 'all' && (
-                <Check className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <Check className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
               )}
             </button>
 
@@ -208,18 +208,18 @@ function BranchSwitcher({ user }) {
                     qc.invalidateQueries();
                     setIsOpen(false);
                   }}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 text-xs text-left hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors ${
+                  className={`w-full flex items-center justify-between px-3.5 py-2.5 text-xs text-left transition-colors ${
                     isSelected
-                      ? 'bg-blue-50/80 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-bold'
-                      : 'text-gray-700 dark:text-gray-300'
+                      ? 'bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-400 font-bold'
+                      : 'text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60'
                   }`}
                 >
                   <div className="flex items-center gap-2 truncate">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    <span className="truncate">{b.name}</span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                    <span className="truncate font-semibold text-slate-900 dark:text-slate-100">{b.name}</span>
                   </div>
                   {isSelected && (
-                    <Check className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                    <Check className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
                   )}
                 </button>
               );
@@ -227,13 +227,13 @@ function BranchSwitcher({ user }) {
           </div>
 
           {isAdmin && (
-            <div className="p-2 border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/40">
+            <div className="p-2 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60">
               <button
                 onClick={() => {
                   setIsOpen(false);
                   navigate('/branches');
                 }}
-                className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-100/50 dark:hover:bg-blue-900/40 rounded-lg transition-colors"
+                className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-100/60 dark:hover:bg-blue-900/40 rounded-xl transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" /> Manage / Add Outlets
               </button>
@@ -839,15 +839,15 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
             <Palette className="w-5 h-5 text-slate-700 dark:text-slate-200 stroke-[2]" />
           </button>
           {showMobileSettings && (
-            <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-[110] overflow-hidden">
-              <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-800 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                Theme
+            <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-[9999] overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+              <div className="px-3.5 py-2 border-b border-slate-200 dark:border-slate-800 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 dark:bg-slate-900/60">
+                Theme & Design
               </div>
               <button
                 onClick={() => {
                   toggleTheme();
                 }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 text-sm text-gray-700 dark:text-gray-300"
+                className="w-full flex items-center gap-3 px-3.5 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-xs font-semibold text-slate-800 dark:text-slate-200"
               >
                 {theme === 'dark' ? (
                   <Moon className="w-4 h-4 text-blue-400" />
@@ -855,7 +855,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
                   <Sun className="w-4 h-4 text-amber-500" />
                 )}
                 {theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
-                <span className="ml-auto text-[10px] text-gray-400">
+                <span className="ml-auto text-[10px] text-slate-400">
                   {theme === 'dark' ? 'ON' : 'OFF'}
                 </span>
               </button>
@@ -863,15 +863,15 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
                 onClick={() => {
                   toggleDesignMode();
                 }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 text-sm text-gray-700 dark:text-gray-300"
+                className="w-full flex items-center gap-3 px-3.5 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-xs font-semibold text-slate-800 dark:text-slate-200"
               >
                 {designMode === 'glass' ? (
                   <Sparkles className="w-4 h-4 text-blue-400" />
                 ) : (
-                  <Diamond className="w-4 h-4 text-gray-400" />
+                  <Diamond className="w-4 h-4 text-slate-400" />
                 )}
                 {designMode === 'glass' ? 'Glass Mode' : 'Flat Mode'}
-                <span className="ml-auto text-[10px] text-gray-400">
+                <span className="ml-auto text-[10px] text-slate-400">
                   {designMode === 'glass' ? 'ON' : 'OFF'}
                 </span>
               </button>
@@ -902,22 +902,22 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
             )}
           </button>
           {showNotifs && (
-            <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl z-[110] max-h-96 overflow-y-auto">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                <h3 className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+            <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-[9999] max-h-96 overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60">
+                <h3 className="font-bold text-xs text-slate-900 dark:text-slate-100">
                   Notifications
                 </h3>
                 {notifData?.unreadCount > 0 && (
                   <button
                     onClick={() => markAllReadMutation.mutate()}
-                    className="text-xs text-[#2563EB] hover:underline"
+                    className="text-xs text-[#2563EB] hover:underline font-semibold"
                   >
                     Mark all read
                   </button>
                 )}
               </div>
               {!notifData?.notifications?.length ? (
-                <div className="px-4 py-8 text-center text-gray-400 text-sm">No notifications</div>
+                <div className="px-4 py-8 text-center text-slate-400 text-xs">No notifications</div>
               ) : (
                 notifData.notifications.map((n) => (
                   <button
@@ -927,23 +927,23 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
                       if (n.link) navigate(n.link);
                       setShowNotifs(false);
                     }}
-                    className={`w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800 transition-colors ${!n.isRead ? 'bg-blue-50/30 dark:bg-blue-900/5' : ''}`}
+                    className={`w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800/80 transition-colors ${!n.isRead ? 'bg-blue-50/40 dark:bg-blue-950/20' : ''}`}
                   >
                     <div className="flex items-start gap-3">
                       {getNotificationIcon(n.type)}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-1">
-                          <div className="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">
+                          <div className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
                             {n.title}
                           </div>
                           {!n.isRead && (
-                            <span className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />
+                            <span className="w-2 h-2 rounded-full bg-blue-600 flex-shrink-0" />
                           )}
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+                        <div className="text-xs text-slate-600 dark:text-slate-300 truncate mt-0.5">
                           {n.message}
                         </div>
-                        <div className="text-[10px] text-gray-400 mt-1">
+                        <div className="text-[10px] text-slate-400 mt-1">
                           {new Date(n.createdAt).toLocaleString()}
                         </div>
                       </div>
@@ -997,7 +997,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
 
             {/* Dropdown menu (both mobile and desktop) */}
             {showUserMenu && (
-              <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#111827] border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-[110] overflow-hidden">
+              <div className="absolute right-0 top-full mt-2 w-60 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-[9999] overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                 {/* Mobile only: show user info at top */}
                 <div className="md:hidden px-3 py-3 border-b border-gray-100 dark:border-gray-800">
                   <div className="flex items-center gap-2.5">

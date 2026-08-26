@@ -670,8 +670,8 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl w-[94vw] max-h-[90vh] overflow-y-auto rounded-3xl p-0 border border-slate-200 dark:border-slate-800 shadow-2xl bg-white dark:bg-[#0f172a]">
-        <div className="p-5 px-6 pr-12 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/50 flex items-center justify-between shrink-0">
+      <DialogContent className="sm:max-w-2xl w-[95vw] max-h-[92vh] overflow-y-auto rounded-3xl p-0 border border-slate-300 dark:border-slate-800 shadow-2xl bg-white dark:bg-[#0f172a] text-slate-900 dark:text-slate-100">
+        <div className="p-5 px-6 pr-12 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/80 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-blue-600/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold shrink-0">
               <Wrench className="w-5 h-5" />
@@ -680,7 +680,7 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
               <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
                 {isEdit ? `Edit Repair Ticket #${initialData?.ticketNumber}` : 'Log New Repair Ticket'}
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5 font-medium">
                 Register customer device, link customer database, assign staff technician and set pricing.
               </p>
             </div>
@@ -689,16 +689,16 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Customer Information (Linked with Customers Database) */}
-          <div className="bg-slate-50/80 dark:bg-slate-900/40 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
+          <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-blue-600" /> Customer Details (Linked to CRM) *
+              <span className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Customer Details (Linked to CRM) *
               </span>
               {customers.length > 0 && (
                 <button
                   type="button"
                   onClick={() => setIsQuickCustomer(!isQuickCustomer)}
-                  className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 hover:underline font-semibold"
+                  className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 hover:underline font-bold"
                 >
                   {isQuickCustomer ? 'Select from Existing Customer List' : '+ Type New Customer Details'}
                 </button>
@@ -708,9 +708,9 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
             {!isQuickCustomer && customers.length > 0 && (
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <Label className="text-[11px] text-slate-500">Pick Existing Customer to Auto-Find Devices</Label>
+                  <label className="text-xs font-bold text-slate-800 dark:text-slate-200">Pick Existing Customer to Auto-Find Devices</label>
                   {loadingDevices && (
-                    <span className="text-[10px] text-blue-600 animate-pulse font-medium">
+                    <span className="text-[11px] text-blue-600 dark:text-blue-400 animate-pulse font-bold">
                       Finding customer devices...
                     </span>
                   )}
@@ -718,7 +718,7 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
                 <select
                   value={selectedCustomerId}
                   onChange={(e) => handleCustomerSelect(e.target.value)}
-                  className="w-full px-3 py-2 bg-white dark:bg-[#1e293b] border border-blue-200 dark:border-blue-800 rounded-xl text-xs text-slate-900 dark:text-slate-100 font-medium focus:outline-none focus:border-blue-500"
+                  className="w-full h-10 px-3 py-2 bg-white dark:bg-[#1e293b] border border-blue-300 dark:border-blue-700 rounded-xl text-xs text-slate-900 dark:text-slate-100 font-bold focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs"
                 >
                   <option value="">-- Choose Existing Customer --</option>
                   {customers.map((c) => (
@@ -732,42 +732,42 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <Label className="text-[11px] font-semibold">Customer Name *</Label>
+                <label className="text-xs font-bold text-slate-800 dark:text-slate-200">Customer Name *</label>
                 <Input
                   required
                   placeholder="e.g. Tanvir Hasan"
                   value={form.customerName}
                   onChange={(e) => setForm({ ...form, customerName: e.target.value })}
-                  className="h-9 text-xs rounded-xl mt-1 bg-white dark:bg-[#1e293b]"
+                  className="h-10 text-xs rounded-xl mt-1.5 bg-white dark:bg-[#1e293b] border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 font-semibold placeholder:text-slate-400 shadow-xs"
                 />
               </div>
               <div>
-                <Label className="text-[11px] font-semibold">Phone Number *</Label>
+                <label className="text-xs font-bold text-slate-800 dark:text-slate-200">Phone Number *</label>
                 <Input
                   required
                   placeholder="e.g. 01712345678"
                   value={form.customerPhone}
                   onChange={(e) => setForm({ ...form, customerPhone: e.target.value })}
-                  className="h-9 text-xs rounded-xl mt-1 bg-white dark:bg-[#1e293b]"
+                  className="h-10 text-xs rounded-xl mt-1.5 bg-white dark:bg-[#1e293b] border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 font-semibold placeholder:text-slate-400 shadow-xs"
                 />
               </div>
               <div>
-                <Label className="text-[11px] font-semibold">Email Address (Optional)</Label>
+                <label className="text-xs font-bold text-slate-800 dark:text-slate-200">Email Address (Optional)</label>
                 <Input
                   type="email"
                   placeholder="customer@email.com"
                   value={form.customerEmail}
                   onChange={(e) => setForm({ ...form, customerEmail: e.target.value })}
-                  className="h-9 text-xs rounded-xl mt-1 bg-white dark:bg-[#1e293b]"
+                  className="h-10 text-xs rounded-xl mt-1.5 bg-white dark:bg-[#1e293b] border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 font-semibold placeholder:text-slate-400 shadow-xs"
                 />
               </div>
             </div>
           </div>
 
           {/* Device Details */}
-          <div className="bg-slate-50/80 dark:bg-slate-900/40 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-              <Smartphone className="w-3.5 h-3.5 text-blue-600" /> Device & Issue Details *
+          <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
+            <span className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider flex items-center gap-1.5">
+              <Smartphone className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Device & Issue Details *
             </span>
 
             {/* Auto-found Customer Devices (Chips) */}
@@ -777,7 +777,7 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
                   <span className="font-bold text-blue-800 dark:text-blue-300 flex items-center gap-1.5">
                     <Smartphone className="w-3.5 h-3.5" /> Customer's Purchased Devices ({customerDevices.length})
                   </span>
-                  <span className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">
+                  <span className="text-[11px] text-blue-600 dark:text-blue-400 font-bold">
                     Click device to auto-fill
                   </span>
                 </div>
@@ -817,18 +817,18 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <Label className="text-[11px] font-semibold">Device Model / Brand *</Label>
+                <label className="text-xs font-bold text-slate-800 dark:text-slate-200">Device Model / Brand *</label>
                 <Input
                   required
                   placeholder="e.g. iPhone 13 Pro 128GB, Samsung S22"
                   value={form.deviceModel}
                   onChange={(e) => setForm({ ...form, deviceModel: e.target.value })}
-                  className="h-9 text-xs rounded-xl mt-1 bg-white dark:bg-[#1e293b]"
+                  className="h-10 text-xs rounded-xl mt-1.5 bg-white dark:bg-[#1e293b] border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 font-semibold placeholder:text-slate-400 shadow-xs"
                 />
               </div>
               <div>
-                <Label className="text-[11px] font-semibold">IMEI / Serial Number (Optional)</Label>
-                <div className="relative mt-1">
+                <label className="text-xs font-bold text-slate-800 dark:text-slate-200">IMEI / Serial Number (Optional)</label>
+                <div className="relative mt-1.5">
                   <Input
                     placeholder="Type or select IMEI..."
                     value={form.imeiOrSerial}
@@ -836,7 +836,7 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
                       const val = e.target.value;
                       handleImeiSelect(val);
                     }}
-                    className="h-9 text-xs rounded-xl font-mono bg-white dark:bg-[#1e293b]"
+                    className="h-10 text-xs rounded-xl font-mono bg-white dark:bg-[#1e293b] border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 font-semibold placeholder:text-slate-400 shadow-xs"
                     list="imei-options"
                   />
                   <datalist id="imei-options">
@@ -851,56 +851,56 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
             </div>
 
             <div>
-              <Label className="text-[11px] font-semibold">Problem / Issue Description *</Label>
+              <label className="text-xs font-bold text-slate-800 dark:text-slate-200">Problem / Issue Description *</label>
               <textarea
                 required
                 rows={2}
                 placeholder="e.g. Display glass cracked, touch working, battery draining fast..."
                 value={form.issueDescription}
                 onChange={(e) => setForm({ ...form, issueDescription: e.target.value })}
-                className="w-full mt-1 p-2.5 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:border-blue-500"
+                className="w-full mt-1.5 p-3 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-xs"
               />
             </div>
           </div>
 
           {/* Pricing & Technician Assignment */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="bg-slate-50/80 dark:bg-slate-900/40 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
-              <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                <DollarSign className="w-3.5 h-3.5 text-blue-600" /> Pricing & Advance
+            <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
+              <span className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider flex items-center gap-1.5">
+                <DollarSign className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Pricing & Advance
               </span>
               <div>
-                <Label className="text-[11px] font-semibold">Estimated Repair Cost (৳)</Label>
+                <label className="text-xs font-bold text-slate-800 dark:text-slate-200">Estimated Repair Cost (৳)</label>
                 <Input
                   type="number"
                   min="0"
                   placeholder="0"
                   value={form.estimatedCost}
                   onChange={(e) => setForm({ ...form, estimatedCost: e.target.value })}
-                  className="h-9 text-xs font-mono font-bold rounded-xl mt-1 bg-white dark:bg-[#1e293b]"
+                  className="h-10 text-xs font-mono font-bold rounded-xl mt-1.5 bg-white dark:bg-[#1e293b] border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 shadow-xs"
                 />
               </div>
               <div>
-                <Label className="text-[11px] font-semibold">Advance Amount Paid (৳)</Label>
+                <label className="text-xs font-bold text-slate-800 dark:text-slate-200">Advance Amount Paid (৳)</label>
                 <Input
                   type="number"
                   min="0"
                   placeholder="0"
                   value={form.advancePaid}
                   onChange={(e) => setForm({ ...form, advancePaid: e.target.value })}
-                  className="h-9 text-xs font-mono font-bold text-emerald-600 rounded-xl mt-1 bg-white dark:bg-[#1e293b]"
+                  className="h-10 text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 rounded-xl mt-1.5 bg-white dark:bg-[#1e293b] border-slate-300 dark:border-slate-700 shadow-xs"
                 />
               </div>
             </div>
 
-            <div className="bg-slate-50/80 dark:bg-slate-900/40 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
-              <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5 text-blue-600" /> Technician & Status
+            <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
+              <span className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Technician & Status
               </span>
 
               {/* Technician Dropdown from Users & Staff */}
               <div>
-                <Label className="text-[11px] font-semibold">Assigned Technician (Staff)</Label>
+                <label className="text-xs font-bold text-slate-800 dark:text-slate-200">Assigned Technician (Staff)</label>
                 <select
                   value={form.isCustomTech ? 'custom' : form.technicianName}
                   onChange={(e) => {
@@ -910,7 +910,7 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
                       setForm({ ...form, isCustomTech: false, technicianName: e.target.value });
                     }
                   }}
-                  className="w-full mt-1 px-3 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-semibold focus:outline-none"
+                  className="w-full h-10 mt-1.5 px-3 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600 shadow-xs"
                 >
                   <optgroup label="Shop Users & Staff">
                     {users.map((u) => (
@@ -928,17 +928,17 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
                     placeholder="Enter technician name..."
                     value={form.technicianName}
                     onChange={(e) => setForm({ ...form, technicianName: e.target.value })}
-                    className="h-8 text-xs rounded-xl mt-1.5 bg-white dark:bg-[#1e293b]"
+                    className="h-10 text-xs rounded-xl mt-2 bg-white dark:bg-[#1e293b] border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 font-semibold"
                   />
                 )}
               </div>
 
               <div>
-                <Label className="text-[11px] font-semibold">Repair Status</Label>
+                <label className="text-xs font-bold text-slate-800 dark:text-slate-200">Repair Status</label>
                 <select
                   value={form.status}
                   onChange={(e) => setForm({ ...form, status: e.target.value })}
-                  className="w-full mt-1 px-3 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold focus:outline-none"
+                  className="w-full h-10 mt-1.5 px-3 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-600 shadow-xs"
                 >
                   <option value="RECEIVED">Received</option>
                   <option value="INSPECTING">Inspecting</option>
@@ -951,14 +951,14 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
             </div>
           </div>
 
-          <DialogFooter className="border-t border-slate-100 dark:border-slate-800 pt-3">
-            <Button type="button" variant="outline" onClick={onClose} className="rounded-xl text-xs">
+          <DialogFooter className="border-t border-slate-200 dark:border-slate-800 pt-3">
+            <Button type="button" variant="outline" onClick={onClose} className="rounded-xl text-xs font-semibold">
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={mutation.isPending}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold gap-1.5 px-5"
+              className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold gap-1.5 px-5 shadow-md"
             >
               <CheckCircle2 className="w-4 h-4" />
               {mutation.isPending ? 'Saving...' : isEdit ? 'Update Ticket' : 'Create Repair Ticket'}

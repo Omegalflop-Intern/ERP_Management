@@ -1,12 +1,13 @@
 import { z } from 'zod';
 
 export const createWarrantyClaimSchema = z.object({
-  imei: z.string().min(1),
+  imei: z.string().optional().nullable(),
   customer: z.string().min(1),
-  invoiceRef: z.string().optional(),
+  productName: z.string().optional().nullable(),
+  invoiceRef: z.string().optional().nullable(),
   claimType: z.enum(['repair', 'replacement', 'refund']),
   description: z.string().min(1).trim(),
-  notes: z.string().optional(),
+  notes: z.string().optional().nullable(),
 });
 
 export const updateWarrantyClaimSchema = z.object({

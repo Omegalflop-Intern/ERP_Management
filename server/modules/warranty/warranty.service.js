@@ -129,14 +129,14 @@ export const createClaim = async (data, tenantId = null) => {
   const [insertedId] = await db('warranty_claims').insert({
     tenant_id: tenantId || data.tenantId || null,
     branch_id: data.branchId || null,
-    imei_id: data.imei || data.imeiId,
+    imei_id: data.imei || data.imeiId || null,
     customer_id: data.customer || data.customerId,
     invoice_id: data.invoiceRef || data.invoiceId || null,
     claim_type: data.claimType,
     description: data.description,
     status: data.status || 'pending',
     resolution: data.resolution || null,
-    notes: data.notes || null,
+    notes: data.notes || (data.productName ? `Product: ${data.productName}` : null),
     is_deleted: false,
   });
 

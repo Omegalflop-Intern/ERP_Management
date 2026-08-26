@@ -28,23 +28,40 @@ export default function DatePicker({
     }
   }, [value]);
 
+  const [popoverStyle, setPopoverStyle] = useState({});
+
   useEffect(() => {
     if (isOpen && containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
-      const spaceBelow = window.innerHeight - rect.bottom;
-      // If less than 320px space below and more space above, open upwards
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const popoverWidth = Math.min(288, vw - 24);
+
+      // If less space below, open upward
+      const spaceBelow = vh - rect.bottom;
       if (spaceBelow < 330 && rect.top > 330) {
         setOpenUpward(true);
       } else {
         setOpenUpward(false);
       }
 
-      // If space on right of input is less than 290px, align popover to the right
-      const spaceRight = window.innerWidth - rect.left;
-      if (spaceRight < 290 && rect.right > 280) {
-        setAlignRight(true);
+      // Small screen or boundary clamping
+      if (vw < 640) {
+        const desiredLeft = Math.max(12, Math.min(rect.left, vw - popoverWidth - 12));
+        const relativeOffset = desiredLeft - rect.left;
+        setPopoverStyle({
+          left: `${relativeOffset}px`,
+          width: `${popoverWidth}px`,
+        });
       } else {
-        setAlignRight(false);
+        const spaceRight = vw - rect.left;
+        if (spaceRight < 300 && rect.right > 280) {
+          setAlignRight(true);
+          setPopoverStyle({});
+        } else {
+          setAlignRight(false);
+          setPopoverStyle({});
+        }
       }
     }
   }, [isOpen]);
@@ -164,6 +181,7 @@ export default function DatePicker({
 
       {isOpen && (
         <div
+          style={popoverStyle}
           className={`absolute ${alignRight ? 'right-0 left-auto' : 'left-0 right-auto'} ${
             openUpward ? 'bottom-full mb-2' : 'top-full mt-2'
           } z-[99999] p-3 sm:p-4 w-[280px] sm:w-72 max-w-[calc(100vw-1.5rem)] ${popoverCardClass}`}
