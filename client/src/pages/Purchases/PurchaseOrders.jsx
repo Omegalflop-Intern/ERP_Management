@@ -1021,8 +1021,8 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                         />
                       </div>
 
-                      {/* Retail Price (1.5 cols) */}
-                      <div className="sm:col-span-1.5 space-y-1.5">
+                      {/* Retail Price (1 col) */}
+                      <div className="sm:col-span-1 space-y-1.5">
                         <Label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-right block">
                           Retail (৳)
                         </Label>
@@ -1042,8 +1042,8 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                         />
                       </div>
 
-                      {/* Wholesale Price (1.5 cols) */}
-                      <div className="sm:col-span-1.5 space-y-1.5">
+                      {/* Wholesale Price (1 col) */}
+                      <div className="sm:col-span-1 space-y-1.5">
                         <Label className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider text-right block">
                           Wholesale (৳)
                         </Label>
@@ -1063,13 +1063,13 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                         />
                       </div>
 
-                      {/* Line Total & Remove Action (1 col) */}
-                      <div className="sm:col-span-1 flex items-center justify-end gap-1 pb-1">
-                        <div className="text-right flex-1">
-                          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
+                      {/* Line Total & Remove Action (2 cols) */}
+                      <div className="sm:col-span-2 flex items-center justify-end gap-2 pb-0.5">
+                        <div className="text-right flex-1 min-w-0">
+                          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                             Subtotal
                           </div>
-                          <div className="font-mono font-black text-xs text-slate-900 dark:text-slate-100 whitespace-nowrap">
+                          <div className="font-mono font-black text-xs sm:text-sm text-slate-900 dark:text-slate-100 truncate">
                             ৳{lineTotal.toLocaleString()}
                           </div>
                         </div>
@@ -1077,7 +1077,7 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                           type="button"
                           disabled={lineItems.length <= 1}
                           onClick={() => handleRemoveLine(index)}
-                          className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 disabled:opacity-20 transition-colors"
+                          className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 disabled:opacity-20 transition-colors shrink-0"
                           title="Remove item"
                         >
                           <Trash2 className="w-4 h-4" />

@@ -206,7 +206,7 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
           tenant_id: tenantId,
           branch_id: branchId,
           name: pName,
-          brand: rawItem.brand || 'Generic',
+          brand: rawItem.brand || null,
           sku,
           category: rawItem.category || 'General',
           cost_price: uCost,
