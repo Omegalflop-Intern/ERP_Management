@@ -17,6 +17,7 @@ import { createServer as createHttpServer } from 'http';
 import { createServer as createHttpsServer } from 'https';
 import { execSync } from 'child_process';
 import { ensureSSLCerts } from './utils/system/ssl.js';
+import { runAutoMigrations } from './scripts/runMigration.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = env.PORT || 5000;
@@ -91,6 +92,7 @@ const startServer = (target) => {
     printAsciiBanner();
 
     await logStep('MySQL/MariaDB Database', checkDbConnection);
+    await logStep('Database Schema Migrations', () => runAutoMigrations({ verbose: false }));
     await logStep('SMTP Mailer Service', initMailer);
     await logStep('System Roles & Subscription Plans', seedDefaultRoles);
     await logStep('Automated Backup Scheduler', () => initAutoBackup());
