@@ -22,7 +22,7 @@ import {
   Wand2,
   X,
 } from 'lucide-react';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
@@ -160,6 +160,17 @@ export default function SalesForm() {
   ];
 
   const [isCustomerFocused, setIsCustomerFocused] = useState(false);
+  const customerSectionRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (customerSectionRef.current && !customerSectionRef.current.contains(e.target)) {
+        setIsCustomerFocused(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const { data: customerSearch } = useQuery({
     queryKey: ['customer-search', customerPhone, customerName, isCustomerFocused],
@@ -1067,7 +1078,7 @@ export default function SalesForm() {
                 )}
               </div>
             ) : (
-              <div className="space-y-2 relative">
+              <div ref={customerSectionRef} className="space-y-2 relative">
                 <input
                   type="text"
                   placeholder="Customer name (click/type to select existing)"

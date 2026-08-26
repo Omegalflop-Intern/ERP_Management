@@ -63,7 +63,9 @@ export const getAllInvestors = async (tenantId = null, branchId = null) => {
   const query = db('investors').where({ is_deleted: false });
   applyTenantScope(query, tenantId);
   if (branchId && branchId !== 'all') {
-    query.where('branch_id', branchId);
+    query.where(function () {
+      this.where('branch_id', branchId).orWhereNull('branch_id');
+    });
   }
   const rows = await query.orderBy('created_at', 'desc');
 
@@ -100,6 +102,7 @@ export const createInvestor = async (data, recordedBy = 'system', tenantId = nul
   const initialCap = Number(data.initialCapital || 0);
   const [insertedId] = await db('investors').insert({
     tenant_id: resolvedTenantId,
+    branch_id: resolvedBranchId,
     name: data.name,
     phone: data.phone,
     email: data.email || null,
@@ -253,7 +256,9 @@ export const getAllTransactions = async (tenantId = null, branchId = null) => {
     dataQuery.where('investor_transactions.tenant_id', tenantId);
   }
   if (branchId && branchId !== 'all') {
-    dataQuery.where('investors.branch_id', branchId);
+    dataQuery.where(function () {
+      this.where('investors.branch_id', branchId).orWhereNull('investors.branch_id');
+    });
   }
 
   const rows = await dataQuery.orderBy('investor_transactions.created_at', 'desc');

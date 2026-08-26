@@ -14,9 +14,9 @@ export const getAllLoans = async (req, res, next) => {
 
 export const createLoan = async (req, res, next) => {
   try {
-    const username = req.user?.username || 'system';
     const tenantId = req.user?.tenantId || null;
-    const loan = await loanService.createLoan(req.body, username, tenantId);
+    const branchId = req.selectedBranchId || null;
+    const loan = await loanService.createLoan(req.body, tenantId, branchId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'CREATE', module: 'loan', entityId: loan._id, entityType: 'Loan', details: { provider: loan.providerName, amount: loan.loanAmount }, req });
     return ApiResponse.created(res, loan, 'Loan record created successfully');
   } catch (error) { next(error); }

@@ -411,7 +411,7 @@ export default function Loans() {
           onClick={() => setShowAddLoanModal(false)}
         >
           <div
-            className={`${cardCls} w-full max-w-md p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto`}
+            className={`${cardCls} w-full max-w-xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b dark:border-gray-800 pb-3">
@@ -442,31 +442,25 @@ export default function Loans() {
                   notes: fd.get('notes'),
                 });
               }}
-              className="space-y-3.5 text-sm"
+              className="space-y-4 text-sm"
             >
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
-                  {loanType === 'LOAN_TAKEN'
-                    ? 'Lender / Bank Name *'
-                    : 'Borrower / Receiver Name *'}
-                </label>
-                <input
-                  required
-                  name="providerName"
-                  placeholder={
-                    loanType === 'LOAN_TAKEN'
-                      ? 'e.g. City Bank / Mr. Rahim'
-                      : 'e.g. Employee / Partner Name'
-                  }
-                  className={inputCls}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
-                    Phone Number
+                    {loanType === 'LOAN_TAKEN'
+                      ? 'Lender / Bank Name *'
+                      : 'Borrower / Receiver Name *'}
                   </label>
-                  <input name="phone" placeholder="01711..." className={inputCls} />
+                  <input
+                    required
+                    name="providerName"
+                    placeholder={
+                      loanType === 'LOAN_TAKEN'
+                        ? 'e.g. City Bank / Mr. Rahim'
+                        : 'e.g. Employee Name'
+                    }
+                    className={inputCls}
+                  />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
@@ -478,8 +472,25 @@ export default function Loans() {
                     className={inputCls}
                   />
                 </div>
-              </div>
-              <div className="grid grid-cols-3 gap-3">
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+                    Phone Number
+                  </label>
+                  <input name="phone" placeholder="e.g. 01711..." className={inputCls} />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+                    First Due Date
+                  </label>
+                  <DatePicker
+                    value={loanDueDate}
+                    onChange={setLoanDueDate}
+                    placeholder="First Due Date"
+                    className="w-full !rounded-xl"
+                  />
+                </div>
+
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
                     Principal (৳) *
@@ -499,13 +510,14 @@ export default function Loans() {
                   <NumberInput
                     step="0.1"
                     name="interestRate"
-                    placeholder="9.5"
+                    placeholder="e.g. 9.5"
                     className={inputCls}
                   />
                 </div>
+
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
-                    Installments
+                    Installments Count
                   </label>
                   <NumberInput
                     min="1"
@@ -514,28 +526,18 @@ export default function Loans() {
                     className={inputCls}
                   />
                 </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
+                    Notes / Terms
+                  </label>
+                  <input name="notes" placeholder="Purpose or terms" className={inputCls} />
+                </div>
               </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
-                  First Due Date
-                </label>
-                <DatePicker
-                  value={loanDueDate}
-                  onChange={setLoanDueDate}
-                  placeholder="First Due Date"
-                  className="w-full !rounded-xl"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
-                  Notes
-                </label>
-                <input name="notes" placeholder="Purpose or terms" className={inputCls} />
-              </div>
+
               <button
                 type="submit"
                 disabled={createLoanMutation.isPending}
-                className="w-full py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold rounded-xl text-sm transition-all"
+                className="w-full py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold rounded-xl text-sm transition-all mt-2"
               >
                 {createLoanMutation.isPending ? 'Saving...' : 'Save Loan Record'}
               </button>

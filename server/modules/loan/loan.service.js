@@ -67,7 +67,9 @@ export const getAllLoans = async (type = 'LOAN_TAKEN', tenantId = null, branchId
   const query = db('loans').where({ is_deleted: false });
   applyTenantScope(query, tenantId);
   if (branchId && branchId !== 'all') {
-    query.where('branch_id', branchId);
+    query.where(function () {
+      this.where('branch_id', branchId).orWhereNull('branch_id');
+    });
   }
   if (type) query.where({ type });
 
@@ -90,8 +92,24 @@ export const getAllLoans = async (type = 'LOAN_TAKEN', tenantId = null, branchId
   };
 };
 
-export const createLoan = async (data, tenantId = null, branchId = null) => {
+export const createLoan = async (data, arg2 = null, arg3 = null) => {
   if (!data.loanAmount || Number(data.loanAmount) <= 0) throw ApiError.badRequest('Loan amount must be greater than 0');
+
+  let resolvedTenantId = null;
+  let resolvedBranchId = null;
+
+  if (typeof arg2 === 'number' || (typeof arg2 === 'string' && /^\d+$/.test(arg2))) {
+    resolvedTenantId = Number(arg2);
+    resolvedBranchId = arg3;
+  } else if (typeof arg3 === 'number' || (typeof arg3 === 'string' && /^\d+$/.test(arg3))) {
+    resolvedTenantId = Number(arg3);
+  } else if (data.tenantId && !isNaN(Number(data.tenantId))) {
+    resolvedTenantId = Number(data.tenantId);
+  }
+
+  if (data.branchId && !isNaN(Number(data.branchId))) {
+    resolvedBranchId = Number(data.branchId);
+  }
 
   const loanAmount = Number(data.loanAmount);
   const interestRate = Number(data.interestRate) || 0;
@@ -115,7 +133,8 @@ export const createLoan = async (data, tenantId = null, branchId = null) => {
   }
 
   const [insertedId] = await db('loans').insert({
-    tenant_id: tenantId || data.tenantId || null,
+    tenant_id: resolvedTenantId,
+    branch_id: resolvedBranchId,
     type: data.type || 'LOAN_TAKEN',
     provider_name: data.providerName,
     account_number: data.accountNumber || null,
@@ -132,7 +151,7 @@ export const createLoan = async (data, tenantId = null, branchId = null) => {
     is_deleted: false,
   });
 
-  return getLoanById(insertedId, tenantId);
+  return getLoanById(insertedId, resolvedTenantId);
 };
 
 export const getLoanById = async (id, tenantId = null) => {
