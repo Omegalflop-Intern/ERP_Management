@@ -12,14 +12,19 @@ export default function WarrantyClaimSlipModal({ claim, onClose }) {
   const claimNumber = claim.claimNumber || `CLM-${String(claim.id || claim._id || '').slice(-6).toUpperCase()}`;
   const claimDate = claim.createdAt ? new Date(claim.createdAt) : new Date();
   
-  const customerName = claim.customerId?.name || claim.customerName || 'Walk-in Customer';
-  const customerPhone = claim.customerId?.phone || claim.customerPhone || 'N/A';
-  const customerAddress = claim.customerId?.address || claim.customerAddress || '';
+  const customerName = claim.customer?.name || claim.customerId?.name || claim.customerName || 'Walk-in Customer';
+  const customerPhone = claim.customer?.phone || claim.customerId?.phone || claim.customerPhone || 'N/A';
+  const customerAddress = claim.customer?.address || claim.customerId?.address || claim.customerAddress || '';
 
-  const productName = claim.productId?.name || claim.productName || 'Gadget Item';
-  const brand = claim.productId?.brand || claim.brand || 'Generic';
-  const imei = claim.imeiOrSerial || claim.imei || claim.serialNumber || 'N/A';
-  const reason = claim.reason || claim.issueDescription || claim.problem || 'Customer reported device issue/defect';
+  const invoiceNumber = claim.invoiceRef?.invoiceNumber || (claim.notes?.match(/INV-[\w-]+/)?.[0] || '—');
+  const productName = claim.notes?.startsWith('Item:')
+    ? claim.notes.replace(/^Item:\s*/i, '')
+    : claim.notes?.startsWith('Sold via')
+    ? claim.notes.split('—')[0]
+    : claim.productId?.name || claim.imei?.productId?.name || claim.productName || 'Gadget Item';
+  const brand = claim.productId?.brand || claim.brand || 'Original Brand';
+  const imei = claim.imei?.imeiOrSerial || claim.imeiOrSerial || claim.imei || claim.serialNumber || 'Non-IMEI Item';
+  const reason = claim.description || claim.reason || claim.issueDescription || claim.problem || 'Customer reported device issue/defect';
   const status = (claim.status || 'pending').toLowerCase();
   const resolution = claim.resolution || claim.actionTaken || claim.notes || 'Under Technical Assessment';
 

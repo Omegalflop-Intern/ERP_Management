@@ -1476,7 +1476,7 @@ DROP TABLE IF EXISTS `warranty_claims`;
 CREATE TABLE `warranty_claims` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `tenant_id` int DEFAULT NULL,
-  `imei_id` int NOT NULL,
+  `imei_id` int DEFAULT NULL,
   `customer_id` int NOT NULL,
   `invoice_id` int DEFAULT NULL,
   `claim_type` varchar(50) NOT NULL,

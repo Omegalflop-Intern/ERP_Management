@@ -220,7 +220,7 @@ export default function WarrantyReport() {
               ) : (
                 units.map((u) => {
                   const expiry = u.warrantyExpiry ? new Date(u.warrantyExpiry) : null;
-                  const soldDate = u.soldAt ? new Date(u.soldAt) : null;
+                  const soldDate = u.soldAt ? new Date(u.soldAt) : u.saleDate ? new Date(u.saleDate) : u.createdAt ? new Date(u.createdAt) : null;
                   const now = new Date();
                   const isExpired = expiry && expiry < now;
                   const daysLeft =
@@ -230,45 +230,56 @@ export default function WarrantyReport() {
                         ? Math.ceil((expiry - now) / 86400000)
                         : null;
 
+                  const pName = u.productName || u.productId?.name || 'Gadget / Product';
+                  const pBrand = u.brandName || u.productId?.brand || 'Accessories / Peripherals';
+                  const isNonImei = !u.imeiOrSerial || u.imeiOrSerial === 'Non-IMEI Item' || u.imeiOrSerial === 'N/A';
+                  const invNum = u.invoiceNumber || u.soldInvoiceNumber || '—';
+
                   return (
                     <tr
-                      key={u._id}
+                      key={u._id || u.id}
                       className="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors"
                     >
                       <td className="px-4 py-3">
-                        <div className="font-medium text-gray-900 dark:text-gray-100">
-                          {u.productId?.name || 'Unknown Product'}
+                        <div className="font-bold text-gray-900 dark:text-gray-100">
+                          {pName}
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">
-                          {u.productId?.brand || 'N/A'} {u.ram && `• ${u.ram}/${u.storage}`}
+                          {pBrand} {u.ram && `• ${u.ram}/${u.storage}`}
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="font-mono text-xs font-semibold px-2 py-1 rounded bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700">
-                          {u.imeiOrSerial}
-                        </span>
+                        {!isNonImei ? (
+                          <span className="font-mono text-xs font-semibold px-2 py-1 rounded bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                            {u.imeiOrSerial}
+                          </span>
+                        ) : (
+                          <span className="font-sans text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                            Non-IMEI Item
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1.5">
                           <User className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                           <span className="font-medium text-gray-900 dark:text-gray-100">
-                            {u.customerName}
+                            {u.customerName || 'In-Store Unit'}
                           </span>
                         </div>
-                        {u.customerPhone && u.customerPhone !== 'N/A' && (
+                        {u.customerPhone && u.customerPhone !== 'N/A' && u.customerPhone !== '—' && (
                           <div className="text-xs text-gray-500 dark:text-gray-400 pl-5">
                             {u.customerPhone}
                           </div>
                         )}
                       </td>
                       <td className="px-4 py-3 hidden lg:table-cell">
-                        {u.soldInvoiceNumber ? (
-                          <div className="flex items-center gap-1 text-xs font-mono text-blue-600 dark:text-blue-400">
+                        {invNum !== '—' ? (
+                          <div className="flex items-center gap-1 text-xs font-mono font-bold text-blue-600 dark:text-blue-400">
                             <FileText className="w-3.5 h-3.5" />
-                            {u.soldInvoiceNumber}
+                            {invNum}
                           </div>
                         ) : (
-                          <span className="text-gray-400 text-xs">-</span>
+                          <span className="text-gray-400 text-xs">—</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-600 dark:text-gray-400 hidden md:table-cell">
@@ -278,7 +289,7 @@ export default function WarrantyReport() {
                               month: 'short',
                               year: 'numeric',
                             })
-                          : '-'}
+                          : '—'}
                       </td>
                       <td className="px-4 py-3">
                         {expiry ? (

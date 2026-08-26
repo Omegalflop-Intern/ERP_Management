@@ -17,7 +17,7 @@ import {
   Wallet,
   X,
 } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import PageHeader from '../../components/layout/PageHeader';
@@ -287,9 +287,63 @@ export default function DueCollection() {
 // ----------------------------------------------------------------------
 function CollectDueModal({ sale, onClose, onSuccess }) {
   const [amount, setAmount] = useState('');
-  const [method, setMethod] = useState('cash');
   const dueAmount = Number(sale.paymentBreakdown?.dueAmount || 0);
   const queryClient = useQueryClient();
+
+  const { data: activeAccountsRes } = useQuery({
+    queryKey: ['accounting-accounts-active'],
+    queryFn: async () => {
+      try {
+        const { data } = await api.get('/accounting/accounts');
+        return data?.data || [];
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const availableMethods = useMemo(() => {
+    const ALL_METHODS = [
+      { key: 'cash', label: 'Cash in Hand (Cash Account)' },
+      { key: 'bkash', label: 'bKash Merchant / Personal' },
+      { key: 'nagad', label: 'Nagad Account' },
+      { key: 'rocket', label: 'Rocket Account' },
+      { key: 'bank', label: 'Bank Transfer / Card' },
+    ];
+
+    if (!activeAccountsRes || !Array.isArray(activeAccountsRes) || activeAccountsRes.length === 0) {
+      return ALL_METHODS;
+    }
+
+    const activeList = activeAccountsRes.filter((a) => a.isActive !== false);
+    const names = activeList.map((a) => `${(a.name || '').toLowerCase()} ${a.code || ''}`);
+
+    const hasCash = names.some((n) => n.includes('cash') || n.includes('petty') || n.includes('1000'));
+    const hasBkash = names.some((n) => n.includes('bkash') || n.includes('b-kash') || n.includes('1011'));
+    const hasRocket = names.some((n) => n.includes('rocket') || n.includes('1013'));
+    const hasNagad = names.some((n) => n.includes('nagad') || n.includes('nogod') || n.includes('1012'));
+    const hasBank = names.some((n) => n.includes('bank') || n.includes('card') || n.includes('checking') || n.includes('1010'));
+
+    const filtered = ALL_METHODS.filter(({ key }) => {
+      if (key === 'cash') return hasCash;
+      if (key === 'bkash') return hasBkash;
+      if (key === 'rocket') return hasRocket;
+      if (key === 'nagad') return hasNagad;
+      if (key === 'bank') return hasBank;
+      return true;
+    });
+
+    return filtered.length > 0 ? filtered : [ALL_METHODS[0]];
+  }, [activeAccountsRes]);
+
+  const [method, setMethod] = useState(() => availableMethods[0]?.key || 'cash');
+
+  useEffect(() => {
+    if (availableMethods.length > 0 && !availableMethods.some((m) => m.key === method)) {
+      setMethod(availableMethods[0].key);
+    }
+  }, [availableMethods, method]);
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -400,19 +454,24 @@ function CollectDueModal({ sale, onClose, onSuccess }) {
 
           {/* Payment Method Selector */}
           <div>
-            <Label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
-              Payment Method
-            </Label>
+            <div className="flex items-center justify-between mb-1">
+              <Label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
+                Active Receiving Account *
+              </Label>
+              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                {availableMethods.length} Active in Shop
+              </span>
+            </div>
             <select
               value={method}
               onChange={(e) => setMethod(e.target.value)}
-              className="w-full mt-1.5 px-3 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500"
+              className="w-full mt-1 px-3 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 shadow-xs"
             >
-              <option value="cash">Cash in Hand</option>
-              <option value="bkash">bKash</option>
-              <option value="nagad">Nagad</option>
-              <option value="rocket">Rocket</option>
-              <option value="bank">Bank / Card</option>
+              {availableMethods.map((m) => (
+                <option key={m.key} value={m.key}>
+                  {m.label}
+                </option>
+              ))}
             </select>
           </div>
 

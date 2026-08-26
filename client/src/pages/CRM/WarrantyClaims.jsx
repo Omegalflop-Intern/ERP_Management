@@ -8,6 +8,7 @@ import {
   Printer,
   RefreshCw,
   Search,
+  X,
   XCircle,
 } from 'lucide-react';
 import React, { useState } from 'react';
@@ -161,12 +162,17 @@ export default function WarrantyClaims() {
                 <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">
                   Customer
                 </th>
-                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">IMEI</th>
-                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 hidden md:table-cell">
-                  Type
+                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">
+                  Product / Item
+                </th>
+                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 hidden sm:table-cell">
+                  Invoice
                 </th>
                 <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 hidden md:table-cell">
-                  Description
+                  Claim Type
+                </th>
+                <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 hidden lg:table-cell">
+                  Issue / Defect
                 </th>
                 <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Status</th>
                 <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 text-right">
@@ -177,73 +183,92 @@ export default function WarrantyClaims() {
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan="6" className="px-4 py-12 text-center text-gray-400">
+                  <td colSpan="7" className="px-4 py-12 text-center text-gray-400">
                     <RefreshCw className="w-6 h-6 animate-spin mx-auto" />
                   </td>
                 </tr>
               ) : claims.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="px-4 py-12 text-center text-gray-400">
+                  <td colSpan="7" className="px-4 py-12 text-center text-gray-400">
                     No warranty claims found
                   </td>
                 </tr>
               ) : (
-                claims.map((cl) => (
-                  <tr
-                    key={cl._id}
-                    className="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30"
-                  >
-                    <td className="px-4 py-3">
-                      <div className="font-medium text-gray-900 dark:text-gray-100">
-                        {cl.customer?.name || 'N/A'}
-                      </div>
-                      <div className="text-xs text-gray-500">{cl.customer?.phone}</div>
-                    </td>
-                    <td className="px-4 py-3 font-mono text-xs text-gray-600 dark:text-gray-400">
-                      {cl.imei?.imeiOrSerial ? (
-                        <span>{cl.imei.imeiOrSerial}</span>
-                      ) : (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-sans font-semibold">
-                          Non-IMEI Item
+                claims.map((cl) => {
+                  const pName = cl.notes?.startsWith('Item:')
+                    ? cl.notes.replace(/^Item:\s*/i, '')
+                    : cl.notes?.startsWith('Sold via')
+                    ? cl.notes.split('—')[0]
+                    : cl.imei?.productId?.name || 'Device / Accessory';
+                  const invNum = cl.invoiceRef?.invoiceNumber || (cl.notes?.match(/INV-[\w-]+/)?.[0] || '—');
+
+                  return (
+                    <tr
+                      key={cl._id}
+                      className="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30"
+                    >
+                      <td className="px-4 py-3">
+                        <div className="font-bold text-gray-900 dark:text-gray-100">
+                          {cl.customer?.name || 'Customer'}
+                        </div>
+                        <div className="text-xs text-gray-500">{cl.customer?.phone || 'No phone'}</div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="font-semibold text-gray-900 dark:text-gray-100 text-xs">
+                          {pName}
+                        </div>
+                        <div className="mt-0.5">
+                          {cl.imei?.imeiOrSerial ? (
+                            <span className="font-mono text-[11px] text-blue-600 dark:text-blue-400 font-bold">
+                              IMEI: {cl.imei.imeiOrSerial}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-sans font-semibold">
+                              Non-IMEI Item
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 hidden sm:table-cell font-mono text-xs font-bold text-slate-700 dark:text-slate-300">
+                        {invNum}
+                      </td>
+                      <td className="px-4 py-3 hidden md:table-cell">
+                        <span className="px-2.5 py-1 text-xs rounded-full font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 capitalize">
+                          {cl.claimType}
                         </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 hidden md:table-cell">
-                      <span className="px-2 py-1 text-xs rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 capitalize">
-                        {cl.claimType}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden md:table-cell max-w-[200px] truncate">
-                      {cl.description}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`px-2 py-1 text-xs rounded-full font-medium capitalize ${STATUS_COLORS[cl.status]}`}
-                      >
-                        {cl.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => setPrintClaim(cl)}
-                          className="p-1.5 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-950/40 text-amber-600 dark:text-amber-400 transition-colors"
-                          title="Print Warranty Claim Token"
+                      </td>
+                      <td className="px-4 py-3 text-gray-600 dark:text-gray-400 hidden lg:table-cell max-w-[200px] truncate text-xs">
+                        {cl.description}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`px-2.5 py-1 text-xs rounded-full font-bold capitalize ${STATUS_COLORS[cl.status]}`}
                         >
-                          <Printer className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => setViewClaim(cl)}
-                          className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-blue-500 transition-colors"
-                          title="View Claim Details"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                          {cl.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setPrintClaim(cl)}
+                            className="p-1.5 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-950/40 text-amber-600 dark:text-amber-400 transition-colors"
+                            title="Print Warranty Claim Token"
+                          >
+                            <Printer className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => setViewClaim(cl)}
+                            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-blue-500 transition-colors"
+                            title="View Claim Details"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -281,6 +306,7 @@ export default function WarrantyClaims() {
 function WarrantyClaimModal({ customers, imeis, onClose }) {
   const queryClient = useQueryClient();
   const [hasImei, setHasImei] = useState(true);
+  const [selectedItemKey, setSelectedItemKey] = useState('');
   const [form, setForm] = useState({
     customer: '',
     imei: '',
@@ -290,6 +316,63 @@ function WarrantyClaimModal({ customers, imeis, onClose }) {
     description: '',
     notes: '',
   });
+
+  // Query customer's actual purchased items (Retail & Wholesale orders)
+  const { data: customerItems = [], isLoading: loadingItems } = useQuery({
+    queryKey: ['customer-purchased-items', form.customer],
+    queryFn: async () => {
+      if (!form.customer) return [];
+      try {
+        const res = await api.get(`/warranties/customer/${form.customer}/purchased-items`);
+        return res.data?.data || [];
+      } catch {
+        return [];
+      }
+    },
+    enabled: Boolean(form.customer),
+  });
+
+  const handleSelectCustomer = (customerId) => {
+    setSelectedItemKey('');
+    setForm({
+      ...form,
+      customer: customerId,
+      imei: '',
+      productName: '',
+      invoiceRef: '',
+    });
+  };
+
+  const handleSelectPurchasedItem = (item) => {
+    setSelectedItemKey(item.id);
+    if (item.hasImei && item.imeiId) {
+      setHasImei(true);
+      setForm((prev) => ({
+        ...prev,
+        imei: String(item.imeiId),
+        productName: item.productName,
+        invoiceRef: item.invoiceId ? String(item.invoiceId) : '',
+        notes: `Sold via ${item.invoiceNumber} (${item.saleType}) — ${item.imeiOrSerial}`,
+      }));
+    } else {
+      setHasImei(false);
+      setForm((prev) => ({
+        ...prev,
+        imei: '',
+        productName: item.productName + (item.imeiOrSerial ? ` [${item.imeiOrSerial}]` : ''),
+        invoiceRef: item.invoiceId ? String(item.invoiceId) : '',
+        notes: `Sold via ${item.invoiceNumber} (${item.saleType})`,
+      }));
+    }
+
+    if (!item.isWarrantyValid && !item.isRefunded) {
+      toast.warning(`Note: The warranty for this product expired on ${new Date(item.warrantyExpiryDate).toLocaleDateString()}. Claim will be logged as out-of-warranty / chargeable repair.`);
+    } else if (item.isRefunded) {
+      toast.error('This product was already refunded/settled in a previous claim.');
+    } else {
+      toast.success(`Selected ${item.productName} (${item.daysRemaining} days warranty left)`);
+    }
+  };
 
   const mutation = useMutation({
     mutationFn: async (data) => {
@@ -317,24 +400,34 @@ function WarrantyClaimModal({ customers, imeis, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4"
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-[#0f172a] rounded-2xl border border-slate-200 dark:border-slate-800 w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+        className="bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200 dark:border-slate-800 w-full max-w-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 max-h-[92vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60">
-          <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Log Warranty Claim</h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
-            Register claim for phones, gadgets, or non-IMEI accessories & peripherals.
-          </p>
+        <div className="p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/60 flex items-center justify-between shrink-0">
+          <div>
+            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Log Warranty Claim</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+              Wholesale & Retail warranty tracking with auto-selected customer products and expiry check.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
+
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (hasImei && !form.imei) {
-              toast.error('Please select an IMEI or switch to Non-IMEI mode');
+            if (hasImei && !form.imei && !form.productName.trim()) {
+              toast.error('Please select an IMEI or choose a purchased product');
               return;
             }
             if (!hasImei && !form.productName.trim()) {
@@ -343,32 +436,102 @@ function WarrantyClaimModal({ customers, imeis, onClose }) {
             }
             mutation.mutate(form);
           }}
-          className="p-5 space-y-3.5 text-xs text-slate-900 dark:text-slate-100"
+          className="p-5 space-y-4 text-xs text-slate-900 dark:text-slate-100 overflow-y-auto flex-1"
         >
+          {/* Step 1: Customer Selection */}
           <div>
             <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
-              Customer *
+              Select Customer *
             </label>
             <select
               required
               value={form.customer}
-              onChange={(e) => setForm({ ...form, customer: e.target.value })}
+              onChange={(e) => handleSelectCustomer(e.target.value)}
               className="w-full h-10 px-3 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-semibold focus:outline-none focus:border-blue-600 shadow-xs"
             >
               <option value="">-- Choose Customer --</option>
               {customers.map((c) => (
                 <option key={c._id} value={c._id}>
-                  {c.name} ({c.phone})
+                  {c.name} ({c.phone || 'No phone'})
                 </option>
               ))}
             </select>
           </div>
 
-          {/* Product Type Toggle: IMEI vs Non-IMEI */}
-          <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5">
+          {/* Step 2: Customer Purchased Products Auto-Loaded (Wholesale & Retail) */}
+          {form.customer && (
+            <div className="p-3.5 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Customer Purchase History ({customerItems.length} Products Found)
+                </span>
+                {loadingItems && <RefreshCw className="w-3.5 h-3.5 animate-spin text-blue-500" />}
+              </div>
+
+              {loadingItems ? (
+                <div className="py-4 text-center text-slate-400 font-medium text-xs">
+                  Loading customer invoices & items...
+                </div>
+              ) : customerItems.length === 0 ? (
+                <div className="p-3 text-center bg-white dark:bg-[#1e293b] rounded-xl border border-dashed border-slate-200 dark:border-slate-700 text-slate-400 text-xs">
+                  No completed purchases found for this customer. You can enter details manually below.
+                </div>
+              ) : (
+                <div className="max-h-44 overflow-y-auto space-y-1.5 pr-1">
+                  {customerItems.map((item) => (
+                    <div
+                      key={item.id}
+                      onClick={() => handleSelectPurchasedItem(item)}
+                      className={`p-2.5 rounded-xl border cursor-pointer transition-all flex items-center justify-between gap-3 text-xs ${
+                        selectedItemKey === item.id
+                          ? 'border-blue-600 bg-blue-50/70 dark:bg-blue-950/40 ring-1 ring-blue-600'
+                          : 'border-slate-200 dark:border-slate-700/80 bg-white dark:bg-[#1e293b] hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="font-bold text-slate-900 dark:text-slate-100 truncate flex items-center gap-1.5">
+                          {item.productName}
+                          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">
+                            {item.invoiceNumber}
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-2 mt-0.5">
+                          {item.imeiOrSerial && (
+                            <span className="font-mono text-blue-600 dark:text-blue-400">
+                              IMEI: {item.imeiOrSerial}
+                            </span>
+                          )}
+                          <span>Sold: {new Date(item.purchaseDate).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+
+                      <div className="text-right shrink-0">
+                        {item.isRefunded ? (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-400">
+                            Refunded
+                          </span>
+                        ) : item.isWarrantyValid ? (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400">
+                            {item.daysRemaining}d warranty
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400">
+                            Expired
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Step 3: Product Type Toggle & Inputs */}
+          <div className="p-3.5 bg-slate-50 dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                Item Tracking Type
+                Item Identification
               </span>
               <div className="flex items-center gap-1 bg-slate-200 dark:bg-slate-800 p-0.5 rounded-lg">
                 <button
@@ -402,12 +565,11 @@ function WarrantyClaimModal({ customers, imeis, onClose }) {
                   IMEI / Serial Unit *
                 </label>
                 <select
-                  required={hasImei}
                   value={form.imei}
                   onChange={(e) => setForm({ ...form, imei: e.target.value })}
                   className="w-full h-10 px-3 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-mono font-bold focus:outline-none focus:border-blue-600 shadow-xs"
                 >
-                  <option value="">-- Select Sold IMEI --</option>
+                  <option value="">-- Choose or Auto-Selected IMEI --</option>
                   {imeis.map((u) => (
                     <option key={u._id} value={u._id}>
                       {u.imeiOrSerial} — {u.productId?.name || 'Device'}
@@ -434,7 +596,7 @@ function WarrantyClaimModal({ customers, imeis, onClose }) {
 
           <div>
             <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
-              Claim Type *
+              Claim Resolution Type *
             </label>
             <select
               required
@@ -444,7 +606,7 @@ function WarrantyClaimModal({ customers, imeis, onClose }) {
             >
               <option value="repair">Repair Service</option>
               <option value="replacement">Direct Replacement</option>
-              <option value="refund">Refund Claim</option>
+              <option value="refund">Refund Claim (Returns Ledger)</option>
             </select>
           </div>
 
@@ -464,7 +626,7 @@ function WarrantyClaimModal({ customers, imeis, onClose }) {
 
           <div>
             <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1">
-              Additional Notes (Optional)
+              Invoice Reference & Notes (Optional)
             </label>
             <input
               type="text"
@@ -475,7 +637,7 @@ function WarrantyClaimModal({ customers, imeis, onClose }) {
             />
           </div>
 
-          <div className="flex justify-end gap-2.5 pt-2 border-t border-slate-200 dark:border-slate-800">
+          <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-200 dark:border-slate-800">
             <button
               type="button"
               onClick={onClose}
@@ -486,10 +648,10 @@ function WarrantyClaimModal({ customers, imeis, onClose }) {
             <button
               type="submit"
               disabled={mutation.isPending}
-              className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition-all flex items-center gap-2 shadow-md disabled:opacity-50"
+              className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs transition-all flex items-center gap-2 shadow-md disabled:opacity-50"
             >
               {mutation.isPending && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
-              Create Claim
+              Submit Warranty Claim
             </button>
           </div>
         </form>
@@ -537,43 +699,55 @@ function ClaimDetailModal({ claim: cl, onClose, onPrint }) {
           </button>
         </div>
         <div className="p-6 space-y-4">
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-500">Customer</span>
-              <span className="font-medium text-gray-900 dark:text-gray-100">
-                {cl.customer?.name}
+          <div className="space-y-2.5 text-xs">
+            <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800">
+              <span className="text-slate-500 font-medium">Customer</span>
+              <span className="font-bold text-slate-900 dark:text-slate-100">
+                {cl.customer?.name} {cl.customer?.phone ? `(${cl.customer.phone})` : ''}
               </span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Phone</span>
-              <span className="text-gray-900 dark:text-gray-100">{cl.customer?.phone}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">IMEI</span>
-              <span className="font-mono text-gray-900 dark:text-gray-100">
-                {cl.imei?.imeiOrSerial}
+            <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800">
+              <span className="text-slate-500 font-medium">Product / Item</span>
+              <span className="font-bold text-slate-900 dark:text-slate-100">
+                {cl.notes?.replace(/^Item:\s*/i, '') || cl.imei?.productId?.name || 'Device / Accessory'}
               </span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Type</span>
-              <span className="capitalize text-gray-900 dark:text-gray-100">{cl.claimType}</span>
+            <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800">
+              <span className="text-slate-500 font-medium">Invoice Ref</span>
+              <span className="font-mono font-bold text-blue-600 dark:text-blue-400">
+                {cl.invoiceRef?.invoiceNumber || (cl.notes?.match(/INV-[\w-]+/)?.[0] || '—')}
+              </span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Status</span>
+            <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800">
+              <span className="text-slate-500 font-medium">IMEI / Serial</span>
+              <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
+                {cl.imei?.imeiOrSerial || 'Non-IMEI Item'}
+              </span>
+            </div>
+            <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800">
+              <span className="text-slate-500 font-medium">Claim Type</span>
+              <span className="capitalize font-bold text-slate-900 dark:text-slate-100">{cl.claimType}</span>
+            </div>
+            <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800">
+              <span className="text-slate-500 font-medium">Status</span>
               <span
-                className={`px-2 py-0.5 text-xs rounded-full font-medium capitalize ${STATUS_COLORS[cl.status]}`}
+                className={`px-2.5 py-0.5 text-xs rounded-full font-bold capitalize ${STATUS_COLORS[cl.status]}`}
               >
                 {cl.status}
               </span>
             </div>
-            <div>
-              <span className="text-gray-500">Description</span>
-              <p className="mt-1 text-gray-900 dark:text-gray-100">{cl.description}</p>
+            <div className="pt-1">
+              <span className="text-slate-500 font-medium block mb-0.5">Issue Description</span>
+              <p className="p-2.5 bg-slate-50 dark:bg-slate-900 rounded-xl text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-800">
+                {cl.description}
+              </p>
             </div>
             {cl.resolution && (
-              <div>
-                <span className="text-gray-500">Resolution</span>
-                <p className="mt-1 text-gray-900 dark:text-gray-100">{cl.resolution}</p>
+              <div className="pt-1">
+                <span className="text-slate-500 font-medium block mb-0.5">Resolution</span>
+                <p className="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl text-emerald-800 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800 font-medium">
+                  {cl.resolution}
+                </p>
               </div>
             )}
           </div>

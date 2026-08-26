@@ -63,3 +63,13 @@ export const getWarrantyReport = async (req, res, next) => {
     return ApiResponse.success(res, report);
   } catch (error) { next(error); }
 };
+
+export const getCustomerPurchasedItems = async (req, res, next) => {
+  try {
+    const { customerId } = req.params;
+    const tenantId = req.user?.tenantId || null;
+    const branchId = req.selectedBranchId || null;
+    const items = await warrantyService.getCustomerPurchasedItems(customerId, tenantId, branchId);
+    return ApiResponse.success(res, items);
+  } catch (error) { next(error); }
+};

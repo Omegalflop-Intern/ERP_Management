@@ -175,55 +175,297 @@ export const getClaimsByIMEI = async (imeiId, tenantId = null, branchId = null) 
   return rows.map(r => formatWarrantyClaim(r));
 };
 
-export const getWarrantyReport = async ({ type = 'expiring', search = '', status = 'Sold' }, tenantId = null, branchId = null) => {
-  let query = db('inventory_units')
+export const getWarrantyReport = async ({ type = 'all', search = '', status = 'Sold' }, tenantId = null, branchId = null) => {
+  const now = new Date();
+  const thirtyDays = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+  // 1. Fetch Products for name, brand, model & warranty lookup
+  let prodQuery = db('products').where({ is_deleted: false });
+  if (tenantId) prodQuery.where('tenant_id', tenantId);
+  const allProducts = await prodQuery.select('id', 'name', 'brand', 'model', 'warranty_months');
+  const productMap = new Map(allProducts.map((p) => [Number(p.id), p]));
+
+  // 2. Fetch Inventory Units (with product & branch info)
+  let unitQuery = db('inventory_units')
     .leftJoin('products', 'inventory_units.product_id', 'products.id')
     .leftJoin('branches', 'inventory_units.branch_id', 'branches.id')
     .where({ 'inventory_units.is_deleted': false });
 
-  if (tenantId) {
-    query.where('inventory_units.tenant_id', tenantId);
+  if (tenantId) unitQuery.where('inventory_units.tenant_id', tenantId);
+  if (branchId && branchId !== 'all') unitQuery.where('inventory_units.branch_id', branchId);
+  if (status && status !== 'ALL') unitQuery.where('inventory_units.status', status);
+
+  const unitRows = await unitQuery.select(
+    'inventory_units.*',
+    'products.name as product_name',
+    'products.brand as product_brand',
+    'branches.name as branch_name'
+  );
+
+  // 3. Fetch Transactions to capture customer info, non-IMEI accessories & wholesale sales
+  let txQuery = db('transactions')
+    .leftJoin('customers', 'transactions.customer_id', 'customers.id')
+    .where({ 'transactions.is_deleted': false })
+    .whereIn('transactions.status', ['COMPLETED', 'RETURNED', 'PARTIAL_RETURN'])
+    .orderBy('transactions.created_at', 'desc');
+
+  if (tenantId) txQuery.where('transactions.tenant_id', tenantId);
+  if (branchId && branchId !== 'all') txQuery.where('transactions.branch_id', branchId);
+
+  const transactions = await txQuery.select(
+    'transactions.*',
+    'customers.name as c_name',
+    'customers.phone as c_phone'
+  );
+
+  // Map transactions by IMEI to attach customer & invoice to serialized units
+  const imeiToTxMap = new Map();
+  const nonImeiItems = [];
+
+  for (const tx of transactions) {
+    let lineItems = [];
+    try {
+      lineItems = typeof tx.line_items === 'string' ? JSON.parse(tx.line_items) : (tx.line_items || []);
+    } catch {
+      lineItems = [];
+    }
+
+    const txDate = new Date(tx.created_at);
+
+    for (const item of lineItems) {
+      const prod = item.productId ? productMap.get(Number(item.productId)) : null;
+      const pName = prod?.name || item.description || item.productName || item.name || 'Gadget Item';
+      const pBrand = prod?.brand || item.brand || 'Accessories';
+      const wMonths = Number(item.warrantyMonths || item.warranty || prod?.warranty_months || 12);
+      const expiryDate = new Date(txDate);
+      expiryDate.setMonth(expiryDate.getMonth() + wMonths);
+
+      const singleImei = item.imeiOrSerial || item.imei;
+      const imeis = Array.isArray(item.imeiList) ? item.imeiList : (singleImei ? [singleImei] : []);
+
+      if (imeis.length > 0) {
+        for (const imeiStr of imeis) {
+          imeiToTxMap.set(String(imeiStr), {
+            customerName: tx.customer_name || tx.c_name || 'Walk-in Customer',
+            customerPhone: tx.customer_phone || tx.c_phone || 'N/A',
+            invoiceNumber: tx.invoice_number,
+            saleDate: tx.created_at,
+            productName: pName,
+            brandName: pBrand,
+            warrantyMonths: wMonths,
+            warrantyExpiry: expiryDate.toISOString(),
+          });
+        }
+      } else {
+        // Non-IMEI item
+        nonImeiItems.push({
+          _id: `tx-item-${tx.id}-${item.productId || pName}`,
+          id: `tx-${tx.id}-${item.productId || pName}`,
+          imeiOrSerial: 'Non-IMEI Item',
+          productName: pName,
+          brandName: pBrand,
+          branchName: tx.branch_id ? `Branch #${tx.branch_id}` : 'Main Outlet',
+          customerName: tx.customer_name || tx.c_name || 'Walk-in Customer',
+          customerPhone: tx.customer_phone || tx.c_phone || 'N/A',
+          invoiceNumber: tx.invoice_number,
+          saleDate: tx.created_at,
+          status: 'Sold',
+          warrantyMonths: wMonths,
+          warrantyExpiry: expiryDate.toISOString(),
+          createdAt: tx.created_at,
+        });
+      }
+    }
   }
 
-  if (branchId) {
-    query.where('inventory_units.branch_id', branchId);
-  }
+  // Build combined items list
+  const combinedItems = [];
 
-  if (status && status !== 'ALL') {
-    query.where('inventory_units.status', status);
-  }
+  // Add serialized units
+  for (const u of unitRows) {
+    const txInfo = imeiToTxMap.get(String(u.imei_or_serial)) || {};
+    const prod = u.product_id ? productMap.get(Number(u.product_id)) : null;
+    const pName = txInfo.productName || u.product_name || prod?.name || 'Device / Phone';
+    const pBrand = txInfo.brandName || u.product_brand || prod?.brand || 'Generic';
 
-  if (search) {
-    const term = `%${search}%`;
-    query.where((q) => {
-      q.where('inventory_units.imei_or_serial', 'like', term)
-       .orWhere('products.name', 'like', term);
+    combinedItems.push({
+      _id: String(u.id),
+      id: u.id,
+      imeiOrSerial: u.imei_or_serial,
+      productName: pName,
+      brandName: pBrand,
+      branchName: u.branch_name || 'Main Outlet',
+      customerName: txInfo.customerName || (u.status === 'Sold' ? 'Customer' : 'In Store Inventory'),
+      customerPhone: txInfo.customerPhone || '—',
+      invoiceNumber: txInfo.invoiceNumber || '—',
+      saleDate: txInfo.saleDate || u.created_at,
+      status: u.status,
+      warrantyMonths: Number(txInfo.warrantyMonths || u.warranty_months || prod?.warranty_months || 12),
+      warrantyExpiry: txInfo.warrantyExpiry || u.warranty_expiry || null,
+      createdAt: u.created_at,
     });
   }
 
-  const now = new Date();
-  if (type === 'expiring') {
-    const thirtyDays = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-    query.whereBetween('inventory_units.warranty_expiry', [now, thirtyDays]);
-  } else if (type === 'expired') {
-    query.where('inventory_units.warranty_expiry', '<', now);
+  // If status is 'Sold' or 'ALL', include non-IMEI sold items as well
+  if (status === 'Sold' || status === 'ALL') {
+    combinedItems.push(...nonImeiItems);
   }
 
-  const rows = await query.select(
-    'inventory_units.*',
-    'products.name as product_name',
-    'branches.name as branch_name'
-  ).orderBy('inventory_units.warranty_expiry', 'asc');
+  // Calculate summary counts
+  const totalSoldUnits = combinedItems.filter(i => i.status === 'Sold').length;
+  const totalActiveSold = combinedItems.filter(i => {
+    if (i.status !== 'Sold') return false;
+    return i.warrantyExpiry && new Date(i.warrantyExpiry) >= now;
+  }).length;
+  const totalExpiringSoon = combinedItems.filter(i => {
+    if (i.status !== 'Sold' || !i.warrantyExpiry) return false;
+    const exp = new Date(i.warrantyExpiry);
+    return exp >= now && exp <= thirtyDays;
+  }).length;
+  const totalExpiredSold = combinedItems.filter(i => {
+    if (i.status !== 'Sold' || !i.warrantyExpiry) return false;
+    return new Date(i.warrantyExpiry) < now;
+  }).length;
 
-  return rows.map((r) => ({
-    _id: String(r.id),
-    id: r.id,
-    imeiOrSerial: r.imei_or_serial,
-    productName: r.product_name || 'Product',
-    branchName: r.branch_name || 'Main Outlet',
-    status: r.status,
-    warrantyMonths: r.warranty_months,
-    warrantyExpiry: r.warranty_expiry,
-    createdAt: r.created_at,
-  }));
+  // Filter combined items by search term and type
+  let filtered = combinedItems;
+
+  if (search) {
+    const term = search.toLowerCase().trim();
+    filtered = filtered.filter(i =>
+      (i.productName || '').toLowerCase().includes(term) ||
+      (i.imeiOrSerial || '').toLowerCase().includes(term) ||
+      (i.customerName || '').toLowerCase().includes(term) ||
+      (i.customerPhone || '').includes(term) ||
+      (i.invoiceNumber || '').toLowerCase().includes(term)
+    );
+  }
+
+  if (type === 'active') {
+    filtered = filtered.filter(i => i.warrantyExpiry && new Date(i.warrantyExpiry) >= now);
+  } else if (type === 'expiring') {
+    filtered = filtered.filter(i => {
+      if (!i.warrantyExpiry) return false;
+      const exp = new Date(i.warrantyExpiry);
+      return exp >= now && exp <= thirtyDays;
+    });
+  } else if (type === 'expired') {
+    filtered = filtered.filter(i => i.warrantyExpiry && new Date(i.warrantyExpiry) < now);
+  }
+
+  // Sort by expiry date ascending
+  filtered.sort((a, b) => {
+    if (!a.warrantyExpiry) return 1;
+    if (!b.warrantyExpiry) return -1;
+    return new Date(a.warrantyExpiry) - new Date(b.warrantyExpiry);
+  });
+
+  return {
+    units: filtered,
+    summary: {
+      totalSoldUnits,
+      totalActiveSold,
+      totalExpiringSoon,
+      totalExpiredSold,
+    },
+  };
+};
+
+export const getCustomerPurchasedItems = async (customerId, tenantId = null, branchId = null) => {
+  const txQuery = db('transactions')
+    .where({ customer_id: customerId, is_deleted: false })
+    .whereIn('status', ['COMPLETED', 'RETURNED', 'PARTIAL_RETURN'])
+    .orderBy('created_at', 'desc');
+
+  if (tenantId) txQuery.where('tenant_id', tenantId);
+  if (branchId && branchId !== 'all') txQuery.where('branch_id', branchId);
+
+  const transactions = await txQuery;
+
+  const claimsQuery = db('warranty_claims').where({ customer_id: customerId, is_deleted: false });
+  if (tenantId) claimsQuery.where('tenant_id', tenantId);
+  const existingClaims = await claimsQuery;
+
+  const purchasedItems = [];
+  const now = new Date();
+
+  for (const tx of transactions) {
+    let lineItems = [];
+    try {
+      lineItems = typeof tx.line_items === 'string' ? JSON.parse(tx.line_items) : (tx.line_items || []);
+    } catch {
+      lineItems = [];
+    }
+
+    const txDate = new Date(tx.created_at);
+
+    for (const item of lineItems) {
+      const pName = item.productName || item.name || 'Gadget / Accessory';
+      const wMonths = Number(item.warrantyMonths || item.warranty || 12);
+      
+      const expiryDate = new Date(txDate);
+      expiryDate.setMonth(expiryDate.getMonth() + wMonths);
+      
+      const isWarrantyValid = expiryDate >= now;
+      const daysDiff = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+      const imeis = Array.isArray(item.imeiList) ? item.imeiList : (item.imei ? [item.imei] : []);
+      
+      if (imeis.length > 0) {
+        for (const imeiNum of imeis) {
+          const unit = await db('inventory_units').where({ imei_or_serial: imeiNum }).first();
+          const imeiId = unit ? unit.id : null;
+          
+          const claim = existingClaims.find(c => c.imei_id === imeiId || (c.notes && c.notes.includes(imeiNum)));
+          const isRefunded = claim && claim.claim_type === 'refund' && claim.status === 'completed';
+
+          purchasedItems.push({
+            id: `item-${tx.id}-${imeiNum}`,
+            invoiceId: tx.id,
+            invoiceNumber: tx.invoice_number,
+            saleType: tx.sale_type || 'RETAIL',
+            purchaseDate: tx.created_at,
+            productId: item.productId || item.id,
+            productName: pName,
+            imeiId: imeiId,
+            imeiOrSerial: imeiNum,
+            hasImei: true,
+            warrantyMonths: wMonths,
+            warrantyExpiryDate: expiryDate.toISOString(),
+            isWarrantyValid: isWarrantyValid && !isRefunded,
+            daysRemaining: daysDiff,
+            statusLabel: isRefunded ? 'Refunded' : (isWarrantyValid ? `${daysDiff} days left` : 'Expired'),
+            isRefunded: Boolean(isRefunded),
+            hasClaim: Boolean(claim),
+            latestClaimStatus: claim?.status || null,
+          });
+        }
+      } else {
+        const qty = Number(item.quantity || 1);
+        purchasedItems.push({
+          id: `item-${tx.id}-${item.productId || pName}`,
+          invoiceId: tx.id,
+          invoiceNumber: tx.invoice_number,
+          saleType: tx.sale_type || 'RETAIL',
+          purchaseDate: tx.created_at,
+          productId: item.productId || item.id,
+          productName: pName,
+          quantity: qty,
+          imeiId: null,
+          imeiOrSerial: null,
+          hasImei: false,
+          warrantyMonths: wMonths,
+          warrantyExpiryDate: expiryDate.toISOString(),
+          isWarrantyValid: isWarrantyValid,
+          daysRemaining: daysDiff,
+          statusLabel: isWarrantyValid ? `${daysDiff} days left` : 'Expired',
+          isRefunded: false,
+          hasClaim: false,
+          latestClaimStatus: null,
+        });
+      }
+    }
+  }
+
+  return purchasedItems;
 };

@@ -12,6 +12,7 @@ router.use(authenticate);
 router.use(checkTenantStatus);
 
 router.get('/report', warrantyController.getWarrantyReport);
+router.get('/customer/:customerId/purchased-items', warrantyController.getCustomerPurchasedItems);
 router.get('/imei/:imeiId', warrantyController.getClaimsByIMEI);
 router.get('/', warrantyController.getAllClaims);
 router.get('/:id', warrantyController.getClaimById);

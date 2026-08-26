@@ -28,6 +28,7 @@ import * as addReceiptsToExpenses from '../migrations/20260824000001_add_receipt
 import * as createRecurringExpensesTable from '../migrations/20260824000002_create_recurring_expenses_table.js';
 import * as addPaymentBreakdownToPurchaseOrders from '../migrations/20260826000001_add_payment_breakdown_to_purchase_orders.js';
 import * as createProductBranchStocksTable from '../migrations/20260826000002_create_product_branch_stocks_table.js';
+import * as allowNullImeiInWarrantyClaims from '../migrations/20260826000003_allow_null_imei_in_warranty_claims.js';
 
 async function ensureDatabase() {
   try {
@@ -104,8 +105,10 @@ export async function runAutoMigrations({ verbose = true } = {}) {
   await addPaymentBreakdownToPurchaseOrders.up(db);
   log('🔄 Running migration 26: create product_branch_stocks table...');
   await createProductBranchStocksTable.up(db);
+  log('🔄 Running migration 27: allow null imei_id in warranty_claims...');
+  await allowNullImeiInWarrantyClaims.up(db);
 
-  if (verbose) console.log('✅ All 26 migrations completed successfully!');
+  if (verbose) console.log('✅ All 27 migrations completed successfully!');
   return true;
 }
 

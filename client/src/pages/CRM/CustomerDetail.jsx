@@ -11,14 +11,12 @@ import {
   RefreshCw,
   ShoppingBag,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
 import { NumberInput } from '../../components/ui/NumberInput';
-
-const METHODS = ['cash', 'bkash', 'rocket', 'nagad', 'bank'];
 
 export default function CustomerDetail() {
   const { id } = useParams();
@@ -27,7 +25,61 @@ export default function CustomerDetail() {
   const queryClient = useQueryClient();
   const [collectModal, setCollectModal] = useState(false);
   const [amount, setAmount] = useState('');
-  const [method, setMethod] = useState('cash');
+
+  const { data: activeAccountsRes } = useQuery({
+    queryKey: ['accounting-accounts-active'],
+    queryFn: async () => {
+      try {
+        const { data } = await api.get('/accounting/accounts');
+        return data?.data || [];
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const availableMethods = useMemo(() => {
+    const ALL_METHODS = [
+      { key: 'cash', label: 'Cash' },
+      { key: 'bkash', label: 'bKash' },
+      { key: 'nagad', label: 'Nagad' },
+      { key: 'rocket', label: 'Rocket' },
+      { key: 'bank', label: 'Bank' },
+    ];
+
+    if (!activeAccountsRes || !Array.isArray(activeAccountsRes) || activeAccountsRes.length === 0) {
+      return ALL_METHODS;
+    }
+
+    const activeList = activeAccountsRes.filter((a) => a.isActive !== false);
+    const names = activeList.map((a) => `${(a.name || '').toLowerCase()} ${a.code || ''}`);
+
+    const hasCash = names.some((n) => n.includes('cash') || n.includes('petty') || n.includes('1000'));
+    const hasBkash = names.some((n) => n.includes('bkash') || n.includes('b-kash') || n.includes('1011'));
+    const hasRocket = names.some((n) => n.includes('rocket') || n.includes('1013'));
+    const hasNagad = names.some((n) => n.includes('nagad') || n.includes('nogod') || n.includes('1012'));
+    const hasBank = names.some((n) => n.includes('bank') || n.includes('card') || n.includes('checking') || n.includes('1010'));
+
+    const filtered = ALL_METHODS.filter(({ key }) => {
+      if (key === 'cash') return hasCash;
+      if (key === 'bkash') return hasBkash;
+      if (key === 'rocket') return hasRocket;
+      if (key === 'nagad') return hasNagad;
+      if (key === 'bank') return hasBank;
+      return true;
+    });
+
+    return filtered.length > 0 ? filtered : [ALL_METHODS[0]];
+  }, [activeAccountsRes]);
+
+  const [method, setMethod] = useState(() => availableMethods[0]?.key || 'cash');
+
+  useEffect(() => {
+    if (availableMethods.length > 0 && !availableMethods.some((m) => m.key === method)) {
+      setMethod(availableMethods[0].key);
+    }
+  }, [availableMethods, method]);
 
   const { data, isLoading } = useQuery({
     queryKey: ['customer-history', id],
@@ -299,18 +351,27 @@ export default function CustomerDetail() {
                 <p className="text-xs text-gray-400 mt-1">Leave empty to collect full amount</p>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
-                  Payment Method
-                </label>
-                <div className="grid grid-cols-5 gap-2">
-                  {METHODS.map((m) => (
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                    Active Receiving Account
+                  </label>
+                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                    {availableMethods.length} Active in Shop
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {availableMethods.map((m) => (
                     <button
-                      key={m}
+                      key={m.key}
                       type="button"
-                      onClick={() => setMethod(m)}
-                      className={`px-2 py-2 rounded-lg text-xs font-medium capitalize transition-all ${method === m ? 'bg-[#2563EB] text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200'}`}
+                      onClick={() => setMethod(m.key)}
+                      className={`flex-1 min-w-[70px] px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-xs ${
+                        method === m.key
+                          ? 'bg-blue-600 text-white shadow-blue-500/20'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-blue-400'
+                      }`}
                     >
-                      {m}
+                      {m.label}
                     </button>
                   ))}
                 </div>
