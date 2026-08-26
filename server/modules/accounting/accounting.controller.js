@@ -233,37 +233,6 @@ export const getAssets = async (req, res, next) => {
     query.whereNotIn('code', ['1000', '1010', '1011', '1012', '1013', '1020', '1030']);
     const rows = await query.orderBy('created_at', 'desc');
 
-    if (rows.length === 0) {
-      const defaultAssets = [
-        { name: 'Main Glass Counter & Display Rack', category: 'FURNITURE', cost: 85000, life: 36 },
-        { name: 'CCTV & Security Camera System', category: 'ELECTRONICS', cost: 45000, life: 24 },
-        { name: 'POS Thermal Printer & Barcode Setup', category: 'EQUIPMENT', cost: 25000, life: 24 },
-      ];
-      for (const def of defaultAssets) {
-        const code = `AST-${Date.now().toString().slice(-4)}${Math.floor(Math.random() * 90 + 10)}`;
-        await db('accounts').insert({
-          tenant_id: tenantId,
-          branch_id: branchId,
-          code,
-          name: def.name,
-          type: 'ASSET',
-          sub_type: def.category,
-          balance: def.cost,
-          description: `Asset acquired on ${new Date().toISOString().split('T')[0]} (Useful life: ${def.life} mos)`,
-          is_active: true,
-          is_deleted: false,
-        });
-      }
-      const refreshed = db('accounts')
-        .where({ type: 'ASSET', is_deleted: false })
-        .whereNotIn('code', ['1000', '1010', '1011', '1012', '1013', '1020', '1030']);
-      applyTenantScope(refreshed, tenantId, 'accounts');
-      applyBranchScope(refreshed, branchId, 'accounts');
-      const seededRows = await refreshed.orderBy('created_at', 'desc');
-      const mapped = seededRows.map((a) => formatAssetRow(a));
-      return ApiResponse.success(res, mapped);
-    }
-
     const mappedAssets = rows.map((a) => formatAssetRow(a));
     return ApiResponse.success(res, mappedAssets);
   } catch (error) { next(error); }

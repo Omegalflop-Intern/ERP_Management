@@ -109,6 +109,7 @@ async function resetDatabase() {
         is_active: true,
         is_verified: true,
         is_deleted: false,
+        tenant_id: null,
       });
       console.log(`  👤 Created Super Admin: ${u.username}`);
     }
