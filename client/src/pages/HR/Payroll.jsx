@@ -14,6 +14,7 @@ export default function Payroll() {
   const [year, setYear] = useState(new Date().getFullYear());
   const [showProcess, setShowProcess] = useState(false);
   const [viewPayslip, setViewPayslip] = useState(null);
+  const [payingRecord, setPayingRecord] = useState(null);
   const { styled } = useTheme();
   const queryClient = useQueryClient();
 
@@ -42,13 +43,14 @@ export default function Payroll() {
   });
 
   const payMutation = useMutation({
-    mutationFn: async (id) => api.put(`/payroll/${id}/pay`),
+    mutationFn: async ({ id, paymentMethod }) => api.put(`/payroll/${id}/pay`, { paymentMethod }),
     onSuccess: () => {
-      toast.success('Marked as paid');
+      toast.success('Salary marked as paid and accounts synced');
+      setPayingRecord(null);
       queryClient.invalidateQueries(['payroll']);
       queryClient.invalidateQueries(['payroll-summary']);
     },
-    onError: (e) => toast.error(e.response?.data?.message || 'Failed'),
+    onError: (e) => toast.error(e.response?.data?.message || 'Failed to pay salary'),
   });
 
   const deleteMutation = useMutation({
@@ -244,16 +246,9 @@ export default function Payroll() {
                         {r.status === 'pending' && (
                           <>
                             <button
-                              onClick={() =>
-                                confirmAction(
-                                  'Mark payroll as paid?',
-                                  () => payMutation.mutate(r._id),
-                                  'Mark Paid',
-                                  'Are you sure you want to mark this salary record as paid?'
-                                )
-                              }
+                              onClick={() => setPayingRecord(r)}
                               className="p-1.5 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/20 text-green-600 transition-colors"
-                              title="Mark Paid"
+                              title="Pay Salary"
                             >
                               <CheckCircle className="w-4 h-4" />
                             </button>
@@ -289,6 +284,16 @@ export default function Payroll() {
         />
       )}
       {viewPayslip && <PayslipModal payroll={viewPayslip} onClose={() => setViewPayslip(null)} />}
+      {payingRecord && (
+        <PaySalaryModal
+          payroll={payingRecord}
+          isPending={payMutation.isPending}
+          onConfirm={(paymentMethod) =>
+            payMutation.mutate({ id: payingRecord._id, paymentMethod })
+          }
+          onClose={() => setPayingRecord(null)}
+        />
+      )}
     </div>
   );
 }
@@ -564,3 +569,105 @@ function PayslipModal({ payroll: r, onClose }) {
     </div>
   );
 }
+
+function PaySalaryModal({ payroll: r, isPending, onConfirm, onClose }) {
+  const [method, setMethod] = useState('CASH');
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white dark:bg-[#111827] rounded-2xl border border-gray-200 dark:border-gray-800 w-full max-w-md overflow-hidden shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-5 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center font-bold">
+              <CheckCircle className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-gray-900 dark:text-gray-100">
+                Disburse Staff Salary
+              </h2>
+              <p className="text-xs text-gray-500">Select payment channel & confirm disbursement</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 font-bold text-xl">
+            &times;
+          </button>
+        </div>
+
+        <div className="p-5 space-y-4">
+          <div className="p-3.5 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5 text-xs">
+            <div className="flex justify-between">
+              <span className="text-slate-500 font-medium">Employee Name:</span>
+              <span className="font-bold text-slate-900 dark:text-slate-100">{r.employee?.name || `Employee #${r.employeeId}`}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500 font-medium">Month / Period:</span>
+              <span className="font-bold text-slate-900 dark:text-slate-100">{MONTHS[r.month - 1]} {r.year}</span>
+            </div>
+            <div className="flex justify-between items-center pt-2 border-t border-slate-200 dark:border-slate-800">
+              <span className="text-sm font-bold text-slate-900 dark:text-slate-100">Disbursement Net Amount:</span>
+              <span className="text-base font-black text-emerald-600 dark:text-emerald-400">৳{r.netSalary?.toLocaleString()}</span>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
+              Select Payment Channel / Account *
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { id: 'CASH', label: 'Cash In Hand', code: '1000', icon: '💵' },
+                { id: 'BANK', label: 'Bank Transfer', code: '1010', icon: '🏦' },
+                { id: 'BKASH', label: 'bKash Mobile', code: '1011', icon: '📱' },
+                { id: 'NAGAD', label: 'Nagad Mobile', code: '1012', icon: '📱' },
+                { id: 'ROCKET', label: 'Rocket Mobile', code: '1013', icon: '📱' },
+              ].map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setMethod(m.id)}
+                  className={`p-2.5 rounded-xl border text-left flex items-center gap-2 transition-all ${
+                    method === m.id
+                      ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 ring-2 ring-emerald-500/20'
+                      : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300'
+                  }`}
+                >
+                  <span className="text-lg">{m.icon}</span>
+                  <div>
+                    <div className="text-xs font-bold">{m.label}</div>
+                    <div className="text-[10px] text-slate-400 font-mono">Acc: #{m.code}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={() => onConfirm(method)}
+              className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-all flex items-center gap-2 shadow-md disabled:opacity-50"
+            >
+              {isPending && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+              Confirm Salary Payment
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+

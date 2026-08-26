@@ -153,7 +153,7 @@ export const generatePayroll = async (month, year, employeeIds = [], tenantId = 
   return { processed: results, skipped };
 };
 
-export const markAsPaid = async (id, paidBy = null, tenantId = null, branchId = null) => {
+export const markAsPaid = async (id, paidBy = null, tenantId = null, branchId = null, paymentMethod = 'CASH', paymentAccount = null) => {
   const query = db('payrolls').where({ id, is_deleted: false });
   applyTenantScope(query, tenantId, 'payrolls');
   if (branchId) query.where('payrolls.branch_id', branchId);
@@ -178,16 +178,17 @@ export const markAsPaid = async (id, paidBy = null, tenantId = null, branchId = 
   applyTenantScope(empQuery, tenantId, 'employees');
   const employee = await empQuery.first();
 
-  // Bug #37 fixed: Create an accounting journal entry for the payroll payment
-  // so salary expenses are reflected in the general ledger.
+  // Create an accounting journal entry for the payroll payment
+  // so salary expenses are reflected in the general ledger and appropriate cash/bank/mobile account.
   try {
     await createAutomatedExpenseJournal({
       tenantId,
-      branchId,
+      branchId: updated.branch_id || branchId,
       expenseCategory: 'Staff Salaries & Payroll',
       amount: Number(updated.net_salary || updated.net_pay || 0),
-      paymentMethod: 'CASH',
-      notes: `Payroll payment — ${employee?.full_name || employee?.name || `Employee #${payroll.employee_id}`} (${updated.month}/${updated.year})`,
+      paymentMethod: paymentMethod || 'CASH',
+      paymentAccount: paymentAccount || null,
+      notes: `Payroll payment [${paymentMethod || 'CASH'}] — ${employee?.full_name || employee?.name || `Employee #${payroll.employee_id}`} (${updated.month}/${updated.year})`,
       createdBy: paidBy || 'system',
     });
   } catch (err) {

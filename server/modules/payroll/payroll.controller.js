@@ -25,9 +25,17 @@ export const processPayroll = async (req, res, next) => {
 
 export const markAsPaid = async (req, res, next) => {
   try {
+    const { paymentMethod, paymentAccount } = req.body || {};
     const tenantId = req.user?.tenantId || null;
     const effectiveBranchId = req.selectedBranchId || null;
-    const payroll = await payrollService.markAsPaid(req.params.id, req.user._id, tenantId, effectiveBranchId);
+    const payroll = await payrollService.markAsPaid(
+      req.params.id,
+      req.user._id,
+      tenantId,
+      effectiveBranchId,
+      paymentMethod || 'CASH',
+      paymentAccount || null
+    );
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'MARK_PAID', module: 'payroll', entityId: payroll._id, entityType: 'Payroll', req });
     return ApiResponse.success(res, payroll, 'Marked as paid');
   } catch (error) { next(error); }
