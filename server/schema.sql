@@ -1333,13 +1333,15 @@ CREATE TABLE `tickets` (
   `resolution_notes` text,
   `resolved_by` int DEFAULT NULL,
   `resolved_at` timestamp NULL DEFAULT NULL,
+  `is_deleted` tinyint(1) DEFAULT '0',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `tickets_ticket_number_unique` (`ticket_number`),
   KEY `tickets_tenant_id_index` (`tenant_id`),
   KEY `tickets_user_id_index` (`user_id`),
-  KEY `tickets_status_index` (`status`)
+  KEY `tickets_status_index` (`status`),
+  KEY `tickets_is_deleted_index` (`is_deleted`)
 ) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 

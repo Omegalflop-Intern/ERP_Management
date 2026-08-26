@@ -47,7 +47,15 @@ export async function ensureTicketsTableExists() {
       table.text('resolution_notes').nullable();
       table.integer('resolved_by').nullable();
       table.timestamp('resolved_at').nullable();
+      table.boolean('is_deleted').defaultTo(false).index();
       table.timestamps(true, true);
     });
+  } else {
+    const hasDeleted = await db.schema.hasColumn('tickets', 'is_deleted');
+    if (!hasDeleted) {
+      await db.schema.alterTable('tickets', (table) => {
+        table.boolean('is_deleted').defaultTo(false).index();
+      });
+    }
   }
 }

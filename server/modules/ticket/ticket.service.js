@@ -96,8 +96,8 @@ export const createTicket = async ({ tenantId, userId, subject, category, priori
 export const getShopTickets = async (tenantId, page = 1, limit = 20, status = null, search = null) => {
   await ensureTicketsTableExists();
 
-  const countQ = db('tickets').where({ tenant_id: tenantId });
-  const dataQ = db('tickets').where({ tenant_id: tenantId });
+  const countQ = db('tickets').where({ tenant_id: tenantId, is_deleted: false });
+  const dataQ = db('tickets').where({ tenant_id: tenantId, is_deleted: false });
 
   if (status && status !== 'ALL') {
     countQ.where({ status });
@@ -136,6 +136,7 @@ export const getAllTicketsAdmin = async (page = 1, limit = 20, filters = {}) => 
   let query = db('tickets as t')
     .leftJoin('tenants as tn', 't.tenant_id', 'tn.id')
     .leftJoin('users as u', 't.user_id', 'u.id')
+    .where('t.is_deleted', false)
     .select(
       't.*',
       'tn.shop_name as shop_name',
@@ -144,7 +145,7 @@ export const getAllTicketsAdmin = async (page = 1, limit = 20, filters = {}) => 
       'u.email as created_by_email'
     );
 
-  let countQuery = db('tickets as t');
+  let countQuery = db('tickets as t').where('t.is_deleted', false);
 
   if (tenantId) {
     query.where('t.tenant_id', tenantId);
@@ -192,14 +193,14 @@ export const getTicketById = async (id, tenantId = null) => {
   let query = db('tickets as t')
     .leftJoin('tenants as tn', 't.tenant_id', 'tn.id')
     .leftJoin('users as u', 't.user_id', 'u.id')
+    .where({ 't.id': id, 't.is_deleted': false })
     .select(
       't.*',
       'tn.shop_name as shop_name',
       'tn.subdomain as shop_subdomain',
       'u.full_name as created_by_name',
       'u.email as created_by_email'
-    )
-    .where('t.id', id);
+    );
 
   if (tenantId) {
     query.andWhere('t.tenant_id', tenantId);
