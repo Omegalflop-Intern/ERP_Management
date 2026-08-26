@@ -331,6 +331,7 @@ app.use('/api/v1/reports', reportRoutes);
 app.use('/api/v1/suppliers', supplierRoutes);
 app.use('/api/v1/purchase-orders', purchaseOrderRoutes);
 app.use('/api/v1/accounting', accountingRoutes);
+app.use('/api/v1/accounts', accountingRoutes);
 app.use('/api/v1/employees', employeeRoutes);
 app.use('/api/v1/attendance', attendanceRoutes);
 app.use('/api/v1/leave', leaveRoutes);

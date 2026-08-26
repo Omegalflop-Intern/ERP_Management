@@ -574,7 +574,7 @@ function PaySalaryModal({ payroll: r, isPending, onConfirm, onClose }) {
   const { data: accountsData } = useQuery({
     queryKey: ['accounts-list'],
     queryFn: async () => {
-      const res = await api.get('/accounts', { params: { limit: 100 } });
+      const res = await api.get('/accounting/accounts', { params: { limit: 100 } });
       return res.data?.data?.accounts || res.data?.data || [];
     },
   });
