@@ -20,12 +20,12 @@ function SidebarLink({ item, isCollapsed, onNavigate }) {
       title={isCollapsed ? item.label : undefined}
       onClick={onNavigate}
       className={({ isActive }) =>
-        `w-full flex items-center gap-2.5 rounded-xl text-[13px] transition-all duration-150 py-2.5 group ${
+        `w-full flex items-center gap-2.5 rounded-xl text-[13px] transition-colors duration-150 py-2.5 group border ${
           isCollapsed ? 'justify-center px-2' : 'px-3'
         } ${
           isActive
-            ? 'bg-blue-600/15 text-blue-700 dark:text-blue-400 font-bold border border-blue-500/20 shadow-xs'
-            : 'text-slate-800 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 font-medium'
+            ? 'bg-blue-600/15 text-blue-700 dark:text-blue-400 font-bold border-blue-500/20 shadow-xs'
+            : 'text-slate-800 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 font-medium border-transparent'
         }`
       }
     >
@@ -47,12 +47,12 @@ function SubmenuGroup({ item, isCollapsed, openSubmenus, toggleSubmenu, location
         type="button"
         onClick={() => toggleSubmenu(item.label)}
         title={isCollapsed ? item.label : undefined}
-        className={`w-full flex items-center justify-between rounded-xl text-[13px] transition-all duration-150 py-2.5 group ${
+        className={`w-full flex items-center justify-between rounded-xl text-[13px] transition-colors duration-150 py-2.5 group border ${
           isCollapsed ? 'justify-center px-2' : 'px-3'
         } ${
           hasActiveChild
-            ? 'text-blue-700 dark:text-blue-400 font-bold bg-blue-600/10 border border-blue-500/20'
-            : 'text-slate-800 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 font-medium'
+            ? 'text-blue-700 dark:text-blue-400 font-bold bg-blue-600/10 border-blue-500/20'
+            : 'text-slate-800 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 font-medium border-transparent'
         }`}
       >
         <div className="flex items-center gap-2.5 min-w-0">
@@ -79,10 +79,10 @@ function SubmenuGroup({ item, isCollapsed, openSubmenus, toggleSubmenu, location
               to={child.path}
               onClick={onNavigate}
               className={({ isActive }) =>
-                `flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition-all duration-150 group ${
+                `flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition-colors duration-150 group border ${
                   isActive
-                    ? 'bg-blue-600/15 text-blue-700 dark:text-blue-400 font-semibold border border-blue-500/20'
-                    : 'text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100/60 dark:hover:bg-slate-800/40 font-medium'
+                    ? 'bg-blue-600/15 text-blue-700 dark:text-blue-400 font-semibold border-blue-500/20'
+                    : 'text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100/60 dark:hover:bg-slate-800/40 font-medium border-transparent'
                 }`
               }
             >
