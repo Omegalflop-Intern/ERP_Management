@@ -235,7 +235,7 @@ export default function SalesForm() {
     const formatDesc = (brand, name) => {
       const b = (brand || '').trim();
       const n = (name || '').trim();
-      if (!b) return n;
+      if (!b || ['generic', 'n/a', 'none'].includes(b.toLowerCase())) return n;
       if (n.toLowerCase().startsWith(b.toLowerCase())) return n;
       return `${b} ${n}`;
     };
@@ -657,7 +657,7 @@ export default function SalesForm() {
                       >
                         <div>
                           <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-red-600 dark:group-hover:text-red-400">
-                            {item.productId?.brand} {item.productId?.name}
+                            {item.productId?.brand && !['generic', 'n/a', 'none'].includes(item.productId.brand.toLowerCase()) ? `${item.productId.brand} ` : ''}{item.productId?.name || item.productName}
                           </div>
                           <div className="text-xs text-gray-500 font-mono flex items-center gap-2">
                             {item.isBulk ? (
