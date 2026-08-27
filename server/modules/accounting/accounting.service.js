@@ -619,8 +619,11 @@ export const getProfitLoss = async (from = '', to = '', tenantId = null, branchI
 
   const grossProfit = totalSalesRevenue - totalCogs;
 
-  // 2. Fetch Operating Expenses
-  const expQuery = db('expenses').where({ is_deleted: false });
+  // 2. Fetch Operating Expenses (excluding supplier payments and payroll, which is fetched separately below)
+  const expQuery = db('expenses')
+    .where({ is_deleted: false })
+    .whereNot('category', 'Supplier Payment')
+    .whereNot('category', 'Staff Salaries & Payroll');
   applyTenantScope(expQuery, tenantId, 'expenses');
   if (branchId && branchId !== 'all') expQuery.where('branch_id', branchId);
   if (fromDateStr) expQuery.whereRaw('DATE(created_at) >= ?', [fromDateStr]);
@@ -930,18 +933,21 @@ export const createAutomatedExpenseJournal = async (expense) => {
     else if (method.includes('nagad') && acctMap['1012']) creditAcct = acctMap['1012'];
     else if (method.includes('rocket') && acctMap['1013']) creditAcct = acctMap['1013'];
 
-    const expenseAcct = acctMap['6000'];
-    if (expenseAcct && creditAcct && amt > 0) {
+    const cat = expense.category || expense.expenseCategory || '';
+    const isSupplierPayment = cat === 'Supplier Payment';
+    const debitAcct = isSupplierPayment ? acctMap['2000'] : acctMap['6000'];
+
+    if (debitAcct && creditAcct && amt > 0) {
       const expTitle = expense.title || expense.notes || expense.category || expense.expenseCategory || 'Shop Expense';
       const expCat = expense.category || expense.expenseCategory || 'General Expense';
       return await createJournalEntry({
         tenantId,
         branchId,
         date: expense.created_at || expense.date || new Date(),
-        description: `Expense: ${expTitle} (${expCat})`,
+        description: isSupplierPayment ? `Supplier Due Payment: ${expTitle}` : `Expense: ${expTitle} (${expCat})`,
         reference: ref,
         lines: [
-          { accountId: expenseAcct.id, code: expenseAcct.code, accountName: expenseAcct.name, debit: amt, credit: 0 },
+          { accountId: debitAcct.id, code: debitAcct.code, accountName: debitAcct.name, debit: amt, credit: 0 },
           { accountId: creditAcct.id, code: creditAcct.code, accountName: creditAcct.name, debit: 0, credit: amt },
         ],
         status: 'POSTED',
@@ -1508,9 +1514,11 @@ export const getCashFlowStatement = async (from = '', to = '', tenantId = null, 
     // Non-blocking if journal_entries not available
   }
 
-  // Expenses paid
+  // Expenses paid (excluding supplier payments and staff salaries which are handled separately)
   const expenseQuery = db('expenses')
     .where({ is_deleted: false })
+    .whereNot('category', 'Supplier Payment')
+    .whereNot('category', 'Staff Salaries & Payroll')
     .whereBetween('created_at', [fromDate, toDate]);
   applyTenantScope(expenseQuery, tenantId, 'expenses');
   if (branchId && branchId !== 'all') expenseQuery.andWhere('branch_id', branchId);
@@ -1545,17 +1553,40 @@ export const getCashFlowStatement = async (from = '', to = '', tenantId = null, 
   // Supplier payments for stock purchase orders
   let supplierPayments = 0;
   try {
-    const poQuery = db('purchase_orders')
-      .where({ is_deleted: false })
+    // 1. Initial payments on POs created during this period (calculated from journal entry credit lines)
+    const poJeQuery = db('journal_entries')
+      .where({ is_deleted: false, status: 'POSTED' })
+      .where('reference', 'like', 'PO-%')
       .whereBetween('created_at', [fromDate, toDate]);
-    applyTenantScope(poQuery, tenantId, 'purchase_orders');
-    if (branchId && branchId !== 'all') poQuery.andWhere('branch_id', branchId);
-    const poRows = await poQuery.select('paid_amount');
-    for (const po of poRows) {
-      supplierPayments += Number(po.paid_amount || 0);
+    applyTenantScope(poJeQuery, tenantId, 'journal_entries');
+    if (branchId && branchId !== 'all') poJeQuery.andWhere((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+    const poJeRows = await poJeQuery.select('lines');
+    let poInitialPaid = 0;
+    for (const je of poJeRows) {
+      let lines = [];
+      try { lines = typeof je.lines === 'string' ? JSON.parse(je.lines) : (je.lines || []); } catch {}
+      for (const line of lines) {
+        if (line.credit > 0 && ['1000', '1010', '1011', '1012', '1013'].includes(line.code)) {
+          poInitialPaid += Number(line.credit || 0);
+        }
+      }
     }
+
+    // 2. Due payments to suppliers during this period (from expenses table category 'Supplier Payment')
+    const supplierDueQuery = db('expenses')
+      .where({ is_deleted: false, category: 'Supplier Payment' })
+      .whereBetween('created_at', [fromDate, toDate]);
+    applyTenantScope(supplierDueQuery, tenantId, 'expenses');
+    if (branchId && branchId !== 'all') supplierDueQuery.where('branch_id', branchId);
+    const supplierDueRows = await supplierDueQuery.select('amount');
+    let supplierDuePaid = 0;
+    for (const exp of supplierDueRows) {
+      supplierDuePaid += Number(exp.amount || 0);
+    }
+
+    supplierPayments = poInitialPaid + supplierDuePaid;
   } catch (err) {
-    // Non-blocking fallback
+    console.error('Failed to calculate supplier payments for cash flow:', err.message);
   }
 
   // Investing Activities - asset purchases

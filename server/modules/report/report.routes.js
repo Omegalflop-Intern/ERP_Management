@@ -49,7 +49,7 @@ router.get('/dashboard', async (req, res, next) => {
     const lowStockItems = [];
 
     try {
-      const expQuery = db('expenses').where({ is_deleted: false });
+      const expQuery = db('expenses').where({ is_deleted: false }).whereNot('category', 'Supplier Payment');
       applyScope(expQuery);
       applyBranch(expQuery);
       const expRes = await expQuery.sum({ total: 'amount' }).first();
@@ -301,7 +301,7 @@ router.get('/analytics', async (req, res, next) => {
     applyBranch(txQuery);
     const salesRes = await txQuery.count({ count: '*' }).sum({ revenue: db.raw('GREATEST(0, net_total - COALESCE(returned_amount, 0))') }).first();
 
-    const expQuery = db('expenses').where({ is_deleted: false });
+    const expQuery = db('expenses').where({ is_deleted: false }).whereNot('category', 'Supplier Payment');
     applyScope(expQuery);
     applyBranch(expQuery);
     const expRes = await expQuery.sum({ total: 'amount' }).first();

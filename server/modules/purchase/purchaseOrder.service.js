@@ -754,6 +754,10 @@ export const payPurchaseOrderDue = async (id, { amount, paymentMethod = 'CASH', 
     throw ApiError.badRequest('Payment amount must be greater than 0');
   }
 
+  const resolvedTenant = tenantId || order.tenantId || null;
+  const { validatePaymentMethodActive } = await import('../accounting/accounting.service.js');
+  await validatePaymentMethodActive(paymentMethod, resolvedTenant);
+
   const currentDue = Number(order.dueAmount || 0);
   if (payAmount > currentDue) {
     throw ApiError.badRequest(`Payment amount (৳${payAmount}) cannot exceed current due balance of ৳${currentDue}`);

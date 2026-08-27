@@ -215,6 +215,10 @@ export const collectDue = async (id, amount, paymentMethod, userId, tenantId = n
   const numAmount = Number(amount);
   if (isNaN(numAmount) || numAmount <= 0) throw ApiError.badRequest('Please enter a valid collection amount');
 
+  const resolvedTenant = tenantId || customer.tenantId || null;
+  const { validatePaymentMethodActive } = await import('../accounting/accounting.service.js');
+  await validatePaymentMethodActive(paymentMethod, resolvedTenant);
+
   // 1. Fetch all unpaid sales transactions for this customer
   const salesQuery = db('transactions').where({ is_deleted: false, tx_type: 'SALE' });
   applyTenantScope(salesQuery, tenantId);
