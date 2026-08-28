@@ -26,6 +26,11 @@ import * as addBranchIdToJournalEntries from '../migrations/20260816000001_add_b
 import * as alterProductsBrandDefault from '../migrations/20260816000002_alter_products_brand_default.js';
 import * as addReceiptsToExpenses from '../migrations/20260824000001_add_receipts_to_expenses.js';
 import * as createRecurringExpensesTable from '../migrations/20260824000002_create_recurring_expenses_table.js';
+import * as addPaymentBreakdownToPurchaseOrders from '../migrations/20260826000001_add_payment_breakdown_to_purchase_orders.js';
+import * as createProductBranchStocksTable from '../migrations/20260826000002_create_product_branch_stocks_table.js';
+import * as allowNullImeiInWarrantyClaims from '../migrations/20260826000003_allow_null_imei_in_warranty_claims.js';
+import * as addIsDeletedToTickets from '../migrations/20260826000004_add_is_deleted_to_tickets.js';
+import * as addBranchIdToSalesAndPurchases from '../migrations/20260828000001_add_branch_id_to_sales_and_purchases.js';
 
 import { seedDefaultRoles } from '../modules/role/role.service.js';
 import { seedSubscriptionPlans } from '../modules/plans/plans.service.js';
@@ -85,6 +90,11 @@ async function resetDatabase() {
     await alterProductsBrandDefault.up(db);
     await addReceiptsToExpenses.up(db);
     await createRecurringExpensesTable.up(db);
+    await addPaymentBreakdownToPurchaseOrders.up(db);
+    await createProductBranchStocksTable.up(db);
+    await allowNullImeiInWarrantyClaims.up(db);
+    await addIsDeletedToTickets.up(db);
+    await addBranchIdToSalesAndPurchases.up(db);
     console.log('✅ Schema created successfully!');
 
     // 3. Seed default roles, subscription plans, system accounts, and super admins
