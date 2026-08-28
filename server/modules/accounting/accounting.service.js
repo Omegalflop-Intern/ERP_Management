@@ -306,25 +306,33 @@ export const validateWalletBalance = async (paymentMethod, amount, tenantId = nu
 
 // Journal Entries
 export const getAllJournalEntries = async (page = 1, limit = 20, search = '', status = '', from = '', to = '', tenantId = null, branchId = null) => {
-  const countQuery = db('journal_entries').where({ is_deleted: false });
-  applyTenantScope(countQuery, tenantId, 'journal_entries');
-  if (status && status !== 'ALL') countQuery.where({ status });
-  if (branchId) countQuery.where('branch_id', branchId);
+  const applyFilters = (q) => {
+    applyTenantScope(q, tenantId, 'journal_entries');
+    if (status && status !== 'ALL') q.where({ status });
+    if (branchId && branchId !== 'all') q.where('branch_id', branchId);
+    if (search) {
+      const term = `%${search}%`;
+      q.where((b) => b.where('description', 'like', term).orWhere('reference', 'like', term).orWhere('entry_number', 'like', term));
+    }
+    if (from) q.where('date', '>=', new Date(from));
+    if (to) q.where('date', '<=', new Date(to));
+  };
 
+  const countQuery = db('journal_entries').where({ is_deleted: false });
+  applyFilters(countQuery);
   const countRes = await countQuery.count({ total: '*' }).first();
   const total = Number(countRes?.total || 0);
 
   const offset = (page - 1) * limit;
   const dataQuery = db('journal_entries').where({ is_deleted: false });
-  applyTenantScope(dataQuery, tenantId, 'journal_entries');
-  if (status && status !== 'ALL') dataQuery.where({ status });
-  if (branchId) dataQuery.where('branch_id', branchId);
+  applyFilters(dataQuery);
 
   const rows = await dataQuery.orderBy('created_at', 'desc').limit(limit).offset(offset);
   const entries = rows.map(formatJournalEntry);
 
   return { entries, pagination: getPagination(total, page, limit) };
 };
+
 
 export const getJournalEntryById = async (id, tenantId = null, branchId = null) => {
   const query = db('journal_entries').where({ id, is_deleted: false });

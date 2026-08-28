@@ -408,13 +408,21 @@ function JournalEntryForm({ onClose, onSuccess }) {
   const isBalanced = Math.abs(totalDebit - totalCredit) < 0.01 && totalDebit > 0;
 
   const mutation = useMutation({
-    mutationFn: async () =>
-      api.post('/accounting/journal-entries', {
-        date,
-        description,
-        reference,
-        lines: lines.filter((l) => l.accountId),
-      }),
+    mutationFn: async () => {
+      const enrichedLines = lines
+        .filter((l) => l.accountId)
+        .map((l) => {
+          const acct = accounts.find((a) => String(a._id) === String(l.accountId) || String(a.id) === String(l.accountId));
+          return {
+            accountId: Number(l.accountId),
+            code: acct?.code || '',
+            accountName: acct?.name || '',
+            debit: Number(l.debit) || 0,
+            credit: Number(l.credit) || 0,
+          };
+        });
+      return api.post('/accounting/journal-entries', { date, description, reference, lines: enrichedLines });
+    },
     onSuccess: () => {
       toast.success('Journal entry created successfully');
       onSuccess();
@@ -686,17 +694,17 @@ function JournalEntryDetail({ entry, onClose }) {
                   <tr key={idx}>
                     <td className="px-4 py-2.5">
                       <span className="font-mono text-xs text-slate-500">
-                        {l.accountId?.code || l.code || ''}
+                        {l.code || ''}
                       </span>
                       <span className="ml-2 font-medium text-slate-900 dark:text-slate-100">
-                        {l.accountId?.name || l.accountName || l.account?.name || ''}
+                        {l.accountName || l.account?.name || ''}
                       </span>
                     </td>
                     <td className="px-4 py-2.5 text-right font-mono text-emerald-600 dark:text-emerald-400 font-bold">
-                      {l.debit ? `৳${l.debit.toLocaleString()}` : '-'}
+                      {l.debit ? `৳${Number(l.debit).toLocaleString()}` : '-'}
                     </td>
                     <td className="px-4 py-2.5 text-right font-mono text-slate-700 dark:text-slate-300">
-                      {l.credit ? `৳${l.credit.toLocaleString()}` : '-'}
+                      {l.credit ? `৳${Number(l.credit).toLocaleString()}` : '-'}
                     </td>
                   </tr>
                 ))}

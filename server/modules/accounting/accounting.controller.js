@@ -82,10 +82,10 @@ export const seedDefaults = async (req, res, next) => {
 
 export const getJournalEntries = async (req, res, next) => {
   try {
-    const { page = 1, limit = 50, fromDate = '', toDate = '' } = req.query;
+    const { page = 1, limit = 50, search = '', status = '', fromDate = '', toDate = '' } = req.query;
     const tenantId = req.user?.tenantId || null;
     const branchId = req.selectedBranchId || null;
-    const result = await accountingService.getAllJournalEntries(Number(page), Number(limit), '', '', fromDate, toDate, tenantId, branchId);
+    const result = await accountingService.getAllJournalEntries(Number(page), Number(limit), search, status, fromDate, toDate, tenantId, branchId);
     return ApiResponse.paginated(res, result.entries, result.pagination.total, result.pagination.page, result.pagination.limit);
   } catch (error) { next(error); }
 };
