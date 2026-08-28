@@ -159,11 +159,6 @@ export const createSale = async (data, createdBy = 'system') => {
 
   let customerId = data.customerId || null;
   let customerObj = null;
-  if (customerId) {
-    const custQuery = db('customers').where({ id: customerId, is_deleted: false });
-    if (tenantId) custQuery.where('tenant_id', tenantId);
-    customerObj = await custQuery.first();
-  }
 
   const invoiceNumber = await generateInvoiceNumber(tenantId);
   const soldDate = new Date();
@@ -183,6 +178,45 @@ export const createSale = async (data, createdBy = 'system') => {
   // marked 'Sold' and stock_quantity was already decremented — leaving the DB corrupted.
   let insertedId;
   await db.transaction(async (trx) => {
+    if (customerId) {
+      const custQuery = trx('customers').where({ id: customerId, is_deleted: false });
+      if (tenantId) custQuery.where('tenant_id', tenantId);
+      customerObj = await custQuery.first();
+    } else if (data.customerPhone && data.customerPhone.trim() && data.customerPhone !== 'N/A') {
+      const { hashText } = await import('../../utils/crypto.utils.js');
+      const phoneHash = hashText(data.customerPhone.trim());
+      const existingCustQ = trx('customers').where({ phone_hash: phoneHash, is_deleted: false });
+      if (tenantId) existingCustQ.where('tenant_id', tenantId);
+      customerObj = await existingCustQ.first();
+
+      if (customerObj) {
+        customerId = customerObj.id;
+      } else if (data.customerName && data.customerName.trim() && data.customerName !== 'Walk-in Customer') {
+        const [newCustId] = await trx('customers').insert({
+          tenant_id: tenantId,
+          branch_id: data.branchId || null,
+          name: data.customerName.trim(),
+          phone: data.customerPhone.trim(),
+          phone_hash: phoneHash,
+          email: data.customerEmail || null,
+          address: data.customerAddress || null,
+          customer_type: 'INDIVIDUAL',
+          due_balance: 0,
+          total_purchases: 0,
+          is_deleted: false,
+          created_at: new Date(),
+          updated_at: new Date(),
+        });
+        customerId = newCustId;
+        customerObj = {
+          id: newCustId,
+          name: data.customerName.trim(),
+          phone: data.customerPhone.trim(),
+          due_balance: 0,
+          total_purchases: 0,
+        };
+      }
+    }
     for (const item of data.items) {
       if (item.imeiOrSerial) {
         const unitQuery = trx('inventory_units').where({ imei_or_serial: item.imeiOrSerial, status: 'Available', is_deleted: false });

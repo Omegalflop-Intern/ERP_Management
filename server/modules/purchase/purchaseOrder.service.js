@@ -247,7 +247,7 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
       const pUpdate = db('products').where({ id: pId });
       if (tenantId) pUpdate.andWhere('tenant_id', tenantId);
       const updateData = {
-        stock_quantity: Number(prod.stock_quantity || 0) + qty,
+        stock_quantity: db.raw('stock_quantity + ?', [qty]),
         cost_price: effectiveUnitCost > 0 ? effectiveUnitCost : (uCost > 0 ? uCost : prod.cost_price),
         selling_price: sPrice > 0 ? sPrice : prod.selling_price,
       };
@@ -543,27 +543,19 @@ export const returnToSupplier = async (id, returnPayload, reason = '', returnedB
     // Deduct stock from products table
     const effectiveBranchId = branchId || order.branchId || order.branch_id || null;
     if (pId) {
-      const prodQ = db('products').where({ id: pId, is_deleted: false });
-      if (tenantId) prodQ.andWhere('tenant_id', tenantId);
-      const prod = await prodQ.first();
-      if (prod) {
-        const newStock = Math.max(0, Number(prod.stock_quantity || 0) - qty);
-        const pUp = db('products').where({ id: pId });
-        if (tenantId) pUp.andWhere('tenant_id', tenantId);
-        await pUp.update({ stock_quantity: newStock });
-      }
+      const pUp = db('products').where({ id: pId });
+      if (tenantId) pUp.andWhere('tenant_id', tenantId);
+      await pUp.update({
+        stock_quantity: db.raw('GREATEST(0, CAST(stock_quantity AS SIGNED) - ?)', [qty])
+      });
 
       // Deduct stock from product_branch_stocks table for non-IMEI items
       if (effectiveBranchId && !item.imeiOrSerial) {
-        const bsQ = db('product_branch_stocks').where({ branch_id: effectiveBranchId, product_id: pId });
-        if (tenantId) bsQ.andWhere('tenant_id', tenantId);
-        const bs = await bsQ.first();
-        if (bs) {
-          const newBranchStock = Math.max(0, Number(bs.stock_quantity || 0) - qty);
-          const bsUp = db('product_branch_stocks').where({ id: bs.id });
-          if (tenantId) bsUp.andWhere('tenant_id', tenantId);
-          await bsUp.update({ stock_quantity: newBranchStock });
-        }
+        const bsUp = db('product_branch_stocks').where({ branch_id: effectiveBranchId, product_id: pId });
+        if (tenantId) bsUp.andWhere('tenant_id', tenantId);
+        await bsUp.update({
+          stock_quantity: db.raw('GREATEST(0, CAST(stock_quantity AS SIGNED) - ?)', [qty])
+        });
       }
 
       emitter.emit(EVENTS.STOCK_UPDATED, { id: pId, name: item.description || item.name, tenantId, branchId: effectiveBranchId });

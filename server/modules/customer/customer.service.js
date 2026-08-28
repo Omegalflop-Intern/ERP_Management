@@ -254,6 +254,14 @@ export const collectDue = async (id, amount, paymentMethod, userId, tenantId = n
         payment_breakdown: JSON.stringify(pb),
         updated_at: new Date(),
       });
+
+      // Get user's username for logging/journal entry
+      const userRow = await db('users').where({ id: userId }).first();
+      const userName = userRow?.username || String(userId) || 'system';
+
+      const { createAutomatedDueCollectionJournal } = await import('../accounting/accounting.service.js');
+      // Create journal entry for this collection segment and update accounts
+      await createAutomatedDueCollectionJournal(row, payThis, paymentMethod, userName);
     }
   }
 
