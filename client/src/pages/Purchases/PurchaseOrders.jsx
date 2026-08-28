@@ -33,6 +33,7 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import api from '../../lib/api';
 import { confirmDelete } from '../../lib/confirm';
+import { useActivePaymentMethods } from '../../hooks';
 
 const STATUSES = ['ALL', 'RECEIVED', 'APPROVED', 'PARTIALLY_RECEIVED', 'DRAFT', 'CANCELLED'];
 
@@ -2225,6 +2226,7 @@ function PayPODueModal({ po, onClose, onSuccess }) {
   const [amount, setAmount] = useState(due);
   const [paymentMethod, setPaymentMethod] = useState('CASH');
   const [notes, setNotes] = useState('');
+  const activeMethods = useActivePaymentMethods();
 
   const supplierName = typeof po.supplierId === 'object' ? po.supplierId?.name : 'Supplier';
 
@@ -2330,11 +2332,11 @@ function PayPODueModal({ po, onClose, onSuccess }) {
               onChange={(e) => setPaymentMethod(e.target.value)}
               className="w-full px-3 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100"
             >
-              <option value="CASH">Cash Payment</option>
-              <option value="BANK">Bank Transfer / Card</option>
-              <option value="BKASH">bKash Merchant</option>
-              <option value="NAGAD">Nagad</option>
-              <option value="ROCKET">Rocket</option>
+              <option value="CASH" disabled={!activeMethods.hasCash}>Cash Payment {!activeMethods.hasCash && ' (Disabled)'}</option>
+              <option value="BANK" disabled={!activeMethods.hasBank}>Bank Transfer / Card {!activeMethods.hasBank && ' (Disabled)'}</option>
+              <option value="BKASH" disabled={!activeMethods.hasBkash}>bKash Merchant {!activeMethods.hasBkash && ' (Disabled)'}</option>
+              <option value="NAGAD" disabled={!activeMethods.hasNagad}>Nagad {!activeMethods.hasNagad && ' (Disabled)'}</option>
+              <option value="ROCKET" disabled={!activeMethods.hasRocket}>Rocket {!activeMethods.hasRocket && ' (Disabled)'}</option>
             </select>
           </div>
 
