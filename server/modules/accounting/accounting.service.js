@@ -130,13 +130,16 @@ export const getAllAccounts = async (page = 1, limit = 100, search = '', type = 
       let lines = [];
       try { lines = typeof je.lines === 'string' ? JSON.parse(je.lines) : (je.lines || []); } catch { lines = []; }
       for (const line of lines) {
-        const acctId = line.accountId || line.account_id;
-        if (acctId && accountIds.includes(acctId)) {
-          journalCounts[acctId] = (journalCounts[acctId] || 0) + 1;
-          totalDebits[acctId] = (totalDebits[acctId] || 0) + Number(line.debit || 0);
-          totalCredits[acctId] = (totalCredits[acctId] || 0) + Number(line.credit || 0);
-          if (!lastTransactions[acctId] || new Date(je.date) > new Date(lastTransactions[acctId])) {
-            lastTransactions[acctId] = je.date;
+        const rawAcctId = line.accountId || line.account_id;
+        if (rawAcctId) {
+          const acctId = Number(rawAcctId);
+          if (accountIds.includes(acctId)) {
+            journalCounts[acctId] = (journalCounts[acctId] || 0) + 1;
+            totalDebits[acctId] = (totalDebits[acctId] || 0) + Number(line.debit || 0);
+            totalCredits[acctId] = (totalCredits[acctId] || 0) + Number(line.credit || 0);
+            if (!lastTransactions[acctId] || new Date(je.date) > new Date(lastTransactions[acctId])) {
+              lastTransactions[acctId] = je.date;
+            }
           }
         }
       }
@@ -481,10 +484,13 @@ export const computeBranchScopedAccountBalances = async (rows, tenantId, branchI
       let lines = [];
       try { lines = typeof je.lines === 'string' ? JSON.parse(je.lines) : (je.lines || []); } catch { lines = []; }
       for (const line of lines) {
-        const acctId = line.accountId || line.account_id;
-        if (acctId && accountIds.includes(acctId)) {
-          totalDebits[acctId] = (totalDebits[acctId] || 0) + Number(line.debit || 0);
-          totalCredits[acctId] = (totalCredits[acctId] || 0) + Number(line.credit || 0);
+        const rawAcctId = line.accountId || line.account_id;
+        if (rawAcctId) {
+          const acctId = Number(rawAcctId);
+          if (accountIds.includes(acctId)) {
+            totalDebits[acctId] = (totalDebits[acctId] || 0) + Number(line.debit || 0);
+            totalCredits[acctId] = (totalCredits[acctId] || 0) + Number(line.credit || 0);
+          }
         }
       }
     }
@@ -734,8 +740,9 @@ export const recalculateAllAccountBalances = async (tenantId = null) => {
     for (const entry of postedEntries) {
       const lines = parseJSON(entry.lines);
       for (const line of lines) {
-        if (line.accountId && (line.debit || line.credit)) {
-          const type = acctTypeMap[line.accountId] || 'ASSET';
+        const lineAcctId = line.accountId ? Number(line.accountId) : null;
+        if (lineAcctId && (line.debit || line.credit)) {
+          const type = acctTypeMap[lineAcctId] || 'ASSET';
           const debit = Number(line.debit || 0);
           const credit = Number(line.credit || 0);
           const delta = (type === 'ASSET' || type === 'EXPENSE')
@@ -743,7 +750,7 @@ export const recalculateAllAccountBalances = async (tenantId = null) => {
             : (credit - debit);
 
           await trx('accounts')
-            .where({ id: line.accountId })
+            .where({ id: lineAcctId })
             .increment('balance', delta);
         }
       }
