@@ -30,6 +30,7 @@ import * as addPaymentBreakdownToPurchaseOrders from '../migrations/202608260000
 import * as createProductBranchStocksTable from '../migrations/20260826000002_create_product_branch_stocks_table.js';
 import * as allowNullImeiInWarrantyClaims from '../migrations/20260826000003_allow_null_imei_in_warranty_claims.js';
 import * as addIsDeletedToTickets from '../migrations/20260826000004_add_is_deleted_to_tickets.js';
+import * as addShiftTimesToEmployees from '../migrations/20260828000001_add_shift_times_to_employees.js';
 
 import { seedDefaultRoles } from '../modules/role/role.service.js';
 import { seedSubscriptionPlans } from '../modules/plans/plans.service.js';
@@ -93,7 +94,8 @@ async function resetDatabase() {
     await createProductBranchStocksTable.up(db);
     await allowNullImeiInWarrantyClaims.up(db);
     await addIsDeletedToTickets.up(db);
-    console.log('✅ Schema created successfully!');
+    await addShiftTimesToEmployees.up(db);
+    console.log('✅ Schema created successfully (29 migrations)!');
 
     // 3. Seed default roles, subscription plans, system accounts, and super admins
     console.log('🌱 Seeding initial system data...');

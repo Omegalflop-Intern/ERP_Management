@@ -30,6 +30,7 @@ import * as addPaymentBreakdownToPurchaseOrders from '../migrations/202608260000
 import * as createProductBranchStocksTable from '../migrations/20260826000002_create_product_branch_stocks_table.js';
 import * as allowNullImeiInWarrantyClaims from '../migrations/20260826000003_allow_null_imei_in_warranty_claims.js';
 import * as addIsDeletedToTickets from '../migrations/20260826000004_add_is_deleted_to_tickets.js';
+import * as addShiftTimesToEmployees from '../migrations/20260828000001_add_shift_times_to_employees.js';
 
 async function ensureDatabase() {
   try {
@@ -110,8 +111,10 @@ export async function runAutoMigrations({ verbose = true } = {}) {
   await allowNullImeiInWarrantyClaims.up(db);
   log('🔄 Running migration 28: add is_deleted to tickets table...');
   await addIsDeletedToTickets.up(db);
+  log('🔄 Running migration 29: add shift_start & shift_end to employees table...');
+  await addShiftTimesToEmployees.up(db);
 
-  if (verbose) console.log('✅ All 28 migrations completed successfully!');
+  if (verbose) console.log('✅ All 29 migrations completed successfully!');
   return true;
 }
 

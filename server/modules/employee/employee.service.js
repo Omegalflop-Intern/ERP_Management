@@ -30,6 +30,8 @@ export function formatEmployee(row, userRow = null) {
     bloodGroup: row.blood_group || '',
     nidNumber: row.nid_number || '',
     isActive: Boolean(row.is_active),
+    shiftStart: row.shift_start || '09:00:00',
+    shiftEnd: row.shift_end || '22:00:00',
     isDeleted: Boolean(row.is_deleted),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -277,6 +279,8 @@ export const createEmployee = async (data, tenantId = null) => {
     blood_group: data.bloodGroup || '',
     nid_number: data.nidNumber || null,
     is_active: data.isActive !== undefined ? Boolean(data.isActive) : true,
+    shift_start: data.shiftStart || '09:00:00',
+    shift_end: data.shiftEnd || '22:00:00',
     is_deleted: false,
   });
 
@@ -315,6 +319,8 @@ export const updateEmployee = async (id, data, tenantId = null, branchId = null)
   if (data.bloodGroup !== undefined) updateFields.blood_group = data.bloodGroup;
   if (data.nidNumber !== undefined) updateFields.nid_number = data.nidNumber;
   if (data.isActive !== undefined) updateFields.is_active = Boolean(data.isActive);
+  if (data.shiftStart !== undefined) updateFields.shift_start = data.shiftStart;
+  if (data.shiftEnd !== undefined) updateFields.shift_end = data.shiftEnd;
 
   if (Object.keys(updateFields).length > 0) {
     const q = db('employees').where({ id });
