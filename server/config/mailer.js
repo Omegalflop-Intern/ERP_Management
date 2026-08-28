@@ -195,14 +195,10 @@ export const sendAdminNotificationEmail = async (subject, title, detailsHtml) =>
 
   let adminEmails = [];
   try {
-    const adminUsers = await User.find({
-      isDeleted: false,
-      isActive: true,
-      $or: [
-        { roleName: { $regex: /^admin$/i } },
-        { roleName: 'System Administrator' }
-      ]
-    }).select('email').lean();
+    const adminUsers = await db('users')
+      .where({ is_deleted: false, is_active: true })
+      .whereNull('tenant_id')
+      .select('email');
 
     if (adminUsers && adminUsers.length > 0) {
       adminEmails = adminUsers.map(u => u.email).filter(Boolean);

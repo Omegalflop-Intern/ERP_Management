@@ -1,5 +1,6 @@
 import * as tenantService from './tenant.service.js';
 import { ApiResponse } from '../../utils/http/ApiResponse.js';
+import { ApiError } from '../../utils/http/ApiError.js';
 import emitter, { EVENTS } from '../../events/index.js';
 
 export const getTenants = async (req, res, next) => {

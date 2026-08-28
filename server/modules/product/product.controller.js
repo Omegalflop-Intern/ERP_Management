@@ -164,7 +164,7 @@ export const getProductIMEIUnits = async (req, res, next) => {
     const { id } = req.params;
     const tenantId = req.user?.tenantId || null;
     const branchId = req.selectedBranchId || null;
-    const result = await imeiService.getAllIMEIs(1, 100, '', '', '', tenantId, branchId);
+    const result = await imeiService.getAllIMEI(1, 100, '', '', '', tenantId, branchId);
     const units = (result.units || []).filter(u => String(u.productId?.id || u.productId) === String(id));
     return ApiResponse.success(res, units);
   } catch (error) { next(error); }

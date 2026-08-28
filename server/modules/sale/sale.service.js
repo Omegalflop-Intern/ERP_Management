@@ -419,7 +419,11 @@ export const getSaleByPublicToken = async (token) => {
 };
 
 export const updateSale = async (id, data, tenantId = null, branchId = null) => {
-  const existing = await getSaleById(id, tenantId, branchId);
+  const cleanId = (id && typeof id === 'object') ? (id.id || id._id || null) : id;
+  const cleanTenantId = (tenantId && typeof tenantId === 'object') ? (tenantId.id || tenantId._id || null) : tenantId;
+  const cleanBranchId = (branchId && typeof branchId === 'object') ? (branchId.id || branchId._id || null) : branchId;
+
+  const existing = await getSaleById(cleanId, cleanTenantId, cleanBranchId);
   if (!existing) throw ApiError.notFound('Sale not found');
 
   const updateFields = {};
@@ -491,7 +495,7 @@ export const updateSale = async (id, data, tenantId = null, branchId = null) => 
       // incrementing/decrementing (stale-read lost-update pattern under concurrent updates).
       if (custId && !isNaN(Number(custId))) {
         const freshSalesQ = db('transactions').where({ customer_id: Number(custId), is_deleted: false, tx_type: 'SALE' });
-        if (tenantId) freshSalesQ.andWhere('tenant_id', tenantId);
+        if (cleanTenantId) freshSalesQ.andWhere('tenant_id', cleanTenantId);
         const allSales = await freshSalesQ.select('payment_breakdown');
         const freshDue = allSales.reduce((sum, s) => {
           let pb = {};
@@ -501,7 +505,7 @@ export const updateSale = async (id, data, tenantId = null, branchId = null) => 
         // Adjust for the current sale's new due (not yet saved to DB)
         const adjustedDue = Math.max(0, freshDue - oldDue + dueAmount);
         const custUpdateQ = db('customers').where({ id: Number(custId) });
-        if (tenantId) custUpdateQ.andWhere('tenant_id', tenantId);
+        if (cleanTenantId) custUpdateQ.andWhere('tenant_id', cleanTenantId);
         await custUpdateQ.update({ due_balance: adjustedDue });
       }
     }
@@ -510,14 +514,14 @@ export const updateSale = async (id, data, tenantId = null, branchId = null) => 
   if (Object.keys(updateFields).length === 0) return existing;
 
   updateFields.updated_at = new Date();
-  const txUpdate = db('transactions').where({ id });
-  if (tenantId) txUpdate.andWhere('tenant_id', tenantId);
-  if (branchId && branchId !== 'all') {
-    txUpdate.andWhere((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
+  const txUpdate = db('transactions').where({ id: cleanId });
+  if (cleanTenantId) txUpdate.andWhere('tenant_id', cleanTenantId);
+  if (cleanBranchId && cleanBranchId !== 'all') {
+    txUpdate.andWhere((b) => b.where('branch_id', cleanBranchId).orWhereNull('branch_id'));
   }
   await txUpdate.update(updateFields);
 
-  return getSaleById(id, tenantId, branchId);
+  return getSaleById(cleanId, cleanTenantId, cleanBranchId);
 };
 
 export const deleteSale = async (id, tenantId = null, branchId = null) => {
@@ -591,9 +595,18 @@ export const processReturn = async (id, data, tenantId = null, branchId = null) 
   const returnInvoiceNumber = `RET-${sale.invoiceNumber || sale.invoice_number || id}-${Date.now().toString(36).toUpperCase().slice(-4)}`;
 
   for (const ri of returnItems) {
-    const pId = ri.productId?._id || ri.productId?.id || ri.productId;
-    const lineItem = (sale.lineItems || []).find(li => String(li.productId?._id || li.productId?.id || li.productId) === String(pId));
-    if (!lineItem) throw ApiError.badRequest(`Line item not found for product ${pId}`);
+    let pId = ri.productId?._id || ri.productId?.id || ri.productId;
+    let lineItem;
+    if (pId) {
+      lineItem = (sale.lineItems || []).find(li => String(li.productId?._id || li.productId?.id || li.productId) === String(pId));
+    }
+    if (!lineItem && ri.imeiOrSerial) {
+      lineItem = (sale.lineItems || []).find(li => String(li.imeiOrSerial) === String(ri.imeiOrSerial));
+      if (lineItem) {
+        pId = lineItem.productId?._id || lineItem.productId?.id || lineItem.productId;
+      }
+    }
+    if (!lineItem) throw ApiError.badRequest(`Line item not found for product ${pId || ri.imeiOrSerial}`);
     const qty = Math.abs(ri.quantity || ri.qty || 1);
     refundAmount += (lineItem.unitPrice * qty);
 
