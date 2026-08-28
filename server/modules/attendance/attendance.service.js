@@ -4,6 +4,7 @@ import { getPagination } from '../../utils/http/pagination.js';
 
 export function formatAttendance(row, employeeRow = null) {
   if (!row) return null;
+  const status = row.status || 'present';
   return {
     _id: String(row.id),
     id: row.id,
@@ -16,12 +17,15 @@ export function formatAttendance(row, employeeRow = null) {
       employeeId: employeeRow.employee_id,
       department: employeeRow.department || '',
       designation: employeeRow.designation || '',
+      shiftStart: employeeRow.shift_start || '09:00:00',
+      shiftEnd: employeeRow.shift_end || '22:00:00',
     } : String(row.employee_id),
     date: row.date,
     checkIn: row.check_in || null,
     checkOut: row.check_out || null,
     location: (row.lat || row.lng) ? { lat: Number(row.lat || 0), lng: Number(row.lng || 0) } : null,
-    status: row.status || 'present',
+    status,
+    isAutoCheckout: status === 'auto_checkout',
     notes: row.notes || '',
     isDeleted: Boolean(row.is_deleted),
     createdAt: row.created_at,
