@@ -2,6 +2,7 @@ import { db } from '../../config/db.knex.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { getPagination } from '../../utils/http/pagination.js';
 import { createAutomatedExpenseJournal, createAutomatedPurchaseJournal } from '../accounting/accounting.service.js';
+import emitter, { EVENTS } from '../../events/index.js';
 
 const generatePoNumber = () => 'PO-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
 
@@ -540,6 +541,7 @@ export const returnToSupplier = async (id, returnPayload, reason = '', returnedB
     totalReturnedQty += qty;
 
     // Deduct stock from products table
+    const effectiveBranchId = branchId || order.branchId || order.branch_id || null;
     if (pId) {
       const prodQ = db('products').where({ id: pId, is_deleted: false });
       if (tenantId) prodQ.andWhere('tenant_id', tenantId);
@@ -550,6 +552,22 @@ export const returnToSupplier = async (id, returnPayload, reason = '', returnedB
         if (tenantId) pUp.andWhere('tenant_id', tenantId);
         await pUp.update({ stock_quantity: newStock });
       }
+
+      // Deduct stock from product_branch_stocks table for non-IMEI items
+      if (effectiveBranchId && !item.imeiOrSerial) {
+        const bsQ = db('product_branch_stocks').where({ branch_id: effectiveBranchId, product_id: pId });
+        if (tenantId) bsQ.andWhere('tenant_id', tenantId);
+        const bs = await bsQ.first();
+        if (bs) {
+          const newBranchStock = Math.max(0, Number(bs.stock_quantity || 0) - qty);
+          const bsUp = db('product_branch_stocks').where({ id: bs.id });
+          if (tenantId) bsUp.andWhere('tenant_id', tenantId);
+          await bsUp.update({ stock_quantity: newBranchStock });
+        }
+      }
+
+      emitter.emit(EVENTS.STOCK_UPDATED, { id: pId, name: item.description || item.name, tenantId, branchId: effectiveBranchId });
+      emitter.emit(EVENTS.PRODUCT_MUTATED, { id: pId, tenantId, branchId: effectiveBranchId });
     }
 
     // If IMEI specified, mark as returned in inventory_units
