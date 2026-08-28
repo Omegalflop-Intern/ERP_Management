@@ -121,7 +121,7 @@ export const deleteSale = async (req, res, next) => {
 export const updateSale = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const sale = await saleService.updateSale(req.params.id, req.body, tenantId, req.selectedBranchId);
+    const sale = await saleService.updateSale(req.params.id, req.body, tenantId, req.selectedBranchId, req.user?.username || 'system');
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'UPDATE', module: 'sale', entityId: sale._id, entityType: 'Transaction', details: { invoiceNumber: sale.invoiceNumber }, req });
     return ApiResponse.success(res, sale, 'Sale updated');
   } catch (error) { next(error); }

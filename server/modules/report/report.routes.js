@@ -68,7 +68,22 @@ router.get('/dashboard', async (req, res, next) => {
       applyBranch(txQuery);
       const txCountRes = await txQuery.count({ count: '*' }).sum({ total: 'net_total' }).sum({ returned: 'returned_amount' }).first();
       totalSalesCount = Number(txCountRes?.count || 0);
-      totalRevenue = Math.max(0, Number(txCountRes?.total || 0) - Number(txCountRes?.returned || 0));
+
+      // Subtract dueAmount to get actual cash/digital revenue
+      const salesForDue = await db('transactions')
+        .where({ is_deleted: false, tx_type: 'SALE' })
+        .modify(applyScope)
+        .modify(applyBranch)
+        .select('payment_breakdown');
+      
+      let outstandingDues = 0;
+      for (const s of salesForDue) {
+        let pb = {};
+        try { pb = typeof s.payment_breakdown === 'string' ? JSON.parse(s.payment_breakdown) : (s.payment_breakdown || {}); } catch {}
+        outstandingDues += Number(pb.dueAmount || 0);
+      }
+
+      totalRevenue = Math.max(0, Number(txCountRes?.total || 0) - Number(txCountRes?.returned || 0) - outstandingDues);
 
       const txRows = await db('transactions')
         .where({ is_deleted: false, tx_type: 'SALE' })
@@ -219,46 +234,52 @@ router.get('/dashboard', async (req, res, next) => {
     } catch {}
 
     try {
-      const salesTrendQuery = db('transactions')
+      const rawSalesQuery = db('transactions')
         .where({ is_deleted: false, tx_type: 'SALE' })
         .whereNot('status', 'RETURNED')
-        .whereNot('status', 'CANCELLED')
-        .select(db.raw('DATE_FORMAT(created_at, "%Y-%m-%d") as date_key'))
-        .select(db.raw('DATE_FORMAT(created_at, "%a %d") as day'))
-        .sum({ revenue: db.raw('GREATEST(0, net_total - COALESCE(returned_amount, 0))') })
-        .count({ sales: '*' })
-        .groupBy('date_key', 'day')
-        .orderBy('date_key', 'asc')
-        .limit(14);
-      applyScope(salesTrendQuery);
-      applyBranch(salesTrendQuery);
-      const rawSales = await salesTrendQuery;
-      salesTrendData = rawSales.map((r) => ({
-        day: r.day,
-        revenue: Math.round(Number(r.revenue || 0)),
-        sales: Number(r.sales || 0),
-      }));
-    } catch {}
+        .whereNot('status', 'CANCELLED');
+      applyScope(rawSalesQuery);
+      applyBranch(rawSalesQuery);
+      const rawSales = await rawSalesQuery.select('created_at', 'net_total', 'returned_amount', 'payment_breakdown');
 
-    try {
-      const dueTrendQuery = db('transactions')
-        .where({ is_deleted: false, tx_type: 'SALE' })
-        .whereNot('status', 'RETURNED')
-        .whereNot('status', 'CANCELLED')
-        .select(db.raw('DATE_FORMAT(created_at, "%Y-%m-%d") as date_key'))
-        .select(db.raw('DATE_FORMAT(created_at, "%a %d") as day'))
-        .sum({ paidAmount: db.raw('GREATEST(0, net_total - COALESCE(returned_amount, 0))') })
-        .count({ transactions: '*' })
-        .groupBy('date_key', 'day')
-        .orderBy('date_key', 'asc')
-        .limit(14);
-      applyScope(dueTrendQuery);
-      applyBranch(dueTrendQuery);
-      const rawDue = await dueTrendQuery;
-      dueTrendData = rawDue.map((r) => ({
+      const dailyMap = {};
+      for (const s of rawSales) {
+        const dObj = new Date(s.created_at);
+        const dateKey = dObj.toISOString().split('T')[0];
+        
+        const weekday = dObj.toLocaleDateString('en-US', { weekday: 'short' });
+        const dayNum = String(dObj.getDate()).padStart(2, '0');
+        const dayLabel = `${weekday} ${dayNum}`;
+        
+        let pb = {};
+        try { pb = typeof s.payment_breakdown === 'string' ? JSON.parse(s.payment_breakdown) : (s.payment_breakdown || {}); } catch {}
+        const dueAmt = Number(pb.dueAmount || 0);
+        const totalAmt = Math.max(0, Number(s.net_total || 0) - Number(s.returned_amount || 0));
+        const collectedAmt = Math.max(0, totalAmt - dueAmt);
+        
+        if (!dailyMap[dateKey]) {
+          dailyMap[dateKey] = { date_key: dateKey, day: dayLabel, revenue: 0, sales: 0, paid: 0, due: 0 };
+        }
+        dailyMap[dateKey].revenue += collectedAmt;
+        dailyMap[dateKey].sales += 1;
+        dailyMap[dateKey].paid += collectedAmt;
+        dailyMap[dateKey].due += dueAmt;
+      }
+      
+      const sortedTrend = Object.values(dailyMap)
+        .sort((a, b) => a.date_key.localeCompare(b.date_key))
+        .slice(-14);
+      
+      salesTrendData = sortedTrend.map((r) => ({
         day: r.day,
-        paidAmount: Math.round(Number(r.paidAmount || 0)),
-        dueAmount: 0,
+        revenue: Math.round(r.revenue),
+        sales: r.sales,
+      }));
+      
+      dueTrendData = sortedTrend.map((r) => ({
+        day: r.day,
+        paidAmount: Math.round(r.paid),
+        dueAmount: Math.round(r.due),
       }));
     } catch {}
 
@@ -329,13 +350,15 @@ router.get('/analytics', async (req, res, next) => {
     applyBranch(txForPm);
     const pmTransactions = await txForPm;
 
+    let outstandingDues = 0;
     const pmCounts = {};
     for (const tx of pmTransactions) {
       let pb = tx.payment_breakdown;
       if (typeof pb === 'string') { try { pb = JSON.parse(pb); } catch { pb = {}; } }
       if (pb && typeof pb === 'object') {
+        outstandingDues += Number(pb.dueAmount || 0);
         Object.entries(pb).forEach(([method, amt]) => {
-          if (Number(amt || 0) > 0) {
+          if (Number(amt || 0) > 0 && method !== 'dueAmount' && method !== 'changeAmount') {
             const m = method.toUpperCase();
             pmCounts[m] = (pmCounts[m] || 0) + 1;
           }
@@ -361,7 +384,7 @@ router.get('/analytics', async (req, res, next) => {
     }));
 
     const totalSalesCount = Number(salesRes?.count || 0);
-    const totalRevenue = Number(salesRes?.revenue || 0);
+    const totalRevenue = Math.max(0, Number(salesRes?.revenue || 0) - outstandingDues);
     const totalExpenses = Number(expRes?.total || 0);
     const totalPurchases = Math.max(0, Number(poRes?.total || 0) - Number(poRes?.returned || 0));
     const netProfit = totalRevenue - totalExpenses;

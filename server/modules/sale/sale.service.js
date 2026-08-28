@@ -452,7 +452,7 @@ export const getSaleByPublicToken = async (token) => {
   return formatTransaction(row, cRow);
 };
 
-export const updateSale = async (id, data, tenantId = null, branchId = null) => {
+export const updateSale = async (id, data, tenantId = null, branchId = null, updatedBy = 'system') => {
   const cleanId = (id && typeof id === 'object') ? (id.id || id._id || null) : id;
   const cleanTenantId = (tenantId && typeof tenantId === 'object') ? (tenantId.id || tenantId._id || null) : tenantId;
   const cleanBranchId = (branchId && typeof branchId === 'object') ? (branchId.id || branchId._id || null) : branchId;
@@ -523,6 +523,30 @@ export const updateSale = async (id, data, tenantId = null, branchId = null) => 
         custId = existing.customerId.id || existing.customerId._id || null;
       } else if (existing.customerId) {
         custId = existing.customerId;
+      }
+
+      // If due amount has decreased (due collected), create an automated journal entry
+      if (dueDiff < 0) {
+        const cashDiff = (data.paymentBreakdown.cash || 0) - (existing.paymentBreakdown?.cash || 0);
+        const bkashDiff = (data.paymentBreakdown.bkash || 0) - (existing.paymentBreakdown?.bkash || 0);
+        const rocketDiff = (data.paymentBreakdown.rocket || 0) - (existing.paymentBreakdown?.rocket || 0);
+        const nagadDiff = (data.paymentBreakdown.nagad || 0) - (existing.paymentBreakdown?.nagad || 0);
+        const bankDiff = (data.paymentBreakdown.bank || 0) - (existing.paymentBreakdown?.bank || 0);
+
+        let method = 'cash';
+        let collectedAmount = Math.abs(dueDiff);
+        if (bkashDiff > 0) { method = 'bkash'; collectedAmount = bkashDiff; }
+        else if (rocketDiff > 0) { method = 'rocket'; collectedAmount = rocketDiff; }
+        else if (nagadDiff > 0) { method = 'nagad'; collectedAmount = nagadDiff; }
+        else if (bankDiff > 0) { method = 'bank'; collectedAmount = bankDiff; }
+        else if (cashDiff > 0) { method = 'cash'; collectedAmount = cashDiff; }
+
+        try {
+          const { createAutomatedDueCollectionJournal } = await import('../accounting/accounting.service.js');
+          await createAutomatedDueCollectionJournal(existing, collectedAmount, method, updatedBy);
+        } catch (err) {
+          console.error('[Accounting Auto-Journal Due Collection Error]:', err.message);
+        }
       }
 
       // Bug #30 fixed: Recalculate customer due_balance from scratch instead of
