@@ -98,8 +98,10 @@ const startServer = (target) => {
     await logStep('Automated Backup Scheduler', () => initAutoBackup());
 
     const { startSubscriptionChecker, startTempAdminCleanup } = await import('./jobs/subscriptionChecker.js');
+    const { startAutoCheckoutJob } = await import('./jobs/autoCheckout.js');
     startSubscriptionChecker();
     startTempAdminCleanup();
+    startAutoCheckoutJob();
 
     console.log('');
     printServerInfo(actualPort, env.NODE_ENV || 'development', protocol);
