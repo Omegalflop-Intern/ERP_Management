@@ -2293,9 +2293,17 @@ function ViewPurchaseModal({ po, onClose, onPrint, onReturn }) {
 function PayPODueModal({ po, onClose, onSuccess }) {
   const due = Number(po.dueAmount || 0);
   const [amount, setAmount] = useState(due);
+  const activeMethods = useActivePaymentMethods();
   const [paymentMethod, setPaymentMethod] = useState('CASH');
   const [notes, setNotes] = useState('');
-  const activeMethods = useActivePaymentMethods();
+
+  useEffect(() => {
+    if (activeMethods.methods && activeMethods.methods.length > 0) {
+      if (!activeMethods.methods.some((m) => m.id === paymentMethod)) {
+        setPaymentMethod(activeMethods.methods[0].id);
+      }
+    }
+  }, [activeMethods.methods, paymentMethod]);
 
   const supplierName = typeof po.supplierId === 'object' ? po.supplierId?.name : 'Supplier';
 
@@ -2401,21 +2409,11 @@ function PayPODueModal({ po, onClose, onSuccess }) {
               onChange={(e) => setPaymentMethod(e.target.value)}
               className="w-full px-3 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100"
             >
-              <option value="CASH" disabled={!activeMethods.hasCash}>
-                Cash Payment {!activeMethods.hasCash && ' (Disabled)'}
-              </option>
-              <option value="BANK" disabled={!activeMethods.hasBank}>
-                Bank Transfer / Card {!activeMethods.hasBank && ' (Disabled)'}
-              </option>
-              <option value="BKASH" disabled={!activeMethods.hasBkash}>
-                bKash Merchant {!activeMethods.hasBkash && ' (Disabled)'}
-              </option>
-              <option value="NAGAD" disabled={!activeMethods.hasNagad}>
-                Nagad {!activeMethods.hasNagad && ' (Disabled)'}
-              </option>
-              <option value="ROCKET" disabled={!activeMethods.hasRocket}>
-                Rocket {!activeMethods.hasRocket && ' (Disabled)'}
-              </option>
+              {(activeMethods.methods || []).map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.label}
+                </option>
+              ))}
             </select>
           </div>
 

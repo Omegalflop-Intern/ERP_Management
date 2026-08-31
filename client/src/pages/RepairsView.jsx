@@ -1215,9 +1215,17 @@ function ViewRepairModal({ ticket, onClose, onStatusChange }) {
 function CollectRepairDueModal({ ticket, onClose, onSuccess }) {
   const due = Math.max(0, (Number(ticket.estimatedCost) || 0) - (Number(ticket.advancePaid) || 0));
   const [amount, setAmount] = useState(due);
+  const activeMethods = useActivePaymentMethods();
   const [paymentMethod, setPaymentMethod] = useState('CASH');
   const [notes, setNotes] = useState('');
-  const activeMethods = useActivePaymentMethods();
+
+  useEffect(() => {
+    if (activeMethods.methods && activeMethods.methods.length > 0) {
+      if (!activeMethods.methods.some((m) => m.id === paymentMethod)) {
+        setPaymentMethod(activeMethods.methods[0].id);
+      }
+    }
+  }, [activeMethods.methods, paymentMethod]);
 
   const mutation = useMutation({
     mutationFn: async (payload) =>
@@ -1256,10 +1264,10 @@ function CollectRepairDueModal({ ticket, onClose, onSuccess }) {
             </div>
             <div>
               <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                Collect Repair Due Payment
+                Collect Repair Due
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Ticket #{ticket.ticketNumber} — {ticket.customerName} ({ticket.deviceModel})
+                Ticket: {ticket.ticketNumber} — {ticket.customerName || 'Customer'}
               </p>
             </div>
           </div>
@@ -1269,56 +1277,44 @@ function CollectRepairDueModal({ ticket, onClose, onSuccess }) {
           {/* Summary Box */}
           <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2">
             <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
-              <span>Total Estimated Cost:</span>
+              <span>Estimated Cost:</span>
               <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
-                ৳{Number(ticket.estimatedCost || 0).toLocaleString()}
+                ৳{(Number(ticket.estimatedCost) || 0).toLocaleString()}
               </span>
             </div>
             <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
-              <span>Already Paid Advance:</span>
+              <span>Advance Paid:</span>
               <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
-                ৳{Number(ticket.advancePaid || 0).toLocaleString()}
+                ৳{(Number(ticket.advancePaid) || 0).toLocaleString()}
               </span>
             </div>
             <div className="flex justify-between text-xs pt-1.5 border-t border-slate-200 dark:border-slate-700/80">
-              <span className="font-bold text-slate-800 dark:text-slate-200">
-                Current Remaining Due:
-              </span>
+              <span className="font-bold text-slate-800 dark:text-slate-200">Remaining Due:</span>
               <span className="font-mono font-bold text-rose-600 dark:text-rose-400 text-base">
                 ৳{due.toLocaleString()}
               </span>
             </div>
           </div>
 
-          {/* Quick Amount Buttons */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <Label className="text-xs font-bold text-slate-700 dark:text-slate-300">
                 Collection Amount (৳) *
               </Label>
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setAmount(due)}
-                  className="text-[11px] font-extrabold px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 hover:underline"
-                >
-                  Pay Full (৳{due.toLocaleString()})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAmount(Math.round(due / 2))}
-                  className="text-[11px] font-extrabold px-2 py-0.5 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 hover:underline"
-                >
-                  50%
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setAmount(due)}
+                className="text-[11px] font-extrabold px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 hover:underline"
+              >
+                Full Due (৳{due.toLocaleString()})
+              </button>
             </div>
             <Input
               type="number"
               min="1"
               max={due > 0 ? due : undefined}
               required
-              placeholder="Enter amount collected"
+              placeholder="Enter amount"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               className="h-11 text-base font-mono font-bold rounded-xl bg-white dark:bg-[#1e293b]"
@@ -1334,21 +1330,11 @@ function CollectRepairDueModal({ ticket, onClose, onSuccess }) {
               onChange={(e) => setPaymentMethod(e.target.value)}
               className="w-full h-11 px-3 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100"
             >
-              <option value="CASH" disabled={!activeMethods.hasCash}>
-                Cash Payment {!activeMethods.hasCash && ' (Disabled)'}
-              </option>
-              <option value="BANK" disabled={!activeMethods.hasBank}>
-                Bank Transfer / Card {!activeMethods.hasBank && ' (Disabled)'}
-              </option>
-              <option value="BKASH" disabled={!activeMethods.hasBkash}>
-                bKash Merchant {!activeMethods.hasBkash && ' (Disabled)'}
-              </option>
-              <option value="NAGAD" disabled={!activeMethods.hasNagad}>
-                Nagad {!activeMethods.hasNagad && ' (Disabled)'}
-              </option>
-              <option value="ROCKET" disabled={!activeMethods.hasRocket}>
-                Rocket {!activeMethods.hasRocket && ' (Disabled)'}
-              </option>
+              {(activeMethods.methods || []).map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.label}
+                </option>
+              ))}
             </select>
           </div>
 
