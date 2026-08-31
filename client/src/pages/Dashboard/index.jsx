@@ -35,16 +35,24 @@ export default function Dashboard() {
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ['dashboard', period, activeBranchId],
     queryFn: async () => {
-      const res = await api.get('/finance/dashboard', { params: { period } });
+      const params = { period };
+      if (activeBranchId && activeBranchId !== 'all') {
+        params.branchId = activeBranchId;
+      }
+      const res = await api.get('/finance/dashboard', { params });
       return res.data;
     },
-    staleTime: 30000,
+    staleTime: 10000,
   });
 
   const { data: recentSales } = useQuery({
     queryKey: ['recent-sales-dashboard', activeBranchId],
     queryFn: async () => {
-      const res = await api.get('/sales', { params: { limit: 5 } });
+      const params = { limit: 5 };
+      if (activeBranchId && activeBranchId !== 'all') {
+        params.branchId = activeBranchId;
+      }
+      const res = await api.get('/sales', { params });
       return res.data?.data || [];
     },
   });

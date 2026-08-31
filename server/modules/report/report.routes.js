@@ -21,13 +21,44 @@ const getTenantScope = (req) => {
 };
 
 const getBranchScope = (req) => {
-  const branchId = req.selectedBranchId || null;
+  const branchId = req.query?.branchId || req.selectedBranchId || null;
   return (query, column = 'branch_id') => {
     if (branchId && branchId !== 'all') {
       query.where(column, branchId);
     }
   };
 };
+
+function getDateRangeFilter(period, fromDate, toDate) {
+  const now = new Date();
+  let start = null;
+  let end = null;
+
+  if (fromDate) {
+    start = new Date(fromDate);
+  }
+  if (toDate) {
+    end = new Date(toDate);
+    end.setHours(23, 59, 59, 999);
+  }
+
+  if (!start && period) {
+    const p = String(period).toLowerCase();
+    if (p === '24h' || p === 'today') {
+      start = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    } else if (p === '7d' || p === 'week') {
+      start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6, 0, 0, 0, 0);
+    } else if (p === '30d' || p === 'month') {
+      start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29, 0, 0, 0, 0);
+    } else if (p === '90d' || p === 'quarter') {
+      start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 89, 0, 0, 0, 0);
+    } else if (p === 'year') {
+      start = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+    }
+  }
+
+  return { start, end };
+}
 
 /**
  * GET /api/v1/reports/dashboard
@@ -37,6 +68,7 @@ router.get('/dashboard', async (req, res, next) => {
     const applyScope = getTenantScope(req);
     const applyBranch = getBranchScope(req);
     const tenantId = req.user?.tenantId || null;
+    const period = String(req.query?.period || '7d').toLowerCase();
 
     let totalSalesCount = 0, totalRevenue = 0;
     let totalAvailableUnits = 0, totalStockValue = 0;
@@ -45,7 +77,6 @@ router.get('/dashboard', async (req, res, next) => {
     let salesTrendData = [];
     let dueTrendData = [];
     let brandDistribution = [];
-    // Declare lowStockItems here so it is in scope for both the product loop and the final response
     const lowStockItems = [];
 
     try {
@@ -140,6 +171,7 @@ router.get('/dashboard', async (req, res, next) => {
       let totalUnitMap = {};
       let branchBulkStocksMap = {};
 
+      const effectiveBranchId = req.query?.branchId || req.selectedBranchId;
       if (productIds.length > 0) {
         const branchUnitQ = db('inventory_units')
           .whereIn('product_id', productIds)
@@ -162,10 +194,10 @@ router.get('/dashboard', async (req, res, next) => {
         const totalRows = await totalUnitQ;
         totalRows.forEach((r) => { totalUnitMap[String(r.product_id)] = Number(r.cnt || 0); });
 
-        if (req.selectedBranchId && req.selectedBranchId !== 'all') {
+        if (effectiveBranchId && effectiveBranchId !== 'all') {
           const bsRows = await db('product_branch_stocks')
             .whereIn('product_id', productIds)
-            .where('branch_id', req.selectedBranchId);
+            .where('branch_id', effectiveBranchId);
           bsRows.forEach((r) => { branchBulkStocksMap[String(r.product_id)] = Number(r.stock_quantity || 0); });
         }
       }
@@ -180,7 +212,7 @@ router.get('/dashboard', async (req, res, next) => {
         if (totalUnitsAny > 0) {
           availUnits = branchUnits;
         } else {
-          if (req.selectedBranchId && req.selectedBranchId !== 'all') {
+          if (effectiveBranchId && effectiveBranchId !== 'all') {
             if (branchBulkStocksMap[pIdStr] !== undefined) {
               availUnits = branchBulkStocksMap[pIdStr];
             } else {
@@ -233,53 +265,149 @@ router.get('/dashboard', async (req, res, next) => {
       totalDueAmount = Number(custRes?.due || 0);
     } catch {}
 
+    // Precise timeframe trend calculation for sales & dues
     try {
+      const now = new Date();
+      let startTime;
+      let isHourly = false;
+      const bucketMap = new Map();
+
+      if (period === '24h' || period === 'today') {
+        isHourly = true;
+        startTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+        for (let i = 23; i >= 0; i--) {
+          const d = new Date(now.getTime() - i * 60 * 60 * 1000);
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          const h = String(d.getHours()).padStart(2, '0');
+          const hourKey = `${y}-${m}-${day}T${h}`;
+          const hourLabel = d.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
+          bucketMap.set(hourKey, {
+            day: hourLabel,
+            revenue: 0,
+            sales: 0,
+            paidAmount: 0,
+            dueAmount: 0,
+          });
+        }
+      } else if (period === '30d' || period === 'month') {
+        startTime = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29, 0, 0, 0, 0);
+
+        for (let i = 29; i >= 0; i--) {
+          const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          const dateKey = `${y}-${m}-${day}`;
+          const monthLabel = d.toLocaleDateString('en-US', { month: 'short' });
+          const dayNum = String(d.getDate()).padStart(2, '0');
+          const dayLabel = `${monthLabel} ${dayNum}`;
+          bucketMap.set(dateKey, {
+            day: dayLabel,
+            revenue: 0,
+            sales: 0,
+            paidAmount: 0,
+            dueAmount: 0,
+          });
+        }
+      } else if (period === '90d' || period === 'quarter') {
+        startTime = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 89, 0, 0, 0, 0);
+
+        for (let i = 89; i >= 0; i--) {
+          const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          const dateKey = `${y}-${m}-${day}`;
+          const monthLabel = d.toLocaleDateString('en-US', { month: 'short' });
+          const dayNum = String(d.getDate()).padStart(2, '0');
+          const dayLabel = `${monthLabel} ${dayNum}`;
+          bucketMap.set(dateKey, {
+            day: dayLabel,
+            revenue: 0,
+            sales: 0,
+            paidAmount: 0,
+            dueAmount: 0,
+          });
+        }
+      } else {
+        // Default: 7d / week
+        startTime = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6, 0, 0, 0, 0);
+
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          const dateKey = `${y}-${m}-${day}`;
+          const weekday = d.toLocaleDateString('en-US', { weekday: 'short' });
+          const dayNum = String(d.getDate()).padStart(2, '0');
+          const dayLabel = `${weekday} ${dayNum}`;
+          bucketMap.set(dateKey, {
+            day: dayLabel,
+            revenue: 0,
+            sales: 0,
+            paidAmount: 0,
+            dueAmount: 0,
+          });
+        }
+      }
+
       const rawSalesQuery = db('transactions')
         .where({ is_deleted: false, tx_type: 'SALE' })
         .whereNot('status', 'RETURNED')
-        .whereNot('status', 'CANCELLED');
+        .whereNot('status', 'CANCELLED')
+        .where('created_at', '>=', startTime);
       applyScope(rawSalesQuery);
       applyBranch(rawSalesQuery);
       const rawSales = await rawSalesQuery.select('created_at', 'net_total', 'returned_amount', 'payment_breakdown');
 
-      const dailyMap = {};
       for (const s of rawSales) {
         const dObj = new Date(s.created_at);
-        const dateKey = dObj.toISOString().split('T')[0];
-        
-        const weekday = dObj.toLocaleDateString('en-US', { weekday: 'short' });
-        const dayNum = String(dObj.getDate()).padStart(2, '0');
-        const dayLabel = `${weekday} ${dayNum}`;
-        
+        if (isNaN(dObj.getTime())) continue;
+
+        let key;
+        const y = dObj.getFullYear();
+        const m = String(dObj.getMonth() + 1).padStart(2, '0');
+        const day = String(dObj.getDate()).padStart(2, '0');
+
+        if (isHourly) {
+          const h = String(dObj.getHours()).padStart(2, '0');
+          key = `${y}-${m}-${day}T${h}`;
+        } else {
+          key = `${y}-${m}-${day}`;
+        }
+
         let pb = {};
-        try { pb = typeof s.payment_breakdown === 'string' ? JSON.parse(s.payment_breakdown) : (s.payment_breakdown || {}); } catch {}
+        try {
+          pb = typeof s.payment_breakdown === 'string' ? JSON.parse(s.payment_breakdown) : (s.payment_breakdown || {});
+        } catch {}
         const dueAmt = Number(pb.dueAmount || 0);
         const totalAmt = Math.max(0, Number(s.net_total || 0) - Number(s.returned_amount || 0));
         const collectedAmt = Math.max(0, totalAmt - dueAmt);
-        
-        if (!dailyMap[dateKey]) {
-          dailyMap[dateKey] = { date_key: dateKey, day: dayLabel, revenue: 0, sales: 0, paid: 0, due: 0 };
+
+        if (bucketMap.has(key)) {
+          const entry = bucketMap.get(key);
+          entry.revenue += collectedAmt;
+          entry.sales += 1;
+          entry.paidAmount += collectedAmt;
+          entry.dueAmount += dueAmt;
         }
-        dailyMap[dateKey].revenue += collectedAmt;
-        dailyMap[dateKey].sales += 1;
-        dailyMap[dateKey].paid += collectedAmt;
-        dailyMap[dateKey].due += dueAmt;
       }
-      
-      const sortedTrend = Object.values(dailyMap)
-        .sort((a, b) => a.date_key.localeCompare(b.date_key))
-        .slice(-14);
-      
-      salesTrendData = sortedTrend.map((r) => ({
+
+      const trendList = Array.from(bucketMap.values());
+      salesTrendData = trendList.map((r) => ({
         day: r.day,
         revenue: Math.round(r.revenue),
         sales: r.sales,
       }));
-      
-      dueTrendData = sortedTrend.map((r) => ({
+
+      dueTrendData = trendList.map((r) => ({
         day: r.day,
-        paidAmount: Math.round(r.paid),
-        dueAmount: Math.round(r.due),
+        paidAmount: Math.round(r.paidAmount),
+        dueAmount: Math.round(r.dueAmount),
       }));
     } catch {}
 
@@ -313,21 +441,28 @@ router.get('/analytics', async (req, res, next) => {
   try {
     const applyScope = getTenantScope(req);
     const applyBranch = getBranchScope(req);
+    const { start, end } = getDateRangeFilter(req.query?.period, req.query?.from, req.query?.to);
 
     const txQuery = db('transactions')
       .where({ is_deleted: false, tx_type: 'SALE' })
       .whereNot('status', 'RETURNED')
       .whereNot('status', 'CANCELLED');
+    if (start) txQuery.where('created_at', '>=', start);
+    if (end) txQuery.where('created_at', '<=', end);
     applyScope(txQuery);
     applyBranch(txQuery);
     const salesRes = await txQuery.count({ count: '*' }).sum({ revenue: db.raw('GREATEST(0, net_total - COALESCE(returned_amount, 0))') }).first();
 
     const expQuery = db('expenses').where({ is_deleted: false }).whereNot('category', 'Supplier Payment');
+    if (start) expQuery.where('created_at', '>=', start);
+    if (end) expQuery.where('created_at', '<=', end);
     applyScope(expQuery);
     applyBranch(expQuery);
     const expRes = await expQuery.sum({ total: 'amount' }).first();
 
     const poQuery = db('purchase_orders').where({ is_deleted: false }).whereNot('status', 'CANCELLED');
+    if (start) poQuery.where('created_at', '>=', start);
+    if (end) poQuery.where('created_at', '<=', end);
     applyScope(poQuery);
     applyBranch(poQuery);
     const poRes = await poQuery.sum({ total: 'net_total' }).sum({ returned: 'returned_amount' }).first();
@@ -344,8 +479,10 @@ router.get('/analytics', async (req, res, next) => {
     const txForPm = db('transactions')
       .where({ is_deleted: false, tx_type: 'SALE' })
       .whereNot('status', 'RETURNED')
-      .whereNot('status', 'CANCELLED')
-      .select('payment_breakdown');
+      .whereNot('status', 'CANCELLED');
+    if (start) txForPm.where('created_at', '>=', start);
+    if (end) txForPm.where('created_at', '<=', end);
+    txForPm.select('payment_breakdown');
     applyScope(txForPm);
     applyBranch(txForPm);
     const pmTransactions = await txForPm;
@@ -429,17 +566,23 @@ router.get('/sales-trend', async (req, res, next) => {
   try {
     const applyScope = getTenantScope(req);
     const applyBranch = getBranchScope(req);
+    const { start, end } = getDateRangeFilter(req.query?.period || 'month', req.query?.from, req.query?.to);
+
     const query = db('transactions')
       .where({ is_deleted: false, tx_type: 'SALE' })
       .whereNot('status', 'RETURNED')
-      .whereNot('status', 'CANCELLED')
+      .whereNot('status', 'CANCELLED');
+
+    if (start) query.where('created_at', '>=', start);
+    if (end) query.where('created_at', '<=', end);
+
+    query
       .select(db.raw('DATE_FORMAT(created_at, "%Y-%m-%d") as date'))
       .select(db.raw('DATE_FORMAT(created_at, "%a %d") as day'))
       .sum({ revenue: db.raw('GREATEST(0, net_total - COALESCE(returned_amount, 0))') })
       .count({ sales: '*' })
       .groupBy('date', 'day')
-      .orderBy('date', 'asc')
-      .limit(30);
+      .orderBy('date', 'asc');
 
     applyScope(query);
     applyBranch(query);
@@ -465,12 +608,17 @@ router.get('/top-products', async (req, res, next) => {
     const applyScope = getTenantScope(req);
     const applyBranch = getBranchScope(req);
     const limit = Number(req.query.limit || 5);
+    const { start, end } = getDateRangeFilter(req.query?.period, req.query?.from, req.query?.to);
 
     // Pull completed sales, parse line_items JSON to aggregate per product
     const txQuery = db('transactions')
       .where({ is_deleted: false, tx_type: 'SALE' })
       .whereNotIn('status', ['CANCELLED', 'RETURNED'])
       .select('line_items', 'net_total');
+
+    if (start) txQuery.where('created_at', '>=', start);
+    if (end) txQuery.where('created_at', '<=', end);
+
     applyScope(txQuery);
     applyBranch(txQuery);
     const transactions = await txQuery;
