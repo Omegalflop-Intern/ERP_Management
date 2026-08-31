@@ -242,7 +242,9 @@ export default function DeveloperPage() {
                     SD
                   </div>
                 </div>
-                <div className="font-black text-sm uppercase tracking-wider text-black">Salah Uddin Kader</div>
+                <div className="font-black text-sm uppercase tracking-wider text-black">
+                  Salah Uddin Kader
+                </div>
                 <div className="font-bold text-xs bg-yellow-300 border border-black px-2.5 py-0.5 rounded-md mt-1 shadow-[2px_2px_0px_0px_#000]">
                   Full-Stack Architect
                 </div>

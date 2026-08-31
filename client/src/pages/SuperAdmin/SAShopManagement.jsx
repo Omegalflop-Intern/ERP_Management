@@ -106,7 +106,7 @@ function TempAdminModal({ tenant, onClose }) {
       `🔑 Password: ${credentials?.password}`,
       `⏳ Valid Until: ${expiry}`,
       `━━━━━━━━━━━━━━━━━━━━━━━━━━`,
-      `⚠️ Note: This temporary account will automatically expire after the allotted duration.`
+      `⚠️ Note: This temporary account will automatically expire after the allotted duration.`,
     ].join('\n');
     copyToClipboard(text, 'All credentials');
   };
@@ -184,13 +184,18 @@ function TempAdminModal({ tenant, onClose }) {
             <div className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-4 space-y-3 text-xs">
               <div className="flex items-center justify-between">
                 <span className="text-slate-500">Shop:</span>
-                <span className="font-semibold text-slate-900 dark:text-white">{tenant.shopName}</span>
+                <span className="font-semibold text-slate-900 dark:text-white">
+                  {tenant.shopName}
+                </span>
               </div>
 
               <div className="flex items-center justify-between">
                 <span className="text-slate-500">Login URL:</span>
                 <div className="flex items-center gap-1.5 max-w-[220px]">
-                  <span className="font-mono text-indigo-600 dark:text-indigo-400 truncate" title={loginUrl}>
+                  <span
+                    className="font-mono text-indigo-600 dark:text-indigo-400 truncate"
+                    title={loginUrl}
+                  >
                     {loginUrl}
                   </span>
                   <button
@@ -738,7 +743,9 @@ function CreatedShopModal({ credentials, onClose }) {
   const loginUrl = getLoginUrl();
 
   const handleCopyAll = () => {
-    const expiry = credentials?.expiresAt ? new Date(credentials.expiresAt).toLocaleDateString() : '';
+    const expiry = credentials?.expiresAt
+      ? new Date(credentials.expiresAt).toLocaleDateString()
+      : '';
     const text = [
       `🎉 Welcome to Omni-Manage ERP!`,
       `Here are your shop account login credentials:`,
@@ -752,7 +759,7 @@ function CreatedShopModal({ credentials, onClose }) {
       `🔑 Password: ${credentials.password}`,
       `⏳ Subscription Valid Until: ${expiry}`,
       `━━━━━━━━━━━━━━━━━━━━━━━━━━`,
-      `💡 Please keep your password safe and do not share it with unauthorized staff.`
+      `💡 Please keep your password safe and do not share it with unauthorized staff.`,
     ].join('\n');
     copyToClipboard(text, 'All credentials');
   };
@@ -801,7 +808,10 @@ function CreatedShopModal({ credentials, onClose }) {
             <div className="flex items-center justify-between">
               <span className="text-slate-500 font-medium">Login URL:</span>
               <div className="flex items-center gap-1.5 max-w-[240px]">
-                <span className="font-mono text-indigo-600 dark:text-indigo-400 truncate" title={loginUrl}>
+                <span
+                  className="font-mono text-indigo-600 dark:text-indigo-400 truncate"
+                  title={loginUrl}
+                >
                   {loginUrl}
                 </span>
                 <button
@@ -982,7 +992,9 @@ export default function SAShopManagement() {
         plan: createForm.plan,
         durationDays: createForm.durationDays,
         subdomain: createdData.subdomain || createForm.subdomain,
-        expiresAt: createdData.expiresAt || new Date(Date.now() + (createForm.durationDays || 30) * 86400000).toISOString(),
+        expiresAt:
+          createdData.expiresAt ||
+          new Date(Date.now() + (createForm.durationDays || 30) * 86400000).toISOString(),
       });
       setCreateForm({
         shopName: '',
@@ -1600,4 +1612,3 @@ export default function SAShopManagement() {
     </div>
   );
 }
-

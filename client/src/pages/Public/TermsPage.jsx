@@ -26,7 +26,9 @@ export default function TermsPage() {
               ⚡
             </div>
             <div>
-              <span className="font-black text-xl tracking-tight uppercase dark:text-white">OmniManage</span>
+              <span className="font-black text-xl tracking-tight uppercase dark:text-white">
+                OmniManage
+              </span>
               <span className="block text-[10px] font-bold tracking-widest text-slate-500 uppercase -mt-1">
                 Legal Terms
               </span>
@@ -55,7 +57,8 @@ export default function TermsPage() {
             Terms of Service & SaaS Agreement
           </h1>
           <p className="font-bold text-sm sm:text-base text-slate-900 max-w-2xl">
-            Please read these terms carefully before registering your shop workspace or subscribing to any OmniManage ERP service plan.
+            Please read these terms carefully before registering your shop workspace or subscribing
+            to any OmniManage ERP service plan.
           </p>
         </div>
       </section>
@@ -68,10 +71,15 @@ export default function TermsPage() {
             <div className="w-8 h-8 bg-amber-300 border-2 border-black rounded-lg flex items-center justify-center font-black text-black text-sm">
               1
             </div>
-            <h2 className="text-xl sm:text-2xl font-black uppercase dark:text-white">Account Registration & Eligibility</h2>
+            <h2 className="text-xl sm:text-2xl font-black uppercase dark:text-white">
+              Account Registration & Eligibility
+            </h2>
           </div>
           <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed font-medium">
-            To register a shop tenant on OmniManage, you must provide valid business information (Shop Name, Owner Name, Business Phone, and Email). You are solely responsible for safeguarding your credentials, configuring Multi-Factor Authentication (MFA), and supervising sub-accounts and cashier roles created under your tenant workspace.
+            To register a shop tenant on OmniManage, you must provide valid business information
+            (Shop Name, Owner Name, Business Phone, and Email). You are solely responsible for
+            safeguarding your credentials, configuring Multi-Factor Authentication (MFA), and
+            supervising sub-accounts and cashier roles created under your tenant workspace.
           </p>
         </section>
 
@@ -81,10 +89,15 @@ export default function TermsPage() {
             <div className="w-8 h-8 bg-lime-400 border-2 border-black rounded-lg flex items-center justify-center font-black text-black text-sm">
               2
             </div>
-            <h2 className="text-xl sm:text-2xl font-black uppercase dark:text-white">SaaS Subscriptions & Billing</h2>
+            <h2 className="text-xl sm:text-2xl font-black uppercase dark:text-white">
+              SaaS Subscriptions & Billing
+            </h2>
           </div>
           <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed font-medium">
-            OmniManage provides tiered subscription plans (Starter, Growth, Enterprise). Subscriptions renew automatically at the end of each billing period (Monthly or Annually) unless cancelled prior to the renewal date. All pricing is exclusive of local taxes where applicable.
+            OmniManage provides tiered subscription plans (Starter, Growth, Enterprise).
+            Subscriptions renew automatically at the end of each billing period (Monthly or
+            Annually) unless cancelled prior to the renewal date. All pricing is exclusive of local
+            taxes where applicable.
           </p>
         </section>
 
@@ -94,10 +107,14 @@ export default function TermsPage() {
             <div className="w-8 h-8 bg-cyan-300 border-2 border-black rounded-lg flex items-center justify-center font-black text-black text-sm">
               3
             </div>
-            <h2 className="text-xl sm:text-2xl font-black uppercase dark:text-white">Data Ownership & Tenant Isolation</h2>
+            <h2 className="text-xl sm:text-2xl font-black uppercase dark:text-white">
+              Data Ownership & Tenant Isolation
+            </h2>
           </div>
           <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed font-medium">
-            You retain 100% full ownership of your shop data—including customer records, IMEI inventories, sales invoices, repair tickets, and accounting journal entries. OmniManage will never sell or monetize your store data to third parties.
+            You retain 100% full ownership of your shop data—including customer records, IMEI
+            inventories, sales invoices, repair tickets, and accounting journal entries. OmniManage
+            will never sell or monetize your store data to third parties.
           </p>
         </section>
 
@@ -107,10 +124,14 @@ export default function TermsPage() {
             <div className="w-8 h-8 bg-pink-400 border-2 border-black rounded-lg flex items-center justify-center font-black text-black text-sm">
               4
             </div>
-            <h2 className="text-xl sm:text-2xl font-black uppercase dark:text-white">System Availability & SLAs</h2>
+            <h2 className="text-xl sm:text-2xl font-black uppercase dark:text-white">
+              System Availability & SLAs
+            </h2>
           </div>
           <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed font-medium">
-            We target a 99.9% uptime for our core POS, inventory, and API services. Scheduled maintenance windows are communicated via in-app banner announcements and email notifications at least 48 hours in advance.
+            We target a 99.9% uptime for our core POS, inventory, and API services. Scheduled
+            maintenance windows are communicated via in-app banner announcements and email
+            notifications at least 48 hours in advance.
           </p>
         </section>
 
@@ -120,10 +141,14 @@ export default function TermsPage() {
             <div className="w-8 h-8 bg-yellow-300 border-2 border-black rounded-lg flex items-center justify-center font-black text-black text-sm">
               5
             </div>
-            <h2 className="text-xl sm:text-2xl font-black uppercase dark:text-white">Account Termination & Data Export</h2>
+            <h2 className="text-xl sm:text-2xl font-black uppercase dark:text-white">
+              Account Termination & Data Export
+            </h2>
           </div>
           <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed font-medium">
-            You may cancel your subscription at any time from the Tenant Settings panel. Upon cancellation or closure, you are provided 30 days to export your full inventory, customer lists, and financial reports in CSV/Excel formats.
+            You may cancel your subscription at any time from the Tenant Settings panel. Upon
+            cancellation or closure, you are provided 30 days to export your full inventory,
+            customer lists, and financial reports in CSV/Excel formats.
           </p>
         </section>
       </main>
@@ -133,10 +158,18 @@ export default function TermsPage() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold">
           <div>&copy; {new Date().getFullYear()} OmniManage ERP Inc. All rights reserved.</div>
           <div className="flex items-center gap-6">
-            <Link to="/about" className="hover:text-yellow-400 transition-colors">About</Link>
-            <Link to="/privacy" className="hover:text-yellow-400 transition-colors">Privacy Policy</Link>
-            <Link to="/refund-policy" className="hover:text-yellow-400 transition-colors">Refund Policy</Link>
-            <Link to="/contact" className="hover:text-yellow-400 transition-colors">Contact</Link>
+            <Link to="/about" className="hover:text-yellow-400 transition-colors">
+              About
+            </Link>
+            <Link to="/privacy" className="hover:text-yellow-400 transition-colors">
+              Privacy Policy
+            </Link>
+            <Link to="/refund-policy" className="hover:text-yellow-400 transition-colors">
+              Refund Policy
+            </Link>
+            <Link to="/contact" className="hover:text-yellow-400 transition-colors">
+              Contact
+            </Link>
           </div>
         </div>
       </footer>

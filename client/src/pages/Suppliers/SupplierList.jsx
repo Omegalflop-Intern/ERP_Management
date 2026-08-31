@@ -62,7 +62,9 @@ export default function SupplierList() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Supplier & Vendor Directory</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+            Supplier & Vendor Directory
+          </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
             Manage vendor profiles, track purchase dues, and process supplier payments.
           </p>
@@ -96,7 +98,9 @@ export default function SupplierList() {
               suppliers.length
             )}
           </div>
-          <div className="text-[11px] text-slate-400 mt-1 font-medium">Registered vendor accounts</div>
+          <div className="text-[11px] text-slate-400 mt-1 font-medium">
+            Registered vendor accounts
+          </div>
         </div>
 
         <div className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm relative overflow-hidden">
@@ -115,7 +119,9 @@ export default function SupplierList() {
               `৳${totalDue.toLocaleString()}`
             )}
           </div>
-          <div className="text-[11px] text-rose-600/80 mt-1 font-medium">Outstanding vendor liabilities</div>
+          <div className="text-[11px] text-rose-600/80 mt-1 font-medium">
+            Outstanding vendor liabilities
+          </div>
         </div>
 
         <div className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-sm relative overflow-hidden">
@@ -134,7 +140,9 @@ export default function SupplierList() {
               suppliers.filter((s) => Number(s.totalPurchases || 0) > 0).length
             )}
           </div>
-          <div className="text-[11px] text-emerald-600/80 mt-1 font-medium">Vendors with active transactions</div>
+          <div className="text-[11px] text-emerald-600/80 mt-1 font-medium">
+            Vendors with active transactions
+          </div>
         </div>
       </div>
 
@@ -180,8 +188,12 @@ export default function SupplierList() {
                 <tr>
                   <td colSpan={7} className="px-4 py-12 text-center text-slate-400">
                     <Contact className="w-10 h-10 mx-auto mb-2 opacity-40" />
-                    <p className="font-semibold text-slate-600 dark:text-slate-300">No suppliers found</p>
-                    <p className="text-xs text-slate-400 mt-1">Add a new supplier to track vendor balances.</p>
+                    <p className="font-semibold text-slate-600 dark:text-slate-300">
+                      No suppliers found
+                    </p>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Add a new supplier to track vendor balances.
+                    </p>
                   </td>
                 </tr>
               ) : (
@@ -198,8 +210,14 @@ export default function SupplierList() {
                             {s.name?.charAt(0)?.toUpperCase() || 'S'}
                           </div>
                           <div className="min-w-0">
-                            <div className="font-bold text-slate-900 dark:text-slate-100">{s.name}</div>
-                            {s.email && <div className="text-[11px] text-slate-400 truncate max-w-[180px]">{s.email}</div>}
+                            <div className="font-bold text-slate-900 dark:text-slate-100">
+                              {s.name}
+                            </div>
+                            {s.email && (
+                              <div className="text-[11px] text-slate-400 truncate max-w-[180px]">
+                                {s.email}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -227,7 +245,11 @@ export default function SupplierList() {
                         ৳{Number(s.totalPurchases || 0).toLocaleString()}
                       </td>
                       <td className="px-4 py-3.5 text-right font-mono font-bold">
-                        <span className={due > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}>
+                        <span
+                          className={
+                            due > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'
+                          }
+                        >
                           {due > 0 ? `৳${due.toLocaleString()}` : '৳0'}
                         </span>
                       </td>
@@ -418,7 +440,7 @@ function SupplierForm({ supplier, onClose, onSuccess }) {
                   setForm((prev) => ({
                     ...prev,
                     name: newName,
-                    company: (!prev.company || prev.company === prev.name) ? newName : prev.company,
+                    company: !prev.company || prev.company === prev.name ? newName : prev.company,
                   }));
                 }}
                 className="h-10 text-xs rounded-xl bg-white dark:bg-[#1e293b]"
@@ -577,14 +599,20 @@ function ViewSupplierModal({ supplier, onClose, onEdit, onPayDue }) {
           {/* Financial Cards */}
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
-              <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Purchases</div>
+              <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                Total Purchases
+              </div>
               <div className="text-xl font-black text-slate-900 dark:text-slate-100 font-mono mt-1">
                 ৳{Number(supplier.totalPurchases || 0).toLocaleString()}
               </div>
             </div>
             <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
-              <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Current Due Payable</div>
-              <div className={`text-xl font-black font-mono mt-1 ${due > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}`}>
+              <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                Current Due Payable
+              </div>
+              <div
+                className={`text-xl font-black font-mono mt-1 ${due > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}`}
+              >
                 ৳{due.toLocaleString()}
               </div>
             </div>
@@ -595,25 +623,33 @@ function ViewSupplierModal({ supplier, onClose, onEdit, onPayDue }) {
             <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
               <Phone className="w-4 h-4 text-blue-600 shrink-0" />
               <span className="font-semibold text-slate-400 w-24">Phone:</span>
-              <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{supplier.phone || 'N/A'}</span>
+              <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
+                {supplier.phone || 'N/A'}
+              </span>
             </div>
             {supplier.email && (
               <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
                 <Mail className="w-4 h-4 text-blue-600 shrink-0" />
                 <span className="font-semibold text-slate-400 w-24">Email:</span>
-                <span className="font-medium text-slate-900 dark:text-slate-100">{supplier.email}</span>
+                <span className="font-medium text-slate-900 dark:text-slate-100">
+                  {supplier.email}
+                </span>
               </div>
             )}
             {supplier.address && (
               <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
                 <MapPin className="w-4 h-4 text-blue-600 shrink-0" />
                 <span className="font-semibold text-slate-400 w-24">Address:</span>
-                <span className="font-medium text-slate-900 dark:text-slate-100">{supplier.address}</span>
+                <span className="font-medium text-slate-900 dark:text-slate-100">
+                  {supplier.address}
+                </span>
               </div>
             )}
             {supplier.notes && (
               <div className="pt-2 border-t border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400">
-                <span className="font-bold text-slate-800 dark:text-slate-200 block mb-1">Notes:</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200 block mb-1">
+                  Notes:
+                </span>
                 {supplier.notes}
               </div>
             )}
@@ -676,9 +712,12 @@ function PaySupplierDueModal({ supplier, onClose, onSuccess }) {
   const activeMethods = useActivePaymentMethods();
 
   const mutation = useMutation({
-    mutationFn: async (payload) => api.post(`/suppliers/${supplier._id || supplier.id}/pay-due`, payload),
+    mutationFn: async (payload) =>
+      api.post(`/suppliers/${supplier._id || supplier.id}/pay-due`, payload),
     onSuccess: () => {
-      toast.success(`Supplier due payment of ৳${Number(amount).toLocaleString()} recorded successfully!`);
+      toast.success(
+        `Supplier due payment of ৳${Number(amount).toLocaleString()} recorded successfully!`
+      );
       onSuccess();
     },
     onError: (err) => {
@@ -723,11 +762,17 @@ function PaySupplierDueModal({ supplier, onClose, onSuccess }) {
           <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2">
             <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
               <span>Total Recorded Purchases:</span>
-              <span className="font-mono font-bold text-slate-900 dark:text-slate-100">৳{Number(supplier.totalPurchases || 0).toLocaleString()}</span>
+              <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
+                ৳{Number(supplier.totalPurchases || 0).toLocaleString()}
+              </span>
             </div>
             <div className="flex justify-between text-xs pt-1.5 border-t border-slate-200 dark:border-slate-700/80">
-              <span className="font-bold text-slate-800 dark:text-slate-200">Current Total Due Payable:</span>
-              <span className="font-mono font-bold text-rose-600 dark:text-rose-400 text-base">৳{due.toLocaleString()}</span>
+              <span className="font-bold text-slate-800 dark:text-slate-200">
+                Current Total Due Payable:
+              </span>
+              <span className="font-mono font-bold text-rose-600 dark:text-rose-400 text-base">
+                ৳{due.toLocaleString()}
+              </span>
             </div>
           </div>
 
@@ -775,11 +820,21 @@ function PaySupplierDueModal({ supplier, onClose, onSuccess }) {
               onChange={(e) => setPaymentMethod(e.target.value)}
               className="w-full h-11 px-3 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100"
             >
-              <option value="CASH" disabled={!activeMethods.hasCash}>Cash Payment {!activeMethods.hasCash && ' (Disabled)'}</option>
-              <option value="BANK" disabled={!activeMethods.hasBank}>Bank Transfer / Card {!activeMethods.hasBank && ' (Disabled)'}</option>
-              <option value="BKASH" disabled={!activeMethods.hasBkash}>bKash Merchant {!activeMethods.hasBkash && ' (Disabled)'}</option>
-              <option value="NAGAD" disabled={!activeMethods.hasNagad}>Nagad {!activeMethods.hasNagad && ' (Disabled)'}</option>
-              <option value="ROCKET" disabled={!activeMethods.hasRocket}>Rocket {!activeMethods.hasRocket && ' (Disabled)'}</option>
+              <option value="CASH" disabled={!activeMethods.hasCash}>
+                Cash Payment {!activeMethods.hasCash && ' (Disabled)'}
+              </option>
+              <option value="BANK" disabled={!activeMethods.hasBank}>
+                Bank Transfer / Card {!activeMethods.hasBank && ' (Disabled)'}
+              </option>
+              <option value="BKASH" disabled={!activeMethods.hasBkash}>
+                bKash Merchant {!activeMethods.hasBkash && ' (Disabled)'}
+              </option>
+              <option value="NAGAD" disabled={!activeMethods.hasNagad}>
+                Nagad {!activeMethods.hasNagad && ' (Disabled)'}
+              </option>
+              <option value="ROCKET" disabled={!activeMethods.hasRocket}>
+                Rocket {!activeMethods.hasRocket && ' (Disabled)'}
+              </option>
             </select>
           </div>
 

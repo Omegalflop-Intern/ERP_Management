@@ -513,14 +513,18 @@ export default function SalesForm() {
       </div>
 
       {/* ── TOP QUICK CUSTOMER SELECTION BAR ── */}
-      <div className={`${cardCls} p-3 sm:p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-l-4 border-l-blue-600 dark:border-l-blue-500 shadow-sm relative z-30`}>
+      <div
+        className={`${cardCls} p-3 sm:p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-l-4 border-l-blue-600 dark:border-l-blue-500 shadow-sm relative z-30`}
+      >
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-10 h-10 rounded-xl bg-blue-600/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold shrink-0">
             {customerId ? <UserCheck className="w-5 h-5" /> : <User className="w-5 h-5" />}
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Customer:</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Customer:
+              </span>
               {customerId ? (
                 <span className="text-xs font-bold text-blue-600 dark:text-blue-400 truncate">
                   {customerName} {customerPhone ? `(${customerPhone})` : ''}
@@ -538,7 +542,7 @@ export default function SalesForm() {
             </div>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
               {customerId
-                ? (customerAddress || selectedCustomerObj?.companyName || 'Customer profile attached')
+                ? customerAddress || selectedCustomerObj?.companyName || 'Customer profile attached'
                 : 'Walk-in retail mode. Click to select registered customer or add new.'}
             </p>
           </div>
@@ -668,7 +672,11 @@ export default function SalesForm() {
                       >
                         <div>
                           <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-red-600 dark:group-hover:text-red-400">
-                            {item.productId?.brand && !['generic', 'n/a', 'none'].includes(item.productId.brand.toLowerCase()) ? `${item.productId.brand} ` : ''}{item.productId?.name || item.productName}
+                            {item.productId?.brand &&
+                            !['generic', 'n/a', 'none'].includes(item.productId.brand.toLowerCase())
+                              ? `${item.productId.brand} `
+                              : ''}
+                            {item.productId?.name || item.productName}
                           </div>
                           <div className="text-xs text-gray-500 font-mono flex items-center gap-2">
                             {item.isBulk ? (
@@ -832,7 +840,9 @@ export default function SalesForm() {
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    {showInvoicePreview ? 'Click to minimize preview' : 'Click to preview formatted printable invoice'}
+                    {showInvoicePreview
+                      ? 'Click to minimize preview'
+                      : 'Click to preview formatted printable invoice'}
                   </p>
                 </div>
               </div>
@@ -841,8 +851,14 @@ export default function SalesForm() {
                 type="button"
                 className="px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-all text-xs flex items-center gap-1.5 font-medium shrink-0"
               >
-                {showInvoicePreview ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                <span className="hidden sm:inline">{showInvoicePreview ? 'Collapse' : 'Expand'}</span>
+                {showInvoicePreview ? (
+                  <ChevronUp className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
+                <span className="hidden sm:inline">
+                  {showInvoicePreview ? 'Collapse' : 'Expand'}
+                </span>
               </button>
             </div>
 
@@ -886,7 +902,9 @@ export default function SalesForm() {
                       </p>
                     )}
                     {customerEmail && (
-                      <p className="text-slate-600 dark:text-slate-300 text-[11px]">{customerEmail}</p>
+                      <p className="text-slate-600 dark:text-slate-300 text-[11px]">
+                        {customerEmail}
+                      </p>
                     )}
                   </div>
 
@@ -905,9 +923,7 @@ export default function SalesForm() {
                     <p className="text-slate-600 dark:text-slate-300 font-mono text-[11px] uppercase">
                       Type:{' '}
                       <span className="font-bold text-blue-600 dark:text-blue-400">
-                        {selectedCustomerObj?.customerType === 'B2B'
-                          ? 'Wholesale'
-                          : 'Invoice'}
+                        {selectedCustomerObj?.customerType === 'B2B' ? 'Wholesale' : 'Invoice'}
                       </span>
                     </p>
                   </div>
@@ -978,7 +994,9 @@ export default function SalesForm() {
                   </div>
                   {discountAmount > 0 && (
                     <div className="flex justify-between text-red-600 dark:text-red-400 font-bold">
-                      <span>Discount ({discountType === 'PERCENT' ? `${discount}%` : 'Fixed ৳'})</span>
+                      <span>
+                        Discount ({discountType === 'PERCENT' ? `${discount}%` : 'Fixed ৳'})
+                      </span>
                       <span className="font-mono">-৳{discountAmount.toLocaleString()}</span>
                     </div>
                   )}

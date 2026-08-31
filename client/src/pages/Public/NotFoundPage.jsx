@@ -27,7 +27,9 @@ export default function NotFoundPage() {
           <div className="w-9 h-9 bg-yellow-300 border-2 border-black rounded-xl flex items-center justify-center font-black text-lg shadow-[2px_2px_0px_0px_#000]">
             ⚡
           </div>
-          <span className="font-black text-lg tracking-tight uppercase dark:text-white">OmniManage</span>
+          <span className="font-black text-lg tracking-tight uppercase dark:text-white">
+            OmniManage
+          </span>
         </Link>
 
         <div className="flex items-center gap-3">
@@ -36,7 +38,11 @@ export default function NotFoundPage() {
             to={isAuthenticated ? dashboardLink : '/'}
             className="inline-flex items-center gap-1.5 font-bold text-xs uppercase bg-yellow-300 text-black border-2 border-black px-3.5 py-1.5 rounded-xl shadow-[2px_2px_0px_0px_#000] hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
           >
-            {isAuthenticated ? <LayoutDashboard className="w-3.5 h-3.5" /> : <Home className="w-3.5 h-3.5" />}
+            {isAuthenticated ? (
+              <LayoutDashboard className="w-3.5 h-3.5" />
+            ) : (
+              <Home className="w-3.5 h-3.5" />
+            )}
             {isAuthenticated ? 'Dashboard' : 'Home'}
           </Link>
         </div>
@@ -55,7 +61,8 @@ export default function NotFoundPage() {
               Lost in Cyber Orbit?
             </h1>
             <p className="text-sm sm:text-base font-medium text-slate-600 dark:text-slate-300 max-w-md mx-auto leading-relaxed">
-              The page or resource you are trying to access does not exist or may have been relocated.
+              The page or resource you are trying to access does not exist or may have been
+              relocated.
             </p>
           </div>
 

@@ -1,5 +1,15 @@
 import React, { useRef, useState } from 'react';
-import { Printer, X, CheckCircle, Clock, Truck, ArrowRight, Building2, Package, ShieldCheck } from 'lucide-react';
+import {
+  Printer,
+  X,
+  CheckCircle,
+  Clock,
+  Truck,
+  ArrowRight,
+  Building2,
+  Package,
+  ShieldCheck,
+} from 'lucide-react';
 import { useCompanyInfo, QRCodeCanvas } from '../sales/Invoice';
 
 export default function TransferChallanModal({ transfer, onClose }) {
@@ -9,9 +19,13 @@ export default function TransferChallanModal({ transfer, onClose }) {
 
   if (!transfer) return null;
 
-  const transferNo = transfer.transferNumber || `TRF-${String(transfer.id || transfer._id || '').slice(-6).toUpperCase()}`;
+  const transferNo =
+    transfer.transferNumber ||
+    `TRF-${String(transfer.id || transfer._id || '')
+      .slice(-6)
+      .toUpperCase()}`;
   const transferDate = transfer.createdAt ? new Date(transfer.createdAt) : new Date();
-  
+
   const fromBranchName = transfer.fromBranchId?.name || transfer.fromBranch || 'Main Branch';
   const toBranchName = transfer.toBranchId?.name || transfer.toBranch || 'Destination Branch';
   const productName = transfer.productId?.name || transfer.product?.name || 'Transferred Item';
@@ -30,14 +44,13 @@ export default function TransferChallanModal({ transfer, onClose }) {
     to: toBranchName,
     product: productName,
     qty: quantity,
-    date: transferDate.toISOString().split('T')[0]
+    date: transferDate.toISOString().split('T')[0],
   });
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs overflow-y-auto">
       {/* Modal Container */}
       <div className="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
-        
         {/* Top Control Header */}
         <div className="p-4 sm:px-6 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between gap-4 shrink-0">
           <div className="flex items-center gap-3">
@@ -51,7 +64,9 @@ export default function TransferChallanModal({ transfer, onClose }) {
                   {transferNo}
                 </span>
               </h2>
-              <p className="text-xs text-slate-400">Official inter-branch transfer document & delivery proof</p>
+              <p className="text-xs text-slate-400">
+                Official inter-branch transfer document & delivery proof
+              </p>
             </div>
           </div>
 
@@ -61,7 +76,9 @@ export default function TransferChallanModal({ transfer, onClose }) {
                 type="button"
                 onClick={() => setPrintSize('a4')}
                 className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
-                  printSize === 'a4' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'
+                  printSize === 'a4'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-slate-400 hover:text-white'
                 }`}
               >
                 A4 Slip
@@ -70,7 +87,9 @@ export default function TransferChallanModal({ transfer, onClose }) {
                 type="button"
                 onClick={() => setPrintSize('thermal')}
                 className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
-                  printSize === 'thermal' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'
+                  printSize === 'thermal'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-slate-400 hover:text-white'
                 }`}
               >
                 POS 80mm
@@ -95,7 +114,6 @@ export default function TransferChallanModal({ transfer, onClose }) {
 
         {/* Printable View Area */}
         <div className="p-4 sm:p-6 overflow-y-auto bg-slate-950 flex justify-center">
-          
           {/* A4 Format Document */}
           {printSize === 'a4' ? (
             <div
@@ -107,7 +125,9 @@ export default function TransferChallanModal({ transfer, onClose }) {
                 {/* 1. Header Branding & Document Title */}
                 <div className="flex justify-between items-start border-b-2 border-slate-900 pb-4 mb-6">
                   <div className="space-y-1">
-                    <h1 className="text-2xl font-black text-slate-900 tracking-tight">{companyInfo.name}</h1>
+                    <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+                      {companyInfo.name}
+                    </h1>
                     {companyInfo.slogan && (
                       <p className="text-xs font-medium text-slate-600">{companyInfo.slogan}</p>
                     )}
@@ -122,7 +142,16 @@ export default function TransferChallanModal({ transfer, onClose }) {
                     </span>
                     <p className="text-lg font-mono font-bold text-slate-900 pt-1">{transferNo}</p>
                     <p className="text-xs text-slate-500">
-                      Date: <span className="font-semibold text-slate-800">{transferDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                      Date:{' '}
+                      <span className="font-semibold text-slate-800">
+                        {transferDate.toLocaleDateString('en-GB', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
                     </p>
                   </div>
                 </div>
@@ -140,7 +169,10 @@ export default function TransferChallanModal({ transfer, onClose }) {
                       {transfer.fromBranchId?.address || 'Main Gadget Warehouse / Outlet'}
                     </div>
                     <div className="text-xs text-slate-500">
-                      Dispatched By: <span className="font-semibold text-slate-800">{transfer.sender || transfer.createdBy || 'Authorized Staff'}</span>
+                      Dispatched By:{' '}
+                      <span className="font-semibold text-slate-800">
+                        {transfer.sender || transfer.createdBy || 'Authorized Staff'}
+                      </span>
                     </div>
                   </div>
 
@@ -202,7 +234,10 @@ export default function TransferChallanModal({ transfer, onClose }) {
                     </tbody>
                     <tfoot>
                       <tr className="bg-slate-100 font-bold text-slate-900 border-t-2 border-slate-300">
-                        <td colSpan={5} className="p-3 text-right uppercase text-[11px] tracking-wider">
+                        <td
+                          colSpan={5}
+                          className="p-3 text-right uppercase text-[11px] tracking-wider"
+                        >
                           Total Dispatched Quantity:
                         </td>
                         <td className="p-3 text-right font-mono font-black text-sm text-blue-700">
@@ -216,7 +251,8 @@ export default function TransferChallanModal({ transfer, onClose }) {
                 {/* 4. Transfer Reason / Notes */}
                 {transfer.notes && (
                   <div className="p-3 rounded-lg border border-dashed border-slate-300 bg-slate-50 mb-6 text-xs text-slate-700">
-                    <span className="font-bold text-slate-900">Transfer Remarks / Notes:</span> {transfer.notes}
+                    <span className="font-bold text-slate-900">Transfer Remarks / Notes:</span>{' '}
+                    {transfer.notes}
                   </div>
                 )}
 
@@ -224,9 +260,12 @@ export default function TransferChallanModal({ transfer, onClose }) {
                 <div className="flex items-center gap-3 p-3.5 rounded-xl bg-blue-50/70 border border-blue-100 text-xs text-blue-900 mb-6">
                   <ShieldCheck className="w-5 h-5 text-blue-600 shrink-0" />
                   <div>
-                    <p className="font-bold">Inter-Branch Dispatch Verification & Handover Policy</p>
+                    <p className="font-bold">
+                      Inter-Branch Dispatch Verification & Handover Policy
+                    </p>
                     <p className="text-[11px] text-blue-700 mt-0.5">
-                      The receiving branch must verify device physical condition and match IMEI/Serial numbers before acknowledging delivery on the ERP portal.
+                      The receiving branch must verify device physical condition and match
+                      IMEI/Serial numbers before acknowledging delivery on the ERP portal.
                     </p>
                   </div>
                 </div>
@@ -256,7 +295,9 @@ export default function TransferChallanModal({ transfer, onClose }) {
                 </div>
 
                 <div className="flex justify-between items-center text-[10px] text-slate-400 pt-4 mt-4 border-t border-slate-100">
-                  <p>Omni-Manage ERP Stock Solutions • Generated on {new Date().toLocaleString()}</p>
+                  <p>
+                    Omni-Manage ERP Stock Solutions • Generated on {new Date().toLocaleString()}
+                  </p>
                   <p>Page 1 of 1</p>
                 </div>
               </div>
@@ -280,9 +321,15 @@ export default function TransferChallanModal({ transfer, onClose }) {
               </div>
 
               <div className="py-2 border-b border-dashed border-slate-400 text-[10px] space-y-1">
-                <p><strong>FROM:</strong> {fromBranchName}</p>
-                <p><strong>TO:</strong> {toBranchName}</p>
-                <p><strong>STATUS:</strong> {transfer.status || 'PENDING'}</p>
+                <p>
+                  <strong>FROM:</strong> {fromBranchName}
+                </p>
+                <p>
+                  <strong>TO:</strong> {toBranchName}
+                </p>
+                <p>
+                  <strong>STATUS:</strong> {transfer.status || 'PENDING'}
+                </p>
               </div>
 
               <div className="py-2 border-b border-dashed border-slate-400">
@@ -304,12 +351,8 @@ export default function TransferChallanModal({ transfer, onClose }) {
               )}
 
               <div className="pt-6 pb-2 text-center text-[10px] space-y-4">
-                <div className="border-t border-slate-400 pt-1">
-                  Dispatched By
-                </div>
-                <div className="border-t border-slate-400 pt-1">
-                  Received By (Signature)
-                </div>
+                <div className="border-t border-slate-400 pt-1">Dispatched By</div>
+                <div className="border-t border-slate-400 pt-1">Received By (Signature)</div>
                 <p className="text-[9px] text-slate-400">Omni-Manage ERP</p>
               </div>
             </div>

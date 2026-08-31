@@ -49,7 +49,9 @@ export default function EmployeeList() {
   const { data, isLoading } = useQuery({
     queryKey: ['employees', search, activeBranchId],
     queryFn: async () => {
-      const res = await api.get('/employees', { params: { search, limit: 100, branchId: activeBranchId } });
+      const res = await api.get('/employees', {
+        params: { search, limit: 100, branchId: activeBranchId },
+      });
       return res.data;
     },
   });
@@ -398,7 +400,10 @@ function EmployeeModal({ editEmp, onClose }) {
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
-                Employee ID * <span className="text-[10px] text-blue-500 normal-case font-normal">(auto-generated)</span>
+                Employee ID *{' '}
+                <span className="text-[10px] text-blue-500 normal-case font-normal">
+                  (auto-generated)
+                </span>
               </label>
               <div className="flex gap-1">
                 <input

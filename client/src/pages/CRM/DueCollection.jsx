@@ -107,33 +107,45 @@ export default function DueCollection() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4 shadow-sm relative overflow-hidden">
-          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Outstanding Due</div>
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            Total Outstanding Due
+          </div>
           <div className="text-2xl font-black text-rose-600 dark:text-rose-400 mt-1 font-mono">
             ৳{totalDue.toLocaleString()}
           </div>
-          <div className="text-[11px] text-slate-400 mt-1 font-medium">Pending from customer invoices</div>
+          <div className="text-[11px] text-slate-400 mt-1 font-medium">
+            Pending from customer invoices
+          </div>
           <div className="absolute right-3 top-3 w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-950/50 flex items-center justify-center text-rose-600">
             <AlertCircle className="w-4 h-4" />
           </div>
         </div>
 
         <div className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4 shadow-sm relative overflow-hidden">
-          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Customers with Due</div>
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            Customers with Due
+          </div>
           <div className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1 font-mono">
             {uniqueCustomersWithDue}
           </div>
-          <div className="text-[11px] text-slate-400 mt-1 font-medium">Distinct customer profiles</div>
+          <div className="text-[11px] text-slate-400 mt-1 font-medium">
+            Distinct customer profiles
+          </div>
           <div className="absolute right-3 top-3 w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/50 flex items-center justify-center text-amber-600">
             <Users className="w-4 h-4" />
           </div>
         </div>
 
         <div className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4 shadow-sm relative overflow-hidden">
-          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Invoices with Due</div>
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            Invoices with Due
+          </div>
           <div className="text-2xl font-black text-blue-600 dark:text-blue-400 mt-1 font-mono">
             {salesWithDue.length}
           </div>
-          <div className="text-[11px] text-slate-400 mt-1 font-medium">Unpaid / partially paid invoices</div>
+          <div className="text-[11px] text-slate-400 mt-1 font-medium">
+            Unpaid / partially paid invoices
+          </div>
           <div className="absolute right-3 top-3 w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-blue-600">
             <Receipt className="w-4 h-4" />
           </div>
@@ -198,7 +210,10 @@ export default function DueCollection() {
                     (s.paymentBreakdown?.bank || 0);
 
                   const due = Number(s.paymentBreakdown?.dueAmount || 0);
-                  const custId = typeof s.customerId === 'object' ? (s.customerId?._id || s.customerId?.id) : s.customerId;
+                  const custId =
+                    typeof s.customerId === 'object'
+                      ? s.customerId?._id || s.customerId?.id
+                      : s.customerId;
 
                   return (
                     <tr
@@ -319,11 +334,20 @@ function CollectDueModal({ sale, onClose, onSuccess }) {
     const activeList = activeAccountsRes.filter((a) => a.isActive !== false);
     const names = activeList.map((a) => `${(a.name || '').toLowerCase()} ${a.code || ''}`);
 
-    const hasCash = names.some((n) => n.includes('cash') || n.includes('petty') || n.includes('1000'));
-    const hasBkash = names.some((n) => n.includes('bkash') || n.includes('b-kash') || n.includes('1011'));
+    const hasCash = names.some(
+      (n) => n.includes('cash') || n.includes('petty') || n.includes('1000')
+    );
+    const hasBkash = names.some(
+      (n) => n.includes('bkash') || n.includes('b-kash') || n.includes('1011')
+    );
     const hasRocket = names.some((n) => n.includes('rocket') || n.includes('1013'));
-    const hasNagad = names.some((n) => n.includes('nagad') || n.includes('nogod') || n.includes('1012'));
-    const hasBank = names.some((n) => n.includes('bank') || n.includes('card') || n.includes('checking') || n.includes('1010'));
+    const hasNagad = names.some(
+      (n) => n.includes('nagad') || n.includes('nogod') || n.includes('1012')
+    );
+    const hasBank = names.some(
+      (n) =>
+        n.includes('bank') || n.includes('card') || n.includes('checking') || n.includes('1010')
+    );
 
     const filtered = ALL_METHODS.filter(({ key }) => {
       if (key === 'cash') return hasCash;
@@ -355,7 +379,10 @@ function CollectDueModal({ sale, onClose, onSuccess }) {
         collectAmount = dueAmount;
       }
 
-      const custId = typeof sale.customerId === 'object' ? (sale.customerId?._id || sale.customerId?.id) : sale.customerId;
+      const custId =
+        typeof sale.customerId === 'object'
+          ? sale.customerId?._id || sale.customerId?.id
+          : sale.customerId;
 
       // If customer is linked, collect via customer due endpoint which updates both customer ledger & invoices!
       if (custId) {
@@ -383,7 +410,8 @@ function CollectDueModal({ sale, onClose, onSuccess }) {
       queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
       onSuccess();
     },
-    onError: (e) => toast.error(e.response?.data?.message || e.message || 'Failed to collect payment'),
+    onError: (e) =>
+      toast.error(e.response?.data?.message || e.message || 'Failed to collect payment'),
   });
 
   const handleSubmit = (e) => {
@@ -426,7 +454,9 @@ function CollectDueModal({ sale, onClose, onSuccess }) {
               </span>
             </div>
             <div className="flex justify-between items-center border-t border-slate-200 dark:border-slate-800 pt-2">
-              <span className="text-rose-600 font-bold uppercase text-[10px]">Total Due Pending:</span>
+              <span className="text-rose-600 font-bold uppercase text-[10px]">
+                Total Due Pending:
+              </span>
               <span className="text-base font-black font-mono text-rose-600">
                 ৳{dueAmount.toLocaleString()}
               </span>
@@ -476,7 +506,12 @@ function CollectDueModal({ sale, onClose, onSuccess }) {
           </div>
 
           <DialogFooter className="border-t border-slate-100 dark:border-slate-800 pt-3">
-            <Button type="button" variant="outline" onClick={onClose} className="rounded-xl text-xs">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="rounded-xl text-xs"
+            >
               Cancel
             </Button>
             <Button

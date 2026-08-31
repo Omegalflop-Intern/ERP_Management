@@ -85,7 +85,7 @@ export default function Investors() {
     queryFn: async () => {
       const res = await api.get('/accounting/accounts', { params: { limit: 200 } });
       return res.data?.data || [];
-    }
+    },
   });
 
   const isMethodActive = (method) => {
@@ -97,7 +97,7 @@ export default function Investors() {
     else if (methodStr.includes('nagad')) code = '1012';
     else if (methodStr.includes('rocket')) code = '1013';
 
-    const acct = accountsData.find(a => a.code === code);
+    const acct = accountsData.find((a) => a.code === code);
     return acct ? Boolean(acct.isActive ?? acct.is_active) : true;
   };
 
@@ -329,7 +329,9 @@ export default function Investors() {
                       <div className="flex items-center justify-between">
                         <span>Partner Since:</span>
                         <strong className="font-mono text-gray-700 dark:text-gray-300">
-                          {investor.createdAt ? new Date(investor.createdAt).toLocaleDateString() : 'N/A'}
+                          {investor.createdAt
+                            ? new Date(investor.createdAt).toLocaleDateString()
+                            : 'N/A'}
                         </strong>
                       </div>
                       <div className="flex items-center justify-between">
@@ -872,8 +874,8 @@ export default function Investors() {
                     { value: 'bank', label: 'Bank Transfer' },
                     { value: 'bkash', label: 'bKash' },
                     { value: 'nagad', label: 'Nagad' },
-                    { value: 'rocket', label: 'Rocket' }
-                  ].map(m => (
+                    { value: 'rocket', label: 'Rocket' },
+                  ].map((m) => (
                     <option key={m.value} value={m.value} disabled={!isMethodActive(m.value)}>
                       {m.label} {!isMethodActive(m.value) ? '(Deactivated)' : ''}
                     </option>

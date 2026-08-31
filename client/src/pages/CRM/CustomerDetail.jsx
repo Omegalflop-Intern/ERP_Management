@@ -55,11 +55,20 @@ export default function CustomerDetail() {
     const activeList = activeAccountsRes.filter((a) => a.isActive !== false);
     const names = activeList.map((a) => `${(a.name || '').toLowerCase()} ${a.code || ''}`);
 
-    const hasCash = names.some((n) => n.includes('cash') || n.includes('petty') || n.includes('1000'));
-    const hasBkash = names.some((n) => n.includes('bkash') || n.includes('b-kash') || n.includes('1011'));
+    const hasCash = names.some(
+      (n) => n.includes('cash') || n.includes('petty') || n.includes('1000')
+    );
+    const hasBkash = names.some(
+      (n) => n.includes('bkash') || n.includes('b-kash') || n.includes('1011')
+    );
     const hasRocket = names.some((n) => n.includes('rocket') || n.includes('1013'));
-    const hasNagad = names.some((n) => n.includes('nagad') || n.includes('nogod') || n.includes('1012'));
-    const hasBank = names.some((n) => n.includes('bank') || n.includes('card') || n.includes('checking') || n.includes('1010'));
+    const hasNagad = names.some(
+      (n) => n.includes('nagad') || n.includes('nogod') || n.includes('1012')
+    );
+    const hasBank = names.some(
+      (n) =>
+        n.includes('bank') || n.includes('card') || n.includes('checking') || n.includes('1010')
+    );
 
     const filtered = ALL_METHODS.filter(({ key }) => {
       if (key === 'cash') return hasCash;

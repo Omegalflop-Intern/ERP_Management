@@ -51,8 +51,8 @@ export default function ChartTooltip({ active, payload, label, unit = '', isCurr
                   ? isMoney
                     ? `৳${val.toLocaleString()}`
                     : isQty
-                    ? `${val.toLocaleString()} ${unit || 'pcs'}`
-                    : val.toLocaleString()
+                      ? `${val.toLocaleString()} ${unit || 'pcs'}`
+                      : val.toLocaleString()
                   : val}
               </span>
             </div>

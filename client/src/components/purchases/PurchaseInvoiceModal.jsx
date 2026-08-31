@@ -1,5 +1,16 @@
 import React, { useRef, useState } from 'react';
-import { Printer, X, ShoppingBag, Truck, Building2, User, Phone, CheckCircle, CreditCard, DollarSign } from 'lucide-react';
+import {
+  Printer,
+  X,
+  ShoppingBag,
+  Truck,
+  Building2,
+  User,
+  Phone,
+  CheckCircle,
+  CreditCard,
+  DollarSign,
+} from 'lucide-react';
 import { useCompanyInfo, QRCodeCanvas } from '../sales/Invoice';
 
 export default function PurchaseInvoiceModal({ po, onClose }) {
@@ -9,9 +20,17 @@ export default function PurchaseInvoiceModal({ po, onClose }) {
 
   if (!po) return null;
 
-  const poNumber = po.poNumber || `PO-${String(po.id || po._id || '').slice(-6).toUpperCase()}`;
-  const orderDate = po.createdAt ? new Date(po.createdAt) : (po.orderDate ? new Date(po.orderDate) : new Date());
-  
+  const poNumber =
+    po.poNumber ||
+    `PO-${String(po.id || po._id || '')
+      .slice(-6)
+      .toUpperCase()}`;
+  const orderDate = po.createdAt
+    ? new Date(po.createdAt)
+    : po.orderDate
+      ? new Date(po.orderDate)
+      : new Date();
+
   const supplierName = po.supplierId?.name || po.supplierName || 'Walk-in / Direct Vendor';
   const supplierCompany = po.supplierId?.company || po.supplierCompany || '';
   const supplierPhone = po.supplierId?.phone || po.supplierPhone || 'N/A';
@@ -21,7 +40,7 @@ export default function PurchaseInvoiceModal({ po, onClose }) {
   const subTotal = Number(po.subTotal || po.totalCost || 0);
   const discount = Number(po.discount || 0);
   const tax = Number(po.tax || 0);
-  const netTotal = Number(po.netTotal || (subTotal - discount + tax) || 0);
+  const netTotal = Number(po.netTotal || subTotal - discount + tax || 0);
   const paidAmount = Number(po.paidAmount || 0);
   const dueAmount = Number(po.dueAmount || Math.max(0, netTotal - paidAmount));
   const paymentMethod = po.paymentMethod || 'CASH';
@@ -34,7 +53,6 @@ export default function PurchaseInvoiceModal({ po, onClose }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs overflow-y-auto">
       {/* Modal Container */}
       <div className="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
-        
         {/* Control Top Header */}
         <div className="p-4 sm:px-6 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between gap-4 shrink-0">
           <div className="flex items-center gap-3">
@@ -48,7 +66,9 @@ export default function PurchaseInvoiceModal({ po, onClose }) {
                   {poNumber}
                 </span>
               </h2>
-              <p className="text-xs text-slate-400">Supplier procurement bill, landed costs & payment receipt</p>
+              <p className="text-xs text-slate-400">
+                Supplier procurement bill, landed costs & payment receipt
+              </p>
             </div>
           </div>
 
@@ -58,7 +78,9 @@ export default function PurchaseInvoiceModal({ po, onClose }) {
                 type="button"
                 onClick={() => setPrintSize('a4')}
                 className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
-                  printSize === 'a4' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'
+                  printSize === 'a4'
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'text-slate-400 hover:text-white'
                 }`}
               >
                 A4 Bill
@@ -67,7 +89,9 @@ export default function PurchaseInvoiceModal({ po, onClose }) {
                 type="button"
                 onClick={() => setPrintSize('thermal')}
                 className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
-                  printSize === 'thermal' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'
+                  printSize === 'thermal'
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'text-slate-400 hover:text-white'
                 }`}
               >
                 POS 80mm
@@ -92,7 +116,6 @@ export default function PurchaseInvoiceModal({ po, onClose }) {
 
         {/* Printable View Area */}
         <div className="p-4 sm:p-6 overflow-y-auto bg-slate-950 flex justify-center">
-          
           {/* A4 Format Document */}
           {printSize === 'a4' ? (
             <div
@@ -104,7 +127,9 @@ export default function PurchaseInvoiceModal({ po, onClose }) {
                 {/* 1. Header Branding & Document Title */}
                 <div className="flex justify-between items-start border-b-2 border-slate-900 pb-4 mb-6">
                   <div className="space-y-1">
-                    <h1 className="text-2xl font-black text-slate-900 tracking-tight">{companyInfo.name}</h1>
+                    <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+                      {companyInfo.name}
+                    </h1>
                     {companyInfo.slogan && (
                       <p className="text-xs font-medium text-slate-600">{companyInfo.slogan}</p>
                     )}
@@ -160,7 +185,10 @@ export default function PurchaseInvoiceModal({ po, onClose }) {
                       {po.branchId?.name || po.branchName || companyInfo.name}
                     </div>
                     <div className="text-xs text-slate-600">
-                      Procured By: <span className="font-semibold text-slate-800">{po.createdBy || 'Admin'}</span>
+                      Procured By:{' '}
+                      <span className="font-semibold text-slate-800">
+                        {po.createdBy || 'Admin'}
+                      </span>
                     </div>
                     <div className="text-xs text-slate-500">
                       PO Status:{' '}
@@ -194,21 +222,27 @@ export default function PurchaseInvoiceModal({ po, onClose }) {
                         </tr>
                       ) : (
                         lineItems.map((item, idx) => {
-                          const pName = item.productId?.name || item.name || item.productName || 'Gadget Item';
+                          const pName =
+                            item.productId?.name || item.name || item.productName || 'Gadget Item';
                           const uCost = Number(item.unitCost || item.costPrice || 0);
                           const qty = Number(item.qty || item.quantity || 1);
-                          const lineTot = Number(item.totalPrice || item.totalCost || (uCost * qty));
+                          const lineTot = Number(item.totalPrice || item.totalCost || uCost * qty);
                           const imeis = item.imeis || item.imeiList || [];
 
                           return (
                             <tr key={idx} className="hover:bg-slate-50">
-                              <td className="p-3 text-center font-bold text-slate-400">{idx + 1}</td>
+                              <td className="p-3 text-center font-bold text-slate-400">
+                                {idx + 1}
+                              </td>
                               <td className="p-3">
                                 <div className="font-bold text-slate-900">{pName}</div>
                                 {imeis.length > 0 && (
                                   <div className="flex flex-wrap gap-1 mt-1">
                                     {imeis.map((im, i) => (
-                                      <span key={i} className="text-[10px] font-mono font-semibold bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded border border-purple-200">
+                                      <span
+                                        key={i}
+                                        className="text-[10px] font-mono font-semibold bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded border border-purple-200"
+                                      >
                                         {im}
                                       </span>
                                     ))}
@@ -222,10 +256,14 @@ export default function PurchaseInvoiceModal({ po, onClose }) {
                                 {qty}
                               </td>
                               <td className="p-3 text-right font-mono text-slate-600">
-                                {Number(item.sellingPrice || 0) > 0 ? `৳${Number(item.sellingPrice).toLocaleString()}` : '-'}
+                                {Number(item.sellingPrice || 0) > 0
+                                  ? `৳${Number(item.sellingPrice).toLocaleString()}`
+                                  : '-'}
                               </td>
                               <td className="p-3 text-right font-mono font-bold text-indigo-700">
-                                {Number(item.wholesalePrice || 0) > 0 ? `৳${Number(item.wholesalePrice).toLocaleString()}` : '-'}
+                                {Number(item.wholesalePrice || 0) > 0
+                                  ? `৳${Number(item.wholesalePrice).toLocaleString()}`
+                                  : '-'}
                               </td>
                               <td className="p-3 text-right font-mono font-black text-slate-900">
                                 ৳{lineTot.toLocaleString()}
@@ -251,9 +289,13 @@ export default function PurchaseInvoiceModal({ po, onClose }) {
                     </div>
                     <div className="flex justify-between py-1 border-b border-slate-200">
                       <span className="text-slate-500">Settlement Status:</span>
-                      <span className={`font-bold px-2 py-0.5 rounded text-[10px] ${
-                        dueAmount <= 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
-                      }`}>
+                      <span
+                        className={`font-bold px-2 py-0.5 rounded text-[10px] ${
+                          dueAmount <= 0
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : 'bg-amber-100 text-amber-800'
+                        }`}
+                      >
                         {dueAmount <= 0 ? 'PAID IN FULL' : 'PARTIAL / DUE OUTSTANDING'}
                       </span>
                     </div>
@@ -268,7 +310,9 @@ export default function PurchaseInvoiceModal({ po, onClose }) {
                   <div className="space-y-1.5 text-xs text-right">
                     <div className="flex justify-between p-1.5 px-3 rounded-lg bg-slate-50 border border-slate-100">
                       <span className="text-slate-500">Gross Purchases Subtotal:</span>
-                      <span className="font-mono font-bold text-slate-800">৳{subTotal.toLocaleString()}</span>
+                      <span className="font-mono font-bold text-slate-800">
+                        ৳{subTotal.toLocaleString()}
+                      </span>
                     </div>
                     {discount > 0 && (
                       <div className="flex justify-between p-1.5 px-3 rounded-lg bg-red-50/60 text-red-700 border border-red-100">
@@ -279,12 +323,16 @@ export default function PurchaseInvoiceModal({ po, onClose }) {
                     {tax > 0 && (
                       <div className="flex justify-between p-1.5 px-3 rounded-lg bg-slate-50 border border-slate-100">
                         <span className="text-slate-500">VAT / Tax:</span>
-                        <span className="font-mono font-bold text-slate-800">+৳{tax.toLocaleString()}</span>
+                        <span className="font-mono font-bold text-slate-800">
+                          +৳{tax.toLocaleString()}
+                        </span>
                       </div>
                     )}
                     <div className="flex justify-between p-2 px-3 rounded-xl bg-slate-900 text-white font-bold text-sm">
                       <span>Net Order Total:</span>
-                      <span className="font-mono text-emerald-400">৳{netTotal.toLocaleString()}</span>
+                      <span className="font-mono text-emerald-400">
+                        ৳{netTotal.toLocaleString()}
+                      </span>
                     </div>
                     <div className="flex justify-between p-1.5 px-3 rounded-lg bg-emerald-50 text-emerald-800 font-semibold">
                       <span>Amount Paid:</span>
@@ -313,12 +361,17 @@ export default function PurchaseInvoiceModal({ po, onClose }) {
                     <div className="border-t border-slate-400 w-2/3 mx-auto pt-1.5 font-bold text-slate-800">
                       Store Manager / Authorized Signature
                     </div>
-                    <p className="text-[10px] text-slate-400">Received, Verified & Added to Stock</p>
+                    <p className="text-[10px] text-slate-400">
+                      Received, Verified & Added to Stock
+                    </p>
                   </div>
                 </div>
 
                 <div className="flex justify-between items-center text-[10px] text-slate-400 pt-4 mt-4 border-t border-slate-100">
-                  <p>Omni-Manage ERP Purchasing Solutions • Generated on {new Date().toLocaleString()}</p>
+                  <p>
+                    Omni-Manage ERP Purchasing Solutions • Generated on{' '}
+                    {new Date().toLocaleString()}
+                  </p>
                   <p>Page 1 of 1</p>
                 </div>
               </div>
@@ -342,8 +395,12 @@ export default function PurchaseInvoiceModal({ po, onClose }) {
               </div>
 
               <div className="py-2 border-b border-dashed border-slate-400 text-[10px] space-y-0.5">
-                <p><strong>SUPPLIER:</strong> {supplierName}</p>
-                <p><strong>PHONE:</strong> {supplierPhone}</p>
+                <p>
+                  <strong>SUPPLIER:</strong> {supplierName}
+                </p>
+                <p>
+                  <strong>PHONE:</strong> {supplierPhone}
+                </p>
               </div>
 
               <div className="py-2 border-b border-dashed border-slate-400 space-y-1">
@@ -356,8 +413,12 @@ export default function PurchaseInvoiceModal({ po, onClose }) {
                   <div key={idx} className="text-[10px]">
                     <div className="font-bold">{it.productId?.name || it.name || 'Item'}</div>
                     <div className="flex justify-between text-slate-600">
-                      <span>{it.qty || 1} × ৳{Number(it.unitCost || 0).toLocaleString()}</span>
-                      <span className="font-bold text-slate-900">৳{Number(it.totalPrice || (it.qty * it.unitCost) || 0).toLocaleString()}</span>
+                      <span>
+                        {it.qty || 1} × ৳{Number(it.unitCost || 0).toLocaleString()}
+                      </span>
+                      <span className="font-bold text-slate-900">
+                        ৳{Number(it.totalPrice || it.qty * it.unitCost || 0).toLocaleString()}
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -381,9 +442,7 @@ export default function PurchaseInvoiceModal({ po, onClose }) {
               </div>
 
               <div className="pt-6 pb-2 text-center text-[10px] space-y-4">
-                <div className="border-t border-slate-400 pt-1">
-                  Receiver Signature
-                </div>
+                <div className="border-t border-slate-400 pt-1">Receiver Signature</div>
                 <p className="text-[9px] text-slate-400">Omni-Manage ERP Purchasing</p>
               </div>
             </div>

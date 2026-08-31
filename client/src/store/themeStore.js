@@ -42,6 +42,9 @@ export const useTheme = () => {
     setDesignMode,
     toggleDesignMode,
     isDark: theme === 'dark',
-    styled: designMode === 'liquidglass' || designMode === 'glassmorphismpro' || designMode === 'neumorphism',
+    styled:
+      designMode === 'liquidglass' ||
+      designMode === 'glassmorphismpro' ||
+      designMode === 'neumorphism',
   };
 };

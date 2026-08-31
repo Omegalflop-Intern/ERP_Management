@@ -156,6 +156,30 @@ export default function RegisterShop() {
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    if (!form.shopName.trim()) {
+      toast.error('Shop name is required');
+      return;
+    }
+    if (!form.ownerName.trim()) {
+      toast.error('Owner name is required');
+      return;
+    }
+    if (!form.email.trim()) {
+      toast.error('Email address is required');
+      return;
+    }
+    if (!form.phone.trim()) {
+      toast.error('Phone number is required');
+      return;
+    }
+    if (!form.password) {
+      toast.error('Password is required');
+      return;
+    }
+    if (form.password.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
     if (form.password !== form.confirmPassword) {
       toast.error('Passwords do not match');
       return;
@@ -164,42 +188,66 @@ export default function RegisterShop() {
     setLoading(true);
     try {
       // Create Tenant Account
-      const res = await api.post('/tenants', {
-        shopName: form.shopName,
-        ownerName: form.ownerName,
-        username: form.username,
-        email: form.email,
-        phone: form.phone,
-        nidNumber: form.nidNumber,
-        tradeLicenseNumber: form.tradeLicenseNumber,
+      const payload = {
+        shopName: form.shopName.trim(),
+        ownerName: form.ownerName.trim(),
+        email: form.email.trim().toLowerCase(),
+        phone: form.phone.trim(),
         password: form.password,
-        selectedPlan,
-        billingCycle,
-      });
+        plan: (selectedPlan || 'starter').toUpperCase(),
+        selectedPlan: (selectedPlan || 'starter').toUpperCase(),
+        billingCycle: billingCycle || 'yearly',
+      };
+
+      if (form.username && form.username.trim()) {
+        payload.username = form.username
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9_]/g, '');
+      }
+      if (form.nidNumber && form.nidNumber.trim()) {
+        payload.nidNumber = form.nidNumber.trim();
+      }
+      if (form.tradeLicenseNumber && form.tradeLicenseNumber.trim()) {
+        payload.tradeLicenseNumber = form.tradeLicenseNumber.trim();
+      }
+
+      const res = await api.post('/tenants', payload);
 
       const tenantData = res.data?.data;
-      const tenantId = tenantData?._id;
+      const tenantId = tenantData?.id || tenantData?._id;
 
       // Upload Shop Logo if provided
       if (tenantId && files.logo) {
-        const logoFd = new FormData();
-        logoFd.append('logo', files.logo);
-        await api.post(`/tenants/${tenantId}/logo-upload`, logoFd, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
+        try {
+          const logoFd = new FormData();
+          logoFd.append('logo', files.logo);
+          await api.post(`/tenants/${tenantId}/logo-upload`, logoFd, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          });
+        } catch (uploadErr) {
+          console.warn('Logo upload skipped or failed:', uploadErr);
+        }
       }
 
       // Upload KYC Documents if files provided
-      if (tenantId && (files.nidFront || files.tradeLicenseFile)) {
-        const fd = new FormData();
-        if (files.nidFront) fd.append('nidFront', files.nidFront);
-        if (files.nidBack) fd.append('nidBack', files.nidBack);
-        if (files.tradeLicenseFile) fd.append('tradeLicenseFile', files.tradeLicenseFile);
-        if (files.tinCertificate) fd.append('tinCertificate', files.tinCertificate);
+      if (
+        tenantId &&
+        (files.nidFront || files.tradeLicenseFile || files.nidBack || files.tinCertificate)
+      ) {
+        try {
+          const fd = new FormData();
+          if (files.nidFront) fd.append('nidFront', files.nidFront);
+          if (files.nidBack) fd.append('nidBack', files.nidBack);
+          if (files.tradeLicenseFile) fd.append('tradeLicenseFile', files.tradeLicenseFile);
+          if (files.tinCertificate) fd.append('tinCertificate', files.tinCertificate);
 
-        await api.post(`/tenants/${tenantId}/kyc-upload`, fd, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
+          await api.post(`/tenants/${tenantId}/kyc-upload`, fd, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          });
+        } catch (kycErr) {
+          console.warn('KYC files upload skipped or failed:', kycErr);
+        }
       }
 
       const shopRefCode = `SHOP-${Math.floor(100000 + Math.random() * 900000)}`;
@@ -207,17 +255,25 @@ export default function RegisterShop() {
       setRegisteredTenantData({
         ...tenantData,
         shopRefCode,
-        selectedPlan,
+        selectedPlan: (selectedPlan || 'starter').toUpperCase(),
         billingCycle,
-        email: form.email,
-        phone: form.phone,
-        shopName: form.shopName,
+        email: form.email.trim(),
+        phone: form.phone.trim(),
+        shopName: form.shopName.trim(),
       });
 
       setShowActivationModal(true);
       toast.success('Shop registration submitted successfully!');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Registration failed');
+      const errors = err.response?.data?.errors;
+      if (Array.isArray(errors) && errors.length > 0) {
+        const detailedMsg = errors
+          .map((e) => `${e.field ? `${e.field}: ` : ''}${e.message}`)
+          .join(', ');
+        toast.error(detailedMsg || 'Validation failed');
+      } else {
+        toast.error(err.response?.data?.message || 'Registration failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -253,7 +309,9 @@ export default function RegisterShop() {
           <div className="w-14 h-14 rounded-2xl bg-white/90 dark:bg-blue-500/20 border border-slate-200/80 dark:border-blue-400/30 flex items-center justify-center mx-auto text-[#2563EB] dark:text-blue-400 shadow-xl shadow-blue-500/10">
             <Smartphone className="w-7 h-7" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">Register Your Shop</h1>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+            Register Your Shop
+          </h1>
           <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
             Onboard your shop to the OmniManage Enterprise SaaS Platform
           </p>
@@ -261,10 +319,18 @@ export default function RegisterShop() {
 
         {/* Step Indicator */}
         <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-4 text-xs font-bold text-slate-400 dark:text-slate-500">
-          <span className={step >= 1 ? 'text-[#2563EB] dark:text-blue-400 font-extrabold' : ''}>1. Select Plan</span>
-          <span className={step >= 2 ? 'text-[#2563EB] dark:text-blue-400 font-extrabold' : ''}>2. Shop Info</span>
-          <span className={step >= 3 ? 'text-[#2563EB] dark:text-blue-400 font-extrabold' : ''}>3. Owner & NID</span>
-          <span className={step >= 4 ? 'text-[#2563EB] dark:text-blue-400 font-extrabold' : ''}>4. Password</span>
+          <span className={step >= 1 ? 'text-[#2563EB] dark:text-blue-400 font-extrabold' : ''}>
+            1. Select Plan
+          </span>
+          <span className={step >= 2 ? 'text-[#2563EB] dark:text-blue-400 font-extrabold' : ''}>
+            2. Shop Info
+          </span>
+          <span className={step >= 3 ? 'text-[#2563EB] dark:text-blue-400 font-extrabold' : ''}>
+            3. Owner & NID
+          </span>
+          <span className={step >= 4 ? 'text-[#2563EB] dark:text-blue-400 font-extrabold' : ''}>
+            4. Password
+          </span>
         </div>
 
         {/* Form Wizard */}
@@ -273,7 +339,9 @@ export default function RegisterShop() {
           {step === 1 && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Choose Subscription Plan *</span>
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                  Choose Subscription Plan *
+                </span>
                 <div className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-1 rounded-xl">
                   <button
                     type="button"
@@ -328,10 +396,14 @@ export default function RegisterShop() {
                       )}
 
                       <div className="flex items-center justify-between mb-1">
-                        <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">{plan.name}</h3>
+                        <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                          {plan.name}
+                        </h3>
                         <div
                           className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                            isSel ? 'bg-[#2563EB] border-[#2563EB]' : 'border-slate-300 dark:border-slate-600'
+                            isSel
+                              ? 'bg-[#2563EB] border-[#2563EB]'
+                              : 'border-slate-300 dark:border-slate-600'
                           }`}
                         >
                           {isSel && <Check className="w-2.5 h-2.5 text-white" />}
@@ -463,7 +535,9 @@ export default function RegisterShop() {
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-xs uppercase tracking-wider mb-1 text-slate-700 dark:text-slate-300">Email Address *</label>
+                  <label className="block font-bold text-xs uppercase tracking-wider mb-1 text-slate-700 dark:text-slate-300">
+                    Email Address *
+                  </label>
                   <input
                     type="email"
                     required
@@ -474,7 +548,9 @@ export default function RegisterShop() {
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-xs uppercase tracking-wider mb-1 text-slate-700 dark:text-slate-300">Username *</label>
+                  <label className="block font-bold text-xs uppercase tracking-wider mb-1 text-slate-700 dark:text-slate-300">
+                    Username *
+                  </label>
                   <input
                     type="text"
                     required
@@ -490,7 +566,9 @@ export default function RegisterShop() {
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-xs uppercase tracking-wider mb-1 text-slate-700 dark:text-slate-300">Phone Number *</label>
+                  <label className="block font-bold text-xs uppercase tracking-wider mb-1 text-slate-700 dark:text-slate-300">
+                    Phone Number *
+                  </label>
                   <input
                     type="text"
                     required
@@ -516,7 +594,9 @@ export default function RegisterShop() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                 <div>
-                  <label className="block font-bold text-xs uppercase tracking-wider mb-1 text-slate-700 dark:text-slate-300">NID Front Image</label>
+                  <label className="block font-bold text-xs uppercase tracking-wider mb-1 text-slate-700 dark:text-slate-300">
+                    NID Front Image
+                  </label>
                   <input
                     type="file"
                     accept="image/*,.pdf"
@@ -525,7 +605,9 @@ export default function RegisterShop() {
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-xs uppercase tracking-wider mb-1 text-slate-700 dark:text-slate-300">NID Back Image</label>
+                  <label className="block font-bold text-xs uppercase tracking-wider mb-1 text-slate-700 dark:text-slate-300">
+                    NID Back Image
+                  </label>
                   <input
                     type="file"
                     accept="image/*,.pdf"
@@ -603,7 +685,9 @@ export default function RegisterShop() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                 <div>
-                  <label className="block font-bold text-xs uppercase tracking-wider mb-1 text-slate-700 dark:text-slate-300">Password *</label>
+                  <label className="block font-bold text-xs uppercase tracking-wider mb-1 text-slate-700 dark:text-slate-300">
+                    Password *
+                  </label>
                   <PasswordInput
                     required
                     value={form.password}
@@ -667,8 +751,12 @@ export default function RegisterShop() {
                   <CheckCircle2 className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-lg text-slate-900 dark:text-white">Registration Submitted!</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Contact Support to Activate Your Shop</p>
+                  <h3 className="font-extrabold text-lg text-slate-900 dark:text-white">
+                    Registration Submitted!
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Contact Support to Activate Your Shop
+                  </p>
                 </div>
               </div>
             </div>
@@ -677,16 +765,22 @@ export default function RegisterShop() {
             <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 space-y-2">
               <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-500 dark:text-slate-400 font-semibold">Shop Name:</span>
-                <span className="font-bold text-slate-900 dark:text-white">{registeredTenantData.shopName}</span>
+                <span className="font-bold text-slate-900 dark:text-white">
+                  {registeredTenantData.shopName}
+                </span>
               </div>
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-500 dark:text-slate-400 font-semibold">Reference ID:</span>
+                <span className="text-slate-500 dark:text-slate-400 font-semibold">
+                  Reference ID:
+                </span>
                 <span className="font-mono font-bold text-yellow-600 dark:text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded border border-yellow-400/30">
                   {registeredTenantData.shopRefCode}
                 </span>
               </div>
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-500 dark:text-slate-400 font-semibold">Selected Plan:</span>
+                <span className="text-slate-500 dark:text-slate-400 font-semibold">
+                  Selected Plan:
+                </span>
                 <span className="font-bold text-emerald-600 dark:text-emerald-400 uppercase">
                   {registeredTenantData.selectedPlan} ({registeredTenantData.billingCycle})
                 </span>
@@ -744,7 +838,9 @@ export default function RegisterShop() {
               <div className="pt-2 border-t border-slate-200 dark:border-slate-800 grid grid-cols-2 gap-2 text-[11px]">
                 {platformSettings.bkashNumber && (
                   <div className="p-2 rounded-lg bg-pink-500/10 border border-pink-500/20 text-center">
-                    <span className="text-pink-600 dark:text-pink-400 font-bold block">bKash Merchant</span>
+                    <span className="text-pink-600 dark:text-pink-400 font-bold block">
+                      bKash Merchant
+                    </span>
                     <span className="font-mono text-slate-900 dark:text-white font-bold">
                       {platformSettings.bkashNumber}
                     </span>
@@ -752,7 +848,9 @@ export default function RegisterShop() {
                 )}
                 {platformSettings.nagadNumber && (
                   <div className="p-2 rounded-lg bg-orange-500/10 border border-orange-500/20 text-center">
-                    <span className="text-orange-600 dark:text-orange-400 font-bold block">Nagad Merchant</span>
+                    <span className="text-orange-600 dark:text-orange-400 font-bold block">
+                      Nagad Merchant
+                    </span>
                     <span className="font-mono text-slate-900 dark:text-white font-bold">
                       {platformSettings.nagadNumber}
                     </span>

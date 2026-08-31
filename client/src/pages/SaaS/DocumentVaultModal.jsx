@@ -57,7 +57,10 @@ export function DocumentVaultModal({ tenant, onClose, onVerifyKyc }) {
       if (typeof onVerifyKyc === 'function') {
         await onVerifyKyc(tenantId, 'REJECTED', reason);
       } else {
-        await api.patch(`/tenants/${tenantId}/verify-kyc`, { status: 'REJECTED', rejectionReason: reason });
+        await api.patch(`/tenants/${tenantId}/verify-kyc`, {
+          status: 'REJECTED',
+          rejectionReason: reason,
+        });
         toast.success('KYC rejected');
         qc.invalidateQueries({ queryKey: ['sa-shops'] });
         qc.invalidateQueries({ queryKey: ['sa-tenants'] });

@@ -30,7 +30,9 @@ export default function InventoryAnalytics() {
   } = useQuery({
     queryKey: ['inventory-analytics', period, activeBranchId],
     queryFn: async () => {
-      const { data } = await api.get('/reports/inventory', { params: { period, branchId: activeBranchId } });
+      const { data } = await api.get('/reports/inventory', {
+        params: { period, branchId: activeBranchId },
+      });
       return data?.data;
     },
   });
@@ -109,14 +111,32 @@ export default function InventoryAnalytics() {
           <h3 className="text-lg font-semibold mb-4">Stock Movement</h3>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={analytics?.stockMovement || [{ date: 'Today', inbound: stats.totalProducts || 0, outbound: 0 }]}>
+              <LineChart
+                data={
+                  analytics?.stockMovement || [
+                    { date: 'Today', inbound: stats.totalProducts || 0, outbound: 0 },
+                  ]
+                }
+              >
                 <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                 <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip content={<ChartTooltip unit="pcs" />} />
                 <Legend />
-                <Line type="monotone" name="Inbound (Restock)" dataKey="inbound" stroke="#10b981" strokeWidth={2} />
-                <Line type="monotone" name="Outbound (Sold)" dataKey="outbound" stroke="#ef4444" strokeWidth={2} />
+                <Line
+                  type="monotone"
+                  name="Inbound (Restock)"
+                  dataKey="inbound"
+                  stroke="#10b981"
+                  strokeWidth={2}
+                />
+                <Line
+                  type="monotone"
+                  name="Outbound (Sold)"
+                  dataKey="outbound"
+                  stroke="#ef4444"
+                  strokeWidth={2}
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -155,11 +175,13 @@ export default function InventoryAnalytics() {
                       <td className="py-3 px-4 text-right font-bold">{qty}</td>
                       <td className="py-3 px-4 text-right">{min}</td>
                       <td className="py-3 px-4">
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                          qty === 0
-                            ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400'
-                            : 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400'
-                        }`}>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                            qty === 0
+                              ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400'
+                              : 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400'
+                          }`}
+                        >
                           {qty === 0 ? 'Out of Stock' : 'Low Stock'}
                         </span>
                       </td>

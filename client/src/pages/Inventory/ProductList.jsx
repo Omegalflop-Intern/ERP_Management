@@ -76,7 +76,9 @@ export default function ProductList() {
   const { data, isLoading } = useQuery({
     queryKey: ['products', search, category, activeBranchId],
     queryFn: async () => {
-      const res = await api.get('/products', { params: { search, category, limit: 50, branchId: activeBranchId } });
+      const res = await api.get('/products', {
+        params: { search, category, limit: 50, branchId: activeBranchId },
+      });
       return res.data;
     },
   });

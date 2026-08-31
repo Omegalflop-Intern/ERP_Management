@@ -56,16 +56,25 @@ export default function EditSaleModal({ saleId, onClose, onSuccess }) {
       setDiscount(saleData.discount ? String(saleData.discount) : '');
       setTax(saleData.tax ? String(saleData.tax) : '');
       setPaymentCash(saleData.paymentBreakdown?.cash ? String(saleData.paymentBreakdown.cash) : '');
-      setPaymentBkash(saleData.paymentBreakdown?.bkash ? String(saleData.paymentBreakdown.bkash) : '');
-      setPaymentRocket(saleData.paymentBreakdown?.rocket ? String(saleData.paymentBreakdown.rocket) : '');
-      setPaymentNagad(saleData.paymentBreakdown?.nagad ? String(saleData.paymentBreakdown.nagad) : '');
+      setPaymentBkash(
+        saleData.paymentBreakdown?.bkash ? String(saleData.paymentBreakdown.bkash) : ''
+      );
+      setPaymentRocket(
+        saleData.paymentBreakdown?.rocket ? String(saleData.paymentBreakdown.rocket) : ''
+      );
+      setPaymentNagad(
+        saleData.paymentBreakdown?.nagad ? String(saleData.paymentBreakdown.nagad) : ''
+      );
       setPaymentBank(saleData.paymentBreakdown?.bank ? String(saleData.paymentBreakdown.bank) : '');
     }
   }, [saleData]);
 
   const numDiscount = Number(discount) || 0;
   const numTax = Number(tax) || 0;
-  const subTotal = items.reduce((sum, item) => sum + (Number(item.unitPrice) || 0) * (Number(item.qty) || 1), 0);
+  const subTotal = items.reduce(
+    (sum, item) => sum + (Number(item.unitPrice) || 0) * (Number(item.qty) || 1),
+    0
+  );
   const netTotal = Math.max(0, subTotal - numDiscount + numTax);
   const totalPaid =
     (Number(paymentCash) || 0) +

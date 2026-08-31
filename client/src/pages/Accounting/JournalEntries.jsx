@@ -93,7 +93,7 @@ export default function JournalEntries() {
 
   const postedCount = entries.filter((e) => e.status === 'POSTED').length;
   const draftCount = entries.filter((e) => e.status === 'DRAFT').length;
-  
+
   // Calculate Net Journal Value (Active Inflow - Returns/Refunds)
   const netJournalValue = entries.reduce((acc, e) => {
     if (e.status !== 'POSTED') return acc;
@@ -412,7 +412,9 @@ function JournalEntryForm({ onClose, onSuccess }) {
       const enrichedLines = lines
         .filter((l) => l.accountId)
         .map((l) => {
-          const acct = accounts.find((a) => String(a._id) === String(l.accountId) || String(a.id) === String(l.accountId));
+          const acct = accounts.find(
+            (a) => String(a._id) === String(l.accountId) || String(a.id) === String(l.accountId)
+          );
           return {
             accountId: Number(l.accountId),
             code: acct?.code || '',
@@ -421,7 +423,12 @@ function JournalEntryForm({ onClose, onSuccess }) {
             credit: Number(l.credit) || 0,
           };
         });
-      return api.post('/accounting/journal-entries', { date, description, reference, lines: enrichedLines });
+      return api.post('/accounting/journal-entries', {
+        date,
+        description,
+        reference,
+        lines: enrichedLines,
+      });
     },
     onSuccess: () => {
       toast.success('Journal entry created successfully');
@@ -693,9 +700,7 @@ function JournalEntryDetail({ entry, onClose }) {
                 {entry.lines?.map((l, idx) => (
                   <tr key={idx}>
                     <td className="px-4 py-2.5">
-                      <span className="font-mono text-xs text-slate-500">
-                        {l.code || ''}
-                      </span>
+                      <span className="font-mono text-xs text-slate-500">{l.code || ''}</span>
                       <span className="ml-2 font-medium text-slate-900 dark:text-slate-100">
                         {l.accountName || l.account?.name || ''}
                       </span>

@@ -115,12 +115,22 @@ export default function PurchaseOrders() {
   const products = productsData || [];
 
   const summary = useMemo(() => {
-    const grossPurchases = orders.reduce((acc, o) => acc + (Number(o.netTotal || o.subTotal) || 0), 0);
+    const grossPurchases = orders.reduce(
+      (acc, o) => acc + (Number(o.netTotal || o.subTotal) || 0),
+      0
+    );
     const totalReturned = orders.reduce((acc, o) => acc + (Number(o.returnedAmount) || 0), 0);
     const netPurchases = Math.max(0, grossPurchases - totalReturned);
     const totalPaid = orders.reduce((acc, o) => acc + (Number(o.paidAmount) || 0), 0);
     const totalDue = orders.reduce((acc, o) => acc + (Number(o.dueAmount) || 0), 0);
-    return { grossPurchases, netPurchases, totalPurchases: netPurchases, totalPaid, totalDue, totalReturned };
+    return {
+      grossPurchases,
+      netPurchases,
+      totalPurchases: netPurchases,
+      totalPaid,
+      totalDue,
+      totalReturned,
+    };
   }, [orders]);
 
   return (
@@ -152,7 +162,8 @@ export default function PurchaseOrders() {
           <div className="text-[11px] mt-1 font-medium truncate">
             {summary.totalReturned > 0 ? (
               <span className="text-amber-600 dark:text-amber-400 font-semibold">
-                ৳{summary.grossPurchases.toLocaleString()} gross • -৳{summary.totalReturned.toLocaleString()} ret.
+                ৳{summary.grossPurchases.toLocaleString()} gross • -৳
+                {summary.totalReturned.toLocaleString()} ret.
               </span>
             ) : (
               <span className="text-slate-400">{orders.length} orders recorded</span>
@@ -325,11 +336,14 @@ export default function PurchaseOrders() {
                       </td>
                       <td className="px-4 py-3.5">
                         <div className="font-medium text-slate-700 dark:text-slate-300">
-                          {po.lineItems?.length || 0} product(s) ({activeUnits} in-stock{returnedUnits > 0 ? `, ${returnedUnits} ret.` : ''})
+                          {po.lineItems?.length || 0} product(s) ({activeUnits} in-stock
+                          {returnedUnits > 0 ? `, ${returnedUnits} ret.` : ''})
                         </div>
                         {po.lineItems?.length > 0 && (
                           <div className="text-[10px] text-slate-400 truncate max-w-[220px]">
-                            {po.lineItems.map((it) => `${it.description || it.name} (${it.qty} bought)`).join(', ')}
+                            {po.lineItems
+                              .map((it) => `${it.description || it.name} (${it.qty} bought)`)
+                              .join(', ')}
                           </div>
                         )}
                       </td>
@@ -339,7 +353,8 @@ export default function PurchaseOrders() {
                         </div>
                         {returnedAmount > 0 && (
                           <div className="text-[10px] text-amber-600 font-semibold">
-                            was ৳{Number(po.netTotal || 0).toLocaleString()} (-৳{returnedAmount.toLocaleString()} ret.)
+                            was ৳{Number(po.netTotal || 0).toLocaleString()} (-৳
+                            {returnedAmount.toLocaleString()} ret.)
                           </div>
                         )}
                       </td>
@@ -490,12 +505,7 @@ export default function PurchaseOrders() {
       )}
 
       {/* ── 4. PRINT PURCHASE ORDER INVOICE MODAL ── */}
-      {printPO && (
-        <PurchaseInvoiceModal
-          po={printPO}
-          onClose={() => setPrintPO(null)}
-        />
-      )}
+      {printPO && <PurchaseInvoiceModal po={printPO} onClose={() => setPrintPO(null)} />}
     </div>
   );
 }
@@ -634,16 +644,49 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
       const bal = Number(a.balance || 0);
 
       if (code === '1000' || n.includes('cash')) {
-        accounts.push({ key: 'cash', code: a.code || '1000', name: a.name || 'Cash', balance: bal, icon: '💵' });
+        accounts.push({
+          key: 'cash',
+          code: a.code || '1000',
+          name: a.name || 'Cash',
+          balance: bal,
+          icon: '💵',
+        });
       } else if (code === '1011' || n.includes('bkash')) {
-        accounts.push({ key: 'bkash', code: a.code || '1011', name: a.name || 'bKash', balance: bal, icon: '📱' });
+        accounts.push({
+          key: 'bkash',
+          code: a.code || '1011',
+          name: a.name || 'bKash',
+          balance: bal,
+          icon: '📱',
+        });
       } else if (code === '1012' || n.includes('nagad')) {
-        accounts.push({ key: 'nagad', code: a.code || '1012', name: a.name || 'Nagad', balance: bal, icon: '📱' });
+        accounts.push({
+          key: 'nagad',
+          code: a.code || '1012',
+          name: a.name || 'Nagad',
+          balance: bal,
+          icon: '📱',
+        });
       } else if (code === '1013' || n.includes('rocket')) {
-        accounts.push({ key: 'rocket', code: a.code || '1013', name: a.name || 'Rocket', balance: bal, icon: '🚀' });
+        accounts.push({
+          key: 'rocket',
+          code: a.code || '1013',
+          name: a.name || 'Rocket',
+          balance: bal,
+          icon: '🚀',
+        });
       } else if (code === '1010' || n.includes('bank')) {
-        accounts.push({ key: 'bank', code: a.code || '1010', name: a.name || 'Bank Account', balance: bal, icon: '🏦' });
-      } else if (a.type === 'ASSET' && (n.includes('wallet') || n.includes('mfs') || n.includes('card'))) {
+        accounts.push({
+          key: 'bank',
+          code: a.code || '1010',
+          name: a.name || 'Bank Account',
+          balance: bal,
+          icon: '🏦',
+        });
+      } else if (
+        a.type === 'ASSET' &&
+        (n.includes('wallet') || n.includes('mfs') || n.includes('card'))
+      ) {
         const k = (a.code || a.name).toLowerCase().replace(/[^a-z0-9]/g, '_');
         accounts.push({ key: k, code: a.code, name: a.name, balance: bal, icon: '💳' });
       }
@@ -660,7 +703,19 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
 
   const availableBrands = useMemo(() => {
     const existing = products.map((p) => p.brand).filter(Boolean);
-    const defaults = ['Apple', 'Samsung', 'Xiaomi', 'Realme', 'OnePlus', 'Anker', 'Havit', 'Baseus', 'Joyroom', 'Remax', 'Generic'];
+    const defaults = [
+      'Apple',
+      'Samsung',
+      'Xiaomi',
+      'Realme',
+      'OnePlus',
+      'Anker',
+      'Havit',
+      'Baseus',
+      'Joyroom',
+      'Remax',
+      'Generic',
+    ];
     return Array.from(new Set([...defaults, ...existing]));
   }, [products]);
 
@@ -813,24 +868,27 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
         });
         finalSupplierId = supRes.data?.data?._id || supRes.data?.data?.id;
       } catch (err) {
-        if (err.response?.status === 409 || err.response?.data?.message?.includes('already exists')) {
+        if (
+          err.response?.status === 409 ||
+          err.response?.data?.message?.includes('already exists')
+        ) {
           try {
             const existingListRes = await api.get('/suppliers', {
               params: { search: newSupplierPhone || newSupplierName, limit: 10 },
             });
-            const list =
-              existingListRes.data?.data?.suppliers ||
-              existingListRes.data?.data ||
-              [];
-            const matched = list.find(
-              (s) =>
-                (newSupplierPhone && s.phone === newSupplierPhone) ||
-                (s.name && s.name.toLowerCase() === newSupplierName.toLowerCase())
-            ) || list[0];
+            const list = existingListRes.data?.data?.suppliers || existingListRes.data?.data || [];
+            const matched =
+              list.find(
+                (s) =>
+                  (newSupplierPhone && s.phone === newSupplierPhone) ||
+                  (s.name && s.name.toLowerCase() === newSupplierName.toLowerCase())
+              ) || list[0];
             if (matched) {
               finalSupplierId = matched._id || matched.id;
             } else {
-              toast.error('Supplier with this phone already exists. Please select it from the dropdown.');
+              toast.error(
+                'Supplier with this phone already exists. Please select it from the dropdown.'
+              );
               return;
             }
           } catch {
@@ -1358,7 +1416,10 @@ function CreatePurchaseModal({ suppliers, products, onClose, onSuccess }) {
                 ) : (
                   <div className="space-y-2.5">
                     {liquidAccounts.map((acc) => (
-                      <div key={acc.key} className="flex items-center justify-between gap-2 p-1.5 rounded-xl bg-white/60 dark:bg-[#1e293b]/60 border border-slate-200/80 dark:border-slate-800">
+                      <div
+                        key={acc.key}
+                        className="flex items-center justify-between gap-2 p-1.5 rounded-xl bg-white/60 dark:bg-[#1e293b]/60 border border-slate-200/80 dark:border-slate-800"
+                      >
                         <div className="flex items-center gap-1.5 min-w-0 flex-1">
                           <span className="text-sm shrink-0">{acc.icon}</span>
                           <div className="truncate">
@@ -1858,7 +1919,9 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
               const rawCost = Number(item.unitCost || 0);
               const effectiveCost = Math.round(rawCost * discountRatio);
               const selectedQty = Number(returnSelection[key]?.qty || 0);
-              const refundTotal = Number(returnSelection[key]?.refundAmount || (selectedQty * effectiveCost));
+              const refundTotal = Number(
+                returnSelection[key]?.refundAmount || selectedQty * effectiveCost
+              );
 
               return (
                 <div
@@ -2082,7 +2145,9 @@ function ViewPurchaseModal({ po, onClose, onPrint, onReturn }) {
                   <th className="px-3.5 py-2.5 text-center">Qty</th>
                   <th className="px-3.5 py-2.5 text-right">Cost (৳)</th>
                   <th className="px-3.5 py-2.5 text-right">Retail (৳)</th>
-                  <th className="px-3.5 py-2.5 text-right text-indigo-600 dark:text-indigo-400">Wholesale (৳)</th>
+                  <th className="px-3.5 py-2.5 text-right text-indigo-600 dark:text-indigo-400">
+                    Wholesale (৳)
+                  </th>
                   <th className="px-3.5 py-2.5 text-right">Total</th>
                 </tr>
               </thead>
@@ -2104,10 +2169,14 @@ function ViewPurchaseModal({ po, onClose, onPrint, onReturn }) {
                       ৳{Number(item.unitCost || 0).toLocaleString()}
                     </td>
                     <td className="px-3.5 py-2.5 text-right font-mono text-emerald-600 dark:text-emerald-400 font-semibold">
-                      {Number(item.sellingPrice || 0) > 0 ? `৳${Number(item.sellingPrice).toLocaleString()}` : '-'}
+                      {Number(item.sellingPrice || 0) > 0
+                        ? `৳${Number(item.sellingPrice).toLocaleString()}`
+                        : '-'}
                     </td>
                     <td className="px-3.5 py-2.5 text-right font-mono text-indigo-600 dark:text-indigo-400 font-semibold">
-                      {Number(item.wholesalePrice || 0) > 0 ? `৳${Number(item.wholesalePrice).toLocaleString()}` : '-'}
+                      {Number(item.wholesalePrice || 0) > 0
+                        ? `৳${Number(item.wholesalePrice).toLocaleString()}`
+                        : '-'}
                     </td>
                     <td className="px-3.5 py-2.5 text-right font-mono font-bold text-slate-900 dark:text-slate-100">
                       ৳{Number(item.totalCost || item.qty * item.unitCost || 0).toLocaleString()}
@@ -2332,11 +2401,21 @@ function PayPODueModal({ po, onClose, onSuccess }) {
               onChange={(e) => setPaymentMethod(e.target.value)}
               className="w-full px-3 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100"
             >
-              <option value="CASH" disabled={!activeMethods.hasCash}>Cash Payment {!activeMethods.hasCash && ' (Disabled)'}</option>
-              <option value="BANK" disabled={!activeMethods.hasBank}>Bank Transfer / Card {!activeMethods.hasBank && ' (Disabled)'}</option>
-              <option value="BKASH" disabled={!activeMethods.hasBkash}>bKash Merchant {!activeMethods.hasBkash && ' (Disabled)'}</option>
-              <option value="NAGAD" disabled={!activeMethods.hasNagad}>Nagad {!activeMethods.hasNagad && ' (Disabled)'}</option>
-              <option value="ROCKET" disabled={!activeMethods.hasRocket}>Rocket {!activeMethods.hasRocket && ' (Disabled)'}</option>
+              <option value="CASH" disabled={!activeMethods.hasCash}>
+                Cash Payment {!activeMethods.hasCash && ' (Disabled)'}
+              </option>
+              <option value="BANK" disabled={!activeMethods.hasBank}>
+                Bank Transfer / Card {!activeMethods.hasBank && ' (Disabled)'}
+              </option>
+              <option value="BKASH" disabled={!activeMethods.hasBkash}>
+                bKash Merchant {!activeMethods.hasBkash && ' (Disabled)'}
+              </option>
+              <option value="NAGAD" disabled={!activeMethods.hasNagad}>
+                Nagad {!activeMethods.hasNagad && ' (Disabled)'}
+              </option>
+              <option value="ROCKET" disabled={!activeMethods.hasRocket}>
+                Rocket {!activeMethods.hasRocket && ' (Disabled)'}
+              </option>
             </select>
           </div>
 

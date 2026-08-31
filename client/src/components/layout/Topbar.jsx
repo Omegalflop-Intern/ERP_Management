@@ -168,7 +168,8 @@ function BranchSwitcher({ user }) {
         <div className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-[9999] overflow-hidden animate-in fade-in zoom-in-95 duration-150">
           <div className="px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700/80 flex items-center justify-between">
             <div className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-              <Building2 className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Switch Active Outlet
+              <Building2 className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Switch Active
+              Outlet
             </div>
             <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
               {branches.length} / {maxBranches === 999 ? '∞' : maxBranches} ({tenantPlan})
@@ -190,7 +191,9 @@ function BranchSwitcher({ user }) {
             >
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0"></span>
-                <span className="font-semibold text-slate-900 dark:text-slate-100">All Outlets (Main Shop)</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">
+                  All Outlets (Main Shop)
+                </span>
               </div>
               {activeBranchId === 'all' && (
                 <Check className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
@@ -216,7 +219,9 @@ function BranchSwitcher({ user }) {
                 >
                   <div className="flex items-center gap-2 truncate">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-                    <span className="truncate font-semibold text-slate-900 dark:text-slate-100">{b.name}</span>
+                    <span className="truncate font-semibold text-slate-900 dark:text-slate-100">
+                      {b.name}
+                    </span>
                   </div>
                   {isSelected && (
                     <Check className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
@@ -639,7 +644,10 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
   const { user, logout, setUser } = useAuth();
   const { theme, toggleTheme, designMode, toggleDesignMode } = useTheme();
   const { activeBranchId, branches = [], maxBranches = 2, setActiveBranchId } = useBranchStore();
-  const styled = designMode === 'liquidglass' || designMode === 'glassmorphismpro' || designMode === 'neumorphism';
+  const styled =
+    designMode === 'liquidglass' ||
+    designMode === 'glassmorphismpro' ||
+    designMode === 'neumorphism';
   const location = useLocation();
   const navigate = useNavigate();
   const qc = useQueryClient();

@@ -114,21 +114,30 @@ export default function CustomerAnalytics() {
             {(analytics?.topCustomers || analytics?.topSpenders || []).length === 0 ? (
               <div className="p-6 text-center text-slate-400">No customer records yet</div>
             ) : (
-              (analytics?.topCustomers || analytics?.topSpenders || []).slice(0, 5).map((cust, i) => (
-                <div key={cust.id || i} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                  <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-sm font-bold text-indigo-600">
-                    {i + 1}
+              (analytics?.topCustomers || analytics?.topSpenders || [])
+                .slice(0, 5)
+                .map((cust, i) => (
+                  <div
+                    key={cust.id || i}
+                    className="flex items-center gap-3 p-3 rounded-lg bg-muted/50"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-sm font-bold text-indigo-600">
+                      {i + 1}
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium">{cust.name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {cust.phone || 'Standard Customer'}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium text-emerald-600 dark:text-emerald-400">
+                        ৳{(cust.totalSpent || 0).toLocaleString()}
+                      </div>
+                      <div className="text-xs text-muted-foreground">VIP Member</div>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <div className="font-medium">{cust.name}</div>
-                    <div className="text-xs text-muted-foreground">{cust.phone || 'Standard Customer'}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-medium text-emerald-600 dark:text-emerald-400">৳{(cust.totalSpent || 0).toLocaleString()}</div>
-                    <div className="text-xs text-muted-foreground">VIP Member</div>
-                  </div>
-                </div>
-              ))
+                ))
             )}
           </div>
         </div>

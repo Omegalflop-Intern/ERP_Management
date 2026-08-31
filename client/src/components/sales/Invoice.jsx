@@ -537,7 +537,8 @@ export function InvoiceA4Full({ sale }) {
 
         <div className="flex justify-between items-center text-[10px] text-slate-500 pt-2 border-t border-slate-200">
           <div>
-            Printed on: {new Date().toLocaleString('en-BD')} | {companyInfo.invoiceFooter} • <span className="font-semibold text-slate-700">Powered by OmniManage ERP Suite</span>
+            Printed on: {new Date().toLocaleString('en-BD')} | {companyInfo.invoiceFooter} •{' '}
+            <span className="font-semibold text-slate-700">Powered by OmniManage ERP Suite</span>
           </div>
           <div className="flex items-center gap-2">
             <QRCodeCanvas value={qrData} size={54} />
@@ -596,10 +597,13 @@ export function InvoiceA4Half({ sale }) {
               </div>
             </div>
             {(sale.branch?.address || companyInfo.address) && (
-              <p className="text-[9px] text-slate-600">{sale.branch?.address || companyInfo.address}</p>
+              <p className="text-[9px] text-slate-600">
+                {sale.branch?.address || companyInfo.address}
+              </p>
             )}
             <p className="text-[9px] text-slate-500">
-              Phone: {sale.branch?.phone || companyInfo.phone} {companyInfo.binVat && `| ${companyInfo.binVat}`}
+              Phone: {sale.branch?.phone || companyInfo.phone}{' '}
+              {companyInfo.binVat && `| ${companyInfo.binVat}`}
             </p>
           </div>
           <div className="text-right">
@@ -770,7 +774,10 @@ export function InvoiceA4Half({ sale }) {
             </div>
           </div>
         </div>
-        <p className="text-center text-[8px] text-slate-500">{companyInfo.invoiceFooter} • <span className="font-semibold text-slate-700">Powered by OmniManage ERP Suite</span></p>
+        <p className="text-center text-[8px] text-slate-500">
+          {companyInfo.invoiceFooter} •{' '}
+          <span className="font-semibold text-slate-700">Powered by OmniManage ERP Suite</span>
+        </p>
       </div>
     </div>
   );

@@ -220,7 +220,13 @@ export default function WarrantyReport() {
               ) : (
                 units.map((u) => {
                   const expiry = u.warrantyExpiry ? new Date(u.warrantyExpiry) : null;
-                  const soldDate = u.soldAt ? new Date(u.soldAt) : u.saleDate ? new Date(u.saleDate) : u.createdAt ? new Date(u.createdAt) : null;
+                  const soldDate = u.soldAt
+                    ? new Date(u.soldAt)
+                    : u.saleDate
+                      ? new Date(u.saleDate)
+                      : u.createdAt
+                        ? new Date(u.createdAt)
+                        : null;
                   const now = new Date();
                   const isExpired = expiry && expiry < now;
                   const daysLeft =
@@ -232,7 +238,10 @@ export default function WarrantyReport() {
 
                   const pName = u.productName || u.productId?.name || 'Gadget / Product';
                   const pBrand = u.brandName || u.productId?.brand || 'Accessories / Peripherals';
-                  const isNonImei = !u.imeiOrSerial || u.imeiOrSerial === 'Non-IMEI Item' || u.imeiOrSerial === 'N/A';
+                  const isNonImei =
+                    !u.imeiOrSerial ||
+                    u.imeiOrSerial === 'Non-IMEI Item' ||
+                    u.imeiOrSerial === 'N/A';
                   const invNum = u.invoiceNumber || u.soldInvoiceNumber || '—';
 
                   return (
@@ -241,9 +250,7 @@ export default function WarrantyReport() {
                       className="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors"
                     >
                       <td className="px-4 py-3">
-                        <div className="font-bold text-gray-900 dark:text-gray-100">
-                          {pName}
-                        </div>
+                        <div className="font-bold text-gray-900 dark:text-gray-100">{pName}</div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">
                           {pBrand} {u.ram && `• ${u.ram}/${u.storage}`}
                         </div>
@@ -266,11 +273,13 @@ export default function WarrantyReport() {
                             {u.customerName || 'In-Store Unit'}
                           </span>
                         </div>
-                        {u.customerPhone && u.customerPhone !== 'N/A' && u.customerPhone !== '—' && (
-                          <div className="text-xs text-gray-500 dark:text-gray-400 pl-5">
-                            {u.customerPhone}
-                          </div>
-                        )}
+                        {u.customerPhone &&
+                          u.customerPhone !== 'N/A' &&
+                          u.customerPhone !== '—' && (
+                            <div className="text-xs text-gray-500 dark:text-gray-400 pl-5">
+                              {u.customerPhone}
+                            </div>
+                          )}
                       </td>
                       <td className="px-4 py-3 hidden lg:table-cell">
                         {invNum !== '—' ? (

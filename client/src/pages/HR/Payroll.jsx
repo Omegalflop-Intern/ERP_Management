@@ -288,9 +288,7 @@ export default function Payroll() {
         <PaySalaryModal
           payroll={payingRecord}
           isPending={payMutation.isPending}
-          onConfirm={(paymentMethod) =>
-            payMutation.mutate({ id: payingRecord._id, paymentMethod })
-          }
+          onConfirm={(paymentMethod) => payMutation.mutate({ id: payingRecord._id, paymentMethod })}
           onClose={() => setPayingRecord(null)}
         />
       )}
@@ -625,15 +623,23 @@ function PaySalaryModal({ payroll: r, isPending, onConfirm, onClose }) {
           <div className="p-3.5 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5 text-xs">
             <div className="flex justify-between">
               <span className="text-slate-500 font-medium">Employee Name:</span>
-              <span className="font-bold text-slate-900 dark:text-slate-100">{r.employee?.name || `Employee #${r.employeeId}`}</span>
+              <span className="font-bold text-slate-900 dark:text-slate-100">
+                {r.employee?.name || `Employee #${r.employeeId}`}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500 font-medium">Month / Period:</span>
-              <span className="font-bold text-slate-900 dark:text-slate-100">{MONTHS[r.month - 1]} {r.year}</span>
+              <span className="font-bold text-slate-900 dark:text-slate-100">
+                {MONTHS[r.month - 1]} {r.year}
+              </span>
             </div>
             <div className="flex justify-between items-center pt-2 border-t border-slate-200 dark:border-slate-800">
-              <span className="text-sm font-bold text-slate-900 dark:text-slate-100">Disbursement Net Amount:</span>
-              <span className="text-base font-black text-emerald-600 dark:text-emerald-400">৳{r.netSalary?.toLocaleString()}</span>
+              <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                Disbursement Net Amount:
+              </span>
+              <span className="text-base font-black text-emerald-600 dark:text-emerald-400">
+                ৳{r.netSalary?.toLocaleString()}
+              </span>
             </div>
           </div>
 
@@ -662,7 +668,11 @@ function PaySalaryModal({ payroll: r, isPending, onConfirm, onClose }) {
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-bold flex items-center justify-between">
                         <span className="truncate">{m.label}</span>
-                        {!isEnabled && <span className="text-[9px] text-red-500 font-normal shrink-0">Disabled</span>}
+                        {!isEnabled && (
+                          <span className="text-[9px] text-red-500 font-normal shrink-0">
+                            Disabled
+                          </span>
+                        )}
                       </div>
                       <div className="text-[10px] text-slate-400 font-mono">Acc: #{m.code}</div>
                     </div>
@@ -695,4 +705,3 @@ function PaySalaryModal({ payroll: r, isPending, onConfirm, onClose }) {
     </div>
   );
 }
-

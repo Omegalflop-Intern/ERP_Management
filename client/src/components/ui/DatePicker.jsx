@@ -43,9 +43,7 @@ export default function DatePicker({
       const openUp = spaceBelow < 330 && rect.top > 330;
       setOpenUpward(openUp);
 
-      const top = openUp
-        ? rect.top + window.scrollY - 330
-        : rect.bottom + window.scrollY;
+      const top = openUp ? rect.top + window.scrollY - 330 : rect.bottom + window.scrollY;
 
       const left = Math.max(12, Math.min(rect.left + window.scrollX, vw - popoverWidth - 12));
 
@@ -172,7 +170,13 @@ export default function DatePicker({
         } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${className}`}
       >
         <CalendarIcon className="w-4 h-4 text-blue-500 flex-shrink-0" />
-        <span className={formattedDisplay ? 'font-medium text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-slate-400'}>
+        <span
+          className={
+            formattedDisplay
+              ? 'font-medium text-slate-900 dark:text-slate-100'
+              : 'text-slate-400 dark:text-slate-400'
+          }
+        >
           {formattedDisplay || placeholder}
         </span>
         {value && (
@@ -186,101 +190,104 @@ export default function DatePicker({
         )}
       </button>
 
-      {isOpen && createPortal(
-        <div
-          data-datepicker-popover="true"
-          style={popoverStyle}
-          className={`p-3 sm:p-4 w-[280px] sm:w-72 max-w-[calc(100vw-1.5rem)] ${popoverCardClass}`}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Header Month / Year Navigation */}
-          <div className="flex items-center justify-between mb-3">
-            <button
-              type="button"
-              onClick={handlePrevMonth}
-              className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <div className="font-bold text-sm text-slate-900 dark:text-white">
-              {monthNames[month]} {year}
-            </div>
-            <button
-              type="button"
-              onClick={handleNextMonth}
-              className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Weekday Labels */}
-          <div className="grid grid-cols-7 gap-1 text-center mb-1.5">
-            {dayNames.map((d) => (
-              <div key={d} className="text-xs font-bold text-slate-400 dark:text-slate-400 py-1">
-                {d}
+      {isOpen &&
+        createPortal(
+          <div
+            data-datepicker-popover="true"
+            style={popoverStyle}
+            className={`p-3 sm:p-4 w-[280px] sm:w-72 max-w-[calc(100vw-1.5rem)] ${popoverCardClass}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header Month / Year Navigation */}
+            <div className="flex items-center justify-between mb-3">
+              <button
+                type="button"
+                onClick={handlePrevMonth}
+                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <div className="font-bold text-sm text-slate-900 dark:text-white">
+                {monthNames[month]} {year}
               </div>
-            ))}
-          </div>
+              <button
+                type="button"
+                onClick={handleNextMonth}
+                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
 
-          {/* Days Grid */}
-          <div className="grid grid-cols-7 gap-1 text-center text-sm">
-            {Array.from({ length: firstDayOfWeek }).map((_, i) => (
-              <div key={`empty-${i}`} className="py-1.5" />
-            ))}
-            {Array.from({ length: daysInMonth }).map((_, i) => {
-              const dayNum = i + 1;
-              const selectedMonth = String(month + 1).padStart(2, '0');
-              const selectedDay = String(dayNum).padStart(2, '0');
-              const dateStr = `${year}-${selectedMonth}-${selectedDay}`;
-              const isSelected = value === dateStr;
+            {/* Weekday Labels */}
+            <div className="grid grid-cols-7 gap-1 text-center mb-1.5">
+              {dayNames.map((d) => (
+                <div key={d} className="text-xs font-bold text-slate-400 dark:text-slate-400 py-1">
+                  {d}
+                </div>
+              ))}
+            </div>
 
-              const isToday = (() => {
-                const now = new Date();
+            {/* Days Grid */}
+            <div className="grid grid-cols-7 gap-1 text-center text-sm">
+              {Array.from({ length: firstDayOfWeek }).map((_, i) => (
+                <div key={`empty-${i}`} className="py-1.5" />
+              ))}
+              {Array.from({ length: daysInMonth }).map((_, i) => {
+                const dayNum = i + 1;
+                const selectedMonth = String(month + 1).padStart(2, '0');
+                const selectedDay = String(dayNum).padStart(2, '0');
+                const dateStr = `${year}-${selectedMonth}-${selectedDay}`;
+                const isSelected = value === dateStr;
+
+                const isToday = (() => {
+                  const now = new Date();
+                  return (
+                    now.getFullYear() === year &&
+                    now.getMonth() === month &&
+                    now.getDate() === dayNum
+                  );
+                })();
+
                 return (
-                  now.getFullYear() === year && now.getMonth() === month && now.getDate() === dayNum
+                  <button
+                    key={dayNum}
+                    type="button"
+                    onClick={() => handleSelectDay(dayNum)}
+                    className={`py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      isSelected
+                        ? 'bg-blue-600 text-white font-bold shadow-md shadow-blue-500/30'
+                        : isToday
+                          ? 'border border-blue-500 text-blue-600 dark:text-blue-400 font-bold bg-blue-50/50 dark:bg-blue-950/40'
+                          : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400'
+                    }`}
+                  >
+                    {dayNum}
+                  </button>
                 );
-              })();
+              })}
+            </div>
 
-              return (
-                <button
-                  key={dayNum}
-                  type="button"
-                  onClick={() => handleSelectDay(dayNum)}
-                  className={`py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                    isSelected
-                      ? 'bg-blue-600 text-white font-bold shadow-md shadow-blue-500/30'
-                      : isToday
-                        ? 'border border-blue-500 text-blue-600 dark:text-blue-400 font-bold bg-blue-50/50 dark:bg-blue-950/40'
-                        : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400'
-                  }`}
-                >
-                  {dayNum}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Footer Quick Actions */}
-          <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
-            <button
-              type="button"
-              onClick={handleClear}
-              className="text-slate-600 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 font-semibold px-2 py-1 rounded-md hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
-            >
-              Clear
-            </button>
-            <button
-              type="button"
-              onClick={handleSelectToday}
-              className="text-blue-600 dark:text-blue-400 hover:underline font-bold px-2 py-1 rounded-md hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors"
-            >
-              Today
-            </button>
-          </div>
-        </div>,
-        document.body
-      )}
+            {/* Footer Quick Actions */}
+            <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
+              <button
+                type="button"
+                onClick={handleClear}
+                className="text-slate-600 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 font-semibold px-2 py-1 rounded-md hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+              >
+                Clear
+              </button>
+              <button
+                type="button"
+                onClick={handleSelectToday}
+                className="text-blue-600 dark:text-blue-400 hover:underline font-bold px-2 py-1 rounded-md hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors"
+              >
+                Today
+              </button>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

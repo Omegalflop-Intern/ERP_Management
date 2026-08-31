@@ -40,13 +40,7 @@ const settingGroups = [
     key: 'social',
     label: 'Social & Online Links',
     icon: Share2,
-    keys: [
-      'websiteUrl',
-      'facebookUrl',
-      'instagramUrl',
-      'whatsappNumber',
-      'youtubeUrl',
-    ],
+    keys: ['websiteUrl', 'facebookUrl', 'instagramUrl', 'whatsappNumber', 'youtubeUrl'],
   },
   {
     key: 'finance',

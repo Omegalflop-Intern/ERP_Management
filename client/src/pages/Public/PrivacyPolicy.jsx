@@ -54,7 +54,9 @@ export default function PrivacyPolicy() {
               ⚡
             </div>
             <div>
-              <span className="font-black text-xl tracking-tight uppercase dark:text-white">OmniManage</span>
+              <span className="font-black text-xl tracking-tight uppercase dark:text-white">
+                OmniManage
+              </span>
               <span className="block text-[10px] font-bold tracking-widest text-slate-500 uppercase -mt-1">
                 Privacy Protection
               </span>
@@ -83,7 +85,8 @@ export default function PrivacyPolicy() {
             How We Protect Your Shop & Customer Data
           </h1>
           <p className="font-bold text-sm sm:text-base text-slate-900 max-w-2xl">
-            OmniManage is built on a foundation of strict multi-tenancy and data confidentiality. Learn how we handle information across our ERP platform.
+            OmniManage is built on a foundation of strict multi-tenancy and data confidentiality.
+            Learn how we handle information across our ERP platform.
           </p>
         </div>
       </section>
@@ -112,25 +115,44 @@ export default function PrivacyPolicy() {
       {/* ─── POLICY DETAILS ────────────────────────────────────────────────────── */}
       <main className="max-w-4xl mx-auto pb-16 px-4 sm:px-8 space-y-8">
         <section className="bg-white dark:bg-slate-900 p-6 sm:p-8 border-3 border-black rounded-2xl shadow-[5px_5px_0px_0px_#000] space-y-4">
-          <h2 className="text-xl sm:text-2xl font-black uppercase dark:text-white">1. Information We Collect</h2>
+          <h2 className="text-xl sm:text-2xl font-black uppercase dark:text-white">
+            1. Information We Collect
+          </h2>
           <ul className="list-disc pl-5 space-y-2 text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed">
-            <li><strong>Tenant Account Information:</strong> Shop business name, owner contact details, email address, and billing credentials.</li>
-            <li><strong>Store Operational Data:</strong> Product inventories, IMEI numbers, sales invoices, warranty records, and repair job orders entered by your staff.</li>
-            <li><strong>Audit & Security Logs:</strong> IP address, device user-agent, and timestamp logs for login attempts and security audits.</li>
+            <li>
+              <strong>Tenant Account Information:</strong> Shop business name, owner contact
+              details, email address, and billing credentials.
+            </li>
+            <li>
+              <strong>Store Operational Data:</strong> Product inventories, IMEI numbers, sales
+              invoices, warranty records, and repair job orders entered by your staff.
+            </li>
+            <li>
+              <strong>Audit & Security Logs:</strong> IP address, device user-agent, and timestamp
+              logs for login attempts and security audits.
+            </li>
           </ul>
         </section>
 
         <section className="bg-white dark:bg-slate-900 p-6 sm:p-8 border-3 border-black rounded-2xl shadow-[5px_5px_0px_0px_#000] space-y-4">
-          <h2 className="text-xl sm:text-2xl font-black uppercase dark:text-white">2. How Your Data Is Processed</h2>
+          <h2 className="text-xl sm:text-2xl font-black uppercase dark:text-white">
+            2. How Your Data Is Processed
+          </h2>
           <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed font-medium">
-            Your data is used solely for the operation of the OmniManage ERP suite—including generating sales receipts, sending customer SMS notifications (if enabled), running financial balance sheets, and alerting you on low stock levels.
+            Your data is used solely for the operation of the OmniManage ERP suite—including
+            generating sales receipts, sending customer SMS notifications (if enabled), running
+            financial balance sheets, and alerting you on low stock levels.
           </p>
         </section>
 
         <section className="bg-white dark:bg-slate-900 p-6 sm:p-8 border-3 border-black rounded-2xl shadow-[5px_5px_0px_0px_#000] space-y-4">
-          <h2 className="text-xl sm:text-2xl font-black uppercase dark:text-white">3. Data Retention & Deletion</h2>
+          <h2 className="text-xl sm:text-2xl font-black uppercase dark:text-white">
+            3. Data Retention & Deletion
+          </h2>
           <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed font-medium">
-            We retain your operational data as long as your tenant subscription remains active. Should you choose to close your account, all operational records are permanently purged after a 30-day graceful retrieval window.
+            We retain your operational data as long as your tenant subscription remains active.
+            Should you choose to close your account, all operational records are permanently purged
+            after a 30-day graceful retrieval window.
           </p>
         </section>
       </main>
@@ -140,10 +162,18 @@ export default function PrivacyPolicy() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold">
           <div>&copy; {new Date().getFullYear()} OmniManage ERP Inc. All rights reserved.</div>
           <div className="flex items-center gap-6">
-            <Link to="/about" className="hover:text-yellow-400 transition-colors">About</Link>
-            <Link to="/terms" className="hover:text-yellow-400 transition-colors">Terms of Service</Link>
-            <Link to="/refund-policy" className="hover:text-yellow-400 transition-colors">Refund Policy</Link>
-            <Link to="/contact" className="hover:text-yellow-400 transition-colors">Contact</Link>
+            <Link to="/about" className="hover:text-yellow-400 transition-colors">
+              About
+            </Link>
+            <Link to="/terms" className="hover:text-yellow-400 transition-colors">
+              Terms of Service
+            </Link>
+            <Link to="/refund-policy" className="hover:text-yellow-400 transition-colors">
+              Refund Policy
+            </Link>
+            <Link to="/contact" className="hover:text-yellow-400 transition-colors">
+              Contact
+            </Link>
           </div>
         </div>
       </footer>

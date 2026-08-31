@@ -389,11 +389,13 @@ export const createTenant = async (data, isSuperAdmin = false) => {
 
   let expiresAt = data.expiresAt ? new Date(data.expiresAt) : null;
   if (!expiresAt) {
-    const durationDays = data.durationDays ? Number(data.durationDays) : 30;
+    const isYearly = (data.billingCycle || '').toLowerCase() === 'yearly';
+    const durationDays = data.durationDays ? Number(data.durationDays) : (isYearly ? 365 : 30);
     expiresAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
   }
 
-  const planName = (data.plan || 'STARTER').toUpperCase();
+  const rawPlan = data.plan || data.selectedPlan || 'STARTER';
+  const planName = String(rawPlan).toUpperCase();
   let maxBranches = data.maxBranches !== undefined ? Number(data.maxBranches) : 2;
   let maxUsers = data.maxUsers !== undefined ? Number(data.maxUsers) : 5;
   if (data.maxBranches === undefined) {

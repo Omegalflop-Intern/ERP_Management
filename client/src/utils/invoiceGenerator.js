@@ -413,11 +413,7 @@ export const generateA4Invoice = async (sale, element = null) => {
 
   doc.setFontSize(6);
   doc.setTextColor(148, 163, 184);
-  doc.text(
-    `Printed on: ${new Date().toLocaleString('en-BD')} | Omni-Manage`,
-    14,
-    pageHeight - 6
-  );
+  doc.text(`Printed on: ${new Date().toLocaleString('en-BD')} | Omni-Manage`, 14, pageHeight - 6);
 
   doc.save(`${sale.invoiceNumber}-A4.pdf`);
 };

@@ -68,7 +68,9 @@ export default function AboutPage() {
               ⚡
             </div>
             <div>
-              <span className="font-black text-xl tracking-tight uppercase dark:text-white">OmniManage</span>
+              <span className="font-black text-xl tracking-tight uppercase dark:text-white">
+                OmniManage
+              </span>
               <span className="block text-[10px] font-bold tracking-widest text-slate-500 uppercase -mt-1">
                 Gadget ERP Solution
               </span>
@@ -76,16 +78,28 @@ export default function AboutPage() {
           </Link>
 
           <nav className="hidden md:flex items-center gap-6 text-sm font-bold">
-            <Link to="/" className="hover:text-blue-600 dark:hover:text-yellow-400 transition-colors">
+            <Link
+              to="/"
+              className="hover:text-blue-600 dark:hover:text-yellow-400 transition-colors"
+            >
               Home
             </Link>
-            <Link to="/pricing" className="hover:text-blue-600 dark:hover:text-yellow-400 transition-colors">
+            <Link
+              to="/pricing"
+              className="hover:text-blue-600 dark:hover:text-yellow-400 transition-colors"
+            >
               Pricing
             </Link>
-            <Link to="/contact" className="hover:text-blue-600 dark:hover:text-yellow-400 transition-colors">
+            <Link
+              to="/contact"
+              className="hover:text-blue-600 dark:hover:text-yellow-400 transition-colors"
+            >
               Contact
             </Link>
-            <Link to="/developer" className="hover:text-blue-600 dark:hover:text-yellow-400 transition-colors">
+            <Link
+              to="/developer"
+              className="hover:text-blue-600 dark:hover:text-yellow-400 transition-colors"
+            >
               Developer
             </Link>
           </nav>
@@ -118,7 +132,9 @@ export default function AboutPage() {
             Built Exclusively for Gadget Shops & Tech Retailers
           </h1>
           <p className="text-base sm:text-lg text-slate-700 dark:text-slate-300 font-medium max-w-2xl mx-auto leading-relaxed">
-            Standard ERP software fails when dealing with unique IMEI numbers, warranty claims, multi-part repairs, and technician commissions. OmniManage was engineered from the ground up to solve these exact gadget industry challenges.
+            Standard ERP software fails when dealing with unique IMEI numbers, warranty claims,
+            multi-part repairs, and technician commissions. OmniManage was engineered from the
+            ground up to solve these exact gadget industry challenges.
           </p>
         </div>
       </section>
@@ -149,7 +165,9 @@ export default function AboutPage() {
               Empowering Gadget Entrepreneurs with Automated Intelligence
             </h2>
             <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
-              We envision a future where every phone repair center, electronics distributor, and multi-branch gadget showroom operates with zero stock discrepancies, frictionless warranty validations, and crystal-clear double-entry accounting.
+              We envision a future where every phone repair center, electronics distributor, and
+              multi-branch gadget showroom operates with zero stock discrepancies, frictionless
+              warranty validations, and crystal-clear double-entry accounting.
             </p>
             <ul className="space-y-3 font-bold text-sm">
               <li className="flex items-center gap-2">
@@ -175,11 +193,15 @@ export default function AboutPage() {
                   key={idx}
                   className="bg-amber-50 dark:bg-slate-800 p-5 border-3 border-black rounded-2xl shadow-[4px_4px_0px_0px_#000] space-y-3"
                 >
-                  <div className={`w-10 h-10 ${val.color} border-2 border-black rounded-xl flex items-center justify-center text-black`}>
+                  <div
+                    className={`w-10 h-10 ${val.color} border-2 border-black rounded-xl flex items-center justify-center text-black`}
+                  >
                     <Icon className="w-5 h-5" />
                   </div>
                   <h3 className="font-black text-base uppercase dark:text-white">{val.title}</h3>
-                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">{val.desc}</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+                    {val.desc}
+                  </p>
                 </div>
               );
             })}
@@ -194,7 +216,8 @@ export default function AboutPage() {
             Ready to Scale Your Gadget Business?
           </h2>
           <p className="font-bold text-base max-w-xl mx-auto">
-            Join hundreds of thriving retail shops and repair centers. Start your 14-day risk-free trial today.
+            Join hundreds of thriving retail shops and repair centers. Start your 14-day risk-free
+            trial today.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
             <Link
@@ -216,14 +239,20 @@ export default function AboutPage() {
       {/* ─── FOOTER ────────────────────────────────────────────────────────────── */}
       <footer className="py-8 px-4 sm:px-8 bg-black text-white">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold">
-          <div>
-            &copy; {new Date().getFullYear()} OmniManage ERP Inc. All rights reserved.
-          </div>
+          <div>&copy; {new Date().getFullYear()} OmniManage ERP Inc. All rights reserved.</div>
           <div className="flex items-center gap-6">
-            <Link to="/terms" className="hover:text-yellow-400 transition-colors">Terms of Service</Link>
-            <Link to="/privacy" className="hover:text-yellow-400 transition-colors">Privacy Policy</Link>
-            <Link to="/refund-policy" className="hover:text-yellow-400 transition-colors">Refund Policy</Link>
-            <Link to="/contact" className="hover:text-yellow-400 transition-colors">Contact</Link>
+            <Link to="/terms" className="hover:text-yellow-400 transition-colors">
+              Terms of Service
+            </Link>
+            <Link to="/privacy" className="hover:text-yellow-400 transition-colors">
+              Privacy Policy
+            </Link>
+            <Link to="/refund-policy" className="hover:text-yellow-400 transition-colors">
+              Refund Policy
+            </Link>
+            <Link to="/contact" className="hover:text-yellow-400 transition-colors">
+              Contact
+            </Link>
           </div>
         </div>
       </footer>

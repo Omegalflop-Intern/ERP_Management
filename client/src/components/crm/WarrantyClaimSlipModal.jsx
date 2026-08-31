@@ -1,5 +1,16 @@
 import React, { useRef, useState } from 'react';
-import { Printer, X, ShieldAlert, ShieldCheck, User, Phone, Smartphone, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
+import {
+  Printer,
+  X,
+  ShieldAlert,
+  ShieldCheck,
+  User,
+  Phone,
+  Smartphone,
+  CheckCircle,
+  Clock,
+  AlertTriangle,
+} from 'lucide-react';
 import { useCompanyInfo, QRCodeCanvas } from '../sales/Invoice';
 
 export default function WarrantyClaimSlipModal({ claim, onClose }) {
@@ -9,24 +20,43 @@ export default function WarrantyClaimSlipModal({ claim, onClose }) {
 
   if (!claim) return null;
 
-  const claimNumber = claim.claimNumber || `CLM-${String(claim.id || claim._id || '').slice(-6).toUpperCase()}`;
+  const claimNumber =
+    claim.claimNumber ||
+    `CLM-${String(claim.id || claim._id || '')
+      .slice(-6)
+      .toUpperCase()}`;
   const claimDate = claim.createdAt ? new Date(claim.createdAt) : new Date();
-  
-  const customerName = claim.customer?.name || claim.customerId?.name || claim.customerName || 'Walk-in Customer';
-  const customerPhone = claim.customer?.phone || claim.customerId?.phone || claim.customerPhone || 'N/A';
-  const customerAddress = claim.customer?.address || claim.customerId?.address || claim.customerAddress || '';
 
-  const invoiceNumber = claim.invoiceRef?.invoiceNumber || (claim.notes?.match(/INV-[\w-]+/)?.[0] || '—');
+  const customerName =
+    claim.customer?.name || claim.customerId?.name || claim.customerName || 'Walk-in Customer';
+  const customerPhone =
+    claim.customer?.phone || claim.customerId?.phone || claim.customerPhone || 'N/A';
+  const customerAddress =
+    claim.customer?.address || claim.customerId?.address || claim.customerAddress || '';
+
+  const invoiceNumber =
+    claim.invoiceRef?.invoiceNumber || claim.notes?.match(/INV-[\w-]+/)?.[0] || '—';
   const productName = claim.notes?.startsWith('Item:')
     ? claim.notes.replace(/^Item:\s*/i, '')
     : claim.notes?.startsWith('Sold via')
-    ? claim.notes.split('—')[0]
-    : claim.productId?.name || claim.imei?.productId?.name || claim.productName || 'Gadget Item';
+      ? claim.notes.split('—')[0]
+      : claim.productId?.name || claim.imei?.productId?.name || claim.productName || 'Gadget Item';
   const brand = claim.productId?.brand || claim.brand || 'Original Brand';
-  const imei = claim.imei?.imeiOrSerial || claim.imeiOrSerial || claim.imei || claim.serialNumber || 'Non-IMEI Item';
-  const reason = claim.description || claim.reason || claim.issueDescription || claim.problem || 'Customer reported device issue/defect';
+  const imei =
+    claim.imei?.imeiOrSerial ||
+    claim.imeiOrSerial ||
+    claim.imei ||
+    claim.serialNumber ||
+    'Non-IMEI Item';
+  const reason =
+    claim.description ||
+    claim.reason ||
+    claim.issueDescription ||
+    claim.problem ||
+    'Customer reported device issue/defect';
   const status = (claim.status || 'pending').toLowerCase();
-  const resolution = claim.resolution || claim.actionTaken || claim.notes || 'Under Technical Assessment';
+  const resolution =
+    claim.resolution || claim.actionTaken || claim.notes || 'Under Technical Assessment';
 
   const handlePrint = () => {
     window.print();
@@ -36,7 +66,6 @@ export default function WarrantyClaimSlipModal({ claim, onClose }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs overflow-y-auto">
       {/* Modal Container */}
       <div className="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
-        
         {/* Control Header */}
         <div className="p-4 sm:px-6 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between gap-4 shrink-0">
           <div className="flex items-center gap-3">
@@ -50,7 +79,9 @@ export default function WarrantyClaimSlipModal({ claim, onClose }) {
                   {claimNumber}
                 </span>
               </h2>
-              <p className="text-xs text-slate-400">Customer warranty acknowledgement token & service record</p>
+              <p className="text-xs text-slate-400">
+                Customer warranty acknowledgement token & service record
+              </p>
             </div>
           </div>
 
@@ -60,7 +91,9 @@ export default function WarrantyClaimSlipModal({ claim, onClose }) {
                 type="button"
                 onClick={() => setPrintSize('a4')}
                 className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
-                  printSize === 'a4' ? 'bg-amber-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'
+                  printSize === 'a4'
+                    ? 'bg-amber-600 text-white shadow-xs'
+                    : 'text-slate-400 hover:text-white'
                 }`}
               >
                 A4 Slip
@@ -69,7 +102,9 @@ export default function WarrantyClaimSlipModal({ claim, onClose }) {
                 type="button"
                 onClick={() => setPrintSize('thermal')}
                 className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
-                  printSize === 'thermal' ? 'bg-amber-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'
+                  printSize === 'thermal'
+                    ? 'bg-amber-600 text-white shadow-xs'
+                    : 'text-slate-400 hover:text-white'
                 }`}
               >
                 POS 80mm
@@ -94,7 +129,6 @@ export default function WarrantyClaimSlipModal({ claim, onClose }) {
 
         {/* Printable View Area */}
         <div className="p-4 sm:p-6 overflow-y-auto bg-slate-950 flex justify-center">
-          
           {/* A4 Format Document */}
           {printSize === 'a4' ? (
             <div
@@ -106,7 +140,9 @@ export default function WarrantyClaimSlipModal({ claim, onClose }) {
                 {/* 1. Header Branding & Document Title */}
                 <div className="flex justify-between items-start border-b-2 border-slate-900 pb-4 mb-6">
                   <div className="space-y-1">
-                    <h1 className="text-2xl font-black text-slate-900 tracking-tight">{companyInfo.name}</h1>
+                    <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+                      {companyInfo.name}
+                    </h1>
                     {companyInfo.slogan && (
                       <p className="text-xs font-medium text-slate-600">{companyInfo.slogan}</p>
                     )}
@@ -142,7 +178,9 @@ export default function WarrantyClaimSlipModal({ claim, onClose }) {
                       Claimant / Customer Details
                     </div>
                     <div className="text-base font-bold text-slate-900">{customerName}</div>
-                    <div className="text-xs text-slate-600">{customerAddress || 'Direct Store Customer'}</div>
+                    <div className="text-xs text-slate-600">
+                      {customerAddress || 'Direct Store Customer'}
+                    </div>
                     <div className="text-xs text-slate-500">
                       Mobile: <span className="font-semibold text-slate-800">{customerPhone}</span>
                     </div>
@@ -155,7 +193,9 @@ export default function WarrantyClaimSlipModal({ claim, onClose }) {
                       Claimed Device Specification
                     </div>
                     <div className="text-base font-bold text-slate-900">{productName}</div>
-                    <div className="text-xs text-slate-600">Brand: <span className="font-semibold">{brand}</span></div>
+                    <div className="text-xs text-slate-600">
+                      Brand: <span className="font-semibold">{brand}</span>
+                    </div>
                     <div className="text-xs font-mono font-bold text-purple-700">
                       IMEI / Serial: {imei}
                     </div>
@@ -186,12 +226,16 @@ export default function WarrantyClaimSlipModal({ claim, onClose }) {
 
                 {/* 5. Terms Notice */}
                 <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 mb-6 space-y-1">
-                  <p className="font-bold text-slate-800">Warranty Claim Policy & Customer Agreement:</p>
-                  <p className="text-[11px]">
-                    • This token must be produced during device collection. Physical damage, liquid exposure, or unauthorized tampering voids warranty coverage.
+                  <p className="font-bold text-slate-800">
+                    Warranty Claim Policy & Customer Agreement:
                   </p>
                   <p className="text-[11px]">
-                    • Standard assessment duration is 3 to 7 working days depending on official brand authorized service centers.
+                    • This token must be produced during device collection. Physical damage, liquid
+                    exposure, or unauthorized tampering voids warranty coverage.
+                  </p>
+                  <p className="text-[11px]">
+                    • Standard assessment duration is 3 to 7 working days depending on official
+                    brand authorized service centers.
                   </p>
                 </div>
               </div>
@@ -214,7 +258,9 @@ export default function WarrantyClaimSlipModal({ claim, onClose }) {
                 </div>
 
                 <div className="flex justify-between items-center text-[10px] text-slate-400 pt-4 mt-4 border-t border-slate-100">
-                  <p>Omni-Manage ERP Warranty Solutions • Printed on {new Date().toLocaleString()}</p>
+                  <p>
+                    Omni-Manage ERP Warranty Solutions • Printed on {new Date().toLocaleString()}
+                  </p>
                   <p>Page 1 of 1</p>
                 </div>
               </div>
@@ -238,14 +284,24 @@ export default function WarrantyClaimSlipModal({ claim, onClose }) {
               </div>
 
               <div className="py-2 border-b border-dashed border-slate-400 text-[10px] space-y-0.5">
-                <p><strong>CUSTOMER:</strong> {customerName}</p>
-                <p><strong>PHONE:</strong> {customerPhone}</p>
+                <p>
+                  <strong>CUSTOMER:</strong> {customerName}
+                </p>
+                <p>
+                  <strong>PHONE:</strong> {customerPhone}
+                </p>
               </div>
 
               <div className="py-2 border-b border-dashed border-slate-400 text-[10px] space-y-0.5">
-                <p><strong>DEVICE:</strong> {productName}</p>
-                <p><strong>IMEI:</strong> {imei}</p>
-                <p><strong>STATUS:</strong> {status.toUpperCase()}</p>
+                <p>
+                  <strong>DEVICE:</strong> {productName}
+                </p>
+                <p>
+                  <strong>IMEI:</strong> {imei}
+                </p>
+                <p>
+                  <strong>STATUS:</strong> {status.toUpperCase()}
+                </p>
               </div>
 
               <div className="py-2 border-b border-dashed border-slate-400 text-[10px]">
@@ -254,9 +310,7 @@ export default function WarrantyClaimSlipModal({ claim, onClose }) {
               </div>
 
               <div className="pt-6 pb-2 text-center text-[10px] space-y-4">
-                <div className="border-t border-slate-400 pt-1">
-                  Customer Signature
-                </div>
+                <div className="border-t border-slate-400 pt-1">Customer Signature</div>
                 <p className="text-[9px] text-slate-400">Please bring token for collection</p>
               </div>
             </div>

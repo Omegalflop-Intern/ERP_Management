@@ -61,7 +61,9 @@ export default function ContactPage() {
               ⚡
             </div>
             <div>
-              <span className="font-black text-xl tracking-tight uppercase dark:text-white">OmniManage</span>
+              <span className="font-black text-xl tracking-tight uppercase dark:text-white">
+                OmniManage
+              </span>
               <span className="block text-[10px] font-bold tracking-widest text-slate-500 uppercase -mt-1">
                 Support & Inquiries
               </span>
@@ -69,16 +71,28 @@ export default function ContactPage() {
           </Link>
 
           <nav className="hidden md:flex items-center gap-6 text-sm font-bold">
-            <Link to="/" className="hover:text-blue-600 dark:hover:text-yellow-400 transition-colors">
+            <Link
+              to="/"
+              className="hover:text-blue-600 dark:hover:text-yellow-400 transition-colors"
+            >
               Home
             </Link>
-            <Link to="/about" className="hover:text-blue-600 dark:hover:text-yellow-400 transition-colors">
+            <Link
+              to="/about"
+              className="hover:text-blue-600 dark:hover:text-yellow-400 transition-colors"
+            >
               About
             </Link>
-            <Link to="/pricing" className="hover:text-blue-600 dark:hover:text-yellow-400 transition-colors">
+            <Link
+              to="/pricing"
+              className="hover:text-blue-600 dark:hover:text-yellow-400 transition-colors"
+            >
               Pricing
             </Link>
-            <Link to="/developer" className="hover:text-blue-600 dark:hover:text-yellow-400 transition-colors">
+            <Link
+              to="/developer"
+              className="hover:text-blue-600 dark:hover:text-yellow-400 transition-colors"
+            >
               Developer
             </Link>
           </nav>
@@ -105,7 +119,8 @@ export default function ContactPage() {
             Get in Touch with Our Team
           </h1>
           <p className="font-bold text-sm sm:text-base max-w-xl mx-auto text-slate-900">
-            Have questions about gadget ERP onboarding, multi-branch migration, or custom hardware integrations? Reach out to us.
+            Have questions about gadget ERP onboarding, multi-branch migration, or custom hardware
+            integrations? Reach out to us.
           </p>
         </div>
       </section>
@@ -124,7 +139,9 @@ export default function ContactPage() {
                     <Mail className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-slate-500 uppercase">Official Support Email</div>
+                    <div className="text-xs font-bold text-slate-500 uppercase">
+                      Official Support Email
+                    </div>
                     <a
                       href="mailto:support@respawnalley.com"
                       className="font-black text-sm text-blue-600 dark:text-yellow-400 hover:underline"
@@ -139,7 +156,9 @@ export default function ContactPage() {
                     <Phone className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-slate-500 uppercase">Sales & Phone Hotline</div>
+                    <div className="text-xs font-bold text-slate-500 uppercase">
+                      Sales & Phone Hotline
+                    </div>
                     <a
                       href="tel:+8801700000000"
                       className="font-black text-sm text-slate-900 dark:text-white"
@@ -166,7 +185,9 @@ export default function ContactPage() {
                     <MapPin className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-slate-500 uppercase">Office Location</div>
+                    <div className="text-xs font-bold text-slate-500 uppercase">
+                      Office Location
+                    </div>
                     <div className="font-bold text-sm text-slate-900 dark:text-white">
                       Dhaka & Chattogram Tech Hub, Bangladesh
                     </div>
@@ -180,7 +201,8 @@ export default function ContactPage() {
                 <Headphones className="w-5 h-5" /> Fast Onboarding Support
               </div>
               <p className="text-xs font-bold mt-2 leading-relaxed">
-                Need on-site training for your cashiers and repair technicians? Our dedicated engineers are available for deployment assistance.
+                Need on-site training for your cashiers and repair technicians? Our dedicated
+                engineers are available for deployment assistance.
               </p>
             </div>
           </div>
@@ -189,7 +211,9 @@ export default function ContactPage() {
           <div className="lg:col-span-7">
             <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 border-3 border-black rounded-2xl shadow-[6px_6px_0px_0px_#000] space-y-6">
               <div>
-                <h2 className="text-2xl font-black uppercase dark:text-white">Send Us a Direct Message</h2>
+                <h2 className="text-2xl font-black uppercase dark:text-white">
+                  Send Us a Direct Message
+                </h2>
                 <p className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300 mt-1">
                   Fill out the form below and we will respond via phone/email within a few hours.
                 </p>
@@ -200,7 +224,8 @@ export default function ContactPage() {
                   <CheckCircle2 className="w-12 h-12 text-lime-600 dark:text-lime-400 mx-auto" />
                   <h3 className="font-black text-lg">Thank You!</h3>
                   <p className="text-sm font-medium">
-                    Your inquiry has been logged in our system. A solution specialist will contact you shortly.
+                    Your inquiry has been logged in our system. A solution specialist will contact
+                    you shortly.
                   </p>
                   <button
                     onClick={() => setSubmitted(false)}
@@ -308,10 +333,18 @@ export default function ContactPage() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold">
           <div>&copy; {new Date().getFullYear()} OmniManage ERP Inc. All rights reserved.</div>
           <div className="flex items-center gap-6">
-            <Link to="/about" className="hover:text-yellow-400 transition-colors">About</Link>
-            <Link to="/terms" className="hover:text-yellow-400 transition-colors">Terms of Service</Link>
-            <Link to="/privacy" className="hover:text-yellow-400 transition-colors">Privacy Policy</Link>
-            <Link to="/refund-policy" className="hover:text-yellow-400 transition-colors">Refund Policy</Link>
+            <Link to="/about" className="hover:text-yellow-400 transition-colors">
+              About
+            </Link>
+            <Link to="/terms" className="hover:text-yellow-400 transition-colors">
+              Terms of Service
+            </Link>
+            <Link to="/privacy" className="hover:text-yellow-400 transition-colors">
+              Privacy Policy
+            </Link>
+            <Link to="/refund-policy" className="hover:text-yellow-400 transition-colors">
+              Refund Policy
+            </Link>
           </div>
         </div>
       </footer>

@@ -47,7 +47,9 @@ export default function RefundPolicy() {
               ⚡
             </div>
             <div>
-              <span className="font-black text-xl tracking-tight uppercase dark:text-white">OmniManage</span>
+              <span className="font-black text-xl tracking-tight uppercase dark:text-white">
+                OmniManage
+              </span>
               <span className="block text-[10px] font-bold tracking-widest text-slate-500 uppercase -mt-1">
                 Refund & Billing
               </span>
@@ -76,7 +78,8 @@ export default function RefundPolicy() {
             Refund & Cancellation Policy
           </h1>
           <p className="font-bold text-sm sm:text-base text-slate-900 max-w-2xl">
-            We believe in honest, predictable pricing. Learn how SaaS subscription cancellations and refund requests are handled.
+            We believe in honest, predictable pricing. Learn how SaaS subscription cancellations and
+            refund requests are handled.
           </p>
         </div>
       </section>
@@ -105,23 +108,37 @@ export default function RefundPolicy() {
       {/* ─── POLICY DETAILS ────────────────────────────────────────────────────── */}
       <main className="max-w-4xl mx-auto pb-16 px-4 sm:px-8 space-y-8">
         <section className="bg-white dark:bg-slate-900 p-6 sm:p-8 border-3 border-black rounded-2xl shadow-[5px_5px_0px_0px_#000] space-y-4">
-          <h2 className="text-xl sm:text-2xl font-black uppercase dark:text-white">1. SaaS Subscription Refunds</h2>
+          <h2 className="text-xl sm:text-2xl font-black uppercase dark:text-white">
+            1. SaaS Subscription Refunds
+          </h2>
           <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed font-medium">
-            First-time subscribers are entitled to a full refund within 7 calendar days of their initial billing date if the service does not meet operational expectations. To request a refund, contact our support team at <strong className="text-black dark:text-yellow-300">support@respawnalley.com</strong> with your shop workspace domain.
+            First-time subscribers are entitled to a full refund within 7 calendar days of their
+            initial billing date if the service does not meet operational expectations. To request a
+            refund, contact our support team at{' '}
+            <strong className="text-black dark:text-yellow-300">support@respawnalley.com</strong>{' '}
+            with your shop workspace domain.
           </p>
         </section>
 
         <section className="bg-white dark:bg-slate-900 p-6 sm:p-8 border-3 border-black rounded-2xl shadow-[5px_5px_0px_0px_#000] space-y-4">
-          <h2 className="text-xl sm:text-2xl font-black uppercase dark:text-white">2. Subscription Cancellation</h2>
+          <h2 className="text-xl sm:text-2xl font-black uppercase dark:text-white">
+            2. Subscription Cancellation
+          </h2>
           <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed font-medium">
-            You may cancel auto-renewal at any time. When you cancel, your workspace will remain fully operational until the end of your prepaid billing period. We do not offer partial refunds for mid-month early cancellations after the initial 7-day guarantee window.
+            You may cancel auto-renewal at any time. When you cancel, your workspace will remain
+            fully operational until the end of your prepaid billing period. We do not offer partial
+            refunds for mid-month early cancellations after the initial 7-day guarantee window.
           </p>
         </section>
 
         <section className="bg-white dark:bg-slate-900 p-6 sm:p-8 border-3 border-black rounded-2xl shadow-[5px_5px_0px_0px_#000] space-y-4">
-          <h2 className="text-xl sm:text-2xl font-black uppercase dark:text-white">3. Customer Retail Returns in Your Shop</h2>
+          <h2 className="text-xl sm:text-2xl font-black uppercase dark:text-white">
+            3. Customer Retail Returns in Your Shop
+          </h2>
           <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed font-medium">
-            Please note: OmniManage provides the ERP software platform. Individual gadget sales, return policies, and device warranty terms for your store's end-customers are set and managed independently by your shop admin via the Sales & Returns module.
+            Please note: OmniManage provides the ERP software platform. Individual gadget sales,
+            return policies, and device warranty terms for your store's end-customers are set and
+            managed independently by your shop admin via the Sales & Returns module.
           </p>
         </section>
       </main>
@@ -131,10 +148,18 @@ export default function RefundPolicy() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold">
           <div>&copy; {new Date().getFullYear()} OmniManage ERP Inc. All rights reserved.</div>
           <div className="flex items-center gap-6">
-            <Link to="/about" className="hover:text-yellow-400 transition-colors">About</Link>
-            <Link to="/terms" className="hover:text-yellow-400 transition-colors">Terms of Service</Link>
-            <Link to="/privacy" className="hover:text-yellow-400 transition-colors">Privacy Policy</Link>
-            <Link to="/contact" className="hover:text-yellow-400 transition-colors">Contact</Link>
+            <Link to="/about" className="hover:text-yellow-400 transition-colors">
+              About
+            </Link>
+            <Link to="/terms" className="hover:text-yellow-400 transition-colors">
+              Terms of Service
+            </Link>
+            <Link to="/privacy" className="hover:text-yellow-400 transition-colors">
+              Privacy Policy
+            </Link>
+            <Link to="/contact" className="hover:text-yellow-400 transition-colors">
+              Contact
+            </Link>
           </div>
         </div>
       </footer>

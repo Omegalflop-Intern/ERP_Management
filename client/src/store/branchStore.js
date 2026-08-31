@@ -33,10 +33,12 @@ export const useBranchStore = create(
           // Fetch branches list
           const res = await api.get('/branches/flat');
           const list = res.data?.data || [];
-          
+
           const currentActive = get().activeBranchId;
-          const validBranch = currentActive === 'all' || list.some((b) => String(b.id || b._id) === String(currentActive));
-          const nextActive = validBranch ? currentActive : (list[0]?.id ? String(list[0].id) : 'all');
+          const validBranch =
+            currentActive === 'all' ||
+            list.some((b) => String(b.id || b._id) === String(currentActive));
+          const nextActive = validBranch ? currentActive : list[0]?.id ? String(list[0].id) : 'all';
 
           set({ branches: list, activeBranchId: nextActive, loading: false });
 

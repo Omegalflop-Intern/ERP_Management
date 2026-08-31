@@ -139,7 +139,14 @@ export default function InvoiceDetail() {
   };
 
   const getItemKey = (item, idx) =>
-    String(item?._id || item?.id || item?.lineItemId || item?.productId?._id || item?.productId || `item-${idx}`);
+    String(
+      item?._id ||
+        item?.id ||
+        item?.lineItemId ||
+        item?.productId?._id ||
+        item?.productId ||
+        `item-${idx}`
+    );
 
   const toggleReturnItem = (item, idx) => {
     const key = getItemKey(item, idx);
@@ -271,7 +278,8 @@ export default function InvoiceDetail() {
               onClick={() => setShowCollectDueModal(true)}
               className="px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 hover:shadow-md active:scale-[0.97]"
             >
-              <DollarSign className="w-4 h-4" /> Collect Due (৳{Number(sale.paymentBreakdown.dueAmount).toLocaleString()})
+              <DollarSign className="w-4 h-4" /> Collect Due (৳
+              {Number(sale.paymentBreakdown.dueAmount).toLocaleString()})
             </button>
           )}
 
@@ -740,7 +748,10 @@ function InvoiceCollectDueModal({ sale, onClose, onSuccess }) {
         collectAmount = dueAmount;
       }
 
-      const custId = typeof sale.customerId === 'object' ? (sale.customerId?._id || sale.customerId?.id) : sale.customerId;
+      const custId =
+        typeof sale.customerId === 'object'
+          ? sale.customerId?._id || sale.customerId?.id
+          : sale.customerId;
 
       if (custId) {
         return api.post(`/customers/${custId}/collect-due`, {
@@ -761,7 +772,8 @@ function InvoiceCollectDueModal({ sale, onClose, onSuccess }) {
       toast.success('Due payment collected and recorded successfully!');
       onSuccess();
     },
-    onError: (e) => toast.error(e.response?.data?.message || e.message || 'Failed to collect payment'),
+    onError: (e) =>
+      toast.error(e.response?.data?.message || e.message || 'Failed to collect payment'),
   });
 
   const handleSubmit = (e) => {
@@ -797,7 +809,9 @@ function InvoiceCollectDueModal({ sale, onClose, onSuccess }) {
               </span>
             </div>
             <div className="flex justify-between items-center border-t border-slate-200 dark:border-slate-800 pt-2">
-              <span className="text-rose-600 font-bold uppercase text-[10px]">Invoice Due Pending:</span>
+              <span className="text-rose-600 font-bold uppercase text-[10px]">
+                Invoice Due Pending:
+              </span>
               <span className="text-base font-black font-mono text-rose-600">
                 ৳{dueAmount.toLocaleString()}
               </span>
@@ -840,7 +854,12 @@ function InvoiceCollectDueModal({ sale, onClose, onSuccess }) {
           </div>
 
           <DialogFooter className="border-t border-slate-100 dark:border-slate-800 pt-3">
-            <Button type="button" variant="outline" onClick={onClose} className="rounded-xl text-xs">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="rounded-xl text-xs"
+            >
               Cancel
             </Button>
             <Button

@@ -81,7 +81,12 @@ export default function Returns() {
     mutationFn: async ({ saleId, items, returnAction, replacementItem }) =>
       api.post(`/sales/${saleId}/return`, { items, returnAction, replacementItem }),
     onSuccess: (res) => {
-      toast.success(res.data.message || (returnAction === 'REPLACEMENT' ? 'Product replaced successfully' : 'Return processed successfully'));
+      toast.success(
+        res.data.message ||
+          (returnAction === 'REPLACEMENT'
+            ? 'Product replaced successfully'
+            : 'Return processed successfully')
+      );
       const updatedSale = res.data?.data?.sale || selectedSale;
       const returnInvoiceNumber = res.data?.data?.returnInvoiceNumber;
 
@@ -466,7 +471,9 @@ export default function Returns() {
                         : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/60'
                     }`}
                   >
-                    <div className={`p-2 rounded-lg shrink-0 ${returnAction === 'REFUND' ? 'bg-red-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-500'}`}>
+                    <div
+                      className={`p-2 rounded-lg shrink-0 ${returnAction === 'REFUND' ? 'bg-red-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-500'}`}
+                    >
                       <RotateCcw className="w-4 h-4" />
                     </div>
                     <div>
@@ -486,7 +493,9 @@ export default function Returns() {
                         : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/60'
                     }`}
                   >
-                    <div className={`p-2 rounded-lg shrink-0 ${returnAction === 'REPLACEMENT' ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-500'}`}>
+                    <div
+                      className={`p-2 rounded-lg shrink-0 ${returnAction === 'REPLACEMENT' ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-500'}`}
+                    >
                       <RefreshCw className="w-4 h-4" />
                     </div>
                     <div>
@@ -513,7 +522,9 @@ export default function Returns() {
                       <select
                         value={replacementItem.productId}
                         onChange={(e) => {
-                          const p = storeProducts.find((x) => String(x.id || x._id) === String(e.target.value));
+                          const p = storeProducts.find(
+                            (x) => String(x.id || x._id) === String(e.target.value)
+                          );
                           setReplacementItem({
                             productId: e.target.value,
                             name: p ? p.name : '',
@@ -585,8 +596,7 @@ export default function Returns() {
                     const lineItem = selectedSale.lineItems[idx];
                     if (!lineItem) return sum;
                     const hasGlobalDiscount =
-                      selectedSale.subTotal > 0 &&
-                      selectedSale.netTotal < selectedSale.subTotal;
+                      selectedSale.subTotal > 0 && selectedSale.netTotal < selectedSale.subTotal;
                     const globalDiscountFactor = hasGlobalDiscount
                       ? selectedSale.netTotal / selectedSale.subTotal
                       : 1;
@@ -602,7 +612,8 @@ export default function Returns() {
 
                 const replacementTotal =
                   returnAction === 'REPLACEMENT'
-                    ? (Number(replacementItem.unitPrice) || 0) * (Number(replacementItem.quantity) || 1)
+                    ? (Number(replacementItem.unitPrice) || 0) *
+                      (Number(replacementItem.quantity) || 1)
                     : 0;
                 const priceDiff = replacementTotal - totalReturnValue;
 
@@ -623,18 +634,25 @@ export default function Returns() {
                       ) : (
                         <div className="text-right space-y-0.5">
                           <div className="text-[11px] text-gray-400">
-                            Returned: <strong>৳{totalReturnValue.toLocaleString()}</strong> | Repl: <strong>৳{replacementTotal.toLocaleString()}</strong>
+                            Returned: <strong>৳{totalReturnValue.toLocaleString()}</strong> | Repl:{' '}
+                            <strong>৳{replacementTotal.toLocaleString()}</strong>
                           </div>
                           <div className="text-base font-mono font-extrabold flex items-center gap-1 justify-end">
                             <span>Balance Diff:</span>
                             {priceDiff > 0 && (
-                              <span className="text-amber-600 dark:text-amber-400">+৳{priceDiff.toLocaleString()} (Customer Pays)</span>
+                              <span className="text-amber-600 dark:text-amber-400">
+                                +৳{priceDiff.toLocaleString()} (Customer Pays)
+                              </span>
                             )}
                             {priceDiff < 0 && (
-                              <span className="text-emerald-600 dark:text-emerald-400">৳{Math.abs(priceDiff).toLocaleString()} (Refund to Customer)</span>
+                              <span className="text-emerald-600 dark:text-emerald-400">
+                                ৳{Math.abs(priceDiff).toLocaleString()} (Refund to Customer)
+                              </span>
                             )}
                             {priceDiff === 0 && (
-                              <span className="text-blue-600 dark:text-blue-400">৳0 (Even Exchange)</span>
+                              <span className="text-blue-600 dark:text-blue-400">
+                                ৳0 (Even Exchange)
+                              </span>
                             )}
                           </div>
                         </div>
@@ -642,9 +660,15 @@ export default function Returns() {
 
                       <button
                         onClick={handleReturn}
-                        disabled={selectedCount === 0 || returnMutation.isPending || (returnAction === 'REPLACEMENT' && !replacementItem.productId)}
+                        disabled={
+                          selectedCount === 0 ||
+                          returnMutation.isPending ||
+                          (returnAction === 'REPLACEMENT' && !replacementItem.productId)
+                        }
                         className={`px-6 py-2.5 disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-xs shrink-0 ${
-                          returnAction === 'REPLACEMENT' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-red-600 hover:bg-red-700'
+                          returnAction === 'REPLACEMENT'
+                            ? 'bg-blue-600 hover:bg-blue-700'
+                            : 'bg-red-600 hover:bg-red-700'
                         }`}
                       >
                         {returnMutation.isPending ? (
@@ -654,7 +678,9 @@ export default function Returns() {
                         ) : (
                           <RotateCcw className="w-4 h-4" />
                         )}
-                        {returnAction === 'REPLACEMENT' ? 'Confirm Product Exchange' : 'Confirm Cash Return'}
+                        {returnAction === 'REPLACEMENT'
+                          ? 'Confirm Product Exchange'
+                          : 'Confirm Cash Return'}
                       </button>
                     </div>
                   </div>

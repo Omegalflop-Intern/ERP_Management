@@ -44,37 +44,51 @@ import api from '../lib/api';
 import { confirmDelete } from '../lib/confirm';
 import { useActivePaymentMethods } from '../hooks';
 
-const STATUSES = ['ALL', 'RECEIVED', 'INSPECTING', 'AWAITING_PARTS', 'REPAIRED', 'DELIVERED', 'CANCELLED'];
+const STATUSES = [
+  'ALL',
+  'RECEIVED',
+  'INSPECTING',
+  'AWAITING_PARTS',
+  'REPAIRED',
+  'DELIVERED',
+  'CANCELLED',
+];
 
 const statusConfig = {
   RECEIVED: {
     label: 'Received',
-    color: 'bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
+    color:
+      'bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
     icon: Clock,
   },
   INSPECTING: {
     label: 'Inspecting',
-    color: 'bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+    color:
+      'bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800',
     icon: Wrench,
   },
   AWAITING_PARTS: {
     label: 'Awaiting Parts',
-    color: 'bg-orange-100 dark:bg-orange-950/50 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800',
+    color:
+      'bg-orange-100 dark:bg-orange-950/50 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800',
     icon: AlertCircle,
   },
   REPAIRED: {
     label: 'Repaired (Ready)',
-    color: 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+    color:
+      'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
     icon: CheckCircle2,
   },
   DELIVERED: {
     label: 'Delivered',
-    color: 'bg-green-100 dark:bg-green-950/50 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800',
+    color:
+      'bg-green-100 dark:bg-green-950/50 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800',
     icon: Check,
   },
   CANCELLED: {
     label: 'Cancelled',
-    color: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700',
+    color:
+      'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700',
     icon: X,
   },
 };
@@ -88,7 +102,11 @@ export default function RepairsView() {
   const [viewTicket, setViewTicket] = useState(null);
   const [collectDueTicket, setCollectDueTicket] = useState(null);
 
-  const { data: repairsData, isLoading, refetch } = useQuery({
+  const {
+    data: repairsData,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ['repairs', search, statusFilter],
     queryFn: async () => {
       const { data } = await api.get('/repairs', {
@@ -186,7 +204,9 @@ export default function RepairsView() {
 
   const summary = useMemo(() => {
     const total = repairs.length;
-    const active = repairs.filter((r) => ['RECEIVED', 'INSPECTING', 'AWAITING_PARTS'].includes(r.status)).length;
+    const active = repairs.filter((r) =>
+      ['RECEIVED', 'INSPECTING', 'AWAITING_PARTS'].includes(r.status)
+    ).length;
     const ready = repairs.filter((r) => r.status === 'REPAIRED').length;
     const delivered = repairs.filter((r) => r.status === 'DELIVERED').length;
     const totalRevenue = repairs.reduce((sum, r) => sum + (Number(r.estimatedCost) || 0), 0);
@@ -222,40 +242,54 @@ export default function RepairsView() {
       {/* Metric Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
-          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Tickets</div>
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            Total Tickets
+          </div>
           <div className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-1.5 font-mono">
             {summary.total}
           </div>
-          <div className="text-[11px] text-slate-400 mt-1 font-medium">{summary.active} currently in workshop</div>
+          <div className="text-[11px] text-slate-400 mt-1 font-medium">
+            {summary.active} currently in workshop
+          </div>
           <div className="absolute right-3 top-3 w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center text-blue-600">
             <Wrench className="w-4 h-4" />
           </div>
         </div>
 
         <div className="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
-          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">In Progress</div>
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            In Progress
+          </div>
           <div className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1.5 font-mono">
             {summary.active}
           </div>
-          <div className="text-[11px] text-amber-600/80 mt-1 font-medium">Inspecting / Parts waiting</div>
+          <div className="text-[11px] text-amber-600/80 mt-1 font-medium">
+            Inspecting / Parts waiting
+          </div>
           <div className="absolute right-3 top-3 w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/50 flex items-center justify-center text-amber-600">
             <Clock className="w-4 h-4" />
           </div>
         </div>
 
         <div className="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
-          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Repaired & Ready</div>
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            Repaired & Ready
+          </div>
           <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1.5 font-mono">
             {summary.ready}
           </div>
-          <div className="text-[11px] text-emerald-600/80 mt-1 font-medium">Ready for customer pickup</div>
+          <div className="text-[11px] text-emerald-600/80 mt-1 font-medium">
+            Ready for customer pickup
+          </div>
           <div className="absolute right-3 top-3 w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-600">
             <CheckCircle2 className="w-4 h-4" />
           </div>
         </div>
 
         <div className="bg-white dark:bg-[#111827] p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm relative overflow-hidden">
-          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Service Billing Value</div>
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            Service Billing Value
+          </div>
           <div className="text-2xl font-black text-indigo-600 dark:text-indigo-400 mt-1.5 font-mono">
             ৳{summary.totalRevenue.toLocaleString()}
           </div>
@@ -335,7 +369,10 @@ export default function RepairsView() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {repairs.map((ticket) => {
             const sc = statusConfig[ticket.status] || statusConfig.RECEIVED;
-            const dueAmount = Math.max(0, (Number(ticket.estimatedCost) || 0) - (Number(ticket.advancePaid) || 0));
+            const dueAmount = Math.max(
+              0,
+              (Number(ticket.estimatedCost) || 0) - (Number(ticket.advancePaid) || 0)
+            );
 
             return (
               <div
@@ -352,7 +389,12 @@ export default function RepairsView() {
                     {/* Status Dropdown */}
                     <select
                       value={ticket.status}
-                      onChange={(e) => updateStatusMutation.mutate({ id: ticket._id || ticket.id, status: e.target.value })}
+                      onChange={(e) =>
+                        updateStatusMutation.mutate({
+                          id: ticket._id || ticket.id,
+                          status: e.target.value,
+                        })
+                      }
                       className={`text-xs font-bold px-2.5 py-1 rounded-xl border appearance-none cursor-pointer focus:outline-none ${sc.color}`}
                     >
                       <option value="RECEIVED">Received</option>
@@ -408,7 +450,9 @@ export default function RepairsView() {
                     </div>
                     <div>
                       <div className="text-[9px] font-bold text-slate-400 uppercase">Due</div>
-                      <div className={`text-xs font-mono font-bold ${dueAmount > 0 ? 'text-rose-600' : 'text-slate-400'}`}>
+                      <div
+                        className={`text-xs font-mono font-bold ${dueAmount > 0 ? 'text-rose-600' : 'text-slate-400'}`}
+                      >
                         ৳{dueAmount.toLocaleString()}
                       </div>
                     </div>
@@ -418,7 +462,10 @@ export default function RepairsView() {
                 {/* Card Actions */}
                 <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
                   <div className="text-[10px] text-slate-400 truncate max-w-[140px]">
-                    Tech: <strong className="text-slate-600 dark:text-slate-300">{ticket.technicianName || 'Unassigned'}</strong>
+                    Tech:{' '}
+                    <strong className="text-slate-600 dark:text-slate-300">
+                      {ticket.technicianName || 'Unassigned'}
+                    </strong>
                   </div>
 
                   <div className="flex items-center gap-1">
@@ -547,7 +594,7 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
     issueDescription: initialData?.issueDescription || '',
     estimatedCost: initialData?.estimatedCost ? String(initialData.estimatedCost) : '',
     advancePaid: initialData?.advancePaid ? String(initialData.advancePaid) : '',
-    technicianName: initialData?.technicianName || (users[0]?.name || 'In-House Technician'),
+    technicianName: initialData?.technicianName || users[0]?.name || 'In-House Technician',
     isCustomTech: false,
     status: initialData?.status || 'RECEIVED',
   });
@@ -562,7 +609,9 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
       return data.data;
     },
     onSuccess: (ticket) => {
-      toast.success(isEdit ? 'Repair ticket updated!' : `Ticket ${ticket.ticketNumber} created successfully!`);
+      toast.success(
+        isEdit ? 'Repair ticket updated!' : `Ticket ${ticket.ticketNumber} created successfully!`
+      );
       onSuccess();
     },
     onError: (err) => {
@@ -626,7 +675,9 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
             deviceModel: latest.model,
             imeiOrSerial: latest.imei || prev.imeiOrSerial,
           }));
-          toast.success(`Auto-linked device: ${latest.model}${latest.imei ? ` (${latest.imei})` : ''}`);
+          toast.success(
+            `Auto-linked device: ${latest.model}${latest.imei ? ` (${latest.imei})` : ''}`
+          );
         }
       } catch (err) {
         console.error('Failed to fetch customer device history', err);
@@ -679,10 +730,13 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
             </div>
             <div>
               <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
-                {isEdit ? `Edit Repair Ticket #${initialData?.ticketNumber}` : 'Log New Repair Ticket'}
+                {isEdit
+                  ? `Edit Repair Ticket #${initialData?.ticketNumber}`
+                  : 'Log New Repair Ticket'}
               </h2>
               <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5 font-medium">
-                Register customer device, link customer database, assign staff technician and set pricing.
+                Register customer device, link customer database, assign staff technician and set
+                pricing.
               </p>
             </div>
           </div>
@@ -693,7 +747,8 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
           <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Customer Details (Linked to CRM) *
+                <User className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Customer Details
+                (Linked to CRM) *
               </span>
               {customers.length > 0 && (
                 <button
@@ -701,7 +756,9 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
                   onClick={() => setIsQuickCustomer(!isQuickCustomer)}
                   className="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 hover:underline font-bold"
                 >
-                  {isQuickCustomer ? 'Select from Existing Customer List' : '+ Type New Customer Details'}
+                  {isQuickCustomer
+                    ? 'Select from Existing Customer List'
+                    : '+ Type New Customer Details'}
                 </button>
               )}
             </div>
@@ -709,7 +766,9 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
             {!isQuickCustomer && customers.length > 0 && (
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-slate-800 dark:text-slate-200">Pick Existing Customer to Auto-Find Devices</label>
+                  <label className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                    Pick Existing Customer to Auto-Find Devices
+                  </label>
                   {loadingDevices && (
                     <span className="text-[11px] text-blue-600 dark:text-blue-400 animate-pulse font-bold">
                       Finding customer devices...
@@ -733,7 +792,9 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="text-xs font-bold text-slate-800 dark:text-slate-200">Customer Name *</label>
+                <label className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Customer Name *
+                </label>
                 <Input
                   required
                   placeholder="e.g. Tanvir Hasan"
@@ -743,7 +804,9 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-slate-800 dark:text-slate-200">Phone Number *</label>
+                <label className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Phone Number *
+                </label>
                 <Input
                   required
                   placeholder="e.g. 01712345678"
@@ -753,7 +816,9 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-slate-800 dark:text-slate-200">Email Address (Optional)</label>
+                <label className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Email Address (Optional)
+                </label>
                 <Input
                   type="email"
                   placeholder="customer@email.com"
@@ -768,7 +833,8 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
           {/* Device Details */}
           <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
             <span className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider flex items-center gap-1.5">
-              <Smartphone className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Device & Issue Details *
+              <Smartphone className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Device & Issue
+              Details *
             </span>
 
             {/* Auto-found Customer Devices (Chips) */}
@@ -776,7 +842,8 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
               <div className="p-3 bg-blue-50/80 dark:bg-blue-950/40 rounded-xl border border-blue-200/80 dark:border-blue-800/80 space-y-2">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-bold text-blue-800 dark:text-blue-300 flex items-center gap-1.5">
-                    <Smartphone className="w-3.5 h-3.5" /> Customer's Purchased Devices ({customerDevices.length})
+                    <Smartphone className="w-3.5 h-3.5" /> Customer's Purchased Devices (
+                    {customerDevices.length})
                   </span>
                   <span className="text-[11px] text-blue-600 dark:text-blue-400 font-bold">
                     Click device to auto-fill
@@ -806,7 +873,9 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
                         }`}
                       >
                         <div className="font-semibold truncate max-w-[220px]">{dev.model}</div>
-                        <div className={`text-[10px] ${isSelected ? 'text-blue-100' : 'text-slate-500 dark:text-slate-400'}`}>
+                        <div
+                          className={`text-[10px] ${isSelected ? 'text-blue-100' : 'text-slate-500 dark:text-slate-400'}`}
+                        >
                           {dev.imei ? `IMEI: ${dev.imei}` : `Inv: ${dev.invoice}`}
                         </div>
                       </button>
@@ -818,7 +887,9 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-bold text-slate-800 dark:text-slate-200">Device Model / Brand *</label>
+                <label className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Device Model / Brand *
+                </label>
                 <Input
                   required
                   placeholder="e.g. iPhone 13 Pro 128GB, Samsung S22"
@@ -828,7 +899,9 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-slate-800 dark:text-slate-200">IMEI / Serial Number (Optional)</label>
+                <label className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  IMEI / Serial Number (Optional)
+                </label>
                 <div className="relative mt-1.5">
                   <Input
                     placeholder="Type or select IMEI..."
@@ -852,7 +925,9 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
             </div>
 
             <div>
-              <label className="text-xs font-bold text-slate-800 dark:text-slate-200">Problem / Issue Description *</label>
+              <label className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                Problem / Issue Description *
+              </label>
               <textarea
                 required
                 rows={2}
@@ -868,10 +943,13 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
               <span className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider flex items-center gap-1.5">
-                <DollarSign className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Pricing & Advance
+                <DollarSign className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Pricing &
+                Advance
               </span>
               <div>
-                <label className="text-xs font-bold text-slate-800 dark:text-slate-200">Estimated Repair Cost (৳)</label>
+                <label className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Estimated Repair Cost (৳)
+                </label>
                 <Input
                   type="number"
                   min="0"
@@ -882,7 +960,9 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
                 />
               </div>
               <div>
-                <label className="text-xs font-bold text-slate-800 dark:text-slate-200">Advance Amount Paid (৳)</label>
+                <label className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Advance Amount Paid (৳)
+                </label>
                 <Input
                   type="number"
                   min="0"
@@ -896,12 +976,15 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
 
             <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
               <span className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Technician & Status
+                <Users className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Technician &
+                Status
               </span>
 
               {/* Technician Dropdown from Users & Staff */}
               <div>
-                <label className="text-xs font-bold text-slate-800 dark:text-slate-200">Assigned Technician (Staff)</label>
+                <label className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Assigned Technician (Staff)
+                </label>
                 <select
                   value={form.isCustomTech ? 'custom' : form.technicianName}
                   onChange={(e) => {
@@ -935,7 +1018,9 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-800 dark:text-slate-200">Repair Status</label>
+                <label className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Repair Status
+                </label>
                 <select
                   value={form.status}
                   onChange={(e) => setForm({ ...form, status: e.target.value })}
@@ -953,7 +1038,12 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
           </div>
 
           <DialogFooter className="border-t border-slate-200 dark:border-slate-800 pt-3">
-            <Button type="button" variant="outline" onClick={onClose} className="rounded-xl text-xs font-semibold">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="rounded-xl text-xs font-semibold"
+            >
               Cancel
             </Button>
             <Button
@@ -976,7 +1066,10 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
 // ----------------------------------------------------------------------
 function ViewRepairModal({ ticket, onClose, onStatusChange }) {
   const printRef = useRef(null);
-  const dueAmount = Math.max(0, (Number(ticket.estimatedCost) || 0) - (Number(ticket.advancePaid) || 0));
+  const dueAmount = Math.max(
+    0,
+    (Number(ticket.estimatedCost) || 0) - (Number(ticket.advancePaid) || 0)
+  );
 
   const handlePrint = () => {
     window.print();
@@ -1004,11 +1097,15 @@ function ViewRepairModal({ ticket, onClose, onStatusChange }) {
           <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2">
             <div className="flex justify-between">
               <span className="text-slate-400 font-medium">Customer:</span>
-              <strong className="text-slate-900 dark:text-slate-100 font-bold">{ticket.customerName}</strong>
+              <strong className="text-slate-900 dark:text-slate-100 font-bold">
+                {ticket.customerName}
+              </strong>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-400 font-medium">Phone:</span>
-              <strong className="font-mono text-slate-900 dark:text-slate-100">{ticket.customerPhone}</strong>
+              <strong className="font-mono text-slate-900 dark:text-slate-100">
+                {ticket.customerPhone}
+              </strong>
             </div>
             <div className="flex justify-between border-t border-slate-200/60 dark:border-slate-800 pt-2">
               <span className="text-slate-400 font-medium">Device Model:</span>
@@ -1017,32 +1114,46 @@ function ViewRepairModal({ ticket, onClose, onStatusChange }) {
             {ticket.imeiOrSerial && (
               <div className="flex justify-between">
                 <span className="text-slate-400 font-medium">IMEI / Serial:</span>
-                <span className="font-mono text-slate-600 dark:text-slate-300">{ticket.imeiOrSerial}</span>
+                <span className="font-mono text-slate-600 dark:text-slate-300">
+                  {ticket.imeiOrSerial}
+                </span>
               </div>
             )}
           </div>
 
           {/* Fault Symptoms */}
           <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-1">
-            <div className="text-[10px] font-bold text-slate-400 uppercase">Fault Symptoms / Work Required</div>
-            <p className="text-slate-800 dark:text-slate-200 font-medium">{ticket.issueDescription}</p>
+            <div className="text-[10px] font-bold text-slate-400 uppercase">
+              Fault Symptoms / Work Required
+            </div>
+            <p className="text-slate-800 dark:text-slate-200 font-medium">
+              {ticket.issueDescription}
+            </p>
           </div>
 
           {/* Financial Breakdown */}
           <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2">
             <div className="flex justify-between">
               <span>Estimated Cost:</span>
-              <strong className="font-mono font-bold">৳{Number(ticket.estimatedCost || 0).toLocaleString()}</strong>
+              <strong className="font-mono font-bold">
+                ৳{Number(ticket.estimatedCost || 0).toLocaleString()}
+              </strong>
             </div>
             <div className="flex justify-between text-emerald-600 font-semibold">
               <span>Advance Paid:</span>
-              <span className="font-mono font-bold">৳{Number(ticket.advancePaid || 0).toLocaleString()}</span>
+              <span className="font-mono font-bold">
+                ৳{Number(ticket.advancePaid || 0).toLocaleString()}
+              </span>
             </div>
             <div className="flex justify-between font-black text-sm pt-2 border-t border-slate-200 dark:border-slate-700">
-              <span className={dueAmount > 0 ? 'text-rose-600' : 'text-slate-900 dark:text-slate-100'}>
+              <span
+                className={dueAmount > 0 ? 'text-rose-600' : 'text-slate-900 dark:text-slate-100'}
+              >
                 Remaining Due:
               </span>
-              <span className={`font-mono ${dueAmount > 0 ? 'text-rose-600' : 'text-slate-900 dark:text-slate-100'}`}>
+              <span
+                className={`font-mono ${dueAmount > 0 ? 'text-rose-600' : 'text-slate-900 dark:text-slate-100'}`}
+              >
                 ৳{dueAmount.toLocaleString()}
               </span>
             </div>
@@ -1084,7 +1195,8 @@ function ViewRepairModal({ ticket, onClose, onStatusChange }) {
                 onClick={onCollectDue}
                 className="rounded-xl text-xs font-bold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
               >
-                <CreditCard className="w-3.5 h-3.5" /> Collect Remaining Due (৳{dueAmount.toLocaleString()})
+                <CreditCard className="w-3.5 h-3.5" /> Collect Remaining Due (৳
+                {dueAmount.toLocaleString()})
               </Button>
             )}
           </div>
@@ -1108,9 +1220,12 @@ function CollectRepairDueModal({ ticket, onClose, onSuccess }) {
   const activeMethods = useActivePaymentMethods();
 
   const mutation = useMutation({
-    mutationFn: async (payload) => api.post(`/repairs/${ticket._id || ticket.id}/collect-due`, payload),
+    mutationFn: async (payload) =>
+      api.post(`/repairs/${ticket._id || ticket.id}/collect-due`, payload),
     onSuccess: () => {
-      toast.success(`Repair due collection of ৳${Number(amount).toLocaleString()} recorded successfully!`);
+      toast.success(
+        `Repair due collection of ৳${Number(amount).toLocaleString()} recorded successfully!`
+      );
       onSuccess();
     },
     onError: (err) => {
@@ -1155,15 +1270,23 @@ function CollectRepairDueModal({ ticket, onClose, onSuccess }) {
           <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2">
             <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
               <span>Total Estimated Cost:</span>
-              <span className="font-mono font-bold text-slate-900 dark:text-slate-100">৳{Number(ticket.estimatedCost || 0).toLocaleString()}</span>
+              <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
+                ৳{Number(ticket.estimatedCost || 0).toLocaleString()}
+              </span>
             </div>
             <div className="flex justify-between text-xs text-slate-600 dark:text-slate-400 font-medium">
               <span>Already Paid Advance:</span>
-              <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">৳{Number(ticket.advancePaid || 0).toLocaleString()}</span>
+              <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                ৳{Number(ticket.advancePaid || 0).toLocaleString()}
+              </span>
             </div>
             <div className="flex justify-between text-xs pt-1.5 border-t border-slate-200 dark:border-slate-700/80">
-              <span className="font-bold text-slate-800 dark:text-slate-200">Current Remaining Due:</span>
-              <span className="font-mono font-bold text-rose-600 dark:text-rose-400 text-base">৳{due.toLocaleString()}</span>
+              <span className="font-bold text-slate-800 dark:text-slate-200">
+                Current Remaining Due:
+              </span>
+              <span className="font-mono font-bold text-rose-600 dark:text-rose-400 text-base">
+                ৳{due.toLocaleString()}
+              </span>
             </div>
           </div>
 
@@ -1211,11 +1334,21 @@ function CollectRepairDueModal({ ticket, onClose, onSuccess }) {
               onChange={(e) => setPaymentMethod(e.target.value)}
               className="w-full h-11 px-3 py-2 bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-slate-100"
             >
-              <option value="CASH" disabled={!activeMethods.hasCash}>Cash Payment {!activeMethods.hasCash && ' (Disabled)'}</option>
-              <option value="BANK" disabled={!activeMethods.hasBank}>Bank Transfer / Card {!activeMethods.hasBank && ' (Disabled)'}</option>
-              <option value="BKASH" disabled={!activeMethods.hasBkash}>bKash Merchant {!activeMethods.hasBkash && ' (Disabled)'}</option>
-              <option value="NAGAD" disabled={!activeMethods.hasNagad}>Nagad {!activeMethods.hasNagad && ' (Disabled)'}</option>
-              <option value="ROCKET" disabled={!activeMethods.hasRocket}>Rocket {!activeMethods.hasRocket && ' (Disabled)'}</option>
+              <option value="CASH" disabled={!activeMethods.hasCash}>
+                Cash Payment {!activeMethods.hasCash && ' (Disabled)'}
+              </option>
+              <option value="BANK" disabled={!activeMethods.hasBank}>
+                Bank Transfer / Card {!activeMethods.hasBank && ' (Disabled)'}
+              </option>
+              <option value="BKASH" disabled={!activeMethods.hasBkash}>
+                bKash Merchant {!activeMethods.hasBkash && ' (Disabled)'}
+              </option>
+              <option value="NAGAD" disabled={!activeMethods.hasNagad}>
+                Nagad {!activeMethods.hasNagad && ' (Disabled)'}
+              </option>
+              <option value="ROCKET" disabled={!activeMethods.hasRocket}>
+                Rocket {!activeMethods.hasRocket && ' (Disabled)'}
+              </option>
             </select>
           </div>
 

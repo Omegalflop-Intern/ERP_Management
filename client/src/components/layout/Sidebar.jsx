@@ -1,11 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import {
-  ChevronDown,
-  ChevronRight,
-  Smartphone,
-  User,
-  X,
-} from 'lucide-react';
+import { ChevronDown, ChevronRight, Smartphone, User, X } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { menuItems } from '../../config/sidebar.config';

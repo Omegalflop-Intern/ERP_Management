@@ -25,7 +25,8 @@ export function useActivePaymentMethods() {
     const names = activeList.map((a) => (a.name || '').toLowerCase());
     return {
       hasCash: names.some((n) => n.includes('cash')) || codes.includes('1000'),
-      hasBank: names.some((n) => n.includes('bank') || n.includes('card')) || codes.includes('1010'),
+      hasBank:
+        names.some((n) => n.includes('bank') || n.includes('card')) || codes.includes('1010'),
       hasBkash: names.some((n) => n.includes('bkash')) || codes.includes('1011'),
       hasNagad: names.some((n) => n.includes('nagad')) || codes.includes('1012'),
       hasRocket: names.some((n) => n.includes('rocket')) || codes.includes('1013'),

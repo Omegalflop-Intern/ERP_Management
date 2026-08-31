@@ -514,12 +514,42 @@ export default function LandingPage() {
   ];
 
   const publicPageLinks = [
-    { label: 'About Us', to: '/about', icon: Building2, desc: 'Our mission, vision & gadget ERP story' },
-    { label: 'Contact Support', to: '/contact', icon: MessageSquare, desc: 'Sales inquiries & 24/7 technical help' },
-    { label: 'Developer Profile', to: '/developer', icon: Code, desc: 'Architect portfolio & tech stack' },
-    { label: 'Terms of Service', to: '/terms', icon: Scale, desc: 'SaaS licensing & tenant guidelines' },
-    { label: 'Privacy Policy', to: '/privacy', icon: Shield, desc: 'Data encryption & isolation protocols' },
-    { label: 'Refund Policy', to: '/refund', icon: FileText, desc: 'Subscription billing & refund terms' },
+    {
+      label: 'About Us',
+      to: '/about',
+      icon: Building2,
+      desc: 'Our mission, vision & gadget ERP story',
+    },
+    {
+      label: 'Contact Support',
+      to: '/contact',
+      icon: MessageSquare,
+      desc: 'Sales inquiries & 24/7 technical help',
+    },
+    {
+      label: 'Developer Profile',
+      to: '/developer',
+      icon: Code,
+      desc: 'Architect portfolio & tech stack',
+    },
+    {
+      label: 'Terms of Service',
+      to: '/terms',
+      icon: Scale,
+      desc: 'SaaS licensing & tenant guidelines',
+    },
+    {
+      label: 'Privacy Policy',
+      to: '/privacy',
+      icon: Shield,
+      desc: 'Data encryption & isolation protocols',
+    },
+    {
+      label: 'Refund Policy',
+      to: '/refund',
+      icon: FileText,
+      desc: 'Subscription billing & refund terms',
+    },
   ];
 
   const scrollTo = (id) => {
@@ -698,7 +728,9 @@ export default function LandingPage() {
                           : 'text-slate-300 bg-white/5 hover:bg-white/10 hover:text-white'
                       }`}
                     >
-                      <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-white' : 'text-indigo-400'}`} />
+                      <Icon
+                        className={`h-3.5 w-3.5 ${isActive ? 'text-white' : 'text-indigo-400'}`}
+                      />
                       <span>{tab.label}</span>
                     </button>
                   );
@@ -991,7 +1023,8 @@ export default function LandingPage() {
                 const monthlyPrice = plan.monthlyPrice ?? plan.priceMonthly;
                 const yearlyPrice = plan.yearlyPrice ?? plan.priceYearly;
                 const isPop = plan.isPopular || plan.popular;
-                const isEnterprise = plan.name === 'ENTERPRISE' || (!monthlyPrice && plan.name !== 'FREE');
+                const isEnterprise =
+                  plan.name === 'ENTERPRISE' || (!monthlyPrice && plan.name !== 'FREE');
                 const isFree = plan.name === 'FREE' && !monthlyPrice;
 
                 return (
@@ -1094,7 +1127,11 @@ export default function LandingPage() {
                             : 'text-slate-300 bg-white/5 hover:bg-white/10 border border-white/10'
                       }`}
                     >
-                      {isEnterprise ? 'Contact Sales' : isFree ? 'Get Started Free' : 'Start 14-Day Free Trial'}
+                      {isEnterprise
+                        ? 'Contact Sales'
+                        : isFree
+                          ? 'Get Started Free'
+                          : 'Start 14-Day Free Trial'}
                     </Link>
                   </div>
                 );

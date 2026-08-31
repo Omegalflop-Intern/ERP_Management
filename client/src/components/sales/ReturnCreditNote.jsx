@@ -215,7 +215,8 @@ export default function ReturnCreditNote({ sale, returnLog, returnLogsGroup }) {
 
         <div className="flex justify-between items-center text-[10px] text-slate-500 pt-2 border-t border-slate-200">
           <div>
-            Issued on: {returnDate.toLocaleString('en-BD')} | {companyInfo.invoiceFooter} • <span className="font-semibold text-slate-700">Powered by OmniManage ERP Suite</span>
+            Issued on: {returnDate.toLocaleString('en-BD')} | {companyInfo.invoiceFooter} •{' '}
+            <span className="font-semibold text-slate-700">Powered by OmniManage ERP Suite</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 min-w-[32px] min-h-[32px] overflow-hidden flex-shrink-0">

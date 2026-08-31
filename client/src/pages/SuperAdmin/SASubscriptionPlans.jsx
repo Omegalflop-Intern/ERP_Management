@@ -303,7 +303,8 @@ function PlanForm({
             </span>
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            When enabled, visitors can see and choose this plan on the public website and shop registration.
+            When enabled, visitors can see and choose this plan on the public website and shop
+            registration.
           </p>
         </div>
         <button
@@ -507,7 +508,8 @@ export default function SASubscriptionPlans() {
       {/* Plan Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {plans.map((plan) => {
-          const isEnterprise = plan.name === 'ENTERPRISE' || (!plan.monthlyPrice && plan.name !== 'FREE');
+          const isEnterprise =
+            plan.name === 'ENTERPRISE' || (!plan.monthlyPrice && plan.name !== 'FREE');
           const isFree = plan.name === 'FREE' && !plan.monthlyPrice;
 
           return (
@@ -579,7 +581,9 @@ export default function SASubscriptionPlans() {
                 ) : isFree ? (
                   <div>
                     <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-black text-gray-900 dark:text-white">Free</span>
+                      <span className="text-2xl font-black text-gray-900 dark:text-white">
+                        Free
+                      </span>
                     </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">
                       Free forever, no credit card required
@@ -596,7 +600,8 @@ export default function SASubscriptionPlans() {
                     {plan.yearlyPrice > 0 && (
                       <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
                         ৳{Number(plan.yearlyPrice).toLocaleString()}/year (save{' '}
-                        {Math.round((1 - plan.yearlyPrice / ((plan.monthlyPrice || 1) * 12)) * 100)}%)
+                        {Math.round((1 - plan.yearlyPrice / ((plan.monthlyPrice || 1) * 12)) * 100)}
+                        %)
                       </p>
                     )}
                   </div>
@@ -699,4 +704,3 @@ export default function SASubscriptionPlans() {
     </div>
   );
 }
-

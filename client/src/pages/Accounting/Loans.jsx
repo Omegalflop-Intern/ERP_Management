@@ -69,7 +69,7 @@ export default function Loans() {
     queryFn: async () => {
       const res = await api.get('/accounting/accounts', { params: { limit: 200 } });
       return res.data?.data || [];
-    }
+    },
   });
 
   const isMethodActive = (method) => {
@@ -81,7 +81,7 @@ export default function Loans() {
     else if (methodStr.includes('nagad')) code = '1012';
     else if (methodStr.includes('rocket')) code = '1013';
 
-    const acct = accountsData.find(a => a.code === code);
+    const acct = accountsData.find((a) => a.code === code);
     return acct ? Boolean(acct.isActive ?? acct.is_active) : true;
   };
 
@@ -351,7 +351,8 @@ export default function Loans() {
                     <div className="flex items-center justify-between pt-1 mt-1 border-t border-dashed border-gray-200 dark:border-gray-800">
                       <span>Installment Plan:</span>
                       <strong className="text-blue-600 dark:text-blue-400">
-                        {loan.installmentCount} Inst. (৳{Math.round(loan.loanAmount / loan.installmentCount).toLocaleString()}/mo)
+                        {loan.installmentCount} Inst. (৳
+                        {Math.round(loan.loanAmount / loan.installmentCount).toLocaleString()}/mo)
                       </strong>
                     </div>
                   )}
@@ -520,7 +521,7 @@ export default function Loans() {
                   </label>
                   <input name="phone" placeholder="e.g. 01711..." className={inputCls} />
                 </div>
-                <div className={installmentsCount > 1 ? "col-span-1" : "grid grid-cols-2 gap-2"}>
+                <div className={installmentsCount > 1 ? 'col-span-1' : 'grid grid-cols-2 gap-2'}>
                   <div>
                     <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">
                       Loan Start Date
@@ -586,7 +587,9 @@ export default function Loans() {
 
                 {installmentsCount > 1 && (
                   <div className="col-span-1 sm:col-span-2 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-400 p-3 rounded-xl border border-emerald-100 dark:border-emerald-800/40 text-xs mt-1">
-                    <strong>Monthly Repayment Schedule Enabled:</strong> repayments will be automatically scheduled monthly starting 1 month after the Loan Start Date. No manual due date selection is required.
+                    <strong>Monthly Repayment Schedule Enabled:</strong> repayments will be
+                    automatically scheduled monthly starting 1 month after the Loan Start Date. No
+                    manual due date selection is required.
                   </div>
                 )}
                 <div>
@@ -672,8 +675,8 @@ export default function Loans() {
                     { value: 'bank', label: 'Bank Transfer' },
                     { value: 'bkash', label: 'bKash' },
                     { value: 'nagad', label: 'Nagad' },
-                    { value: 'rocket', label: 'Rocket' }
-                  ].map(m => (
+                    { value: 'rocket', label: 'Rocket' },
+                  ].map((m) => (
                     <option key={m.value} value={m.value} disabled={!isMethodActive(m.value)}>
                       {m.label} {!isMethodActive(m.value) ? '(Deactivated)' : ''}
                     </option>

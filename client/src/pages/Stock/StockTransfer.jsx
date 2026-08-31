@@ -186,9 +186,13 @@ export default function StockTransfer() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
-                        <div className="font-medium">{t.productId?.name || t.product?.name || 'Product'}</div>
+                        <div className="font-medium">
+                          {t.productId?.name || t.product?.name || 'Product'}
+                        </div>
                         {t.productId?.sku && (
-                          <div className="text-xs text-gray-400 font-mono">SKU: {t.productId.sku}</div>
+                          <div className="text-xs text-gray-400 font-mono">
+                            SKU: {t.productId.sku}
+                          </div>
                         )}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
@@ -228,7 +232,10 @@ export default function StockTransfer() {
                             <>
                               <button
                                 onClick={() =>
-                                  updateStatusMutation.mutate({ id: t._id || t.id, status: 'IN_TRANSIT' })
+                                  updateStatusMutation.mutate({
+                                    id: t._id || t.id,
+                                    status: 'IN_TRANSIT',
+                                  })
                                 }
                                 className="px-2.5 py-1 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg text-xs font-medium transition-colors"
                               >
@@ -236,7 +243,10 @@ export default function StockTransfer() {
                               </button>
                               <button
                                 onClick={() =>
-                                  updateStatusMutation.mutate({ id: t._id || t.id, status: 'CANCELLED' })
+                                  updateStatusMutation.mutate({
+                                    id: t._id || t.id,
+                                    status: 'CANCELLED',
+                                  })
                                 }
                                 className="px-2.5 py-1 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300 rounded-lg text-xs font-medium transition-colors"
                               >
@@ -247,7 +257,10 @@ export default function StockTransfer() {
                           {t.status === 'IN_TRANSIT' && (
                             <button
                               onClick={() =>
-                                updateStatusMutation.mutate({ id: t._id || t.id, status: 'DELIVERED' })
+                                updateStatusMutation.mutate({
+                                  id: t._id || t.id,
+                                  status: 'DELIVERED',
+                                })
                               }
                               className="px-2.5 py-1 bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50 text-green-700 dark:text-green-300 rounded-lg text-xs font-medium transition-colors"
                             >
@@ -282,10 +295,7 @@ export default function StockTransfer() {
       )}
 
       {printTransfer && (
-        <TransferChallanModal
-          transfer={printTransfer}
-          onClose={() => setPrintTransfer(null)}
-        />
+        <TransferChallanModal transfer={printTransfer} onClose={() => setPrintTransfer(null)} />
       )}
     </div>
   );

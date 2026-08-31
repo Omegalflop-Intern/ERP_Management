@@ -109,7 +109,8 @@ export default function Expenses() {
     },
   });
 
-  const rawPurchaseOrders = purchaseData?.orders || (Array.isArray(purchaseData) ? purchaseData : []);
+  const rawPurchaseOrders =
+    purchaseData?.orders || (Array.isArray(purchaseData) ? purchaseData : []);
   const purchaseOrders = rawPurchaseOrders.filter((po) => po.status !== 'CANCELLED');
 
   const totalPurchasesCost = purchaseOrders.reduce((sum, po) => {
@@ -127,7 +128,7 @@ export default function Expenses() {
     queryFn: async () => {
       const res = await api.get('/accounting/accounts', { params: { limit: 200 } });
       return res.data?.data || [];
-    }
+    },
   });
 
   const isMethodActive = (method) => {
@@ -139,7 +140,7 @@ export default function Expenses() {
     else if (methodStr.includes('nagad')) code = '1012';
     else if (methodStr.includes('rocket')) code = '1013';
 
-    const acct = accountsData.find(a => a.code === code);
+    const acct = accountsData.find((a) => a.code === code);
     return acct ? Boolean(acct.isActive ?? acct.is_active) : true;
   };
   // Combined sorted list for all outgoings
@@ -159,8 +160,11 @@ export default function Expenses() {
       const net = Number(po.netTotal || po.net_total || po.subTotal || 0);
       const ret = Number(po.returnedAmount || po.returned_amount || 0);
       const netCost = Math.max(0, net - ret);
-      const supplierName = typeof po.supplierId === 'object' ? po.supplierId?.name : (po.supplier_name || 'Supplier');
-      const itemNames = (po.lineItems || []).map((li) => `${li.name || li.description} × ${li.qty}`).join(', ');
+      const supplierName =
+        typeof po.supplierId === 'object' ? po.supplierId?.name : po.supplier_name || 'Supplier';
+      const itemNames = (po.lineItems || [])
+        .map((li) => `${li.name || li.description} × ${li.qty}`)
+        .join(', ');
       return {
         id: `po-${po.id || po._id}`,
         type: 'PURCHASE',
@@ -297,8 +301,12 @@ export default function Expenses() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className={cardCls}>
           <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-500 uppercase font-semibold">Operating Expenses</span>
-            <span className="p-1.5 bg-red-100 dark:bg-red-900/30 text-red-600 rounded-lg text-xs font-bold">OPEX</span>
+            <span className="text-xs text-gray-500 uppercase font-semibold">
+              Operating Expenses
+            </span>
+            <span className="p-1.5 bg-red-100 dark:bg-red-900/30 text-red-600 rounded-lg text-xs font-bold">
+              OPEX
+            </span>
           </div>
           <div className="text-2xl font-bold text-red-600 mt-1">
             ৳{totalOpExpenses.toLocaleString()}
@@ -310,8 +318,12 @@ export default function Expenses() {
 
         <div className={cardCls}>
           <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-500 uppercase font-semibold">Product Restock Cost</span>
-            <span className="p-1.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 rounded-lg text-xs font-bold">STOCK</span>
+            <span className="text-xs text-gray-500 uppercase font-semibold">
+              Product Restock Cost
+            </span>
+            <span className="p-1.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 rounded-lg text-xs font-bold">
+              STOCK
+            </span>
           </div>
           <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">
             ৳{totalPurchasesCost.toLocaleString()}
@@ -323,21 +335,25 @@ export default function Expenses() {
 
         <div className={cardCls}>
           <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-500 uppercase font-semibold">Total Shop Outgoings</span>
-            <span className="p-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 rounded-lg text-xs font-bold">ALL</span>
+            <span className="text-xs text-gray-500 uppercase font-semibold">
+              Total Shop Outgoings
+            </span>
+            <span className="p-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-600 rounded-lg text-xs font-bold">
+              ALL
+            </span>
           </div>
           <div className="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">
             ৳{totalCombinedOutflow.toLocaleString()}
           </div>
-          <div className="text-xs text-muted-foreground mt-1">
-            Expenses + Stock Restocks
-          </div>
+          <div className="text-xs text-muted-foreground mt-1">Expenses + Stock Restocks</div>
         </div>
 
         <div className={cardCls}>
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-500 uppercase font-semibold">Rent & Utilities</span>
-            <span className="p-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-lg text-xs font-bold">FIXED</span>
+            <span className="p-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-lg text-xs font-bold">
+              FIXED
+            </span>
           </div>
           <div className="text-2xl font-bold text-blue-600 mt-1">
             ৳
@@ -347,7 +363,9 @@ export default function Expenses() {
             ).toLocaleString()}
           </div>
           <div className="text-xs text-muted-foreground mt-1 truncate">
-            Top: {Object.entries(summary.categoryBreakdown || {}).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A'}
+            Top:{' '}
+            {Object.entries(summary.categoryBreakdown || {}).sort((a, b) => b[1] - a[1])[0]?.[0] ||
+              'N/A'}
           </div>
         </div>
       </div>
@@ -391,12 +409,24 @@ export default function Expenses() {
               <thead>
                 <tr className="border-b border-gray-200 dark:border-gray-800 text-left bg-gray-50/50 dark:bg-gray-900/50">
                   <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Date</th>
-                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Title / Purpose</th>
-                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Category</th>
-                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Amount</th>
-                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Method</th>
-                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Voucher / Notes</th>
-                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 text-right">Actions</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">
+                    Title / Purpose
+                  </th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">
+                    Category
+                  </th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">
+                    Amount
+                  </th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">
+                    Method
+                  </th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">
+                    Voucher / Notes
+                  </th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 text-right">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -501,13 +531,27 @@ export default function Expenses() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200 dark:border-gray-800 text-left bg-gray-50/50 dark:bg-gray-900/50">
-                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Date & PO #</th>
-                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Supplier</th>
-                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Purchased Products</th>
-                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Net Cost (৳)</th>
-                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Payment</th>
-                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Status</th>
-                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 text-right">Action</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">
+                    Date & PO #
+                  </th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">
+                    Supplier
+                  </th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">
+                    Purchased Products
+                  </th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">
+                    Net Cost (৳)
+                  </th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">
+                    Payment
+                  </th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400 text-right">
+                    Action
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -528,8 +572,12 @@ export default function Expenses() {
                     const net = Number(po.netTotal || po.net_total || po.subTotal || 0);
                     const ret = Number(po.returnedAmount || po.returned_amount || 0);
                     const netCost = Math.max(0, net - ret);
-                    const supplierName = typeof po.supplierId === 'object' ? po.supplierId?.name : (po.supplier_name || 'Supplier');
-                    const supplierPhone = typeof po.supplierId === 'object' ? po.supplierId?.phone : '';
+                    const supplierName =
+                      typeof po.supplierId === 'object'
+                        ? po.supplierId?.name
+                        : po.supplier_name || 'Supplier';
+                    const supplierPhone =
+                      typeof po.supplierId === 'object' ? po.supplierId?.phone : '';
 
                     return (
                       <tr
@@ -537,18 +585,27 @@ export default function Expenses() {
                         className="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/30"
                       >
                         <td className="px-4 py-3">
-                          <div className="font-semibold text-gray-900 dark:text-gray-100">{po.poNumber}</div>
-                          <div className="text-xs text-gray-500">{new Date(po.createdAt || po.created_at).toLocaleDateString()}</div>
+                          <div className="font-semibold text-gray-900 dark:text-gray-100">
+                            {po.poNumber}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {new Date(po.createdAt || po.created_at).toLocaleDateString()}
+                          </div>
                         </td>
                         <td className="px-4 py-3">
-                          <div className="font-medium text-gray-900 dark:text-gray-100">{supplierName}</div>
-                          {supplierPhone && <div className="text-xs text-gray-500">{supplierPhone}</div>}
+                          <div className="font-medium text-gray-900 dark:text-gray-100">
+                            {supplierName}
+                          </div>
+                          {supplierPhone && (
+                            <div className="text-xs text-gray-500">{supplierPhone}</div>
+                          )}
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex flex-wrap gap-1.5 max-w-md">
                             {(po.lineItems || []).map((li, idx) => {
                               const retCount = (po.returnLogs || []).reduce((sum, rl) => {
-                                const pidMatch = String(rl.productId) === String(li.productId || li.id);
+                                const pidMatch =
+                                  String(rl.productId) === String(li.productId || li.id);
                                 return pidMatch ? sum + Number(rl.qty || 0) : sum;
                               }, 0);
                               const activeQty = Math.max(0, Number(li.qty || 1) - retCount);
@@ -567,14 +624,18 @@ export default function Expenses() {
                                       ({li.qty} bought, {retCount} ret.)
                                     </span>
                                   )}
-                                  <span className="text-[10px] opacity-70">(@৳{Math.round(Number(li.unitCost || 0)).toLocaleString()})</span>
+                                  <span className="text-[10px] opacity-70">
+                                    (@৳{Math.round(Number(li.unitCost || 0)).toLocaleString()})
+                                  </span>
                                 </span>
                               );
                             })}
                           </div>
                         </td>
                         <td className="px-4 py-3 font-mono">
-                          <div className="font-bold text-indigo-600 dark:text-indigo-400">৳{netCost.toLocaleString()} Net</div>
+                          <div className="font-bold text-indigo-600 dark:text-indigo-400">
+                            ৳{netCost.toLocaleString()} Net
+                          </div>
                           {ret > 0 && (
                             <div className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold">
                               was ৳{net.toLocaleString()} gross (-৳{ret.toLocaleString()} ret.)
@@ -618,10 +679,18 @@ export default function Expenses() {
                 <tr className="border-b border-gray-200 dark:border-gray-800 text-left bg-gray-50/50 dark:bg-gray-900/50">
                   <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Date</th>
                   <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Type</th>
-                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Description / Details</th>
-                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Category</th>
-                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Amount</th>
-                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">Payment</th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">
+                    Description / Details
+                  </th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">
+                    Category
+                  </th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">
+                    Amount
+                  </th>
+                  <th className="px-4 py-3 font-semibold text-gray-600 dark:text-gray-400">
+                    Payment
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -652,14 +721,22 @@ export default function Expenses() {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <div className="font-semibold text-gray-900 dark:text-gray-100">{row.title}</div>
+                        <div className="font-semibold text-gray-900 dark:text-gray-100">
+                          {row.title}
+                        </div>
                         <div className="text-xs text-gray-500">{row.details}</div>
                       </td>
                       <td className="px-4 py-3 text-xs font-medium text-gray-600 dark:text-gray-300">
                         {row.category}
                       </td>
                       <td className="px-4 py-3 font-mono font-bold">
-                        <span className={row.type === 'EXPENSE' ? 'text-red-600 dark:text-red-400' : 'text-indigo-600 dark:text-indigo-400'}>
+                        <span
+                          className={
+                            row.type === 'EXPENSE'
+                              ? 'text-red-600 dark:text-red-400'
+                              : 'text-indigo-600 dark:text-indigo-400'
+                          }
+                        >
                           ৳{row.amount.toLocaleString()}
                         </span>
                       </td>
@@ -794,8 +871,8 @@ export default function Expenses() {
                       { value: 'Nagad', label: 'Nagad' },
                       { value: 'Rocket', label: 'Rocket' },
                       { value: 'Bank Transfer', label: 'Bank Transfer' },
-                      { value: 'Card', label: 'Card' }
-                    ].map(m => (
+                      { value: 'Card', label: 'Card' },
+                    ].map((m) => (
                       <option key={m.value} value={m.value} disabled={!isMethodActive(m.value)}>
                         {m.label} {!isMethodActive(m.value) ? '(Deactivated)' : ''}
                       </option>
@@ -815,9 +892,13 @@ export default function Expenses() {
                   Receipts / Proof
                 </label>
                 <div className="flex items-center gap-2">
-                  <label className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm ${addUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <label
+                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm ${addUploading ? 'opacity-50 pointer-events-none' : ''}`}
+                  >
                     <Upload className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-500">{addUploading ? 'Uploading...' : 'Attach receipt (image/PDF)'}</span>
+                    <span className="text-gray-500">
+                      {addUploading ? 'Uploading...' : 'Attach receipt (image/PDF)'}
+                    </span>
                     <input
                       type="file"
                       accept="image/*,.pdf"
@@ -829,12 +910,12 @@ export default function Expenses() {
                         setAddUploading(true);
                         try {
                           const fd = new FormData();
-                          files.forEach(f => fd.append('receipts', f));
+                          files.forEach((f) => fd.append('receipts', f));
                           const res = await api.post('/expenses/upload-receipts', fd, {
                             headers: { 'Content-Type': 'multipart/form-data' },
                           });
                           const urls = res.data?.data?.urls || [];
-                          setAddReceipts(prev => [...prev, ...urls]);
+                          setAddReceipts((prev) => [...prev, ...urls]);
                           toast.success(`${urls.length} receipt(s) uploaded`);
                         } catch (err) {
                           toast.error(err.response?.data?.message || 'Upload failed');
@@ -849,12 +930,24 @@ export default function Expenses() {
                 {addReceipts.length > 0 && (
                   <div className="mt-2 space-y-1">
                     {addReceipts.map((url, idx) => (
-                      <div key={idx} className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-1.5">
-                        <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-blue-500 hover:underline truncate">
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-1.5"
+                      >
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 text-xs text-blue-500 hover:underline truncate"
+                        >
                           <FileImage className="w-3.5 h-3.5 shrink-0" />
                           <span className="truncate">Receipt {idx + 1}</span>
                         </a>
-                        <button type="button" onClick={() => setAddReceipts(prev => prev.filter((_, i) => i !== idx))} className="text-red-400 hover:text-red-600 ml-2">
+                        <button
+                          type="button"
+                          onClick={() => setAddReceipts((prev) => prev.filter((_, i) => i !== idx))}
+                          className="text-red-400 hover:text-red-600 ml-2"
+                        >
                           <X className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -929,12 +1022,12 @@ function EditExpenseModal({
     setUploading(true);
     try {
       const fd = new FormData();
-      files.forEach(f => fd.append('receipts', f));
+      files.forEach((f) => fd.append('receipts', f));
       const res = await api.post('/expenses/upload-receipts', fd, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       const urls = res.data?.data?.urls || [];
-      setReceipts(prev => [...prev, ...urls]);
+      setReceipts((prev) => [...prev, ...urls]);
       toast.success(`${urls.length} receipt(s) uploaded`);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Upload failed');
@@ -945,7 +1038,7 @@ function EditExpenseModal({
   };
 
   const removeReceipt = (idx) => {
-    setReceipts(prev => prev.filter((_, i) => i !== idx));
+    setReceipts((prev) => prev.filter((_, i) => i !== idx));
   };
 
   return (
@@ -1037,8 +1130,8 @@ function EditExpenseModal({
                   { value: 'Nagad', label: 'Nagad' },
                   { value: 'Rocket', label: 'Rocket' },
                   { value: 'Bank Transfer', label: 'Bank Transfer' },
-                  { value: 'Card', label: 'Card' }
-                ].map(m => (
+                  { value: 'Card', label: 'Card' },
+                ].map((m) => (
                   <option key={m.value} value={m.value} disabled={!isMethodActive(m.value)}>
                     {m.label} {!isMethodActive(m.value) ? '(Deactivated)' : ''}
                   </option>
@@ -1068,9 +1161,13 @@ function EditExpenseModal({
               Receipts / Proof
             </label>
             <div className="flex items-center gap-2">
-              <label className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
+              <label
+                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
+              >
                 <Upload className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-500">{uploading ? 'Uploading...' : 'Attach receipt'}</span>
+                <span className="text-gray-500">
+                  {uploading ? 'Uploading...' : 'Attach receipt'}
+                </span>
                 <input
                   type="file"
                   accept="image/*,.pdf"
@@ -1083,12 +1180,24 @@ function EditExpenseModal({
             {receipts.length > 0 && (
               <div className="mt-2 space-y-1">
                 {receipts.map((url, idx) => (
-                  <div key={idx} className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-1.5">
-                    <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs text-blue-500 hover:underline truncate">
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-lg px-3 py-1.5"
+                  >
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-xs text-blue-500 hover:underline truncate"
+                    >
                       <FileImage className="w-3.5 h-3.5 shrink-0" />
                       <span className="truncate">Receipt {idx + 1}</span>
                     </a>
-                    <button type="button" onClick={() => removeReceipt(idx)} className="text-red-400 hover:text-red-600 ml-2">
+                    <button
+                      type="button"
+                      onClick={() => removeReceipt(idx)}
+                      className="text-red-400 hover:text-red-600 ml-2"
+                    >
                       <X className="w-3.5 h-3.5" />
                     </button>
                   </div>

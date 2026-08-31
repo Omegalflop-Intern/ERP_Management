@@ -33,7 +33,9 @@ export default function EmployeeAnalytics() {
   } = useQuery({
     queryKey: ['employee-analytics', period, activeBranchId],
     queryFn: async () => {
-      const { data } = await api.get('/reports/employees', { params: { period, branchId: activeBranchId } });
+      const { data } = await api.get('/reports/employees', {
+        params: { period, branchId: activeBranchId },
+      });
       return data?.data;
     },
   });
@@ -108,7 +110,12 @@ export default function EmployeeAnalytics() {
                   <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} />
                   <Tooltip content={<ChartTooltip isCurrency={true} />} />
-                  <Bar dataKey="totalRevenue" fill="#6366f1" radius={[4, 4, 0, 0]} name="Total Revenue (৳)" />
+                  <Bar
+                    dataKey="totalRevenue"
+                    fill="#6366f1"
+                    radius={[4, 4, 0, 0]}
+                    name="Total Revenue (৳)"
+                  />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -145,7 +152,13 @@ export default function EmployeeAnalytics() {
                     strokeWidth={2}
                     name="Absent"
                   />
-                  <Line type="monotone" dataKey="late" stroke="#f59e0b" strokeWidth={2} name="Late" />
+                  <Line
+                    type="monotone"
+                    dataKey="late"
+                    stroke="#f59e0b"
+                    strokeWidth={2}
+                    name="Late"
+                  />
                 </LineChart>
               </ResponsiveContainer>
             )}
@@ -197,7 +210,10 @@ export default function EmployeeAnalytics() {
           ) : (
             <div className="space-y-3">
               {analytics.salesByEmployee.slice(0, 5).map((emp, i) => (
-                <div key={emp.name || i} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                <div
+                  key={emp.name || i}
+                  className="flex items-center gap-3 p-3 rounded-lg bg-muted/50"
+                >
                   <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-sm font-bold text-indigo-600">
                     {i + 1}
                   </div>
@@ -206,7 +222,9 @@ export default function EmployeeAnalytics() {
                     <div className="text-xs text-muted-foreground">Staff</div>
                   </div>
                   <div className="text-right">
-                    <div className="font-medium text-emerald-600 dark:text-emerald-400">৳{Number(emp.totalRevenue || 0).toLocaleString()}</div>
+                    <div className="font-medium text-emerald-600 dark:text-emerald-400">
+                      ৳{Number(emp.totalRevenue || 0).toLocaleString()}
+                    </div>
                     <div className="text-xs text-muted-foreground">{emp.salesCount || 0} Sales</div>
                   </div>
                 </div>

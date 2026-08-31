@@ -27,7 +27,11 @@ export default function AssetsPage() {
   const [showModal, setShowModal] = useState(false);
   const [search, setSearch] = useState('');
 
-  const { data: assetsData, isLoading, refetch } = useQuery({
+  const {
+    data: assetsData,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ['accounting-assets'],
     queryFn: async () => {
       const res = await api.get('/accounting/assets');
@@ -61,8 +65,14 @@ export default function AssetsPage() {
     );
   });
 
-  const totalAssetValue = filteredAssets.reduce((sum, a) => sum + Number(a.purchaseCost || a.balance || 0), 0);
-  const currentBookValue = filteredAssets.reduce((sum, a) => sum + Number(a.currentBookValue || a.balance || a.purchaseCost || 0), 0);
+  const totalAssetValue = filteredAssets.reduce(
+    (sum, a) => sum + Number(a.purchaseCost || a.balance || 0),
+    0
+  );
+  const currentBookValue = filteredAssets.reduce(
+    (sum, a) => sum + Number(a.currentBookValue || a.balance || a.purchaseCost || 0),
+    0
+  );
   const totalDepreciation = Math.max(0, totalAssetValue - currentBookValue);
 
   const cardCls = styled
@@ -182,11 +192,15 @@ export default function AssetsPage() {
                   <th className="px-4 py-3.5 font-bold uppercase text-xs text-right">
                     Purchase Cost
                   </th>
-                  <th className="px-4 py-3.5 font-bold uppercase text-xs text-right">Useful Life</th>
+                  <th className="px-4 py-3.5 font-bold uppercase text-xs text-right">
+                    Useful Life
+                  </th>
                   <th className="px-4 py-3.5 font-bold uppercase text-xs text-right">
                     Current Value
                   </th>
-                  <th className="px-4 py-3.5 font-bold uppercase text-xs text-right">Monthly Depreciation</th>
+                  <th className="px-4 py-3.5 font-bold uppercase text-xs text-right">
+                    Monthly Depreciation
+                  </th>
                   <th className="px-4 py-3.5 font-bold uppercase text-xs text-center">Action</th>
                 </tr>
               </thead>
@@ -205,7 +219,9 @@ export default function AssetsPage() {
                     >
                       <td className="px-4 py-3.5 font-bold text-gray-900 dark:text-gray-100">
                         <div>{asset.assetName || asset.name || 'Shop Asset'}</div>
-                        {asset.code && <div className="text-[11px] font-mono text-gray-400">{asset.code}</div>}
+                        {asset.code && (
+                          <div className="text-[11px] font-mono text-gray-400">{asset.code}</div>
+                        )}
                       </td>
                       <td className="px-4 py-3.5">
                         <span className="text-xs px-2.5 py-0.5 rounded-full font-bold uppercase bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300">
@@ -215,7 +231,9 @@ export default function AssetsPage() {
                       <td className="px-4 py-3.5 font-mono text-xs text-gray-600 dark:text-gray-400">
                         {asset.purchaseDate
                           ? new Date(asset.purchaseDate).toLocaleDateString()
-                          : (asset.createdAt ? new Date(asset.createdAt).toLocaleDateString() : 'N/A')}
+                          : asset.createdAt
+                            ? new Date(asset.createdAt).toLocaleDateString()
+                            : 'N/A'}
                       </td>
                       <td className="px-4 py-3.5 text-right font-mono text-gray-900 dark:text-gray-100">
                         ৳{pCost.toLocaleString()}

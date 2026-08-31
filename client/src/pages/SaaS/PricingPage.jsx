@@ -573,8 +573,8 @@ export default function PricingPage() {
         <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 p-10 text-center text-white space-y-5">
           <h2 className="text-3xl font-bold">Ready to get started?</h2>
           <p className="text-blue-100 max-w-md mx-auto">
-            Join hundreds of mobile &amp; gadget shops already running on Omni-Manage. Start free today — no
-            credit card required.
+            Join hundreds of mobile &amp; gadget shops already running on Omni-Manage. Start free
+            today — no credit card required.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link

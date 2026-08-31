@@ -482,7 +482,8 @@ export default function WholesaleOrders() {
                     return {
                       lineItemId,
                       productId: item?.productId?._id || item?.productId || lineItemId,
-                      name: item?.product?.name || item?.description || item?.name || 'Wholesale Item',
+                      name:
+                        item?.product?.name || item?.description || item?.name || 'Wholesale Item',
                       quantity: Number(qty),
                       unitPrice: Number(item?.unitPrice || 0),
                       reason: returnReason,

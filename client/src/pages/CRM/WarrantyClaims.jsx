@@ -198,9 +198,10 @@ export default function WarrantyClaims() {
                   const pName = cl.notes?.startsWith('Item:')
                     ? cl.notes.replace(/^Item:\s*/i, '')
                     : cl.notes?.startsWith('Sold via')
-                    ? cl.notes.split('—')[0]
-                    : cl.imei?.productId?.name || 'Device / Accessory';
-                  const invNum = cl.invoiceRef?.invoiceNumber || (cl.notes?.match(/INV-[\w-]+/)?.[0] || '—');
+                      ? cl.notes.split('—')[0]
+                      : cl.imei?.productId?.name || 'Device / Accessory';
+                  const invNum =
+                    cl.invoiceRef?.invoiceNumber || cl.notes?.match(/INV-[\w-]+/)?.[0] || '—';
 
                   return (
                     <tr
@@ -211,7 +212,9 @@ export default function WarrantyClaims() {
                         <div className="font-bold text-gray-900 dark:text-gray-100">
                           {cl.customer?.name || 'Customer'}
                         </div>
-                        <div className="text-xs text-gray-500">{cl.customer?.phone || 'No phone'}</div>
+                        <div className="text-xs text-gray-500">
+                          {cl.customer?.phone || 'No phone'}
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <div className="font-semibold text-gray-900 dark:text-gray-100 text-xs">
@@ -294,10 +297,7 @@ export default function WarrantyClaims() {
         />
       )}
       {printClaim && (
-        <WarrantyClaimSlipModal
-          claim={printClaim}
-          onClose={() => setPrintClaim(null)}
-        />
+        <WarrantyClaimSlipModal claim={printClaim} onClose={() => setPrintClaim(null)} />
       )}
     </div>
   );
@@ -366,7 +366,9 @@ function WarrantyClaimModal({ customers, imeis, onClose }) {
     }
 
     if (!item.isWarrantyValid && !item.isRefunded) {
-      toast.warning(`Note: The warranty for this product expired on ${new Date(item.warrantyExpiryDate).toLocaleDateString()}. Claim will be logged as out-of-warranty / chargeable repair.`);
+      toast.warning(
+        `Note: The warranty for this product expired on ${new Date(item.warrantyExpiryDate).toLocaleDateString()}. Claim will be logged as out-of-warranty / chargeable repair.`
+      );
     } else if (item.isRefunded) {
       toast.error('This product was already refunded/settled in a previous claim.');
     } else {
@@ -409,9 +411,12 @@ function WarrantyClaimModal({ customers, imeis, onClose }) {
       >
         <div className="p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/60 flex items-center justify-between shrink-0">
           <div>
-            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">Log Warranty Claim</h2>
+            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
+              Log Warranty Claim
+            </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
-              Wholesale & Retail warranty tracking with auto-selected customer products and expiry check.
+              Wholesale & Retail warranty tracking with auto-selected customer products and expiry
+              check.
             </p>
           </div>
           <button
@@ -474,7 +479,8 @@ function WarrantyClaimModal({ customers, imeis, onClose }) {
                 </div>
               ) : customerItems.length === 0 ? (
                 <div className="p-3 text-center bg-white dark:bg-[#1e293b] rounded-xl border border-dashed border-slate-200 dark:border-slate-700 text-slate-400 text-xs">
-                  No completed purchases found for this customer. You can enter details manually below.
+                  No completed purchases found for this customer. You can enter details manually
+                  below.
                 </div>
               ) : (
                 <div className="max-h-44 overflow-y-auto space-y-1.5 pr-1">
@@ -709,13 +715,15 @@ function ClaimDetailModal({ claim: cl, onClose, onPrint }) {
             <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800">
               <span className="text-slate-500 font-medium">Product / Item</span>
               <span className="font-bold text-slate-900 dark:text-slate-100">
-                {cl.notes?.replace(/^Item:\s*/i, '') || cl.imei?.productId?.name || 'Device / Accessory'}
+                {cl.notes?.replace(/^Item:\s*/i, '') ||
+                  cl.imei?.productId?.name ||
+                  'Device / Accessory'}
               </span>
             </div>
             <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800">
               <span className="text-slate-500 font-medium">Invoice Ref</span>
               <span className="font-mono font-bold text-blue-600 dark:text-blue-400">
-                {cl.invoiceRef?.invoiceNumber || (cl.notes?.match(/INV-[\w-]+/)?.[0] || '—')}
+                {cl.invoiceRef?.invoiceNumber || cl.notes?.match(/INV-[\w-]+/)?.[0] || '—'}
               </span>
             </div>
             <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800">
@@ -726,7 +734,9 @@ function ClaimDetailModal({ claim: cl, onClose, onPrint }) {
             </div>
             <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800">
               <span className="text-slate-500 font-medium">Claim Type</span>
-              <span className="capitalize font-bold text-slate-900 dark:text-slate-100">{cl.claimType}</span>
+              <span className="capitalize font-bold text-slate-900 dark:text-slate-100">
+                {cl.claimType}
+              </span>
             </div>
             <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800">
               <span className="text-slate-500 font-medium">Status</span>
