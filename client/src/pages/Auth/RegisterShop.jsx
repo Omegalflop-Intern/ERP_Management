@@ -99,6 +99,16 @@ export default function RegisterShop() {
 
   const [registeredTenantData, setRegisteredTenantData] = useState(null);
   const [showActivationModal, setShowActivationModal] = useState(false);
+  const [copiedRef, setCopiedRef] = useState(false);
+
+  const handleCopyRef = () => {
+    if (registeredTenantData?.shopRefCode) {
+      navigator.clipboard.writeText(registeredTenantData.shopRefCode);
+      setCopiedRef(true);
+      toast.success('Reference ID copied to clipboard!');
+      setTimeout(() => setCopiedRef(false), 2000);
+    }
+  };
 
   const [platformSettings, setPlatformSettings] = useState({
     platformName: 'OmniManage ERP',
@@ -741,7 +751,7 @@ export default function RegisterShop() {
       {/* ─── SHOP ACTIVATION & SUPPORT POPUP MODAL ──────────────────────── */}
       {showActivationModal && registeredTenantData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
-          <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 text-slate-900 dark:text-slate-100 overflow-hidden">
+          <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5 text-slate-900 dark:text-slate-100 overflow-hidden">
             {/* Top Shine */}
             <div className="absolute -top-24 -left-24 w-48 h-48 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
 
@@ -759,23 +769,55 @@ export default function RegisterShop() {
                   </p>
                 </div>
               </div>
+              <button
+                type="button"
+                onClick={() => setShowActivationModal(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                title="Close"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
             {/* Shop Details Card */}
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 space-y-2">
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 space-y-2.5">
               <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-500 dark:text-slate-400 font-semibold">Shop Name:</span>
                 <span className="font-bold text-slate-900 dark:text-white">
                   {registeredTenantData.shopName}
                 </span>
               </div>
+              {registeredTenantData.ownerName && (
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-500 dark:text-slate-400 font-semibold">
+                    Owner Name:
+                  </span>
+                  <span className="font-medium text-slate-800 dark:text-slate-200">
+                    {registeredTenantData.ownerName}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-500 dark:text-slate-400 font-semibold">
                   Reference ID:
                 </span>
-                <span className="font-mono font-bold text-yellow-600 dark:text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded border border-yellow-400/30">
-                  {registeredTenantData.shopRefCode}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-mono font-bold text-yellow-600 dark:text-yellow-400 bg-yellow-400/10 px-2 py-0.5 rounded border border-yellow-400/30">
+                    {registeredTenantData.shopRefCode}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleCopyRef}
+                    className="p-1 rounded bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/20 text-slate-700 dark:text-slate-300 transition-colors"
+                    title="Copy Reference Code"
+                  >
+                    {copiedRef ? (
+                      <Check className="w-3.5 h-3.5 text-emerald-500" />
+                    ) : (
+                      <Copy className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                </div>
               </div>
               <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-500 dark:text-slate-400 font-semibold">
@@ -859,17 +901,28 @@ export default function RegisterShop() {
               </div>
             )}
 
-            {/* Bottom Actions */}
-            <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-end">
+            {/* Bottom Actions: Direct Login & Navigation */}
+            <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
               <button
                 type="button"
                 onClick={() => {
                   setShowActivationModal(false);
-                  navigate(`/verify-email?email=${encodeURIComponent(registeredTenantData.email)}`);
+                  navigate('/');
                 }}
-                className="px-6 py-2.5 rounded-xl font-bold text-xs text-white bg-[#2563EB] hover:bg-blue-700 transition-all shadow-md"
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl font-semibold text-xs text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 transition-all text-center"
               >
-                Proceed to Verify Email OTP & Sign In
+                Back to Home
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowActivationModal(false);
+                  navigate('/login');
+                }}
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl font-bold text-xs text-white bg-[#2563EB] hover:bg-blue-700 transition-all shadow-md flex items-center justify-center gap-1.5"
+              >
+                <span>Go to Login</span>
+                <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </div>
