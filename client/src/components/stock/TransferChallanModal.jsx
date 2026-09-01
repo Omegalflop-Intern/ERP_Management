@@ -52,7 +52,7 @@ export default function TransferChallanModal({ transfer, onClose }) {
       {/* Modal Container */}
       <div className="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
         {/* Top Control Header */}
-        <div className="p-4 sm:px-6 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between gap-4 shrink-0">
+        <div className="p-4 sm:px-6 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between gap-4 shrink-0 no-print">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-blue-600/10 text-blue-400 flex items-center justify-center font-bold">
               <Truck className="w-5 h-5" />
@@ -113,12 +113,13 @@ export default function TransferChallanModal({ transfer, onClose }) {
         </div>
 
         {/* Printable View Area */}
-        <div className="p-4 sm:p-6 overflow-y-auto bg-slate-950 flex justify-center">
+        <div className="p-4 sm:p-6 overflow-y-auto bg-slate-950 flex justify-center print:p-0 print:bg-white">
           {/* A4 Format Document */}
           {printSize === 'a4' ? (
             <div
               ref={componentRef}
-              className="bg-white text-slate-900 p-8 w-full max-w-[210mm] min-h-[270mm] rounded-xl shadow-xl flex flex-col justify-between print:shadow-none print:p-4 print:max-w-none print:w-full print:min-h-[270mm]"
+              data-printable="true"
+              className="printable-invoice-container printable-challan bg-white text-slate-900 p-8 w-full max-w-[210mm] min-h-[270mm] rounded-xl shadow-xl flex flex-col justify-between print:shadow-none print:p-4 print:max-w-none print:w-full print:min-h-[270mm]"
               style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
             >
               <div>
@@ -306,7 +307,8 @@ export default function TransferChallanModal({ transfer, onClose }) {
             /* POS 80mm Thermal Receipt Format */
             <div
               ref={componentRef}
-              className="bg-white text-slate-900 p-4 w-[80mm] rounded-lg shadow-xl text-xs flex flex-col justify-between print:shadow-none print:p-2 print:w-full"
+              data-printable="true"
+              className="printable-invoice-container printable-challan bg-white text-slate-900 p-4 w-[80mm] rounded-lg shadow-xl text-xs flex flex-col justify-between print:shadow-none print:p-2 print:w-full"
               style={{ fontFamily: 'monospace' }}
             >
               <div className="text-center pb-2 border-b border-dashed border-slate-400">

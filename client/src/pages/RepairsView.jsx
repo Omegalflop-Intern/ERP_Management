@@ -1078,7 +1078,7 @@ function ViewRepairModal({ ticket, onClose, onStatusChange }) {
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-xl w-[94vw] max-h-[90vh] overflow-y-auto rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-2xl bg-white dark:bg-[#0f172a]">
-        <DialogHeader className="border-b border-slate-100 dark:border-slate-800 pb-3 pr-10">
+        <DialogHeader className="border-b border-slate-100 dark:border-slate-800 pb-3 pr-10 no-print">
           <div className="flex items-center justify-between">
             <div>
               <DialogTitle className="font-mono text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
@@ -1092,7 +1092,11 @@ function ViewRepairModal({ ticket, onClose, onStatusChange }) {
         </DialogHeader>
 
         {/* Printable Card Area */}
-        <div ref={printRef} className="space-y-4 pt-2 text-xs">
+        <div
+          ref={printRef}
+          data-printable="true"
+          className="printable-invoice-container printable-repair-sheet space-y-4 pt-2 text-xs"
+        >
           {/* Customer & Device Box */}
           <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2">
             <div className="flex justify-between">
@@ -1151,16 +1155,14 @@ function ViewRepairModal({ ticket, onClose, onStatusChange }) {
               >
                 Remaining Due:
               </span>
-              <span
-                className={`font-mono ${dueAmount > 0 ? 'text-rose-600' : 'text-slate-900 dark:text-slate-100'}`}
-              >
+              <span className={`font-mono ${dueAmount > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
                 ৳{dueAmount.toLocaleString()}
               </span>
             </div>
           </div>
 
           {/* Status Quick Bar */}
-          <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-900/40 p-3 rounded-2xl border border-slate-200 dark:border-slate-800">
+          <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-900/40 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 no-print">
             <span className="text-xs font-semibold">Current Status:</span>
             <select
               value={ticket.status}
@@ -1177,7 +1179,7 @@ function ViewRepairModal({ ticket, onClose, onStatusChange }) {
           </div>
         </div>
 
-        <DialogFooter className="border-t border-slate-100 dark:border-slate-800 pt-4 flex items-center justify-between sm:justify-between">
+        <DialogFooter className="border-t border-slate-100 dark:border-slate-800 pt-4 flex items-center justify-between sm:justify-between no-print">
           <div className="flex items-center gap-2">
             <Button
               type="button"

@@ -1376,6 +1376,8 @@ input.global-search-input,
   *::after {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
   }
 
   html,
@@ -1398,45 +1400,88 @@ input.global-search-input,
     min-height: 0 !important;
     position: static !important;
     display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
 
   body * {
     visibility: hidden;
   }
 
+  /* Hide UI elements, navigation, buttons, control bars */
   aside,
   nav,
   header,
+  footer,
   button,
   .no-print,
-  [role="dialog"],
-  .fixed,
-  .sticky {
+  .print-hide,
+  [data-print-hide="true"] {
     display: none !important;
   }
 
+  /* Reset modal overlays and dialog wrappers so they do not clip or hide content */
+  .fixed,
+  .sticky,
+  [role="dialog"],
+  [data-radix-portal],
+  .fixed.inset-0 {
+    position: static !important;
+    display: block !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+
+  /* Make all invoice, bill, challan, token, and receipt components visible */
   .printable-invoice-container,
   .printable-invoice-container *,
+  .printable-bill,
+  .printable-bill *,
+  .printable-challan,
+  .printable-challan *,
+  .printable-slip,
+  .printable-slip *,
+  .printable-document,
+  .printable-document *,
+  .printable-repair-sheet,
+  .printable-repair-sheet *,
   #printable-receipt,
-  #printable-receipt * {
+  #printable-receipt *,
+  [data-printable="true"],
+  [data-printable="true"] * {
     visibility: visible !important;
   }
 
-  .printable-invoice-container {
+  .printable-invoice-container,
+  .printable-bill,
+  .printable-challan,
+  .printable-slip,
+  .printable-document,
+  .printable-repair-sheet,
+  [data-printable="true"] {
     position: absolute !important;
     left: 0 !important;
     top: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
-    min-height: 100% !important;
+    min-height: auto !important;
     margin: 0 !important;
     padding: 0 !important;
     background: #ffffff !important;
+    color: #000000 !important;
     box-shadow: none !important;
     border: none !important;
     z-index: 999999 !important;
-    display: flex !important;
-    flex-direction: column !important;
+    display: block !important;
   }
 
   #printable-receipt {
@@ -1444,8 +1489,8 @@ input.global-search-input,
     left: 0 !important;
     top: 0 !important;
     width: 80mm !important;
-    color: #000 !important;
-    background: #fff !important;
+    color: #000000 !important;
+    background: #ffffff !important;
     font-size: 11px !important;
     padding: 10px !important;
   }
