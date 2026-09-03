@@ -249,36 +249,72 @@ app.get('/api/v1/system/analytics', authenticate, requireSuperAdmin, async (req,
     const cpus = os.cpus();
     const loadAvg = os.loadavg();
 
-    let dbStats = { collections: 0, documents: 0, storageSize: 0, dataSize: 0 };
+    let dbStats = { collections: 0, documents: 0, storageSize: 0, dataSize: 0, indexSize: 0, avgObjSize: 0 };
     let collections = [];
     try {
-      const tablesRes = await db.raw("SELECT table_name, table_rows FROM information_schema.tables WHERE table_schema = DATABASE()");
+      const tablesRes = await db.raw(`
+        SELECT 
+          table_name, 
+          table_rows, 
+          data_length, 
+          index_length, 
+          (data_length + index_length) AS total_size 
+        FROM information_schema.tables 
+        WHERE table_schema = DATABASE()
+        ORDER BY (data_length + index_length) DESC
+      `);
       const tableRows = tablesRes[0] || [];
+      const totalData = tableRows.reduce((acc, t) => acc + Number(t.DATA_LENGTH || t.data_length || 0), 0);
+      const totalIndex = tableRows.reduce((acc, t) => acc + Number(t.INDEX_LENGTH || t.index_length || 0), 0);
+      const totalDocs = tableRows.reduce((acc, t) => acc + Number(t.TABLE_ROWS || t.table_rows || 0), 0);
+      const totalStorage = totalData + totalIndex;
+
       dbStats = {
         collections: tableRows.length,
-        documents: tableRows.reduce((acc, t) => acc + Number(t.TABLE_ROWS || t.table_rows || 0), 0),
-        storageSize: 0,
-        dataSize: 0,
+        documents: totalDocs,
+        dataSize: totalData,
+        indexSize: totalIndex,
+        storageSize: totalStorage,
+        avgObjSize: totalDocs > 0 ? Math.round(totalData / totalDocs) : 0,
       };
-      collections = tableRows.map((t, idx) => ({
-        name: t.TABLE_NAME || t.table_name || `collection_${idx}`,
-        count: Number(t.TABLE_ROWS || t.table_rows || 0),
-        size: 0,
-      }));
-    } catch (e) {}
+
+      collections = tableRows.map((t, idx) => {
+        const dSize = Number(t.DATA_LENGTH || t.data_length || 0);
+        const iSize = Number(t.INDEX_LENGTH || t.index_length || 0);
+        const tSize = Number(t.TOTAL_SIZE || t.total_size || (dSize + iSize));
+        return {
+          name: t.TABLE_NAME || t.table_name || `table_${idx}`,
+          count: Number(t.TABLE_ROWS || t.table_rows || 0),
+          size: dSize,
+          storageSize: tSize,
+          indexSize: iSize,
+        };
+      });
+    } catch (e) {
+      console.error('[ANALYTICS] DB stats query error:', e.message);
+    }
 
     let uploadsSize = 0;
     try {
       const fs = await import('fs');
-      const uploadsDir = path.join(__dirname, '../uploads');
+      const candidates = [
+        path.join(__dirname, 'uploads'),
+        path.resolve(__dirname, 'uploads'),
+        path.resolve(__dirname, '../uploads'),
+        path.resolve(process.cwd(), 'uploads'),
+        path.resolve(process.cwd(), 'server/uploads'),
+      ];
+      const uploadsDir = candidates.find((d) => fs.default.existsSync(d)) || candidates[0];
       const walkDir = (dir) => {
         if (!fs.default.existsSync(dir)) return;
         const files = fs.default.readdirSync(dir);
         for (const f of files) {
           const fp = path.join(dir, f);
-          const stat = fs.default.statSync(fp);
-          if (stat.isDirectory()) walkDir(fp);
-          else uploadsSize += stat.size;
+          try {
+            const stat = fs.default.statSync(fp);
+            if (stat.isDirectory()) walkDir(fp);
+            else uploadsSize += stat.size;
+          } catch {}
         }
       };
       walkDir(uploadsDir);

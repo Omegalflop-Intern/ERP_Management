@@ -272,44 +272,44 @@ export default function SystemAnalytics() {
       {/* Database */}
       <div>
         <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3 flex items-center gap-2">
-          <Database className="w-4 h-4" /> Database
+          <Database className="w-4 h-4" /> MySQL / MariaDB Database
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             icon={Database}
-            label="Collections"
+            label="Database Tables"
             value={s.database?.collections || 0}
-            sub="MongoDB collections"
+            sub="MySQL / MariaDB tables"
             color="text-emerald-600 dark:text-emerald-400"
           />
           <StatCard
             icon={Database}
-            label="Documents"
+            label="Total Records"
             value={(s.database?.documents || 0).toLocaleString()}
-            sub="Total documents"
+            sub="Active SQL rows"
             color="text-teal-600 dark:text-teal-400"
           />
           <StatCard
             icon={HardDrive}
             label="Data Size"
             value={formatBytes(s.database?.dataSize)}
-            sub={`Avg obj: ${formatBytes(s.database?.avgObjSize)}`}
+            sub={`Index: ${formatBytes(s.database?.indexSize)}`}
             color="text-orange-600 dark:text-orange-400"
           />
           <StatCard
             icon={HardDrive}
-            label="Storage Size"
+            label="Total DB Storage"
             value={formatBytes(s.database?.storageSize)}
-            sub={`Index: ${formatBytes(s.database?.indexSize)}`}
+            sub={`Data + Index size`}
             color="text-rose-600 dark:text-rose-400"
           />
         </div>
       </div>
 
-      {/* Collection Breakdown */}
+      {/* Table Breakdown */}
       <div>
         <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3 flex items-center gap-2">
-          <Database className="w-4 h-4" /> Collection Breakdown
+          <Database className="w-4 h-4" /> Table Storage Breakdown
         </h2>
         <div className={`${cardCls} overflow-hidden`}>
           <div className="overflow-x-auto">
@@ -317,19 +317,19 @@ export default function SystemAnalytics() {
               <thead>
                 <tr className="border-b border-gray-200 dark:border-gray-800">
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
-                    Collection
+                    Table Name
                   </th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
-                    Documents
+                    Rows
                   </th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
                     Data Size
                   </th>
                   <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
-                    Storage
+                    Storage (Data + Index)
                   </th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase w-48">
-                    Size
+                    Relative Size
                   </th>
                 </tr>
               </thead>
@@ -355,11 +355,11 @@ export default function SystemAnalytics() {
                       <td className="px-4 py-3 text-right text-sm text-gray-700 dark:text-gray-300">
                         {formatBytes(coll.size)}
                       </td>
-                      <td className="px-4 py-3 text-right text-sm text-gray-700 dark:text-gray-300">
+                      <td className="px-4 py-3 text-right text-sm text-gray-700 dark:text-gray-300 font-medium">
                         {formatBytes(coll.storageSize)}
                       </td>
                       <td className="px-4 py-3">
-                        <ProgressBar value={coll.storageSize} max={maxStorage} color="bg-red-500" />
+                        <ProgressBar value={coll.storageSize} max={maxStorage} color="bg-blue-500" />
                       </td>
                     </tr>
                   );
@@ -370,7 +370,7 @@ export default function SystemAnalytics() {
                       colSpan={5}
                       className="px-4 py-8 text-center text-gray-500 dark:text-gray-400 text-sm"
                     >
-                      No collection data available
+                      No database table data available
                     </td>
                   </tr>
                 )}
@@ -380,24 +380,24 @@ export default function SystemAnalytics() {
         </div>
       </div>
 
-      {/* Uploads */}
+      {/* Storage & Uploads */}
       <div>
         <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase mb-3 flex items-center gap-2">
-          <Upload className="w-4 h-4" /> Storage
+          <Upload className="w-4 h-4" /> Storage Breakdown
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <StatCard
             icon={Upload}
             label="Uploads Folder"
             value={formatBytes(s.uploads?.totalSize)}
-            sub="Images, invoices, reports"
+            sub="Media, avatars, invoices & attachments"
             color="text-violet-600 dark:text-violet-400"
           />
           <StatCard
             icon={HardDrive}
-            label="Total System"
+            label="Total System Footprint"
             value={formatBytes((s.database?.storageSize || 0) + (s.uploads?.totalSize || 0))}
-            sub="DB + Uploads combined"
+            sub="Database + Uploads storage combined"
             color="text-fuchsia-600 dark:text-fuchsia-400"
           />
         </div>
