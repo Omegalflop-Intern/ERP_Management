@@ -12,6 +12,14 @@ export const getAllEmployees = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
+export const getMyEmployeeProfile = async (req, res, next) => {
+  try {
+    const tenantId = req.user?.tenantId || null;
+    const employee = await employeeService.getMyEmployee(req.user.userId || req.user.id, tenantId);
+    return ApiResponse.success(res, employee);
+  } catch (error) { next(error); }
+};
+
 export const getEmployeeById = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;

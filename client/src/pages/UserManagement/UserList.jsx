@@ -311,6 +311,7 @@ function UserFormModal({ user, onClose, onSuccess }) {
   const [step, setStep] = useState('form'); // 'form' or 'otp'
   const [createdUser, setCreatedUser] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
+  const queryClient = useQueryClient();
   const [form, setForm] = useState({
     username: user?.username || '',
     email: user?.email || '',
@@ -365,6 +366,8 @@ function UserFormModal({ user, onClose, onSuccess }) {
         );
         setStep('otp');
         toast.info(`User created! Verification OTP sent to ${form.email}`);
+        queryClient.invalidateQueries({ queryKey: ['users'] });
+        queryClient.invalidateQueries({ queryKey: ['employees'] });
       }
     },
     onError: (e) => {

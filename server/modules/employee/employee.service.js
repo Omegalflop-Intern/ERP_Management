@@ -77,7 +77,13 @@ export const syncUserToEmployee = async (userId, userData = null, tenantId = nul
     // Do NOT sync Temp Support Admins or Super Admins into shop staff employees table!
     const userUsername = String(user.username || '').toLowerCase();
     const userEmailStr = String(user.email || '').toLowerCase();
-    const userRoleName = String(user.role_name || user.role_name_val || (typeof user.role === 'object' ? user.role?.name : user.role) || '').toUpperCase();
+    const userRoleName = String(
+      user.roleName ||
+      user.role_name ||
+      user.role_name_val ||
+      (typeof user.role === 'object' ? user.role?.name : user.role) ||
+      ''
+    ).toUpperCase();
 
     if (userUsername.startsWith('support_') || userEmailStr.includes('@temp.omnimanage.local') || userRoleName === 'SUPER_ADMIN') {
       return null;
@@ -96,6 +102,10 @@ export const syncUserToEmployee = async (userId, userData = null, tenantId = nul
 
     const existingEmp = await db('employees').where({ user_id: uId }).first();
 
+    const isActive = user.isActive !== undefined
+      ? Boolean(user.isActive)
+      : (user.is_active !== undefined ? Boolean(user.is_active) : true);
+
     if (existingEmp) {
       await db('employees')
         .where({ id: existingEmp.id })
@@ -108,7 +118,7 @@ export const syncUserToEmployee = async (userId, userData = null, tenantId = nul
           branch: branchName,
           branch_id: bId !== undefined ? bId : existingEmp.branch_id,
           tenant_id: tId || existingEmp.tenant_id,
-          is_active: user.is_active !== undefined ? Boolean(user.is_active) : true,
+          is_active: isActive,
           is_deleted: false,
           updated_at: new Date(),
         });
@@ -132,8 +142,8 @@ export const syncUserToEmployee = async (userId, userData = null, tenantId = nul
         department,
         branch: branchName,
         salary: user.salary || 0,
-        joining_date: user.created_at ? new Date(user.created_at) : new Date(),
-        is_active: user.is_active !== undefined ? Boolean(user.is_active) : true,
+        joining_date: (user.createdAt || user.created_at) ? new Date(user.createdAt || user.created_at) : new Date(),
+        is_active: isActive,
         is_deleted: false,
       });
       return getEmployeeById(insertedId, tId);
@@ -142,6 +152,41 @@ export const syncUserToEmployee = async (userId, userData = null, tenantId = nul
     console.error(`[SYNC-EMPLOYEE] Failed to sync user ${userId} to employee:`, err.message);
     return null;
   }
+};
+
+export const getMyEmployee = async (userId, tenantId = null) => {
+  const uId = Number(userId);
+  if (!uId || isNaN(uId)) return null;
+
+  let row = await db('employees')
+    .leftJoin('users', 'employees.user_id', 'users.id')
+    .where({ 'employees.user_id': uId, 'employees.is_deleted': false })
+    .select(
+      'employees.*',
+      'users.id as u_id',
+      'users.username as u_username',
+      'users.email as u_email'
+    )
+    .first();
+
+  if (!row) {
+    // Attempt auto-sync
+    await syncUserToEmployee(uId, null, tenantId);
+    row = await db('employees')
+      .leftJoin('users', 'employees.user_id', 'users.id')
+      .where({ 'employees.user_id': uId, 'employees.is_deleted': false })
+      .select(
+        'employees.*',
+        'users.id as u_id',
+        'users.username as u_username',
+        'users.email as u_email'
+      )
+      .first();
+  }
+
+  if (!row) return null;
+  const uRow = row.u_id ? { id: row.u_id, username: row.u_username, email: row.u_email } : null;
+  return formatEmployee(row, uRow);
 };
 
 export const getAllEmployees = async (page = 1, limit = 20, search = '', branch = '', tenantId = null, branchId = null) => {
@@ -176,7 +221,9 @@ export const getAllEmployees = async (page = 1, limit = 20, search = '', branch 
   applyTenantScope(countQuery, tenantId);
   if (branch) countQuery.where('employees.branch', branch);
   if (branchId && branchId !== 'all') {
-    countQuery.where('employees.branch_id', branchId);
+    countQuery.where((b) => {
+      b.where('employees.branch_id', branchId).orWhereNull('employees.branch_id');
+    });
   }
 
   if (search) {
@@ -208,7 +255,9 @@ export const getAllEmployees = async (page = 1, limit = 20, search = '', branch 
   applyTenantScope(dataQuery, tenantId);
   if (branch) dataQuery.where('employees.branch', branch);
   if (branchId && branchId !== 'all') {
-    dataQuery.where('employees.branch_id', branchId);
+    dataQuery.where((b) => {
+      b.where('employees.branch_id', branchId).orWhereNull('employees.branch_id');
+    });
   }
 
   if (search) {

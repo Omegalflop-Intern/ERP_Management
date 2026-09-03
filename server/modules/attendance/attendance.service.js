@@ -77,14 +77,12 @@ export const checkOut = async (employeeId, location, tenantId = null, branchId =
   const todayStr = new Date().toISOString().slice(0, 10);
   const attQuery = db('attendances').where({ employee_id: employeeId, date: todayStr, is_deleted: false });
   if (tenantId) attQuery.where('tenant_id', tenantId);
-  if (branchId) attQuery.where('branch_id', branchId);
   const attendance = await attQuery.first();
   if (!attendance) throw ApiError.badRequest('No check-in found for today');
   if (attendance.check_out) throw ApiError.badRequest('Already checked out today');
 
   const coQ = db('attendances').where({ id: attendance.id });
   if (tenantId) coQ.andWhere('tenant_id', tenantId);
-  if (branchId) coQ.andWhere('branch_id', branchId);
   await coQ.update({
     check_out: new Date(),
     lat: location?.lat || attendance.lat,
@@ -93,7 +91,6 @@ export const checkOut = async (employeeId, location, tenantId = null, branchId =
 
   const coRQ = db('attendances').where({ id: attendance.id });
   if (tenantId) coRQ.andWhere('tenant_id', tenantId);
-  if (branchId) coRQ.andWhere('branch_id', branchId);
   const row = await coRQ.first();
   const empQuery = db('employees').where({ id: employeeId, is_deleted: false });
   if (tenantId) empQuery.where('tenant_id', tenantId);
@@ -105,7 +102,11 @@ export const getAttendanceReport = async (page = 1, limit = 20, employeeId = '',
   const countQuery = db('attendances').where('attendances.is_deleted', false);
   applyTenantScope(countQuery, tenantId, 'attendances');
   if (employeeId) countQuery.where('attendances.employee_id', employeeId);
-  if (branchId) countQuery.where('attendances.branch_id', branchId);
+  if (branchId && branchId !== 'all') {
+    countQuery.where((b) => {
+      b.where('attendances.branch_id', branchId).orWhereNull('attendances.branch_id');
+    });
+  }
 
   const countRes = await countQuery.count({ total: '*' }).first();
   const total = Number(countRes?.total || 0);
@@ -121,7 +122,11 @@ export const getAttendanceReport = async (page = 1, limit = 20, employeeId = '',
     );
   applyTenantScope(dataQuery, tenantId, 'attendances');
   if (employeeId) dataQuery.where('attendances.employee_id', employeeId);
-  if (branchId) dataQuery.where('attendances.branch_id', branchId);
+  if (branchId && branchId !== 'all') {
+    dataQuery.where((b) => {
+      b.where('attendances.branch_id', branchId).orWhereNull('attendances.branch_id');
+    });
+  }
 
   const rows = await dataQuery.orderBy('attendances.date', 'desc').limit(limit).offset(offset);
 

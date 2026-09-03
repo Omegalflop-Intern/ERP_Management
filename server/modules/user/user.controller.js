@@ -5,10 +5,10 @@ import { validateUploadedFile } from '../../config/upload.js';
 
 export const getAllUsers = async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, search = '' } = req.query;
-    const branchId = req.selectedBranchId || req.query.branchId;
+    const { page = 1, limit = 20, search = '', branchId } = req.query;
     const tenantId = req.user?.tenantId || null;
-    const result = await userService.getAllUsers(Number(page), Number(limit), search, tenantId, branchId);
+    const effectiveBranchId = (branchId !== undefined && branchId !== '' && branchId !== 'all') ? branchId : null;
+    const result = await userService.getAllUsers(Number(page), Number(limit), search, tenantId, effectiveBranchId);
     return ApiResponse.paginated(res, result.users, result.pagination.total, result.pagination.page, result.pagination.limit);
   } catch (error) { next(error); }
 };

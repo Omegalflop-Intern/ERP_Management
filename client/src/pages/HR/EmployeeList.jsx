@@ -68,8 +68,8 @@ export default function EmployeeList() {
     mutationFn: async (id) => api.delete(`/employees/${id}`),
     onSuccess: () => {
       toast.success('Employee deleted');
-      queryClient.invalidateQueries(['employees']);
-      queryClient.invalidateQueries(['employee-stats']);
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      queryClient.invalidateQueries({ queryKey: ['employee-stats'] });
     },
     onError: (e) => toast.error(e.response?.data?.message || 'Failed to delete'),
   });
@@ -358,8 +358,8 @@ function EmployeeModal({ editEmp, onClose }) {
     },
     onSuccess: () => {
       toast.success(editEmp ? 'Employee updated' : 'Employee created');
-      queryClient.invalidateQueries(['employees']);
-      queryClient.invalidateQueries(['employee-stats']);
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      queryClient.invalidateQueries({ queryKey: ['employee-stats'] });
       onClose();
     },
     onError: (e) => toast.error(e.response?.data?.message || 'Operation failed'),

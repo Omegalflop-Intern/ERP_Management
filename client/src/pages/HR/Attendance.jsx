@@ -54,6 +54,18 @@ export default function Attendance() {
     },
   });
 
+  const { data: myEmployeeData } = useQuery({
+    queryKey: ['my-employee'],
+    queryFn: async () => {
+      try {
+        const res = await api.get('/employees/me');
+        return res.data?.data || null;
+      } catch {
+        return null;
+      }
+    },
+  });
+
   const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ['attendance-report', from, to, selectedEmployee],
     queryFn: async () => {
@@ -70,7 +82,9 @@ export default function Attendance() {
     },
     onSuccess: () => {
       toast.success('Checked in successfully!');
-      queryClient.invalidateQueries(['attendance-report']);
+      queryClient.invalidateQueries({ queryKey: ['attendance-report'] });
+      queryClient.invalidateQueries({ queryKey: ['my-employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees-list'] });
     },
     onError: (e) => toast.error(e.response?.data?.message || 'Check-in failed'),
   });
@@ -81,7 +95,9 @@ export default function Attendance() {
     },
     onSuccess: () => {
       toast.success('Checked out successfully!');
-      queryClient.invalidateQueries(['attendance-report']);
+      queryClient.invalidateQueries({ queryKey: ['attendance-report'] });
+      queryClient.invalidateQueries({ queryKey: ['my-employee'] });
+      queryClient.invalidateQueries({ queryKey: ['employees-list'] });
     },
     onError: (e) => toast.error(e.response?.data?.message || 'Check-out failed'),
   });
@@ -92,7 +108,8 @@ export default function Attendance() {
     },
     onSuccess: () => {
       toast.success('Attendance record deleted successfully');
-      queryClient.invalidateQueries(['attendance-report']);
+      queryClient.invalidateQueries({ queryKey: ['attendance-report'] });
+      queryClient.invalidateQueries({ queryKey: ['my-employee'] });
     },
     onError: (e) => toast.error(e.response?.data?.message || 'Failed to delete attendance record'),
   });
@@ -111,12 +128,14 @@ export default function Attendance() {
   const employees = empData || [];
   const records = data?.data || [];
 
-  // Find logged-in user's employee record
-  const myEmployee = employees.find(
+  // Find logged-in user's employee record (from /employees/me or fallback list search)
+  const myEmployee = myEmployeeData || employees.find(
     (e) =>
       String(e.user?._id || e.user?.id || e.user) === String(user?._id || user?.id) ||
       (user?.email && e.email?.toLowerCase() === user.email.toLowerCase()) ||
-      (user?.name && e.name?.toLowerCase() === user.name.toLowerCase())
+      (user?.name && e.name?.toLowerCase() === user.name.toLowerCase()) ||
+      (user?.username && e.name?.toLowerCase() === user.username.toLowerCase()) ||
+      (user?.fullName && e.name?.toLowerCase() === user.fullName.toLowerCase())
   );
 
   const todayStr = new Date().toISOString().slice(0, 10);

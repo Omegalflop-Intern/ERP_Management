@@ -12,6 +12,7 @@ router.use(authenticate);
 router.use(checkTenantStatus);
 
 router.get('/stats', employeeController.getEmployeeStats);
+router.get('/me', employeeController.getMyEmployeeProfile);
 router.get('/', employeeController.getAllEmployees);
 router.get('/:id', employeeController.getEmployeeById);
 router.post('/', authorize('ADMIN', 'MANAGER'), validate(createEmployeeSchema), employeeController.createEmployee);
