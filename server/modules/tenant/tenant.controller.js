@@ -2,6 +2,7 @@ import * as tenantService from './tenant.service.js';
 import { ApiResponse } from '../../utils/http/ApiResponse.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import emitter, { EVENTS } from '../../events/index.js';
+import { logAction } from '../../utils/auth/auditLog.js';
 
 export const getTenants = async (req, res, next) => {
   try {
@@ -47,6 +48,16 @@ export const updateTenant = async (req, res, next) => {
   try {
     const tenant = await tenantService.updateTenant(req.params.id, req.body);
     emitter.emit(EVENTS.TENANT_UPDATED, tenant);
+    logAction({
+      userId: req.user?.userId || req.user?.id,
+      username: req.user?.username,
+      action: 'UPDATE',
+      module: 'tenant',
+      entityId: tenant.id || tenant._id,
+      entityType: 'Tenant',
+      details: { shopName: tenant.shopName, ...req.body },
+      req,
+    });
     return ApiResponse.success(res, tenant, 'Tenant updated successfully');
   } catch (error) {
     next(error);
@@ -62,6 +73,16 @@ export const createTenant = async (req, res, next) => {
     );
     const tenant = await tenantService.createTenant(req.body, isSuperAdmin);
     emitter.emit(EVENTS.TENANT_UPDATED, tenant);
+    logAction({
+      userId: req.user?.userId || req.user?.id,
+      username: req.user?.username,
+      action: 'CREATE',
+      module: 'tenant',
+      entityId: tenant.id || tenant._id,
+      entityType: 'Tenant',
+      details: { shopName: tenant.shopName, subdomain: tenant.subdomain },
+      req,
+    });
     return ApiResponse.created(res, tenant, 'Shop tenant created successfully');
   } catch (error) {
     next(error);
@@ -72,6 +93,16 @@ export const deleteTenant = async (req, res, next) => {
   try {
     await tenantService.purgeTenantData(req.params.id);
     emitter.emit(EVENTS.TENANT_UPDATED, { id: req.params.id, isDeleted: true });
+    logAction({
+      userId: req.user?.userId || req.user?.id,
+      username: req.user?.username,
+      action: 'DELETE',
+      module: 'tenant',
+      entityId: req.params.id,
+      entityType: 'Tenant',
+      details: { tenantId: req.params.id },
+      req,
+    });
     return ApiResponse.success(res, { id: req.params.id, isDeleted: true }, 'Shop and all associated data deleted successfully');
   } catch (error) {
     next(error);
@@ -83,6 +114,16 @@ export const updateStatus = async (req, res, next) => {
     const { status, rejectionReason } = req.body;
     const tenant = await tenantService.updateTenantStatus(req.params.id, status, rejectionReason);
     emitter.emit(EVENTS.TENANT_UPDATED, tenant);
+    logAction({
+      userId: req.user?.userId || req.user?.id,
+      username: req.user?.username,
+      action: 'UPDATE_STATUS',
+      module: 'tenant',
+      entityId: tenant.id || tenant._id,
+      entityType: 'Tenant',
+      details: { shopName: tenant.shopName, status, rejectionReason },
+      req,
+    });
     return ApiResponse.success(res, tenant, `Tenant status updated to ${status}`);
   } catch (error) {
     next(error);
@@ -103,6 +144,16 @@ export const handleVerifyKyc = async (req, res, next) => {
     const { status, rejectionReason } = req.body;
     const tenant = await tenantService.verifyKyc(req.params.id, status, rejectionReason);
     emitter.emit(EVENTS.TENANT_UPDATED, tenant);
+    logAction({
+      userId: req.user?.userId || req.user?.id,
+      username: req.user?.username,
+      action: 'VERIFY_KYC',
+      module: 'tenant',
+      entityId: tenant.id || tenant._id,
+      entityType: 'Tenant',
+      details: { shopName: tenant.shopName, status, rejectionReason },
+      req,
+    });
     return ApiResponse.success(res, tenant, `KYC status set to ${status}`);
   } catch (error) {
     next(error);
