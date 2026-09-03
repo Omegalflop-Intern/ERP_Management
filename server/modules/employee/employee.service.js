@@ -182,7 +182,7 @@ export const getMyEmployee = async (userId, tenantId = null) => {
   return formatEmployee(row, uRow);
 };
 
-export const getAllEmployees = async (page = 1, limit = 20, search = '', branch = '', tenantId = null) => {
+export const getAllEmployees = async (page = 1, limit = 20, search = '', tenantId = null, branch = '') => {
   // Auto-sync any existing tenant users who are not yet in employees
   try {
     const userQuery = db('users')
