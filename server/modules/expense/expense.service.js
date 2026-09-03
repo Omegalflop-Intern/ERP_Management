@@ -9,7 +9,6 @@ export function formatExpense(row) {
     _id: String(row.id),
     id: row.id,
     tenantId: row.tenant_id || null,
-    branchId: row.branch_id ? String(row.branch_id) : null,
     title: row.title,
     category: row.category || 'Miscellaneous',
     amount: Number(row.amount || 0),
@@ -32,12 +31,9 @@ function applyTenantScope(query, tenantId) {
 }
 
 export const getAllExpenses = async (params = {}, tenantId = null) => {
-  const { category, search, branchId } = params;
+  const { category, search } = params;
   const query = db('expenses').where({ is_deleted: false });
   applyTenantScope(query, tenantId);
-  if (branchId && branchId !== 'all') {
-    query.where('branch_id', branchId);
-  }
 
   if (category && category !== 'ALL') query.where({ category });
   if (search) {
@@ -66,7 +62,7 @@ export const getAllExpenses = async (params = {}, tenantId = null) => {
   };
 };
 
-export const getAvailableCashBalance = async (tenantId = null, branchId = null) => {
+export const getAvailableCashBalance = async (tenantId = null) => {
   let cashAcctQuery = db('accounts').where({ is_deleted: false }).andWhere((b) => b.where('code', '1000').orWhere('name', 'like', '%Cash%'));
   if (tenantId) cashAcctQuery.andWhere('tenant_id', tenantId);
   const cashAcct = await cashAcctQuery.first();
@@ -76,7 +72,6 @@ export const getAvailableCashBalance = async (tenantId = null, branchId = null) 
 
   const salesQuery = db('transactions').where({ tx_type: 'SALE', is_deleted: false });
   if (tenantId) salesQuery.andWhere('tenant_id', tenantId);
-  if (branchId) salesQuery.andWhere('branch_id', branchId);
   const sales = await salesQuery.select('payment_breakdown');
   const totalSalesCash = sales.reduce((sum, s) => {
     try {
@@ -92,14 +87,12 @@ export const getAvailableCashBalance = async (tenantId = null, branchId = null) 
 
   const expQuery = db('expenses').where({ is_deleted: false });
   if (tenantId) expQuery.andWhere('tenant_id', tenantId);
-  if (branchId) expQuery.andWhere('branch_id', branchId);
   expQuery.andWhere((b) => b.where('payment_method', 'cash').orWhere('payment_method', 'CASH'));
   const expRes = await expQuery.sum({ total: 'amount' }).first();
   const totalExpCash = Number(expRes?.total || 0);
 
   const poQuery = db('purchase_orders').where({ is_deleted: false });
   if (tenantId) poQuery.andWhere('tenant_id', tenantId);
-  if (branchId) poQuery.andWhere('branch_id', branchId);
   poQuery.andWhere((b) => b.where('payment_method', 'cash').orWhere('payment_method', 'CASH'));
   const poRes = await poQuery.sum({ total: 'paid_amount' }).first();
   const totalPoCash = Number(poRes?.total || 0);
@@ -119,7 +112,7 @@ export const createExpense = async (data, recordedBy = 'system', tenantId = null
 
   const method = (data.paymentMethod || 'cash').toLowerCase();
   if (method === 'cash' && process.env.NODE_ENV !== 'test') {
-    const availableCash = await getAvailableCashBalance(tenantId || data.tenantId, data.branchId);
+    const availableCash = await getAvailableCashBalance(tenantId || data.tenantId);
     if (availableCash < amount) {
       console.warn(`[Expense Warning] Insufficient cash in hand. Available: ৳${availableCash}, Required: ৳${amount}`);
     }
@@ -129,7 +122,6 @@ export const createExpense = async (data, recordedBy = 'system', tenantId = null
 
   const [insertedId] = await db('expenses').insert({
     tenant_id: tenantId || data.tenantId || null,
-    branch_id: data.branchId || null,
     title: data.title || data.category || data.notes || 'General Expense',
     category: data.category || 'General Expense',
     amount,
@@ -157,10 +149,9 @@ export const createExpense = async (data, recordedBy = 'system', tenantId = null
   return formatExpense(row);
 };
 
-export const updateExpense = async (id, data, tenantId = null, branchId = null) => {
+export const updateExpense = async (id, data, tenantId = null) => {
   const query = db('expenses').where({ id, is_deleted: false });
   applyTenantScope(query, tenantId);
-  if (branchId) query.where('branch_id', branchId);
   const expense = await query.first();
   if (!expense) throw ApiError.notFound('Expense entry not found');
 
@@ -204,10 +195,9 @@ export const updateExpense = async (id, data, tenantId = null, branchId = null) 
   return formatExpense(updated);
 };
 
-export const deleteExpense = async (id, tenantId = null, branchId = null) => {
+export const deleteExpense = async (id, tenantId = null) => {
   const query = db('expenses').where({ id, is_deleted: false });
   applyTenantScope(query, tenantId);
-  if (branchId) query.where('branch_id', branchId);
   const expense = await query.first();
   if (!expense) throw ApiError.notFound('Expense entry not found');
 

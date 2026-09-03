@@ -9,7 +9,6 @@ export function formatAttendance(row, employeeRow = null) {
     _id: String(row.id),
     id: row.id,
     tenantId: row.tenant_id || null,
-    branchId: row.branch_id ? String(row.branch_id) : null,
     employee: employeeRow ? {
       _id: String(employeeRow.id),
       id: employeeRow.id,
@@ -39,7 +38,7 @@ function applyTenantScope(query, tenantId, tablePrefix = 'attendances') {
   }
 }
 
-export const checkIn = async (employeeId, location, notes, tenantId = null, branchId = null) => {
+export const checkIn = async (employeeId, location, notes, tenantId = null) => {
   const empQuery = db('employees').where({ id: employeeId, is_deleted: false });
   if (tenantId) empQuery.where('tenant_id', tenantId);
   const employee = await empQuery.first();
@@ -56,7 +55,6 @@ export const checkIn = async (employeeId, location, notes, tenantId = null, bran
 
   const [insertedId] = await db('attendances').insert({
     tenant_id: tenantId || employee.tenant_id || null,
-    branch_id: branchId || employee.branch_id || null,
     employee_id: employeeId,
     date: todayStr,
     check_in: now,
@@ -73,7 +71,7 @@ export const checkIn = async (employeeId, location, notes, tenantId = null, bran
   return formatAttendance(row, employee);
 };
 
-export const checkOut = async (employeeId, location, tenantId = null, branchId = null) => {
+export const checkOut = async (employeeId, location, tenantId = null) => {
   const todayStr = new Date().toISOString().slice(0, 10);
   const attQuery = db('attendances').where({ employee_id: employeeId, date: todayStr, is_deleted: false });
   if (tenantId) attQuery.where('tenant_id', tenantId);
@@ -98,15 +96,10 @@ export const checkOut = async (employeeId, location, tenantId = null, branchId =
   return formatAttendance(row, employee);
 };
 
-export const getAttendanceReport = async (page = 1, limit = 20, employeeId = '', branch = '', from = '', to = '', tenantId = null, branchId = null) => {
+export const getAttendanceReport = async (page = 1, limit = 20, employeeId = '', branch = '', from = '', to = '', tenantId = null) => {
   const countQuery = db('attendances').where('attendances.is_deleted', false);
   applyTenantScope(countQuery, tenantId, 'attendances');
   if (employeeId) countQuery.where('attendances.employee_id', employeeId);
-  if (branchId && branchId !== 'all') {
-    countQuery.where((b) => {
-      b.where('attendances.branch_id', branchId).orWhereNull('attendances.branch_id');
-    });
-  }
 
   const countRes = await countQuery.count({ total: '*' }).first();
   const total = Number(countRes?.total || 0);
@@ -122,11 +115,6 @@ export const getAttendanceReport = async (page = 1, limit = 20, employeeId = '',
     );
   applyTenantScope(dataQuery, tenantId, 'attendances');
   if (employeeId) dataQuery.where('attendances.employee_id', employeeId);
-  if (branchId && branchId !== 'all') {
-    dataQuery.where((b) => {
-      b.where('attendances.branch_id', branchId).orWhereNull('attendances.branch_id');
-    });
-  }
 
   const rows = await dataQuery.orderBy('attendances.date', 'desc').limit(limit).offset(offset);
 
@@ -138,19 +126,17 @@ export const getAttendanceReport = async (page = 1, limit = 20, employeeId = '',
   return { records, pagination: getPagination(total, page, limit) };
 };
 
-export const getTodayStatus = async (employeeId, tenantId = null, branchId = null) => {
+export const getTodayStatus = async (employeeId, tenantId = null) => {
   const todayStr = new Date().toISOString().slice(0, 10);
   const query = db('attendances').where({ employee_id: employeeId, date: todayStr, is_deleted: false });
   if (tenantId) query.where('tenant_id', tenantId);
-  if (branchId) query.where('branch_id', branchId);
   const row = await query.first();
   return formatAttendance(row);
 };
 
-export const updateAttendance = async (id, data, tenantId = null, branchId = null) => {
+export const updateAttendance = async (id, data, tenantId = null) => {
   const query = db('attendances').where({ id, is_deleted: false });
   if (tenantId) query.where('tenant_id', tenantId);
-  if (branchId) query.where('branch_id', branchId);
   const attendance = await query.first();
   if (!attendance) throw ApiError.notFound('Attendance record not found');
 
@@ -161,27 +147,23 @@ export const updateAttendance = async (id, data, tenantId = null, branchId = nul
   if (Object.keys(updateFields).length > 0) {
     const q = db('attendances').where({ id });
     if (tenantId) q.andWhere('tenant_id', tenantId);
-    if (branchId) q.andWhere('branch_id', branchId);
     await q.update(updateFields);
   }
 
   const uq = db('attendances').where({ id });
   if (tenantId) uq.andWhere('tenant_id', tenantId);
-  if (branchId) uq.andWhere('branch_id', branchId);
   const updated = await uq.first();
   return formatAttendance(updated);
 };
 
-export const deleteAttendance = async (id, tenantId = null, branchId = null) => {
+export const deleteAttendance = async (id, tenantId = null) => {
   const query = db('attendances').where({ id, is_deleted: false });
   if (tenantId) query.where('tenant_id', tenantId);
-  if (branchId) query.where('branch_id', branchId);
   const attendance = await query.first();
   if (!attendance) throw ApiError.notFound('Attendance record not found');
 
   const dq = db('attendances').where({ id });
   if (tenantId) dq.andWhere('tenant_id', tenantId);
-  if (branchId) dq.andWhere('branch_id', branchId);
   await dq.update({ is_deleted: true });
   return true;
 };

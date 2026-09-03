@@ -21,7 +21,7 @@ function parseJSON(str) {
   return str || [];
 }
 
-export function formatTransaction(row, customerRow = null, branchRow = null) {
+export function formatTransaction(row, customerRow = null) {
   if (!row) return null;
   // Bug #16 fixed: wrap JSON.parse in try/catch to prevent 500 on malformed payment_breakdown
   let breakdown = {};
@@ -31,28 +31,10 @@ export function formatTransaction(row, customerRow = null, branchRow = null) {
     breakdown = {};
   }
 
-  const branchObj = branchRow ? {
-    _id: String(branchRow.id),
-    id: branchRow.id,
-    name: branchRow.name,
-    address: branchRow.address || '',
-    phone: branchRow.phone || '',
-    email: branchRow.email || '',
-  } : (row.b_id ? {
-    _id: String(row.b_id),
-    id: row.b_id,
-    name: row.b_name,
-    address: row.b_address || '',
-    phone: row.b_phone || '',
-    email: row.b_email || '',
-  } : (row.branch_id ? { _id: String(row.branch_id), id: row.branch_id } : null));
-
   return {
     _id: String(row.id),
     id: row.id,
     tenantId: row.tenant_id || null,
-    branchId: row.branch_id ? String(row.branch_id) : null,
-    branch: branchObj,
     invoiceNumber: row.invoice_number,
     txType: row.tx_type,
     saleType: row.sale_type || 'RETAIL',
@@ -194,7 +176,6 @@ export const createSale = async (data, createdBy = 'system') => {
       } else if (data.customerName && data.customerName.trim() && data.customerName !== 'Walk-in Customer') {
         const [newCustId] = await trx('customers').insert({
           tenant_id: tenantId,
-          branch_id: data.branchId || null,
           name: data.customerName.trim(),
           phone: data.customerPhone.trim(),
           phone_hash: phoneHash,
@@ -255,21 +236,11 @@ export const createSale = async (data, createdBy = 'system') => {
         const prodDecrQuery = trx('products').where({ id: item.productId });
         if (tenantId) prodDecrQuery.andWhere('tenant_id', tenantId);
         await prodDecrQuery.decrement('stock_quantity', requestedQty);
-
-        if (data.branchId) {
-          const bsQuery = trx('product_branch_stocks').where({ branch_id: data.branchId, product_id: item.productId });
-          if (tenantId) bsQuery.andWhere('tenant_id', tenantId);
-          const bsRow = await bsQuery.first();
-          if (bsRow) {
-            await trx('product_branch_stocks').where({ id: bsRow.id }).decrement('stock_quantity', requestedQty);
-          }
-        }
       }
     }
 
     [insertedId] = await trx('transactions').insert({
       tenant_id: tenantId,
-      branch_id: data.branchId || null,
       invoice_number: invoiceNumber,
       tx_type: 'SALE',
       sale_type: data.saleType || 'RETAIL',
@@ -306,7 +277,7 @@ export const createSale = async (data, createdBy = 'system') => {
     }
   });
 
-  const sale = await getSaleById(insertedId, tenantId, data.branchId || null);
+  const sale = await getSaleById(insertedId, tenantId);
   emitter.emit(EVENTS.SALE_COMPLETED, { ...sale, tenantId });
   return sale;
 };
@@ -315,9 +286,6 @@ export const getAllSales = async (page = 1, limit = 20, filters = {}) => {
   const buildQuery = (query) => {
     applyTenantScope(query, filters.tenantId, 'transactions');
     if (filters.status && filters.status !== 'ALL') query.where('transactions.status', filters.status);
-    if (filters.branchId && filters.branchId !== 'all') {
-      query.where((b) => b.where('transactions.branch_id', filters.branchId).orWhereNull('transactions.branch_id'));
-    }
     if (filters.saleType) query.where('transactions.sale_type', filters.saleType);
     if (filters.from) query.where('transactions.created_at', '>=', new Date(filters.from));
     if (filters.to) {
@@ -359,14 +327,11 @@ export const getAllSales = async (page = 1, limit = 20, filters = {}) => {
   const offset = (page - 1) * limit;
   const dataQuery = db('transactions')
     .leftJoin('customers', 'transactions.customer_id', 'customers.id')
-    .leftJoin('branches', 'transactions.branch_id', 'branches.id')
     .where({ 'transactions.is_deleted': false, 'transactions.tx_type': 'SALE' })
     .select(
       'transactions.*',
       'customers.id as c_id', 'customers.name as c_name', 'customers.phone as c_phone',
-      'customers.email as c_email', 'customers.address as c_address',
-      'branches.id as b_id', 'branches.name as b_name', 'branches.address as b_address',
-      'branches.phone as b_phone', 'branches.email as b_email'
+      'customers.email as c_email', 'customers.address as c_address'
     );
   buildQuery(dataQuery);
 
@@ -380,22 +345,16 @@ export const getAllSales = async (page = 1, limit = 20, filters = {}) => {
   return { sales, pagination: getPagination(total, page, limit) };
 };
 
-export const getSaleById = async (id, tenantId = null, branchId = null) => {
+export const getSaleById = async (id, tenantId = null) => {
   const dataQuery = db('transactions')
     .leftJoin('customers', 'transactions.customer_id', 'customers.id')
-    .leftJoin('branches', 'transactions.branch_id', 'branches.id')
     .where({ 'transactions.id': id, 'transactions.is_deleted': false })
     .select(
       'transactions.*',
       'customers.id as c_id', 'customers.name as c_name', 'customers.phone as c_phone',
-      'customers.email as c_email', 'customers.address as c_address',
-      'branches.id as b_id', 'branches.name as b_name', 'branches.address as b_address',
-      'branches.phone as b_phone', 'branches.email as b_email'
+      'customers.email as c_email', 'customers.address as c_address'
     );
   applyTenantScope(dataQuery, tenantId, 'transactions');
-  if (branchId && branchId !== 'all') {
-    dataQuery.where((b) => b.where('transactions.branch_id', branchId).orWhereNull('transactions.branch_id'));
-  }
 
   const row = await dataQuery.first();
   if (!row) throw ApiError.notFound('Sale not found');
@@ -404,22 +363,16 @@ export const getSaleById = async (id, tenantId = null, branchId = null) => {
   return formatTransaction(row, cRow);
 };
 
-export const getSaleByInvoice = async (invoiceQuery, tenantId = null, branchId = null) => {
+export const getSaleByInvoice = async (invoiceQuery, tenantId = null) => {
   const dataQuery = db('transactions')
     .leftJoin('customers', 'transactions.customer_id', 'customers.id')
-    .leftJoin('branches', 'transactions.branch_id', 'branches.id')
     .where({ 'transactions.invoice_number': invoiceQuery, 'transactions.is_deleted': false })
     .select(
       'transactions.*',
       'customers.id as c_id', 'customers.name as c_name', 'customers.phone as c_phone',
-      'customers.email as c_email', 'customers.address as c_address',
-      'branches.id as b_id', 'branches.name as b_name', 'branches.address as b_address',
-      'branches.phone as b_phone', 'branches.email as b_email'
+      'customers.email as c_email', 'customers.address as c_address'
     );
   applyTenantScope(dataQuery, tenantId, 'transactions');
-  if (branchId && branchId !== 'all') {
-    dataQuery.where((b) => b.where('transactions.branch_id', branchId).orWhereNull('transactions.branch_id'));
-  }
 
   const row = await dataQuery.first();
   if (!row) throw ApiError.notFound(`No sale found matching "${invoiceQuery}"`);

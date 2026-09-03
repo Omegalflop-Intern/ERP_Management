@@ -47,7 +47,6 @@ export const authenticate = async (req, res, next) => {
       try { permissions = JSON.parse(permissions); } catch { permissions = []; }
     }
 
-    const userBranchId = row.branch_id ? String(row.branch_id) : null;
     const roleName = row.role_name_val || row.role_name || '';
 
     req.user = {
@@ -62,20 +61,8 @@ export const authenticate = async (req, res, next) => {
       roleName,
       isSuperAdmin,
       tenantId: row.tenant_id || null,
-      branchId: userBranchId,
       permissions: Array.isArray(permissions) ? permissions : [],
     };
-
-    // Extract requested branch from query parameter or header
-    const explicitBranchId = req.query.branchId || req.headers['x-branch-id'] || req.headers['X-Branch-Id'] || null;
-
-    if (explicitBranchId && explicitBranchId !== 'all') {
-      req.selectedBranchId = String(explicitBranchId);
-    } else if (userBranchId) {
-      req.selectedBranchId = String(userBranchId);
-    } else {
-      req.selectedBranchId = null;
-    }
 
     next();
   } catch (error) {

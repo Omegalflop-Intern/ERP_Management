@@ -7,7 +7,6 @@ export function formatRecurringExpense(row) {
     _id: String(row.id),
     id: row.id,
     tenantId: row.tenant_id || null,
-    branchId: row.branch_id ? String(row.branch_id) : null,
     title: row.title,
     category: row.category || 'Miscellaneous',
     amount: Number(row.amount || 0),
@@ -26,12 +25,9 @@ function applyTenantScope(query, tenantId) {
   if (tenantId) query.where('tenant_id', tenantId);
 }
 
-export const getAllRecurringExpenses = async (tenantId = null, branchId = null) => {
+export const getAllRecurringExpenses = async (tenantId = null) => {
   const query = db('recurring_expenses').where({ is_deleted: false });
   applyTenantScope(query, tenantId);
-  if (branchId && branchId !== 'all') {
-    query.where('branch_id', branchId);
-  }
   const rows = await query.orderBy('next_due_date', 'asc');
   return rows.map(formatRecurringExpense);
 };
@@ -51,7 +47,6 @@ export const createRecurringExpense = async (data, tenantId = null) => {
 
   const [insertedId] = await db('recurring_expenses').insert({
     tenant_id: tenantId || null,
-    branch_id: data.branchId || null,
     title: data.title,
     category: data.category || 'Miscellaneous',
     amount,
@@ -144,7 +139,6 @@ export const processRecurringExpenses = async (tenantId = null) => {
           amount: Number(item.amount),
           paymentMethod: item.payment_method,
           notes: `Auto-created from recurring expense #${item.id}`,
-          branchId: item.branch_id,
           tenantId: item.tenant_id,
         },
         'system',

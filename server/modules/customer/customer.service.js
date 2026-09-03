@@ -10,7 +10,6 @@ export function formatCustomer(row) {
     _id: String(row.id),
     id: row.id,
     tenantId: row.tenant_id || null,
-    branchId: row.branch_id ? String(row.branch_id) : null,
     name: row.name,
     phone: row.phone,
     phoneHash: row.phone_hash || null,
@@ -34,12 +33,9 @@ function applyTenantScope(query, tenantId) {
   }
 }
 
-export const getAllCustomers = async (page = 1, limit = 20, search = '', tenantId = null, branchId = null) => {
+export const getAllCustomers = async (page = 1, limit = 20, search = '', tenantId = null) => {
   const countQuery = db('customers').where('is_deleted', false);
   applyTenantScope(countQuery, tenantId);
-  if (branchId && branchId !== 'all') {
-    countQuery.where('branch_id', branchId);
-  }
 
   if (search) {
     const term = `%${search}%`;
@@ -58,9 +54,6 @@ export const getAllCustomers = async (page = 1, limit = 20, search = '', tenantI
   const offset = (page - 1) * limit;
   const dataQuery = db('customers').where('is_deleted', false);
   applyTenantScope(dataQuery, tenantId);
-  if (branchId && branchId !== 'all') {
-    dataQuery.where('branch_id', branchId);
-  }
 
   if (search) {
     const term = `%${search}%`;
@@ -79,12 +72,9 @@ export const getAllCustomers = async (page = 1, limit = 20, search = '', tenantI
   return { customers, pagination: getPagination(total, page, limit) };
 };
 
-export const getCustomerById = async (id, tenantId = null, branchId = null) => {
+export const getCustomerById = async (id, tenantId = null) => {
   const query = db('customers').where({ id, is_deleted: false });
   applyTenantScope(query, tenantId);
-  if (branchId && branchId !== 'all') {
-    query.where((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
-  }
   const row = await query.first();
   if (!row) throw ApiError.notFound('Customer not found');
   return formatCustomer(row);
@@ -99,7 +89,6 @@ export const createCustomer = async (data, tenantId = null) => {
 
   const [insertedId] = await db('customers').insert({
     tenant_id: tenantId || data.tenantId || null,
-    branch_id: data.branchId || null,
     name: data.name,
     phone: data.phone,
     phone_hash: pHash,
@@ -162,13 +151,12 @@ export const deleteCustomer = async (id, tenantId = null) => {
   return { ...customer, isDeleted: true };
 };
 
-export const getCustomerHistory = async (id, tenantId = null, branchId = null) => {
-  const customer = await getCustomerById(id, tenantId, branchId);
+export const getCustomerHistory = async (id, tenantId = null) => {
+  const customer = await getCustomerById(id, tenantId);
   if (!customer) throw ApiError.notFound('Customer not found');
 
   const salesQuery = db('transactions').where({ is_deleted: false, tx_type: 'SALE' });
   applyTenantScope(salesQuery, tenantId);
-  if (branchId) salesQuery.where({ branch_id: branchId });
   salesQuery.andWhere((b) => {
     b.where('customer_id', id);
     if (customer.phone) b.orWhere('customer_phone', customer.phone);
@@ -177,7 +165,6 @@ export const getCustomerHistory = async (id, tenantId = null, branchId = null) =
 
   const returnsQuery = db('transactions').where({ is_deleted: false, tx_type: 'RETURN' });
   applyTenantScope(returnsQuery, tenantId);
-  if (branchId) returnsQuery.where({ branch_id: branchId });
   returnsQuery.andWhere((b) => {
     b.where('customer_id', id);
     if (customer.phone) b.orWhere('customer_phone', customer.phone);
@@ -208,8 +195,8 @@ export const getCustomerHistory = async (id, tenantId = null, branchId = null) =
   };
 };
 
-export const collectDue = async (id, amount, paymentMethod, userId, tenantId = null, branchId = null) => {
-  const customer = await getCustomerById(id, tenantId, branchId);
+export const collectDue = async (id, amount, paymentMethod, userId, tenantId = null) => {
+  const customer = await getCustomerById(id, tenantId);
   if (!customer) throw ApiError.notFound('Customer not found');
 
   const numAmount = Number(amount);
@@ -222,7 +209,6 @@ export const collectDue = async (id, amount, paymentMethod, userId, tenantId = n
   // 1. Fetch all unpaid sales transactions for this customer
   const salesQuery = db('transactions').where({ is_deleted: false, tx_type: 'SALE' });
   applyTenantScope(salesQuery, tenantId);
-  if (branchId) salesQuery.where({ branch_id: branchId });
   salesQuery.andWhere((b) => {
     b.where('customer_id', id);
     if (customer.phone) b.orWhere('customer_phone', customer.phone);
@@ -285,25 +271,22 @@ export const collectDue = async (id, amount, paymentMethod, userId, tenantId = n
   if (tenantId) qCust.andWhere('tenant_id', tenantId);
   await qCust.update({ due_balance: freshDueBalance });
 
-  const updated = await getCustomerById(id, tenantId, branchId);
+  const updated = await getCustomerById(id, tenantId);
   return { customer: updated, collected: numAmount, remainingDue: freshDueBalance };
 };
 
-export const getCustomerStats = async (tenantId = null, branchId = null) => {
+export const getCustomerStats = async (tenantId = null) => {
   const query = db('customers').where({ is_deleted: false });
   applyTenantScope(query, tenantId);
-  if (branchId) query.where('branch_id', branchId);
   const countRes = await query.count({ count: '*' }).first();
   const total = Number(countRes?.count || 0);
 
   const dueQuery = db('customers').where({ is_deleted: false }).where('due_balance', '>', 0);
   applyTenantScope(dueQuery, tenantId);
-  if (branchId) dueQuery.where('branch_id', branchId);
   const dueRes = await dueQuery.count({ count: '*' }).sum({ totalDue: 'due_balance' }).first();
 
   const purchaseQuery = db('customers').where({ is_deleted: false });
   applyTenantScope(purchaseQuery, tenantId);
-  if (branchId) purchaseQuery.where('branch_id', branchId);
   const purchaseRes = await purchaseQuery.sum({ totalPurchases: 'total_purchases' }).first();
 
   return {

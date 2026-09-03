@@ -8,7 +8,6 @@ export function formatEmployee(row, userRow = null) {
     _id: String(row.id),
     id: row.id,
     tenantId: row.tenant_id || null,
-    branchId: row.branch_id ? String(row.branch_id) : null,
     user: userRow ? {
       _id: String(userRow.id),
       id: userRow.id,
@@ -63,12 +62,10 @@ export const syncUserToEmployee = async (userId, userData = null, tenantId = nul
     if (!user || !user.username) {
       user = await db('users')
         .leftJoin('roles', 'users.role_id', 'roles.id')
-        .leftJoin('branches', 'users.branch_id', 'branches.id')
         .where({ 'users.id': uId })
         .select(
           'users.*',
-          'roles.name as role_name_val',
-          'branches.name as branch_name_val'
+          'roles.name as role_name_val'
         )
         .first();
     }
@@ -90,11 +87,9 @@ export const syncUserToEmployee = async (userId, userData = null, tenantId = nul
     }
 
     const tId = tenantId || user.tenant_id || user.tenantId || null;
-    const bId = user.branch_id || user.branchId || null;
     const roleName = userRoleName || 'STAFF';
     const department = mapRoleToDepartment(roleName);
     const designation = roleName.charAt(0).toUpperCase() + roleName.slice(1).toLowerCase();
-    const branchName = user.branch_name_val || (typeof user.branch === 'object' ? user.branch?.name : user.branch) || 'Main';
     const empCode = `EMP-${tId ? tId + '-' : ''}${String(uId).padStart(4, '0')}`;
     const name = user.full_name || user.fullName || user.username || 'Employee';
     const email = user.email || null;
@@ -115,8 +110,7 @@ export const syncUserToEmployee = async (userId, userData = null, tenantId = nul
           phone: existingEmp.phone || phone,
           designation: existingEmp.designation || designation,
           department: existingEmp.department || department,
-          branch: branchName,
-          branch_id: bId !== undefined ? bId : existingEmp.branch_id,
+          branch: existingEmp.branch || 'Main',
           tenant_id: tId || existingEmp.tenant_id,
           is_active: isActive,
           is_deleted: false,
@@ -132,7 +126,6 @@ export const syncUserToEmployee = async (userId, userData = null, tenantId = nul
 
       const [insertedId] = await db('employees').insert({
         tenant_id: tId,
-        branch_id: bId,
         user_id: uId,
         employee_id: finalEmpCode,
         name,
@@ -140,7 +133,7 @@ export const syncUserToEmployee = async (userId, userData = null, tenantId = nul
         email,
         designation,
         department,
-        branch: branchName,
+        branch: 'Main',
         salary: user.salary || 0,
         joining_date: (user.createdAt || user.created_at) ? new Date(user.createdAt || user.created_at) : new Date(),
         is_active: isActive,
@@ -189,19 +182,17 @@ export const getMyEmployee = async (userId, tenantId = null) => {
   return formatEmployee(row, uRow);
 };
 
-export const getAllEmployees = async (page = 1, limit = 20, search = '', branch = '', tenantId = null, branchId = null) => {
+export const getAllEmployees = async (page = 1, limit = 20, search = '', branch = '', tenantId = null) => {
   // Auto-sync any existing tenant users who are not yet in employees
   try {
     const userQuery = db('users')
       .leftJoin('employees', 'users.id', 'employees.user_id')
       .leftJoin('roles', 'users.role_id', 'roles.id')
-      .leftJoin('branches', 'users.branch_id', 'branches.id')
       .where('users.is_deleted', false)
       .whereNull('employees.id')
       .select(
         'users.*',
-        'roles.name as role_name_val',
-        'branches.name as branch_name_val'
+        'roles.name as role_name_val'
       );
     if (tenantId) {
       userQuery.where('users.tenant_id', tenantId);
@@ -220,11 +211,6 @@ export const getAllEmployees = async (page = 1, limit = 20, search = '', branch 
     .whereNot('employees.email', 'like', '%@temp.omnimanage.local%');
   applyTenantScope(countQuery, tenantId);
   if (branch) countQuery.where('employees.branch', branch);
-  if (branchId && branchId !== 'all') {
-    countQuery.where((b) => {
-      b.where('employees.branch_id', branchId).orWhereNull('employees.branch_id');
-    });
-  }
 
   if (search) {
     const term = `%${search}%`;
@@ -254,11 +240,6 @@ export const getAllEmployees = async (page = 1, limit = 20, search = '', branch 
     );
   applyTenantScope(dataQuery, tenantId);
   if (branch) dataQuery.where('employees.branch', branch);
-  if (branchId && branchId !== 'all') {
-    dataQuery.where((b) => {
-      b.where('employees.branch_id', branchId).orWhereNull('employees.branch_id');
-    });
-  }
 
   if (search) {
     const term = `%${search}%`;
@@ -281,7 +262,7 @@ export const getAllEmployees = async (page = 1, limit = 20, search = '', branch 
   return { employees, pagination: getPagination(total, page, limit) };
 };
 
-export const getEmployeeById = async (id, tenantId = null, branchId = null) => {
+export const getEmployeeById = async (id, tenantId = null) => {
   const dataQuery = db('employees')
     .leftJoin('users', 'employees.user_id', 'users.id')
     .where({ 'employees.id': id, 'employees.is_deleted': false })
@@ -292,7 +273,6 @@ export const getEmployeeById = async (id, tenantId = null, branchId = null) => {
       'users.email as u_email'
     );
   applyTenantScope(dataQuery, tenantId);
-  if (branchId) dataQuery.where('employees.branch_id', branchId);
 
   const row = await dataQuery.first();
   if (!row) throw ApiError.notFound('Employee not found');
@@ -312,7 +292,6 @@ export const createEmployee = async (data, tenantId = null) => {
 
   const [insertedId] = await db('employees').insert({
     tenant_id: tenantId || data.tenantId || null,
-    branch_id: data.branchId || null,
     user_id: data.user || data.userId || 1,
     employee_id: data.employeeId,
     name: data.name,
@@ -336,8 +315,8 @@ export const createEmployee = async (data, tenantId = null) => {
   return getEmployeeById(insertedId, tenantId || data.tenantId || null);
 };
 
-export const updateEmployee = async (id, data, tenantId = null, branchId = null) => {
-  const employee = await getEmployeeById(id, tenantId, branchId);
+export const updateEmployee = async (id, data, tenantId = null) => {
+  const employee = await getEmployeeById(id, tenantId);
   if (!employee) throw ApiError.notFound('Employee not found');
 
   const updateFields = {};
@@ -374,41 +353,33 @@ export const updateEmployee = async (id, data, tenantId = null, branchId = null)
   if (Object.keys(updateFields).length > 0) {
     const q = db('employees').where({ id });
     if (tenantId) q.andWhere('tenant_id', tenantId);
-    if (branchId) q.andWhere('branch_id', branchId);
     await q.update(updateFields);
   }
 
-  return getEmployeeById(id, tenantId, branchId);
+  return getEmployeeById(id, tenantId);
 };
 
-export const deleteEmployee = async (id, tenantId = null, branchId = null) => {
-  const employee = await getEmployeeById(id, tenantId, branchId);
+export const deleteEmployee = async (id, tenantId = null) => {
+  const employee = await getEmployeeById(id, tenantId);
   if (!employee) throw ApiError.notFound('Employee not found');
 
   const q1 = db('employees').where({ id });
   if (tenantId) q1.andWhere('tenant_id', tenantId);
-  if (branchId) q1.andWhere('branch_id', branchId);
   await q1.update({ is_deleted: true });
   return { ...employee, isDeleted: true };
 };
 
-export const getEmployeeStats = async (tenantId = null, branchId = null) => {
+export const getEmployeeStats = async (tenantId = null) => {
   const countQuery = db('employees').where({ is_deleted: false })
     .whereNot('name', 'like', '%Temp Admin%')
     .whereNot('email', 'like', '%@temp.omnimanage.local%');
   applyTenantScope(countQuery, tenantId);
-  if (branchId && branchId !== 'all') {
-    countQuery.where('branch_id', branchId);
-  }
   const totalRes = await countQuery.count({ count: '*' }).first();
 
   const activeQuery = db('employees').where({ is_deleted: false, is_active: true })
     .whereNot('name', 'like', '%Temp Admin%')
     .whereNot('email', 'like', '%@temp.omnimanage.local%');
   applyTenantScope(activeQuery, tenantId);
-  if (branchId && branchId !== 'all') {
-    activeQuery.where('branch_id', branchId);
-  }
   const activeRes = await activeQuery.count({ count: '*' }).first();
 
   const total = Number(totalRes?.count || 0);
@@ -419,18 +390,12 @@ export const getEmployeeStats = async (tenantId = null, branchId = null) => {
     .whereNot('name', 'like', '%Temp Admin%')
     .whereNot('email', 'like', '%@temp.omnimanage.local%');
   applyTenantScope(deptQuery, tenantId);
-  if (branchId && branchId !== 'all') {
-    deptQuery.where('branch_id', branchId);
-  }
   const departments = await deptQuery.select('department').count({ count: '*' }).groupBy('department').orderBy('count', 'desc');
 
   const salaryQuery = db('employees').where({ is_deleted: false })
     .whereNot('name', 'like', '%Temp Admin%')
     .whereNot('email', 'like', '%@temp.omnimanage.local%');
   applyTenantScope(salaryQuery, tenantId);
-  if (branchId && branchId !== 'all') {
-    salaryQuery.where('branch_id', branchId);
-  }
   const salaryRes = await salaryQuery.avg({ avg: 'salary' }).sum({ total: 'salary' }).first();
 
   return {

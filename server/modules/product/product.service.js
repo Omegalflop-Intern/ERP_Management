@@ -8,20 +8,9 @@ export function generateSKU(brandName) {
   return `${prefix}-${random6}`;
 }
 
-export function formatProduct(row, availableIMEIs = [], branchId = null, totalUnitsGlobal = 0, branchStockFromTable = null) {
+export function formatProduct(row, availableIMEIs = [], totalUnitsGlobal = 0) {
   if (!row) return null;
-  const imeiCountInBranch = availableIMEIs.length;
-  const isSerialTracked = totalUnitsGlobal > 0 || imeiCountInBranch > 0;
-
-  let branchStock = 0;
-  if (isSerialTracked) {
-    branchStock = imeiCountInBranch;
-  } else if (branchStockFromTable !== null) {
-    branchStock = branchStockFromTable;
-  } else {
-    branchStock = Number(row.stock_quantity || 0);
-  }
-
+  const isSerialTracked = totalUnitsGlobal > 0 || availableIMEIs.length > 0;
   const globalStock = isSerialTracked ? totalUnitsGlobal : Number(row.stock_quantity || 0);
 
   return {
@@ -43,8 +32,7 @@ export function formatProduct(row, availableIMEIs = [], branchId = null, totalUn
     vatRate: Number(row.vat_rate || 0),
     unit: row.unit || 'piece',
     minStockAlert: Number(row.min_stock_alert || 2),
-    stockQuantity: branchId ? branchStock : globalStock,
-    branchStockQuantity: branchStock,
+    stockQuantity: globalStock,
     globalStockQuantity: globalStock,
     warrantyMonths: Number(row.warranty_months || 12),
     image: row.image || null,
@@ -64,24 +52,9 @@ function applyTenantScope(query, tenantId) {
   }
 }
 
-export const getAllProducts = async (page = 1, limit = 50, search = '', category = '', tenantId = null, branchId = null) => {
+export const getAllProducts = async (page = 1, limit = 50, search = '', category = '', tenantId = null) => {
   const countQuery = db('products').where({ is_deleted: false });
   applyTenantScope(countQuery, tenantId);
-
-  if (branchId && branchId !== 'all') {
-    countQuery.where((b) => {
-      b.whereIn('products.id', function () {
-        this.select('product_id').from('product_branch_stocks')
-          .where('branch_id', branchId)
-          .where('stock_quantity', '>', 0);
-      }).orWhereIn('products.id', function () {
-        this.select('product_id').from('inventory_units')
-          .where('branch_id', branchId)
-          .where('status', 'Available')
-          .where('is_deleted', false);
-      });
-    });
-  }
 
   if (search) {
     const term = `%${search}%`;
@@ -104,21 +77,6 @@ export const getAllProducts = async (page = 1, limit = 50, search = '', category
   const dataQuery = db('products').where({ is_deleted: false });
   applyTenantScope(dataQuery, tenantId);
 
-  if (branchId && branchId !== 'all') {
-    dataQuery.where((b) => {
-      b.whereIn('products.id', function () {
-        this.select('product_id').from('product_branch_stocks')
-          .where('branch_id', branchId)
-          .where('stock_quantity', '>', 0);
-      }).orWhereIn('products.id', function () {
-        this.select('product_id').from('inventory_units')
-          .where('branch_id', branchId)
-          .where('status', 'Available')
-          .where('is_deleted', false);
-      });
-    });
-  }
-
   if (search) {
     const term = `%${search}%`;
     dataQuery.where((b) => {
@@ -137,39 +95,23 @@ export const getAllProducts = async (page = 1, limit = 50, search = '', category
 
   const productIds = rows.map(r => r.id);
   let allUnits = [];
-  let branchUnits = [];
-  const branchStocksMap = {};
 
   if (productIds.length > 0) {
     const allUnitQuery = db('inventory_units').whereIn('product_id', productIds).where({ status: 'Available', is_deleted: false });
     if (tenantId) allUnitQuery.where('tenant_id', tenantId);
     allUnits = await allUnitQuery;
-
-    if (branchId && branchId !== 'all') {
-      branchUnits = allUnits.filter(u => !u.branch_id || String(u.branch_id) === String(branchId));
-
-      const bsQuery = db('product_branch_stocks').whereIn('product_id', productIds).where('branch_id', branchId);
-      if (tenantId) bsQuery.where('tenant_id', tenantId);
-      const bsRows = await bsQuery;
-      bsRows.forEach((r) => {
-        branchStocksMap[String(r.product_id)] = Number(r.stock_quantity || 0);
-      });
-    } else {
-      branchUnits = allUnits;
-    }
   }
 
   const products = rows.map((row) => {
-    const availIMEIs = branchUnits.filter(u => u.product_id === row.id).map(u => u.imei_or_serial);
+    const availIMEIs = allUnits.filter(u => u.product_id === row.id).map(u => u.imei_or_serial);
     const globalCount = allUnits.filter(u => u.product_id === row.id).length;
-    const branchStockFromTable = branchId && branchId !== 'all' ? (branchStocksMap[String(row.id)] ?? 0) : null;
-    return formatProduct(row, availIMEIs, branchId, globalCount, branchStockFromTable);
+    return formatProduct(row, availIMEIs, globalCount);
   });
 
   return { products, pagination: getPagination(total, page, limit) };
 };
 
-export const getProductById = async (id, tenantId = null, branchId = null) => {
+export const getProductById = async (id, tenantId = null) => {
   const query = db('products').where({ id, is_deleted: false });
   applyTenantScope(query, tenantId);
   const row = await query.first();
@@ -179,17 +121,8 @@ export const getProductById = async (id, tenantId = null, branchId = null) => {
   if (tenantId) allUnitQuery.where('tenant_id', tenantId);
   const allUnits = await allUnitQuery;
 
-  let branchUnits = allUnits;
-  let branchStockFromTable = null;
-  if (branchId && branchId !== 'all') {
-    branchUnits = allUnits.filter(u => !u.branch_id || String(u.branch_id) === String(branchId));
-
-    const bs = await db('product_branch_stocks').where({ product_id: id, branch_id: branchId }).first();
-    branchStockFromTable = bs ? Number(bs.stock_quantity || 0) : 0;
-  }
-
-  const availIMEIs = branchUnits.map(u => u.imei_or_serial);
-  return formatProduct(row, availIMEIs, branchId, allUnits.length, branchStockFromTable);
+  const availIMEIs = allUnits.map(u => u.imei_or_serial);
+  return formatProduct(row, availIMEIs, allUnits.length);
 };
 
 export const getProductBySku = async (sku, tenantId = null) => {
@@ -297,7 +230,6 @@ export const createProduct = async (data) => {
       if (!existing) {
         await db('inventory_units').insert({
           tenant_id: tenantId,
-          branch_id: data.branchId || null,
           product_id: insertedId,
           imei_or_serial: imeiVal,
           color: parts[1]?.trim() || data.color || null,

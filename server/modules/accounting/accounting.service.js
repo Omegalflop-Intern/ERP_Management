@@ -65,18 +65,9 @@ function applyTenantScope(query, tenantId, tablePrefix = 'accounts') {
   }
 }
 
-function applyBranchScope(query, branchId, tablePrefix = 'accounts') {
-  if (branchId && branchId !== 'all') {
-    query.where((b) => b.where(`${tablePrefix}.branch_id`, branchId).orWhereNull(`${tablePrefix}.branch_id`));
-  }
-}
-
-export const getAllAccounts = async (page = 1, limit = 100, search = '', type = '', tenantId = null, branchId = null) => {
+export const getAllAccounts = async (page = 1, limit = 100, search = '', type = '', tenantId = null) => {
   const countQuery = db('accounts').where('accounts.is_deleted', false);
   applyTenantScope(countQuery, tenantId, 'accounts');
-  if (branchId && branchId !== 'all') {
-    countQuery.where((b) => b.where('accounts.branch_id', branchId).orWhereNull('accounts.branch_id'));
-  }
   if (type && type !== 'ALL') countQuery.where('accounts.type', type);
   if (search) {
     const term = `%${search}%`;
@@ -97,9 +88,6 @@ export const getAllAccounts = async (page = 1, limit = 100, search = '', type = 
       'p.id as p_id', 'p.code as p_code', 'p.name as p_name'
     );
   applyTenantScope(dataQuery, tenantId, 'accounts');
-  if (branchId && branchId !== 'all') {
-    dataQuery.where((b) => b.where('accounts.branch_id', branchId).orWhereNull('accounts.branch_id'));
-  }
   if (type && type !== 'ALL') dataQuery.where('accounts.type', type);
   if (search) {
     const term = `%${search}%`;
@@ -110,7 +98,6 @@ export const getAllAccounts = async (page = 1, limit = 100, search = '', type = 
 
   const rows = await dataQuery.orderBy('accounts.code', 'asc').limit(limit).offset(offset);
 
-  // Get journal entry counts and last activity per account from JSON lines
   const accountIds = rows.map((r) => r.id);
   let journalCounts = {};
   let lastTransactions = {};
@@ -120,11 +107,8 @@ export const getAllAccounts = async (page = 1, limit = 100, search = '', type = 
     const jeQuery = db('journal_entries')
       .where('is_deleted', false)
       .andWhere('status', 'POSTED')
-      .select('id', 'date', 'lines', 'branch_id');
+      .select('id', 'date', 'lines');
     applyTenantScope(jeQuery, tenantId, 'journal_entries');
-    if (branchId && branchId !== 'all') {
-      jeQuery.where('branch_id', branchId);
-    }
     const jeRows = await jeQuery;
     for (const je of jeRows) {
       let lines = [];
@@ -149,28 +133,17 @@ export const getAllAccounts = async (page = 1, limit = 100, search = '', type = 
   const accounts = rows.map((row) => {
     const parentRow = row.p_id ? { id: row.p_id, code: row.p_code, name: row.p_name } : null;
     const formatted = formatAccount(row, parentRow);
-    const d = totalDebits[row.id] || 0;
-    const c = totalCredits[row.id] || 0;
-
-    if (branchId && branchId !== 'all') {
-      if (['ASSET', 'EXPENSE'].includes(row.type)) {
-        formatted.balance = d - c;
-      } else {
-        formatted.balance = c - d;
-      }
-    }
-
     formatted.journalEntryCount = journalCounts[row.id] || 0;
     formatted.lastTransactionDate = lastTransactions[row.id] || null;
-    formatted.totalDebit = d;
-    formatted.totalCredit = c;
+    formatted.totalDebit = totalDebits[row.id] || 0;
+    formatted.totalCredit = totalCredits[row.id] || 0;
     return formatted;
   });
 
   return { accounts, pagination: getPagination(total, page, limit) };
 };
 
-export const getAccountById = async (id, tenantId = null, branchId = null) => {
+export const getAccountById = async (id, tenantId = null) => {
   const query = db('accounts')
     .leftJoin('accounts as p', 'accounts.parent_id', 'p.id')
     .where({ 'accounts.id': id, 'accounts.is_deleted': false })
@@ -179,7 +152,6 @@ export const getAccountById = async (id, tenantId = null, branchId = null) => {
       'p.id as p_id', 'p.code as p_code', 'p.name as p_name'
     );
   applyTenantScope(query, tenantId, 'accounts');
-  applyBranchScope(query, branchId, 'accounts');
   const row = await query.first();
   if (!row) throw ApiError.notFound('Account not found');
   const parentRow = row.p_id ? { id: row.p_id, code: row.p_code, name: row.p_name } : null;
@@ -188,14 +160,12 @@ export const getAccountById = async (id, tenantId = null, branchId = null) => {
 
 export const createAccount = async (data) => {
   const tenantId = data.tenantId || null;
-  const branchId = data.branchId || null;
   const existingQuery = db('accounts').where({ code: data.code, is_deleted: false });
   applyTenantScope(existingQuery, tenantId, 'accounts');
   if (await existingQuery.first()) throw ApiError.conflict('Account code already exists');
 
   const [insertedId] = await db('accounts').insert({
     tenant_id: tenantId,
-    branch_id: branchId,
     code: data.code,
     name: data.name,
     type: data.type,
@@ -210,8 +180,8 @@ export const createAccount = async (data) => {
   return getAccountById(insertedId, tenantId);
 };
 
-export const updateAccount = async (id, data, tenantId = null, branchId = null) => {
-  const account = await getAccountById(id, tenantId, branchId);
+export const updateAccount = async (id, data, tenantId = null) => {
+  const account = await getAccountById(id, tenantId);
   if (!account) throw ApiError.notFound('Account not found');
 
   const updateFields = {};
@@ -229,8 +199,8 @@ export const updateAccount = async (id, data, tenantId = null, branchId = null) 
   return getAccountById(id, tenantId);
 };
 
-export const deleteAccount = async (id, tenantId = null, branchId = null) => {
-  const account = await getAccountById(id, tenantId, branchId);
+export const deleteAccount = async (id, tenantId = null) => {
+  const account = await getAccountById(id, tenantId);
   if (!account) throw ApiError.notFound('Account not found');
 
   const acctDel = db('accounts').where({ id });
@@ -305,11 +275,10 @@ export const validateWalletBalance = async (paymentMethod, amount, tenantId = nu
 };
 
 // Journal Entries
-export const getAllJournalEntries = async (page = 1, limit = 20, search = '', status = '', from = '', to = '', tenantId = null, branchId = null) => {
+export const getAllJournalEntries = async (page = 1, limit = 20, search = '', status = '', from = '', to = '', tenantId = null) => {
   const applyFilters = (q) => {
     applyTenantScope(q, tenantId, 'journal_entries');
     if (status && status !== 'ALL') q.where({ status });
-    if (branchId && branchId !== 'all') q.where('branch_id', branchId);
     if (search) {
       const term = `%${search}%`;
       q.where((b) => b.where('description', 'like', term).orWhere('reference', 'like', term).orWhere('entry_number', 'like', term));
@@ -334,10 +303,9 @@ export const getAllJournalEntries = async (page = 1, limit = 20, search = '', st
 };
 
 
-export const getJournalEntryById = async (id, tenantId = null, branchId = null) => {
+export const getJournalEntryById = async (id, tenantId = null) => {
   const query = db('journal_entries').where({ id, is_deleted: false });
   applyTenantScope(query, tenantId, 'journal_entries');
-  applyBranchScope(query, branchId, 'journal_entries');
   const row = await query.first();
   if (!row) throw ApiError.notFound('Journal entry not found');
   return formatJournalEntry(row);
@@ -396,7 +364,6 @@ export const validatePaymentMethodActive = async (method, tenantId) => {
 
 export const createJournalEntry = async (data) => {
   const tenantId = data.tenantId || null;
-  const branchId = data.branchId || null;
   const totalDebit = (data.lines || []).reduce((sum, l) => sum + (Number(l.debit) || 0), 0);
   const totalCredit = (data.lines || []).reduce((sum, l) => sum + (Number(l.credit) || 0), 0);
 
@@ -406,7 +373,6 @@ export const createJournalEntry = async (data) => {
   const entryNumber = await generateEntryNumber(tenantId);
   const [insertedId] = await db('journal_entries').insert({
     tenant_id: tenantId,
-    branch_id: branchId,
     entry_number: entryNumber,
     date: data.date ? new Date(data.date) : new Date(),
     description: data.description,
@@ -423,28 +389,24 @@ export const createJournalEntry = async (data) => {
     await applyLinesToAccounts(data.lines, false, tenantId);
   }
 
-  return getJournalEntryById(insertedId, tenantId, branchId);
+  return getJournalEntryById(insertedId, tenantId);
 };
 
-export const postJournalEntry = async (id, postedBy = 'system', tenantId = null, branchId = null) => {
-  const entry = await getJournalEntryById(id, tenantId, branchId);
+export const postJournalEntry = async (id, postedBy = 'system', tenantId = null) => {
+  const entry = await getJournalEntryById(id, tenantId);
   if (!entry) throw ApiError.notFound('Journal entry not found');
 
   if (entry.status !== 'POSTED') {
     const jePost = db('journal_entries').where({ id });
     if (tenantId) jePost.andWhere('tenant_id', tenantId);
-    if (branchId && branchId !== 'all') jePost.andWhere('branch_id', branchId);
-    // Bug #24 fixed: Update status in DB FIRST before applying to accounts.
-    // This prevents double-applying balances if applyLinesToAccounts throws midway
-    // and the entry is later retried with status still = DRAFT.
     await jePost.update({ status: 'POSTED', posted_by: postedBy });
     await applyLinesToAccounts(parseJSON(entry.lines), false, tenantId);
   }
-  return getJournalEntryById(id, tenantId, branchId);
+  return getJournalEntryById(id, tenantId);
 };
 
-export const voidJournalEntry = async (id, voidedBy = 'system', tenantId = null, branchId = null) => {
-  const entry = await getJournalEntryById(id, tenantId, branchId);
+export const voidJournalEntry = async (id, voidedBy = 'system', tenantId = null) => {
+  const entry = await getJournalEntryById(id, tenantId);
   if (!entry) throw ApiError.notFound('Journal entry not found');
 
   if (entry.status === 'POSTED') {
@@ -453,13 +415,12 @@ export const voidJournalEntry = async (id, voidedBy = 'system', tenantId = null,
 
   const jeVoid = db('journal_entries').where({ id });
   if (tenantId) jeVoid.andWhere('tenant_id', tenantId);
-  if (branchId && branchId !== 'all') jeVoid.andWhere('branch_id', branchId);
   await jeVoid.update({ status: 'VOID', voided_by: voidedBy, voided_at: new Date() });
-  return getJournalEntryById(id, tenantId, branchId);
+  return getJournalEntryById(id, tenantId);
 };
 
-export const deleteJournalEntry = async (id, tenantId = null, branchId = null) => {
-  const entry = await getJournalEntryById(id, tenantId, branchId);
+export const deleteJournalEntry = async (id, tenantId = null) => {
+  const entry = await getJournalEntryById(id, tenantId);
   if (!entry) throw ApiError.notFound('Journal entry not found');
 
   if (entry.status === 'POSTED') {
@@ -468,12 +429,11 @@ export const deleteJournalEntry = async (id, tenantId = null, branchId = null) =
 
   const jeDel = db('journal_entries').where({ id });
   if (tenantId) jeDel.andWhere('tenant_id', tenantId);
-  if (branchId && branchId !== 'all') jeDel.andWhere('branch_id', branchId);
   await jeDel.update({ is_deleted: true });
   return { ...entry, isDeleted: true };
 };
 
-export const computeBranchScopedAccountBalances = async (rows, tenantId, branchId) => {
+export const computeBranchScopedAccountBalances = async (rows, tenantId) => {
   const accountIds = rows.map((r) => r.id);
   let totalDebits = {};
   let totalCredits = {};
@@ -482,11 +442,8 @@ export const computeBranchScopedAccountBalances = async (rows, tenantId, branchI
     const jeQuery = db('journal_entries')
       .where('is_deleted', false)
       .andWhere('status', 'POSTED')
-      .select('id', 'date', 'lines', 'branch_id');
+      .select('id', 'date', 'lines');
     applyTenantScope(jeQuery, tenantId, 'journal_entries');
-    if (branchId && branchId !== 'all') {
-      jeQuery.where('branch_id', branchId);
-    }
     const jeRows = await jeQuery;
     for (const je of jeRows) {
       let lines = [];
@@ -506,30 +463,20 @@ export const computeBranchScopedAccountBalances = async (rows, tenantId, branchI
 
   return rows.map((r) => {
     const formatted = formatAccount(r);
-    const d = totalDebits[r.id] || 0;
-    const c = totalCredits[r.id] || 0;
-    if (branchId && branchId !== 'all') {
-      if (['ASSET', 'EXPENSE'].includes(r.type)) {
-        formatted.balance = d - c;
-      } else {
-        formatted.balance = c - d;
-      }
-    }
-    formatted.totalDebit = d;
-    formatted.totalCredit = c;
+    formatted.totalDebit = totalDebits[r.id] || 0;
+    formatted.totalCredit = totalCredits[r.id] || 0;
     return formatted;
   });
 };
 
-export const getBalanceSheet = async (asOf = '', tenantId = null, branchId = null) => {
+export const getBalanceSheet = async (asOf = '', tenantId = null) => {
   await seedDefaultAccounts(tenantId);
 
   const accountsQuery = db('accounts').where({ is_deleted: false, is_active: true });
   applyTenantScope(accountsQuery, tenantId, 'accounts');
   const rows = await accountsQuery.orderBy('code', 'asc');
   
-  // Calculate branch-scoped balances from journal entries
-  const accounts = await computeBranchScopedAccountBalances(rows, tenantId, branchId);
+  const accounts = await computeBranchScopedAccountBalances(rows, tenantId);
 
   const assets = accounts.filter(a => a.type === 'ASSET');
   const liabilities = accounts.filter(a => a.type === 'LIABILITY');
@@ -541,7 +488,6 @@ export const getBalanceSheet = async (asOf = '', tenantId = null, branchId = nul
   const totalLiabilities = liabilities.reduce((sum, a) => sum + (-Number(a.balance || 0)), 0);
   const baseEquity = equity.reduce((sum, a) => sum + (-Number(a.balance || 0)), 0);
 
-  // Retained Earnings = Total Revenue (Credit) - Total Operating Expenses & COGS (Debit)
   const totalRevenue = revenue.reduce((sum, a) => sum + (-Number(a.balance || 0)), 0);
   const totalExpenses = expenses.reduce((sum, a) => sum + Number(a.balance || 0), 0);
   const retainedEarnings = totalRevenue - totalExpenses;
@@ -557,16 +503,14 @@ export const getBalanceSheet = async (asOf = '', tenantId = null, branchId = nul
   };
 };
 
-export const getProfitLoss = async (from = '', to = '', tenantId = null, branchId = null) => {
+export const getProfitLoss = async (from = '', to = '', tenantId = null) => {
   const fromDateStr = from ? (from.includes('T') ? from.split('T')[0] : from) : '';
   const toDateStr = to ? (to.includes('T') ? to.split('T')[0] : to) : '';
 
-  // 1. Fetch completed sales transactions
   const revQuery = db('transactions')
     .where({ tx_type: 'SALE', is_deleted: false })
     .whereNot('status', 'CANCELLED');
   applyTenantScope(revQuery, tenantId, 'transactions');
-  if (branchId && branchId !== 'all') revQuery.where('branch_id', branchId);
   if (fromDateStr) revQuery.whereRaw('DATE(created_at) >= ?', [fromDateStr]);
   if (toDateStr) revQuery.whereRaw('DATE(created_at) <= ?', [toDateStr]);
 
@@ -639,7 +583,6 @@ export const getProfitLoss = async (from = '', to = '', tenantId = null, branchI
     .whereNot('category', 'Supplier Payment')
     .whereNot('category', 'Staff Salaries & Payroll');
   applyTenantScope(expQuery, tenantId, 'expenses');
-  if (branchId && branchId !== 'all') expQuery.where('branch_id', branchId);
   if (fromDateStr) expQuery.whereRaw('DATE(created_at) >= ?', [fromDateStr]);
   if (toDateStr) expQuery.whereRaw('DATE(created_at) <= ?', [toDateStr]);
 
@@ -658,7 +601,6 @@ export const getProfitLoss = async (from = '', to = '', tenantId = null, branchI
   try {
     const payQuery = db('payrolls').where({ is_deleted: false, payment_status: 'PAID' });
     applyTenantScope(payQuery, tenantId, 'payrolls');
-    if (branchId && branchId !== 'all') payQuery.where('branch_id', branchId);
     if (fromDateStr) payQuery.whereRaw('DATE(created_at) >= ?', [fromDateStr]);
     if (toDateStr) payQuery.whereRaw('DATE(created_at) <= ?', [toDateStr]);
 
@@ -678,7 +620,6 @@ export const getProfitLoss = async (from = '', to = '', tenantId = null, branchI
   try {
     const poQuery = db('purchase_orders').where({ is_deleted: false }).whereNot('status', 'CANCELLED');
     applyTenantScope(poQuery, tenantId, 'purchase_orders');
-    if (branchId && branchId !== 'all') poQuery.where('branch_id', branchId);
     if (fromDateStr) poQuery.whereRaw('DATE(created_at) >= ?', [fromDateStr]);
     if (toDateStr) poQuery.whereRaw('DATE(created_at) <= ?', [toDateStr]);
 
@@ -766,15 +707,14 @@ export const recalculateAllAccountBalances = async (tenantId = null) => {
   });
 };
 
-export const getTrialBalance = async (tenantId = null, branchId = null) => {
+export const getTrialBalance = async (tenantId = null) => {
   await seedDefaultAccounts(tenantId);
 
   const query = db('accounts').where({ is_deleted: false, is_active: true });
   applyTenantScope(query, tenantId, 'accounts');
   const rows = await query.orderBy('code', 'asc');
 
-  // Compute branch-scoped balances
-  const accountsWithBalances = await computeBranchScopedAccountBalances(rows, tenantId, branchId);
+  const accountsWithBalances = await computeBranchScopedAccountBalances(rows, tenantId);
 
   let totalDebit = 0;
   let totalCredit = 0;
@@ -809,7 +749,7 @@ export const getTrialBalance = async (tenantId = null, branchId = null) => {
   });
 
   return {
-    accounts: branchId && branchId !== 'all' ? accounts.filter(a => a.debit > 0 || a.credit > 0 || Math.abs(a.balance) > 0) : accounts,
+    accounts,
     totalDebit,
     totalCredit,
     balanced: Math.abs(totalDebit - totalCredit) < 0.01,
@@ -863,7 +803,6 @@ export const createAutomatedSaleJournal = async (sale) => {
     if (lines.length >= 2) {
       await createJournalEntry({
         tenantId,
-        branchId: sale.branch_id || sale.branchId || null,
         date: sale.created_at || new Date(),
         description: `Sale Invoice #${ref} (${sale.customer_name || 'Walk-in'})`,
         reference: ref,
@@ -887,7 +826,6 @@ export const createAutomatedSaleJournal = async (sale) => {
       if (!existingCogs) {
         await createJournalEntry({
           tenantId,
-          branchId: sale.branch_id || sale.branchId || null,
           date: sale.created_at || new Date(),
           description: `COGS Recognition for #${ref}`,
           reference: cogsRef,
@@ -908,7 +846,6 @@ export const createAutomatedSaleJournal = async (sale) => {
 export const createAutomatedExpenseJournal = async (expense) => {
   try {
     const tenantId = expense.tenant_id || expense.tenantId || null;
-    const branchId = expense.branch_id || expense.branchId || null;
     const amt = Number(expense.amount || 0);
     if (amt <= 0) return null;
 
@@ -916,7 +853,6 @@ export const createAutomatedExpenseJournal = async (expense) => {
     if (!expenseId) {
       const [insertedId] = await db('expenses').insert({
         tenant_id: tenantId,
-        branch_id: branchId,
         title: expense.title || expense.notes || `${expense.expenseCategory || expense.category || 'Supplier Payment'}`,
         category: expense.expenseCategory || expense.category || 'Supplier Payment',
         amount: amt,
@@ -957,7 +893,6 @@ export const createAutomatedExpenseJournal = async (expense) => {
       const expCat = expense.category || expense.expenseCategory || 'General Expense';
       return await createJournalEntry({
         tenantId,
-        branchId,
         date: expense.created_at || expense.date || new Date(),
         description: isSupplierPayment ? `Supplier Due Payment: ${expTitle}` : `Expense: ${expTitle} (${expCat})`,
         reference: ref,
@@ -1115,7 +1050,6 @@ export const syncHistoricalJournals = async (tenantId = null) => {
       if (lines.length >= 2) {
         await createJournalEntry({
           tenantId: sale.tenant_id || tenantId,
-          branchId: sale.branch_id || null,
           date: sale.created_at,
           description: `Sale Invoice #${ref} (${sale.customer_name || 'Walk-in'})`,
           reference: ref,
@@ -1130,7 +1064,6 @@ export const syncHistoricalJournals = async (tenantId = null) => {
         if (!existingCogs) {
           await createJournalEntry({
             tenantId: sale.tenant_id || tenantId,
-            branchId: sale.branch_id || null,
             date: sale.created_at,
             description: `COGS Recognition for #${ref}`,
             reference: cogsRef,
@@ -1170,7 +1103,6 @@ export const syncHistoricalJournals = async (tenantId = null) => {
         const catStr = exp.category || 'General Expense';
         await createJournalEntry({
           tenantId: exp.tenant_id || tenantId,
-          branchId: exp.branch_id || null,
           date: exp.created_at,
           description: `Expense: ${titleStr} (${catStr})`,
           reference: ref,

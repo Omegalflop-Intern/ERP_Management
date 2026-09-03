@@ -2,7 +2,7 @@ import { db } from '../../config/db.knex.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { getPagination } from '../../utils/http/pagination.js';
 
-export function formatInventoryUnit(row, productRow = null, branchRow = null, supplierRow = null) {
+export function formatInventoryUnit(row, productRow = null, supplierRow = null) {
   if (!row) return null;
   let history = row.passport_history;
   if (typeof history === 'string') {
@@ -25,11 +25,6 @@ export function formatInventoryUnit(row, productRow = null, branchRow = null, su
       sellingPrice: Number(productRow.selling_price || 0),
       costPrice: Number(productRow.cost_price || 0),
     } : String(row.product_id),
-    branchId: branchRow ? {
-      _id: String(branchRow.id),
-      id: branchRow.id,
-      name: branchRow.name,
-    } : (row.branch_id ? String(row.branch_id) : null),
     supplierId: supplierRow ? {
       _id: String(supplierRow.id),
       id: supplierRow.id,
@@ -59,14 +54,11 @@ function applyTenantScope(query, tenantId) {
   }
 }
 
-export const getAllIMEI = async (page = 1, limit = 20, search = '', status = '', category = '', tenantId = null, branchId = null) => {
+export const getAllIMEI = async (page = 1, limit = 20, search = '', status = '', category = '', tenantId = null) => {
   const countQuery = db('inventory_units')
     .leftJoin('products', 'inventory_units.product_id', 'products.id')
     .where('inventory_units.is_deleted', false);
   applyTenantScope(countQuery, tenantId);
-  if (branchId && branchId !== 'all') {
-    countQuery.where((b) => b.where('inventory_units.branch_id', branchId).orWhereNull('inventory_units.branch_id'));
-  }
 
   if (search) {
     const term = `%${search}%`;
@@ -87,7 +79,6 @@ export const getAllIMEI = async (page = 1, limit = 20, search = '', status = '',
   const offset = (page - 1) * limit;
   const dataQuery = db('inventory_units')
     .leftJoin('products', 'inventory_units.product_id', 'products.id')
-    .leftJoin('branches', 'inventory_units.branch_id', 'branches.id')
     .where('inventory_units.is_deleted', false)
     .select(
       'inventory_units.*',
@@ -98,14 +89,9 @@ export const getAllIMEI = async (page = 1, limit = 20, search = '', status = '',
       'products.model as p_model',
       'products.sku as p_sku',
       'products.selling_price as p_selling_price',
-      'products.cost_price as p_cost_price',
-      'branches.id as b_id',
-      'branches.name as b_name'
+      'products.cost_price as p_cost_price'
     );
   applyTenantScope(dataQuery, tenantId);
-  if (branchId && branchId !== 'all') {
-    dataQuery.where((b) => b.where('inventory_units.branch_id', branchId).orWhereNull('inventory_units.branch_id'));
-  }
 
   if (search) {
     const term = `%${search}%`;
@@ -127,8 +113,7 @@ export const getAllIMEI = async (page = 1, limit = 20, search = '', status = '',
       id: row.p_id, name: row.p_name, brand: row.p_brand, category: row.p_category,
       model: row.p_model, sku: row.p_sku, selling_price: row.p_selling_price, cost_price: row.p_cost_price
     } : null;
-    const bRow = row.b_id ? { id: row.b_id, name: row.b_name } : null;
-    return formatInventoryUnit(row, pRow, bRow);
+    return formatInventoryUnit(row, pRow);
   });
 
   return { units, pagination: getPagination(total, page, limit) };
@@ -139,14 +124,12 @@ export const getAllIMEIs = getAllIMEI;
 export const getIMEIBySerial = async (imeiOrSerial, tenantId = null) => {
   const dataQuery = db('inventory_units')
     .leftJoin('products', 'inventory_units.product_id', 'products.id')
-    .leftJoin('branches', 'inventory_units.branch_id', 'branches.id')
     .where({ 'inventory_units.imei_or_serial': imeiOrSerial, 'inventory_units.is_deleted': false })
     .select(
       'inventory_units.*',
       'products.id as p_id', 'products.name as p_name', 'products.brand as p_brand',
       'products.category as p_category', 'products.model as p_model', 'products.sku as p_sku',
-      'products.selling_price as p_selling_price', 'products.cost_price as p_cost_price',
-      'branches.id as b_id', 'branches.name as b_name'
+      'products.selling_price as p_selling_price', 'products.cost_price as p_cost_price'
     );
   applyTenantScope(dataQuery, tenantId);
 
@@ -157,12 +140,11 @@ export const getIMEIBySerial = async (imeiOrSerial, tenantId = null) => {
     id: row.p_id, name: row.p_name, brand: row.p_brand, category: row.p_category,
     model: row.p_model, sku: row.p_sku, selling_price: row.p_selling_price, cost_price: row.p_cost_price
   } : null;
-  const bRow = row.b_id ? { id: row.b_id, name: row.b_name } : null;
 
-  return formatInventoryUnit(row, pRow, bRow);
+  return formatInventoryUnit(row, pRow);
 };
 
-export const getIMEIPassport = async (imeiOrSerial, tenantId = null, branchId = null) => {
+export const getIMEIPassport = async (imeiOrSerial, tenantId = null) => {
   return getIMEIBySerial(imeiOrSerial, tenantId);
 };
 
@@ -191,7 +173,6 @@ export const addInventoryUnit = async (data, tenantId = null) => {
     tenant_id: tenantId || data.tenantId || null,
     imei_or_serial: data.imeiOrSerial,
     product_id: data.productId,
-    branch_id: data.branchId || null,
     supplier_id: data.supplierId || null,
     status: data.status || 'Available',
     purchase_price: data.purchasePrice || product.cost_price,

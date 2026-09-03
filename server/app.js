@@ -29,7 +29,6 @@ import customerCrmRoutes from './modules/customer/customer.routes.js';
 import warrantyRoutes from './modules/warranty/warranty.routes.js';
 import repairRoutes from './modules/repair/repair.routes.js';
 import catalogRoutes from './modules/catalog/catalog.routes.js';
-import branchRoutes from './modules/branch/branch.routes.js';
 import wholesaleRoutes from './modules/wholesale/wholesale.routes.js';
 import notificationRoutes from './modules/notification/notification.routes.js';
 import settingsRoutes from './modules/settings/settings.routes.js';
@@ -218,8 +217,7 @@ app.get('/api/v1/audit-logs', authenticate, authorize('ADMIN', 'MANAGER'), async
   try {
     const { page = 1, limit = 50, module, userId, action, from, to } = req.query;
     const tenantId = req.user?.tenantId || null;
-    const branchId = req.selectedBranchId || null;
-    const result = await getAuditLogs(Number(page), Number(limit), { module, userId, action, from, to }, tenantId, branchId);
+    const result = await getAuditLogs(Number(page), Number(limit), { module, userId, action, from, to }, tenantId);
     res.json({ success: true, data: result.logs, pagination: result.pagination });
   } catch (error) { next(error); }
 });
@@ -340,7 +338,6 @@ app.use('/api/v1/customers', customerCrmRoutes);
 app.use('/api/v1/warranties', warrantyRoutes);
 app.use('/api/v1/repairs', repairRoutes);
 app.use('/api/v1/catalog', catalogRoutes);
-app.use('/api/v1/branches', branchRoutes);
 app.use('/api/v1/wholesale', wholesaleRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/settings', settingsRoutes);
