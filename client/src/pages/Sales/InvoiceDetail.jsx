@@ -408,6 +408,11 @@ export default function InvoiceDetail() {
           <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
             ৳{Math.max(0, paid - (sale.returnedAmount || 0)).toLocaleString()}
           </div>
+          {Number(sale.paymentBreakdown?.changeAmount || 0) > 0 && (
+            <div className="text-[10px] text-blue-600 dark:text-blue-400 font-bold mt-1">
+              Change Returned: ৳{Number(sale.paymentBreakdown.changeAmount).toLocaleString()}
+            </div>
+          )}
           {sale.returnedAmount > 0 && (
             <div className="text-[10px] text-gray-400 mt-1">
               Initially Rec'd: ৳{paid.toLocaleString()} (-৳{sale.returnedAmount.toLocaleString()}{' '}

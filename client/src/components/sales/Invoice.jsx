@@ -495,6 +495,12 @@ export function InvoiceA4Full({ sale }) {
               <span>Total Paid:</span>
               <span>৳{totalPaid.toLocaleString()}</span>
             </div>
+            {Number(sale.paymentBreakdown?.changeAmount || 0) > 0 && (
+              <div className="flex justify-between text-blue-700 font-extrabold text-xs pt-0.5">
+                <span>Change Returned (ফেরত):</span>
+                <span>৳{Number(sale.paymentBreakdown.changeAmount).toLocaleString()}</span>
+              </div>
+            )}
             {dueAmount > 0 && (
               <div className="flex justify-between text-red-600 font-extrabold text-sm pt-0.5">
                 <span>Balance Due:</span>
@@ -746,6 +752,12 @@ export function InvoiceA4Half({ sale }) {
               <span>Net Paid:</span>
               <span>৳{Math.max(0, totalPaid - (sale.returnedAmount || 0)).toLocaleString()}</span>
             </div>
+            {Number(sale.paymentBreakdown?.changeAmount || 0) > 0 && (
+              <div className="flex justify-between text-blue-700 font-bold text-[9px]">
+                <span>Change (ফেরত):</span>
+                <span>৳{Number(sale.paymentBreakdown.changeAmount).toLocaleString()}</span>
+              </div>
+            )}
             {dueAmount > 0 && (
               <div className="flex justify-between text-red-600 font-bold">
                 <span>Balance Due:</span>
@@ -846,6 +858,12 @@ export function InvoiceReceipt({ sale }) {
           <span>Paid:</span>
           <span>৳{totalPaid.toLocaleString()}</span>
         </div>
+        {Number(sale.paymentBreakdown?.changeAmount || 0) > 0 && (
+          <div className="flex justify-between font-bold text-blue-600">
+            <span>CHANGE (ফেরত):</span>
+            <span>৳{Number(sale.paymentBreakdown.changeAmount).toLocaleString()}</span>
+          </div>
+        )}
         {dueAmount > 0 && (
           <div className="flex justify-between font-bold text-red-600">
             <span>DUE:</span>
@@ -923,6 +941,12 @@ export function InvoiceThermal({ sale }) {
           <span>Paid:</span>
           <span>৳{totalPaid}</span>
         </div>
+        {Number(sale.paymentBreakdown?.changeAmount || 0) > 0 && (
+          <div className="flex justify-between font-bold text-blue-600">
+            <span>Change:</span>
+            <span>৳{Number(sale.paymentBreakdown.changeAmount)}</span>
+          </div>
+        )}
         {dueAmount > 0 && (
           <div className="flex justify-between font-bold text-red-600">
             <span>DUE:</span>
