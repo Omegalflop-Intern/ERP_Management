@@ -10,12 +10,7 @@ export async function up(knex) {
       await knex.schema.table('wholesale_orders', (table) => {
         table.integer('branch_id').nullable().index();
       });
-      console.log('  ✅ Added branch_id to wholesale_orders');
-    } else {
-      console.log('  ⏭️  branch_id already exists on wholesale_orders');
     }
-  } else {
-    console.log('  ⚠️  Table wholesale_orders not found, skipping');
   }
 }
 
