@@ -189,13 +189,16 @@ export default function SalesForm() {
       return data.data;
     },
     onSuccess: (customer) => {
-      setCustomerId(customer._id);
+      const cId = customer._id || customer.id;
+      setCustomerId(cId);
       setCustomerName(customer.name);
       setCustomerPhone(customer.phone);
       setCustomerEmail(customer.email || '');
       setCustomerAddress(customer.address || '');
+      setSelectedCustomerObj(customer);
+      updateCartPricesForCustomer(customer);
       setShowCustomerCreate(false);
-      toast.success(`Customer "${customer.name}" created`);
+      toast.success(`Customer "${customer.name}" created & selected`);
       queryClient.invalidateQueries({ queryKey: ['customer-search'] });
     },
     onError: (e) => toast.error(e.response?.data?.message || 'Failed to create customer'),
@@ -238,8 +241,8 @@ export default function SalesForm() {
     }
 
     const prodObj = item.productId && typeof item.productId === 'object' ? item.productId : null;
-    const retailPrice = item.currentSellingPrice || item.sellingPrice || prodObj?.sellingPrice || 0;
-    const wholesalePrice = prodObj?.wholesalePrice || item.wholesalePrice || 0;
+    const retailPrice = Number(item.currentSellingPrice || item.sellingPrice || prodObj?.sellingPrice || 0);
+    const wholesalePrice = Number(prodObj?.wholesalePrice || item.wholesalePrice || (typeof item.productId === 'object' ? item.productId?.wholesalePrice : 0) || 0);
     const isB2B = selectedCustomerObj?.customerType === 'B2B';
     const unitPrice = isB2B && wholesalePrice > 0 ? wholesalePrice : retailPrice;
 
