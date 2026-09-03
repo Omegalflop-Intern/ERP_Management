@@ -16,7 +16,6 @@ export function formatPayroll(row, employeeRow = null, paidByRow = null) {
     _id: String(row.id),
     id: row.id,
     tenantId: row.tenant_id || null,
-    branchId: row.branch_id ? String(row.branch_id) : null,
     employee: employeeRow ? {
       _id: String(employeeRow.id),
       id: employeeRow.id,

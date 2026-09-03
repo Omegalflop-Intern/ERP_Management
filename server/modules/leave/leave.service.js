@@ -158,17 +158,15 @@ export const getEmployeeLeaves = async (employeeId, year, tenantId = null) => {
   return { leaves, summary };
 };
 
-export const deleteLeave = async (id, tenantId = null, branchId = null) => {
+export const deleteLeave = async (id, tenantId = null) => {
   const query = db('leaves').where({ id, is_deleted: false });
   applyTenantScope(query, tenantId, 'leaves');
-  if (branchId) query.where('leaves.branch_id', branchId);
   const leave = await query.first();
   if (!leave) throw ApiError.notFound('Leave not found');
   if (leave.status === 'approved') throw ApiError.badRequest('Cannot delete approved leave');
 
   const dq = db('leaves').where({ id });
   if (tenantId) dq.andWhere('tenant_id', tenantId);
-  if (branchId) dq.andWhere('branch_id', branchId);
   await dq.update({ is_deleted: true });
   return { ...formatLeave(leave), isDeleted: true };
 };

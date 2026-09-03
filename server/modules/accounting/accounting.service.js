@@ -1214,7 +1214,6 @@ export const createAutomatedReturnJournal = async (sale, refundAmount, returnInv
     if (lines.length >= 2) {
       await createJournalEntry({
         tenantId,
-        branchId: sale.branch_id || sale.branchId || null,
         date: new Date(),
         description: `Sales Return (${ref}) - Customer: ${sale.customer_name || sale.customer?.name || 'Customer'}`,
         reference: ref,
@@ -1248,7 +1247,6 @@ export const createAutomatedReturnJournal = async (sale, refundAmount, returnInv
       if (!existingRestock) {
         await createJournalEntry({
           tenantId,
-          branchId: sale.branch_id || sale.branchId || null,
           date: new Date(),
           description: `Inventory Restock for Return (${ref})`,
           reference: restockRef,
@@ -1271,7 +1269,6 @@ export const createAutomatedPurchaseReturnJournal = async (purchaseOrder, refund
 export const createAutomatedPurchaseJournal = async (purchaseOrder, createdBy = 'system') => {
   try {
     const tenantId = purchaseOrder.tenantId || purchaseOrder.tenant_id || null;
-    const branchId = purchaseOrder.branchId || purchaseOrder.branch_id || null;
     const poNumber = purchaseOrder.poNumber || purchaseOrder.po_number || 'PO';
     const ref = `PO-${purchaseOrder.id || purchaseOrder._id}`;
 
