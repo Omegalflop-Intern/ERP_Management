@@ -45,14 +45,15 @@ const BRAND_COLORS = [
 ];
 
 const PERIOD_OPTIONS = [
-  { label: '24 Hours', value: '24h' },
+  { label: 'Today (Daily)', value: '24h' },
   { label: '7 Days', value: '7d' },
   { label: '30 Days', value: '30d' },
   { label: '90 Days', value: '90d' },
 ];
 
 const PERIOD_LABELS = {
-  '24h': 'Last 24 Hours',
+  '24h': "Today's Performance",
+  today: "Today's Performance",
   '7d': 'Last 7 Days',
   '30d': 'Last 30 Days',
   '90d': 'Last 90 Days',

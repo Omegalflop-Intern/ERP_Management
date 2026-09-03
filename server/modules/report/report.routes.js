@@ -92,17 +92,24 @@ router.get('/dashboard', async (req, res, next) => {
     try {
       const expQuery = db('expenses').where({ is_deleted: false }).whereNot('category', 'Supplier Payment');
       if (startTime) {
-        expQuery.where('expense_date', '>=', startTime.toISOString().slice(0, 10));
+        expQuery.where('created_at', '>=', startTime);
       }
       applyScope(expQuery);
       const expRes = await expQuery.sum({ total: 'amount' }).first();
       totalExpenses = Number(expRes?.total || 0);
+    } catch (e) {
+      console.error('[DASHBOARD] Expense query error:', e.message);
+    }
 
+    // 1b. Total Inventory Purchases (All-time inventory purchases for the shop)
+    try {
       const poQuery = db('purchase_orders').where({ is_deleted: false }).whereNot('status', 'CANCELLED');
       applyScope(poQuery);
       const poRes = await poQuery.sum({ total: 'net_total' }).sum({ returned: 'returned_amount' }).first();
       totalPurchasesCost = Math.max(0, Number(poRes?.total || 0) - Number(poRes?.returned || 0));
-    } catch {}
+    } catch (e) {
+      console.error('[DASHBOARD] PO query error:', e.message);
+    }
 
     // 2. Sales, Revenue, COGS, and Dues (period-scoped)
     try {
@@ -257,10 +264,10 @@ router.get('/dashboard', async (req, res, next) => {
 
       if (period === '24h' || period === 'today') {
         isHourly = true;
-        startTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        startTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
 
-        for (let i = 23; i >= 0; i--) {
-          const d = new Date(now.getTime() - i * 60 * 60 * 1000);
+        for (let hIndex = 0; hIndex < 24; hIndex++) {
+          const d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hIndex, 0, 0, 0);
           const y = d.getFullYear();
           const m = String(d.getMonth() + 1).padStart(2, '0');
           const day = String(d.getDate()).padStart(2, '0');
