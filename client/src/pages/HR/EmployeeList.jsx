@@ -299,24 +299,6 @@ function EmployeeModal({ editEmp, onClose }) {
     return () => document.removeEventListener('keydown', handler);
   }, [onClose]);
 
-  const { data: employees = [] } = useQuery({
-    queryKey: ['employees'],
-    queryFn: async () => {
-      const { data } = await api.get('/employees', { params: { limit: 200 } });
-      return data?.data || [];
-    },
-    enabled: !editEmp,
-  });
-
-  const generateEmpId = () => {
-    const existing = (employees || []).map((e) => {
-      const match = String(e.employeeId || '').match(/EMP-(\d+)/);
-      return match ? Number(match[1]) : 0;
-    });
-    const maxNum = existing.length > 0 ? Math.max(...existing) : 0;
-    return `EMP-${String(maxNum + 1).padStart(3, '0')}`;
-  };
-
   const [form, setForm] = useState({
     name: editEmp?.name || '',
     phone: editEmp?.phone || '',
@@ -336,19 +318,13 @@ function EmployeeModal({ editEmp, onClose }) {
     userId: editEmp?.user?._id || editEmp?.user || '',
   });
 
-  useEffect(() => {
-    if (!editEmp && employees.length > 0 && !form.employeeId) {
-      setForm((prev) => ({ ...prev, employeeId: generateEmpId() }));
-    }
-  }, [employees, editEmp]);
-
   const mutation = useMutation({
     mutationFn: async (data) => {
       if (editEmp) return api.put(`/employees/${editEmp._id}`, data);
       return api.post('/employees', data);
     },
     onSuccess: () => {
-      toast.success(editEmp ? 'Employee updated' : 'Employee created');
+      toast.success('Employee profile updated');
       queryClient.invalidateQueries({ queryKey: ['employees'] });
       queryClient.invalidateQueries({ queryKey: ['employee-stats'] });
       onClose();
@@ -372,7 +348,7 @@ function EmployeeModal({ editEmp, onClose }) {
       >
         <div className="p-6 border-b border-gray-200 dark:border-gray-800">
           <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
-            {editEmp ? 'Edit Employee' : 'Add Employee'}
+            Edit Employee Profile
           </h2>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
