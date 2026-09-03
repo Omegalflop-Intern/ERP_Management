@@ -58,7 +58,26 @@ router.get('/dashboard', async (req, res, next) => {
   try {
     const applyScope = getTenantScope(req);
     const tenantId = req.user?.tenantId || null;
-    const period = String(req.query?.period || '7d').toLowerCase();
+    const period = String(req.query?.period || '24h').toLowerCase();
+
+    const now = new Date();
+    let startTime = null;
+    let isHourly = false;
+
+    if (period === '24h' || period === 'today') {
+      isHourly = true;
+      // Start of current day (00:00:00 local time)
+      startTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    } else if (period === '30d' || period === 'month') {
+      startTime = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29, 0, 0, 0, 0);
+    } else if (period === '90d' || period === 'quarter') {
+      startTime = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 89, 0, 0, 0, 0);
+    } else if (period === 'all' || period === 'alltime') {
+      startTime = null;
+    } else {
+      // Default: 7d (last 7 days)
+      startTime = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6, 0, 0, 0, 0);
+    }
 
     let totalSalesCount = 0, totalRevenue = 0;
     let totalAvailableUnits = 0, totalStockValue = 0;
@@ -69,8 +88,12 @@ router.get('/dashboard', async (req, res, next) => {
     let brandDistribution = [];
     const lowStockItems = [];
 
+    // 1. Operating Expenses (period-scoped)
     try {
       const expQuery = db('expenses').where({ is_deleted: false }).whereNot('category', 'Supplier Payment');
+      if (startTime) {
+        expQuery.where('expense_date', '>=', startTime.toISOString().slice(0, 10));
+      }
       applyScope(expQuery);
       const expRes = await expQuery.sum({ total: 'amount' }).first();
       totalExpenses = Number(expRes?.total || 0);
@@ -81,32 +104,45 @@ router.get('/dashboard', async (req, res, next) => {
       totalPurchasesCost = Math.max(0, Number(poRes?.total || 0) - Number(poRes?.returned || 0));
     } catch {}
 
+    // 2. Sales, Revenue, COGS, and Dues (period-scoped)
     try {
-      const txQuery = db('transactions').where({ is_deleted: false, tx_type: 'SALE' });
+      const txQuery = db('transactions').where({ is_deleted: false, tx_type: 'SALE' }).whereNot('status', 'CANCELLED');
+      if (startTime) {
+        txQuery.where('created_at', '>=', startTime);
+      }
       applyScope(txQuery);
       const txCountRes = await txQuery.count({ count: '*' }).sum({ total: 'net_total' }).sum({ returned: 'returned_amount' }).first();
       totalSalesCount = Number(txCountRes?.count || 0);
 
-      // Subtract dueAmount to get actual cash/digital revenue
-      const salesForDue = await db('transactions')
+      // Period dues and cash revenue
+      const salesForDueQuery = db('transactions')
         .where({ is_deleted: false, tx_type: 'SALE' })
-        .modify(applyScope)
-        .select('payment_breakdown');
-      
-      let outstandingDues = 0;
+        .whereNot('status', 'CANCELLED');
+      if (startTime) {
+        salesForDueQuery.where('created_at', '>=', startTime);
+      }
+      applyScope(salesForDueQuery);
+      const salesForDue = await salesForDueQuery.select('payment_breakdown');
+
+      let periodDues = 0;
       for (const s of salesForDue) {
         let pb = {};
         try { pb = typeof s.payment_breakdown === 'string' ? JSON.parse(s.payment_breakdown) : (s.payment_breakdown || {}); } catch {}
-        outstandingDues += Number(pb.dueAmount || 0);
+        periodDues += Number(pb.dueAmount || 0);
       }
 
-      totalRevenue = Math.max(0, Number(txCountRes?.total || 0) - Number(txCountRes?.returned || 0) - outstandingDues);
+      totalRevenue = Math.max(0, Number(txCountRes?.total || 0) - Number(txCountRes?.returned || 0) - periodDues);
+      totalDueAmount = periodDues;
 
-      const txRows = await db('transactions')
+      const txRowsQuery = db('transactions')
         .where({ is_deleted: false, tx_type: 'SALE' })
-        .modify(applyScope)
-        .select('line_items', 'returned_amount', 'net_total', 'return_logs');
-      
+        .whereNot('status', 'CANCELLED');
+      if (startTime) {
+        txRowsQuery.where('created_at', '>=', startTime);
+      }
+      applyScope(txRowsQuery);
+      const txRows = await txRowsQuery.select('line_items', 'returned_amount', 'net_total', 'return_logs');
+
       for (const tx of txRows) {
         let items = [];
         try { items = typeof tx.line_items === 'string' ? JSON.parse(tx.line_items) : (tx.line_items || []); } catch {}
@@ -146,13 +182,13 @@ router.get('/dashboard', async (req, res, next) => {
     const grossProfit = Math.max(0, totalRevenue - totalCogs);
     const netProfit = (totalRevenue - totalCogs) - totalExpenses;
 
+    // 3. Live Stock Value & Brands (Current Live Asset Value)
     try {
       const prodQuery = db('products').where({ is_deleted: false });
       applyScope(prodQuery);
       const activeProducts = await prodQuery;
       const productIds = activeProducts.map((p) => p.id);
 
-      let branchUnitMap = {};
       let totalUnitMap = {};
 
       if (productIds.length > 0) {
@@ -171,9 +207,7 @@ router.get('/dashboard', async (req, res, next) => {
       for (const p of activeProducts) {
         const pIdStr = String(p.id);
         const totalUnitsAny = totalUnitMap[pIdStr] || 0;
-
         const availUnits = totalUnitsAny > 0 ? totalUnitsAny : Number(p.stock_quantity || 0);
-
         const costVal = availUnits * Number(p.cost_price || 0);
         totalAvailableUnits += availUnits;
         totalStockValue += costVal;
@@ -201,6 +235,7 @@ router.get('/dashboard', async (req, res, next) => {
         .slice(0, 6);
     } catch {}
 
+    // 4. Active In-Progress Repairs & Customers
     try {
       const repQuery = db('repair_tickets').where({ is_deleted: false }).whereNotIn('status', ['DELIVERED', 'CANCELLED']);
       applyScope(repQuery);
@@ -209,9 +244,8 @@ router.get('/dashboard', async (req, res, next) => {
 
       const custQuery = db('customers').where({ is_deleted: false });
       applyScope(custQuery);
-      const custRes = await custQuery.count({ count: '*' }).sum({ due: 'due_balance' }).first();
+      const custRes = await custQuery.count({ count: '*' }).first();
       totalCustomers = Number(custRes?.count || 0);
-      totalDueAmount = Number(custRes?.due || 0);
     } catch {}
 
     // Precise timeframe trend calculation for sales & dues

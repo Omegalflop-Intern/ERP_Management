@@ -28,7 +28,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { styled } = useTheme();
-  const [period, setPeriod] = React.useState('7d');
+  const [period, setPeriod] = React.useState('24h');
 
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ['dashboard', period],
@@ -53,39 +53,49 @@ export default function Dashboard() {
   const charts = dashboardData?.data?.charts || {};
   const lowStockData = dashboardData?.data?.lowStockItems || [];
 
+  const periodLabelMap = {
+    '24h': 'Today',
+    today: 'Today',
+    '7d': 'Last 7 Days',
+    '30d': 'Last 30 Days',
+    '90d': 'Last 90 Days',
+    all: 'All Time',
+  };
+  const currentPeriodLabel = periodLabelMap[period] || 'Today';
+
   const statCards = [
     {
-      label: 'Total Revenue',
+      label: period === '24h' || period === 'today' ? "Today's Revenue" : `Revenue (${currentPeriodLabel})`,
       value: stats.totalRevenue || 0,
       prefix: '৳',
       suffix: '',
       icon: DollarSign,
       color: 'text-emerald-600 dark:text-emerald-400',
       bg: 'bg-emerald-50 dark:bg-emerald-950/40',
-      hint: 'Total cash received',
+      hint: `${currentPeriodLabel} cash received`,
     },
     {
-      label: 'Total Sales',
+      label: period === '24h' || period === 'today' ? "Today's Sales" : `Sales (${currentPeriodLabel})`,
       value: stats.totalSalesCount || 0,
       prefix: '',
       suffix: '',
       icon: ShoppingCart,
       color: 'text-blue-600 dark:text-blue-400',
       bg: 'bg-blue-50 dark:bg-blue-950/40',
-      hint: 'Completed orders',
+      hint: `${currentPeriodLabel} completed orders`,
     },
     {
-      label: 'Due Amount',
+      label: period === '24h' || period === 'today' ? "Today's Due" : `Due (${currentPeriodLabel})`,
       value: stats.totalDueAmount || 0,
       prefix: '৳',
       suffix: '',
       icon: AlertTriangle,
       color: 'text-red-600 dark:text-red-400',
       bg: 'bg-red-50 dark:bg-red-950/40',
-      hint: 'Pending customer dues',
+      hint: `${currentPeriodLabel} customer credit`,
     },
     {
-      label: 'Net Profit',
+      label: period === '24h' || period === 'today' ? "Today's Profit" : `Net Profit (${currentPeriodLabel})`,
       value:
         stats.netProfit !== undefined
           ? stats.netProfit
@@ -111,7 +121,7 @@ export default function Dashboard() {
       icon: Package,
       color: 'text-purple-600 dark:text-purple-400',
       bg: 'bg-purple-50 dark:bg-purple-950/40',
-      hint: 'Inventory asset value',
+      hint: 'Live inventory asset value',
     },
     {
       label: 'Purchase Cost',
@@ -121,17 +131,17 @@ export default function Dashboard() {
       icon: Receipt,
       color: 'text-amber-600 dark:text-amber-400',
       bg: 'bg-amber-50 dark:bg-amber-950/40',
-      hint: 'Stock inventory purchases',
+      hint: 'Total inventory purchases',
     },
     {
-      label: 'Shop Expenses',
+      label: period === '24h' || period === 'today' ? "Today's Expenses" : `Expenses (${currentPeriodLabel})`,
       value: stats.totalExpenses || 0,
       prefix: '৳',
       suffix: '',
       icon: DollarSign,
       color: 'text-rose-600 dark:text-rose-400',
       bg: 'bg-rose-50 dark:bg-rose-950/40',
-      hint: 'Operating expenses (bills, rent, etc.)',
+      hint: `${currentPeriodLabel} operating expenses`,
     },
     {
       label: 'Active Repairs',
@@ -141,8 +151,16 @@ export default function Dashboard() {
       icon: Wrench,
       color: 'text-indigo-600 dark:text-indigo-400',
       bg: 'bg-indigo-50 dark:bg-indigo-950/40',
-      hint: 'Devices in service',
+      hint: 'Devices currently in service',
     },
+  ];
+
+  const PERIOD_OPTIONS = [
+    { label: 'Today (Daily)', value: '24h' },
+    { label: '7 Days', value: '7d' },
+    { label: '30 Days', value: '30d' },
+    { label: '90 Days', value: '90d' },
+    { label: 'All Time', value: 'all' },
   ];
 
   return (
@@ -177,6 +195,38 @@ export default function Dashboard() {
           </>
         }
       />
+
+      {/* Period Filter Switcher Bar */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-800">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider pl-1">
+            Performance Window:
+          </span>
+          <span className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/50 text-[#2563EB] dark:text-blue-400 font-mono font-bold text-xs">
+            {currentPeriodLabel}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200/60 dark:border-slate-700/60 self-stretch sm:self-auto overflow-x-auto">
+          {PERIOD_OPTIONS.map((opt) => {
+            const active = period === opt.value || (opt.value === '24h' && period === 'today');
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setPeriod(opt.value)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 whitespace-nowrap ${
+                  active
+                    ? 'bg-blue-600 text-white shadow-xs font-bold'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-white/50 dark:hover:bg-slate-700/50'
+                }`}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {/* Primary Key Metrics Grid — 4 Cards Per Row on Desktop, 2 on Tablet, 1 on Mobile */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
