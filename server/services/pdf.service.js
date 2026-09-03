@@ -295,9 +295,16 @@ export async function generateInvoicePdfBuffer(sale) {
       doc.text(BDT(financials.netTotal), rightCardX + 90, calcY + 3, { width: 92, align: 'right' });
       calcY += 21;
 
-      // Total Paid
+      // Total Paid / Received
       doc.fillColor('#059669').font('Helvetica-Bold').fontSize(8).text('Total Paid', rightCardX + 10, calcY);
       doc.text(BDT(financials.totalPaid), rightCardX + 100, calcY, { width: 90, align: 'right' });
+
+      // Change Returned (if any)
+      if (financials.changeAmount > 0) {
+        calcY += 12;
+        doc.fillColor('#2563EB').font('Helvetica-Bold').fontSize(8).text('Change Returned', rightCardX + 10, calcY);
+        doc.text(BDT(financials.changeAmount), rightCardX + 100, calcY, { width: 90, align: 'right' });
+      }
 
       // Balance Due
       if (financials.dueAmount > 0) {

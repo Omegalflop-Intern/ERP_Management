@@ -25,7 +25,8 @@ export function calculateInvoiceFinancials(sale) {
   const bank = Number(pb.bank || 0);
 
   const totalPaid = cash + bkash + rocket + nagad + bank;
-  const dueAmount = Math.max(0, netTotal - totalPaid);
+  const dueAmount = Number(pb.dueAmount !== undefined ? pb.dueAmount : Math.max(0, netTotal - totalPaid));
+  const changeAmount = Number(pb.changeAmount !== undefined ? pb.changeAmount : Math.max(0, totalPaid - netTotal));
 
   let statusLabel = 'PAID';
   if (sale.status === 'RETURNED') statusLabel = 'RETURNED';
@@ -44,6 +45,7 @@ export function calculateInvoiceFinancials(sale) {
     bank,
     totalPaid,
     dueAmount,
+    changeAmount,
     statusLabel,
     lineItems,
   };

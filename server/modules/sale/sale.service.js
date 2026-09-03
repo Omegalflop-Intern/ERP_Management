@@ -66,6 +66,15 @@ export function formatTransaction(row, customerRow = null) {
       nagad: Number(breakdown.nagad || 0),
       bank: Number(breakdown.bank || 0),
       dueAmount: Number(breakdown.dueAmount || 0),
+      changeAmount: Number(breakdown.changeAmount || 0),
+      totalTendered: Number(
+        breakdown.totalTendered ||
+          (Number(breakdown.cash || 0) +
+            Number(breakdown.bkash || 0) +
+            Number(breakdown.rocket || 0) +
+            Number(breakdown.nagad || 0) +
+            Number(breakdown.bank || 0))
+      ),
     },
     cashierUsername: row.cashier_username || '',
     sellerName: row.seller_name || '',
@@ -125,16 +134,11 @@ export const createSale = async (data, createdBy = 'system') => {
 
   const netTotal = Math.max(0, subTotal - (data.discount || 0) + (data.tax || 0));
   const rawCash = Number(data.paymentBreakdown?.cash || 0);
-  const rawDigital = (Number(data.paymentBreakdown?.bkash || 0)) +
-    (Number(data.paymentBreakdown?.rocket || 0)) +
-    (Number(data.paymentBreakdown?.nagad || 0)) +
-    (Number(data.paymentBreakdown?.bank || 0));
-
-  const totalPaidRaw = rawCash + rawDigital;
-
-  if (rawDigital > netTotal + 0.01) {
-    throw ApiError.badRequest(`Digital payment amount (৳${rawDigital}) exceeds sale net total (৳${netTotal})`);
-  }
+  const rawBkash = Number(data.paymentBreakdown?.bkash || 0);
+  const rawRocket = Number(data.paymentBreakdown?.rocket || 0);
+  const rawNagad = Number(data.paymentBreakdown?.nagad || 0);
+  const rawBank = Number(data.paymentBreakdown?.bank || 0);
+  const totalPaidRaw = rawCash + rawBkash + rawRocket + rawNagad + rawBank;
 
   const changeAmount = Math.max(0, totalPaidRaw - netTotal);
   const dueAmount = Math.max(0, netTotal - totalPaidRaw);
@@ -146,11 +150,13 @@ export const createSale = async (data, createdBy = 'system') => {
   const soldDate = new Date();
 
   const paymentBreakdown = {
-    cash: data.paymentBreakdown?.cash || 0,
-    bkash: data.paymentBreakdown?.bkash || 0,
-    rocket: data.paymentBreakdown?.rocket || 0,
-    nagad: data.paymentBreakdown?.nagad || 0,
-    bank: data.paymentBreakdown?.bank || 0,
+    cash: rawCash,
+    bkash: rawBkash,
+    rocket: rawRocket,
+    nagad: rawNagad,
+    bank: rawBank,
+    totalTendered: totalPaidRaw,
+    paidAmount: Math.min(totalPaidRaw, netTotal),
     dueAmount,
     changeAmount,
   };
