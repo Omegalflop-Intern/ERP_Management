@@ -54,7 +54,6 @@ export const getImeiPassport = async (imei, tenantId = null) => {
     currentStatus: unit.status,
     product: unit.productId,
     supplier: unit.supplierId,
-    branch: unit.branchId,
     timeline,
   };
 };

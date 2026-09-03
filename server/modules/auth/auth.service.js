@@ -91,11 +91,8 @@ export const findUserByLogin = async (identifier, tenantId = null) => {
   // Enforce tenant check for non-SuperAdmin users
   if (row.tenant_id) {
     if (Boolean(row.tenant_is_deleted) || !row.tenant_status || row.tenant_status !== 'ACTIVE') {
-      if (row.tenant_status === 'PENDING_KYC') {
-        throw ApiError.forbidden('Your shop account is pending KYC verification. Please wait for administrator approval.');
-      }
-      if (row.tenant_status === 'PAUSED' || row.tenant_status === 'SUSPENDED') {
-        throw ApiError.forbidden('Your shop account has been suspended or paused. Please contact billing support.');
+      if (row.tenant_status === 'SUSPENDED') {
+        throw ApiError.forbidden('Your shop account has been suspended. Please contact support.');
       }
       throw ApiError.forbidden('Associated shop account has been deleted or does not exist. Access denied.');
     }
@@ -160,7 +157,7 @@ export const loginDirect = async (identifier, password, ipAddress = '', userAgen
 
     if (tenant.expires_at && new Date(tenant.expires_at) < new Date()) {
       await db('tenants').where({ id: tenant.id }).update({
-        status: 'PAUSED',
+        status: 'SUSPENDED',
         paused_reason: 'SUBSCRIPTION_EXPIRED',
         paused_at: new Date(),
       });

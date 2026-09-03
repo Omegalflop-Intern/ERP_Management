@@ -8,7 +8,6 @@ export const createExpenseSchema = z.object({
   date: z.string().optional(),
   voucherNumber: z.string().optional(),
   notes: z.string().optional(),
-  branchId: z.string().optional(),
 });
 
 export const updateExpenseSchema = z.object({

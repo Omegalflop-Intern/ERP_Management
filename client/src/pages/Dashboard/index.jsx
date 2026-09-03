@@ -22,23 +22,18 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
 
-import { useBranchStore } from '../../store/branchStore';
 import PageHeader from '../../components/layout/PageHeader';
 
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { styled } = useTheme();
-  const activeBranchId = useBranchStore((s) => s.activeBranchId);
   const [period, setPeriod] = React.useState('7d');
 
   const { data: dashboardData, isLoading } = useQuery({
-    queryKey: ['dashboard', period, activeBranchId],
+    queryKey: ['dashboard', period],
     queryFn: async () => {
       const params = { period };
-      if (activeBranchId && activeBranchId !== 'all') {
-        params.branchId = activeBranchId;
-      }
       const res = await api.get('/finance/dashboard', { params });
       return res.data;
     },
@@ -46,12 +41,9 @@ export default function Dashboard() {
   });
 
   const { data: recentSales } = useQuery({
-    queryKey: ['recent-sales-dashboard', activeBranchId],
+    queryKey: ['recent-sales-dashboard'],
     queryFn: async () => {
       const params = { limit: 5 };
-      if (activeBranchId && activeBranchId !== 'all') {
-        params.branchId = activeBranchId;
-      }
       const res = await api.get('/sales', { params });
       return res.data?.data || [];
     },

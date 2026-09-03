@@ -13,8 +13,7 @@ export const getSuperAdminAuditLogs = async (req, res, next) => {
 export const getAuditLogStats = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const branchId = req.selectedBranchId || null;
-    const stats = await auditService.getAuditLogStats(tenantId, branchId);
+    const stats = await auditService.getAuditLogStats(tenantId);
     return ApiResponse.success(res, stats);
   } catch (error) { next(error); }
 };

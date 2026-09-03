@@ -26,8 +26,6 @@ export const checkTenantStatus = async (req, res, next) => {
       return next();
     }
 
-    // Bug #31 fixed: Removed silent next() for null tenantId on non-admin users.
-    // A non-admin user without a tenant has no business accessing tenant-scoped routes.
     if (!tenantId) {
       return next(ApiError.forbidden('No tenant context found. Access denied.'));
     }
@@ -37,13 +35,22 @@ export const checkTenantStatus = async (req, res, next) => {
       throw ApiError.forbidden('Shop account has been deleted or does not exist. Access denied.');
     }
 
+    // Auto-suspend if subscription expired (dual protection: cron + on-request)
+    if (tenant.status === 'ACTIVE' && tenant.expires_at && new Date(tenant.expires_at) < new Date()) {
+      await db('tenants').where({ id: tenantId }).update({
+        status: 'SUSPENDED',
+        paused_reason: 'SUBSCRIPTION_EXPIRED',
+        paused_at: new Date(),
+      });
+      await db('users').where({ tenant_id: tenantId }).update({ is_active: false });
+      throw ApiError.forbidden('Your subscription has expired. Please renew to continue.');
+    }
+
+    if (tenant.status === 'SUSPENDED') {
+      throw ApiError.forbidden('Your shop account has been suspended. Please contact support.');
+    }
+
     if (tenant.status !== 'ACTIVE') {
-      if (tenant.status === 'PAUSED' || tenant.status === 'SUSPENDED') {
-        throw ApiError.forbidden('Your shop account has been suspended by system administrator. Please contact support.');
-      }
-      if (tenant.status === 'PENDING_KYC') {
-        throw ApiError.forbidden('Your shop account is pending KYC & document verification approval by administrator.');
-      }
       throw ApiError.forbidden(`Shop account status is "${tenant.status}". Access denied.`);
     }
 

@@ -30,7 +30,6 @@ export const createPurchaseOrderSchema = z.object({
   supplierName: z.string().optional(),
   supplierPhone: z.string().optional(),
   supplierCompany: z.string().optional(),
-  branchId: z.union([z.string(), z.number()]).optional().nullable(),
   lineItems: z.array(lineItemSchema).min(1),
   discount: z.number().min(0).default(0),
   tax: z.number().min(0).default(0),

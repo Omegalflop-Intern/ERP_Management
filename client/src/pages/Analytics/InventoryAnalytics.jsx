@@ -15,23 +15,20 @@ import {
 } from 'recharts';
 import api from '../../lib/api';
 import ChartTooltip from '../../components/charts/ChartTooltip';
-import { useBranchStore } from '../../store/branchStore';
-
 const _COLORS = ['#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e'];
 
 export default function InventoryAnalytics() {
   const [period, setPeriod] = useState('month');
-  const activeBranchId = useBranchStore((s) => s.activeBranchId);
 
   const {
     data: analytics,
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: ['inventory-analytics', period, activeBranchId],
+    queryKey: ['inventory-analytics', period],
     queryFn: async () => {
       const { data } = await api.get('/reports/inventory', {
-        params: { period, branchId: activeBranchId },
+        params: { period },
       });
       return data?.data;
     },

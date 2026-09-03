@@ -15,7 +15,6 @@ import userRoutes from './modules/user/user.routes.js';
 import roleRoutes from './modules/role/role.routes.js';
 import productRoutes from './modules/product/product.routes.js';
 import imeiRoutes from './modules/imei/imei.routes.js';
-import stockRoutes from './modules/stock/stock.routes.js';
 import saleRoutes from './modules/sale/sale.routes.js';
 import reportRoutes from './modules/report/report.routes.js';
 import supplierRoutes from './modules/supplier/supplier.routes.js';
@@ -142,6 +141,15 @@ app.use('/uploads', (req, res, next) => {
 }, express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api', apiLimiter);
+
+// Prevent browser from caching API responses (multi-tenant safety)
+app.use('/api', (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+  next();
+});
 
 app.get('/', (req, res) => {
   if (
@@ -322,7 +330,6 @@ app.use('/api/v1/roles', roleRoutes);
 app.use('/api/v1/products', productRoutes);
 app.use('/api/v1/inventory', imeiRoutes);
 app.use('/api/v1/imei', imeiRoutes);
-app.use('/api/v1/stock', stockRoutes);
 app.use('/api/v1/sales', saleRoutes);
 app.use('/api/v1/finance', reportRoutes);
 app.use('/api/v1/reports', reportRoutes);

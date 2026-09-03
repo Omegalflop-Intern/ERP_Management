@@ -17,7 +17,6 @@ function formatUser(row, roleRow) {
     roleDisplayName: roleRow?.display_name || null,
     permissions: roleRow?.permissions || [],
     tenantId: row.tenant_id || null,
-    branchId: row.branch_id || null,
     commissionRate: row.commission_rate || 0,
     isActive: Boolean(row.is_active),
     isVerified: Boolean(row.is_verified),

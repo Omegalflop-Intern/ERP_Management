@@ -5,8 +5,7 @@ import { logAction } from '../../utils/auth/auditLog.js';
 export const getAllInvestors = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const branchId = req.selectedBranchId || null;
-    const result = await investorService.getAllInvestors(tenantId, branchId);
+    const result = await investorService.getAllInvestors(tenantId);
     return ApiResponse.success(res, result);
   } catch (error) { next(error); }
 };
@@ -33,8 +32,7 @@ export const addInvestorTransaction = async (req, res, next) => {
   try {
     const username = req.user?.username || 'system';
     const tenantId = req.user?.tenantId || null;
-    const branchId = req.selectedBranchId || null;
-    const result = await investorService.addInvestorTransaction(req.params.id, req.body, username, tenantId, branchId);
+    const result = await investorService.addInvestorTransaction(req.params.id, req.body, username, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'TRANSACTION', module: 'investor', entityId: req.params.id, entityType: 'InvestorTransaction', details: { type: req.body.type, amount: req.body.amount }, req });
     return ApiResponse.success(res, result, `Investment transaction (${req.body.type}) recorded successfully`);
   } catch (error) { next(error); }
@@ -61,8 +59,7 @@ export const deleteInvestor = async (req, res, next) => {
 export const getAllTransactions = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const branchId = req.selectedBranchId || null;
-    const txs = await investorService.getAllTransactions(tenantId, branchId);
+    const txs = await investorService.getAllTransactions(tenantId);
     return ApiResponse.success(res, txs);
   } catch (error) { next(error); }
 };
@@ -81,9 +78,8 @@ export const distributeProfitLoss = async (req, res, next) => {
   try {
     const username = req.user?.username || 'system';
     const tenantId = req.user?.tenantId || null;
-    const branchId = req.selectedBranchId || null;
     const { executeShareDistribution } = await import('./profitDistribution.service.js');
-    const result = await executeShareDistribution(req.body, username, tenantId, branchId);
+    const result = await executeShareDistribution(req.body, username, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'DISTRIBUTION', module: 'investor', entityId: result.investor._id, entityType: 'Investor', details: { actionType: req.body.actionType, amount: req.body.amount }, req });
     return ApiResponse.success(res, result, `Profit share distribution (${req.body.actionType}) processed successfully`);
   } catch (error) { next(error); }

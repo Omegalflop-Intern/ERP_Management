@@ -12,7 +12,7 @@ export const startSubscriptionChecker = () => {
 
       for (const shop of expiredShops) {
         await db('tenants').where({ id: shop.id }).update({
-          status: 'PAUSED',
+          status: 'SUSPENDED',
           paused_reason: 'SUBSCRIPTION_EXPIRED',
           paused_at: now,
         });

@@ -46,9 +46,9 @@ const PLAN_COLORS = {
 const STATUS_COLORS = {
   ACTIVE:
     'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800',
-  PAUSED:
+  SUSPENDED:
     'bg-red-50 text-red-600 border-red-200 dark:bg-red-950/40 dark:text-red-400 dark:border-red-800',
-  PENDING_KYC:
+  DELETED:
     'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800',
 };
 
@@ -1330,7 +1330,7 @@ export default function SAShopManagement() {
                 </button>
                 {t.status === 'ACTIVE' ? (
                   <button
-                    onClick={() => statusMutation.mutate({ id: t._id, status: 'PAUSED' })}
+                    onClick={() => statusMutation.mutate({ id: t._id, status: 'SUSPENDED' })}
                     className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-amber-700 dark:text-amber-400 rounded-lg transition-colors"
                   >
                     <PauseCircle className="w-3 h-3" /> Suspend

@@ -81,11 +81,10 @@ export const getSuperAdminAuditLogs = async (page = 1, limit = 50, filters = {})
   return { logs, pagination: getPagination(total, page, limit) };
 };
 
-export const getAuditLogStats = async (tenantId = null, branchId = null) => {
+export const getAuditLogStats = async (tenantId = null) => {
   const baseQuery = () => {
     const q = db('audit_logs');
     if (tenantId) q.where('tenant_id', tenantId);
-    if (branchId && branchId !== 'all') q.where('branch_id', branchId);
     return q;
   };
 

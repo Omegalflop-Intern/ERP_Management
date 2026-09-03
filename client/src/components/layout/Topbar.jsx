@@ -36,7 +36,6 @@ import {
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { useBranchStore } from '../../store/branchStore';
 import { useTheme } from '../../context/ThemeContext';
 import { detectSubdomain, getBaseDomain } from '../../utils/subdomain';
 import ThemeToggle from '../ui/ThemeToggle';
@@ -73,7 +72,6 @@ function UserAvatar({ user, size = 'md', online = true }) {
           user?.username?.[0]?.toUpperCase() || '?'
         )}
       </div>
-      {/* Online/Offline Status Indicator Dot */}
       <span
         className={`absolute bottom-0 right-0 ${dotSize} rounded-full ring-2 ring-white dark:ring-slate-900 flex items-center justify-center`}
       >
@@ -86,166 +84,6 @@ function UserAvatar({ user, size = 'md', online = true }) {
           <span className="inline-flex rounded-full h-full w-full bg-amber-500"></span>
         )}
       </span>
-    </div>
-  );
-}
-
-function BranchSwitcher({ user }) {
-  const activeBranchId = useBranchStore((s) => s.activeBranchId);
-  const branches = useBranchStore((s) => s.branches);
-  const fetchBranches = useBranchStore((s) => s.fetchBranches);
-  const setActiveBranchId = useBranchStore((s) => s.setActiveBranchId);
-  const syncUserBranch = useBranchStore((s) => s.syncUserBranch);
-  const tenantPlan = useBranchStore((s) => s.tenantPlan);
-  const maxBranches = useBranchStore((s) => s.maxBranches);
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
-  const navigate = useNavigate();
-  const qc = useQueryClient();
-
-  useEffect(() => {
-    fetchBranches();
-  }, []);
-
-  useEffect(() => {
-    if (user) syncUserBranch(user);
-  }, [user]);
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const roleName = (user?.roleName || user?.role?.name || '').toUpperCase();
-  const isAdmin = roleName === 'ADMIN' || user?.isSuperAdmin;
-  const isBranchLocked = !isAdmin && !!user?.branchId;
-
-  const currentBranch = branches.find((b) => String(b.id || b._id) === String(activeBranchId));
-  const activeLabel =
-    activeBranchId === 'all' ? 'All Outlets' : currentBranch?.name || 'Selected Branch';
-
-  return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        onClick={() => {
-          if (!isBranchLocked) setIsOpen(!isOpen);
-        }}
-        disabled={isBranchLocked}
-        title={isBranchLocked ? 'Locked to assigned branch' : 'Switch active branch context'}
-        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all ${
-          isBranchLocked
-            ? 'bg-gray-100 dark:bg-gray-800/80 border-gray-200 dark:border-gray-700/60 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-            : 'bg-white/60 dark:bg-white/[0.05] border-white/40 dark:border-white/[0.1] hover:bg-white/90 dark:hover:bg-white/[0.1] text-gray-800 dark:text-gray-200 shadow-sm'
-        }`}
-      >
-        <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold">
-          {isBranchLocked ? (
-            <Lock className="w-3 h-3 text-amber-500" />
-          ) : (
-            <Building2 className="w-3.5 h-3.5" />
-          )}
-        </div>
-        <div className="text-left hidden sm:block max-w-[130px] truncate">
-          <div className="text-[10px] text-gray-400 dark:text-gray-500 font-medium uppercase tracking-wider flex items-center gap-1">
-            <span>Outlet</span>
-            {isBranchLocked && (
-              <span className="text-[9px] text-amber-500 font-bold">(Assigned)</span>
-            )}
-          </div>
-          <div className="font-semibold text-gray-900 dark:text-gray-100 truncate">
-            {activeLabel}
-          </div>
-        </div>
-        {!isBranchLocked && <ChevronDown className="w-3.5 h-3.5 text-gray-400 ml-0.5" />}
-      </button>
-
-      {isOpen && !isBranchLocked && (
-        <div className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-[9999] overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-          <div className="px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700/80 flex items-center justify-between">
-            <div className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-              <Building2 className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" /> Switch Active
-              Outlet
-            </div>
-            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-              {branches.length} / {maxBranches === 999 ? '∞' : maxBranches} ({tenantPlan})
-            </span>
-          </div>
-
-          <div className="max-h-64 overflow-y-auto py-1 divide-y divide-slate-100 dark:divide-slate-800/50">
-            <button
-              onClick={() => {
-                setActiveBranchId('all');
-                qc.invalidateQueries();
-                setIsOpen(false);
-              }}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 text-xs text-left transition-colors ${
-                activeBranchId === 'all'
-                  ? 'bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-400 font-bold'
-                  : 'text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60'
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-blue-600 shrink-0"></span>
-                <span className="font-semibold text-slate-900 dark:text-slate-100">
-                  All Outlets (Main Shop)
-                </span>
-              </div>
-              {activeBranchId === 'all' && (
-                <Check className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
-              )}
-            </button>
-
-            {branches.map((b) => {
-              const bId = String(b.id || b._id);
-              const isSelected = activeBranchId === bId;
-              return (
-                <button
-                  key={bId}
-                  onClick={() => {
-                    setActiveBranchId(bId, b.name);
-                    qc.invalidateQueries();
-                    setIsOpen(false);
-                  }}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 text-xs text-left transition-colors ${
-                    isSelected
-                      ? 'bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-blue-400 font-bold'
-                      : 'text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 truncate">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-                    <span className="truncate font-semibold text-slate-900 dark:text-slate-100">
-                      {b.name}
-                    </span>
-                  </div>
-                  {isSelected && (
-                    <Check className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {isAdmin && (
-            <div className="p-2 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60">
-              <button
-                onClick={() => {
-                  setIsOpen(false);
-                  navigate('/branches');
-                }}
-                className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-100/60 dark:hover:bg-blue-900/40 rounded-xl transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5" /> Manage / Add Outlets
-              </button>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
@@ -269,7 +107,6 @@ function GlobalSearch() {
     { title: 'Product Catalog', path: '/products', icon: Package, category: 'Inventory' },
     { title: 'IMEI Tracker', path: '/inventory', icon: Smartphone, category: 'Inventory' },
     { title: 'Stock Overview', path: '/stock', icon: Package, category: 'Inventory' },
-    { title: 'Stock Transfer', path: '/stock-transfer', icon: Package, category: 'Inventory' },
     { title: 'Customer List', path: '/customers', icon: Users, category: 'CRM' },
     { title: 'Due Collection', path: '/customers/due-collection', icon: Users, category: 'CRM' },
     { title: 'Warranty Claims', path: '/warranties', icon: FileText, category: 'Services' },
@@ -378,7 +215,6 @@ function GlobalSearch() {
       className="relative flex-1 max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg mx-2"
       ref={searchRef}
     >
-      {/* Search Bar Input Container */}
       <div
         onClick={() => {
           setIsOpen(true);
@@ -421,10 +257,8 @@ function GlobalSearch() {
         )}
       </div>
 
-      {/* Global Search Results Dropdown Overlay */}
       {isOpen && (
         <div className="absolute left-0 right-0 sm:-left-12 sm:-right-12 md:-left-20 md:-right-20 top-full mt-2 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-[200] max-h-[75vh] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/80">
-          {/* Section: Pages / Quick Navigation */}
           {filteredPages.length > 0 && (
             <div className="p-2">
               <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -456,14 +290,12 @@ function GlobalSearch() {
             </div>
           )}
 
-          {/* Loading Indicator */}
           {loading && (
             <div className="p-4 text-center text-xs text-gray-400 flex items-center justify-center gap-2">
               <RefreshCw className="w-4 h-4 animate-spin text-[#2563EB]" /> Searching database...
             </div>
           )}
 
-          {/* Section: Products / Inventory */}
           {!loading && products.length > 0 && (
             <div className="p-2">
               <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -501,7 +333,6 @@ function GlobalSearch() {
             </div>
           )}
 
-          {/* Section: Customers */}
           {!loading && customers.length > 0 && (
             <div className="p-2">
               <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -536,7 +367,6 @@ function GlobalSearch() {
             </div>
           )}
 
-          {/* Section: Sales & Invoices */}
           {!loading && sales.length > 0 && (
             <div className="p-2">
               <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -576,7 +406,6 @@ function GlobalSearch() {
             </div>
           )}
 
-          {/* No results */}
           {!loading && query.length >= 2 && !hasResults && (
             <div className="p-6 text-center text-xs text-gray-400">
               No products, customers, or invoices match "
@@ -584,7 +413,6 @@ function GlobalSearch() {
             </div>
           )}
 
-          {/* Footer hint */}
           <div className="px-4 py-2 bg-gray-50/50 dark:bg-gray-900/40 text-[10px] text-gray-400 flex items-center justify-between">
             <span>
               Press{' '}
@@ -643,7 +471,6 @@ function getNotificationIcon(type) {
 export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed }) {
   const { user, logout, setUser } = useAuth();
   const { theme, toggleTheme, designMode, toggleDesignMode } = useTheme();
-  const { activeBranchId, branches = [], maxBranches = 2, setActiveBranchId } = useBranchStore();
   const styled =
     designMode === 'liquidglass' ||
     designMode === 'glassmorphismpro' ||
@@ -664,7 +491,6 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
   const [online, setOnline] = useState(navigator.onLine);
   const notifRef = useRef(null);
 
-  // Fetch fresh profile on mount to ensure avatar & latest data is shown
   useEffect(() => {
     if (!user) return;
     api
@@ -674,9 +500,8 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
         if (fresh) setUser((prev) => ({ ...(prev || {}), ...fresh }));
       })
       .catch(() => {});
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Fetch tenant info (shop name + plan + logo) for the logged-in shop user
   const { data: tenantInfo } = useQuery({
     queryKey: ['my-tenant-info', user?.tenantId],
     queryFn: async () => {
@@ -687,7 +512,6 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
     staleTime: 5 * 60 * 1000,
   });
 
-  // Fetch settings for companyLogo fallback
   const { data: settings } = useQuery({
     queryKey: ['settings'],
     queryFn: async () => {
@@ -761,7 +585,6 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
 
   return (
     <header className="h-14 glass-primary rounded-[20px] m-2 px-3 md:px-6 flex items-center justify-between sticky top-2 z-[100] shadow-sm">
-      {/* Left: menu + brand */}
       <div className="flex items-center gap-2">
         <button
           onClick={onToggleSidebar}
@@ -801,14 +624,6 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
                 user?.shopName ||
                 (user?.tenantId ? 'OmniManage' : 'Super Admin Portal')}
             </span>
-            {user?.tenantId && (
-              <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-md border border-blue-200/60 dark:border-blue-800/40">
-                {activeBranchId === 'all'
-                  ? 'All Outlets'
-                  : branches.find((b) => String(b.id || b._id) === String(activeBranchId))?.name ||
-                    'Active Outlet'}
-              </span>
-            )}
             <span
               className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${
                 user?.tenantId
@@ -824,17 +639,13 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
         </div>
       </div>
 
-      {/* Middle: Global Search Bar */}
       <GlobalSearch />
 
-      {/* Right: controls */}
       <div className="flex items-center gap-1.5 md:gap-2">
-        {/* Desktop: ThemeToggle inline */}
         <div className="hidden md:block">
           <ThemeToggle />
         </div>
 
-        {/* Mobile: settings gear/dots button → popover */}
         <div className="relative md:hidden" ref={mobileSettingsRef}>
           <button
             onClick={() => {
@@ -887,10 +698,6 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
           )}
         </div>
 
-        {/* Active Branch Switcher */}
-        {user && <BranchSwitcher user={user} />}
-
-        {/* Notifications */}
         <div className="relative" ref={notifRef}>
           <button
             onClick={() => {
@@ -963,10 +770,8 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
           )}
         </div>
 
-        {/* User profile */}
         {user && (
           <div className="relative" ref={userMenuRef}>
-            {/* Mobile: just avatar */}
             <button
               onClick={() => {
                 setShowUserMenu(!showUserMenu);
@@ -978,7 +783,6 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
               <UserAvatar user={user} size="md" online={online} />
             </button>
 
-            {/* Desktop: compact sleek profile button */}
             <button
               onClick={() => {
                 setShowUserMenu(!showUserMenu);
@@ -1003,10 +807,8 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
               <ChevronDown className="w-3.5 h-3.5 text-gray-400 ml-0.5 flex-shrink-0" />
             </button>
 
-            {/* Dropdown menu (both mobile and desktop) */}
             {showUserMenu && (
               <div className="absolute right-0 top-full mt-2 w-60 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-[9999] overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-                {/* Mobile only: show user info at top */}
                 <div className="md:hidden px-3 py-3 border-b border-gray-100 dark:border-gray-800">
                   <div className="flex items-center gap-2.5">
                     <UserAvatar user={user} size="lg" online={online} />
@@ -1024,39 +826,6 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
                       )}
                     </div>
                   </div>
-                </div>
-
-                {/* Active Branch Switcher Inside Profile Menu */}
-                <div className="px-3 py-2.5 border-b border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-900/50">
-                  <div className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1 flex items-center justify-between">
-                    <span className="flex items-center gap-1">
-                      <Building2 className="w-3 h-3 text-blue-500" /> Active Outlet
-                    </span>
-                    <span className="text-[9px] font-bold text-blue-600 dark:text-blue-400">
-                      ({branches.length}/{maxBranches === 999 ? '∞' : maxBranches})
-                    </span>
-                  </div>
-                  <select
-                    value={activeBranchId}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === 'all') {
-                        setActiveBranchId('all');
-                      } else {
-                        const selected = branches.find((b) => String(b.id || b._id) === val);
-                        setActiveBranchId(val, selected?.name);
-                      }
-                      setShowUserMenu(false);
-                    }}
-                    className="w-full text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
-                  >
-                    <option value="all">All Outlets (Main Shop)</option>
-                    {branches.map((b) => (
-                      <option key={b._id || b.id} value={String(b.id || b._id)}>
-                        {b.name}
-                      </option>
-                    ))}
-                  </select>
                 </div>
 
                 {!user.tenantId && user.roleName === 'ADMIN' && (

@@ -5,8 +5,7 @@ import { logAction } from '../../utils/auth/auditLog.js';
 export const getAllRecurringExpenses = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const branchId = req.selectedBranchId || null;
-    const data = await recurringExpenseService.getAllRecurringExpenses(tenantId, branchId);
+    const data = await recurringExpenseService.getAllRecurringExpenses(tenantId);
     return ApiResponse.success(res, data);
   } catch (error) { next(error); }
 };

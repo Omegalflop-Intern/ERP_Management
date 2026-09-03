@@ -16,7 +16,6 @@ export const createSaleSchema = z.object({
   customerAddress: z.string().optional(),
   customerId: z.string().optional(),
   saleType: z.enum(['RETAIL', 'WHOLESALE']).optional(),
-  branchId: z.string().optional(),
   sellerName: z.string().optional(),
   sellerId: z.string().optional(),
   items: z.array(lineItemSchema).min(1, 'At least one item required'),

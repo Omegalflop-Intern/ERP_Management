@@ -1,7 +1,15 @@
+// Parse comma-separated env vars into arrays
+const parseEnvList = (val) =>
+  (val || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+
 const rawOrigins = [
   process.env.CLIENT_URL,
   process.env.APP_URL,
   process.env.ALLOWED_ORIGIN,
+  ...parseEnvList(process.env.SHOP_URLS),
   'http://localhost:3000',
   'https://localhost:3000',
   'http://127.0.0.1:3000',
@@ -18,21 +26,14 @@ const allowedOrigins = rawOrigins
   .map((o) => o.trim().replace(/\/+$/, ''))
   .filter(Boolean);
 
-const baseDomain = process.env.BASE_DOMAIN || 'respawnalley.com';
-
 if (allowedOrigins.length === 0) {
-  console.warn('[CORS] No allowed origins configured. Set CLIENT_URL, APP_URL, or ALLOWED_ORIGIN env vars.');
+  console.warn('[CORS] No allowed origins configured. Set CLIENT_URL, APP_URL, ALLOWED_ORIGIN, or SHOP_URLS env vars.');
 }
 
 export const corsOptions = {
   origin: (origin, callback) => {
     // Allow requests with no origin (mobile apps, curl, server-to-server)
     if (!origin) return callback(null, true);
-
-    // Allow any *.baseDomain subdomain in all environments
-    if (origin.includes(`.${baseDomain}`) || origin.endsWith(`://${baseDomain}`)) {
-      return callback(null, true);
-    }
 
     if (process.env.NODE_ENV === 'production') {
       if (allowedOrigins.some((o) => origin.startsWith(o))) {

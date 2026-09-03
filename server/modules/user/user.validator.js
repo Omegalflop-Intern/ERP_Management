@@ -11,7 +11,6 @@ export const createUserSchema = z.object({
     .regex(/[0-9]/, 'Password must contain at least one number'),
   role: z.string().min(1, 'Role is required'),
   fullName: z.string().transform((val) => (!val || !val.trim() ? undefined : val.trim())).optional(),
-  branchId: z.string().transform((val) => (!val || !val.trim() ? undefined : val.trim())).optional(),
   commissionRate: z.preprocess((val) => (val === '' || val === undefined || val === null ? 0 : Number(val)), z.number().min(0).max(100)).default(0),
 });
 
@@ -22,7 +21,6 @@ export const updateUserSchema = z.object({
   role: z.string().optional(),
   fullName: z.string().transform((val) => (!val || !val.trim() ? undefined : val.trim())).optional(),
   isActive: z.boolean().optional(),
-  branchId: z.string().transform((val) => (!val || !val.trim() ? undefined : val.trim())).optional(),
   commissionRate: z.preprocess((val) => (val === '' || val === undefined || val === null ? undefined : Number(val)), z.number().min(0).max(100).optional()),
 });
 

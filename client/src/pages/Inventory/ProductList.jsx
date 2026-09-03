@@ -48,8 +48,6 @@ const getUnitColorClass = (idx) => UNIT_COLORS[idx % UNIT_COLORS.length];
 import PageHeader from '../../components/layout/PageHeader';
 import EmptyState from '../../components/ui/EmptyState';
 
-import { useBranchStore } from '../../store/branchStore';
-
 export default function ProductList() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('ALL');
@@ -60,10 +58,9 @@ export default function ProductList() {
   const queryClient = useQueryClient();
   const { styled } = useTheme();
   const fileInputRef = useRef(null);
-  const activeBranchId = useBranchStore((s) => s.activeBranchId);
 
   const { data: catList } = useQuery({
-    queryKey: ['catalog', 'CATEGORY', activeBranchId],
+    queryKey: ['catalog', 'CATEGORY'],
     queryFn: async () => {
       const { data } = await api.get('/catalog', { params: { type: 'CATEGORY' } });
       return data.data || [];
@@ -74,10 +71,10 @@ export default function ProductList() {
   const CATEGORIES = ['ALL', ...categories.map((c) => c.name)];
 
   const { data, isLoading } = useQuery({
-    queryKey: ['products', search, category, activeBranchId],
+    queryKey: ['products', search, category],
     queryFn: async () => {
       const res = await api.get('/products', {
-        params: { search, category, limit: 50, branchId: activeBranchId },
+        params: { search, category, limit: 50 },
       });
       return res.data;
     },

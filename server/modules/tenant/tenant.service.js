@@ -28,7 +28,7 @@ export function formatTenant(row) {
     email: row.email,
     phone: row.phone,
     plan: planName,
-    status: row.status || 'PENDING_KYC',
+    status: row.status || 'ACTIVE',
     maxUsers: Number(row.max_users ?? defaultUsers),
     expiresAt: row.expires_at,
     notes: row.notes || '',
@@ -71,8 +71,8 @@ export const checkSubdomainAvailability = async (slug) => {
 export const getTenantStats = async () => {
   const totalRes = await db('tenants').where({ is_deleted: false }).count('* as count').first();
   const activeRes = await db('tenants').where({ is_deleted: false, status: 'ACTIVE' }).count('* as count').first();
-  const pausedRes = await db('tenants').where({ is_deleted: false, status: 'PAUSED' }).count('* as count').first();
-  const pendingKycRes = await db('tenants').where({ is_deleted: false, status: 'PENDING_KYC' }).count('* as count').first();
+  const pausedRes = await db('tenants').where({ is_deleted: false, status: 'SUSPENDED' }).count('* as count').first();
+  const pendingKycRes = { count: 0 };
 
   const thirtyDaysLater = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
   const now = new Date();
@@ -397,7 +397,7 @@ export const createTenant = async (data, isSuperAdmin = false) => {
     else if (planName === 'FREE') maxUsers = 2;
   }
 
-  const initialStatus = data.status || (isSuperAdmin ? 'ACTIVE' : 'PENDING_KYC');
+  const initialStatus = data.status || 'ACTIVE';
   const initialKycStatus = data.kycStatus || (isSuperAdmin ? 'APPROVED' : 'PENDING');
 
   const [insertedId] = await db('tenants').insert({
@@ -519,7 +519,7 @@ export const updateTenantStatus = async (id, status, rejectionReason) => {
   if (status === 'ACTIVE') {
     await db('users').where({ tenant_id: id }).update({ is_active: true, is_verified: true, is_deleted: false });
   } else {
-    // If PAUSED, SUSPENDED, PENDING_KYC, disable users
+    // If SUSPENDED or DELETED, disable users
     await db('users').where({ tenant_id: id }).update({ is_active: false });
     const tenantUserIds = await db('users').where({ tenant_id: id }).pluck('id');
     if (tenantUserIds.length > 0) {
@@ -585,6 +585,24 @@ export const uploadTenantLogo = async (id, file) => {
 
   // Sync with tenant settings companyLogo as well
   await updateSettings({ companyLogo: logoUrl }, null, id);
+
+  return getTenantById(id);
+};
+
+export const uploadKycDocuments = async (id, files) => {
+  const row = await db('tenants').where({ id, is_deleted: false }).first();
+  if (!row) throw ApiError.notFound('Shop tenant account not found');
+
+  const updateFields = {};
+  if (files?.nidFront?.[0]) updateFields.nid_front = `/uploads/tenants/kyc/${files.nidFront[0].filename}`;
+  if (files?.nidBack?.[0]) updateFields.nid_back = `/uploads/tenants/kyc/${files.nidBack[0].filename}`;
+  if (files?.tradeLicenseFile?.[0]) updateFields.trade_license_file = `/uploads/tenants/kyc/${files.tradeLicenseFile[0].filename}`;
+  if (files?.tinCertificate?.[0]) updateFields.tin_certificate = `/uploads/tenants/kyc/${files.tinCertificate[0].filename}`;
+
+  if (Object.keys(updateFields).length > 0) {
+    updateFields.kyc_status = 'PENDING';
+    await db('tenants').where({ id }).update(updateFields);
+  }
 
   return getTenantById(id);
 };

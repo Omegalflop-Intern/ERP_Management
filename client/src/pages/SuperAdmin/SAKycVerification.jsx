@@ -30,7 +30,7 @@ export default function SAKycVerification() {
     queryFn: async () => {
       const res = await api.get('/tenants');
       return (res.data?.data || []).filter(
-        (t) => t.kycDocuments?.kycStatus === 'PENDING' || t.status === 'PENDING_KYC'
+        (t) => t.kycDocuments?.kycStatus === 'PENDING'
       );
     },
   });

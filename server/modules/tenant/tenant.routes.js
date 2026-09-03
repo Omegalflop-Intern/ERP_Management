@@ -71,6 +71,8 @@ router.get('/me', authenticate, tenantController.getMyTenant);
 router.get('/:id', authenticate, requireSuperAdmin, tenantController.getTenant);
 router.put('/:id', authenticate, requireSuperAdmin, validate(updateTenantSchema), tenantController.updateTenant);
 router.patch('/:id/status', authenticate, requireSuperAdmin, validate(updateTenantStatusSchema), tenantController.updateStatus);
+
+// Super admin: approve/reject KYC
 router.patch('/:id/verify-kyc', authenticate, requireSuperAdmin, validate(verifyKycSchema), tenantController.handleVerifyKyc);
 
 // Super admin: subdomain info

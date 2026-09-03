@@ -146,12 +146,12 @@ export const loginDirect = async (req, res, next) => {
       throw ApiError.forbidden('Account is deactivated');
     }
 
-    // Check tenant status — block PAUSED and PENDING_KYC tenants from logging in
+    // Check tenant status — block SUSPENDED tenants from logging in
     if (user.tenantId) {
       const { getTenantById } = await import('../tenant/tenant.service.js');
       const tenant = await getTenantById(user.tenantId).catch(() => null);
       if (tenant) {
-        if (tenant.status === 'PAUSED') {
+        if (tenant.status === 'SUSPENDED') {
           logSecurityEvent({
             action: 'LOGIN_BLOCKED',
             userId: user._id,
@@ -161,19 +161,7 @@ export const loginDirect = async (req, res, next) => {
             details: { login, reason: 'Tenant account suspended', tenantId: user.tenantId },
             severity: 'medium',
           });
-          throw ApiError.forbidden('Your shop account has been suspended. Please contact billing support.');
-        }
-        if (tenant.status === 'PENDING_KYC') {
-          logSecurityEvent({
-            action: 'LOGIN_BLOCKED',
-            userId: user._id,
-            username: user.username,
-            ipAddress: ip,
-            userAgent: req.headers['user-agent'] || '',
-            details: { login, reason: 'Tenant pending KYC verification', tenantId: user.tenantId },
-            severity: 'low',
-          });
-          throw ApiError.forbidden('Your shop account is pending KYC verification. Please wait for administrator approval.');
+          throw ApiError.forbidden('Your shop account has been suspended. Please contact support.');
         }
       }
     }

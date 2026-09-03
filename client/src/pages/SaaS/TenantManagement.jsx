@@ -237,7 +237,7 @@ export default function TenantManagement() {
                     className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider border ${
                       t.status === 'ACTIVE'
                         ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400'
-                        : t.status === 'PAUSED'
+                        : t.status === 'SUSPENDED'
                           ? 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400'
                           : 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400'
                     }`}
@@ -352,8 +352,8 @@ export default function TenantManagement() {
 
                 {t.status === 'ACTIVE' && (
                   <button
-                    onClick={() => statusMutation.mutate({ id: t._id, status: 'PAUSED' })}
-                    title="Pause Account"
+                    onClick={() => statusMutation.mutate({ id: t._id, status: 'SUSPENDED' })}
+                    title="Suspend Account"
                     className="p-2 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-xl border border-amber-200 transition-colors"
                   >
                     <PauseCircle className="w-4 h-4" />

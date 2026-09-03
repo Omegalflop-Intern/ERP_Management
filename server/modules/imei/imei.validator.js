@@ -4,7 +4,6 @@ export const addInventoryUnitSchema = z.object({
   imeiOrSerial: z.string().min(1).trim(),
   productId: z.string().min(1),
   supplierId: z.string().optional(),
-  branchId: z.string().optional(),
   purchasePrice: z.number().min(0),
   currentSellingPrice: z.number().min(0),
   warrantyMonths: z.number().min(0).default(12),

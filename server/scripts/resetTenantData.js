@@ -2,7 +2,7 @@
  * Tenant Business Data Reset Script
  * ----------------------------------
  * Clears ALL business/operational data for a given tenant.
- * KEEPS: tenants, users, roles, branches, settings, sessions, plans, audit_logs
+ * KEEPS: tenants, users, roles, settings, sessions, plans, audit_logs
  * WIPES: products, stock, sales, purchases, customers, suppliers, accounting,
  *        expenses, employees, payroll, loans, investors, warranties, repairs,
  *        tickets, documents, catalog, inventory units, notifications, etc.
@@ -29,7 +29,6 @@ const TENANT_TABLES = [
   'purchase_orders',
 
   // Products & Stock
-  'product_branch_stocks',
   'inventory_units',
   'catalog_items',
   'products',
@@ -58,7 +57,6 @@ const TENANT_TABLES = [
   // Operations
   'warranty_claims',
   'repair_tickets',
-  'stock_transfers',
   'wholesale_prices',
   'wholesale_orders',
   'document_vaults',
@@ -68,7 +66,7 @@ const TENANT_TABLES = [
 
 async function resetTenantData() {
   console.log(`\n🔄  Starting business data reset for Tenant ID: ${TENANT_ID}`);
-  console.log('⚠️   Keeping: tenants, users, roles, branches, settings, sessions\n');
+  console.log('⚠️   Keeping: tenants, users, roles, settings, sessions\n');
 
   // Confirm by listing what exists before reset
   const [txCount] = await db('transactions').where('tenant_id', TENANT_ID).count('id as c');

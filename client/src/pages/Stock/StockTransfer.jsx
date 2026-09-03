@@ -16,7 +16,6 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import api from '../../lib/api';
-import { useBranchStore } from '../../store/branchStore';
 import TransferChallanModal from '../../components/stock/TransferChallanModal';
 
 const STATUSES = ['ALL', 'PENDING', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED'];
@@ -49,13 +48,12 @@ export default function StockTransfer() {
   const [showCreate, setShowCreate] = useState(false);
   const [printTransfer, setPrintTransfer] = useState(null);
   const queryClient = useQueryClient();
-  const activeBranchId = useBranchStore((s) => s.activeBranchId);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['transfers', statusFilter, activeBranchId],
+    queryKey: ['transfers', statusFilter],
     queryFn: async () => {
       const res = await api.get('/stock', {
-        params: { status: statusFilter, limit: 50, branchId: activeBranchId },
+        params: { status: statusFilter, limit: 50 },
       });
       return res.data;
     },
@@ -302,7 +300,6 @@ export default function StockTransfer() {
 }
 
 function CreateTransferModal({ onClose, onSuccess }) {
-  const activeBranchId = useBranchStore((s) => s.activeBranchId);
   const [fromBranchId, setFromBranchId] = useState('');
   const [toBranchId, setToBranchId] = useState('');
   const [notes, setNotes] = useState('');
@@ -322,10 +319,7 @@ function CreateTransferModal({ onClose, onSuccess }) {
   // Pre-populate branches
   useEffect(() => {
     if (branches.length > 0) {
-      const defaultFrom =
-        activeBranchId && activeBranchId !== 'all'
-          ? String(activeBranchId)
-          : String(branches[0]?._id || branches[0]?.id || '');
+      const defaultFrom = String(branches[0]?._id || branches[0]?.id || '');
       setFromBranchId(defaultFrom);
 
       const otherBranch = branches.find((b) => String(b._id || b.id) !== defaultFrom);
@@ -333,7 +327,7 @@ function CreateTransferModal({ onClose, onSuccess }) {
         setToBranchId(String(otherBranch._id || otherBranch.id));
       }
     }
-  }, [branches, activeBranchId]);
+  }, [branches]);
 
   // Fetch available products for fromBranchId
   const { data: availableProducts = [], isLoading: loadingProducts } = useQuery({

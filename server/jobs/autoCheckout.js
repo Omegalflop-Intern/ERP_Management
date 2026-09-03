@@ -32,7 +32,6 @@ export const startAutoCheckoutJob = () => {
           'a.date as att_date',
           'a.check_in',
           'a.tenant_id',
-          'a.branch_id',
           'a.employee_id',
           'e.name as emp_name',
           db.raw("COALESCE(e.shift_end, '22:00:00') as shift_end"),

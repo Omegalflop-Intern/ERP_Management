@@ -6,10 +6,9 @@ import XLSX from 'xlsx';
 
 export const getAllIMEI = async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, search = '', status = '', category = '', branchId } = req.query;
+    const { page = 1, limit = 20, search = '', status = '', category = '' } = req.query;
     const tenantId = req.user?.tenantId || null;
-    const effectiveBranchId = branchId !== undefined ? (branchId || null) : (req.selectedBranchId || null);
-    const result = await imeiService.getAllIMEI(Number(page), Number(limit), search, status, category, tenantId, effectiveBranchId);
+    const result = await imeiService.getAllIMEI(Number(page), Number(limit), search, status, category, tenantId);
     return ApiResponse.paginated(res, result.units, result.pagination.total, result.pagination.page, result.pagination.limit);
   } catch (error) { next(error); }
 };
@@ -17,8 +16,7 @@ export const getAllIMEI = async (req, res, next) => {
 export const getIMEIPassport = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const branchId = req.selectedBranchId || null;
-    const unit = await imeiService.getIMEIPassport(req.params.imei, tenantId, branchId);
+    const unit = await imeiService.getIMEIPassport(req.params.imei, tenantId);
     return ApiResponse.success(res, unit);
   } catch (error) { next(error); }
 };
@@ -26,8 +24,7 @@ export const getIMEIPassport = async (req, res, next) => {
 export const lookupIMEI = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const branchId = req.selectedBranchId || null;
-    const result = await imeiService.lookupIMEI(req.params.imei, tenantId, branchId);
+    const result = await imeiService.lookupIMEI(req.params.imei, tenantId);
     return ApiResponse.success(res, result);
   } catch (error) { next(error); }
 };
@@ -81,8 +78,7 @@ export const importIMEI = async (req, res, next) => {
 export const updateIMEIStatus = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const branchId = req.selectedBranchId || null;
-    const unit = await imeiService.updateIMEIStatus(req.params.id, req.body.status, req.user?.username, tenantId, branchId);
+    const unit = await imeiService.updateIMEIStatus(req.params.id, req.body.status, req.user?.username, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'UPDATE_STATUS', module: 'imei', entityId: unit._id, entityType: 'InventoryUnit', details: { status: req.body.status }, req });
     return ApiResponse.success(res, unit, 'Status updated');
   } catch (error) { next(error); }
@@ -100,8 +96,7 @@ export const priceDropAdjustment = async (req, res, next) => {
 export const deleteIMEI = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const branchId = req.selectedBranchId || null;
-    await imeiService.deleteIMEI(req.params.id, tenantId, branchId);
+    await imeiService.deleteIMEI(req.params.id, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'DELETE', module: 'imei', entityId: req.params.id, entityType: 'InventoryUnit', req });
     return ApiResponse.success(res, null, 'IMEI deleted');
   } catch (error) { next(error); }

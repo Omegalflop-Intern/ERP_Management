@@ -89,6 +89,15 @@ export const updateStatus = async (req, res, next) => {
   }
 };
 
+export const uploadLogo = async (req, res, next) => {
+  try {
+    const tenant = await tenantService.uploadTenantLogo(req.params.id, req.file);
+    return ApiResponse.success(res, tenant, 'Shop logo uploaded successfully');
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const handleVerifyKyc = async (req, res, next) => {
   try {
     const { status, rejectionReason } = req.body;
@@ -104,15 +113,6 @@ export const uploadKyc = async (req, res, next) => {
   try {
     const tenant = await tenantService.uploadKycDocuments(req.params.id, req.files);
     return ApiResponse.success(res, tenant, 'KYC documents uploaded successfully');
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const uploadLogo = async (req, res, next) => {
-  try {
-    const tenant = await tenantService.uploadTenantLogo(req.params.id, req.file);
-    return ApiResponse.success(res, tenant, 'Shop logo uploaded successfully');
   } catch (error) {
     next(error);
   }

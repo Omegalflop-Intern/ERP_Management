@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { useBranchStore } from '../store/branchStore';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
 const SERVER_URL = API_URL ? API_URL.replace(/\/api\/v1\/?$/, '') : '';
@@ -13,16 +12,6 @@ export const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken');
   if (token) config.headers.Authorization = `Bearer ${token}`;
-
-  try {
-    const activeBranchId = useBranchStore.getState().activeBranchId;
-    if (activeBranchId && activeBranchId !== 'all') {
-      config.headers['X-Branch-Id'] = activeBranchId;
-    }
-  } catch {
-    // Ignore store access errors
-  }
-
   return config;
 });
 
@@ -45,7 +34,6 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Do not attempt refresh for auth endpoints
     if (
       originalRequest?.url?.includes('/auth/login') ||
       originalRequest?.url?.includes('/auth/refresh-token') ||
@@ -75,9 +63,6 @@ api.interceptors.response.use(
           {},
           { withCredentials: true }
         );
-        // Bug #34 fixed: Server returns { data: { accessToken, refreshToken } }
-        // but client was looking for .token (which doesn't exist), causing silent logout
-        // on every token refresh attempt.
         const token = res.data?.data?.accessToken || res.data?.accessToken;
 
         if (token) {
@@ -99,7 +84,6 @@ api.interceptors.response.use(
         localStorage.removeItem('accessToken');
         localStorage.removeItem('user');
         localStorage.removeItem('auth-storage');
-        localStorage.removeItem('branch-storage');
         localStorage.removeItem('omni_last_activity');
         try {
           const { useAuthStore } = await import('../store/authStore.js');
@@ -140,8 +124,6 @@ export function getAssetUrl(path) {
 
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
 
-  // Uploaded files live on the API server, not the client origin.
-  // Prepend SERVER_URL so production correctly loads from api.respawnalley.com/uploads/...
   if (normalizedPath.startsWith('/uploads') && SERVER_URL) {
     return `${SERVER_URL}${normalizedPath}`;
   }

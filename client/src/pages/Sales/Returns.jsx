@@ -18,8 +18,6 @@ import ReturnCreditNote from '../../components/sales/ReturnCreditNote';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
 import { executeClientPrint } from '../../utils/invoiceGenerator';
-import { useBranchStore } from '../../store/branchStore';
-
 export default function Returns() {
   const navigate = useNavigate();
   const [invoiceSearch, setInvoiceSearch] = useState('');
@@ -37,11 +35,10 @@ export default function Returns() {
   const creditNoteRef = useRef(null);
   const { styled } = useTheme();
   const queryClient = useQueryClient();
-  const activeBranchId = useBranchStore((s) => s.activeBranchId);
 
   // Fetch store products for replacement option
   const { data: storeProducts = [] } = useQuery({
-    queryKey: ['products-for-replacement', activeBranchId],
+    queryKey: ['products-for-replacement'],
     queryFn: async () => {
       const res = await api.get('/products', { params: { limit: 100 } });
       return res.data?.data?.products || res.data?.data || [];
@@ -50,7 +47,7 @@ export default function Returns() {
 
   // Fetch recent sales for 1-click return selection (strictly returnable sales)
   const { data: recentSalesRes, isLoading: loadingRecent } = useQuery({
-    queryKey: ['recent-sales-returns', invoiceSearch, activeBranchId],
+    queryKey: ['recent-sales-returns', invoiceSearch],
     queryFn: async () => {
       const params = { limit: 10, returnable: true };
       if (invoiceSearch.trim()) params.customer = invoiceSearch.trim();

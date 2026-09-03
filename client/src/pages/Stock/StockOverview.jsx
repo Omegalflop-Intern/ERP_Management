@@ -25,8 +25,6 @@ const STATUS_FILTERS = [
   { id: 'BULK', label: 'Bulk Products (No IMEI)' },
 ];
 
-import { useBranchStore } from '../../store/branchStore';
-
 export default function StockOverview() {
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState('ALL');
@@ -36,10 +34,9 @@ export default function StockOverview() {
   const [creatingCat, setCreatingCat] = useState(false);
   const qc = useQueryClient();
   const { styled } = useTheme();
-  const activeBranchId = useBranchStore((s) => s.activeBranchId);
 
   const { data: catList } = useQuery({
-    queryKey: ['catalog', 'CATEGORY', activeBranchId],
+    queryKey: ['catalog', 'CATEGORY'],
     queryFn: async () => {
       const { data } = await api.get('/catalog', { params: { type: 'CATEGORY' } });
       return data.data || [];
@@ -47,17 +44,17 @@ export default function StockOverview() {
   });
 
   const { data: inventoryRes, isLoading: loadingInventory } = useQuery({
-    queryKey: ['stock-overview-inventory', activeBranchId],
+    queryKey: ['stock-overview-inventory'],
     queryFn: async () => {
-      const res = await api.get('/inventory', { params: { limit: 500, branchId: activeBranchId } });
+      const res = await api.get('/inventory', { params: { limit: 500 } });
       return res.data?.data || [];
     },
   });
 
   const { data: productsRes, isLoading: loadingProducts } = useQuery({
-    queryKey: ['stock-overview-products', activeBranchId],
+    queryKey: ['stock-overview-products'],
     queryFn: async () => {
-      const res = await api.get('/products', { params: { limit: 500, branchId: activeBranchId } });
+      const res = await api.get('/products', { params: { limit: 500 } });
       return res.data?.data || [];
     },
   });

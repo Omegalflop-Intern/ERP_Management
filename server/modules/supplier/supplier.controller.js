@@ -57,8 +57,7 @@ export const getSupplierStats = async (req, res, next) => {
 export const paySupplierDue = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const branchId = req.selectedBranchId || null;
-    const supplier = await supplierService.paySupplierDue(req.params.id, req.body, tenantId, branchId, req.user);
+    const supplier = await supplierService.paySupplierDue(req.params.id, req.body, tenantId, req.user);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'PAY_SUPPLIER_DUE', module: 'supplier', entityId: supplier._id, entityType: 'Supplier', details: { amount: req.body.amount, supplierName: supplier.name }, req });
     return ApiResponse.success(res, supplier, 'Supplier due payment recorded successfully');
   } catch (error) { next(error); }

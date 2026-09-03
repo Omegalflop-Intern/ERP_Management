@@ -8,7 +8,6 @@ export const createLeaveSchema = z.object({
   toDate: z.string().min(1),
   days: z.number().min(1).optional(),
   reason: z.string().min(1).trim(),
-  branchId: z.union([z.string(), z.number()]).optional().nullable(),
 });
 
 export const updateLeaveStatusSchema = z.object({

@@ -45,8 +45,7 @@ export const getAllOrders = async (req, res, next) => {
   try {
     const { page = 1, limit = 20, customer, status } = req.query;
     const tenantId = req.user?.tenantId || null;
-    const branchId = req.selectedBranchId || null;
-    const result = await wholesaleService.getAllOrders(Number(page), Number(limit), { customer, status }, tenantId, branchId);
+    const result = await wholesaleService.getAllOrders(Number(page), Number(limit), { customer, status }, tenantId);
     return ApiResponse.paginated(res, result.orders, result.pagination.total, result.pagination.page, result.pagination.limit);
   } catch (error) { next(error); }
 };
@@ -65,7 +64,6 @@ export const createOrder = async (req, res, next) => {
     const orderData = {
       ...req.body,
       tenantId: req.user?.tenantId || null,
-      branchId: req.selectedBranchId || null,
     };
     const order = await wholesaleService.createOrder(orderData, req.user.userId, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'CREATE_ORDER', module: 'wholesale', entityId: order._id, entityType: 'WholesaleOrder', details: { orderNumber: order.orderNumber }, req });
@@ -94,8 +92,7 @@ export const deleteOrder = async (req, res, next) => {
 export const getOrdersStats = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const branchId = req.selectedBranchId || null;
-    const stats = await wholesaleService.getOrdersStats(tenantId, branchId);
+    const stats = await wholesaleService.getOrdersStats(tenantId);
     return ApiResponse.success(res, stats);
   } catch (error) { next(error); }
 };

@@ -55,8 +55,6 @@ export const createTenantSchema = z.object({
         .optional()
     ),
   customDomain: z.preprocess(cleanLowerString, z.string().optional()),
-  nidNumber: z.preprocess(cleanString, z.string().optional()),
-  tradeLicenseNumber: z.preprocess(cleanString, z.string().optional()),
   password: z.preprocess(
     cleanString,
     z.string().min(6, 'Password must be at least 6 characters').optional()
@@ -67,10 +65,6 @@ export const createTenantSchema = z.object({
   ),
   address: z.preprocess(cleanString, z.string().optional()),
   platformAddress: z.preprocess(cleanString, z.string().optional()),
-  maxBranches: z.preprocess(
-    (val) => (val !== undefined && val !== null && val !== '' ? Number(val) : undefined),
-    z.number().int().min(1).max(9999).optional()
-  ),
   maxUsers: z.preprocess(
     (val) => (val !== undefined && val !== null && val !== '' ? Number(val) : undefined),
     z.number().int().min(1).max(9999).optional()
@@ -114,10 +108,6 @@ export const updateTenantSchema = z.object({
         .optional()
     ),
   customDomain: z.preprocess(cleanLowerString, z.string().optional()),
-  maxBranches: z.preprocess(
-    (val) => (val !== undefined && val !== null && val !== '' ? Number(val) : undefined),
-    z.number().int().min(1).max(9999).optional()
-  ),
   maxUsers: z.preprocess(
     (val) => (val !== undefined && val !== null && val !== '' ? Number(val) : undefined),
     z.number().int().min(1).max(9999).optional()
@@ -127,12 +117,10 @@ export const updateTenantSchema = z.object({
     z.string().datetime({ offset: true }).or(z.null()).optional()
   ),
   notes: z.preprocess(cleanString, z.string().max(500).optional()),
-  nidNumber: z.preprocess(cleanString, z.string().optional()),
-  tradeLicenseNumber: z.preprocess(cleanString, z.string().optional()),
 });
 
 export const updateTenantStatusSchema = z.object({
-  status: z.enum(['ACTIVE', 'PAUSED', 'PENDING_KYC', 'DELETED']),
+  status: z.enum(['ACTIVE', 'SUSPENDED', 'DELETED']),
   rejectionReason: z.string().optional(),
 });
 

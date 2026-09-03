@@ -36,7 +36,6 @@ const ProductList = lazy(() => import('./pages/Inventory/ProductList'));
 const IMEITracker = lazy(() => import('./pages/Inventory/IMEITracker'));
 const Categories = lazy(() => import('./pages/Inventory/Categories'));
 const StockOverview = lazy(() => import('./pages/Stock/StockOverview'));
-const StockTransfer = lazy(() => import('./pages/Stock/StockTransfer'));
 const SalesList = lazy(() => import('./pages/Sales/SalesList'));
 const SalesForm = lazy(() => import('./pages/Sales/SalesForm'));
 const InvoiceDetail = lazy(() => import('./pages/Sales/InvoiceDetail'));
@@ -64,7 +63,6 @@ const Attendance = lazy(() => import('./pages/HR/Attendance'));
 const LeaveManagement = lazy(() => import('./pages/HR/LeaveManagement'));
 const Payroll = lazy(() => import('./pages/HR/Payroll'));
 const RepairsView = lazy(() => import('./pages/RepairsView'));
-const BranchManagement = lazy(() => import('./pages/Branches/BranchManagement'));
 const WholesaleOrders = lazy(() => import('./pages/Wholesale/WholesaleOrders'));
 const SettingsPage = lazy(() => import('./pages/Settings/SettingsPage'));
 const ActivityLogs = lazy(() => import('./pages/Settings/ActivityLogs'));
@@ -339,15 +337,6 @@ export default function App() {
               </RoleBasedRoute>
             }
           />
-          <Route
-            path="stock-transfer"
-            element={
-              <RoleBasedRoute permissions={['stock:transfer']}>
-                <StockTransfer />
-              </RoleBasedRoute>
-            }
-          />
-
           {/* CRM */}
           <Route
             path="customers"
@@ -508,16 +497,6 @@ export default function App() {
             element={
               <RoleBasedRoute permissions={['repairs:view', 'repairs:manage']}>
                 <RepairsView />
-              </RoleBasedRoute>
-            }
-          />
-
-          {/* Branches */}
-          <Route
-            path="branches"
-            element={
-              <RoleBasedRoute permissions={['branches:view', 'branches:manage']}>
-                <BranchManagement />
               </RoleBasedRoute>
             }
           />

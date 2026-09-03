@@ -42,13 +42,15 @@ No root-level scripts. Run client/server from their own directories.
 - **Responses**: Standard shape `{ success, message, data, pagination? }`. Use `ApiResponse` helper and `ApiError` class (both in `server/utils/http/`).
 - **API docs**: Swagger UI at **`/api-docs`** (not `/api/docs`). Config in `server/config/swagger.config.js`. The root `/api` route redirects browsers to `/api/docs` which is a dead link — use `/api-docs` directly.
 - **Multi-tenancy**: Subdomain-based tenant extraction via `server/middleware/subdomain.middleware.js`. Tenant management in `server/modules/tenant/`.
+- **Tenant statuses**: Only ACTIVE, SUSPENDED, DELETED. No PAUSED, PENDING_KYC, or REJECTED.
+- **Subscription enforcement**: Dual — cron job (`server/jobs/subscriptionChecker.js`) auto-suspends expired tenants hourly + per-request `expires_at` check in `server/middleware/tenant.middleware.js`.
 
 ## Environment
 
-- **Server env**: `server/.env` (loaded via `server/config/env.config.js`, always from `server/` root). Required: `JWT_SECRET` (min 10 chars). DB vars: `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` (MySQL/MariaDB). Optional: SMTP vars for OTP emails, `ADMIN_EMAIL`/`ADMIN_PHONE`.
+- **Server env**: `server/.env` (loaded via `server/config/env.config.js`, always from `server/` root). Required: `JWT_SECRET` (min 10 chars). DB vars: `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` (MySQL/MariaDB). Optional: SMTP vars for OTP emails, `ADMIN_EMAIL`/`ADMIN_PHONE`, `SHOP_URLS` (comma-separated client URLs for CORS).
 - **Client env**: `client/.env` with `VITE_API_URL` (default `http://localhost:5000/api/v1` for local dev). Vite exposes only `VITE_*` vars. `VITE_BASE_DOMAIN` controls subdomain routing.
 - **Database**: MySQL/MariaDB via Knex (`server/config/db.knex.js`). NOT MongoDB. Schema dump at `server/schema.sql`. Defaults: `localhost:3306`.
-- **CORS**: Allows `APP_URL`, `CLIENT_URL`, `ALLOWED_ORIGIN`, `localhost:3000`, `localhost:5173` + any `*.BASE_DOMAIN` subdomain. Permissive in dev; strict in production.
+- **CORS**: Allows `APP_URL`, `CLIENT_URL`, `ALLOWED_ORIGIN`, `SHOP_URLS`, `localhost:3000`, `localhost:5173`. Permissive in dev; strict in production.
 - **Root `.env.example` is stale** — still references MongoDB. Use `server/.env.example` instead.
 
 ## Frontend Conventions
@@ -59,7 +61,7 @@ No root-level scripts. Run client/server from their own directories.
 - **Linting/Formatting**: Biome (not ESLint — no ESLint config exists). Config: `client/biome.json`. Indent: 2 spaces, single quotes, semicolons always, 100-char line width. Use `check:fix` to auto-fix.
 - **Icons**: Lucide React primary.
 - **Offline**: `client/src/utils/offlineSync.js` + `offlineDB.js` using `idb` (IndexedDB). No service worker / workbox — just client-side caching.
-- **API client**: `client/src/lib/api.js` (Axios with Bearer interceptor + automatic 401 refresh-token flow via httpOnly cookies). Also sends `X-Branch-Id` header from branch store. Asset URLs resolved via `getAssetUrl()`.
+- **API client**: `client/src/lib/api.js` (Axios with Bearer interceptor + automatic 401 refresh-token flow via httpOnly cookies). Asset URLs resolved via `getAssetUrl()`.
 
 ## Gotchas
 
@@ -72,10 +74,12 @@ No root-level scripts. Run client/server from their own directories.
 - Tests exist in `server/tests/` but no CI or pre-commit hooks. **Tests require a running MySQL instance** — `npm run test` will fail without it.
 - Lockfiles: client has both `package-lock.json` and `pnpm-lock.yaml`. Use npm unless pnpm is explicitly needed.
 - `server/schema.sql` contains a MySQL 8.4 dump of the full schema — useful for understanding table structure but **not** used for migrations (Knex migrations in `server/migrations/` are the source of truth).
+- **Branch/Outlet system removed**: No branches, stock transfers, or branch scoping. Single-tenant inventory per subdomain.
+- **Stock transfer feature removed**: `/api/v1/stock` routes and `/stock-transfer` frontend page removed. Stock is per-product in `products.stock_quantity`.
 
-## Server Modules (34)
+## Server Modules (33)
 
-`accounting`, `attendance`, `audit`, `auth`, `branch`, `catalog`, `contact`, `customer`, `documentVault`, `employee`, `expense`, `imei`, `investor`, `leave`, `loan`, `notification`, `payroll`, `plans`, `product`, `purchase`, `repair`, `report`, `role`, `sale`, `settings`, `sse`, `stock`, `superAdmin`, `supplier`, `tenant`, `ticket`, `user`, `warranty`, `wholesale`
+`accounting`, `attendance`, `audit`, `auth`, `catalog`, `contact`, `customer`, `documentVault`, `employee`, `expense`, `imei`, `investor`, `leave`, `loan`, `notification`, `payroll`, `plans`, `product`, `purchase`, `repair`, `report`, `role`, `sale`, `settings`, `sse`, `superAdmin`, `supplier`, `tenant`, `ticket`, `user`, `warranty`, `wholesale`
 
 ## Security Notes
 
@@ -84,7 +88,7 @@ No root-level scripts. Run client/server from their own directories.
 - ADMIN role bypasses `authorize()` and `requirePermission()` checks.
 - Password reset tokens are never returned in API responses; sent via email only.
 - File uploads validate both MIME type and file magic numbers using `file-type` package.
-- CORS requires explicit origin configuration via `CLIENT_URL`, `APP_URL`, or `ALLOWED_ORIGIN` env vars.
+- CORS requires explicit origin configuration via `CLIENT_URL`, `APP_URL`, `ALLOWED_ORIGIN`, or `SHOP_URLS` env vars.
 - Helmet configured with CSP, HSTS, and strict referrer policy.
 - Seed passwords must be provided via `SEED_PASSWORD_<ROLE>` env vars in production.
 - `server/.env` and `server/uploads/` are gitignored; never commit secrets.

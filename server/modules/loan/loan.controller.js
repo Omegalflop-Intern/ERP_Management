@@ -6,8 +6,7 @@ export const getAllLoans = async (req, res, next) => {
   try {
     const type = req.query.type || 'LOAN_TAKEN';
     const tenantId = req.user?.tenantId || null;
-    const branchId = req.selectedBranchId || null;
-    const result = await loanService.getAllLoans(type, tenantId, branchId);
+    const result = await loanService.getAllLoans(type, tenantId);
     return ApiResponse.success(res, result);
   } catch (error) { next(error); }
 };
@@ -15,8 +14,7 @@ export const getAllLoans = async (req, res, next) => {
 export const createLoan = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const branchId = req.selectedBranchId || null;
-    const loan = await loanService.createLoan(req.body, tenantId, branchId);
+    const loan = await loanService.createLoan(req.body, tenantId);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'CREATE', module: 'loan', entityId: loan._id, entityType: 'Loan', details: { provider: loan.providerName, amount: loan.loanAmount }, req });
     return ApiResponse.created(res, loan, 'Loan record created successfully');
   } catch (error) { next(error); }

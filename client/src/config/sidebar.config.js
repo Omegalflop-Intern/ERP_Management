@@ -1,5 +1,4 @@
 import {
-  ArrowRightLeft,
   Banknote,
   BarChart3,
   BookOpen,
@@ -86,12 +85,6 @@ export const menuItems = [
         permissions: ['inventory:view'],
       },
       { path: '/stock', label: 'Stock Overview', icon: BarChart3, permissions: ['stock:view'] },
-      {
-        path: '/stock-transfer',
-        label: 'Stock Transfer',
-        icon: ArrowRightLeft,
-        permissions: ['stock:transfer'],
-      },
     ],
   },
   {
@@ -270,7 +263,6 @@ export const menuItems = [
         icon: ShieldCheck,
         permissions: ['roles:view'],
       },
-      { path: '/branches', label: 'Branches', icon: Building2, permissions: ['branches:view'] },
       {
         path: '/activity-logs',
         label: 'Activity Logs',

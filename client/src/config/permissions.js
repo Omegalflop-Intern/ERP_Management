@@ -112,10 +112,6 @@ export const PERMISSIONS = {
   SETTINGS_VIEW: 'settings:view',
   SETTINGS_MANAGE: 'settings:manage',
 
-  // Branches
-  BRANCHES_VIEW: 'branches:view',
-  BRANCHES_MANAGE: 'branches:manage',
-
   // Notifications
   NOTIFICATIONS_VIEW: 'notifications:view',
   NOTIFICATIONS_MANAGE: 'notifications:manage',
