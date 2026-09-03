@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import { db } from '../../config/db.knex.js';
 import { ApiResponse } from '../../utils/http/ApiResponse.js';
 import { ApiError } from '../../utils/http/ApiError.js';
+import { logAction } from '../../utils/auth/auditLog.js';
 
 // GET /api/v1/super-admin/admins — list all platform-level admins
 export const listSystemAdmins = async (req, res, next) => {
@@ -94,6 +95,17 @@ export const createSystemAdmin = async (req, res, next) => {
       isActive: Boolean(created.is_active),
     };
 
+    logAction({
+      userId: req.user?.userId || req.user?.id,
+      username: req.user?.username,
+      action: 'CREATE',
+      module: 'super-admin',
+      entityId: id,
+      entityType: 'User',
+      details: { username: created.username, email: created.email, role: 'ADMIN' },
+      req,
+    });
+
     return ApiResponse.created(res, formatted, 'System admin created');
   } catch (err) {
     next(err);
@@ -128,6 +140,17 @@ export const updateSystemAdmin = async (req, res, next) => {
       isActive: Boolean(updated.is_active),
     };
 
+    logAction({
+      userId: req.user?.userId || req.user?.id,
+      username: req.user?.username,
+      action: 'UPDATE',
+      module: 'super-admin',
+      entityId: id,
+      entityType: 'User',
+      details: { username: updated.username, ...updates },
+      req,
+    });
+
     return ApiResponse.success(res, formatted, 'System admin updated');
   } catch (err) {
     next(err);
@@ -149,6 +172,17 @@ export const toggleAdminActive = async (req, res, next) => {
 
     await db('users').where({ id }).update({ is_active: !admin.is_active });
 
+    logAction({
+      userId: req.user?.userId || req.user?.id,
+      username: req.user?.username,
+      action: 'TOGGLE_ACTIVE',
+      module: 'super-admin',
+      entityId: id,
+      entityType: 'User',
+      details: { username: admin.username, isActive: !admin.is_active },
+      req,
+    });
+
     return ApiResponse.success(res, { id: Number(id), isActive: !admin.is_active }, `Admin ${admin.is_active ? 'deactivated' : 'activated'}`);
   } catch (err) {
     next(err);
@@ -169,6 +203,17 @@ export const deleteSystemAdmin = async (req, res, next) => {
     if (!admin) throw ApiError.notFound('System admin not found');
 
     await db('users').where({ id }).update({ is_deleted: true, is_active: false });
+
+    logAction({
+      userId: req.user?.userId || req.user?.id,
+      username: req.user?.username,
+      action: 'DELETE',
+      module: 'super-admin',
+      entityId: id,
+      entityType: 'User',
+      details: { username: admin.username },
+      req,
+    });
 
     return ApiResponse.success(res, null, 'System admin removed');
   } catch (err) {
