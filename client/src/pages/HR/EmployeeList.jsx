@@ -91,17 +91,6 @@ export default function EmployeeList() {
         subtitle="Manage shop staff accounts, job designations, monthly salaries, and employment statuses."
         icon={Users}
         breadcrumbs={['Staff & HR', 'Employees']}
-        actions={
-          <button
-            onClick={() => {
-              setEditEmp(null);
-              setShowForm(true);
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl text-xs transition-all shadow-xs"
-          >
-            <Plus className="w-4 h-4" /> Add Employee
-          </button>
-        }
       />
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -205,7 +194,12 @@ export default function EmployeeList() {
               ) : employees.length === 0 ? (
                 <tr>
                   <td colSpan="8" className="px-4 py-12 text-center text-gray-400">
-                    No employees found
+                    <div className="max-w-md mx-auto space-y-1.5">
+                      <p className="font-semibold text-gray-600 dark:text-gray-300">No employees found</p>
+                      <p className="text-xs text-gray-400">
+                        Staff accounts created under <strong>User Management</strong> are automatically listed here as employees.
+                      </p>
+                    </div>
                   </td>
                 </tr>
               ) : (
