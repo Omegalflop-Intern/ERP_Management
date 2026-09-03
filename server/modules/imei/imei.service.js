@@ -189,10 +189,9 @@ export const addInventoryUnit = async (data, tenantId = null) => {
   return getIMEIBySerial(data.imeiOrSerial, tenantId);
 };
 
-export const updateIMEIStatus = async (id, status, performedBy = 'system', tenantId = null, branchId = null) => {
+export const updateIMEIStatus = async (id, status, performedBy = 'system', tenantId = null) => {
   const query = db('inventory_units').where({ id, is_deleted: false });
   applyTenantScope(query, tenantId);
-  if (branchId) query.where('inventory_units.branch_id', branchId);
   const unit = await query.first();
   if (!unit) throw ApiError.notFound('IMEI not found');
 
@@ -216,7 +215,7 @@ export const updateIMEIStatus = async (id, status, performedBy = 'system', tenan
   return getIMEIBySerial(unit.imei_or_serial, tenantId);
 };
 
-export const lookupIMEI = async (imeiOrSerial, tenantId = null, branchId = null) => {
+export const lookupIMEI = async (imeiOrSerial, tenantId = null) => {
   try {
     const unit = await getIMEIBySerial(imeiOrSerial, tenantId);
     return { found: true, source: 'inventory', unit };
@@ -225,10 +224,9 @@ export const lookupIMEI = async (imeiOrSerial, tenantId = null, branchId = null)
   }
 };
 
-export const deleteIMEI = async (id, tenantId = null, branchId = null) => {
+export const deleteIMEI = async (id, tenantId = null) => {
   const query = db('inventory_units').where({ id, is_deleted: false });
   applyTenantScope(query, tenantId);
-  if (branchId) query.where('inventory_units.branch_id', branchId);
   const unit = await query.first();
   if (!unit) throw ApiError.notFound('IMEI not found');
 

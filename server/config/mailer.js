@@ -387,15 +387,12 @@ export const sendCustomerInvoiceEmail = async (toEmail, customerName, invoiceDat
     ? new Date(invoiceData.createdAt).toLocaleDateString('en-BD', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
     : new Date().toLocaleDateString('en-BD', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-  // Fetch tenant shop & branch info from DB using tenantId and branchId
+  // Fetch tenant shop info from DB using tenantId
   let shopName = SENDER_NAME;
   let shopPhone = '';
   let shopAddress = COMPANY_ADDRESS;
   let shopEmail = SENDER_EMAIL;
   let shopLogo = '';
-  let branchName = '';
-  let branchAddress = '';
-  let branchPhone = '';
   let socials = { facebook: '', instagram: '', whatsapp: '', youtube: '', website: '' };
 
   try {
@@ -427,22 +424,11 @@ export const sendCustomerInvoiceEmail = async (toEmail, customerName, invoiceDat
           }
         } catch { /* ignore */ }
       }
-
-      // If branch is provided, fetch branch specific location and phone
-      const bId = invoiceData.branch?.id || invoiceData.branchId;
-      if (bId) {
-        const branch = await db('branches').where({ id: bId, is_deleted: false }).first();
-        if (branch) {
-          branchName = branch.name || '';
-          branchAddress = branch.address || '';
-          branchPhone = branch.phone || '';
-        }
-      }
     }
   } catch { /* non-blocking — use defaults */ }
 
-  const effectiveAddress = branchAddress || shopAddress;
-  const effectivePhone = branchPhone || shopPhone;
+  const effectiveAddress = shopAddress;
+  const effectivePhone = shopPhone;
 
   // Line items table rows
   const lineItems = Array.isArray(invoiceData.lineItems) ? invoiceData.lineItems : [];
@@ -491,11 +477,10 @@ export const sendCustomerInvoiceEmail = async (toEmail, customerName, invoiceDat
           <td style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);padding:32px 36px;text-align:center;">
             ${logoHtml}
             <div style="font-size:22px;font-weight:800;color:#ffffff;letter-spacing:-0.5px;">${shopName}</div>
-            ${branchName ? `<div style="font-size:13px;font-weight:700;color:#93c5fd;margin-top:2px;">${branchName}</div>` : ''}
             <div style="font-size:12px;color:#94a3b8;margin-top:4px;">
-              ${effectivePhone ? `📞 ${effectivePhone}` : ''}
-              ${effectivePhone && effectiveAddress ? ' &nbsp;·&nbsp; ' : ''}
-              ${effectiveAddress ? `📍 ${effectiveAddress}` : ''}
+              ${shopPhone ? `📞 ${shopPhone}` : ''}
+              ${shopPhone && shopAddress ? ' &nbsp;·&nbsp; ' : ''}
+              ${shopAddress ? `📍 ${shopAddress}` : ''}
             </div>
             <div style="margin-top:20px;display:inline-block;">
               <div style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:10px 24px;display:inline-block;">
@@ -601,7 +586,7 @@ export const sendCustomerInvoiceEmail = async (toEmail, customerName, invoiceDat
         <!-- FOOTER -->
         <tr>
           <td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:24px 36px;text-align:center;">
-            <div style="font-size:13px;color:#0f172a;font-weight:700;margin-bottom:4px;">Thank you for shopping with ${shopName}${branchName ? ` (${branchName})` : ''}! 🙏</div>
+            <div style="font-size:13px;color:#0f172a;font-weight:700;margin-bottom:4px;">Thank you for shopping with ${shopName}! 🙏</div>
             <div style="font-size:11px;color:#64748b;margin-bottom:12px;">
               For customer support, contact us at ${shopEmail || effectivePhone}
             </div>

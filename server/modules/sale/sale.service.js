@@ -384,14 +384,11 @@ export const getSaleByInvoice = async (invoiceQuery, tenantId = null) => {
 export const getSaleByPublicToken = async (token) => {
   const query = db('transactions')
     .leftJoin('customers', 'transactions.customer_id', 'customers.id')
-    .leftJoin('branches', 'transactions.branch_id', 'branches.id')
     .where({ 'transactions.public_token': token, 'transactions.is_deleted': false })
     .select(
       'transactions.*',
       'customers.id as c_id', 'customers.name as c_name', 'customers.phone as c_phone',
-      'customers.email as c_email', 'customers.address as c_address',
-      'branches.id as b_id', 'branches.name as b_name', 'branches.address as b_address',
-      'branches.phone as b_phone', 'branches.email as b_email'
+      'customers.email as c_email', 'customers.address as c_address'
     );
 
   // Optional expiry check if token_expires_at is populated
@@ -405,12 +402,11 @@ export const getSaleByPublicToken = async (token) => {
   return formatTransaction(row, cRow);
 };
 
-export const updateSale = async (id, data, tenantId = null, branchId = null, updatedBy = 'system') => {
+export const updateSale = async (id, data, tenantId = null, updatedBy = 'system') => {
   const cleanId = (id && typeof id === 'object') ? (id.id || id._id || null) : id;
   const cleanTenantId = (tenantId && typeof tenantId === 'object') ? (tenantId.id || tenantId._id || null) : tenantId;
-  const cleanBranchId = (branchId && typeof branchId === 'object') ? (branchId.id || branchId._id || null) : branchId;
 
-  const existing = await getSaleById(cleanId, cleanTenantId, cleanBranchId);
+  const existing = await getSaleById(cleanId, cleanTenantId);
   if (!existing) throw ApiError.notFound('Sale not found');
 
   const updateFields = {};
@@ -527,16 +523,13 @@ export const updateSale = async (id, data, tenantId = null, branchId = null, upd
   updateFields.updated_at = new Date();
   const txUpdate = db('transactions').where({ id: cleanId });
   if (cleanTenantId) txUpdate.andWhere('tenant_id', cleanTenantId);
-  if (cleanBranchId && cleanBranchId !== 'all') {
-    txUpdate.andWhere((b) => b.where('branch_id', cleanBranchId).orWhereNull('branch_id'));
-  }
   await txUpdate.update(updateFields);
 
-  return getSaleById(cleanId, cleanTenantId, cleanBranchId);
+  return getSaleById(cleanId, cleanTenantId);
 };
 
-export const deleteSale = async (id, tenantId = null, branchId = null) => {
-  const sale = await getSaleById(id, tenantId, branchId);
+export const deleteSale = async (id, tenantId = null) => {
+  const sale = await getSaleById(id, tenantId);
   if (!sale) throw ApiError.notFound('Sale not found');
 
   // 1. Restore product stock & inventory units (IMEIs)
@@ -589,17 +582,13 @@ export const deleteSale = async (id, tenantId = null, branchId = null) => {
 
   const txDel = db('transactions').where({ id });
   if (tenantId) txDel.andWhere('tenant_id', tenantId);
-  if (branchId && branchId !== 'all') {
-    txDel.andWhere((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
-  }
   await txDel.update({ is_deleted: true, status: 'CANCELLED', updated_at: new Date() });
 
   return { ...sale, isDeleted: true, status: 'CANCELLED' };
 };
 
-export const processReturn = async (id, data, tenantId = null, branchId = null) => {
-  const sale = await getSaleById(id, tenantId, branchId);
-  const effectiveBranchId = (branchId && branchId !== 'all') ? branchId : (sale.branchId || sale.branch_id || null);
+export const processReturn = async (id, data, tenantId = null) => {
+  const sale = await getSaleById(id, tenantId);
 
   const returnItems = data.items || [];
   let refundAmount = 0;
@@ -621,31 +610,14 @@ export const processReturn = async (id, data, tenantId = null, branchId = null) 
     const qty = Math.abs(ri.quantity || ri.qty || 1);
     refundAmount += (lineItem.unitPrice * qty);
 
-    // 1. Restock Product in inventory (Catalog & Branch Stock)
+    // 1. Restock Product in inventory (Catalog)
     if (pId) {
       const stockIncrQ = db('products').where({ id: pId });
       if (tenantId) stockIncrQ.andWhere('tenant_id', tenantId);
       await stockIncrQ.increment('stock_quantity', qty);
 
-      // Increment branch stock in product_branch_stocks
-      if (effectiveBranchId) {
-        const bsQ = db('product_branch_stocks').where({ branch_id: effectiveBranchId, product_id: pId });
-        if (tenantId) bsQ.andWhere('tenant_id', tenantId);
-        const bs = await bsQ.first();
-        if (bs) {
-          await db('product_branch_stocks').where({ id: bs.id }).increment('stock_quantity', qty);
-        } else {
-          await db('product_branch_stocks').insert({
-            tenant_id: tenantId,
-            branch_id: effectiveBranchId,
-            product_id: pId,
-            stock_quantity: qty,
-          });
-        }
-      }
-
-      emitter.emit(EVENTS.STOCK_UPDATED, { id: pId, name: lineItem.description || lineItem.name, tenantId, branchId: effectiveBranchId });
-      emitter.emit(EVENTS.PRODUCT_MUTATED, { id: pId, tenantId, branchId: effectiveBranchId });
+      emitter.emit(EVENTS.STOCK_UPDATED, { id: pId, name: lineItem.description || lineItem.name, tenantId });
+      emitter.emit(EVENTS.PRODUCT_MUTATED, { id: pId, tenantId });
     }
 
     // 2. If IMEI item, mark IMEI back to Available in inventory_units
@@ -655,7 +627,6 @@ export const processReturn = async (id, data, tenantId = null, branchId = null) 
       if (tenantId) imeiRetQ.andWhere('tenant_id', tenantId);
       await imeiRetQ.update({
         status: 'Available',
-        branch_id: effectiveBranchId,
         sold_invoice_number: null,
         sold_at: null,
         sold_to_customer_id: null,
@@ -684,15 +655,6 @@ export const processReturn = async (id, data, tenantId = null, branchId = null) 
     if (tenantId) replStockQ.andWhere('tenant_id', tenantId);
     await replStockQ.decrement('stock_quantity', replQty);
 
-    if (effectiveBranchId) {
-      const replBsQ = db('product_branch_stocks').where({ branch_id: effectiveBranchId, product_id: replPId });
-      if (tenantId) replBsQ.andWhere('tenant_id', tenantId);
-      const replBs = await replBsQ.first();
-      if (replBs) {
-        await db('product_branch_stocks').where({ id: replBs.id }).decrement('stock_quantity', replQty);
-      }
-    }
-
     if (replacementItem.imeiOrSerial) {
       const replImeiQ = db('inventory_units').where({ imei_or_serial: replacementItem.imeiOrSerial });
       if (tenantId) replImeiQ.andWhere('tenant_id', tenantId);
@@ -705,8 +667,8 @@ export const processReturn = async (id, data, tenantId = null, branchId = null) 
       });
     }
 
-    emitter.emit(EVENTS.STOCK_UPDATED, { id: replPId, tenantId, branchId: effectiveBranchId });
-    emitter.emit(EVENTS.PRODUCT_MUTATED, { id: replPId, tenantId, branchId: effectiveBranchId });
+    emitter.emit(EVENTS.STOCK_UPDATED, { id: replPId, tenantId });
+    emitter.emit(EVENTS.PRODUCT_MUTATED, { id: replPId, tenantId });
   }
 
   const newReturnedAmount = (sale.returnedAmount || 0) + refundAmount;
@@ -725,9 +687,6 @@ export const processReturn = async (id, data, tenantId = null, branchId = null) 
   const existingLogs = sale.returnLogs || [];
   const txUpdate = db('transactions').where({ id });
   if (tenantId) txUpdate.andWhere('tenant_id', tenantId);
-  if (effectiveBranchId) {
-    txUpdate.andWhere((b) => b.where('branch_id', effectiveBranchId).orWhereNull('branch_id'));
-  }
 
   // Update payment_breakdown.dueAmount to reflect the return / replacement
   let pb = {};
@@ -761,7 +720,6 @@ export const processReturn = async (id, data, tenantId = null, branchId = null) 
     const netTxTotal = returnAction === 'REPLACEMENT' ? priceDifference : -refundAmount;
     await db('transactions').insert({
       tenant_id: tenantId || sale.tenantId || null,
-      branch_id: effectiveBranchId,
       invoice_number: returnInvoiceNumber,
       tx_type: returnAction === 'REPLACEMENT' ? 'EXCHANGE' : 'RETURN',
       sale_type: sale.saleType || 'RETAIL',

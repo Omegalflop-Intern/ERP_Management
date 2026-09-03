@@ -10,8 +10,7 @@ export const getAllProducts = async (req, res, next) => {
   try {
     const { page = 1, limit = 20, search = '', category = '' } = req.query;
     const tenantId = req.user?.tenantId || null;
-    const branchId = req.query.branchId !== undefined ? (req.query.branchId || null) : (req.selectedBranchId || null);
-    const result = await productService.getAllProducts(Number(page), Number(limit), search, category, tenantId, branchId);
+    const result = await productService.getAllProducts(Number(page), Number(limit), search, category, tenantId);
     return ApiResponse.paginated(res, result.products, result.pagination.total, result.pagination.page, result.pagination.limit);
   } catch (error) { next(error); }
 };
@@ -19,8 +18,7 @@ export const getAllProducts = async (req, res, next) => {
 export const getProductById = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const branchId = req.query.branchId !== undefined ? (req.query.branchId || null) : (req.selectedBranchId || null);
-    const product = await productService.getProductById(req.params.id, tenantId, branchId);
+    const product = await productService.getProductById(req.params.id, tenantId);
     return ApiResponse.success(res, product);
   } catch (error) { next(error); }
 };
@@ -28,8 +26,7 @@ export const getProductById = async (req, res, next) => {
 export const createProduct = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const branchId = req.selectedBranchId || null;
-    const productData = { ...req.body, tenantId, branchId };
+    const productData = { ...req.body, tenantId };
     if (req.file) {
       await validateUploadedFile(req);
       productData.image = `/uploads/${req.file.filename}`;
@@ -74,8 +71,7 @@ export const uploadImage = async (req, res, next) => {
 export const exportProducts = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const branchId = req.selectedBranchId || null;
-    const result = await productService.getAllProducts(1, 10000, '', '', tenantId, branchId);
+    const result = await productService.getAllProducts(1, 10000, '', '', tenantId);
     const products = result.products || [];
     const rows = products.map(p => ({
       Name: p.name,
@@ -163,8 +159,7 @@ export const getProductIMEIUnits = async (req, res, next) => {
   try {
     const { id } = req.params;
     const tenantId = req.user?.tenantId || null;
-    const branchId = req.selectedBranchId || null;
-    const result = await imeiService.getAllIMEI(1, 100, '', '', '', tenantId, branchId);
+    const result = await imeiService.getAllIMEI(1, 100, '', '', '', tenantId);
     const units = (result.units || []).filter(u => String(u.productId?.id || u.productId) === String(id));
     return ApiResponse.success(res, units);
   } catch (error) { next(error); }

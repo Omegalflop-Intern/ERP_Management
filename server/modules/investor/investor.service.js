@@ -59,14 +59,9 @@ function applyTenantScope(query, tenantId) {
   }
 }
 
-export const getAllInvestors = async (tenantId = null, branchId = null) => {
+export const getAllInvestors = async (tenantId = null) => {
   const query = db('investors').where({ is_deleted: false });
   applyTenantScope(query, tenantId);
-  if (branchId && branchId !== 'all') {
-    query.where(function () {
-      this.where('branch_id', branchId).orWhereNull('branch_id');
-    });
-  }
   const rows = await query.orderBy('created_at', 'desc');
 
   const investors = rows.map(formatInvestor);
@@ -97,7 +92,6 @@ export const createInvestor = async (data, recordedBy = 'system', tenantId = nul
   const resolvedTenantId = (tenantId !== null && tenantId !== undefined && !isNaN(Number(tenantId)))
     ? tenantId
     : (data.tenantId && !isNaN(Number(data.tenantId)) ? data.tenantId : null);
-  const resolvedBranchId = (data.branchId && !isNaN(Number(data.branchId))) ? data.branchId : null;
 
   if (data.initialCapital && Number(data.initialCapital) > 0) {
     const { validatePaymentMethodActive } = await import('../accounting/accounting.service.js');
@@ -109,7 +103,6 @@ export const createInvestor = async (data, recordedBy = 'system', tenantId = nul
 
   const [insertedId] = await db('investors').insert({
     tenant_id: resolvedTenantId,
-    branch_id: resolvedBranchId,
     name: data.name,
     phone: data.phone,
     email: data.email || null,
@@ -165,13 +158,9 @@ export const getInvestorById = async (id, tenantId = null) => {
   return investor;
 };
 
-export const addInvestorTransaction = async (investorId, txData, username, tenantId = null, branchId = null) => {
+export const addInvestorTransaction = async (investorId, txData, username, tenantId = null) => {
   const investor = await getInvestorById(investorId, tenantId);
   if (!investor) throw ApiError.notFound('Investor not found');
-
-  if (branchId && branchId !== 'all' && investor.branchId && String(investor.branchId) !== String(branchId)) {
-    throw ApiError.forbidden('Investor does not belong to your branch');
-  }
 
   const amount = Number(txData.amount);
   if (isNaN(amount) || amount <= 0) throw ApiError.badRequest('Invalid transaction amount');
@@ -286,7 +275,7 @@ export const deleteInvestor = async (id, tenantId = null) => {
   return { ...investor, isDeleted: true };
 };
 
-export const getAllTransactions = async (tenantId = null, branchId = null) => {
+export const getAllTransactions = async (tenantId = null) => {
   const dataQuery = db('investor_transactions')
     .leftJoin('investors', 'investor_transactions.investor_id', 'investors.id')
     .where('investor_transactions.is_deleted', false)
@@ -299,11 +288,6 @@ export const getAllTransactions = async (tenantId = null, branchId = null) => {
     );
   if (tenantId) {
     dataQuery.where('investor_transactions.tenant_id', tenantId);
-  }
-  if (branchId && branchId !== 'all') {
-    dataQuery.where(function () {
-      this.where('investors.branch_id', branchId).orWhereNull('investors.branch_id');
-    });
   }
 
   const rows = await dataQuery.orderBy('investor_transactions.created_at', 'desc');
@@ -359,7 +343,6 @@ export const createAutomatedInvestorJournal = async (tx) => {
       if (lines.length === 2) {
         return await createJournalEntry({
           tenantId,
-          branchId: null,
           date: tx.date || tx.created_at || new Date(),
           description: `Investor Capital Transaction (${tx.type}): Ref ${tx.reference || tx.id}`,
           reference: ref,

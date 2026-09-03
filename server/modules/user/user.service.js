@@ -6,7 +6,7 @@ import { generateOTP, sendOTP } from '../auth/auth.service.js';
 import emitter, { EVENTS } from '../../events/index.js';
 import { syncUserToEmployee } from '../employee/employee.service.js';
 
-export function formatUser(row, roleRow = null, branchRow = null) {
+export function formatUser(row, roleRow = null) {
   if (!row) return null;
   return {
     _id: String(row.id),
@@ -26,13 +26,6 @@ export function formatUser(row, roleRow = null, branchRow = null) {
     roleName: row.role_name,
     isActive: Boolean(row.is_active),
     isVerified: Boolean(row.is_verified),
-    branchId: row.branch_id ? String(row.branch_id) : null,
-    branchName: branchRow?.name || row.branch_name || (row.branch_id ? `Branch #${row.branch_id}` : 'Main Branch (All Outlets)'),
-    branch: branchRow ? {
-      _id: String(branchRow.id),
-      id: branchRow.id,
-      name: branchRow.name,
-    } : (row.branch_id ? { _id: String(row.branch_id), id: row.branch_id, name: row.branch_name || `Branch #${row.branch_id}` } : null),
     tenantId: row.tenant_id || null,
     commissionRate: Number(row.commission_rate || 0),
     isMfaEnabled: Boolean(row.is_mfa_enabled),
@@ -52,10 +45,9 @@ function applyTenantScope(query, tenantId) {
   }
 }
 
-export const getAllUsers = async (page = 1, limit = 20, search = '', tenantId = null, branchId = null) => {
+export const getAllUsers = async (page = 1, limit = 20, search = '', tenantId = null) => {
   const countQuery = db('users').where('users.is_deleted', false);
   applyTenantScope(countQuery, tenantId);
-  if (branchId) countQuery.where('users.branch_id', branchId);
 
   if (search) {
     const term = `%${search}%`;
@@ -73,19 +65,15 @@ export const getAllUsers = async (page = 1, limit = 20, search = '', tenantId = 
   const offset = (page - 1) * limit;
   const dataQuery = db('users')
     .leftJoin('roles', 'users.role_id', 'roles.id')
-    .leftJoin('branches', 'users.branch_id', 'branches.id')
     .where('users.is_deleted', false)
     .select(
       'users.*',
       'roles.id as role_id_val',
       'roles.name as role_name_val',
       'roles.display_name as role_display_name_val',
-      'roles.permissions as role_permissions_val',
-      'branches.id as branch_id_val',
-      'branches.name as branch_name'
+      'roles.permissions as role_permissions_val'
     );
   applyTenantScope(dataQuery, tenantId);
-  if (branchId) dataQuery.where('users.branch_id', branchId);
 
   if (search) {
     const term = `%${search}%`;
@@ -106,11 +94,7 @@ export const getAllUsers = async (page = 1, limit = 20, search = '', tenantId = 
       display_name: row.role_display_name_val,
       permissions: row.role_permissions_val,
     } : null;
-    const branchRow = row.branch_id_val ? {
-      id: row.branch_id_val,
-      name: row.branch_name,
-    } : null;
-    return formatUser(row, roleRow, branchRow);
+    return formatUser(row, roleRow);
   });
 
   return { users, pagination: getPagination(total, page, limit) };
@@ -149,7 +133,7 @@ export const createUser = async (data, tenantId = null) => {
 
   const effectiveTenantId = tenantId || data.tenantId || null;
   if (effectiveTenantId) {
-    const tenant = await db('tenants').where({ id: effectiveTenantId }).select('max_branches', 'max_users', 'plan').first();
+    const tenant = await db('tenants').where({ id: effectiveTenantId }).select('max_users', 'plan').first();
     if (tenant) {
       const countRes = await db('users').where({ tenant_id: effectiveTenantId, is_deleted: false }).count({ count: '*' }).first();
       const currentCount = Number(countRes?.count || 0);
@@ -158,23 +142,6 @@ export const createUser = async (data, tenantId = null) => {
         throw ApiError.forbidden(
           `Your plan (${tenant.plan || 'STARTER'}) allows a maximum of ${userLimit} user${userLimit === 1 ? '' : 's'}. Please upgrade subscription.`
         );
-      }
-
-      // Check per-branch user limit (5 users per branch for STARTER / BASIC plans)
-      const targetBranchId = data.branchId || data.branch_id || data.branch;
-      if (targetBranchId) {
-        const branchUserCountRes = await db('users')
-          .where({ branch_id: targetBranchId, is_deleted: false })
-          .count({ count: '*' })
-          .first();
-        const branchUserCount = Number(branchUserCountRes?.count || 0);
-        const planName = (tenant.plan || 'STARTER').toUpperCase();
-        const perBranchUserLimit = planName === 'STARTER' ? 5 : 999;
-        if (branchUserCount >= perBranchUserLimit) {
-          throw ApiError.forbidden(
-            `This branch has reached the limit of ${perBranchUserLimit} users per outlet for the ${planName} plan. Upgrade to expand limits.`
-          );
-        }
       }
     }
   }
@@ -240,7 +207,6 @@ export const createUser = async (data, tenantId = null) => {
     avatar: data.avatar || null,
     is_active: data.isActive !== undefined ? Boolean(data.isActive) : true,
     is_verified: false,
-    branch_id: data.branchId || null,
     tenant_id: effectiveTenantId,
     commission_rate: data.commissionRate || 0,
     otp_code: otpCode,
@@ -325,7 +291,6 @@ export const updateUser = async (id, data, tenantId = null) => {
   if (data.name !== undefined && data.fullName === undefined) updateFields.full_name = data.name;
   if (data.avatar !== undefined) updateFields.avatar = data.avatar;
   if (data.isActive !== undefined) updateFields.is_active = Boolean(data.isActive);
-  if (data.branchId !== undefined) updateFields.branch_id = data.branchId;
   if (data.commissionRate !== undefined) updateFields.commission_rate = data.commissionRate;
 
   if (Object.keys(updateFields).length > 0) {

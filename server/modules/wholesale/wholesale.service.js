@@ -169,18 +169,16 @@ export const deletePrice = async (id, tenantId = null) => {
 };
 
 // Orders
-export const getAllOrders = async (page = 1, limit = 20, filters = {}, tenantId = null, branchId = null) => {
+export const getAllOrders = async (page = 1, limit = 20, filters = {}, tenantId = null) => {
   // Fetch from wholesale_orders table
   const wsQuery = db('wholesale_orders').where('wholesale_orders.is_deleted', false);
   applyTenantScope(wsQuery, tenantId, 'wholesale_orders');
-  if (branchId) wsQuery.where('wholesale_orders.branch_id', branchId);
   if (filters.status) wsQuery.where('wholesale_orders.status', filters.status);
   const wsRows = await wsQuery.select('wholesale_orders.id as _src_id');
 
   // Fetch wholesale-type sales from transactions table
   const txQuery = db('transactions').where({ is_deleted: false, sale_type: 'WHOLESALE' });
   applyTenantScope(txQuery, tenantId, 'transactions');
-  if (branchId) txQuery.where('transactions.branch_id', branchId);
   if (filters.status) txQuery.where('transactions.status', filters.status);
   const txRows = await txQuery.select('transactions.id as _src_id');
 
@@ -188,14 +186,12 @@ export const getAllOrders = async (page = 1, limit = 20, filters = {}, tenantId 
 
   const countQuery = db('wholesale_orders').where('wholesale_orders.is_deleted', false);
   applyTenantScope(countQuery, tenantId, 'wholesale_orders');
-  if (branchId) countQuery.where('wholesale_orders.branch_id', branchId);
   if (filters.status) countQuery.where('wholesale_orders.status', filters.status);
   const countRes = await countQuery.count({ total: '*' }).first();
   const wsCount = Number(countRes?.total || 0);
 
   const txCountQuery = db('transactions').where({ is_deleted: false, sale_type: 'WHOLESALE' });
   applyTenantScope(txCountQuery, tenantId, 'transactions');
-  if (branchId) txCountQuery.where('transactions.branch_id', branchId);
   if (filters.status) txCountQuery.where('transactions.status', filters.status);
   const txCountRes = await txCountQuery.count({ total: '*' }).first();
   const txCount = Number(txCountRes?.total || 0);
@@ -215,7 +211,6 @@ export const getAllOrders = async (page = 1, limit = 20, filters = {}, tenantId 
       'users.id as u_id', 'users.username as u_username'
     );
   applyTenantScope(dataQuery, tenantId, 'wholesale_orders');
-  if (branchId) dataQuery.where('wholesale_orders.branch_id', branchId);
   if (filters.status) dataQuery.where('wholesale_orders.status', filters.status);
   const wsOrderRows = await dataQuery.orderBy('wholesale_orders.created_at', 'desc').limit(limit).offset(offset);
 
@@ -228,7 +223,6 @@ export const getAllOrders = async (page = 1, limit = 20, filters = {}, tenantId 
       'customers.id as c_id', 'customers.name as c_name', 'customers.phone as c_phone', 'customers.company_name as c_company'
     );
   applyTenantScope(txDataQuery, tenantId, 'transactions');
-  if (branchId) txDataQuery.where('transactions.branch_id', branchId);
   if (filters.status) txDataQuery.where('transactions.status', filters.status);
   const txOrderRows = await txDataQuery.orderBy('transactions.created_at', 'desc').limit(limit).offset(offset);
 
@@ -311,7 +305,6 @@ export const createOrder = async (data, userId, tenantId = null) => {
 
   const [insertedId] = await db('wholesale_orders').insert({
     tenant_id: tenantId || data.tenantId || null,
-    branch_id: data.branchId || null,
     order_number: orderNumber,
     customer_id: data.customer || data.customerId,
     items: JSON.stringify(items),
@@ -360,10 +353,9 @@ export const deleteOrder = async (id, tenantId = null) => {
   return { ...order, isDeleted: true };
 };
 
-export const getOrdersStats = async (tenantId = null, branchId = null) => {
+export const getOrdersStats = async (tenantId = null) => {
   const query = db('wholesale_orders').where({ is_deleted: false });
   applyTenantScope(query, tenantId, 'wholesale_orders');
-  if (branchId && branchId !== 'all') query.where('wholesale_orders.branch_id', branchId);
 
   const countRes = await query.count({ totalOrders: '*' }).sum({ totalRevenue: 'grand_total' }).sum({ totalDue: 'due_amount' }).first();
 

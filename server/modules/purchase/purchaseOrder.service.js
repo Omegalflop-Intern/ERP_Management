@@ -19,7 +19,6 @@ export function formatPurchaseOrder(row, supplierRow = null) {
     _id: String(row.id),
     id: row.id,
     tenantId: row.tenant_id || null,
-    branchId: row.branch_id ? String(row.branch_id) : null,
     poNumber: row.po_number,
     supplierId: supplierRow ? {
       _id: String(supplierRow.id),
@@ -63,12 +62,9 @@ function applyTenantScope(query, tenantId) {
   }
 }
 
-export const getAllPurchaseOrders = async (page = 1, limit = 20, search = '', status = '', tenantId = null, branchId = null) => {
+export const getAllPurchaseOrders = async (page = 1, limit = 20, search = '', status = '', tenantId = null) => {
   const countQuery = db('purchase_orders').where('purchase_orders.is_deleted', false);
   applyTenantScope(countQuery, tenantId);
-  if (branchId && branchId !== 'all') {
-    countQuery.where('purchase_orders.branch_id', branchId);
-  }
   if (status && status !== 'ALL') countQuery.where('purchase_orders.status', status);
   if (search) {
     const term = `%${search}%`;
@@ -92,9 +88,6 @@ export const getAllPurchaseOrders = async (page = 1, limit = 20, search = '', st
       'suppliers.company as s_company'
     );
   applyTenantScope(dataQuery, tenantId);
-  if (branchId && branchId !== 'all') {
-    dataQuery.where('purchase_orders.branch_id', branchId);
-  }
   if (status && status !== 'ALL') dataQuery.where('purchase_orders.status', status);
   if (search) {
     const term = `%${search}%`;
@@ -113,7 +106,7 @@ export const getAllPurchaseOrders = async (page = 1, limit = 20, search = '', st
   return { orders, pagination: getPagination(total, page, limit) };
 };
 
-export const getPurchaseOrderById = async (id, tenantId = null, branchId = null) => {
+export const getPurchaseOrderById = async (id, tenantId = null) => {
   const dataQuery = db('purchase_orders')
     .leftJoin('suppliers', 'purchase_orders.supplier_id', 'suppliers.id')
     .where({ 'purchase_orders.id': id, 'purchase_orders.is_deleted': false })
@@ -128,9 +121,6 @@ export const getPurchaseOrderById = async (id, tenantId = null, branchId = null)
       'suppliers.credit_balance as s_credit_balance'
     );
   applyTenantScope(dataQuery, tenantId);
-  if (branchId && branchId !== 'all') {
-    dataQuery.where('purchase_orders.branch_id', branchId);
-  }
 
   const row = await dataQuery.first();
   if (!row) throw ApiError.notFound('Purchase order not found');
@@ -145,7 +135,6 @@ export const getPurchaseOrderById = async (id, tenantId = null, branchId = null)
 
 export const createPurchaseOrder = async (data, createdBy = 'system') => {
   const tenantId = data.tenantId || null;
-  const branchId = data.branchId || null;
 
   let supplier = null;
   if (data.supplierId && !isNaN(Number(data.supplierId))) {
@@ -163,7 +152,6 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
     if (!supplier) {
       const [newSupId] = await db('suppliers').insert({
         tenant_id: tenantId,
-        branch_id: branchId,
         name: sName,
         phone: data.supplierPhone || 'N/A',
         company: data.supplierCompany || '',
@@ -221,7 +209,6 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
         const sku = 'SKU-' + Date.now().toString(36).toUpperCase() + Math.floor(Math.random() * 900 + 100);
         const [newId] = await db('products').insert({
           tenant_id: tenantId,
-          branch_id: branchId,
           name: pName,
           brand: rawItem.brand || null,
           sku,
@@ -257,25 +244,8 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
       await pUpdate.update(updateData);
     }
 
-    // Auto increment branch stock in product_branch_stocks for non-IMEI items
-    const imeis = rawItem.imeis || rawItem.imeiList || rawItem.imeiOrSerials || [];
-    if (branchId && (!Array.isArray(imeis) || imeis.length === 0)) {
-      const bsQ = db('product_branch_stocks').where({ branch_id: branchId, product_id: pId });
-      if (tenantId) bsQ.andWhere('tenant_id', tenantId);
-      const bs = await bsQ.first();
-      if (bs) {
-        await db('product_branch_stocks').where({ id: bs.id }).increment('stock_quantity', qty);
-      } else {
-        await db('product_branch_stocks').insert({
-          tenant_id: tenantId,
-          branch_id: branchId,
-          product_id: pId,
-          stock_quantity: qty,
-        });
-      }
-    }
-
     // If IMEIs are provided at purchase time, insert them into inventory_units with effective cost
+    const imeis = rawItem.imeis || rawItem.imeiList || rawItem.imeiOrSerials || [];
     if (Array.isArray(imeis) && imeis.length > 0) {
       for (const imei of imeis) {
         const trimmed = String(imei).trim();
@@ -286,7 +256,6 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
         if (!hasImei) {
           await db('inventory_units').insert({
             tenant_id: tenantId,
-            branch_id: branchId,
             imei_or_serial: trimmed,
             product_id: pId,
             supplier_id: supplier.id,
@@ -342,7 +311,6 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
 
   const [insertedId] = await db('purchase_orders').insert({
     tenant_id: tenantId,
-    branch_id: branchId,
     po_number: generatePoNumber(),
     supplier_id: supplier.id,
     status: 'RECEIVED',
@@ -373,7 +341,7 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
     due_balance: Number(supplier.due_balance || 0) + dueAmount,
   });
 
-  const createdOrder = await getPurchaseOrderById(insertedId, tenantId, branchId);
+  const createdOrder = await getPurchaseOrderById(insertedId, tenantId);
 
   // Trigger automated expense entry & accounting journal for purchase restock
   try {
@@ -385,8 +353,8 @@ export const createPurchaseOrder = async (data, createdBy = 'system') => {
   return createdOrder;
 };
 
-export const updatePurchaseOrder = async (id, data, tenantId = null, branchId = null) => {
-  const order = await getPurchaseOrderById(id, tenantId, branchId);
+export const updatePurchaseOrder = async (id, data, tenantId = null) => {
+  const order = await getPurchaseOrderById(id, tenantId);
   if (!order) throw ApiError.notFound('Purchase order not found');
 
   if (order.status === 'CANCELLED') {
@@ -401,17 +369,14 @@ export const updatePurchaseOrder = async (id, data, tenantId = null, branchId = 
   if (Object.keys(updateFields).length > 0) {
     const poUpdate = db('purchase_orders').where({ id });
     if (tenantId) poUpdate.andWhere('tenant_id', tenantId);
-    if (branchId && branchId !== 'all') {
-      poUpdate.andWhere((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
-    }
     await poUpdate.update(updateFields);
   }
 
-  return getPurchaseOrderById(id, tenantId, branchId);
+  return getPurchaseOrderById(id, tenantId);
 };
 
-export const receiveGoods = async (id, grnEntries, receivedBy = 'system', tenantId = null, branchId = null) => {
-  const order = await getPurchaseOrderById(id, tenantId, branchId);
+export const receiveGoods = async (id, grnEntries, receivedBy = 'system', tenantId = null) => {
+  const order = await getPurchaseOrderById(id, tenantId);
   if (!order) throw ApiError.notFound('Purchase order not found');
 
   // Only validate IMEI duplicates for entries that have an imeiOrSerial
@@ -441,7 +406,6 @@ export const receiveGoods = async (id, grnEntries, receivedBy = 'system', tenant
 
       await db('inventory_units').insert({
         tenant_id: tenantId || order.tenantId || null,
-        branch_id: order.branch_id || order.branchId || null,
         imei_or_serial: entry.imeiOrSerial,
         product_id: entry.productId,
         supplier_id: order.supplierId?.id || order.supplierId,
@@ -486,9 +450,6 @@ export const receiveGoods = async (id, grnEntries, receivedBy = 'system', tenant
 
   const poReceiveUpdate = db('purchase_orders').where({ id });
   if (tenantId) poReceiveUpdate.andWhere('tenant_id', tenantId);
-  if (branchId && branchId !== 'all') {
-    poReceiveUpdate.andWhere((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
-  }
   await poReceiveUpdate.update({
     status,
     line_items: JSON.stringify(currentLineItems),
@@ -496,11 +457,11 @@ export const receiveGoods = async (id, grnEntries, receivedBy = 'system', tenant
     received_date: new Date(),
   });
 
-  return getPurchaseOrderById(id, tenantId, branchId);
+  return getPurchaseOrderById(id, tenantId);
 };
 
-export const returnToSupplier = async (id, returnPayload, reason = '', returnedBy = 'system', tenantId = null, branchId = null) => {
-  const order = await getPurchaseOrderById(id, tenantId, branchId);
+export const returnToSupplier = async (id, returnPayload, reason = '', returnedBy = 'system', tenantId = null) => {
+  const order = await getPurchaseOrderById(id, tenantId);
   if (!order) throw ApiError.notFound('Purchase order not found');
 
   let itemsToReturn = [];
@@ -541,7 +502,6 @@ export const returnToSupplier = async (id, returnPayload, reason = '', returnedB
     totalReturnedQty += qty;
 
     // Deduct stock from products table
-    const effectiveBranchId = branchId || order.branchId || order.branch_id || null;
     if (pId) {
       const pUp = db('products').where({ id: pId });
       if (tenantId) pUp.andWhere('tenant_id', tenantId);
@@ -549,17 +509,8 @@ export const returnToSupplier = async (id, returnPayload, reason = '', returnedB
         stock_quantity: db.raw('GREATEST(0, CAST(stock_quantity AS SIGNED) - ?)', [qty])
       });
 
-      // Deduct stock from product_branch_stocks table for non-IMEI items
-      if (effectiveBranchId && !item.imeiOrSerial) {
-        const bsUp = db('product_branch_stocks').where({ branch_id: effectiveBranchId, product_id: pId });
-        if (tenantId) bsUp.andWhere('tenant_id', tenantId);
-        await bsUp.update({
-          stock_quantity: db.raw('GREATEST(0, CAST(stock_quantity AS SIGNED) - ?)', [qty])
-        });
-      }
-
-      emitter.emit(EVENTS.STOCK_UPDATED, { id: pId, name: item.description || item.name, tenantId, branchId: effectiveBranchId });
-      emitter.emit(EVENTS.PRODUCT_MUTATED, { id: pId, tenantId, branchId: effectiveBranchId });
+      emitter.emit(EVENTS.STOCK_UPDATED, { id: pId, name: item.description || item.name, tenantId });
+      emitter.emit(EVENTS.PRODUCT_MUTATED, { id: pId, tenantId });
     }
 
     // If IMEI specified, mark as returned in inventory_units
@@ -613,9 +564,6 @@ export const returnToSupplier = async (id, returnPayload, reason = '', returnedB
 
   const poUpdate = db('purchase_orders').where({ id });
   if (tenantId) poUpdate.andWhere('tenant_id', tenantId);
-  if (branchId && branchId !== 'all') {
-    poUpdate.andWhere((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
-  }
   await poUpdate.update({
     return_logs: JSON.stringify(currentReturnLogs),
     returned_count: newReturnedCount,
@@ -685,7 +633,6 @@ export const returnToSupplier = async (id, returnPayload, reason = '', returnedB
       if (lines.length >= 2) {
         await createJournalEntry({
           tenantId,
-          branchId,
           date: new Date(),
           description: `Supplier Return PO #${order.poNumber || ''} (${totalReturnedQty} items, ৳${totalRefund.toLocaleString()} via ${settlementType === 'WALLET_REFUND' ? refundMethod : 'Due Adjustment'})`,
           reference: `PO-RETURN-${id}-${Date.now().toString(36)}`,
@@ -703,12 +650,12 @@ export const returnToSupplier = async (id, returnPayload, reason = '', returnedB
     message: `${totalReturnedQty} item(s) returned to supplier successfully`,
     returnedCount: totalReturnedQty,
     totalRefund,
-    order: await getPurchaseOrderById(id, tenantId, branchId),
+    order: await getPurchaseOrderById(id, tenantId),
   };
 };
 
-export const deletePurchaseOrder = async (id, tenantId = null, branchId = null) => {
-  const order = await getPurchaseOrderById(id, tenantId, branchId);
+export const deletePurchaseOrder = async (id, tenantId = null) => {
+  const order = await getPurchaseOrderById(id, tenantId);
   if (!order) throw ApiError.notFound('Purchase order not found');
 
   // Bug #5 fixed: Restore stock_quantity before soft-deleting a received PO
@@ -748,15 +695,12 @@ export const deletePurchaseOrder = async (id, tenantId = null, branchId = null) 
 
   const poDel = db('purchase_orders').where({ id });
   if (tenantId) poDel.andWhere('tenant_id', tenantId);
-  if (branchId && branchId !== 'all') {
-    poDel.andWhere((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
-  }
   await poDel.update({ is_deleted: true, status: 'CANCELLED' });
   return { ...order, isDeleted: true };
 };
 
-export const payPurchaseOrderDue = async (id, { amount, paymentMethod = 'CASH', notes = '' } = {}, tenantId = null, branchId = null, user = null) => {
-  const order = await getPurchaseOrderById(id, tenantId, branchId);
+export const payPurchaseOrderDue = async (id, { amount, paymentMethod = 'CASH', notes = '' } = {}, tenantId = null, user = null) => {
+  const order = await getPurchaseOrderById(id, tenantId);
   if (!order) throw ApiError.notFound('Purchase order not found');
 
   const payAmount = Number(amount || 0);
@@ -779,9 +723,6 @@ export const payPurchaseOrderDue = async (id, { amount, paymentMethod = 'CASH', 
 
   const poUpdate = db('purchase_orders').where({ id });
   if (tenantId) poUpdate.andWhere('tenant_id', tenantId);
-  if (branchId && branchId !== 'all') {
-    poUpdate.andWhere((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
-  }
   await poUpdate.update({
     status,
     paid_amount: newPaid,
@@ -809,7 +750,6 @@ export const payPurchaseOrderDue = async (id, { amount, paymentMethod = 'CASH', 
   try {
     await createAutomatedExpenseJournal({
       tenantId: tenantId || order.tenantId,
-      branchId: branchId || order.branchId,
       expenseCategory: 'Supplier Payment',
       amount: payAmount,
       paymentMethod,
@@ -820,5 +760,5 @@ export const payPurchaseOrderDue = async (id, { amount, paymentMethod = 'CASH', 
     console.error('Failed to log automated journal for supplier due payment:', err.message);
   }
 
-  return getPurchaseOrderById(id, tenantId, branchId);
+  return getPurchaseOrderById(id, tenantId);
 };

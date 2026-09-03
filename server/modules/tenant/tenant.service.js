@@ -8,17 +8,13 @@ export function formatTenant(row) {
   if (!row) return null;
 
   const planName = (row.plan || 'STARTER').toUpperCase();
-  let defaultBranches = 2;
   let defaultUsers = 5;
 
   if (planName === 'ENTERPRISE') {
-    defaultBranches = 999;
     defaultUsers = 999;
   } else if (planName === 'PRO' || planName === 'BUSINESS') {
-    defaultBranches = 5;
     defaultUsers = 20;
   } else if (planName === 'FREE') {
-    defaultBranches = 1;
     defaultUsers = 2;
   }
 
@@ -33,7 +29,6 @@ export function formatTenant(row) {
     phone: row.phone,
     plan: planName,
     status: row.status || 'PENDING_KYC',
-    maxBranches: Number(row.max_branches ?? defaultBranches),
     maxUsers: Number(row.max_users ?? defaultUsers),
     expiresAt: row.expires_at,
     notes: row.notes || '',
@@ -243,7 +238,6 @@ export const updateTenant = async (id, data) => {
 
   if (data.phone !== undefined) updateFields.phone = data.phone;
   if (data.plan !== undefined) updateFields.plan = data.plan;
-  if (data.maxBranches !== undefined) updateFields.max_branches = data.maxBranches;
   if (data.maxUsers !== undefined) updateFields.max_users = data.maxUsers;
   if (data.expiresAt !== undefined) updateFields.expires_at = data.expiresAt ? new Date(data.expiresAt) : null;
   if (data.notes !== undefined) updateFields.notes = data.notes;
@@ -396,13 +390,7 @@ export const createTenant = async (data, isSuperAdmin = false) => {
 
   const rawPlan = data.plan || data.selectedPlan || 'STARTER';
   const planName = String(rawPlan).toUpperCase();
-  let maxBranches = data.maxBranches !== undefined ? Number(data.maxBranches) : 2;
   let maxUsers = data.maxUsers !== undefined ? Number(data.maxUsers) : 5;
-  if (data.maxBranches === undefined) {
-    if (planName === 'ENTERPRISE') maxBranches = 999;
-    else if (planName === 'PRO' || planName === 'BUSINESS') maxBranches = 5;
-    else if (planName === 'FREE') maxBranches = 1;
-  }
   if (data.maxUsers === undefined) {
     if (planName === 'ENTERPRISE') maxUsers = 999;
     else if (planName === 'PRO' || planName === 'BUSINESS') maxUsers = 20;
@@ -418,7 +406,6 @@ export const createTenant = async (data, isSuperAdmin = false) => {
     email: emailLower,
     phone: data.phone,
     plan: planName,
-    max_branches: maxBranches,
     max_users: maxUsers,
     subdomain,
     custom_domain: customDomain,
@@ -432,20 +419,6 @@ export const createTenant = async (data, isSuperAdmin = false) => {
 
   // Provision shop owner ADMIN account
   await createShopOwnerAdminUser(insertedId, data, isSuperAdmin);
-
-  // Automatically provision default Main Outlet branch for the new shop
-  const [mainBranchId] = await db('branches').insert({
-    tenant_id: insertedId,
-    name: `${data.shopName} Main Outlet`,
-    address: data.platformAddress || 'Main Shop Outlet',
-    phone: data.phone || '',
-    email: emailLower,
-    is_active: true,
-    is_deleted: false,
-  });
-
-  // Link owner user to default main branch
-  await db('users').where({ tenant_id: insertedId }).update({ branch_id: mainBranchId });
 
   // Automatically sync shop owner admin user into Employees list
   const ownerUser = await db('users').where({ tenant_id: insertedId }).first();
@@ -478,7 +451,6 @@ export const purgeTenantData = async (tenantId) => {
     'purchase_orders',
     'inventory_units',
     'imei_records',
-    'stock_transfers',
     'products',
     'accounts',
     'attendances',

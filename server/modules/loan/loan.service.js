@@ -63,14 +63,9 @@ function applyTenantScope(query, tenantId) {
   }
 }
 
-export const getAllLoans = async (type = 'LOAN_TAKEN', tenantId = null, branchId = null) => {
+export const getAllLoans = async (type = 'LOAN_TAKEN', tenantId = null) => {
   const query = db('loans').where({ is_deleted: false });
   applyTenantScope(query, tenantId);
-  if (branchId && branchId !== 'all') {
-    query.where(function () {
-      this.where('branch_id', branchId).orWhereNull('branch_id');
-    });
-  }
   if (type) query.where({ type });
 
   const rows = await query.orderBy('created_at', 'desc');
@@ -96,19 +91,13 @@ export const createLoan = async (data, arg2 = null, arg3 = null) => {
   if (!data.loanAmount || Number(data.loanAmount) <= 0) throw ApiError.badRequest('Loan amount must be greater than 0');
 
   let resolvedTenantId = null;
-  let resolvedBranchId = null;
 
   if (typeof arg2 === 'number' || (typeof arg2 === 'string' && /^\d+$/.test(arg2))) {
     resolvedTenantId = Number(arg2);
-    resolvedBranchId = arg3;
   } else if (typeof arg3 === 'number' || (typeof arg3 === 'string' && /^\d+$/.test(arg3))) {
     resolvedTenantId = Number(arg3);
   } else if (data.tenantId && !isNaN(Number(data.tenantId))) {
     resolvedTenantId = Number(data.tenantId);
-  }
-
-  if (data.branchId && !isNaN(Number(data.branchId))) {
-    resolvedBranchId = Number(data.branchId);
   }
 
   const loanAmount = Number(data.loanAmount);
@@ -158,7 +147,6 @@ export const createLoan = async (data, arg2 = null, arg3 = null) => {
 
   const [insertedId] = await db('loans').insert({
     tenant_id: resolvedTenantId,
-    branch_id: resolvedBranchId,
     type: data.type || 'LOAN_TAKEN',
     provider_name: data.providerName,
     account_number: data.accountNumber || null,
@@ -320,7 +308,6 @@ export const createAutomatedLoanJournal = async (loan) => {
       if (assetAcct && payAcct) {
         return await createJournalEntry({
           tenantId,
-          branchId: loan.branch_id || null,
           date: loan.borrowed_date || new Date(),
           description: `Loan Taken from ${loan.provider_name}`,
           reference: ref,
@@ -336,7 +323,6 @@ export const createAutomatedLoanJournal = async (loan) => {
       if (assetAcct && recAcct) {
         return await createJournalEntry({
           tenantId,
-          branchId: loan.branch_id || null,
           date: loan.borrowed_date || new Date(),
           description: `Loan Given to ${loan.provider_name}`,
           reference: ref,
@@ -387,7 +373,6 @@ export const createAutomatedLoanRepaymentJournal = async (repayment, loan) => {
       if (assetAcct && payAcct) {
         return await createJournalEntry({
           tenantId,
-          branchId: loan.branch_id || null,
           date: repayment.date || new Date(),
           description: `Loan Repayment to ${loan.provider_name}`,
           reference: ref,
@@ -403,7 +388,6 @@ export const createAutomatedLoanRepaymentJournal = async (repayment, loan) => {
       if (assetAcct && recAcct) {
         return await createJournalEntry({
           tenantId,
-          branchId: loan.branch_id || null,
           date: repayment.date || new Date(),
           description: `Loan Repayment received from ${loan.provider_name}`,
           reference: ref,

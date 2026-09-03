@@ -40,8 +40,7 @@ router.get('/reports/cash-flow', accountingController.getCashFlowStatement);
 router.get('/reports/balance-sheet/pdf', async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const branchId = req.selectedBranchId || null;
-    const data = await accountingService.getBalanceSheet(req.query.asOfDate || '', tenantId, branchId);
+    const data = await accountingService.getBalanceSheet(req.query.asOfDate || '', tenantId);
     const pdf = await generateBalanceSheetPdf(data, tenantId);
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename=balance-sheet.pdf');
@@ -51,8 +50,7 @@ router.get('/reports/balance-sheet/pdf', async (req, res, next) => {
 router.get('/reports/profit-loss/pdf', async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const branchId = req.selectedBranchId || null;
-    const data = await accountingService.getProfitLoss(req.query.from || '', req.query.to || '', tenantId, branchId);
+    const data = await accountingService.getProfitLoss(req.query.from || '', req.query.to || '', tenantId);
     const pdf = await generateProfitLossPdf(data, tenantId);
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename=profit-loss.pdf');
@@ -62,8 +60,7 @@ router.get('/reports/profit-loss/pdf', async (req, res, next) => {
 router.get('/reports/trial-balance/pdf', async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const branchId = req.selectedBranchId || null;
-    const data = await accountingService.getTrialBalance(tenantId, branchId);
+    const data = await accountingService.getTrialBalance(tenantId);
     const pdf = await generateTrialBalancePdf(data, tenantId);
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename=trial-balance.pdf');
@@ -73,8 +70,7 @@ router.get('/reports/trial-balance/pdf', async (req, res, next) => {
 router.get('/reports/cash-flow/pdf', async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const branchId = req.selectedBranchId || null;
-    const data = await accountingService.getCashFlowStatement(req.query.from || '', req.query.to || '', tenantId, branchId);
+    const data = await accountingService.getCashFlowStatement(req.query.from || '', req.query.to || '', tenantId);
     const pdf = await generateCashFlowPdf(data, tenantId);
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename=cash-flow.pdf');

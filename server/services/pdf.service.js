@@ -84,29 +84,22 @@ export async function generateInvoicePdfBuffer(sale) {
       }
 
       const shopName = companyInfo.name;
-      const branchName = sale.branch?.name || '';
-      const branchAddress = sale.branch?.address || companyInfo.address;
-      const branchPhone = sale.branch?.phone || companyInfo.phone;
-      const branchEmail = sale.branch?.email || companyInfo.email;
 
       doc.fillColor('#0F172A').font('Helvetica-Bold').fontSize(16).text(shopName, headerTextX, y);
       y += 18;
 
-      if (branchName) {
-        doc.fillColor('#2563EB').font('Helvetica-Bold').fontSize(9).text(branchName, headerTextX, y);
-        y += 13;
-      } else if (companyInfo.slogan) {
+      if (companyInfo.slogan) {
         doc.fillColor('#64748B').font('Helvetica').fontSize(8).text(companyInfo.slogan, startX, y);
         y += 11;
       }
 
-      if (branchAddress) {
-        doc.fillColor('#64748B').font('Helvetica').fontSize(7.5).text(branchAddress, startX, y);
+      if (companyInfo.address) {
+        doc.fillColor('#64748B').font('Helvetica').fontSize(7.5).text(companyInfo.address, startX, y);
         y += 11;
       }
       const contactLine = [
-        branchPhone && `Phone: ${branchPhone}`,
-        branchEmail && `Email: ${branchEmail}`,
+        companyInfo.phone && `Phone: ${companyInfo.phone}`,
+        companyInfo.email && `Email: ${companyInfo.email}`,
         companyInfo.binVat && `${companyInfo.binVat}`,
       ].filter(Boolean).join('  •  ');
       if (contactLine) {

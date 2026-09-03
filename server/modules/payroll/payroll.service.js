@@ -53,13 +53,12 @@ function applyTenantScope(query, tenantId, tablePrefix = 'payrolls') {
   }
 }
 
-export const getAllPayroll = async (page = 1, limit = 20, branch = '', month = '', year = '', status = '', tenantId = null, branchId = null) => {
+export const getAllPayroll = async (page = 1, limit = 20, branch = '', month = '', year = '', status = '', tenantId = null) => {
   const countQuery = db('payrolls').where('payrolls.is_deleted', false);
   applyTenantScope(countQuery, tenantId, 'payrolls');
   if (status) countQuery.where('payrolls.status', status);
   if (month) countQuery.where('payrolls.month', Number(month));
   if (year) countQuery.where('payrolls.year', Number(year));
-  if (branchId) countQuery.where('payrolls.branch_id', branchId);
 
   const countRes = await countQuery.count({ total: '*' }).first();
   const total = Number(countRes?.total || 0);
@@ -79,7 +78,6 @@ export const getAllPayroll = async (page = 1, limit = 20, branch = '', month = '
   if (status) dataQuery.where('payrolls.status', status);
   if (month) dataQuery.where('payrolls.month', Number(month));
   if (year) dataQuery.where('payrolls.year', Number(year));
-  if (branchId) dataQuery.where('payrolls.branch_id', branchId);
 
   const rows = await dataQuery.orderBy('payrolls.created_at', 'desc').limit(limit).offset(offset);
 
@@ -92,10 +90,9 @@ export const getAllPayroll = async (page = 1, limit = 20, branch = '', month = '
   return { payrolls, pagination: getPagination(total, page, limit) };
 };
 
-export const generatePayroll = async (month, year, employeeIds = [], tenantId = null, branchId = null, customAllowances = null, customDeductions = null) => {
+export const generatePayroll = async (month, year, employeeIds = [], tenantId = null, customAllowances = null, customDeductions = null) => {
   let empQuery = db('employees').where('employees.is_deleted', false).where('employees.is_active', true);
   if (tenantId) empQuery.where((b) => b.where('employees.tenant_id', tenantId).orWhereNull('employees.tenant_id'));
-  if (branchId) empQuery.where('employees.branch_id', branchId);
 
   if (Array.isArray(employeeIds) && employeeIds.length > 0) {
     empQuery.whereIn('employees.id', employeeIds);
@@ -129,7 +126,6 @@ export const generatePayroll = async (month, year, employeeIds = [], tenantId = 
 
     const [insertedId] = await db('payrolls').insert({
       tenant_id: tenantId || employee.tenant_id || null,
-      branch_id: branchId || employee.branch_id || null,
       employee_id: empId,
       month: Number(month),
       year: Number(year),
@@ -152,17 +148,15 @@ export const generatePayroll = async (month, year, employeeIds = [], tenantId = 
   return { processed: results, skipped };
 };
 
-export const markAsPaid = async (id, paidBy = null, tenantId = null, branchId = null, paymentMethod = 'CASH', paymentAccount = null) => {
+export const markAsPaid = async (id, paidBy = null, tenantId = null, paymentMethod = 'CASH', paymentAccount = null) => {
   const query = db('payrolls').where({ id, is_deleted: false });
   applyTenantScope(query, tenantId, 'payrolls');
-  if (branchId) query.where('payrolls.branch_id', branchId);
   const payroll = await query.first();
   if (!payroll) throw ApiError.notFound('Payroll record not found');
   if (payroll.status === 'paid') throw ApiError.badRequest('Already paid');
 
   const mq = db('payrolls').where({ id });
   if (tenantId) mq.andWhere('tenant_id', tenantId);
-  if (branchId) mq.andWhere('branch_id', branchId);
   await mq.update({
     status: 'paid',
     paid_date: new Date(),
@@ -171,7 +165,6 @@ export const markAsPaid = async (id, paidBy = null, tenantId = null, branchId = 
 
   const urq = db('payrolls').where({ id });
   if (tenantId) urq.andWhere('tenant_id', tenantId);
-  if (branchId) urq.andWhere('branch_id', branchId);
   const updated = await urq.first();
   const empQuery = db('employees').where({ id: payroll.employee_id, is_deleted: false });
   applyTenantScope(empQuery, tenantId, 'employees');
@@ -182,7 +175,6 @@ export const markAsPaid = async (id, paidBy = null, tenantId = null, branchId = 
   try {
     await createAutomatedExpenseJournal({
       tenantId,
-      branchId: updated.branch_id || branchId,
       expenseCategory: 'Staff Salaries & Payroll',
       amount: Number(updated.net_salary || updated.net_pay || 0),
       paymentMethod: paymentMethod || 'CASH',
@@ -197,10 +189,9 @@ export const markAsPaid = async (id, paidBy = null, tenantId = null, branchId = 
   return formatPayroll(updated, employee);
 };
 
-export const getPayrollSummary = async (month, year, tenantId = null, branchId = null) => {
+export const getPayrollSummary = async (month, year, tenantId = null) => {
   const query = db('payrolls').where({ month: Number(month), year: Number(year), is_deleted: false });
   applyTenantScope(query, tenantId, 'payrolls');
-  if (branchId) query.where('payrolls.branch_id', branchId);
 
   const rows = await query;
   const records = rows.map(r => formatPayroll(r));
@@ -222,10 +213,9 @@ export const getPayrollSummary = async (month, year, tenantId = null, branchId =
   };
 };
 
-export const getPayslip = async (id, tenantId = null, branchId = null) => {
+export const getPayslip = async (id, tenantId = null) => {
   const query = db('payrolls').where({ id, is_deleted: false });
   applyTenantScope(query, tenantId, 'payrolls');
-  if (branchId) query.where('payrolls.branch_id', branchId);
   const row = await query.first();
   if (!row) throw ApiError.notFound('Payroll record not found');
   const empQuery = db('employees').where({ id: row.employee_id, is_deleted: false });
@@ -234,17 +224,15 @@ export const getPayslip = async (id, tenantId = null, branchId = null) => {
   return formatPayroll(row, employee);
 };
 
-export const deletePayroll = async (id, tenantId = null, branchId = null) => {
+export const deletePayroll = async (id, tenantId = null) => {
   const query = db('payrolls').where({ id, is_deleted: false });
   applyTenantScope(query, tenantId, 'payrolls');
-  if (branchId) query.where('payrolls.branch_id', branchId);
   const payroll = await query.first();
   if (!payroll) throw ApiError.notFound('Payroll record not found');
   if (payroll.status === 'paid') throw ApiError.badRequest('Cannot delete paid payroll');
 
   const dq = db('payrolls').where({ id });
   if (tenantId) dq.andWhere('tenant_id', tenantId);
-  if (branchId) dq.andWhere('branch_id', branchId);
   await dq.update({ is_deleted: true });
   return { ...formatPayroll(payroll), isDeleted: true };
 };

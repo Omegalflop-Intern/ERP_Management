@@ -8,7 +8,6 @@ export function formatWarrantyClaim(row, imeiRow = null, customerRow = null, inv
     _id: String(row.id),
     id: row.id,
     tenantId: row.tenant_id || null,
-    branchId: row.branch_id ? String(row.branch_id) : null,
     imei: imeiRow ? {
       _id: String(imeiRow.id),
       id: imeiRow.id,
@@ -53,12 +52,9 @@ function applyTenantScope(query, tenantId, tablePrefix = 'warranty_claims') {
   }
 }
 
-export const getAllClaims = async (page = 1, limit = 20, status = '', search = '', tenantId = null, branchId = null) => {
+export const getAllClaims = async (page = 1, limit = 20, status = '', search = '', tenantId = null) => {
   const countQuery = db('warranty_claims').where({ 'warranty_claims.is_deleted': false });
   applyTenantScope(countQuery, tenantId, 'warranty_claims');
-  if (branchId && branchId !== 'all') {
-    countQuery.where('warranty_claims.branch_id', branchId);
-  }
   if (status) countQuery.where('warranty_claims.status', status);
 
   const countRes = await countQuery.count({ total: '*' }).first();
@@ -79,9 +75,6 @@ export const getAllClaims = async (page = 1, limit = 20, status = '', search = '
       'users.id as u_id', 'users.username as u_username'
     );
   applyTenantScope(dataQuery, tenantId, 'warranty_claims');
-  if (branchId && branchId !== 'all') {
-    dataQuery.where('warranty_claims.branch_id', branchId);
-  }
   if (status) dataQuery.where('warranty_claims.status', status);
 
   const rows = await dataQuery.orderBy('warranty_claims.created_at', 'desc').limit(limit).offset(offset);
@@ -97,7 +90,7 @@ export const getAllClaims = async (page = 1, limit = 20, status = '', search = '
   return { claims, pagination: getPagination(total, page, limit) };
 };
 
-export const getClaimById = async (id, tenantId = null, branchId = null) => {
+export const getClaimById = async (id, tenantId = null) => {
   const dataQuery = db('warranty_claims')
     .leftJoin('inventory_units', 'warranty_claims.imei_id', 'inventory_units.id')
     .leftJoin('customers', 'warranty_claims.customer_id', 'customers.id')
@@ -112,7 +105,6 @@ export const getClaimById = async (id, tenantId = null, branchId = null) => {
       'users.id as u_id', 'users.username as u_username'
     );
   applyTenantScope(dataQuery, tenantId, 'warranty_claims');
-  if (branchId) dataQuery.where('warranty_claims.branch_id', branchId);
 
   const row = await dataQuery.first();
   if (!row) throw ApiError.notFound('Warranty claim not found');
@@ -128,7 +120,6 @@ export const getClaimById = async (id, tenantId = null, branchId = null) => {
 export const createClaim = async (data, tenantId = null) => {
   const [insertedId] = await db('warranty_claims').insert({
     tenant_id: tenantId || data.tenantId || null,
-    branch_id: data.branchId || null,
     imei_id: data.imei || data.imeiId || null,
     customer_id: data.customer || data.customerId,
     invoice_id: data.invoiceRef || data.invoiceId || null,
@@ -140,11 +131,11 @@ export const createClaim = async (data, tenantId = null) => {
     is_deleted: false,
   });
 
-  return getClaimById(insertedId, tenantId, data.branchId);
+  return getClaimById(insertedId, tenantId);
 };
 
-export const updateClaim = async (id, data, userId, tenantId = null, branchId = null) => {
-  const claim = await getClaimById(id, tenantId, branchId);
+export const updateClaim = async (id, data, userId, tenantId = null) => {
+  const claim = await getClaimById(id, tenantId);
   if (!claim) throw ApiError.notFound('Warranty claim not found');
 
   const updateFields = {};
@@ -164,18 +155,17 @@ export const updateClaim = async (id, data, userId, tenantId = null, branchId = 
     await q.update(updateFields);
   }
 
-  return getClaimById(id, tenantId, branchId);
+  return getClaimById(id, tenantId);
 };
 
-export const getClaimsByIMEI = async (imeiId, tenantId = null, branchId = null) => {
+export const getClaimsByIMEI = async (imeiId, tenantId = null) => {
   const dataQuery = db('warranty_claims').where({ imei_id: imeiId, is_deleted: false });
   applyTenantScope(dataQuery, tenantId, 'warranty_claims');
-  if (branchId) dataQuery.where('branch_id', branchId);
   const rows = await dataQuery.orderBy('created_at', 'desc');
   return rows.map(r => formatWarrantyClaim(r));
 };
 
-export const getWarrantyReport = async ({ type = 'all', search = '', status = 'Sold' }, tenantId = null, branchId = null) => {
+export const getWarrantyReport = async ({ type = 'all', search = '', status = 'Sold' }, tenantId = null) => {
   const now = new Date();
   const thirtyDays = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
@@ -185,21 +175,18 @@ export const getWarrantyReport = async ({ type = 'all', search = '', status = 'S
   const allProducts = await prodQuery.select('id', 'name', 'brand', 'model', 'warranty_months');
   const productMap = new Map(allProducts.map((p) => [Number(p.id), p]));
 
-  // 2. Fetch Inventory Units (with product & branch info)
+  // 2. Fetch Inventory Units (with product info)
   let unitQuery = db('inventory_units')
     .leftJoin('products', 'inventory_units.product_id', 'products.id')
-    .leftJoin('branches', 'inventory_units.branch_id', 'branches.id')
     .where({ 'inventory_units.is_deleted': false });
 
   if (tenantId) unitQuery.where('inventory_units.tenant_id', tenantId);
-  if (branchId && branchId !== 'all') unitQuery.where('inventory_units.branch_id', branchId);
   if (status && status !== 'ALL') unitQuery.where('inventory_units.status', status);
 
   const unitRows = await unitQuery.select(
     'inventory_units.*',
     'products.name as product_name',
-    'products.brand as product_brand',
-    'branches.name as branch_name'
+    'products.brand as product_brand'
   );
 
   // 3. Fetch Transactions to capture customer info, non-IMEI accessories & wholesale sales
@@ -210,7 +197,6 @@ export const getWarrantyReport = async ({ type = 'all', search = '', status = 'S
     .orderBy('transactions.created_at', 'desc');
 
   if (tenantId) txQuery.where('transactions.tenant_id', tenantId);
-  if (branchId && branchId !== 'all') txQuery.where('transactions.branch_id', branchId);
 
   const transactions = await txQuery.select(
     'transactions.*',
@@ -264,7 +250,6 @@ export const getWarrantyReport = async ({ type = 'all', search = '', status = 'S
           imeiOrSerial: 'Non-IMEI Item',
           productName: pName,
           brandName: pBrand,
-          branchName: tx.branch_id ? `Branch #${tx.branch_id}` : 'Main Outlet',
           customerName: tx.customer_name || tx.c_name || 'Walk-in Customer',
           customerPhone: tx.customer_phone || tx.c_phone || 'N/A',
           invoiceNumber: tx.invoice_number,
@@ -294,7 +279,6 @@ export const getWarrantyReport = async ({ type = 'all', search = '', status = 'S
       imeiOrSerial: u.imei_or_serial,
       productName: pName,
       brandName: pBrand,
-      branchName: u.branch_name || 'Main Outlet',
       customerName: txInfo.customerName || (u.status === 'Sold' ? 'Customer' : 'In Store Inventory'),
       customerPhone: txInfo.customerPhone || '—',
       invoiceNumber: txInfo.invoiceNumber || '—',
@@ -371,14 +355,13 @@ export const getWarrantyReport = async ({ type = 'all', search = '', status = 'S
   };
 };
 
-export const getCustomerPurchasedItems = async (customerId, tenantId = null, branchId = null) => {
+export const getCustomerPurchasedItems = async (customerId, tenantId = null) => {
   const txQuery = db('transactions')
     .where({ customer_id: customerId, is_deleted: false })
     .whereIn('status', ['COMPLETED', 'RETURNED', 'PARTIAL_RETURN'])
     .orderBy('created_at', 'desc');
 
   if (tenantId) txQuery.where('tenant_id', tenantId);
-  if (branchId && branchId !== 'all') txQuery.where('branch_id', branchId);
 
   const transactions = await txQuery;
 

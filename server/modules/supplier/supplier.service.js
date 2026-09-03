@@ -31,12 +31,9 @@ function applyTenantScope(query, tenantId) {
   }
 }
 
-export const getAllSuppliers = async (page = 1, limit = 20, search = '', tenantId = null, branchId = null) => {
+export const getAllSuppliers = async (page = 1, limit = 20, search = '', tenantId = null) => {
   const countQuery = db('suppliers').where('is_deleted', false);
   applyTenantScope(countQuery, tenantId);
-  if (branchId && branchId !== 'all') {
-    countQuery.where('branch_id', branchId);
-  }
 
   if (search) {
     const term = `%${search}%`;
@@ -53,9 +50,6 @@ export const getAllSuppliers = async (page = 1, limit = 20, search = '', tenantI
   const offset = (page - 1) * limit;
   const dataQuery = db('suppliers').where('is_deleted', false);
   applyTenantScope(dataQuery, tenantId);
-  if (branchId && branchId !== 'all') {
-    dataQuery.where('branch_id', branchId);
-  }
 
   if (search) {
     const term = `%${search}%`;
@@ -80,7 +74,7 @@ export const getSupplierById = async (id, tenantId = null) => {
   return formatSupplier(row);
 };
 
-export const createSupplier = async (data, tenantId = null, branchId = null) => {
+export const createSupplier = async (data, tenantId = null) => {
   const existingQuery = db('suppliers').where({ phone: data.phone, is_deleted: false });
   applyTenantScope(existingQuery, tenantId);
   const existing = await existingQuery.first();
@@ -88,7 +82,6 @@ export const createSupplier = async (data, tenantId = null, branchId = null) => 
 
   const [insertedId] = await db('suppliers').insert({
     tenant_id: tenantId,
-    branch_id: data.branchId || branchId || null,
     name: data.name,
     phone: data.phone,
     email: data.email || null,
@@ -159,7 +152,7 @@ export const getSupplierStats = async (id, tenantId = null) => {
   };
 };
 
-export const paySupplierDue = async (id, { amount, paymentMethod = 'CASH', notes = '' } = {}, tenantId = null, branchId = null, user = null) => {
+export const paySupplierDue = async (id, { amount, paymentMethod = 'CASH', notes = '' } = {}, tenantId = null, user = null) => {
   const supplier = await getSupplierById(id, tenantId);
   if (!supplier) throw ApiError.notFound('Supplier not found');
 
@@ -210,7 +203,6 @@ export const paySupplierDue = async (id, { amount, paymentMethod = 'CASH', notes
   try {
     await createAutomatedExpenseJournal({
       tenantId: tenantId || supplier.tenantId,
-      branchId,
       expenseCategory: 'Supplier Payment',
       amount: payAmount,
       paymentMethod,

@@ -1341,7 +1341,6 @@ export const createAutomatedPurchaseJournal = async (purchaseOrder, createdBy = 
     if (lines.length >= 2) {
       return await createJournalEntry({
         tenantId,
-        branchId,
         date: purchaseOrder.createdAt || purchaseOrder.created_at || new Date(),
         description: `Product Purchase PO #${poNumber}`,
         reference: ref,
@@ -1358,7 +1357,6 @@ export const createAutomatedPurchaseJournal = async (purchaseOrder, createdBy = 
 export const createAutomatedServiceJournal = async (repairTicket, amountPaid, paymentMethod = 'CASH', createdBy = 'system') => {
   try {
     const tenantId = repairTicket.tenantId || repairTicket.tenant_id || null;
-    const branchId = repairTicket.branchId || repairTicket.branch_id || null;
     const ticketNumber = repairTicket.ticketNumber || repairTicket.ticket_number || 'RPR';
     const amt = Number(amountPaid || 0);
     if (amt <= 0) return null;
@@ -1384,7 +1382,6 @@ export const createAutomatedServiceJournal = async (repairTicket, amountPaid, pa
     if (debitAcct && revAcct) {
       return await createJournalEntry({
         tenantId,
-        branchId,
         date: new Date(),
         description: `Repair Service Revenue #${ticketNumber} (${repairTicket.deviceModel || 'Gadget Repair'})`,
         reference: ref,
@@ -1392,7 +1389,6 @@ export const createAutomatedServiceJournal = async (repairTicket, amountPaid, pa
           { accountId: debitAcct.id, code: debitAcct.code, accountName: debitAcct.name, debit: amt, credit: 0 },
           { accountId: revAcct.id, code: revAcct.code, accountName: revAcct.name, debit: 0, credit: amt },
         ],
-        // Bug #10 fixed: Changed DRAFT → POSTED so repair revenue actually appears in the ledger.
         status: 'POSTED',
       });
     }
@@ -1402,16 +1398,14 @@ export const createAutomatedServiceJournal = async (repairTicket, amountPaid, pa
   return null;
 };
 
-export const getCashFlowStatement = async (from = '', to = '', tenantId = null, branchId = null) => {
+export const getCashFlowStatement = async (from = '', to = '', tenantId = null) => {
   const fromDate = from ? new Date(from + 'T00:00:00') : new Date(new Date().setDate(1));
   const toDate = to ? new Date(to + 'T23:59:59') : new Date();
 
-  // Operating Activities - cash from sales, expenses, due collections, repair services
   const salesQuery = db('transactions')
     .where({ tx_type: 'SALE', is_deleted: false, status: 'COMPLETED' })
     .whereBetween('created_at', [fromDate, toDate]);
   applyTenantScope(salesQuery, tenantId, 'transactions');
-  if (branchId && branchId !== 'all') salesQuery.andWhere((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
 
   const salesRows = await salesQuery.select('payment_breakdown', 'returned_amount', 'net_total', 'created_at');
   let cashFromSales = 0;
@@ -1431,7 +1425,6 @@ export const getCashFlowStatement = async (from = '', to = '', tenantId = null, 
     .where({ tx_type: 'SALE', is_deleted: false })
     .whereBetween('created_at', [fromDate, toDate]);
   applyTenantScope(dueQuery, tenantId, 'transactions');
-  if (branchId && branchId !== 'all') dueQuery.andWhere((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
   const dueRows = await dueQuery.select('payment_breakdown', 'created_at');
   let dueCollected = 0;
   for (const d of dueRows) {
@@ -1449,7 +1442,6 @@ export const getCashFlowStatement = async (from = '', to = '', tenantId = null, 
       .where('reference', 'like', 'RPR-%')
       .whereBetween('created_at', [fromDate, toDate]);
     applyTenantScope(repairJeQuery, tenantId, 'journal_entries');
-    if (branchId && branchId !== 'all') repairJeQuery.andWhere((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
     const repairJeRows = await repairJeQuery.select('total_credit', 'total_debit');
     for (const rj of repairJeRows) {
       repairIncome += Number(rj.total_credit || 0);
@@ -1465,7 +1457,6 @@ export const getCashFlowStatement = async (from = '', to = '', tenantId = null, 
     .whereNot('category', 'Staff Salaries & Payroll')
     .whereBetween('created_at', [fromDate, toDate]);
   applyTenantScope(expenseQuery, tenantId, 'expenses');
-  if (branchId && branchId !== 'all') expenseQuery.andWhere('branch_id', branchId);
   const expenseRows = await expenseQuery.select('amount', 'payment_method', 'category', 'created_at');
   let totalExpensesPaid = 0;
   const expensesByCategory = {};
@@ -1482,7 +1473,6 @@ export const getCashFlowStatement = async (from = '', to = '', tenantId = null, 
       .where('is_deleted', false)
       .whereIn('status', ['paid', 'PAID']);
     applyTenantScope(payrollQuery, tenantId, 'payrolls');
-    if (branchId && branchId !== 'all') payrollQuery.andWhere('branch_id', branchId);
     if (fromDate && toDate) {
       payrollQuery.where((b) => {
         b.whereBetween('paid_date', [fromDate, toDate]).orWhereBetween('created_at', [fromDate, toDate]);
@@ -1503,7 +1493,6 @@ export const getCashFlowStatement = async (from = '', to = '', tenantId = null, 
       .where('reference', 'like', 'PO-%')
       .whereBetween('created_at', [fromDate, toDate]);
     applyTenantScope(poJeQuery, tenantId, 'journal_entries');
-    if (branchId && branchId !== 'all') poJeQuery.andWhere((b) => b.where('branch_id', branchId).orWhereNull('branch_id'));
     const poJeRows = await poJeQuery.select('lines');
     let poInitialPaid = 0;
     for (const je of poJeRows) {
@@ -1521,7 +1510,6 @@ export const getCashFlowStatement = async (from = '', to = '', tenantId = null, 
       .where({ is_deleted: false, category: 'Supplier Payment' })
       .whereBetween('created_at', [fromDate, toDate]);
     applyTenantScope(supplierDueQuery, tenantId, 'expenses');
-    if (branchId && branchId !== 'all') supplierDueQuery.where('branch_id', branchId);
     const supplierDueRows = await supplierDueQuery.select('amount');
     let supplierDuePaid = 0;
     for (const exp of supplierDueRows) {

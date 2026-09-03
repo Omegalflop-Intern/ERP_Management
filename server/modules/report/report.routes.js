@@ -20,15 +20,6 @@ const getTenantScope = (req) => {
   };
 };
 
-const getBranchScope = (req) => {
-  const branchId = req.query?.branchId || req.selectedBranchId || null;
-  return (query, column = 'branch_id') => {
-    if (branchId && branchId !== 'all') {
-      query.where(column, branchId);
-    }
-  };
-};
-
 function getDateRangeFilter(period, fromDate, toDate) {
   const now = new Date();
   let start = null;
@@ -66,7 +57,6 @@ function getDateRangeFilter(period, fromDate, toDate) {
 router.get('/dashboard', async (req, res, next) => {
   try {
     const applyScope = getTenantScope(req);
-    const applyBranch = getBranchScope(req);
     const tenantId = req.user?.tenantId || null;
     const period = String(req.query?.period || '7d').toLowerCase();
 
@@ -82,13 +72,11 @@ router.get('/dashboard', async (req, res, next) => {
     try {
       const expQuery = db('expenses').where({ is_deleted: false }).whereNot('category', 'Supplier Payment');
       applyScope(expQuery);
-      applyBranch(expQuery);
       const expRes = await expQuery.sum({ total: 'amount' }).first();
       totalExpenses = Number(expRes?.total || 0);
 
       const poQuery = db('purchase_orders').where({ is_deleted: false }).whereNot('status', 'CANCELLED');
       applyScope(poQuery);
-      applyBranch(poQuery);
       const poRes = await poQuery.sum({ total: 'net_total' }).sum({ returned: 'returned_amount' }).first();
       totalPurchasesCost = Math.max(0, Number(poRes?.total || 0) - Number(poRes?.returned || 0));
     } catch {}
@@ -96,7 +84,6 @@ router.get('/dashboard', async (req, res, next) => {
     try {
       const txQuery = db('transactions').where({ is_deleted: false, tx_type: 'SALE' });
       applyScope(txQuery);
-      applyBranch(txQuery);
       const txCountRes = await txQuery.count({ count: '*' }).sum({ total: 'net_total' }).sum({ returned: 'returned_amount' }).first();
       totalSalesCount = Number(txCountRes?.count || 0);
 
@@ -104,7 +91,6 @@ router.get('/dashboard', async (req, res, next) => {
       const salesForDue = await db('transactions')
         .where({ is_deleted: false, tx_type: 'SALE' })
         .modify(applyScope)
-        .modify(applyBranch)
         .select('payment_breakdown');
       
       let outstandingDues = 0;
@@ -119,7 +105,6 @@ router.get('/dashboard', async (req, res, next) => {
       const txRows = await db('transactions')
         .where({ is_deleted: false, tx_type: 'SALE' })
         .modify(applyScope)
-        .modify(applyBranch)
         .select('line_items', 'returned_amount', 'net_total', 'return_logs');
       
       for (const tx of txRows) {
@@ -169,21 +154,8 @@ router.get('/dashboard', async (req, res, next) => {
 
       let branchUnitMap = {};
       let totalUnitMap = {};
-      let branchBulkStocksMap = {};
 
-      const effectiveBranchId = req.query?.branchId || req.selectedBranchId;
       if (productIds.length > 0) {
-        const branchUnitQ = db('inventory_units')
-          .whereIn('product_id', productIds)
-          .where({ status: 'Available', is_deleted: false })
-          .groupBy('product_id')
-          .select('product_id')
-          .count({ cnt: '*' });
-        applyScope(branchUnitQ);
-        applyBranch(branchUnitQ);
-        const branchRows = await branchUnitQ;
-        branchRows.forEach((r) => { branchUnitMap[String(r.product_id)] = Number(r.cnt || 0); });
-
         const totalUnitQ = db('inventory_units')
           .whereIn('product_id', productIds)
           .where({ status: 'Available', is_deleted: false })
@@ -193,35 +165,14 @@ router.get('/dashboard', async (req, res, next) => {
         applyScope(totalUnitQ);
         const totalRows = await totalUnitQ;
         totalRows.forEach((r) => { totalUnitMap[String(r.product_id)] = Number(r.cnt || 0); });
-
-        if (effectiveBranchId && effectiveBranchId !== 'all') {
-          const bsRows = await db('product_branch_stocks')
-            .whereIn('product_id', productIds)
-            .where('branch_id', effectiveBranchId);
-          bsRows.forEach((r) => { branchBulkStocksMap[String(r.product_id)] = Number(r.stock_quantity || 0); });
-        }
       }
 
       const brandCounts = {};
       for (const p of activeProducts) {
         const pIdStr = String(p.id);
-        const branchUnits = branchUnitMap[pIdStr] || 0;
         const totalUnitsAny = totalUnitMap[pIdStr] || 0;
 
-        let availUnits = 0;
-        if (totalUnitsAny > 0) {
-          availUnits = branchUnits;
-        } else {
-          if (effectiveBranchId && effectiveBranchId !== 'all') {
-            if (branchBulkStocksMap[pIdStr] !== undefined) {
-              availUnits = branchBulkStocksMap[pIdStr];
-            } else {
-              availUnits = 0;
-            }
-          } else {
-            availUnits = Number(p.stock_quantity || 0);
-          }
-        }
+        const availUnits = totalUnitsAny > 0 ? totalUnitsAny : Number(p.stock_quantity || 0);
 
         const costVal = availUnits * Number(p.cost_price || 0);
         totalAvailableUnits += availUnits;
@@ -253,13 +204,11 @@ router.get('/dashboard', async (req, res, next) => {
     try {
       const repQuery = db('repair_tickets').where({ is_deleted: false }).whereNotIn('status', ['DELIVERED', 'CANCELLED']);
       applyScope(repQuery);
-      applyBranch(repQuery);
       const repRes = await repQuery.count({ count: '*' }).first();
       activeRepairsCount = Number(repRes?.count || 0);
 
       const custQuery = db('customers').where({ is_deleted: false });
       applyScope(custQuery);
-      applyBranch(custQuery);
       const custRes = await custQuery.count({ count: '*' }).sum({ due: 'due_balance' }).first();
       totalCustomers = Number(custRes?.count || 0);
       totalDueAmount = Number(custRes?.due || 0);
@@ -361,7 +310,6 @@ router.get('/dashboard', async (req, res, next) => {
         .whereNot('status', 'CANCELLED')
         .where('created_at', '>=', startTime);
       applyScope(rawSalesQuery);
-      applyBranch(rawSalesQuery);
       const rawSales = await rawSalesQuery.select('created_at', 'net_total', 'returned_amount', 'payment_breakdown');
 
       for (const s of rawSales) {
@@ -440,7 +388,6 @@ router.get('/dashboard', async (req, res, next) => {
 router.get('/analytics', async (req, res, next) => {
   try {
     const applyScope = getTenantScope(req);
-    const applyBranch = getBranchScope(req);
     const { start, end } = getDateRangeFilter(req.query?.period, req.query?.from, req.query?.to);
 
     const txQuery = db('transactions')
@@ -450,26 +397,22 @@ router.get('/analytics', async (req, res, next) => {
     if (start) txQuery.where('created_at', '>=', start);
     if (end) txQuery.where('created_at', '<=', end);
     applyScope(txQuery);
-    applyBranch(txQuery);
     const salesRes = await txQuery.count({ count: '*' }).sum({ revenue: db.raw('GREATEST(0, net_total - COALESCE(returned_amount, 0))') }).first();
 
     const expQuery = db('expenses').where({ is_deleted: false }).whereNot('category', 'Supplier Payment');
     if (start) expQuery.where('created_at', '>=', start);
     if (end) expQuery.where('created_at', '<=', end);
     applyScope(expQuery);
-    applyBranch(expQuery);
     const expRes = await expQuery.sum({ total: 'amount' }).first();
 
     const poQuery = db('purchase_orders').where({ is_deleted: false }).whereNot('status', 'CANCELLED');
     if (start) poQuery.where('created_at', '>=', start);
     if (end) poQuery.where('created_at', '<=', end);
     applyScope(poQuery);
-    applyBranch(poQuery);
     const poRes = await poQuery.sum({ total: 'net_total' }).sum({ returned: 'returned_amount' }).first();
 
     const custQuery = db('customers').where({ is_deleted: false });
     applyScope(custQuery);
-    applyBranch(custQuery);
     const custRes = await custQuery.count({ count: '*' }).first();
 
     const prodQuery = db('products').where({ is_deleted: false });
@@ -484,7 +427,6 @@ router.get('/analytics', async (req, res, next) => {
     if (end) txForPm.where('created_at', '<=', end);
     txForPm.select('payment_breakdown');
     applyScope(txForPm);
-    applyBranch(txForPm);
     const pmTransactions = await txForPm;
 
     let outstandingDues = 0;
@@ -565,7 +507,6 @@ router.get('/analytics', async (req, res, next) => {
 router.get('/sales-trend', async (req, res, next) => {
   try {
     const applyScope = getTenantScope(req);
-    const applyBranch = getBranchScope(req);
     const { start, end } = getDateRangeFilter(req.query?.period || 'month', req.query?.from, req.query?.to);
 
     const query = db('transactions')
@@ -585,7 +526,6 @@ router.get('/sales-trend', async (req, res, next) => {
       .orderBy('date', 'asc');
 
     applyScope(query);
-    applyBranch(query);
     const rows = await query;
     const data = rows.map((r) => ({
       date: r.date,
@@ -606,7 +546,6 @@ router.get('/sales-trend', async (req, res, next) => {
 router.get('/top-products', async (req, res, next) => {
   try {
     const applyScope = getTenantScope(req);
-    const applyBranch = getBranchScope(req);
     const limit = Number(req.query.limit || 5);
     const { start, end } = getDateRangeFilter(req.query?.period, req.query?.from, req.query?.to);
 
@@ -620,7 +559,6 @@ router.get('/top-products', async (req, res, next) => {
     if (end) txQuery.where('created_at', '<=', end);
 
     applyScope(txQuery);
-    applyBranch(txQuery);
     const transactions = await txQuery;
 
     // Aggregate sold quantity and revenue per productId from line_items JSON
@@ -677,10 +615,8 @@ router.get('/top-products', async (req, res, next) => {
 router.get('/customers', async (req, res, next) => {
   try {
     const applyScope = getTenantScope(req);
-    const applyBranch = getBranchScope(req);
     const custQuery = db('customers').where({ is_deleted: false });
     applyScope(custQuery);
-    applyBranch(custQuery);
     const customers = await custQuery.orderBy('created_at', 'desc');
 
     const totalCustomers = customers.length;
@@ -707,7 +643,6 @@ router.get('/customers', async (req, res, next) => {
       .orderBy('date', 'asc')
       .limit(15);
     applyScope(growthQuery);
-    applyBranch(growthQuery);
     const growthRows = await growthQuery;
 
     const customerGrowth = growthRows.map((r) => ({
@@ -748,10 +683,8 @@ router.get('/customers', async (req, res, next) => {
 router.get('/employees', async (req, res, next) => {
   try {
     const applyScope = getTenantScope(req);
-    const applyBranch = getBranchScope(req);
     const empQuery = db('employees').where({ is_deleted: false });
     applyScope(empQuery);
-    applyBranch(empQuery);
     const employees = await empQuery;
 
     const totalEmployees = employees.length;
@@ -761,7 +694,6 @@ router.get('/employees', async (req, res, next) => {
     try {
       const leaveQuery = db('leaves').where({ is_deleted: false, status: 'APPROVED' });
       applyScope(leaveQuery);
-      applyBranch(leaveQuery);
       const leaveRes = await leaveQuery.count({ count: '*' }).first();
       activeLeavesCount = Number(leaveRes?.count || 0);
     } catch {}
@@ -776,13 +708,11 @@ router.get('/employees', async (req, res, next) => {
       const todayStr = new Date().toISOString().split('T')[0];
       const attTodayQuery = db('attendances').where({ is_deleted: false }).whereRaw('DATE(date) = ?', [todayStr]);
       applyScope(attTodayQuery);
-      applyBranch(attTodayQuery);
       const attTodayRows = await attTodayQuery;
       presentToday = attTodayRows.filter((a) => a.status === 'PRESENT' || a.status === 'LATE').length;
 
       const attAllQuery = db('attendances').where({ is_deleted: false });
       applyScope(attAllQuery);
-      applyBranch(attAllQuery);
       const attAllRows = await attAllQuery;
       const totalAttRecords = attAllRows.length;
       const totalPresentRecords = attAllRows.filter((a) => a.status === 'PRESENT' || a.status === 'LATE').length;
@@ -803,7 +733,6 @@ router.get('/employees', async (req, res, next) => {
         .orderBy('date_key', 'asc')
         .limit(7);
       applyScope(trendQuery);
-      applyBranch(trendQuery);
       const trendRows = await trendQuery;
       attendanceTrend = trendRows.map((r) => ({
         date: r.date,
@@ -822,7 +751,6 @@ router.get('/employees', async (req, res, next) => {
       .groupByRaw('COALESCE(seller_name, cashier_username, "Staff")')
       .limit(10);
     applyScope(salesByEmpQuery);
-    applyBranch(salesByEmpQuery);
     const salesByEmpRows = await salesByEmpQuery;
 
     const salesByEmployee = salesByEmpRows
@@ -876,8 +804,6 @@ router.get('/employees', async (req, res, next) => {
 router.get('/inventory', async (req, res, next) => {
   try {
     const applyScope = getTenantScope(req);
-    const applyBranch = getBranchScope(req);
-    const branchId = req.selectedBranchId || null;
 
     const prodQuery = db('products').where({ is_deleted: false });
     applyScope(prodQuery);
@@ -889,41 +815,8 @@ router.get('/inventory', async (req, res, next) => {
     const categoryCounts = {};
     const lowStockItems = [];
 
-    let branchUnitCounts = null;
-    let branchBulkStocks = null;
-    if (branchId && products.length > 0) {
-      const productIds = products.map((p) => p.id);
-      const unitRows = await db('inventory_units')
-        .whereIn('product_id', productIds)
-        .where({ status: 'Available', is_deleted: false })
-        .where('branch_id', branchId)
-        .select('product_id')
-        .count({ cnt: '*' })
-        .groupBy('product_id');
-      branchUnitCounts = {};
-      unitRows.forEach((r) => { branchUnitCounts[String(r.product_id)] = Number(r.cnt || 0); });
-
-      const bsRows = await db('product_branch_stocks')
-        .whereIn('product_id', productIds)
-        .where('branch_id', branchId);
-      branchBulkStocks = {};
-      bsRows.forEach((r) => { branchBulkStocks[String(r.product_id)] = Number(r.stock_quantity || 0); });
-    }
-
     for (const p of products) {
-      let qty = 0;
-      if (branchUnitCounts !== null) {
-        const imeiBranchQty = branchUnitCounts[String(p.id)];
-        if (imeiBranchQty !== undefined && imeiBranchQty > 0) {
-          qty = imeiBranchQty;
-        } else if (branchBulkStocks && branchBulkStocks[String(p.id)] !== undefined) {
-          qty = branchBulkStocks[String(p.id)];
-        } else {
-          qty = 0;
-        }
-      } else {
-        qty = Number(p.stock_quantity || 0);
-      }
+      const qty = Number(p.stock_quantity || 0);
       const cost = Number(p.cost_price || 0);
       totalStockValue += qty * cost;
 
@@ -955,13 +848,11 @@ router.get('/inventory', async (req, res, next) => {
       const todayStr = new Date().toISOString().split('T')[0];
       const poQ = db('purchase_orders').where({ is_deleted: false }).whereRaw('DATE(created_at) = ?', [todayStr]);
       applyScope(poQ);
-      applyBranch(poQ);
       const poRes = await poQ.sum({ cnt: 'item_count' }).first();
       inboundToday = Number(poRes?.cnt || 0);
 
       const txQ = db('transactions').where({ is_deleted: false, tx_type: 'SALE' }).whereRaw('DATE(created_at) = ?', [todayStr]);
       applyScope(txQ);
-      applyBranch(txQ);
       const txRes = await txQ.count({ cnt: '*' }).first();
       outboundToday = Number(txRes?.cnt || 0);
     } catch {}
