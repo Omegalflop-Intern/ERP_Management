@@ -84,7 +84,10 @@ export default function ProductList() {
     mutationFn: async (id) => api.delete(`/products/${id}`),
     onSuccess: () => {
       toast.success('Product deleted');
-      queryClient.invalidateQueries(['products']);
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['product-search-pos'] });
+      queryClient.invalidateQueries({ queryKey: ['imei-search'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
     },
     onError: (e) => toast.error(e.response?.data?.message || 'Failed to delete'),
   });
@@ -99,7 +102,10 @@ export default function ProductList() {
     },
     onSuccess: (res) => {
       toast.success(`Imported: ${res.data.data.created} created, ${res.data.data.skipped} skipped`);
-      queryClient.invalidateQueries(['products']);
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['product-search-pos'] });
+      queryClient.invalidateQueries({ queryKey: ['imei-search'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
     },
     onError: (e) => toast.error(e.response?.data?.message || 'Import failed'),
   });
@@ -412,6 +418,9 @@ export default function ProductList() {
             queryClient.invalidateQueries({ queryKey: ['products'] });
             queryClient.invalidateQueries({ queryKey: ['catalog'] });
             queryClient.invalidateQueries({ queryKey: ['stock-overview-products'] });
+            queryClient.invalidateQueries({ queryKey: ['product-search-pos'] });
+            queryClient.invalidateQueries({ queryKey: ['imei-search'] });
+            queryClient.invalidateQueries({ queryKey: ['inventory'] });
           }}
         />
       )}
@@ -421,7 +430,10 @@ export default function ProductList() {
           onClose={() => setShowBulkImport(false)}
           onSuccess={() => {
             setShowBulkImport(false);
-            queryClient.invalidateQueries(['products']);
+            queryClient.invalidateQueries({ queryKey: ['products'] });
+            queryClient.invalidateQueries({ queryKey: ['product-search-pos'] });
+            queryClient.invalidateQueries({ queryKey: ['imei-search'] });
+            queryClient.invalidateQueries({ queryKey: ['inventory'] });
           }}
         />
       )}

@@ -179,10 +179,11 @@ export const createSale = async (data, createdBy = 'system') => {
 
       if (customerObj) {
         customerId = customerObj.id;
-      } else if (data.customerName && data.customerName.trim() && data.customerName !== 'Walk-in Customer') {
+      } else if ((data.customerName && data.customerName.trim() && data.customerName !== 'Walk-in Customer') || (dueAmount > 0 && data.customerPhone)) {
+        const custName = (data.customerName && data.customerName.trim()) || 'Walk-in Customer';
         const [newCustId] = await trx('customers').insert({
           tenant_id: tenantId,
-          name: data.customerName.trim(),
+          name: custName,
           phone: data.customerPhone.trim(),
           phone_hash: phoneHash,
           email: data.customerEmail || null,
@@ -197,7 +198,7 @@ export const createSale = async (data, createdBy = 'system') => {
         customerId = newCustId;
         customerObj = {
           id: newCustId,
-          name: data.customerName.trim(),
+          name: custName,
           phone: data.customerPhone.trim(),
           due_balance: 0,
           total_purchases: 0,
@@ -230,14 +231,17 @@ export const createSale = async (data, createdBy = 'system') => {
             passport_history: JSON.stringify(history),
           });
 
-          const prodCountQuery = trx('inventory_units').where({ product_id: item.productId, status: 'Available', is_deleted: false });
-          if (tenantId) prodCountQuery.andWhere('tenant_id', tenantId);
-          const availCountRes = await prodCountQuery.count({ count: '*' }).first();
-          const prodUpdate = trx('products').where({ id: item.productId });
-          if (tenantId) prodUpdate.andWhere('tenant_id', tenantId);
-          await prodUpdate.update({ stock_quantity: Number(availCountRes?.count || 0) });
+          const pId = item.productId || unit.product_id;
+          if (pId) {
+            const prodCountQuery = trx('inventory_units').where({ product_id: pId, status: 'Available', is_deleted: false });
+            if (tenantId) prodCountQuery.andWhere('tenant_id', tenantId);
+            const availCountRes = await prodCountQuery.count({ count: '*' }).first();
+            const prodUpdate = trx('products').where({ id: pId });
+            if (tenantId) prodUpdate.andWhere('tenant_id', tenantId);
+            await prodUpdate.update({ stock_quantity: Number(availCountRes?.count || 0) });
+          }
         }
-      } else {
+      } else if (item.productId && !String(item.productId).startsWith('manual')) {
         const requestedQty = Math.abs(item.qty || 1);
         const prodDecrQuery = trx('products').where({ id: item.productId });
         if (tenantId) prodDecrQuery.andWhere('tenant_id', tenantId);

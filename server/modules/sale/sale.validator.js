@@ -1,9 +1,9 @@
 import { z } from 'zod';
 
 const lineItemSchema = z.object({
-  productId: z.string().min(1),
+  productId: z.union([z.string(), z.number()]).nullable().optional(),
   imeiOrSerial: z.string().optional(),
-  description: z.string().min(1),
+  description: z.string().min(1, 'Description is required'),
   qty: z.number().min(1).default(1),
   unitPrice: z.number().min(0),
   discount: z.number().min(0).default(0),

@@ -34,9 +34,50 @@ export const downloadBackendInvoicePdf = async (saleIdOrToken, invoiceNumber) =>
   }
 };
 
-// 100% Bulletproof Native Client-Side Print Engine
+// 100% Bulletproof Native Client-Side Print Engine with Dynamic Page Size
 export const executeClientPrint = (element, title = 'Invoice', printSize = 'a4full') => {
+  let pageSize = 'A4 portrait';
+  let pageMargin = '4mm';
+
+  if (printSize === 'a4half' || printSize === 'a5') {
+    pageSize = 'A5 portrait';
+    pageMargin = '3mm';
+  } else if (printSize === 'receipt' || printSize === '80mm') {
+    pageSize = '80mm auto';
+    pageMargin = '2mm';
+  } else if (printSize === 'thermal' || printSize === '58mm') {
+    pageSize = '58mm auto';
+    pageMargin = '1mm';
+  }
+
+  const existingStyle = document.getElementById('omni-dynamic-print-style');
+  if (existingStyle) existingStyle.remove();
+
+  const style = document.createElement('style');
+  style.id = 'omni-dynamic-print-style';
+  style.textContent = `
+    @page {
+      size: ${pageSize};
+      margin: ${pageMargin};
+    }
+    @media print {
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+
   window.print();
+
+  setTimeout(() => {
+    const s = document.getElementById('omni-dynamic-print-style');
+    if (s) s.remove();
+  }, 1500);
 };
 
 // Generate standard Code128 barcode image as data URL using JsBarcode
@@ -426,7 +467,7 @@ export const generateA4HalfInvoice = async (sale, element = null) => {
     const success = await captureElementToPDF(
       element,
       [148, 210],
-      `${sale.invoiceNumber}-A5-Half.pdf`
+      `${sale.invoiceNumber}-A4-Half.pdf`
     );
     if (success) return;
   }
@@ -436,118 +477,165 @@ export const generateA4HalfInvoice = async (sale, element = null) => {
   const pageHeight = doc.internal.pageSize.getHeight();
 
   doc.setFillColor(15, 23, 42);
-  doc.rect(0, 0, pageWidth, 6, 'F');
+  doc.rect(0, 0, pageWidth, 5, 'F');
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(13);
+  doc.setFontSize(12);
   doc.setTextColor(15, 23, 42);
-  doc.text(companyInfo.name, 10, 14);
+  doc.text(companyInfo.name, 8, 12);
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7);
+  doc.setFontSize(6.5);
   doc.setTextColor(100, 116, 139);
-  doc.text(`${companyInfo.address} | Phone: ${companyInfo.phone}`, 10, 18);
+  doc.text(companyInfo.slogan || '', 8, 16);
+  doc.text(`${companyInfo.address || ''} | Phone: ${companyInfo.phone || ''}`, 8, 20);
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
-  doc.text(`INVOICE: ${sale.invoiceNumber}`, pageWidth - 10, 14, { align: 'right' });
+  doc.setTextColor(15, 23, 42);
+  doc.text(sale.saleType === 'WHOLESALE' ? 'WHOLESALE INVOICE' : 'INVOICE', pageWidth - 8, 12, {
+    align: 'right',
+  });
+  doc.setFontSize(7.5);
+  doc.text(`No: ${sale.invoiceNumber}`, pageWidth - 8, 16, { align: 'right' });
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7);
-  doc.text(`Date: ${new Date(sale.createdAt).toLocaleDateString('en-BD')}`, pageWidth - 10, 18, {
+  doc.setFontSize(6.5);
+  doc.text(`Date: ${new Date(sale.createdAt).toLocaleDateString('en-BD')}`, pageWidth - 8, 20, {
     align: 'right',
   });
 
   doc.setFillColor(248, 250, 252);
-  doc.roundedRect(10, 22, pageWidth - 20, 12, 1, 1, 'FD');
+  doc.setDrawColor(226, 232, 240);
+  doc.roundedRect(8, 23, pageWidth - 16, 11, 1, 1, 'FD');
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   doc.setTextColor(15, 23, 42);
-  doc.text(`Customer: ${sale.customerName || 'Walk-in Customer'}`, 13, 27);
+  doc.text(`Customer: ${sale.customerName || 'Walk-in Customer'}`, 11, 27.5);
   doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6.5);
+  doc.text(
+    `Phone: ${sale.customerPhone || 'N/A'}${sale.customerAddress ? ` | Addr: ${sale.customerAddress}` : ''}`,
+    11,
+    31.5
+  );
+
+  const due = sale.paymentBreakdown?.dueAmount || 0;
+  const statusLabel = due <= 0 ? 'PAID' : getTotalPaid(sale) > 0 ? 'PARTIAL' : 'UNPAID';
+  doc.setFont('helvetica', 'bold');
   doc.setFontSize(7);
-  doc.text(`Phone: ${sale.customerPhone || 'N/A'}`, 13, 31);
+  if (due <= 0) {
+    doc.setTextColor(16, 185, 129);
+  } else {
+    doc.setTextColor(225, 29, 72);
+  }
+  doc.text(statusLabel, pageWidth - 12, 29, { align: 'right' });
 
-  const tableData = (sale.lineItems || []).map((item, index) => [
-    index + 1,
-    `${item.description}${item.imeiOrSerial ? `\nIMEI: ${item.imeiOrSerial}` : ''}`,
-    item.qty,
-    BDT(item.unitPrice),
-    BDT(item.totalPrice),
-  ]);
-
-  autoTable(doc, {
-    startY: 37,
-    head: [['#', 'Item Description / IMEI', 'Qty', 'Price', 'Total']],
-    body: tableData,
-    theme: 'grid',
-    headStyles: { fillColor: [15, 23, 42], textColor: 255, fontSize: 7, fontStyle: 'bold' },
-    bodyStyles: { fontSize: 7 },
-    columnStyles: {
-      0: { halign: 'center', cellWidth: 8 },
-      1: { cellWidth: 55 },
-      2: { halign: 'center', cellWidth: 10 },
-      3: { halign: 'right', cellWidth: 27 },
-      4: { halign: 'right', cellWidth: 28 },
-    },
-    margin: { left: 10, right: 10 },
+  const tableData = (sale.lineItems || []).map((item, index) => {
+    const p = item.productId || {};
+    const specs = [p.brand, p.model, p.storage].filter(Boolean).join(' ');
+    const desc = `${item.description || p.name || 'Mobile Item'}${specs ? ` (${specs})` : ''}`;
+    return [
+      index + 1,
+      desc,
+      item.imeiOrSerial ? `${item.imeiOrSerial}` : 'Bulk',
+      p.defaultWarrantyMonths ? `${p.defaultWarrantyMonths}M` : '1Y',
+      item.qty,
+      BDT(item.unitPrice),
+      BDT(item.totalPrice),
+    ];
   });
 
-  const finalY = doc.lastAutoTable?.finalY || 80;
+  autoTable(doc, {
+    startY: 36,
+    head: [['#', 'Item Description / Specs', 'IMEI/Serial', 'War.', 'Qty', 'Price', 'Total']],
+    body: tableData,
+    theme: 'grid',
+    headStyles: { fillColor: [15, 23, 42], textColor: 255, fontSize: 6.5, fontStyle: 'bold' },
+    bodyStyles: { fontSize: 6.5, textColor: [30, 41, 59] },
+    columnStyles: {
+      0: { halign: 'center', cellWidth: 6 },
+      1: { cellWidth: 50 },
+      2: { cellWidth: 26, font: 'courier' },
+      3: { halign: 'center', cellWidth: 10 },
+      4: { halign: 'center', cellWidth: 8 },
+      5: { halign: 'right', cellWidth: 16 },
+      6: { halign: 'right', cellWidth: 16 },
+    },
+    margin: { left: 8, right: 8 },
+  });
 
-  doc.setFontSize(7);
+  const finalY = doc.lastAutoTable?.finalY || 75;
+
+  doc.setFontSize(6.5);
   doc.setFont('helvetica', 'bold');
+  doc.setTextColor(15, 23, 42);
   const revisedNet = Math.max(0, (sale.netTotal || 0) - (sale.returnedAmount || 0));
-  doc.text(`Words: ${numberToWordsBD(revisedNet || sale.netTotal)}`, 10, finalY + 6);
+  doc.text(`Words: ${numberToWordsBD(revisedNet || sale.netTotal)}`, 8, finalY + 5);
 
   const rawPaid = getTotalPaid(sale);
   const netPaid = Math.max(0, rawPaid - (sale.returnedAmount || 0));
-  const due = sale.paymentBreakdown?.dueAmount || 0;
-  const rightX = pageWidth - 10;
-  let summaryY = finalY + 6;
+  const rightX = pageWidth - 8;
+  let summaryY = finalY + 5;
 
-  doc.setFontSize(8);
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(71, 85, 105);
+  doc.text(`Subtotal: ${BDT(sale.subTotal)}`, rightX, summaryY, { align: 'right' });
+
+  if (sale.discount > 0) {
+    summaryY += 4;
+    doc.setTextColor(225, 29, 72);
+    doc.text(`Discount: -${BDT(sale.discount)}`, rightX, summaryY, { align: 'right' });
+  }
+
+  summaryY += 4.5;
+  doc.setFontSize(7.5);
   doc.setFont('helvetica', 'bold');
+  doc.setTextColor(15, 23, 42);
   doc.text(`Grand Total: ${BDT(sale.netTotal)}`, rightX, summaryY, { align: 'right' });
 
   if (sale.returnedAmount > 0) {
-    summaryY += 5;
+    summaryY += 4;
     doc.setTextColor(225, 29, 72);
     doc.text(`Less Refund: -${BDT(sale.returnedAmount)}`, rightX, summaryY, { align: 'right' });
-    summaryY += 5;
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(15, 23, 42);
-    doc.text(`Net Revised Total: ${BDT(revisedNet)}`, rightX, summaryY, { align: 'right' });
+    summaryY += 4;
+    doc.text(`Net Revised: ${BDT(revisedNet)}`, rightX, summaryY, { align: 'right' });
   }
 
-  summaryY += 5;
-  doc.setFontSize(8);
+  summaryY += 4;
+  doc.setFontSize(7);
   doc.setTextColor(16, 185, 129);
-  doc.text(`Net Paid: ${BDT(netPaid)}`, rightX, summaryY, { align: 'right' });
+  doc.text(`Paid: ${BDT(netPaid)}`, rightX, summaryY, { align: 'right' });
 
   if (due > 0) {
-    summaryY += 5;
+    summaryY += 4;
     doc.setTextColor(225, 29, 72);
-    doc.text(`Balance Due: ${BDT(due)}`, rightX, summaryY, { align: 'right' });
+    doc.text(`Due: ${BDT(due)}`, rightX, summaryY, { align: 'right' });
   }
 
-  const sigY = pageHeight - 20;
+  const sigY = pageHeight - 16;
+  const barcodeImg = await generateBarcode(sale.invoiceNumber);
+  const qrData = JSON.stringify({ inv: sale.invoiceNumber, tot: sale.netTotal });
+  const qrImg = await generateQR(qrData);
+
   doc.setDrawColor(15, 23, 42);
-  doc.line(10, sigY, 40, sigY);
-  doc.setFontSize(7);
+  doc.setLineWidth(0.4);
+  doc.line(8, sigY, 35, sigY);
+  doc.setFontSize(6.5);
   doc.setTextColor(15, 23, 42);
-  doc.text('Customer Sig.', 25, sigY + 3, { align: 'center' });
+  doc.text('Customer Sig.', 21.5, sigY + 3, { align: 'center' });
 
-  doc.line(pageWidth - 40, sigY, pageWidth - 10, sigY);
-  doc.text('Auth. Seal', pageWidth - 25, sigY + 3, { align: 'center' });
+  doc.line(pageWidth - 35, sigY, pageWidth - 8, sigY);
+  doc.text('Auth. Seal', pageWidth - 21.5, sigY + 3, { align: 'center' });
 
-  doc.setFontSize(6);
+  if (barcodeImg) doc.addImage(barcodeImg, 'PNG', (pageWidth - 32) / 2, sigY - 5, 32, 8);
+  if (qrImg) doc.addImage(qrImg, 'PNG', pageWidth - 18, sigY + 4, 10, 10);
+
+  doc.setFontSize(5.5);
   doc.setTextColor(148, 163, 184);
-  doc.text(`Thank you for shopping at ${companyInfo.name}!`, pageWidth / 2, pageHeight - 5, {
-    align: 'center',
-  });
+  doc.text(`Printed on: ${new Date().toLocaleString('en-BD')} | OmniManage`, 8, pageHeight - 4);
 
-  doc.save(`${sale.invoiceNumber}-A5-Half.pdf`);
+  doc.save(`${sale.invoiceNumber}-A4-Half.pdf`);
 };
 
 // ----------------------------------------------------------------------

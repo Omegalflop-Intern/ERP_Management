@@ -170,7 +170,7 @@ const SuperAdminGuard = ({ children }) => {
 // Subdomain guard — if accessed via subdomain, ensure user belongs to this shop
 const SubdomainGuard = ({ children }) => {
   const subdomain = detectSubdomain();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   // No subdomain → main domain → pass through (super admin or unauthenticated)
   if (!subdomain) return children;
@@ -181,9 +181,10 @@ const SubdomainGuard = ({ children }) => {
   // Super admin (no tenantId) accessing subdomain → allow (they manage all shops)
   if (!user?.tenantId) return children;
 
-  // User belongs to this subdomain → pass through
-  if (!user.subdomain || user.subdomain === subdomain || user.customDomain === subdomain) {
-    return children;
+  // If user belongs to a different shop subdomain, log them out so they can log into this shop
+  if (user.subdomain && user.subdomain !== subdomain && user.customDomain !== subdomain) {
+    logout();
+    return <Navigate to="/login" replace />;
   }
 
   return children;

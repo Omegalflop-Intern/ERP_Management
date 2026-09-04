@@ -250,32 +250,27 @@ export function InvoiceA4Full({ sale }) {
                 <h1 className="text-2xl font-black tracking-tight text-slate-900 leading-none">
                   {companyInfo.name}
                 </h1>
-                {sale.branch?.name && (
-                  <p className="text-xs font-bold text-blue-600 dark:text-blue-400 mt-0.5">
-                    {sale.branch.name}
-                  </p>
+                {companyInfo.slogan && (
+                  <p className="text-xs font-medium text-slate-500 mt-0.5">{companyInfo.slogan}</p>
                 )}
               </div>
             </div>
-            {companyInfo.slogan && !sale.branch?.name && (
-              <p className="text-xs font-medium text-slate-500">{companyInfo.slogan}</p>
-            )}
-            {(sale.branch?.address || companyInfo.address) && (
+            {companyInfo.address && (
               <p className="text-xs text-slate-500 max-w-sm leading-relaxed">
-                {sale.branch?.address || companyInfo.address}
+                {companyInfo.address}
               </p>
             )}
             <div className="text-xs text-slate-500 flex flex-wrap gap-x-2 gap-y-0.5 pt-0.5">
-              {(sale.branch?.phone || companyInfo.phone) && (
+              {companyInfo.phone && (
                 <span>
-                  <strong>Phone:</strong> {sale.branch?.phone || companyInfo.phone}
+                  <strong>Phone:</strong> {companyInfo.phone}
                 </span>
               )}
-              {(sale.branch?.email || companyInfo.email) && (
+              {companyInfo.email && (
                 <>
                   <span>•</span>
                   <span>
-                    <strong>Email:</strong> {sale.branch?.email || companyInfo.email}
+                    <strong>Email:</strong> {companyInfo.email}
                   </span>
                 </>
               )}
@@ -327,7 +322,7 @@ export function InvoiceA4Full({ sale }) {
 
         <hr className="border-t-2 border-slate-900 my-3" />
 
-        {/* CUSTOMER INFO & STATUS STAMP (MINIMAL, ZERO HEAVY CARDS) */}
+        {/* CUSTOMER INFO & STATUS STAMP */}
         <div className="grid grid-cols-12 gap-4 mb-4 pb-2 border-b border-slate-200 print:break-inside-avoid">
           <div className="col-span-8 space-y-0.5">
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block mb-0.5">
@@ -365,7 +360,7 @@ export function InvoiceA4Full({ sale }) {
           </div>
         </div>
 
-        {/* PRODUCTS DATA TABLE (MINIMAL CLEAN BORDERS) */}
+        {/* PRODUCTS DATA TABLE */}
         <div className="mb-4">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
@@ -436,7 +431,7 @@ export function InvoiceA4Full({ sale }) {
           </table>
         </div>
 
-        {/* SUMMARY & FINANCIAL BREAKDOWN (MINIMAL LAYOUT) */}
+        {/* SUMMARY & FINANCIAL BREAKDOWN */}
         <div className="grid grid-cols-12 gap-6 mb-4 pt-2 border-t border-slate-200 print:break-inside-avoid">
           <div className="col-span-7 space-y-3">
             <div>
@@ -510,7 +505,7 @@ export function InvoiceA4Full({ sale }) {
           </div>
         </div>
 
-        {/* TERMS AND CONDITIONS (MINIMAL FOOTNOTE) */}
+        {/* TERMS AND CONDITIONS */}
         <div className="pt-2 border-t border-slate-200 text-[10px] text-slate-500 mb-4 leading-relaxed print:break-inside-avoid">
           <h4 className="font-bold text-slate-700 uppercase tracking-wider text-[10px] mb-0.5">
             Warranty & Return Terms
@@ -523,7 +518,7 @@ export function InvoiceA4Full({ sale }) {
         </div>
       </div>
 
-      {/* FOOTER: SIGNATURES, BARCODE & QR CODE (PINNED TO BOTTOM, NO TOP BORDER) */}
+      {/* FOOTER */}
       <div className="pt-2 mt-auto flex-shrink-0 print:break-inside-avoid">
         <div className="grid grid-cols-12 gap-4 items-end mb-3">
           <div className="col-span-4 text-center">
@@ -560,25 +555,26 @@ export function InvoiceA4Full({ sale }) {
 }
 
 // ----------------------------------------------------------------------
-// SIZE 2: HALF A4 SIZE (A5: 148mm x 210mm) - DYNAMIC & ZERO BLANK PAGE FIX
+// SIZE 2: HALF A4 SIZE (A5 / Half A4: 148mm x 210mm) - COMPACT, COMPLETE & ZERO OVERFLOW
 // ----------------------------------------------------------------------
 export function InvoiceA4Half({ sale }) {
   const companyInfo = useCompanyInfo();
-  const qrData = `INV: ${sale.invoiceNumber} | Total: Tk ${sale.netTotal?.toLocaleString() || 0}`;
+  const qrData = `INV: ${sale.invoiceNumber} | Total: Tk ${sale.netTotal?.toLocaleString() || 0} | Date: ${new Date(sale.createdAt).toLocaleDateString('en-BD')}`;
 
   const totalPaid = getTotalPaid(sale);
   const dueAmount = sale.paymentBreakdown?.dueAmount || 0;
   const statusStamp = getStatusStamp(sale);
+  const cashierDisplayName = getServedByText(sale);
 
   return (
     <div
-      className="bg-white text-slate-900 p-3 sm:p-4 md:p-5 w-full max-w-[210mm] mx-auto flex flex-col justify-between shadow-lg border border-slate-200 print:shadow-none print:border-none print:p-3 print:max-w-none print:w-full print:min-h-0 print:h-auto print:break-inside-avoid print:page-break-inside-avoid"
-      style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: '10px' }}
+      className="bg-white text-slate-900 p-3 sm:p-4 w-full max-w-[210mm] mx-auto flex flex-col justify-between shadow-lg border border-slate-200 print:shadow-none print:border-none print:p-2 print:max-w-none print:w-full print:min-h-0 print:h-auto print:break-inside-avoid print:page-break-inside-avoid"
+      style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: '9.5px', lineHeight: '1.25' }}
     >
       <div>
-        {/* HEADER BRANDING */}
-        <div className="flex justify-between items-start mb-2">
-          <div>
+        {/* TOP BRANDING & HEADER */}
+        <div className="flex justify-between items-start mb-2 print:break-inside-avoid">
+          <div className="space-y-0.5">
             <div className="flex items-center gap-2">
               {companyInfo.logo && (
                 <img
@@ -588,178 +584,248 @@ export function InvoiceA4Half({ sale }) {
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
                   }}
-                  className="h-7 w-auto max-w-[100px] object-contain"
+                  className="h-6 w-auto max-w-[70px] object-contain flex-shrink-0"
                 />
               )}
               <div>
                 <h1 className="text-base font-black tracking-tight text-slate-900 leading-none">
                   {companyInfo.name}
                 </h1>
-                {sale.branch?.name && (
-                  <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400 mt-0.5">
-                    {sale.branch.name}
+                {companyInfo.slogan && (
+                  <p className="text-[9px] font-medium text-slate-500 mt-0.5">
+                    {companyInfo.slogan}
                   </p>
                 )}
               </div>
             </div>
-            {(sale.branch?.address || companyInfo.address) && (
-              <p className="text-[9px] text-slate-600">
-                {sale.branch?.address || companyInfo.address}
+            {companyInfo.address && (
+              <p className="text-[9px] text-slate-600 max-w-sm leading-tight">
+                {companyInfo.address}
               </p>
             )}
-            <p className="text-[9px] text-slate-500">
-              Phone: {sale.branch?.phone || companyInfo.phone}{' '}
-              {companyInfo.binVat && `| ${companyInfo.binVat}`}
-            </p>
+            <div className="text-[8.5px] text-slate-500 flex flex-wrap gap-x-2 gap-y-0.5">
+              {companyInfo.phone && (
+                <span>
+                  <strong>Phone:</strong> {companyInfo.phone}
+                </span>
+              )}
+              {companyInfo.email && (
+                <span>
+                  • <strong>Email:</strong> {companyInfo.email}
+                </span>
+              )}
+              {companyInfo.binVat && (
+                <span>
+                  • <strong>{companyInfo.binVat}</strong>
+                </span>
+              )}
+            </div>
           </div>
-          <div className="text-right">
-            <span className="text-slate-900 font-extrabold text-[10px] uppercase border-b border-slate-900 pb-0.5">
+
+          <div className="text-right flex flex-col items-end space-y-0.5">
+            <div className="text-xs font-black tracking-wider uppercase text-slate-900 border-b border-slate-900 pb-0.5">
               {sale.saleType === 'WHOLESALE' ? 'WHOLESALE' : 'INVOICE'}
-            </span>
-            <p className="text-xs font-mono font-bold text-slate-900 mt-1">{sale.invoiceNumber}</p>
-            <p className="text-[9px] text-slate-500">
-              {new Date(sale.createdAt).toLocaleDateString('en-BD')}
-            </p>
-            <p className="text-[9px] font-semibold text-slate-700">
-              Served By: {getServedByText(sale)}
-            </p>
-          </div>
-        </div>
-
-        <hr className="border-t-2 border-slate-900 my-2" />
-
-        {/* CUSTOMER & STATUS */}
-        <div className="grid grid-cols-12 gap-3 mb-2.5 text-[10px]">
-          <div className="col-span-8 bg-slate-50 p-2 rounded border border-slate-200">
-            <span className="font-bold text-slate-500 uppercase text-[8px] block border-b border-slate-200 pb-0.5 mb-1">
-              Customer / Bill To
-            </span>
-            <p className="font-bold text-slate-900 text-xs">
-              {sale.customerName || 'Walk-in Customer'}
-            </p>
-            <p className="text-slate-600 font-mono text-[9px]">
-              Phone: {sale.customerPhone || 'N/A'}
-            </p>
-          </div>
-          <div className="col-span-4 flex items-center justify-center">
-            <div
-              className={`border-2 ${statusStamp.color} font-black text-xs px-2.5 py-0.5 rounded uppercase tracking-wider`}
-            >
-              {statusStamp.label}
+            </div>
+            <div className="pt-0.5">
+              <span className="text-[8px] text-slate-400 uppercase font-bold tracking-wider">
+                Invoice No
+              </span>
+              <p className="text-sm font-mono font-bold text-slate-900 tracking-tight leading-tight">
+                {sale.invoiceNumber}
+              </p>
+            </div>
+            <div className="text-[8.5px] text-slate-600 leading-tight space-y-0.5">
+              <p>
+                <strong>Date:</strong>{' '}
+                {new Date(sale.createdAt).toLocaleDateString('en-BD', {
+                  month: 'short',
+                  day: '2-digit',
+                  year: 'numeric',
+                })}{' '}
+                {new Date(sale.createdAt).toLocaleTimeString('en-BD', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </p>
+              <p className="font-semibold text-slate-700">Served By: {cashierDisplayName}</p>
             </div>
           </div>
         </div>
 
-        {/* DATA TABLE */}
-        <div className="mb-2.5 border border-slate-300 rounded overflow-hidden">
+        <hr className="border-t-2 border-slate-900 my-1.5" />
+
+        {/* CUSTOMER & STATUS */}
+        <div className="grid grid-cols-12 gap-2 mb-2 pb-1.5 border-b border-slate-200 print:break-inside-avoid">
+          <div className="col-span-8 space-y-0.5">
+            <span className="text-[8px] font-extrabold uppercase tracking-wider text-slate-400 block">
+              Customer / Bill To
+            </span>
+            <p className="font-extrabold text-slate-900 text-xs">
+              {sale.customerName || sale.customerId?.name || 'Walk-in Customer'}
+            </p>
+            <div className="text-[9px] text-slate-600 flex flex-wrap gap-x-2">
+              <span className="font-mono">
+                Phone: {sale.customerPhone || sale.customerId?.phone || 'N/A'}
+              </span>
+              {(sale.customerAddress || sale.customerId?.address) && (
+                <span>• Address: {sale.customerAddress || sale.customerId?.address}</span>
+              )}
+            </div>
+          </div>
+
+          <div className="col-span-4 flex items-center justify-end">
+            <div
+              className={`border-2 ${statusStamp.color} font-black text-xs px-2.5 py-0.5 rounded uppercase tracking-wider text-center`}
+            >
+              {statusStamp.label}
+              {dueAmount > 0 && (
+                <span className="block text-[8px] tracking-normal font-bold">
+                  Due: ৳{dueAmount.toLocaleString()}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* PRODUCTS DATA TABLE */}
+        <div className="mb-2">
           <table className="w-full text-left text-[9px] border-collapse">
             <thead>
-              <tr className="bg-slate-900 text-white uppercase text-[8px] tracking-wider">
-                <th className="py-1 px-1.5 text-center w-6 border-r border-slate-800">#</th>
-                <th className="py-1 px-1.5 border-r border-slate-800">Product & Specification</th>
-                <th className="py-1 px-1.5 border-r border-slate-800">IMEI / Serial</th>
-                <th className="py-1 px-1.5 text-center w-8 border-r border-slate-800">Qty</th>
-                <th className="py-1 px-1.5 text-right w-14 border-r border-slate-800">Price</th>
-                <th className="py-1 px-1.5 text-right w-14">Total</th>
+              <tr className="border-y border-slate-900 bg-slate-50 text-slate-900 uppercase text-[8px] font-black tracking-wider print:break-inside-avoid">
+                <th className="py-1 px-1.5 text-center w-6">#</th>
+                <th className="py-1 px-1.5">Product & Specification</th>
+                <th className="py-1 px-1.5">IMEI / Serial</th>
+                <th className="py-1 px-1.5 text-center">Warranty</th>
+                <th className="py-1 px-1.5 text-center w-8">Qty</th>
+                <th className="py-1 px-1.5 text-right w-16">Price</th>
+                <th className="py-1 px-1.5 text-right w-16">Total</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {sale.lineItems?.map((item, index) => (
-                <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
-                  <td className="py-1 px-1.5 text-center font-bold text-slate-500 border-r border-slate-200">
-                    {index + 1}
-                  </td>
-                  <td className="py-1 px-1.5 border-r border-slate-200">
-                    <div className="font-bold text-slate-900">{item.description}</div>
-                  </td>
-                  <td className="py-1 px-1.5 border-r border-slate-200 font-mono text-[8px]">
-                    {item.imeiOrSerial ? (
-                      <span className="font-semibold bg-slate-100 px-1 py-0.5 rounded border border-slate-200 inline-block text-slate-800">
-                        {item.imeiOrSerial}
-                      </span>
-                    ) : (
-                      <span className="text-slate-400 italic font-sans">Bulk</span>
-                    )}
-                  </td>
-                  <td className="py-1 px-1.5 text-center font-bold border-r border-slate-200">
-                    {item.qty}
-                  </td>
-                  <td className="py-1 px-1.5 text-right border-r border-slate-200">
-                    ৳{item.unitPrice?.toLocaleString()}
-                  </td>
-                  <td className="py-1 px-1.5 text-right font-bold text-slate-900">
-                    ৳{item.totalPrice?.toLocaleString()}
-                  </td>
-                </tr>
-              ))}
+              {sale.lineItems?.map((item, index) => {
+                const p = item.productId || {};
+                const brandModelStr = [p.brand, p.model].filter(Boolean).join(' ');
+                const specsStr = [
+                  p.ram && `${p.ram} RAM`,
+                  p.storage && `${p.storage} Storage`,
+                  p.color,
+                ]
+                  .filter(Boolean)
+                  .join(' • ');
+
+                return (
+                  <tr key={index} className="hover:bg-slate-50/50 print:break-inside-avoid">
+                    <td className="py-1 px-1.5 text-center font-bold text-slate-400">
+                      {index + 1}
+                    </td>
+                    <td className="py-1 px-1.5">
+                      <div className="font-bold text-slate-900 text-[9.5px]">
+                        {item.description || p.name || 'Mobile Phone Item'}
+                      </div>
+                      {(brandModelStr || specsStr) && (
+                        <div className="text-[8px] text-slate-500">
+                          {brandModelStr} {brandModelStr && specsStr && '•'} {specsStr}
+                        </div>
+                      )}
+                    </td>
+                    <td className="py-1 px-1.5 font-mono text-[8.5px] text-slate-700">
+                      {item.imeiOrSerial ? (
+                        <span className="font-semibold text-slate-800">{item.imeiOrSerial}</span>
+                      ) : (
+                        <span className="text-slate-400 italic text-[8px]">Bulk</span>
+                      )}
+                    </td>
+                    <td className="py-1 px-1.5 text-center font-medium text-slate-600 text-[8.5px]">
+                      {p.defaultWarrantyMonths ? `${p.defaultWarrantyMonths}M` : '1Y Official'}
+                    </td>
+                    <td className="py-1 px-1.5 text-center font-bold text-slate-800">{item.qty}</td>
+                    <td className="py-1 px-1.5 text-right font-medium text-slate-800">
+                      ৳{item.unitPrice?.toLocaleString()}
+                    </td>
+                    <td className="py-1 px-1.5 text-right font-bold text-slate-900">
+                      ৳{item.totalPrice?.toLocaleString()}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
 
-        {/* FINANCIAL SUMMARY & WORDS */}
-        <div className="grid grid-cols-12 gap-2.5 mb-2.5">
-          <div className="col-span-7 text-[9px] space-y-1">
-            <div className="bg-slate-50 p-1.5 rounded border border-slate-200">
-              <span className="font-bold uppercase text-[8px] text-slate-500 block">
-                Payment Method
+        {/* FINANCIAL SUMMARY & PAYMENT METHOD */}
+        <div className="grid grid-cols-12 gap-3 mb-2 pt-1.5 border-t border-slate-200 print:break-inside-avoid">
+          <div className="col-span-7 space-y-1.5 text-[8.5px]">
+            <div>
+              <span className="font-bold uppercase text-slate-400 text-[8px] block">
+                Payment Method / Received Via
               </span>
-              <p className="font-semibold text-slate-800">{getPaymentText(sale)}</p>
+              <p className="font-semibold text-slate-800 text-[9px]">{getPaymentText(sale)}</p>
             </div>
-            <div className="bg-slate-100 p-1.5 rounded border border-slate-200">
-              <span className="font-bold uppercase text-[8px] text-slate-500 block">
+
+            <div>
+              <span className="font-bold uppercase text-slate-400 text-[8px] block">
                 Amount in Words
               </span>
-              <p className="font-bold text-slate-900 italic text-[9px]">
+              <p className="font-bold text-slate-900 italic text-[8.5px] leading-tight">
                 {numberToWordsBD(sale.netTotal)}
+              </p>
+            </div>
+
+            <div className="text-[8px] text-slate-500 pt-1">
+              <p className="font-semibold text-slate-600">Warranty Note:</p>
+              <p className="leading-tight">
+                Original receipt & intact IMEI required. Software/liquid/physical damage void.
               </p>
             </div>
           </div>
 
-          <div className="col-span-5 border border-slate-300 rounded p-1.5 pb-2 text-[9px] space-y-1 bg-slate-50">
-            <div className="flex justify-between">
+          <div className="col-span-5 text-[9px] space-y-1">
+            <div className="flex justify-between text-slate-600">
               <span>Subtotal:</span>
               <span>৳{sale.subTotal?.toLocaleString()}</span>
             </div>
             {sale.discount > 0 && (
               <div className="flex justify-between text-red-600">
-                <span>Discount:</span>
+                <span>Special Discount:</span>
                 <span>-৳{sale.discount?.toLocaleString()}</span>
               </div>
             )}
-            <div className="flex justify-between font-black text-white bg-slate-900 p-1 rounded text-[9px]">
+            {sale.tax > 0 && (
+              <div className="flex justify-between text-slate-600">
+                <span>VAT / Tax:</span>
+                <span>+৳{sale.tax?.toLocaleString()}</span>
+              </div>
+            )}
+            <div className="flex justify-between items-center text-xs font-black text-slate-900 py-0.5 border-y border-slate-900 my-0.5">
               <span>GRAND TOTAL:</span>
               <span>৳{sale.netTotal?.toLocaleString()}</span>
             </div>
             {sale.returnedAmount > 0 && (
               <>
-                <div className="flex justify-between font-bold text-red-600">
+                <div className="flex justify-between text-red-600 font-bold text-[8.5px]">
                   <span>Less Item Refund:</span>
                   <span>-৳{sale.returnedAmount?.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between font-black text-red-700 bg-red-50 p-1 rounded text-[9px] border border-red-200">
-                  <span>NET REVISED TOTAL:</span>
+                <div className="flex justify-between items-center text-[9px] font-black text-red-700 py-0.5 border-b border-red-700">
+                  <span>NET REVISED:</span>
                   <span>
-                    ৳
-                    {Math.max(
-                      0,
-                      (sale.netTotal || 0) - (sale.returnedAmount || 0)
-                    ).toLocaleString()}
+                    ৳{((sale.netTotal || 0) - (sale.returnedAmount || 0)).toLocaleString()}
                   </span>
                 </div>
               </>
             )}
             <div className="flex justify-between text-emerald-700 font-bold">
-              <span>Net Paid:</span>
-              <span>৳{Math.max(0, totalPaid - (sale.returnedAmount || 0)).toLocaleString()}</span>
+              <span>Total Paid:</span>
+              <span>৳{totalPaid.toLocaleString()}</span>
             </div>
             {Number(sale.paymentBreakdown?.changeAmount || 0) > 0 && (
-              <div className="flex justify-between text-blue-700 font-bold text-[9px]">
-                <span>Change (ফেরত):</span>
+              <div className="flex justify-between text-blue-700 font-bold text-[8.5px]">
+                <span>Change Returned:</span>
                 <span>৳{Number(sale.paymentBreakdown.changeAmount).toLocaleString()}</span>
               </div>
             )}
             {dueAmount > 0 && (
-              <div className="flex justify-between text-red-600 font-bold">
+              <div className="flex justify-between text-red-600 font-bold text-xs pt-0.5">
                 <span>Balance Due:</span>
                 <span>৳{dueAmount.toLocaleString()}</span>
               </div>
@@ -768,28 +834,39 @@ export function InvoiceA4Half({ sale }) {
         </div>
       </div>
 
-      {/* FOOTER */}
-      <div className="border-t border-slate-300 pt-2 mt-auto">
-        <div className="flex justify-between items-end mb-1">
-          <div className="text-center">
-            <div className="border-t border-dashed border-slate-800 w-24 pt-0.5 text-[8px] font-bold">
+      {/* FOOTER: SIGNATURES, BARCODE & QR */}
+      <div className="pt-1.5 mt-auto flex-shrink-0 print:break-inside-avoid">
+        <div className="grid grid-cols-12 gap-2 items-end mb-1.5">
+          <div className="col-span-4 text-center">
+            <div className="border-t border-dashed border-slate-800 w-28 mx-auto pt-0.5 text-[8px] font-bold text-slate-800">
               Customer Signature
             </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            <BarcodeCanvas value={sale.invoiceNumber} width={1.0} height={20} />
-            <QRCodeCanvas value={qrData} size={48} />
+          <div className="col-span-4 flex flex-col items-center justify-center">
+            <BarcodeCanvas
+              value={sale.invoiceNumber}
+              width={1.1}
+              height={20}
+              displayValue={false}
+            />
+            <span className="font-mono text-[8px] text-slate-600 mt-0.5">{sale.invoiceNumber}</span>
           </div>
-          <div className="text-center">
-            <div className="border-t border-dashed border-slate-800 w-24 pt-0.5 text-[8px] font-bold">
-              Authorized Seal
+          <div className="col-span-4 text-center">
+            <div className="border-t border-dashed border-slate-800 w-28 mx-auto pt-0.5 text-[8px] font-bold text-slate-800">
+              Authorized Seal & Sign
             </div>
           </div>
         </div>
-        <p className="text-center text-[8px] text-slate-500">
-          {companyInfo.invoiceFooter} •{' '}
-          <span className="font-semibold text-slate-700">Powered by OmniManage ERP Suite</span>
-        </p>
+
+        <div className="flex justify-between items-center text-[8px] text-slate-500 pt-1 border-t border-slate-200">
+          <div>
+            Printed: {new Date().toLocaleString('en-BD')} | {companyInfo.invoiceFooter} •{' '}
+            <span className="font-semibold text-slate-700">OmniManage ERP</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <QRCodeCanvas value={qrData} size={36} />
+          </div>
+        </div>
       </div>
     </div>
   );

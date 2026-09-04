@@ -3,48 +3,69 @@ import { env } from '../config/env.config.js';
 
 export const extractTenantFromHost = async (req, res, next) => {
   try {
-    const rawHost = req.headers.host?.split(':')[0]?.toLowerCase();
-    if (!rawHost) return next();
-
-    const baseDomain = (env.BASE_DOMAIN || process.env.BASE_DOMAIN || 'respawnalley.com').toLowerCase();
+    const baseDomain = (env.BASE_DOMAIN || process.env.BASE_DOMAIN || 'localhost').toLowerCase();
 
     if (req.user?.tenantId) return next();
 
-    // Main domain check: respawnalley.com, www.respawnalley.com, api.respawnalley.com, localhost
-    if (
-      rawHost === baseDomain ||
-      rawHost === `www.${baseDomain}` ||
-      rawHost === `api.${baseDomain}` ||
-      rawHost === 'localhost' ||
-      rawHost.startsWith('127.')
-    ) {
-      return next();
-    }
+    // 1. Direct header sent by frontend API client (highest priority)
+    const customHeaderSubdomain = req.headers['x-subdomain']
+      ? String(req.headers['x-subdomain']).toLowerCase().trim()
+      : null;
 
-    let subdomain = null;
+    // 2. Extract from Host or Forwarded headers
+    const forwardedHost = req.headers['x-forwarded-host']?.split(':')[0]?.toLowerCase();
+    const originHost = req.headers.origin ? new URL(req.headers.origin).hostname.toLowerCase() : null;
+    const refererHost = req.headers.referer ? new URL(req.headers.referer).hostname.toLowerCase() : null;
+    const hostHeader = req.headers.host?.split(':')[0]?.toLowerCase();
+
+    const rawHost = forwardedHost || originHost || refererHost || hostHeader || '';
+
+    let subdomain = customHeaderSubdomain || null;
     let customDomain = null;
 
-    if (rawHost.endsWith(`.${baseDomain}`)) {
-      const sub = rawHost.slice(0, rawHost.length - baseDomain.length - 1);
-      if (sub && sub !== 'www' && sub !== 'api') {
-        subdomain = sub;
+    if (!subdomain && rawHost) {
+      // Main domain check
+      if (
+        rawHost === baseDomain ||
+        rawHost === `www.${baseDomain}` ||
+        rawHost === `api.${baseDomain}` ||
+        rawHost === 'localhost' ||
+        rawHost.startsWith('127.')
+      ) {
+        return next();
       }
-    } else {
-      customDomain = rawHost.startsWith('www.') ? rawHost.slice(4) : rawHost;
+
+      if (baseDomain !== 'localhost' && rawHost.endsWith(`.${baseDomain}`)) {
+        const sub = rawHost.slice(0, rawHost.length - baseDomain.length - 1);
+        if (sub && sub !== 'www' && sub !== 'api') {
+          subdomain = sub;
+        }
+      } else if (rawHost.endsWith('.localhost')) {
+        const sub = rawHost.slice(0, rawHost.length - '.localhost'.length);
+        if (sub && sub !== 'www' && sub !== 'api') {
+          subdomain = sub;
+        }
+      } else {
+        customDomain = rawHost.startsWith('www.') ? rawHost.slice(4) : rawHost;
+      }
     }
 
     if (subdomain || customDomain) {
-      const query = db('tenants');
+      const query = db('tenants').where({ is_deleted: false });
       if (subdomain) query.where({ subdomain });
       else if (customDomain) query.where({ custom_domain: customDomain });
 
-      const tenant = await query.select('id', 'shop_name', 'subdomain', 'custom_domain', 'plan', 'status', 'is_deleted').first();
+      const tenant = await query
+        .select('id', 'shop_name', 'subdomain', 'custom_domain', 'plan', 'status', 'is_deleted')
+        .first();
 
       if (tenant) {
         if (Boolean(tenant.is_deleted) || tenant.status !== 'ACTIVE') {
           return res.status(403).json({
             success: false,
-            message: `Shop account "${tenant.shop_name || subdomain || customDomain}" is ${tenant.status === 'SUSPENDED' ? 'suspended' : 'deleted/inactive'}. Access denied.`,
+            message: `Shop account "${tenant.shop_name || subdomain || customDomain}" is ${
+              tenant.status === 'SUSPENDED' ? 'suspended' : 'deleted/inactive'
+            }. Access denied.`,
           });
         }
 

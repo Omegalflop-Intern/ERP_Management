@@ -129,6 +129,8 @@ export default function InvoiceDetail() {
 
   const getWidth = () => {
     switch (printSize) {
+      case 'a4half':
+        return 'max-w-[170mm]';
       case 'receipt':
         return 'max-w-[80mm]';
       case 'thermal':
@@ -505,7 +507,7 @@ export default function InvoiceDetail() {
         <div className="w-full overflow-x-auto pb-4 flex justify-start md:justify-center">
           <div
             ref={printRef}
-            className={`${getWidth()} w-full min-w-[320px] sm:min-w-[650px] md:min-w-[750px] flex-shrink-0 printable-invoice-container`}
+            className={`${getWidth()} w-full ${printSize === 'a4' ? 'min-w-[320px] sm:min-w-[650px]' : printSize === 'a4half' ? 'min-w-[320px] sm:min-w-[480px]' : 'min-w-[240px]'} flex-shrink-0 printable-invoice-container`}
           >
             {renderInvoice()}
           </div>

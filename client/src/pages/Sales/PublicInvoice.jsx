@@ -51,13 +51,25 @@ export default function PublicInvoice() {
   const handleDownloadPdf = async () => {
     setPdfDownloading(true);
     try {
-      const { downloadBackendInvoicePdf, generateA4Invoice } = await import(
-        '../../utils/invoiceGenerator'
-      );
-      const success = await downloadBackendInvoicePdf(token || sale._id, sale.invoiceNumber);
-      if (!success && sale) {
-        // Fallback to instant client-side PDF capture
-        await generateA4Invoice(sale, printRef.current);
+      const {
+        downloadBackendInvoicePdf,
+        generateA4Invoice,
+        generateA4HalfInvoice,
+        generateReceipt80,
+        generateReceipt58,
+      } = await import('../../utils/invoiceGenerator');
+
+      if (printSize === 'a4half') {
+        await generateA4HalfInvoice(sale, printRef.current);
+      } else if (printSize === 'receipt') {
+        await generateReceipt80(sale, printRef.current);
+      } else if (printSize === 'thermal') {
+        await generateReceipt58(sale, printRef.current);
+      } else {
+        const success = await downloadBackendInvoicePdf(token || sale._id, sale.invoiceNumber);
+        if (!success && sale) {
+          await generateA4Invoice(sale, printRef.current);
+        }
       }
     } catch (e) {
       console.error('PDF download error:', e);
@@ -69,13 +81,13 @@ export default function PublicInvoice() {
   const getPageStyle = () => {
     switch (printSize) {
       case 'a4half':
-        return `@page { size: A5 portrait; margin: 0; } @media print { html, body { margin: 0 !important; padding: 0 !important; background: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }`;
+        return `@page { size: A5 portrait; margin: 3mm; } @media print { html, body { margin: 0 !important; padding: 0 !important; background: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }`;
       case 'receipt':
-        return `@page { size: 80mm auto; margin: 0; } @media print { html, body { margin: 0 !important; padding: 0 !important; background: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }`;
+        return `@page { size: 80mm auto; margin: 2mm; } @media print { html, body { margin: 0 !important; padding: 0 !important; background: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }`;
       case 'thermal':
-        return `@page { size: 58mm auto; margin: 0; } @media print { html, body { margin: 0 !important; padding: 0 !important; background: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }`;
+        return `@page { size: 58mm auto; margin: 1mm; } @media print { html, body { margin: 0 !important; padding: 0 !important; background: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }`;
       default:
-        return `@page { size: A4 portrait; margin: 0; } @media print { html, body { margin: 0 !important; padding: 0 !important; background: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }`;
+        return `@page { size: A4 portrait; margin: 4mm; } @media print { html, body { margin: 0 !important; padding: 0 !important; background: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }`;
     }
   };
 
@@ -85,7 +97,9 @@ export default function PublicInvoice() {
     style.textContent = getPageStyle();
     document.head.appendChild(style);
     window.print();
-    document.head.removeChild(style);
+    setTimeout(() => {
+      if (style.parentNode) document.head.removeChild(style);
+    }, 1500);
   };
 
   const renderInvoice = () => {
@@ -103,6 +117,8 @@ export default function PublicInvoice() {
 
   const getWidth = () => {
     switch (printSize) {
+      case 'a4half':
+        return 'max-w-[170mm]';
       case 'receipt':
         return 'max-w-[80mm]';
       case 'thermal':

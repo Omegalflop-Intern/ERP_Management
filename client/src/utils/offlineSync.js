@@ -5,13 +5,13 @@ export async function setupOfflineSync(api) {
   const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
   if (token) {
     try {
-      const [productsRes, stockRes, customersRes] = await Promise.all([
+      const [productsRes, inventoryRes, customersRes] = await Promise.all([
         api.get('/products', { params: { limit: 500 } }).catch(() => null),
-        api.get('/stock').catch(() => null),
+        api.get('/inventory', { params: { limit: 500 } }).catch(() => null),
         api.get('/customers', { params: { limit: 500 } }).catch(() => null),
       ]);
       if (productsRes?.data?.data) await cacheProducts(productsRes.data.data);
-      if (stockRes?.data?.data) await cacheStock(stockRes.data.data);
+      if (inventoryRes?.data?.data) await cacheStock(inventoryRes.data.data);
       if (customersRes?.data?.data) await cacheCustomers(customersRes.data.data);
     } catch (e) {
       // Quietly ignore cache setup errors

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { detectSubdomain } from '../utils/subdomain.js';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
 const SERVER_URL = API_URL ? API_URL.replace(/\/api\/v1\/?$/, '') : '';
@@ -12,6 +13,12 @@ export const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken');
   if (token) config.headers.Authorization = `Bearer ${token}`;
+
+  const sub = detectSubdomain();
+  if (sub) {
+    config.headers['X-Subdomain'] = sub;
+  }
+
   return config;
 });
 

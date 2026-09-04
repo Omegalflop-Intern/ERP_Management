@@ -17,7 +17,6 @@ export function formatSubscriptionPlan(row) {
     monthlyPrice: Number(row.monthly_price || 0),
     yearlyPrice: Number(row.yearly_price || 0),
     trialDays: Number(row.trial_days || 0),
-    maxBranches: Number(row.max_branches || 1),
     maxUsers: Number(row.max_users || 2),
     maxProducts: Number(row.max_products || 500),
     maxCustomers: Number(row.max_customers || 200),
@@ -39,14 +38,13 @@ export const DEFAULT_PLANS = [
     monthlyPrice: 0,
     yearlyPrice: 0,
     trialDays: 0,
-    maxBranches: 1,
     maxUsers: 2,
     maxProducts: 500,
     maxCustomers: 200,
     maxStorageMB: 100,
     sortOrder: 0,
     isPublic: true,
-    features: ['POS & Sales', 'Product & Inventory', 'Up to 2 Users', '1 Branch', 'Basic Reports', 'Email Support'],
+    features: ['POS & Sales', 'Product & Inventory', 'Up to 2 Users', 'Basic Reports', 'Email Support'],
   },
   {
     name: 'STARTER',
@@ -55,30 +53,28 @@ export const DEFAULT_PLANS = [
     monthlyPrice: 999,
     yearlyPrice: 9990,
     trialDays: 14,
-    maxBranches: 2,
     maxUsers: 5,
     maxProducts: 2000,
     maxCustomers: 1000,
     maxStorageMB: 500,
     sortOrder: 1,
     isPublic: true,
-    features: ['Everything in Free', 'IMEI / Serial Tracking', 'Customer CRM & Due', 'Supplier Management', 'Purchase Orders', 'Up to 5 Users', '2 Branches', 'Repair Job Sheets', 'SMS & Email Invoices', 'Priority Email Support'],
+    features: ['Everything in Free', 'IMEI / Serial Tracking', 'Customer CRM & Due', 'Supplier Management', 'Purchase Orders', 'Up to 5 Users', 'Repair Job Sheets', 'SMS & Email Invoices', 'Priority Email Support'],
   },
   {
     name: 'PRO',
     displayName: 'Pro',
-    description: 'For established businesses with multiple branches',
+    description: 'For established businesses',
     monthlyPrice: 2499,
     yearlyPrice: 24990,
     trialDays: 14,
-    maxBranches: 5,
     maxUsers: 20,
     maxProducts: 10000,
     maxCustomers: 5000,
     maxStorageMB: 2000,
     sortOrder: 2,
     isPublic: true,
-    features: ['Everything in Starter', 'Double-Entry Accounting', 'Payroll & HR Module', 'Attendance Tracking', 'Leave Management', 'Wholesale Orders', 'Warranty Claims', 'Investor & Loan Tracking', 'Document Vault', 'Up to 20 Users', '5 Branches', 'Advanced Analytics', 'Chat Support'],
+    features: ['Everything in Starter', 'Double-Entry Accounting', 'Payroll & HR Module', 'Attendance Tracking', 'Leave Management', 'Wholesale Orders', 'Warranty Claims', 'Investor & Loan Tracking', 'Document Vault', 'Up to 20 Users', 'Advanced Analytics', 'Chat Support'],
   },
   {
     name: 'ENTERPRISE',
@@ -87,14 +83,13 @@ export const DEFAULT_PLANS = [
     monthlyPrice: 0,
     yearlyPrice: 0,
     trialDays: 30,
-    maxBranches: 999,
     maxUsers: 999,
     maxProducts: -1,
     maxCustomers: -1,
     maxStorageMB: -1,
     sortOrder: 3,
     isPublic: true,
-    features: ['Everything in Pro', 'Unlimited Branches', 'Unlimited Users', 'Custom Branding & Logo', 'API Access', 'Dedicated Account Manager', 'Custom Integrations', 'SLA Guarantee', 'On-premise Option', 'Priority Phone Support'],
+    features: ['Everything in Pro', 'Unlimited Users', 'Custom Branding & Logo', 'API Access', 'Dedicated Account Manager', 'Custom Integrations', 'SLA Guarantee', 'On-premise Option', 'Priority Phone Support'],
   },
 ];
 
@@ -135,7 +130,6 @@ export const createPlan = async (data) => {
     monthly_price: data.monthlyPrice !== undefined ? Number(data.monthlyPrice) : 0,
     yearly_price: data.yearlyPrice !== undefined ? Number(data.yearlyPrice) : 0,
     trial_days: data.trialDays !== undefined ? Number(data.trialDays) : 0,
-    max_branches: data.maxBranches !== undefined ? Number(data.maxBranches) : 1,
     max_users: data.maxUsers !== undefined ? Number(data.maxUsers) : 2,
     max_products: data.maxProducts !== undefined ? Number(data.maxProducts) : 500,
     max_customers: data.maxCustomers !== undefined ? Number(data.maxCustomers) : 200,
@@ -159,7 +153,6 @@ export const updatePlan = async (id, data) => {
   if (data.monthlyPrice !== undefined) updateFields.monthly_price = Number(data.monthlyPrice);
   if (data.yearlyPrice !== undefined) updateFields.yearly_price = Number(data.yearlyPrice);
   if (data.trialDays !== undefined) updateFields.trial_days = Number(data.trialDays);
-  if (data.maxBranches !== undefined) updateFields.max_branches = Number(data.maxBranches);
   if (data.maxUsers !== undefined) updateFields.max_users = Number(data.maxUsers);
   if (data.maxProducts !== undefined) updateFields.max_products = Number(data.maxProducts);
   if (data.maxCustomers !== undefined) updateFields.max_customers = Number(data.maxCustomers);
@@ -204,7 +197,6 @@ export const seedSubscriptionPlans = async () => {
         monthly_price: plan.monthlyPrice,
         yearly_price: plan.yearlyPrice,
         trial_days: plan.trialDays,
-        max_branches: plan.maxBranches,
         max_users: plan.maxUsers,
         max_products: plan.maxProducts,
         max_customers: plan.maxCustomers,
