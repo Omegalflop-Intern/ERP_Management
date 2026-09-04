@@ -34,13 +34,14 @@ No root-level scripts. Run client/server from their own directories.
 
 - **Server**: Node.js + Express (ESM). Entry: `server/server.js` → `server/app.js`.
 - **Client**: Vite 5 + React 18. Entry: `client/src/main.jsx`. `@` alias resolves to `client/src`.
-- **Module pattern**: Each backend feature lives in `server/modules/<name>/` with `{name}.routes.js`, `{name}.controller.js`, `{name}.service.js`, `{name}.validator.js`, `{name}.model.js`. Exception: `superAdmin/` splits into `profile.routes.js` + `admins.routes.js`.
-- **Stray top-level dir**: `server/services/pdf.service.js` exists outside the module pattern — shared utility.
+- **Module pattern**: Each backend feature lives in `server/modules/<name>/` with `{name}.routes.js`, `{name}.controller.js`, `{name}.service.js`, `{name}.validator.js`, `{name}.model.js`. Exception: `superAdmin/` splits into `profile.routes.js` + `admins.routes.js`. Also `expense/` has a separate `recurringExpense.routes.js`.
+- **Stray shared files**: `server/services/pdf.service.js` and `server/services/financialReportPdf.service.js` exist outside the module pattern — shared utilities.
 - **Validation**: Zod schemas in `*.validator.js`, enforced by `server/middleware/validate.middleware.js`.
 - **Auth**: Bearer JWT (or httpOnly cookies or query string for SSE). `authenticate` sets `req.user`. `authorize(...roles)` checks role name strings. `requirePermission(...perms)` checks role.permissions array. ADMIN role bypasses all checks. MFA (TOTP) is implemented.
+- **Rate limiting**: Global `apiLimiter` on all `/api` routes. No per-route `authLimiter` — it was removed.
 - **Real-time**: Node.js `EventEmitter` (server, max 100 listeners) + SSE via `server/modules/sse/` (not Socket.io). Browser-side SSE via native `EventSource` in `client/src/hooks/useSSE.js`. Events defined in `server/events/index.js`.
 - **Responses**: Standard shape `{ success, message, data, pagination? }`. Use `ApiResponse` helper and `ApiError` class (both in `server/utils/http/`).
-- **API docs**: Swagger UI at **`/api-docs`** (not `/api/docs`). Config in `server/config/swagger.config.js`. The root `/api` route redirects browsers to `/api/docs` which is a dead link — use `/api-docs` directly.
+- **API docs**: Swagger UI at **`/api-docs`** (not `/api/docs`). Config in `server/config/swagger.config.js`. The root `/api` route redirects browsers to `/api-docs` which is a dead link — use `/api-docs` directly.
 - **Multi-tenancy**: Subdomain-based tenant extraction via `server/middleware/subdomain.middleware.js`. Tenant management in `server/modules/tenant/`.
 - **Tenant statuses**: Only ACTIVE, SUSPENDED, DELETED. No PAUSED, PENDING_KYC, or REJECTED.
 - **Subscription enforcement**: Dual — cron job (`server/jobs/subscriptionChecker.js`) auto-suspends expired tenants hourly + per-request `expires_at` check in `server/middleware/tenant.middleware.js`.
@@ -74,12 +75,16 @@ No root-level scripts. Run client/server from their own directories.
 - Tests exist in `server/tests/` but no CI or pre-commit hooks. **Tests require a running MySQL instance** — `npm run test` will fail without it.
 - Lockfiles: client has both `package-lock.json` and `pnpm-lock.yaml`. Use npm unless pnpm is explicitly needed.
 - `server/schema.sql` contains a MySQL 8.4 dump of the full schema — useful for understanding table structure but **not** used for migrations (Knex migrations in `server/migrations/` are the source of truth).
-- **Branch/Outlet system removed**: No branches, stock transfers, or branch scoping. Single-tenant inventory per subdomain.
-- **Stock transfer feature removed**: `/api/v1/stock` routes and `/stock-transfer` frontend page removed. Stock is per-product in `products.stock_quantity`.
+- **Stock transfer dead code**: `server/modules/stock/` still contains full route/controller/service/validator files, but stock routes are **not mounted** in `app.js`. The `/api/v1/stock` endpoint does not exist. Do not import or extend this module without re-mounting it.
+- **Branch/Outlet system removed**: No `branch/` module directory exists. No `/api/v1/branches` route is mounted. Single-tenant inventory per subdomain.
+- **README is outdated**: Still references MongoDB, "32 modules", multi-branch stock transfers, and `/api/v1/stock`. Trust `server/app.js` route mounts over README claims.
+- **Auth routes**: `/auth/login` returns OTP challenge; `/auth/login-direct` does direct login (used by frontend). Refresh token uses httpOnly cookie (`refreshToken`).
 
-## Server Modules (33)
+## Server Modules (33 directories, 32 mounted)
 
-`accounting`, `attendance`, `audit`, `auth`, `catalog`, `contact`, `customer`, `documentVault`, `employee`, `expense`, `imei`, `investor`, `leave`, `loan`, `notification`, `payroll`, `plans`, `product`, `purchase`, `repair`, `report`, `role`, `sale`, `settings`, `sse`, `superAdmin`, `supplier`, `tenant`, `ticket`, `user`, `warranty`, `wholesale`
+`accounting`, `attendance`, `audit`, `auth`, `catalog`, `contact`, `customer`, `documentVault`, `employee`, `expense` (+ `recurringExpense`), `imei`, `investor`, `leave`, `loan`, `notification`, `payroll`, `plans`, `product`, `purchase`, `repair`, `report`, `role`, `sale`, `settings`, `sse`, `superAdmin` (split routes), `supplier`, `tenant`, `ticket`, `user`, `warranty`, `wholesale`
+
+Dead code (files exist, not mounted): `stock`
 
 ## Security Notes
 
