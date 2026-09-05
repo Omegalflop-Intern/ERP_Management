@@ -70,40 +70,40 @@ export default function PublicFooter() {
 
             <div className="pt-2 flex items-center gap-3">
               <a
-                href="https://github.com"
+                href="https://github.com/salahuddingfx"
                 target="_blank"
                 rel="noreferrer"
                 className="w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
-                aria-label="GitHub"
+                aria-label="GitHub - salahuddingfx"
               >
                 <Github className="w-4 h-4" />
               </a>
               <a
-                href="https://twitter.com"
+                href="https://x.com/salahuddingfx"
                 target="_blank"
                 rel="noreferrer"
                 className="w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-blue-400 transition-colors"
-                aria-label="Twitter"
+                aria-label="Twitter/X - salahuddingfx"
               >
                 <Twitter className="w-4 h-4" />
               </a>
               <a
-                href="https://linkedin.com"
+                href="https://linkedin.com/in/salahuddingfx"
                 target="_blank"
                 rel="noreferrer"
                 className="w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-blue-500 transition-colors"
-                aria-label="LinkedIn"
+                aria-label="LinkedIn - salahuddingfx"
               >
                 <Linkedin className="w-4 h-4" />
               </a>
               <a
-                href="https://youtube.com"
+                href="https://salahuddin.codes"
                 target="_blank"
                 rel="noreferrer"
-                className="w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-red-400 transition-colors"
-                aria-label="YouTube"
+                className="w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-emerald-400 transition-colors"
+                aria-label="Portfolio - salahuddin.codes"
               >
-                <Youtube className="w-4 h-4" />
+                <Globe className="w-4 h-4" />
               </a>
             </div>
           </div>
@@ -145,15 +145,26 @@ export default function PublicFooter() {
             </ul>
           </div>
 
-          {/* Col 3: Developers & API */}
+          {/* Col 3: Developers & Creator */}
           <div className="space-y-3">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-200">Developers & Docs</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-200">Engineering & Architect</p>
             <ul className="space-y-2 text-sm text-slate-400">
               <li>
                 <Link to="/developer" className="hover:text-white transition-colors flex items-center gap-1.5">
                   <Code2 className="w-3.5 h-3.5 text-blue-400" />
-                  <span>API Documentation</span>
+                  <span>Architect: Salah Uddin Kader</span>
                 </Link>
+              </li>
+              <li>
+                <a
+                  href="https://salahuddin.codes"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="hover:text-white transition-colors flex items-center gap-1.5"
+                >
+                  <Globe className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Creator Portfolio (salahuddin.codes)</span>
+                </a>
               </li>
               <li>
                 <a
@@ -167,19 +178,13 @@ export default function PublicFooter() {
                 </a>
               </li>
               <li>
-                <Link to="/developer#webhooks" className="hover:text-white transition-colors flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                  <span>SSE & Realtime Events</span>
-                </Link>
-              </li>
-              <li>
                 <Link to="/about" className="hover:text-white transition-colors">
                   System Architecture
                 </Link>
               </li>
               <li>
                 <Link to="/contact" className="hover:text-white transition-colors">
-                  Developer Support
+                  Technical Consulting
                 </Link>
               </li>
             </ul>
@@ -223,8 +228,17 @@ export default function PublicFooter() {
           <p>© {new Date().getFullYear()} OmniManage ERP Solutions. All rights reserved.</p>
 
           <div className="flex items-center gap-6">
-            <span className="flex items-center gap-1">
-              Engineered with <Heart className="w-3 h-3 text-red-500 fill-red-500 inline" /> for gadget businesses
+            <span className="flex items-center gap-1.5">
+              Engineered with <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500 inline" /> by{' '}
+              <a
+                href="https://salahuddin.codes"
+                target="_blank"
+                rel="noreferrer"
+                className="font-bold text-slate-200 hover:text-blue-400 underline decoration-blue-500/60 transition-colors"
+              >
+                Salah Uddin Kader
+              </a>{' '}
+              for gadget & electronics businesses
             </span>
           </div>
         </div>

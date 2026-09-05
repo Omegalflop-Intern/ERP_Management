@@ -72,7 +72,6 @@ export default function PublicNavbar() {
     { name: 'Modules', href: '/#modules', isRoute: false },
     { name: 'Pricing', href: '/#pricing', isRoute: false },
     { name: 'About', href: '/about', isRoute: true },
-    { name: 'Developer', href: '/developer', isRoute: true },
     { name: 'Contact', href: '/contact', isRoute: true },
   ];
 
