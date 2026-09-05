@@ -190,29 +190,58 @@ export const sendPasswordResetEmail = async (toEmail, resetLink, userName = '') 
   }
 };
 
-export const sendAdminNotificationEmail = async (subject, title, detailsHtml) => {
-  if (!transporter) await initMailer();
-
-  let adminEmails = [];
+export const getPlatformAdminEmails = async () => {
+  const emails = [];
   try {
+    // 1. Query active Super Admins from database users table (tenant_id IS NULL)
     const adminUsers = await db('users')
       .where({ is_deleted: false, is_active: true })
       .whereNull('tenant_id')
       .select('email');
 
     if (adminUsers && adminUsers.length > 0) {
-      adminEmails = adminUsers.map(u => u.email).filter(Boolean);
+      adminUsers.forEach((u) => {
+        if (u.email && u.email.trim()) emails.push(u.email.trim().toLowerCase());
+      });
+    }
+
+    // 2. Query settings table for platformEmail or adminEmail configured in DB
+    const platformSettings = await db('settings')
+      .whereNull('tenant_id')
+      .whereIn('key', ['platformEmail', 'adminEmail', 'supportEmail'])
+      .select('value');
+
+    for (const row of platformSettings) {
+      if (row.value) {
+        try {
+          const val = typeof row.value === 'string' && row.value.startsWith('"')
+            ? JSON.parse(row.value)
+            : row.value;
+          if (typeof val === 'string' && val.includes('@')) {
+            emails.push(val.trim().toLowerCase());
+          }
+        } catch { /* ignore */ }
+      }
     }
   } catch (err) {
-    console.error('[Admin Mailer Lookup Error]:', err.message);
+    console.error('[Platform Admin Lookup Error]:', err.message);
   }
 
-  if (process.env.ADMIN_EMAIL && !adminEmails.includes(process.env.ADMIN_EMAIL)) {
-    adminEmails.push(process.env.ADMIN_EMAIL);
+  // 3. Fallback to process.env.ADMIN_EMAIL if configured
+  if (process.env.ADMIN_EMAIL && process.env.ADMIN_EMAIL.trim()) {
+    emails.push(process.env.ADMIN_EMAIL.trim().toLowerCase());
   }
 
-  const recipientString = [...new Set(adminEmails)].filter(Boolean).join(', ');
-  if (!recipientString) return { success: false, reason: 'No admin email found' };
+  const distinctEmails = [...new Set(emails)].filter(Boolean);
+  return distinctEmails;
+};
+
+export const sendAdminNotificationEmail = async (subject, title, detailsHtml) => {
+  if (!transporter) await initMailer();
+
+  const adminEmails = await getPlatformAdminEmails();
+  const recipientString = adminEmails.join(', ');
+  if (!recipientString) return { success: false, reason: 'No admin email found in database or config' };
 
   const mailOptions = {
     from: `"${SENDER_NAME}" <${SENDER_EMAIL}>`,
@@ -267,26 +296,9 @@ export const sendAdminNotificationEmail = async (subject, title, detailsHtml) =>
 export const sendShopRegistrationAdminEmail = async (tenantData) => {
   if (!transporter) await initMailer();
 
-  let adminEmails = [];
-  try {
-    const adminUsers = await db('users')
-      .where({ is_deleted: false, is_active: true })
-      .whereNull('tenant_id')
-      .select('email');
-
-    if (adminUsers && adminUsers.length > 0) {
-      adminEmails = adminUsers.map((u) => u.email).filter(Boolean);
-    }
-  } catch (err) {
-    console.error('[Shop Reg Admin Mailer Lookup Error]:', err.message);
-  }
-
-  if (process.env.ADMIN_EMAIL && !adminEmails.includes(process.env.ADMIN_EMAIL)) {
-    adminEmails.push(process.env.ADMIN_EMAIL);
-  }
-
-  const recipientString = [...new Set(adminEmails)].filter(Boolean).join(', ');
-  if (!recipientString) return { success: false, reason: 'No platform admin email found' };
+  const adminEmails = await getPlatformAdminEmails();
+  const recipientString = adminEmails.join(', ');
+  if (!recipientString) return { success: false, reason: 'No platform admin email found in database' };
 
   const {
     shopName,
@@ -377,6 +389,87 @@ export const sendShopRegistrationAdminEmail = async (tenantData) => {
     return { success: true, messageId: info.messageId };
   } catch (err) {
     console.error(`[Shop Reg Admin Mailer Error]: ${err.message}`);
+    return { success: false, error: err.message };
+  }
+};
+
+export const sendTicketCreatedAdminEmail = async (ticketData) => {
+  if (!transporter) await initMailer();
+
+  const adminEmails = await getPlatformAdminEmails();
+  const recipientString = adminEmails.join(', ');
+  if (!recipientString) return { success: false, reason: 'No platform admin email found' };
+
+  const { ticketNumber, shopName, shopSubdomain, subject, category, priority, description, createdByName } = ticketData;
+
+  const mailOptions = {
+    from: `"${SENDER_NAME}" <${SENDER_EMAIL}>`,
+    to: recipientString,
+    replyTo: SUPPORT_EMAIL,
+    subject: `[Support Ticket] New Ticket #${ticketNumber} from ${shopName || 'Shop'}`,
+    headers: { ...baseHeaders, 'X-Priority': priority === 'URGENT' ? '1' : '3' },
+    text: `New Support Ticket Submitted\n\nTicket #: ${ticketNumber}\nShop: ${shopName} (${shopSubdomain || 'N/A'})\nCategory: ${category}\nPriority: ${priority}\nSubject: ${subject}\n\nDescription:\n${description}\n\nSubmitted By: ${createdByName}\n\nPowered by OmniManage ERP Suite`,
+    html: `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head><meta charset="utf-8"></head>
+      <body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',system-ui,sans-serif;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:32px 16px;">
+          <tr><td align="center">
+            <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+              <tr>
+                <td style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);padding:24px 32px;">
+                  <h2 style="margin:0;color:#ffffff;font-size:18px;font-weight:700;">Support Ticket Submitted</h2>
+                  <p style="margin:6px 0 0;color:#60a5fa;font-size:13px;font-weight:600;">#${ticketNumber} &bull; ${priority} Priority</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:28px 32px;">
+                  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;border-collapse:collapse;">
+                    <tr style="background:#f8fafc;">
+                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#64748b;width:30%;">Shop Name:</td>
+                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#0f172a;font-weight:600;">${shopName || 'Unknown Shop'} (${shopSubdomain || 'main'})</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#64748b;">Category:</td>
+                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#0f172a;">${category}</td>
+                    </tr>
+                    <tr style="background:#f8fafc;">
+                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#64748b;">Subject:</td>
+                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#0f172a;font-weight:600;">${subject}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#64748b;">Submitted By:</td>
+                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#0f172a;">${createdByName || 'Staff User'}</td>
+                    </tr>
+                  </table>
+                  <div style="background:#f1f5f9;border-left:4px solid #2563eb;padding:16px;border-radius:4px;margin-bottom:20px;">
+                    <p style="margin:0 0 6px;font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;">Ticket Description:</p>
+                    <p style="margin:0;font-size:14px;color:#1e293b;line-height:1.6;white-space:pre-wrap;">${description}</p>
+                  </div>
+                  <p style="margin:0;font-size:12px;color:#64748b;">Please log in to the Super Admin Panel to review and resolve this ticket.</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:16px;text-align:center;color:#94a3b8;font-size:11px;">
+                  © ${new Date().getFullYear()} ${APP_NAME}. System Automated Notification<br>
+                  <span style="color:#64748b;font-weight:600;">⚡ Powered by OmniManage ERP Suite</span>
+                </td>
+              </tr>
+            </table>
+          </td></tr>
+        </table>
+      </body>
+      </html>
+    `,
+  };
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`[Ticket Mailer] Alert sent to ${recipientString} for ticket #${ticketNumber}`);
+    return { success: true, messageId: info.messageId };
+  } catch (err) {
+    console.error(`[Ticket Mailer Error]: ${err.message}`);
     return { success: false, error: err.message };
   }
 };
