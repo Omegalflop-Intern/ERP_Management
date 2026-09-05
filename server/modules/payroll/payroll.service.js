@@ -53,7 +53,7 @@ function applyTenantScope(query, tenantId, tablePrefix = 'payrolls') {
   }
 }
 
-export const getAllPayroll = async (page = 1, limit = 20, branch = '', month = '', year = '', status = '', tenantId = null) => {
+export const getAllPayroll = async (page = 1, limit = 20, month = '', year = '', status = '', tenantId = null) => {
   const countQuery = db('payrolls').where('payrolls.is_deleted', false);
   applyTenantScope(countQuery, tenantId, 'payrolls');
   if (status) countQuery.where('payrolls.status', status);
