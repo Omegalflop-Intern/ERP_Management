@@ -226,15 +226,6 @@ export default function PublicFooter() {
             <span className="flex items-center gap-1">
               Engineered with <Heart className="w-3 h-3 text-red-500 fill-red-500 inline" /> for gadget businesses
             </span>
-            <button
-              type="button"
-              onClick={scrollToTop}
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition-colors"
-              aria-label="Scroll to top"
-            >
-              <ArrowUp className="w-3 h-3" />
-              <span>Back to Top</span>
-            </button>
           </div>
         </div>
       </div>
