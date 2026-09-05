@@ -164,13 +164,13 @@ export default function WarrantyClaimSlipModal({ claim, onClose }) {
         </div>
 
         {/* Printable View Area */}
-        <div className="p-4 sm:p-6 overflow-y-auto bg-slate-950/60 flex justify-center print:p-0 print:bg-white">
+        <div className="p-4 sm:p-6 overflow-y-auto bg-slate-950/60 flex justify-center print:p-0 print:m-0 print:bg-white print:block">
           {/* A4 Format Document */}
           {printSize === 'a4' ? (
             <div
               ref={componentRef}
               data-printable="true"
-              className="printable-invoice-container printable-slip bg-white text-slate-900 p-4 sm:p-6 md:p-8 w-full max-w-[210mm] min-h-[276mm] mx-auto flex flex-col justify-between shadow-lg border border-slate-200 print:shadow-none print:border-none print:p-2 sm:print:p-4 print:max-w-none print:w-full print:min-h-[276mm] print:flex print:flex-col print:justify-between"
+              className="printable-invoice-container printable-slip bg-white text-slate-900 p-6 sm:p-8 w-full max-w-[210mm] mx-auto flex flex-col justify-between shadow-lg border border-slate-200 print:shadow-none print:border-none print:p-4 print:m-0 print:max-w-none print:w-full print:min-h-0 print:block"
               style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
             >
               <div>
