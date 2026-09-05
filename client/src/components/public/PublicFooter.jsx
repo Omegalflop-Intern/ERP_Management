@@ -5,6 +5,7 @@ import {
   FileCheck2,
   FileText,
   Github,
+  Globe,
   Heart,
   HelpCircle,
   Instagram,
