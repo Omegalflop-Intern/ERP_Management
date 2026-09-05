@@ -5,12 +5,15 @@ import {
   Bell,
   Building2,
   Check,
+  CheckCircle2,
   ChevronDown,
+  Clock,
   Command,
   Diamond,
   DollarSign,
   FileText,
   Lock,
+  LogIn,
   LogOut,
   Moon,
   Package,
@@ -35,6 +38,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { detectSubdomain, getBaseDomain } from '../../utils/subdomain';

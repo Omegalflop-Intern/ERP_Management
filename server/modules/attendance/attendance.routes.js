@@ -11,6 +11,9 @@ const router = Router();
 router.use(authenticate);
 router.use(checkTenantStatus);
 
+router.get('/my-today', attendanceController.getMyTodayStatus);
+router.post('/my-check-in', validate(checkInSchema), attendanceController.checkIn);
+router.post('/my-check-out', validate(checkOutSchema), attendanceController.checkOut);
 router.get('/report', attendanceController.getAttendanceReport);
 router.get('/today/:employeeId', attendanceController.getTodayStatus);
 router.post('/check-in', validate(checkInSchema), attendanceController.checkIn);

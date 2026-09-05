@@ -37,10 +37,29 @@ function applyTenantScope(query, tenantId, tablePrefix = 'leaves') {
 }
 
 export const getAllLeaves = async (page = 1, limit = 20, search = '', status = '', employeeId = '', currentUser = null, tenantId = null) => {
+  const userRole = String(currentUser?.roleName || currentUser?.role?.name || currentUser?.role || '').toUpperCase();
+  const isManager = userRole === 'ADMIN' || userRole === 'MANAGER' || userRole === 'SUPER_ADMIN' || userRole === 'HR_MANAGER';
+
+  let effectiveEmpId = employeeId;
+  if (!isManager && !effectiveEmpId && currentUser) {
+    const q = db('employees').where({ is_deleted: false });
+    if (tenantId) q.where('tenant_id', tenantId);
+    q.andWhere((builder) => {
+      if (currentUser.userId || currentUser._id || currentUser.id) {
+        builder.where('user_id', currentUser.userId || currentUser._id || currentUser.id);
+      }
+      if (currentUser.email) {
+        builder.orWhere('email', currentUser.email);
+      }
+    });
+    const matched = await q.first();
+    if (matched) effectiveEmpId = matched.id;
+  }
+
   const countQuery = db('leaves').where('leaves.is_deleted', false);
   applyTenantScope(countQuery, tenantId, 'leaves');
   if (status) countQuery.where('leaves.status', status);
-  if (employeeId) countQuery.where('leaves.employee_id', employeeId);
+  if (effectiveEmpId) countQuery.where('leaves.employee_id', effectiveEmpId);
 
   const countRes = await countQuery.count({ total: '*' }).first();
   const total = Number(countRes?.total || 0);
@@ -56,7 +75,7 @@ export const getAllLeaves = async (page = 1, limit = 20, search = '', status = '
     );
   applyTenantScope(dataQuery, tenantId, 'leaves');
   if (status) dataQuery.where('leaves.status', status);
-  if (employeeId) dataQuery.where('leaves.employee_id', employeeId);
+  if (effectiveEmpId) dataQuery.where('leaves.employee_id', effectiveEmpId);
 
   const rows = await dataQuery.orderBy('leaves.created_at', 'desc').limit(limit).offset(offset);
 
@@ -69,7 +88,10 @@ export const getAllLeaves = async (page = 1, limit = 20, search = '', status = '
 };
 
 export const createLeave = async (data, currentUser = null, tenantId = null) => {
-  let empId = data.employee || data.employeeId;
+  const userRole = String(currentUser?.roleName || currentUser?.role?.name || currentUser?.role || '').toUpperCase();
+  const isManager = userRole === 'ADMIN' || userRole === 'MANAGER' || userRole === 'SUPER_ADMIN' || userRole === 'HR_MANAGER';
+
+  let empId = (isManager && (data.employee || data.employeeId)) ? (data.employee || data.employeeId) : null;
   if (!empId && currentUser) {
     const q = db('employees').where({ is_deleted: false });
     if (tenantId) q.where('tenant_id', tenantId);
@@ -85,7 +107,7 @@ export const createLeave = async (data, currentUser = null, tenantId = null) => 
     if (matched) empId = matched.id;
   }
 
-  if (!empId) throw ApiError.badRequest('Please select an employee');
+  if (!empId) throw ApiError.badRequest('No linked employee profile found for this user');
 
   const empQuery = db('employees').where({ id: empId, is_deleted: false });
   if (tenantId) empQuery.where('tenant_id', tenantId);

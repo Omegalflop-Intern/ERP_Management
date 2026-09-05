@@ -691,7 +691,6 @@ export default function InvoiceDetail() {
                 </DialogDescription>
               </div>
               <Button
-                size="sm"
                 onClick={() =>
                   executeClientPrint(
                     creditNoteRef.current,
@@ -699,7 +698,7 @@ export default function InvoiceDetail() {
                     'a4'
                   )
                 }
-                className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold gap-2 text-xs"
+                className="h-10 px-5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold gap-2 text-xs rounded-xl shadow-md"
               >
                 <Printer className="w-4 h-4" /> Print Return Credit Note
               </Button>
@@ -712,7 +711,11 @@ export default function InvoiceDetail() {
             </div>
 
             <DialogFooter>
-              <Button variant="outline" size="sm" onClick={() => setShowCreditNoteModal(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setShowCreditNoteModal(false)}
+                className="h-10 px-5 rounded-xl font-semibold text-xs"
+              >
                 Close
               </Button>
             </DialogFooter>

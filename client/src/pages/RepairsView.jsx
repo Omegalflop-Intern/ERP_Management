@@ -24,7 +24,7 @@ import {
   Wrench,
   X,
 } from 'lucide-react';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import PageHeader from '../components/layout/PageHeader';
 import { Badge } from '../components/ui/badge';
@@ -40,9 +40,16 @@ import {
 import EmptyState from '../components/ui/EmptyState';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import api from '../lib/api';
+import api, { getAssetUrl } from '../lib/api';
 import { confirmDelete } from '../lib/confirm';
 import { useActivePaymentMethods } from '../hooks';
+import {
+  useCompanyInfo,
+  BarcodeCanvas,
+  QRCodeCanvas,
+  numberToWordsBD,
+} from '../components/sales/Invoice';
+import { executeClientPrint } from '../utils/invoiceGenerator';
 
 const STATUSES = [
   'ALL',
@@ -1064,150 +1071,450 @@ function RepairTicketModal({ initialData, users, customers, imeis, onClose, onSu
 // ----------------------------------------------------------------------
 // MODAL: VIEW & PRINT REPAIR RECEIPT / JOB SHEET
 // ----------------------------------------------------------------------
-function ViewRepairModal({ ticket, onClose, onStatusChange }) {
+function ViewRepairModal({ ticket, onClose, onStatusChange, onCollectDue }) {
+  const [printSize, setPrintSize] = useState('a4');
   const printRef = useRef(null);
+  const companyInfo = useCompanyInfo();
+
   const dueAmount = Math.max(
     0,
     (Number(ticket.estimatedCost) || 0) - (Number(ticket.advancePaid) || 0)
   );
 
   const handlePrint = () => {
-    window.print();
+    executeClientPrint(printRef.current, `Repair-${ticket.ticketNumber}`, printSize);
   };
 
+  const ticketDate = ticket.createdAt ? new Date(ticket.createdAt) : new Date();
+
+  const getStatusBadge = (st) => {
+    switch (st) {
+      case 'DELIVERED':
+        return { label: 'DELIVERED', color: 'border-emerald-600 text-emerald-700 bg-emerald-50' };
+      case 'REPAIRED':
+        return { label: 'REPAIRED / READY', color: 'border-blue-600 text-blue-700 bg-blue-50' };
+      case 'INSPECTING':
+        return { label: 'INSPECTING', color: 'border-indigo-600 text-indigo-700 bg-indigo-50' };
+      case 'AWAITING_PARTS':
+        return { label: 'AWAITING PARTS', color: 'border-amber-600 text-amber-700 bg-amber-50' };
+      case 'CANCELLED':
+        return { label: 'CANCELLED', color: 'border-rose-600 text-rose-700 bg-rose-50' };
+      default:
+        return { label: 'RECEIVED INTAKE', color: 'border-slate-600 text-slate-700 bg-slate-50' };
+    }
+  };
+
+  const statusBadge = getStatusBadge(ticket.status);
+
   return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-xl w-[94vw] max-h-[90vh] overflow-y-auto rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-2xl bg-white dark:bg-[#0f172a]">
-        <DialogHeader className="border-b border-slate-100 dark:border-slate-800 pb-3 pr-10 no-print">
-          <div className="flex items-center justify-between">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm overflow-y-auto">
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
+        {/* Top Control Bar */}
+        <div className="p-4 sm:px-6 bg-slate-950/90 border-b border-slate-800 flex flex-wrap items-center justify-between gap-4 shrink-0 no-print">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-blue-600/15 text-blue-400 flex items-center justify-center font-bold">
+              <Wrench className="w-5 h-5" />
+            </div>
             <div>
-              <DialogTitle className="font-mono text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
-                Repair Sheet #{ticket.ticketNumber}
-              </DialogTitle>
-              <DialogDescription className="text-xs text-slate-500">
-                Logged on {new Date(ticket.createdAt).toLocaleString('en-BD')}
-              </DialogDescription>
-            </div>
-          </div>
-        </DialogHeader>
-
-        {/* Printable Card Area */}
-        <div
-          ref={printRef}
-          data-printable="true"
-          className="printable-invoice-container printable-repair-sheet space-y-4 pt-2 text-xs"
-        >
-          {/* Customer & Device Box */}
-          <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2">
-            <div className="flex justify-between">
-              <span className="text-slate-400 font-medium">Customer:</span>
-              <strong className="text-slate-900 dark:text-slate-100 font-bold">
-                {ticket.customerName}
-              </strong>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400 font-medium">Phone:</span>
-              <strong className="font-mono text-slate-900 dark:text-slate-100">
-                {ticket.customerPhone}
-              </strong>
-            </div>
-            <div className="flex justify-between border-t border-slate-200/60 dark:border-slate-800 pt-2">
-              <span className="text-slate-400 font-medium">Device Model:</span>
-              <strong className="text-slate-900 dark:text-slate-100">{ticket.deviceModel}</strong>
-            </div>
-            {ticket.imeiOrSerial && (
-              <div className="flex justify-between">
-                <span className="text-slate-400 font-medium">IMEI / Serial:</span>
-                <span className="font-mono text-slate-600 dark:text-slate-300">
-                  {ticket.imeiOrSerial}
+              <h2 className="text-base font-bold text-white flex items-center gap-2">
+                Repair Service Sheet & Invoice
+                <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-blue-950 text-blue-400 border border-blue-800">
+                  #{ticket.ticketNumber}
                 </span>
-              </div>
-            )}
+              </h2>
+              <p className="text-xs text-slate-400">
+                Logged on {ticketDate.toLocaleDateString('en-BD', { month: 'short', day: '2-digit', year: 'numeric' })} • {ticket.customerName}
+              </p>
+            </div>
           </div>
 
-          {/* Fault Symptoms */}
-          <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-1">
-            <div className="text-[10px] font-bold text-slate-400 uppercase">
-              Fault Symptoms / Work Required
-            </div>
-            <p className="text-slate-800 dark:text-slate-200 font-medium">
-              {ticket.issueDescription}
-            </p>
-          </div>
-
-          {/* Financial Breakdown */}
-          <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2">
-            <div className="flex justify-between">
-              <span>Estimated Cost:</span>
-              <strong className="font-mono font-bold">
-                ৳{Number(ticket.estimatedCost || 0).toLocaleString()}
-              </strong>
-            </div>
-            <div className="flex justify-between text-emerald-600 font-semibold">
-              <span>Advance Paid:</span>
-              <span className="font-mono font-bold">
-                ৳{Number(ticket.advancePaid || 0).toLocaleString()}
-              </span>
-            </div>
-            <div className="flex justify-between font-black text-sm pt-2 border-t border-slate-200 dark:border-slate-700">
-              <span
-                className={dueAmount > 0 ? 'text-rose-600' : 'text-slate-900 dark:text-slate-100'}
+          <div className="flex items-center gap-2.5">
+            {/* Live Status Selector */}
+            <div className="flex items-center gap-1.5 bg-slate-800/90 px-2.5 py-1 rounded-xl border border-slate-700 text-xs">
+              <span className="text-slate-400 font-medium">Status:</span>
+              <select
+                value={ticket.status}
+                onChange={(e) => onStatusChange(e.target.value)}
+                className="text-xs font-bold text-white bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 focus:outline-none cursor-pointer"
               >
-                Remaining Due:
-              </span>
-              <span className={`font-mono ${dueAmount > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
-                ৳{dueAmount.toLocaleString()}
-              </span>
+                <option value="RECEIVED">Received</option>
+                <option value="INSPECTING">Inspecting</option>
+                <option value="AWAITING_PARTS">Awaiting Parts</option>
+                <option value="REPAIRED">Repaired</option>
+                <option value="DELIVERED">Delivered</option>
+                <option value="CANCELLED">Cancelled</option>
+              </select>
             </div>
-          </div>
 
-          {/* Status Quick Bar */}
-          <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-900/40 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 no-print">
-            <span className="text-xs font-semibold">Current Status:</span>
-            <select
-              value={ticket.status}
-              onChange={(e) => onStatusChange(e.target.value)}
-              className="text-xs font-bold px-3 py-1 rounded-xl bg-white dark:bg-[#1e293b] border border-slate-300 dark:border-slate-700 focus:outline-none"
+            <div className="flex items-center bg-slate-800/90 p-1 rounded-xl border border-slate-700">
+              <button
+                type="button"
+                onClick={() => setPrintSize('a4')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                  printSize === 'a4'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" /> A4 Sheet
+              </button>
+              <button
+                type="button"
+                onClick={() => setPrintSize('thermal')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                  printSize === 'thermal'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Smartphone className="w-3.5 h-3.5" /> POS 80mm
+              </button>
+            </div>
+
+            {dueAmount > 0 && onCollectDue && (
+              <button
+                type="button"
+                onClick={onCollectDue}
+                className="flex items-center gap-1.5 h-10 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition-all shadow-md active:scale-95 shrink-0"
+              >
+                <CreditCard className="w-4 h-4" /> Collect Due (৳{dueAmount.toLocaleString()})
+              </button>
+            )}
+
+            <button
+              onClick={handlePrint}
+              className="flex items-center gap-2 h-10 px-5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs transition-all shadow-md active:scale-95 shrink-0"
             >
-              <option value="RECEIVED">Received</option>
-              <option value="INSPECTING">Inspecting</option>
-              <option value="AWAITING_PARTS">Awaiting Parts</option>
-              <option value="REPAIRED">Repaired</option>
-              <option value="DELIVERED">Delivered</option>
-              <option value="CANCELLED">Cancelled</option>
-            </select>
+              <Printer className="w-4 h-4" /> Print Sheet
+            </button>
+
+            <button
+              onClick={onClose}
+              className="p-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
         </div>
 
-        <DialogFooter className="border-t border-slate-100 dark:border-slate-800 pt-4 flex items-center justify-between sm:justify-between no-print">
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handlePrint}
-              className="rounded-xl text-xs gap-1.5"
+        {/* Printable Area */}
+        <div className="p-4 sm:p-6 overflow-y-auto bg-slate-950/60 flex justify-center print:p-0 print:bg-white">
+          {printSize === 'a4' ? (
+            <div
+              ref={printRef}
+              data-printable="true"
+              className="printable-invoice-container printable-repair-sheet bg-white text-slate-900 p-4 sm:p-6 md:p-8 w-full max-w-[210mm] min-h-[276mm] mx-auto flex flex-col justify-between shadow-lg border border-slate-200 print:shadow-none print:border-none print:p-2 sm:print:p-4 print:max-w-none print:w-full print:min-h-[276mm] print:flex print:flex-col print:justify-between"
+              style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
             >
-              <Printer className="w-3.5 h-3.5" /> Print Job Sheet
-            </Button>
-            {dueAmount > 0 && (
-              <Button
-                type="button"
-                size="sm"
-                onClick={onCollectDue}
-                className="rounded-xl text-xs font-bold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
-              >
-                <CreditCard className="w-3.5 h-3.5" /> Collect Remaining Due (৳
-                {dueAmount.toLocaleString()})
-              </Button>
-            )}
-          </div>
-          <Button type="button" onClick={onClose} size="sm" className="rounded-xl text-xs">
-            Close
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+              <div>
+                {/* 1. BRANDING & HEADER */}
+                <div className="flex justify-between items-start mb-3 print:break-inside-avoid">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2.5">
+                      {companyInfo.logo && (
+                        <img
+                          src={getAssetUrl(companyInfo.logo)}
+                          alt="Logo"
+                          crossOrigin="anonymous"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                          className="h-8 w-auto max-w-[80px] object-contain flex-shrink-0"
+                        />
+                      )}
+                      <div>
+                        <h1 className="text-2xl font-black tracking-tight text-slate-900 leading-none">
+                          {companyInfo.name}
+                        </h1>
+                        {companyInfo.slogan && (
+                          <p className="text-xs font-medium text-slate-500 mt-0.5">{companyInfo.slogan}</p>
+                        )}
+                      </div>
+                    </div>
+                    {companyInfo.address && (
+                      <p className="text-xs text-slate-500 max-w-sm leading-relaxed">
+                        {companyInfo.address}
+                      </p>
+                    )}
+                    <div className="text-xs text-slate-500 flex flex-wrap gap-x-2 gap-y-0.5 pt-0.5">
+                      {companyInfo.phone && (
+                        <span>
+                          <strong>Hotline:</strong> {companyInfo.phone}
+                        </span>
+                      )}
+                      {companyInfo.email && (
+                        <>
+                          <span>•</span>
+                          <span>
+                            <strong>Email:</strong> {companyInfo.email}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="text-right flex flex-col items-end space-y-1">
+                    <div className="text-sm font-black tracking-wider uppercase text-blue-700 border-b-2 border-slate-900 pb-0.5 flex items-center gap-1.5">
+                      <Wrench className="w-4 h-4 text-blue-700 inline" />
+                      REPAIR JOB SHEET &amp; INVOICE
+                    </div>
+                    <div className="pt-0.5">
+                      <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">
+                        Job Ticket No
+                      </p>
+                      <p className="text-lg font-mono font-bold text-slate-900 tracking-tight">
+                        #{ticket.ticketNumber}
+                      </p>
+                    </div>
+                    <div className="text-xs text-slate-600 leading-tight space-y-0.5">
+                      <p>
+                        <strong>Date:</strong>{' '}
+                        {ticketDate.toLocaleDateString('en-BD', {
+                          month: 'short',
+                          day: '2-digit',
+                          year: 'numeric',
+                        })}
+                      </p>
+                      <p>
+                        <strong>Time:</strong>{' '}
+                        {ticketDate.toLocaleTimeString('en-BD', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                      {ticket.technicianName && (
+                        <p className="text-xs font-semibold text-slate-700">
+                          Technician: {ticket.technicianName}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <hr className="border-t-2 border-slate-900 my-3" />
+
+                {/* 2. CUSTOMER & DEVICE INFORMATION */}
+                <div className="grid grid-cols-12 gap-4 mb-4 pb-2 border-b border-slate-200 print:break-inside-avoid">
+                  {/* Customer Information */}
+                  <div className="col-span-7 space-y-0.5">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block mb-0.5 flex items-center gap-1">
+                      <User className="w-3 h-3 text-blue-600 inline" /> Customer Information
+                    </span>
+                    <p className="font-extrabold text-slate-900 text-sm">{ticket.customerName}</p>
+                    <p className="text-xs text-slate-600 font-mono">Mobile: {ticket.customerPhone}</p>
+                    {ticket.customerEmail && (
+                      <p className="text-xs text-slate-500">Email: {ticket.customerEmail}</p>
+                    )}
+                  </div>
+
+                  {/* Device Specification & Status */}
+                  <div className="col-span-5 flex flex-col justify-between items-end text-right">
+                    <div className="space-y-0.5">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block mb-0.5 flex items-center justify-end gap-1">
+                        <Smartphone className="w-3 h-3 text-blue-600 inline" /> Device Under Repair
+                      </span>
+                      <p className="font-bold text-slate-900 text-xs">{ticket.deviceModel}</p>
+                      {ticket.imeiOrSerial && (
+                        <p className="text-[11px] font-mono font-bold text-purple-700">
+                          IMEI/Serial: {ticket.imeiOrSerial}
+                        </p>
+                      )}
+                    </div>
+
+                    <div
+                      className={`border-2 ${statusBadge.color} font-black text-xs px-3.5 py-1 rounded uppercase tracking-wider text-center mt-2`}
+                    >
+                      {statusBadge.label}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. REPORTED SYMPTOMS & TECHNICAL DIAGNOSIS */}
+                <div className="space-y-3 mb-4 print:break-inside-avoid">
+                  <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-1">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block">
+                      Reported Issue &amp; Fault Symptoms:
+                    </span>
+                    <p className="text-xs text-slate-800 font-medium leading-relaxed bg-white p-2.5 rounded-lg border border-slate-200">
+                      {ticket.issueDescription || 'No description provided'}
+                    </p>
+                  </div>
+
+                  {ticket.notes && (
+                    <div className="bg-blue-50/50 p-3.5 rounded-xl border border-blue-200/70 space-y-1">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-900 block">
+                        Technician Internal Remarks &amp; Diagnostics:
+                      </span>
+                      <p className="text-xs text-slate-700 font-medium leading-relaxed bg-white p-2.5 rounded-lg border border-blue-100">
+                        {ticket.notes}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* 4. FINANCIAL BREAKDOWN & PAYMENT STATUS */}
+                <div className="grid grid-cols-12 gap-6 mb-4 pt-2 border-t border-slate-200 print:break-inside-avoid">
+                  <div className="col-span-7 space-y-3">
+                    <div>
+                      <span className="font-extrabold uppercase text-slate-400 text-[9px] block mb-0.5">
+                        Amount In Words
+                      </span>
+                      <p className="font-bold text-slate-900 italic text-xs leading-snug">
+                        {numberToWordsBD(ticket.estimatedCost || 0)}
+                      </p>
+                    </div>
+
+                    <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-xs text-slate-600 space-y-0.5">
+                      <span className="font-bold text-slate-700 uppercase text-[9px] block">
+                        Service Guarantee Notice:
+                      </span>
+                      <p className="text-[10px] text-slate-500 leading-snug">
+                        • Replaced hardware components carry a 30-day warranty against manufacturer defects.
+                      </p>
+                      <p className="text-[10px] text-slate-500 leading-snug">
+                        • Omni-Manage and the service center are not liable for user data loss. Back up devices regularly.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-3 pt-1">
+                      <div className="bg-white p-1 rounded border border-slate-200 shrink-0">
+                        <QRCodeCanvas
+                          value={`TICKET: ${ticket.ticketNumber} | Device: ${ticket.deviceModel} | Due: Tk ${dueAmount} | Status: ${ticket.status}`}
+                          size={56}
+                        />
+                      </div>
+                      <div className="shrink-0 overflow-hidden">
+                        <BarcodeCanvas value={String(ticket.ticketNumber)} width={1.2} height={26} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="col-span-5 space-y-1 text-xs">
+                    <div className="flex justify-between py-1 text-slate-600">
+                      <span>Estimated Service Cost:</span>
+                      <span className="font-mono font-semibold text-slate-800">
+                        ৳{Number(ticket.estimatedCost || 0).toLocaleString()}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between py-1 text-emerald-700 font-semibold border-t border-slate-200">
+                      <span>Advance Deposited:</span>
+                      <span className="font-mono font-bold">
+                        ৳{Number(ticket.advancePaid || 0).toLocaleString()}
+                      </span>
+                    </div>
+
+                    {dueAmount > 0 ? (
+                      <div className="flex justify-between py-1 text-rose-600 font-bold bg-rose-50 px-2 rounded border border-rose-200">
+                        <span>Remaining Due Balance:</span>
+                        <span className="font-mono text-sm">৳{dueAmount.toLocaleString()}</span>
+                      </div>
+                    ) : (
+                      <div className="flex justify-between py-1 text-emerald-700 font-bold bg-emerald-50 px-2 rounded border border-emerald-200">
+                        <span>Settlement Status:</span>
+                        <span className="font-mono">PAID IN FULL (৳0 DUE)</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* 5. FOOTER & SIGNATURES */}
+              <div className="print:break-inside-avoid">
+                <div className="grid grid-cols-2 gap-8 pt-10 border-t border-slate-200 text-center text-xs">
+                  <div className="space-y-1">
+                    <div className="border-t border-slate-400 w-3/4 mx-auto pt-1.5 font-bold text-slate-800">
+                      Customer Signature
+                    </div>
+                    <p className="text-[10px] text-slate-400">Device Received / Accepted</p>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="border-t border-slate-400 w-3/4 mx-auto pt-1.5 font-bold text-slate-800">
+                      Service Technician / Authority
+                    </div>
+                    <p className="text-[10px] text-slate-400">Tested, Verified & Released</p>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center text-[10px] text-slate-400 pt-3 mt-3 border-t border-slate-100">
+                  <p>
+                    Omni-Manage ERP Repair Solutions • Generated on {new Date().toLocaleString('en-BD')}
+                  </p>
+                  <p>Official Service Job Sheet</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* POS 80mm Thermal Receipt Format */
+            <div
+              ref={printRef}
+              data-printable="true"
+              id="printable-receipt"
+              className="printable-invoice-container bg-white text-slate-900 p-4 w-[80mm] rounded-lg shadow-xl text-xs flex flex-col justify-between print:shadow-none print:p-2 print:w-full"
+              style={{ fontFamily: 'monospace' }}
+            >
+              <div className="text-center pb-2 border-b border-dashed border-slate-400">
+                <h2 className="font-bold text-sm uppercase">{companyInfo.name}</h2>
+                <p className="text-[10px]">{companyInfo.address}</p>
+                <p className="text-[10px]">Tel: {companyInfo.phone}</p>
+                <div className="my-1.5 font-bold uppercase text-[11px] bg-slate-900 text-white py-0.5 rounded">
+                  REPAIR JOB TICKET
+                </div>
+                <p className="font-bold text-xs">#{ticket.ticketNumber}</p>
+                <p className="text-[10px]">{ticketDate.toLocaleDateString('en-BD')}</p>
+              </div>
+
+              <div className="py-2 border-b border-dashed border-slate-400 text-[10px] space-y-0.5">
+                <p>
+                  <strong>CUSTOMER:</strong> {ticket.customerName}
+                </p>
+                <p>
+                  <strong>PHONE:</strong> {ticket.customerPhone}
+                </p>
+                <p>
+                  <strong>DEVICE:</strong> {ticket.deviceModel}
+                </p>
+                {ticket.imeiOrSerial && (
+                  <p>
+                    <strong>IMEI:</strong> {ticket.imeiOrSerial}
+                  </p>
+                )}
+                <p>
+                  <strong>STATUS:</strong> {ticket.status}
+                </p>
+              </div>
+
+              <div className="py-2 border-b border-dashed border-slate-400 text-[10px]">
+                <p className="font-bold">FAULT:</p>
+                <p>{ticket.issueDescription}</p>
+              </div>
+
+              <div className="py-2 border-b border-dashed border-slate-400 text-[11px] space-y-1 text-right">
+                <div className="flex justify-between">
+                  <span>Est. Cost:</span>
+                  <span className="font-bold">৳{Number(ticket.estimatedCost || 0).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-emerald-700 font-bold">
+                  <span>Advance:</span>
+                  <span>৳{Number(ticket.advancePaid || 0).toLocaleString()}</span>
+                </div>
+                {dueAmount > 0 && (
+                  <div className="flex justify-between text-rose-600 font-bold">
+                    <span>Due:</span>
+                    <span>৳{dueAmount.toLocaleString()}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="pt-6 pb-2 text-center text-[10px] space-y-4">
+                <div className="border-t border-slate-400 pt-1">Customer Signature</div>
+                <p className="text-[9px] text-slate-400">Please produce receipt upon collection</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 

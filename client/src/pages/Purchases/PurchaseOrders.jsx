@@ -16,7 +16,7 @@ import {
   Trash2,
   Truck,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import PageHeader from '../../components/layout/PageHeader';
 import { Button } from '../../components/ui/button';
@@ -2059,16 +2059,15 @@ function ReturnSupplierModal({ po, onClose, onSuccess }) {
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
                 onClick={onClose}
-                className="rounded-xl flex-1 sm:flex-none"
+                className="h-10 px-4 rounded-xl flex-1 sm:flex-none font-semibold text-xs"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={mutation.isPending || Object.keys(returnSelection).length === 0}
-                className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold gap-1.5 flex-1 sm:flex-none"
+                className="h-10 px-5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold gap-1.5 flex-1 sm:flex-none shadow-md"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 {mutation.isPending ? 'Processing...' : 'Confirm Return to Supplier'}
@@ -2272,13 +2271,12 @@ function ViewPurchaseModal({ po, onClose, onPrint, onReturn }) {
           <Button
             type="button"
             variant="outline"
-            size="sm"
             onClick={onReturn}
-            className="text-amber-600 border-amber-300 dark:border-amber-800 rounded-xl gap-1 text-xs font-semibold"
+            className="h-10 px-4 text-amber-600 border-amber-300 dark:border-amber-800 rounded-xl gap-1.5 text-xs font-bold"
           >
             <RotateCcw className="w-3.5 h-3.5" /> Return Items to Supplier
           </Button>
-          <Button type="button" onClick={onClose} size="sm" className="rounded-xl text-xs">
+          <Button type="button" onClick={onClose} className="h-10 px-5 rounded-xl text-xs font-semibold">
             Close
           </Button>
         </DialogFooter>
@@ -2429,21 +2427,19 @@ function PayPODueModal({ po, onClose, onSuccess }) {
             />
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
             <Button
               type="button"
               variant="outline"
-              size="sm"
               onClick={onClose}
-              className="rounded-xl"
+              className="h-10 px-4 rounded-xl font-semibold text-xs"
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              size="sm"
               disabled={mutation.isPending}
-              className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+              className="h-10 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md"
             >
               {mutation.isPending ? 'Processing...' : 'Confirm Due Payment'}
             </Button>

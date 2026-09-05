@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const checkInSchema = z.object({
-  employeeId: z.string().min(1),
+  employeeId: z.union([z.string(), z.number()]).optional(),
   location: z.object({
     lat: z.number(),
     lng: z.number(),
@@ -10,7 +10,7 @@ export const checkInSchema = z.object({
 });
 
 export const checkOutSchema = z.object({
-  employeeId: z.string().min(1),
+  employeeId: z.union([z.string(), z.number()]).optional(),
   location: z.object({
     lat: z.number(),
     lng: z.number(),

@@ -54,6 +54,18 @@ export default function Attendance() {
     },
   });
 
+  const { data: myTodayData, refetch: refetchMyToday } = useQuery({
+    queryKey: ['my-attendance-today'],
+    queryFn: async () => {
+      try {
+        const res = await api.get('/attendance/my-today');
+        return res.data?.data || null;
+      } catch {
+        return null;
+      }
+    },
+  });
+
   const { data: myEmployeeData } = useQuery({
     queryKey: ['my-employee'],
     queryFn: async () => {
@@ -76,13 +88,44 @@ export default function Attendance() {
     },
   });
 
+  const [shiftNotes, setShiftNotes] = useState('');
+  const [useGeo, setUseGeo] = useState(false);
+  const [geoCoords, setGeoCoords] = useState(null);
+  const [gettingLocation, setGettingLocation] = useState(false);
+
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser');
+      return;
+    }
+    setGettingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGeoCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setUseGeo(true);
+        setGettingLocation(false);
+        toast.success('Location acquired');
+      },
+      (err) => {
+        setGettingLocation(false);
+        toast.error('Could not get GPS location');
+      },
+      { timeout: 8000 }
+    );
+  };
+
   const checkInMutation = useMutation({
-    mutationFn: async (employeeId) => {
-      return api.post('/attendance/check-in', { employeeId });
+    mutationFn: async ({ employeeId, notes, location } = {}) => {
+      if (employeeId) {
+        return api.post('/attendance/check-in', { employeeId, notes, location });
+      }
+      return api.post('/attendance/my-check-in', { notes, location });
     },
     onSuccess: () => {
-      toast.success('Checked in successfully!');
+      toast.success('Checked in successfully! Have a productive shift.');
+      setShiftNotes('');
       queryClient.invalidateQueries({ queryKey: ['attendance-report'] });
+      queryClient.invalidateQueries({ queryKey: ['my-attendance-today'] });
       queryClient.invalidateQueries({ queryKey: ['my-employee'] });
       queryClient.invalidateQueries({ queryKey: ['employees-list'] });
     },
@@ -90,12 +133,16 @@ export default function Attendance() {
   });
 
   const checkOutMutation = useMutation({
-    mutationFn: async (employeeId) => {
-      return api.post('/attendance/check-out', { employeeId });
+    mutationFn: async ({ employeeId, location } = {}) => {
+      if (employeeId) {
+        return api.post('/attendance/check-out', { employeeId, location });
+      }
+      return api.post('/attendance/my-check-out', { location });
     },
     onSuccess: () => {
-      toast.success('Checked out successfully!');
+      toast.success('Checked out successfully! Shift completed.');
       queryClient.invalidateQueries({ queryKey: ['attendance-report'] });
+      queryClient.invalidateQueries({ queryKey: ['my-attendance-today'] });
       queryClient.invalidateQueries({ queryKey: ['my-employee'] });
       queryClient.invalidateQueries({ queryKey: ['employees-list'] });
     },
@@ -109,6 +156,7 @@ export default function Attendance() {
     onSuccess: () => {
       toast.success('Attendance record deleted successfully');
       queryClient.invalidateQueries({ queryKey: ['attendance-report'] });
+      queryClient.invalidateQueries({ queryKey: ['my-attendance-today'] });
       queryClient.invalidateQueries({ queryKey: ['my-employee'] });
     },
     onError: (e) => toast.error(e.response?.data?.message || 'Failed to delete attendance record'),
@@ -128,24 +176,35 @@ export default function Attendance() {
   const employees = empData || [];
   const records = data?.data || [];
 
-  // Find logged-in user's employee record (from /employees/me or fallback list search)
-  const myEmployee = myEmployeeData || employees.find(
-    (e) =>
-      String(e.user?._id || e.user?.id || e.user) === String(user?._id || user?.id) ||
-      (user?.email && e.email?.toLowerCase() === user.email.toLowerCase()) ||
-      (user?.name && e.name?.toLowerCase() === user.name.toLowerCase()) ||
-      (user?.username && e.name?.toLowerCase() === user.username.toLowerCase()) ||
-      (user?.fullName && e.name?.toLowerCase() === user.fullName.toLowerCase())
-  );
+  // Find logged-in user's employee record (from /attendance/my-today or /employees/me or fallback list search)
+  const myEmployee =
+    myTodayData?.employee ||
+    myEmployeeData ||
+    employees.find(
+      (e) =>
+        String(e.user?._id || e.user?.id || e.user) === String(user?._id || user?.id) ||
+        (user?.email && e.email?.toLowerCase() === user.email.toLowerCase()) ||
+        (user?.name && e.name?.toLowerCase() === user.name.toLowerCase()) ||
+        (user?.username && e.name?.toLowerCase() === user.username.toLowerCase()) ||
+        (user?.fullName && e.name?.toLowerCase() === user.fullName.toLowerCase())
+    ) || {
+      name: user?.name || user?.username || 'Current User',
+      employeeId: 'MY-SELF',
+      designation: user?.roleName || user?.role?.name || 'Staff',
+      id: null,
+      _id: null,
+    };
 
   const todayStr = new Date().toISOString().slice(0, 10);
-  const myTodayRecord = records.find(
-    (r) =>
-      String(r.employee?._id || r.employee?.id || r.employee) ===
-        String(myEmployee?._id || myEmployee?.id) &&
-      (String(r.date).slice(0, 10) === todayStr ||
-        new Date(r.date).toISOString().slice(0, 10) === todayStr)
-  );
+  const myTodayRecord =
+    myTodayData?.attendance ||
+    records.find(
+      (r) =>
+        String(r.employee?._id || r.employee?.id || r.employee) ===
+          String(myEmployee?._id || myEmployee?.id) &&
+        (String(r.date).slice(0, 10) === todayStr ||
+          new Date(r.date).toISOString().slice(0, 10) === todayStr)
+    );
 
   const isCheckedIn = Boolean(myTodayRecord?.checkIn);
   const isCheckedOut = Boolean(myTodayRecord?.checkOut);
@@ -270,33 +329,70 @@ export default function Attendance() {
               </p>
             </div>
 
-            {/* Check-In / Check-Out Actions */}
-            <div className="flex items-center gap-3">
-              <Button
-                onClick={() => checkInMutation.mutate(myEmployee._id || myEmployee.id)}
-                disabled={checkInMutation.isPending || isCheckedIn}
-                className={`h-11 px-5 rounded-2xl font-bold text-xs gap-2 transition-all shadow-lg ${
-                  isCheckedIn
-                    ? 'bg-slate-800/80 text-slate-400 border border-slate-700 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-emerald-500/20'
-                }`}
-              >
-                <LogIn className="w-4 h-4" />
-                {isCheckedIn ? 'Checked In' : 'Check In Now'}
-              </Button>
+            {/* Check-In / Check-Out Actions & Optional Shift Note */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              {!isCheckedIn && (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={shiftNotes}
+                    onChange={(e) => setShiftNotes(e.target.value)}
+                    placeholder="Shift note (optional)..."
+                    className="h-11 px-3.5 rounded-2xl bg-white/10 border border-white/20 text-white placeholder:text-slate-400 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleGetLocation}
+                    disabled={gettingLocation}
+                    title={geoCoords ? 'GPS Acquired' : 'Add GPS Location'}
+                    className={`h-11 px-3 rounded-2xl border text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                      geoCoords
+                        ? 'bg-emerald-500/20 border-emerald-400/40 text-emerald-300'
+                        : 'bg-white/10 border-white/20 text-slate-300 hover:bg-white/15'
+                    }`}
+                  >
+                    <MapPin className={`w-3.5 h-3.5 ${gettingLocation ? 'animate-bounce text-amber-400' : ''}`} />
+                    <span className="hidden lg:inline">{geoCoords ? 'GPS Set' : 'Location'}</span>
+                  </button>
+                </div>
+              )}
 
-              <Button
-                onClick={() => checkOutMutation.mutate(myEmployee._id || myEmployee.id)}
-                disabled={checkOutMutation.isPending || !isCheckedIn || isCheckedOut}
-                className={`h-11 px-5 rounded-2xl font-bold text-xs gap-2 transition-all shadow-lg ${
-                  !isCheckedIn || isCheckedOut
-                    ? 'bg-slate-800/80 text-slate-500 border border-slate-700 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-600 hover:to-rose-700 text-white shadow-rose-500/20'
-                }`}
-              >
-                <LogOut className="w-4 h-4" />
-                {isCheckedOut ? 'Checked Out' : 'Check Out'}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() =>
+                    checkInMutation.mutate({
+                      notes: shiftNotes || undefined,
+                      location: geoCoords || undefined,
+                    })
+                  }
+                  disabled={checkInMutation.isPending || isCheckedIn}
+                  className={`h-11 px-6 rounded-2xl font-bold text-xs gap-2 transition-all shadow-lg ${
+                    isCheckedIn
+                      ? 'bg-slate-800/80 text-slate-400 border border-slate-700 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-emerald-500/20'
+                  }`}
+                >
+                  <LogIn className="w-4 h-4" />
+                  {isCheckedIn ? 'Checked In' : 'Check In Now'}
+                </Button>
+
+                <Button
+                  onClick={() =>
+                    checkOutMutation.mutate({
+                      location: geoCoords || undefined,
+                    })
+                  }
+                  disabled={checkOutMutation.isPending || !isCheckedIn || isCheckedOut}
+                  className={`h-11 px-6 rounded-2xl font-bold text-xs gap-2 transition-all shadow-lg ${
+                    !isCheckedIn || isCheckedOut
+                      ? 'bg-slate-800/80 text-slate-500 border border-slate-700 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-amber-500 to-rose-600 hover:from-amber-600 hover:to-rose-700 text-white shadow-rose-500/20'
+                  }`}
+                >
+                  <LogOut className="w-4 h-4" />
+                  {isCheckedOut ? 'Checked Out' : 'Check Out'}
+                </Button>
+              </div>
             </div>
           </div>
         </div>

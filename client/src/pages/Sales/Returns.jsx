@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  AlertCircle,
   ArrowLeft,
   CheckCircle2,
   Printer,
@@ -15,6 +16,7 @@ import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import ReturnCreditNote from '../../components/sales/ReturnCreditNote';
+import { NumberInput } from '../../components/ui/NumberInput';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../lib/api';
 import { executeClientPrint } from '../../utils/invoiceGenerator';
@@ -118,29 +120,36 @@ export default function Returns() {
     setReturnAction('REFUND');
     setReplacementItem({ productId: '', name: '', unitPrice: 0, imeiOrSerial: '', quantity: 1 });
     setReturnItems(
-      sale.lineItems.map((item, idx) => ({
-        lineItemId: item._id || item.id || idx,
-        productId: item.productId?._id || item.productId,
-        imeiOrSerial: item.imeiOrSerial || '',
-        quantity: item.qty,
-        maxQty: item.qty,
-        reason: 'defective',
-        notes: '',
-        selected: false,
-      }))
+      (sale.lineItems || []).map((item, idx) => {
+        const remaining = typeof item.remainingQty === 'number' ? item.remainingQty : Math.max(0, item.qty - (item.returnedQty || 0));
+        const isAlreadyReturned = item.isFullyReturned || remaining <= 0;
+        return {
+          lineItemId: item._id || item.id || idx,
+          productId: item.productId?._id || item.productId,
+          imeiOrSerial: item.imeiOrSerial || '',
+          quantity: remaining > 0 ? 1 : 0,
+          maxQty: remaining,
+          isAlreadyReturned,
+          reason: 'defective',
+          notes: '',
+          selected: false,
+        };
+      })
     );
   };
 
   const toggleItem = (index) => {
     const updated = [...returnItems];
+    if (updated[index]?.isAlreadyReturned || (updated[index]?.maxQty ?? 0) <= 0) return;
     updated[index].selected = !updated[index].selected;
     setReturnItems(updated);
   };
 
   const updateReturnQty = (index, qty) => {
     const updated = [...returnItems];
-    const maxQty = updated[index].maxQty || updated[index].quantity;
-    updated[index].quantity = Math.max(0, Math.min(qty, maxQty));
+    const maxQty = updated[index]?.maxQty ?? updated[index]?.quantity ?? 0;
+    if (maxQty <= 0) return;
+    updated[index].quantity = Math.max(1, Math.min(qty, maxQty));
     setReturnItems(updated);
   };
 
@@ -152,7 +161,7 @@ export default function Returns() {
 
   const handleReturn = () => {
     const items = returnItems
-      .filter((i) => i.selected)
+      .filter((i) => i.selected && !i.isAlreadyReturned && i.quantity > 0)
       .map((i) => ({
         productId: i.productId,
         imeiOrSerial: i.imeiOrSerial,
@@ -160,7 +169,7 @@ export default function Returns() {
         reason: i.reason,
         notes: i.notes,
       }));
-    if (items.length === 0) return toast.error('Select at least one item to return');
+    if (items.length === 0) return toast.error('Select at least one available item to return');
     if (returnAction === 'REPLACEMENT' && !replacementItem.productId) {
       return toast.error('Please select a replacement product from the catalog');
     }
@@ -351,33 +360,57 @@ export default function Returns() {
 
             {/* Return Items Selection */}
             <div>
-              <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                Select Sold Line Items to Return
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                  Select Sold Line Items to Return
+                </span>
+                {returnItems.every((item) => item.isAlreadyReturned) && (
+                  <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 rounded-md flex items-center gap-1">
+                    <AlertCircle className="w-3.5 h-3.5" /> All items already returned
+                  </span>
+                )}
               </div>
               <div className="divide-y divide-gray-100 dark:divide-gray-800 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
                 {returnItems.map((item, i) => {
                   const lineItem = selectedSale.lineItems[i];
+                  const isReturned = item.isAlreadyReturned || (lineItem && lineItem.isFullyReturned) || (item.maxQty <= 0);
 
                   return (
                     <div
                       key={i}
-                      className={`p-3 flex flex-col sm:flex-row sm:items-center gap-3 transition-colors ${item.selected ? 'bg-red-50/70 dark:bg-red-900/10' : 'bg-white dark:bg-gray-900'}`}
+                      className={`p-3 flex flex-col sm:flex-row sm:items-center gap-3 transition-colors ${
+                        isReturned
+                          ? 'bg-gray-50/70 dark:bg-gray-900/40 opacity-70'
+                          : item.selected
+                          ? 'bg-red-50/70 dark:bg-red-900/10'
+                          : 'bg-white dark:bg-gray-900'
+                      }`}
                     >
                       <div className="flex items-center gap-3 min-w-0 flex-1">
                         <input
                           type="checkbox"
                           checked={item.selected}
+                          disabled={isReturned}
                           onChange={() => toggleItem(i)}
-                          className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-[#2563EB] cursor-pointer"
+                          className={`w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-[#2563EB] ${
+                            isReturned ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'
+                          }`}
                         />
                         <div className="min-w-0 flex-1">
-                          <div className="text-sm font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                            <span>{lineItem?.description}</span>
-                            {lineItem?.returnedQty > 0 && (
-                              <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-1.5 py-0.5 rounded">
-                                {lineItem.returnedQty} of {lineItem.qty} already returned
+                          <div className="text-sm font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2 flex-wrap">
+                            <span className={isReturned ? 'line-through text-gray-400 dark:text-gray-500' : ''}>
+                              {lineItem?.description}
+                            </span>
+                            {isReturned ? (
+                              <span className="text-[10px] font-bold text-gray-600 dark:text-gray-300 bg-gray-200 dark:bg-gray-700/60 px-2 py-0.5 rounded border border-gray-300 dark:border-gray-600 flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                                Already Returned
                               </span>
-                            )}
+                            ) : lineItem?.returnedQty > 0 ? (
+                              <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-1.5 py-0.5 rounded">
+                                {lineItem.returnedQty} of {lineItem.qty} returned ({item.maxQty} remaining)
+                              </span>
+                            ) : null}
                           </div>
                           {item.imeiOrSerial ? (
                             <span className="text-[11px] font-mono font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded border border-blue-200 dark:border-blue-800 inline-block mt-0.5">
@@ -385,7 +418,8 @@ export default function Returns() {
                             </span>
                           ) : (
                             <span className="text-[11px] text-gray-400">
-                              Bulk item ({lineItem?.qty} pcs purchased)
+                              Bulk item ({lineItem?.qty} pcs purchased
+                              {lineItem?.returnedQty > 0 ? `, ${lineItem.returnedQty} returned` : ''})
                             </span>
                           )}
                         </div>
@@ -398,10 +432,13 @@ export default function Returns() {
                           </label>
                           <NumberInput
                             value={item.quantity}
+                            disabled={isReturned}
                             onChange={(e) => updateReturnQty(i, Number(e.target.value))}
-                            min={1}
-                            max={lineItem ? lineItem.qty - (lineItem.returnedQty || 0) : 1}
-                            className="w-full px-2 py-1 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-xs font-bold text-center text-gray-900 dark:text-gray-100"
+                            min={isReturned ? 0 : 1}
+                            max={item.maxQty || 1}
+                            className={`w-full px-2 py-1 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-xs font-bold text-center text-gray-900 dark:text-gray-100 ${
+                              isReturned ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}
                           />
                         </div>
 
@@ -411,8 +448,11 @@ export default function Returns() {
                           </label>
                           <select
                             value={item.reason}
+                            disabled={isReturned}
                             onChange={(e) => updateReason(i, e.target.value)}
-                            className="w-full px-2 py-1 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-xs font-semibold text-gray-900 dark:text-gray-100"
+                            className={`w-full px-2 py-1 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-xs font-semibold text-gray-900 dark:text-gray-100 ${
+                              isReturned ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}
                           >
                             <option value="defective">Defective / Damaged</option>
                             <option value="wrong_item">Wrong Item</option>
@@ -427,6 +467,7 @@ export default function Returns() {
                           </label>
                           <span className="text-sm font-mono font-bold text-red-600 dark:text-red-400">
                             ৳{(() => {
+                              if (isReturned) return '0';
                               // Calculate effective refund price considering discounts
                               const hasGlobalDiscount =
                                 selectedSale.subTotal > 0 &&

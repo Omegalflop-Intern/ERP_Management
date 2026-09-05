@@ -100,6 +100,8 @@ export const getAttendanceReport = async (page = 1, limit = 20, employeeId = '',
   const countQuery = db('attendances').where('attendances.is_deleted', false);
   applyTenantScope(countQuery, tenantId, 'attendances');
   if (employeeId) countQuery.where('attendances.employee_id', employeeId);
+  if (from) countQuery.where('attendances.date', '>=', from);
+  if (to) countQuery.where('attendances.date', '<=', to);
 
   const countRes = await countQuery.count({ total: '*' }).first();
   const total = Number(countRes?.total || 0);
@@ -115,6 +117,8 @@ export const getAttendanceReport = async (page = 1, limit = 20, employeeId = '',
     );
   applyTenantScope(dataQuery, tenantId, 'attendances');
   if (employeeId) dataQuery.where('attendances.employee_id', employeeId);
+  if (from) dataQuery.where('attendances.date', '>=', from);
+  if (to) dataQuery.where('attendances.date', '<=', to);
 
   const rows = await dataQuery.orderBy('attendances.date', 'desc').limit(limit).offset(offset);
 

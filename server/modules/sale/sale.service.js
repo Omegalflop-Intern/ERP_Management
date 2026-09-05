@@ -31,6 +31,54 @@ export function formatTransaction(row, customerRow = null) {
     breakdown = {};
   }
 
+  const rawLineItems = parseJSON(row.line_items);
+  const rawReturnLogs = parseJSON(row.return_logs);
+
+  // Compute returned quantities and IMEIs per line item
+  const returnedImeis = new Set();
+  const returnedProductQtyMap = {};
+
+  for (const log of (Array.isArray(rawReturnLogs) ? rawReturnLogs : [])) {
+    const rItems = log.items || log.returnedItems || [];
+    for (const ri of rItems) {
+      if (ri.imeiOrSerial) {
+        returnedImeis.add(String(ri.imeiOrSerial).trim());
+      }
+      const pId = String(ri.productId?._id || ri.productId?.id || ri.productId || '').trim();
+      if (pId) {
+        returnedProductQtyMap[pId] = (returnedProductQtyMap[pId] || 0) + Number(ri.quantity || ri.qty || 1);
+      }
+    }
+  }
+
+  const tempAllocatedMap = { ...returnedProductQtyMap };
+
+  const lineItems = (Array.isArray(rawLineItems) ? rawLineItems : []).map((li) => {
+    let retQty = Number(li.returnedQty || 0);
+    const itemImei = li.imeiOrSerial ? String(li.imeiOrSerial).trim() : null;
+    const pId = String(li.productId?._id || li.productId?.id || li.productId || '').trim();
+    const originalQty = Number(li.qty || 1);
+
+    if (itemImei && returnedImeis.has(itemImei)) {
+      retQty = originalQty;
+    } else if (pId && tempAllocatedMap[pId] > 0) {
+      const needed = Math.min(tempAllocatedMap[pId], originalQty);
+      retQty = Math.max(retQty, needed);
+      tempAllocatedMap[pId] -= needed;
+    }
+
+    const remainingQty = Math.max(0, originalQty - retQty);
+    const isFullyReturned = remainingQty === 0;
+
+    return {
+      ...li,
+      qty: originalQty,
+      returnedQty: retQty,
+      remainingQty,
+      isFullyReturned,
+    };
+  });
+
   return {
     _id: String(row.id),
     id: row.id,
@@ -48,8 +96,8 @@ export function formatTransaction(row, customerRow = null) {
       address: customerRow.address || '',
     } : (row.customer_id ? String(row.customer_id) : null),
     supplierId: row.supplier_id ? String(row.supplier_id) : null,
-    lineItems: parseJSON(row.line_items),
-    returnLogs: parseJSON(row.return_logs),
+    lineItems,
+    returnLogs: rawReturnLogs,
     customerName: row.customer_name || customerRow?.name || 'Walk-in Customer',
     customerPhone: row.customer_phone || customerRow?.phone || 'N/A',
     customerEmail: row.customer_email || customerRow?.email || '',

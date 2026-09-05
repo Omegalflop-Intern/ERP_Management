@@ -179,12 +179,12 @@ export const seedDefaultRoles = async () => {
     { name: 'CASHIER', displayName: 'Cashier', description: 'Sales and basic operations', isSystem: true, permissions: [
       'dashboard:view', 'sales:view', 'sales:create',
       'products:view', 'customers:view', 'customers:manage',
-      'repairs:view', 'warranties:view',
+      'repairs:view', 'warranties:view', 'attendance:view', 'leaves:view',
     ]},
     { name: 'TECHNICIAN', displayName: 'Technician', description: 'Repair and warranty operations', isSystem: true, permissions: [
       'dashboard:view', 'repairs:view', 'repairs:manage',
       'warranties:view', 'warranties:manage', 'products:view',
-      'inventory:view',
+      'inventory:view', 'attendance:view', 'leaves:view',
     ]},
   ];
 

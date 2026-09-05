@@ -15,6 +15,6 @@ router.get('/', leaveController.getAllLeaves);
 router.get('/employee/:employeeId', leaveController.getEmployeeLeaves);
 router.post('/', validate(createLeaveSchema), leaveController.createLeave);
 router.put('/:id/status', authorize('ADMIN', 'MANAGER'), validate(updateLeaveStatusSchema), leaveController.updateLeaveStatus);
-router.delete('/:id', authorize('ADMIN'), leaveController.deleteLeave);
+router.delete('/:id', leaveController.deleteLeave);
 
 export default router;
