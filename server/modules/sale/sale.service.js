@@ -35,23 +35,26 @@ export function formatTransaction(row, customerRow = null) {
   const rawReturnLogs = parseJSON(row.return_logs);
 
   // Compute returned quantities and IMEIs per line item
+  // IMEI items are tracked individually by IMEI; bulk non-IMEI items are tracked by productId count.
   const returnedImeis = new Set();
-  const returnedProductQtyMap = {};
+  const returnedBulkProductQtyMap = {};
 
   for (const log of (Array.isArray(rawReturnLogs) ? rawReturnLogs : [])) {
     const rItems = log.items || log.returnedItems || [];
     for (const ri of rItems) {
-      if (ri.imeiOrSerial) {
-        returnedImeis.add(String(ri.imeiOrSerial).trim());
-      }
-      const pId = String(ri.productId?._id || ri.productId?.id || ri.productId || '').trim();
-      if (pId) {
-        returnedProductQtyMap[pId] = (returnedProductQtyMap[pId] || 0) + Number(ri.quantity || ri.qty || 1);
+      const imei = ri.imeiOrSerial ? String(ri.imeiOrSerial).trim() : null;
+      if (imei) {
+        returnedImeis.add(imei);
+      } else {
+        const pId = String(ri.productId?._id || ri.productId?.id || ri.productId || '').trim();
+        if (pId) {
+          returnedBulkProductQtyMap[pId] = (returnedBulkProductQtyMap[pId] || 0) + Number(ri.quantity || ri.qty || 1);
+        }
       }
     }
   }
 
-  const tempAllocatedMap = { ...returnedProductQtyMap };
+  const tempBulkAllocatedMap = { ...returnedBulkProductQtyMap };
 
   const lineItems = (Array.isArray(rawLineItems) ? rawLineItems : []).map((li) => {
     let retQty = Number(li.returnedQty || 0);
@@ -59,12 +62,16 @@ export function formatTransaction(row, customerRow = null) {
     const pId = String(li.productId?._id || li.productId?.id || li.productId || '').trim();
     const originalQty = Number(li.qty || 1);
 
-    if (itemImei && returnedImeis.has(itemImei)) {
-      retQty = originalQty;
-    } else if (pId && tempAllocatedMap[pId] > 0) {
-      const needed = Math.min(tempAllocatedMap[pId], originalQty);
+    if (itemImei) {
+      // IMEI items are strictly evaluated by their specific IMEI
+      if (returnedImeis.has(itemImei)) {
+        retQty = originalQty;
+      }
+    } else if (pId && tempBulkAllocatedMap[pId] > 0) {
+      // Bulk non-IMEI items allocate from returnedBulkProductQtyMap
+      const needed = Math.min(tempBulkAllocatedMap[pId], originalQty);
       retQty = Math.max(retQty, needed);
-      tempAllocatedMap[pId] -= needed;
+      tempBulkAllocatedMap[pId] -= needed;
     }
 
     const remainingQty = Math.max(0, originalQty - retQty);
@@ -655,14 +662,14 @@ export const processReturn = async (id, data, tenantId = null) => {
   for (const ri of returnItems) {
     let pId = ri.productId?._id || ri.productId?.id || ri.productId;
     let lineItem;
-    if (pId) {
+    if (ri.imeiOrSerial) {
+      lineItem = (sale.lineItems || []).find(li => String(li.imeiOrSerial || '').trim() === String(ri.imeiOrSerial).trim());
+    }
+    if (!lineItem && pId) {
       lineItem = (sale.lineItems || []).find(li => String(li.productId?._id || li.productId?.id || li.productId) === String(pId));
     }
-    if (!lineItem && ri.imeiOrSerial) {
-      lineItem = (sale.lineItems || []).find(li => String(li.imeiOrSerial) === String(ri.imeiOrSerial));
-      if (lineItem) {
-        pId = lineItem.productId?._id || lineItem.productId?.id || lineItem.productId;
-      }
+    if (lineItem && !pId) {
+      pId = lineItem.productId?._id || lineItem.productId?.id || lineItem.productId;
     }
     if (!lineItem) throw ApiError.badRequest(`Line item not found for product ${pId || ri.imeiOrSerial}`);
     const qty = Math.abs(ri.quantity || ri.qty || 1);
