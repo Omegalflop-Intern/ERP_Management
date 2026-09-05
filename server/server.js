@@ -1,7 +1,13 @@
 import app from './app.js';
 import { env } from './config/env.config.js';
 import { checkDbConnection } from './config/db.knex.js';
-import { initMailer, sendAdminNotificationEmail, sendCustomerInvoiceEmail, sendCustomerRepairEmail } from './config/mailer.js';
+import {
+  initMailer,
+  sendAdminNotificationEmail,
+  sendCustomerInvoiceEmail,
+  sendCustomerRepairEmail,
+  sendShopSaleAlertEmail,
+} from './config/mailer.js';
 import { seedDefaultRoles } from './modules/role/role.service.js';
 import { initAutoBackup } from './modules/settings/settings.service.js';
 import emitter, { EVENTS } from './events/index.js';
@@ -136,12 +142,6 @@ if (!process.env.NODE_WATCH && process.env.NODE_ENV === 'production') {
   emitter.on(EVENTS.STOCK_UPDATED, (data) => {
     console.log('\x1b[36m[EVENT:STOCK]\x1b[0m Stock updated:', data?.name || data?.sku);
     broadcastToTenant(data?.tenantId || null, { type: 'STOCK_UPDATED', data });
-
-    sendAdminNotificationEmail(
-      `Stock Updated (${data?.name || data?.sku || 'Product'})`,
-      'Product Stock Updated',
-      `<p>Inventory updated for product: <strong>${data?.name || 'Item'}</strong></p>`
-    ).catch((err) => console.error('[Admin Mail Error]:', err.message));
   });
 
   emitter.on(EVENTS.SALE_COMPLETED, async (data) => {
@@ -161,6 +161,7 @@ if (!process.env.NODE_WATCH && process.env.NODE_ENV === 'production') {
     const customerEmail = data?.customerEmail || data?.sale?.customer?.email || data?.customer?.email;
     const customerName = data?.customerName || data?.sale?.customer?.name || data?.customer?.name;
 
+    // 1. Send customer receipt email directly to customer
     if (customerEmail) {
       const saleObj = data?.sale || data;
       sendCustomerInvoiceEmail(customerEmail, customerName, {
@@ -183,12 +184,15 @@ if (!process.env.NODE_WATCH && process.env.NODE_ENV === 'production') {
       }).catch((err) => console.error('[Customer Mail Error]:', err.message));
     }
 
-    sendAdminNotificationEmail(
-      `New Sale Recorded #${invoiceNo}`,
-      `New Sale Completed (${invoiceNo})`,
-      `<p>Sale invoice <strong>#${invoiceNo}</strong> processed for <strong>৳${Number(amount).toLocaleString()}</strong>.</p>
-       <p>Customer: ${customerName || 'Walk-in Customer'} ${customerEmail ? `(${customerEmail})` : ''}</p>`
-    ).catch((err) => console.error('[Admin Mail Error]:', err.message));
+    // 2. Send sale alert to the specific shop/tenant admin (NOT platform super admins)
+    if (eventTenantId) {
+      sendShopSaleAlertEmail(eventTenantId, {
+        invoiceNo,
+        amount,
+        customerName,
+        customerEmail,
+      }).catch((err) => console.error('[Shop Sale Mail Error]:', err.message));
+    }
 
     try {
       let query = db('users').where({ is_deleted: false, is_active: true });
@@ -215,11 +219,14 @@ if (!process.env.NODE_WATCH && process.env.NODE_ENV === 'production') {
     console.log('\x1b[34m[EVENT:USER]\x1b[0m User created:', data?.username);
     broadcastToTenant(data?.tenantId || null, { type: 'USER_MUTATED', data });
     broadcastAll({ type: 'USER_MUTATED', data });
-    sendAdminNotificationEmail(
-      `New User Created (${data?.username || 'User'})`,
-      'New User Account Created',
-      `<p>New system user <strong>${data?.username}</strong> (${data?.roleName || 'Staff'}) was added.</p>`
-    ).catch((err) => console.error('[Admin Mail Error]:', err.message));
+    // Only alert platform super admin if a global platform user was created (no tenant)
+    if (!data?.tenantId) {
+      sendAdminNotificationEmail(
+        `New Platform User Created (${data?.username || 'User'})`,
+        'New Platform User Account Created',
+        `<p>New global administrator <strong>${data?.username}</strong> was added to the platform.</p>`
+      ).catch((err) => console.error('[Admin Mail Error]:', err.message));
+    }
   });
 
   emitter.on(EVENTS.USER_MUTATED, (data) => {
@@ -229,11 +236,10 @@ if (!process.env.NODE_WATCH && process.env.NODE_ENV === 'production') {
   });
 
   emitter.on(EVENTS.LOW_STOCK_ALERT, (data) => {
-    sendAdminNotificationEmail(
-      `Low Stock Warning (${data?.name || 'Product'})`,
-      'Low Stock Warning Alert',
-      `<p>Product <strong>${data?.name}</strong> has reached low stock (Remaining: ${data?.stockQuantity}). Please restock.</p>`
-    ).catch((err) => console.error('[Admin Mail Error]:', err.message));
+    // In-app broadcast only to the shop tenant
+    if (data?.tenantId) {
+      broadcastToTenant(data.tenantId, { type: 'LOW_STOCK_ALERT', data });
+    }
   });
 
   emitter.on(EVENTS.NOTIFICATION_NEW, (data) => {

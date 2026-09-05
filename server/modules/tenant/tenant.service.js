@@ -3,6 +3,7 @@ import { db } from '../../config/db.knex.js';
 import { ApiError } from '../../utils/http/ApiError.js';
 import { seedDefaultsForTenant, updateSettings } from '../settings/settings.service.js';
 import { syncUserToEmployee } from '../employee/employee.service.js';
+import { sendShopRegistrationAdminEmail, sendShopOwnerWelcomeEmail } from '../../config/mailer.js';
 
 export function formatTenant(row) {
   if (!row) return null;
@@ -429,7 +430,26 @@ export const createTenant = async (data, isSuperAdmin = false) => {
   // Automatically provision default settings for the new shop tenant
   await seedDefaultsForTenant(insertedId, data);
 
-  return getTenantById(insertedId);
+  const newTenant = await getTenantById(insertedId);
+
+  // Send platform admin alert for new shop registration & welcome email to owner
+  sendShopRegistrationAdminEmail({
+    ...data,
+    id: insertedId,
+    email: emailLower,
+    plan: planName,
+    subdomain,
+    status: initialStatus,
+    kycStatus: initialKycStatus,
+  }).catch((err) => console.error('[Shop Reg Admin Mailer Error]:', err.message));
+
+  sendShopOwnerWelcomeEmail(emailLower, data.ownerName, {
+    shopName: data.shopName,
+    subdomain,
+    plan: planName,
+  }).catch((err) => console.error('[Shop Welcome Mailer Error]:', err.message));
+
+  return newTenant;
 };
 
 export const purgeTenantData = async (tenantId) => {

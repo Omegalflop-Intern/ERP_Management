@@ -30,11 +30,6 @@ export const createRepair = async (req, res, next) => {
     if (ticket.customerEmail) {
       sendCustomerRepairEmail(ticket.customerEmail, ticket.customerName, ticket).catch(e => console.error('[Customer Repair Mail Error]:', e.message));
     }
-    sendAdminNotificationEmail(
-      `New Device Repair Sheet #${ticket.ticketNumber}`,
-      `New Repair Ticket (${ticket.ticketNumber})`,
-      `<p>New repair ticket created for device <strong>${ticket.deviceModel || 'Device'}</strong> (Customer: ${ticket.customerName || 'N/A'}). Status: <strong>${ticket.status}</strong></p>`
-    ).catch(e => console.error('[Admin Repair Mail Error]:', e.message));
 
     return ApiResponse.created(res, ticket, 'Repair ticket created');
   } catch (error) { next(error); }
@@ -49,11 +44,6 @@ export const updateRepairStatus = async (req, res, next) => {
     if (ticket.customerEmail) {
       sendCustomerRepairEmail(ticket.customerEmail, ticket.customerName, ticket).catch(e => console.error('[Customer Repair Mail Error]:', e.message));
     }
-    sendAdminNotificationEmail(
-      `Repair Status Changed #${ticket.ticketNumber} (${ticket.status})`,
-      `Repair Ticket Status Updated`,
-      `<p>Ticket <strong>#${ticket.ticketNumber}</strong> status changed to <strong style="color:#2563eb;">${ticket.status}</strong>.</p>`
-    ).catch(e => console.error('[Admin Repair Mail Error]:', e.message));
 
     return ApiResponse.success(res, ticket, `Status updated to ${ticket.status}`);
   } catch (error) { next(error); }

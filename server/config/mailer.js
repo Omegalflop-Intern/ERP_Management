@@ -264,7 +264,7 @@ export const sendAdminNotificationEmail = async (subject, title, detailsHtml) =>
   }
 };
 
-export const sendTicketCreatedAdminEmail = async (ticketData) => {
+export const sendShopRegistrationAdminEmail = async (tenantData) => {
   if (!transporter) await initMailer();
 
   let adminEmails = [];
@@ -278,7 +278,7 @@ export const sendTicketCreatedAdminEmail = async (ticketData) => {
       adminEmails = adminUsers.map((u) => u.email).filter(Boolean);
     }
   } catch (err) {
-    console.error('[Ticket Admin Mailer Lookup Error]:', err.message);
+    console.error('[Shop Reg Admin Mailer Lookup Error]:', err.message);
   }
 
   if (process.env.ADMIN_EMAIL && !adminEmails.includes(process.env.ADMIN_EMAIL)) {
@@ -286,17 +286,28 @@ export const sendTicketCreatedAdminEmail = async (ticketData) => {
   }
 
   const recipientString = [...new Set(adminEmails)].filter(Boolean).join(', ');
-  if (!recipientString) return { success: false, reason: 'No admin email found' };
+  if (!recipientString) return { success: false, reason: 'No platform admin email found' };
 
-  const { ticketNumber, shopName, shopSubdomain, subject, category, priority, description, createdByName } = ticketData;
+  const {
+    shopName,
+    ownerName,
+    email,
+    phone,
+    subdomain,
+    plan,
+    nidNumber,
+    tradeLicenseNumber,
+    kycStatus,
+    status,
+  } = tenantData;
 
   const mailOptions = {
     from: `"${SENDER_NAME}" <${SENDER_EMAIL}>`,
     to: recipientString,
     replyTo: SUPPORT_EMAIL,
-    subject: `[Support Ticket] New Ticket #${ticketNumber} from ${shopName || 'Shop'}`,
-    headers: { ...baseHeaders, 'X-Priority': priority === 'URGENT' ? '1' : '3' },
-    text: `New Support Ticket Submitted\n\nTicket #: ${ticketNumber}\nShop: ${shopName} (${shopSubdomain || 'N/A'})\nCategory: ${category}\nPriority: ${priority}\nSubject: ${subject}\n\nDescription:\n${description}\n\nSubmitted By: ${createdByName}\n\nPowered by OmniManage ERP Suite`,
+    subject: `[Platform Alert] New Shop Registered: ${shopName} (${subdomain || 'outlet'})`,
+    headers: { ...baseHeaders, 'X-Priority': '2' },
+    text: `New Shop Registered on OmniManage ERP\n\nShop Name: ${shopName}\nSubdomain: ${subdomain || 'N/A'}\nOwner: ${ownerName}\nEmail: ${email}\nPhone: ${phone}\nPlan: ${plan || 'STARTER'}\nKYC Status: ${kycStatus || 'PENDING'}\nOutlet Status: ${status || 'ACTIVE'}\n\nPlease log in to Super Admin Dashboard to manage this shop.`,
     html: `
       <!DOCTYPE html>
       <html lang="en">
@@ -307,35 +318,43 @@ export const sendTicketCreatedAdminEmail = async (ticketData) => {
             <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
               <tr>
                 <td style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);padding:24px 32px;">
-                  <h2 style="margin:0;color:#ffffff;font-size:18px;font-weight:700;">Support Ticket Submitted</h2>
-                  <p style="margin:6px 0 0;color:#60a5fa;font-size:13px;font-weight:600;">#${ticketNumber} &bull; ${priority} Priority</p>
+                  <h2 style="margin:0;color:#ffffff;font-size:18px;font-weight:700;">New Shop Outlet Registered</h2>
+                  <p style="margin:6px 0 0;color:#60a5fa;font-size:13px;font-weight:600;">Subdomain: ${subdomain || 'outlet'}.omnimanage.app &bull; Plan: ${plan || 'STARTER'}</p>
                 </td>
               </tr>
               <tr>
                 <td style="padding:28px 32px;">
                   <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;border-collapse:collapse;">
                     <tr style="background:#f8fafc;">
-                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#64748b;width:30%;">Shop Name:</td>
-                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#0f172a;font-weight:600;">${shopName || 'Unknown Shop'} (${shopSubdomain || 'main'})</td>
+                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#64748b;width:35%;">Shop Name:</td>
+                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#0f172a;font-weight:700;">${shopName}</td>
                     </tr>
                     <tr>
-                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#64748b;">Category:</td>
-                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#0f172a;">${category}</td>
+                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#64748b;">Owner Name:</td>
+                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#0f172a;">${ownerName}</td>
                     </tr>
                     <tr style="background:#f8fafc;">
-                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#64748b;">Subject:</td>
-                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#0f172a;font-weight:600;">${subject}</td>
+                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#64748b;">Contact Email:</td>
+                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#2563eb;font-weight:600;">${email}</td>
                     </tr>
                     <tr>
-                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#64748b;">Submitted By:</td>
-                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#0f172a;">${createdByName || 'Staff User'}</td>
+                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#64748b;">Phone Number:</td>
+                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#0f172a;">${phone}</td>
+                    </tr>
+                    <tr style="background:#f8fafc;">
+                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#64748b;">Selected Plan:</td>
+                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#059669;font-weight:700;">${plan || 'PRO'}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#64748b;">Trade License:</td>
+                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#0f172a;">${tradeLicenseNumber || 'Not provided'}</td>
+                    </tr>
+                    <tr style="background:#f8fafc;">
+                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#64748b;">NID / Passport:</td>
+                      <td style="padding:10px 14px;border:1px solid #e2e8f0;font-size:13px;color:#0f172a;">${nidNumber || 'Not provided'}</td>
                     </tr>
                   </table>
-                  <div style="background:#f1f5f9;border-left:4px solid #2563eb;padding:16px;border-radius:4px;margin-bottom:20px;">
-                    <p style="margin:0 0 6px;font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;">Ticket Description:</p>
-                    <p style="margin:0;font-size:14px;color:#1e293b;line-height:1.6;white-space:pre-wrap;">${description}</p>
-                  </div>
-                  <p style="margin:0;font-size:12px;color:#64748b;">Please log in to the Super Admin Panel to review and resolve this ticket.</p>
+                  <p style="margin:0;font-size:13px;color:#64748b;">Log in to the Super Admin platform to review documents, verify KYC, or configure custom limits.</p>
                 </td>
               </tr>
               <tr>
@@ -354,10 +373,173 @@ export const sendTicketCreatedAdminEmail = async (ticketData) => {
 
   try {
     const info = await transporter.sendMail(mailOptions);
-    console.log(`[Ticket Mailer] Alert sent to ${recipientString} for ticket #${ticketNumber}`);
+    console.log(`[Shop Reg Admin Mailer] Alert sent to ${recipientString} for shop ${shopName}`);
     return { success: true, messageId: info.messageId };
   } catch (err) {
-    console.error(`[Ticket Mailer Error]: ${err.message}`);
+    console.error(`[Shop Reg Admin Mailer Error]: ${err.message}`);
+    return { success: false, error: err.message };
+  }
+};
+
+export const sendShopOwnerWelcomeEmail = async (toEmail, ownerName, tenantData) => {
+  if (!toEmail) return;
+  if (!transporter) await initMailer();
+
+  const { shopName, subdomain, plan } = tenantData;
+  const loginUrl = `${process.env.CLIENT_URL || process.env.APP_URL || 'https://omnimanage.app'}/login`;
+
+  const mailOptions = {
+    from: `"${SENDER_NAME}" <${SENDER_EMAIL}>`,
+    to: toEmail,
+    replyTo: SUPPORT_EMAIL,
+    subject: `Welcome to OmniManage ERP - ${shopName}`,
+    headers: { ...baseHeaders, 'X-Priority': '3' },
+    text: `Welcome to OmniManage ERP, ${ownerName}!\n\nYour shop "${shopName}" has been successfully provisioned.\nSubdomain: ${subdomain || 'app'}\nPlan: ${plan || 'PRO'}\nLogin URL: ${loginUrl}\n\nThank you for choosing OmniManage.`,
+    html: `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head><meta charset="utf-8"></head>
+      <body style="margin:0;padding:0;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',system-ui,sans-serif;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;padding:32px 16px;">
+          <tr><td align="center">
+            <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+              <tr>
+                <td style="background:linear-gradient(135deg,#1d4ed8 0%,#3b82f6 100%);padding:32px;text-align:center;">
+                  <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:800;">Welcome to OmniManage ERP!</h1>
+                  <p style="margin:8px 0 0;color:#dbeafe;font-size:14px;">Your gadget & retail shop is ready to launch.</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:32px;">
+                  <p style="margin:0 0 16px;font-size:15px;color:#1e293b;line-height:1.6;">
+                    Hello <strong>${ownerName}</strong>,<br><br>
+                    Congratulations! Your store outlet <strong>${shopName}</strong> has been successfully provisioned on OmniManage.
+                  </p>
+
+                  <div style="background:#f1f5f9;border-radius:12px;padding:20px;margin-bottom:24px;">
+                    <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;">Store Credentials Summary</p>
+                    <p style="margin:4px 0;font-size:14px;color:#0f172a;"><strong>Store Name:</strong> ${shopName}</p>
+                    <p style="margin:4px 0;font-size:14px;color:#0f172a;"><strong>Assigned Subdomain:</strong> ${subdomain || 'outlet'}</p>
+                    <p style="margin:4px 0;font-size:14px;color:#0f172a;"><strong>Plan Tier:</strong> ${plan || 'PRO'} (14-Day Free Trial Active)</p>
+                  </div>
+
+                  <div style="text-align:center;margin:32px 0;">
+                    <a href="${loginUrl}" style="background:#2563eb;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:10px;font-size:14px;font-weight:700;display:inline-block;box-shadow:0 4px 12px rgba(37,99,235,0.25);">
+                      Log In to Your Store Dashboard &rarr;
+                    </a>
+                  </div>
+
+                  <p style="margin:0;font-size:13px;color:#64748b;line-height:1.6;">
+                    If you have any questions or need assisted data migration, reply directly to this email or reach us at <a href="mailto:${SUPPORT_EMAIL}" style="color:#2563eb;">${SUPPORT_EMAIL}</a>.
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:16px;text-align:center;color:#94a3b8;font-size:11px;">
+                  © ${new Date().getFullYear()} ${APP_NAME}. All rights reserved.<br>
+                  <span style="color:#64748b;font-weight:600;">⚡ Powered by OmniManage ERP Suite</span>
+                </td>
+              </tr>
+            </table>
+          </td></tr>
+        </table>
+      </body>
+      </html>
+    `,
+  };
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`[Shop Owner Mailer] Welcome email sent to ${toEmail}`);
+    return { success: true, messageId: info.messageId };
+  } catch (err) {
+    console.error(`[Shop Owner Mailer Error]: ${err.message}`);
+    return { success: false, error: err.message };
+  }
+};
+
+export const sendShopSaleAlertEmail = async (tenantId, saleData) => {
+  if (!tenantId) return;
+  if (!transporter) await initMailer();
+
+  let shopEmails = [];
+  let shopName = 'Your Shop';
+  try {
+    const tenant = await db('tenants').where({ id: tenantId, is_deleted: false }).first();
+    if (tenant) {
+      if (tenant.email) shopEmails.push(tenant.email);
+      shopName = tenant.shop_name || shopName;
+    }
+
+    const adminUsers = await db('users')
+      .where({ tenant_id: tenantId, is_deleted: false, is_active: true })
+      .select('email');
+
+    if (adminUsers && adminUsers.length > 0) {
+      adminUsers.forEach((u) => {
+        if (u.email) shopEmails.push(u.email);
+      });
+    }
+  } catch (err) {
+    console.error('[Shop Sale Mailer Lookup Error]:', err.message);
+  }
+
+  const recipientString = [...new Set(shopEmails)].filter(Boolean).join(', ');
+  if (!recipientString) return { success: false, reason: 'No shop admin email found' };
+
+  const { invoiceNo, amount, customerName, customerEmail } = saleData;
+
+  const mailOptions = {
+    from: `"${shopName}" <${SENDER_EMAIL}>`,
+    to: recipientString,
+    replyTo: SENDER_EMAIL,
+    subject: `[Sale Recorded] #${invoiceNo} - ৳${Number(amount || 0).toLocaleString()} (${shopName})`,
+    headers: { ...baseHeaders, 'X-Priority': '3' },
+    text: `New Sale Recorded in ${shopName}\n\nInvoice: #${invoiceNo}\nAmount: ৳${Number(amount || 0).toLocaleString()}\nCustomer: ${customerName || 'Walk-in Customer'}\n\nPowered by OmniManage ERP Suite`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head><meta charset="utf-8"></head>
+      <body style="margin:0;padding:0;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',sans-serif;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;padding:24px 16px;">
+          <tr><td align="center">
+            <table width="520" cellpadding="0" cellspacing="0" style="max-width:520px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;">
+              <tr>
+                <td style="background:#0f172a;padding:20px 24px;">
+                  <h3 style="margin:0;color:#ffffff;font-size:16px;font-weight:700;">New Sale Recorded</h3>
+                  <p style="margin:4px 0 0;color:#94a3b8;font-size:12px;">Store: ${shopName} &bull; #${invoiceNo}</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:24px;color:#334155;font-size:14px;line-height:1.6;">
+                  <p style="margin:0 0 12px;">A new invoice has been recorded in your store:</p>
+                  <div style="background:#f1f5f9;border-radius:8px;padding:16px;margin-bottom:16px;">
+                    <p style="margin:0 0 6px;"><strong>Invoice Number:</strong> #${invoiceNo}</p>
+                    <p style="margin:0 0 6px;"><strong>Total Amount:</strong> <span style="color:#059669;font-weight:700;">৳${Number(amount || 0).toLocaleString()}</span></p>
+                    <p style="margin:0;"><strong>Customer:</strong> ${customerName || 'Walk-in Customer'} ${customerEmail ? `(${customerEmail})` : ''}</p>
+                  </div>
+                  <p style="margin:0;font-size:12px;color:#64748b;">View and manage this sale from your store's POS & Sales ledger.</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:12px;text-align:center;color:#94a3b8;font-size:11px;">
+                  © ${new Date().getFullYear()} ${shopName} &bull; Powered by OmniManage ERP Suite
+                </td>
+              </tr>
+            </table>
+          </td></tr>
+        </table>
+      </body>
+      </html>
+    `,
+  };
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`[Shop Sale Mailer] Alert sent to ${recipientString}: #${invoiceNo}`);
+    return { success: true, messageId: info.messageId };
+  } catch (err) {
+    console.error(`[Shop Sale Mailer Error]: ${err.message}`);
     return { success: false, error: err.message };
   }
 };
