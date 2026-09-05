@@ -24,6 +24,8 @@ import {
 } from 'lucide-react';
 import React from 'react';
 import { Link } from 'react-router-dom';
+import AnimatedCounter from '../../components/public/AnimatedCounter';
+import ScrollReveal from '../../components/public/ScrollReveal';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 export default function AboutPage() {
@@ -81,61 +83,86 @@ export default function AboutPage() {
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-300 text-xs font-bold">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Built by Engineers & Retail Veterans</span>
-          </div>
+          <ScrollReveal animation="fade-down" duration={500}>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-300 text-xs font-bold">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Built by Engineers & Retail Veterans</span>
+            </div>
+          </ScrollReveal>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
-            Transforming How Gadget Businesses{' '}
-            <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">
-              Operate & Scale
-            </span>
-          </h1>
+          <ScrollReveal animation="fade-up" delay={150}>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
+              Transforming How Gadget Businesses{' '}
+              <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">
+                Operate & Scale
+              </span>
+            </h1>
+          </ScrollReveal>
 
-          <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-3xl mx-auto leading-relaxed">
-            OmniManage was created to solve the real operational headaches of mobile retailers, electronics
-            distributors, and repair workshops. We replace scattered spreadsheets and generic POS tools with
-            an integrated operating system.
-          </p>
+          <ScrollReveal animation="fade-up" delay={300}>
+            <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-3xl mx-auto leading-relaxed">
+              OmniManage was created to solve the real operational headaches of mobile retailers, electronics
+              distributors, and repair workshops. We replace scattered spreadsheets and generic POS tools with
+              an integrated operating system.
+            </p>
+          </ScrollReveal>
         </div>
       </section>
 
-      {/* ─── STATS STRIP ──────────────────────────────────────────────────────── */}
+      {/* ─── STATS STRIP WITH ANIMATED COUNTER ───────────────────────────────── */}
       <section className="py-10 border-y border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            <div>
-              <p className="text-3xl font-black text-slate-900 dark:text-white">500+</p>
-              <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mt-1">
-                Active Outlets
-              </p>
-            </div>
-            <div>
-              <p className="text-3xl font-black text-blue-600 dark:text-blue-400">1.2M+</p>
-              <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mt-1">
-                IMEI Records Tracked
-              </p>
-            </div>
-            <div>
-              <p className="text-3xl font-black text-indigo-600 dark:text-indigo-400">৳ 250M+</p>
-              <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mt-1">
-                Monthly Invoices Settled
-              </p>
-            </div>
-            <div>
-              <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400">99.98%</p>
-              <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mt-1">
-                Platform Reliability
-              </p>
-            </div>
+            <ScrollReveal animation="fade-up" delay={0}>
+              <div>
+                <p className="text-3xl font-black text-slate-900 dark:text-white">
+                  <AnimatedCounter end={500} suffix="+" />
+                </p>
+                <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mt-1">
+                  Active Outlets
+                </p>
+              </div>
+            </ScrollReveal>
+
+            <ScrollReveal animation="fade-up" delay={100}>
+              <div>
+                <p className="text-3xl font-black text-blue-600 dark:text-blue-400">
+                  <AnimatedCounter end={1.2} suffix="M+" />
+                </p>
+                <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mt-1">
+                  IMEI Records Tracked
+                </p>
+              </div>
+            </ScrollReveal>
+
+            <ScrollReveal animation="fade-up" delay={200}>
+              <div>
+                <p className="text-3xl font-black text-indigo-600 dark:text-indigo-400">
+                  <AnimatedCounter end={250} prefix="৳ " suffix="M+" />
+                </p>
+                <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mt-1">
+                  Monthly Invoices Settled
+                </p>
+              </div>
+            </ScrollReveal>
+
+            <ScrollReveal animation="fade-up" delay={300}>
+              <div>
+                <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400">
+                  <AnimatedCounter end={99.98} suffix="%" />
+                </p>
+                <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mt-1">
+                  Platform Reliability
+                </p>
+              </div>
+            </ScrollReveal>
           </div>
         </div>
       </section>
 
       {/* ─── MISSION & PILLARS ────────────────────────────────────────────────── */}
       <section className="py-20 sm:py-28 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto space-y-3 mb-16">
+        <ScrollReveal animation="fade-up" className="text-center max-w-2xl mx-auto space-y-3 mb-16">
           <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">
             Our Architectural Core
           </h2>
@@ -146,92 +173,106 @@ export default function AboutPage() {
             Every feature in OmniManage is engineered around the specialized workflows of gadgets and
             hardware repair.
           </p>
-        </div>
+        </ScrollReveal>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {pillars.map((p) => {
+          {pillars.map((p, idx) => {
             const Icon = p.icon;
             return (
-              <div
+              <ScrollReveal
                 key={p.title}
-                className="p-8 rounded-3xl bg-white dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 shadow-lg shadow-slate-900/5 space-y-4 hover:border-blue-500/50 transition-all duration-300"
+                animation="fade-up"
+                delay={idx * 120}
+                className="h-full"
               >
-                <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${p.color} flex items-center justify-center`}>
-                  <Icon className="w-6 h-6" />
+                <div className="h-full p-8 rounded-3xl bg-white dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 shadow-lg shadow-slate-900/5 space-y-4 hover:border-blue-500/50 hover:shadow-xl transition-all duration-300">
+                  <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${p.color} flex items-center justify-center`}>
+                    <Icon className="w-6 h-6" />
+                  </div>
+                  <h4 className="text-xl font-bold text-slate-900 dark:text-white">{p.title}</h4>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{p.desc}</p>
                 </div>
-                <h4 className="text-xl font-bold text-slate-900 dark:text-white">{p.title}</h4>
-                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{p.desc}</p>
-              </div>
+              </ScrollReveal>
             );
           })}
         </div>
       </section>
 
-      {/* ─── TIMELINE / STORY ─────────────────────────────────────────────────── */}
+      {/* ─── TIMELINE / STORY WITH DIRECTIONAL SCROLL REVEAL ────────────────── */}
       <section className="py-20 bg-slate-100/70 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center space-y-3 mb-16">
+          <ScrollReveal animation="fade-up" className="text-center space-y-3 mb-16">
             <h2 className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
               Our Journey
             </h2>
             <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
               Evolution of the OmniManage Platform
             </h3>
-          </div>
+          </ScrollReveal>
 
           <div className="space-y-8 relative before:absolute before:inset-0 before:left-4 sm:before:left-1/2 before:w-0.5 before:bg-slate-300 dark:before:bg-slate-800">
-            {milestones.map((m, idx) => (
-              <div
-                key={m.year}
-                className={`relative flex flex-col sm:flex-row items-start ${
-                  idx % 2 === 0 ? 'sm:flex-row-reverse' : ''
-                } gap-6 sm:gap-12`}
-              >
-                {/* Center Badge */}
-                <div className="absolute left-4 sm:left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-blue-600 border-4 border-white dark:border-slate-950 flex items-center justify-center text-white text-[10px] font-black shadow-md z-10">
-                  ✓
-                </div>
+            {milestones.map((m, idx) => {
+              const isEven = idx % 2 === 0;
+              return (
+                <div
+                  key={m.year}
+                  className={`relative flex flex-col sm:flex-row items-start ${
+                    isEven ? 'sm:flex-row-reverse' : ''
+                  } gap-6 sm:gap-12`}
+                >
+                  {/* Center Badge */}
+                  <div className="absolute left-4 sm:left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-blue-600 border-4 border-white dark:border-slate-950 flex items-center justify-center text-white text-[10px] font-black shadow-md z-10">
+                    ✓
+                  </div>
 
-                <div className={`w-full sm:w-1/2 pl-12 sm:pl-0 ${idx % 2 === 0 ? 'sm:text-left sm:pl-8' : 'sm:text-right sm:pr-8'}`}>
-                  <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400">
-                      {m.year}
-                    </span>
-                    <h4 className="text-lg font-bold text-slate-900 dark:text-white">{m.title}</h4>
-                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                      {m.desc}
-                    </p>
+                  <div className={`w-full sm:w-1/2 pl-12 sm:pl-0 ${isEven ? 'sm:text-left sm:pl-8' : 'sm:text-right sm:pr-8'}`}>
+                    <ScrollReveal
+                      animation={isEven ? 'fade-left' : 'fade-right'}
+                      delay={idx * 150}
+                    >
+                      <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-2 hover:border-blue-500/40 transition-all">
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400">
+                          {m.year}
+                        </span>
+                        <h4 className="text-lg font-bold text-slate-900 dark:text-white">{m.title}</h4>
+                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                          {m.desc}
+                        </p>
+                      </div>
+                    </ScrollReveal>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
 
       {/* ─── CALL TO ACTION ───────────────────────────────────────────────────── */}
-      <section className="py-20 text-center max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-          Ready to Modernize Your Gadget Operations?
-        </h3>
-        <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
-          Start your 14-day unrestricted trial today and experience the speed of OmniManage.
-        </p>
-        <div className="flex flex-wrap items-center justify-center gap-3">
-          <Link
-            to="/register-shop"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-white bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-500/25 transition-all"
-          >
-            <span>Register Your Shop</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-          <Link
-            to="/contact"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 transition-all"
-          >
-            <span>Contact Sales</span>
-          </Link>
-        </div>
+      <section className="py-20 text-center max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <ScrollReveal animation="zoom-in" className="space-y-6">
+          <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+            Ready to Modernize Your Gadget Operations?
+          </h3>
+          <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
+            Start your 14-day unrestricted trial today and experience the speed of OmniManage.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Link
+              to="/register-shop"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-white bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-500/25 transition-all active:scale-95"
+            >
+              <span>Register Your Shop</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link
+              to="/contact"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 transition-all active:scale-95"
+            >
+              <span>Contact Sales</span>
+            </Link>
+          </div>
+        </ScrollReveal>
       </section>
     </div>
   );

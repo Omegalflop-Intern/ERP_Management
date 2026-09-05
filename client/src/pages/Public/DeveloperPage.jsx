@@ -24,6 +24,7 @@ import {
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
+import ScrollReveal from '../../components/public/ScrollReveal';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 export default function DeveloperPage() {
@@ -149,74 +150,86 @@ print("Response:", response.json())`,
       {/* ─── HERO HEADER ──────────────────────────────────────────────────────── */}
       <section className="relative pt-12 pb-16 sm:pt-20 sm:pb-24 bg-gradient-to-b from-blue-50/50 via-transparent to-transparent dark:from-slate-900/40 text-center">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-300 text-xs font-bold">
-            <Code2 className="w-3.5 h-3.5" />
-            <span>Developer Hub & Integration Specs</span>
-          </div>
+          <ScrollReveal animation="fade-down">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-300 text-xs font-bold">
+              <Code2 className="w-3.5 h-3.5" />
+              <span>Developer Hub & Integration Specs</span>
+            </div>
+          </ScrollReveal>
 
-          <h1 className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
-            Built for Developers,{' '}
-            <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">
-              Engineered for Speed
-            </span>
-          </h1>
+          <ScrollReveal animation="fade-up" delay={150}>
+            <h1 className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
+              Built for Developers,{' '}
+              <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">
+                Engineered for Speed
+              </span>
+            </h1>
+          </ScrollReveal>
 
-          <p className="text-base text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            Integrate your e-commerce storefront, custom hardware kiosks, or enterprise data warehouses with
-            OmniManage's REST APIs and SSE streaming engine.
-          </p>
+          <ScrollReveal animation="fade-up" delay={300}>
+            <p className="text-base text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
+              Integrate your e-commerce storefront, custom hardware kiosks, or enterprise data warehouses with
+              OmniManage's REST APIs and SSE streaming engine.
+            </p>
+          </ScrollReveal>
 
-          <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
-            <a
-              href="/api-docs"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs text-white bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-500/20 transition-all"
-            >
-              <span>Explore OpenAPI / Swagger</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
-            <a
-              href="#code-sample"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
-            >
-              <Terminal className="w-3.5 h-3.5" />
-              <span>View Code Samples</span>
-            </a>
-          </div>
+          <ScrollReveal animation="fade-up" delay={450}>
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+              <a
+                href="/api-docs"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs text-white bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-500/20 transition-all active:scale-95"
+              >
+                <span>Explore OpenAPI / Swagger</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+              <a
+                href="#code-sample"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-95"
+              >
+                <Terminal className="w-3.5 h-3.5" />
+                <span>View Code Samples</span>
+              </a>
+            </div>
+          </ScrollReveal>
         </div>
       </section>
 
       {/* ─── TECH STACK ARCHITECTURE ─────────────────────────────────────────── */}
       <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto space-y-2 mb-12">
+        <ScrollReveal animation="fade-up" className="text-center max-w-2xl mx-auto space-y-2 mb-12">
           <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">
             System Architecture
           </h2>
           <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
             High-Performance Stack
           </h3>
-        </div>
+        </ScrollReveal>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stackLayers.map((layer) => {
+          {stackLayers.map((layer, idx) => {
             const Icon = layer.icon;
             return (
-              <div
+              <ScrollReveal
                 key={layer.title}
-                className="p-6 rounded-3xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3 flex flex-col justify-between"
+                animation="fade-up"
+                delay={idx * 100}
+                className="h-full"
               >
-                <div className="space-y-3">
-                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${layer.color} flex items-center justify-center`}>
-                    <Icon className="w-5 h-5" />
+                <div className="h-full p-6 rounded-3xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3 flex flex-col justify-between hover:border-blue-500/40 hover:shadow-lg transition-all">
+                  <div className="space-y-3">
+                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${layer.color} flex items-center justify-center`}>
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <h4 className="text-base font-bold text-slate-900 dark:text-white">{layer.title}</h4>
+                    <p className="text-[11px] font-mono font-bold text-blue-600 dark:text-blue-400">
+                      {layer.tech}
+                    </p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{layer.desc}</p>
                   </div>
-                  <h4 className="text-base font-bold text-slate-900 dark:text-white">{layer.title}</h4>
-                  <p className="text-[11px] font-mono font-bold text-blue-600 dark:text-blue-400">
-                    {layer.tech}
-                  </p>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{layer.desc}</p>
                 </div>
-              </div>
+              </ScrollReveal>
             );
           })}
         </div>
@@ -227,7 +240,7 @@ print("Response:", response.json())`,
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
             {/* Left: Endpoint List */}
-            <div className="space-y-4">
+            <ScrollReveal animation="fade-right" className="space-y-4">
               <div>
                 <h3 className="text-2xl font-black text-slate-900 dark:text-white">Core REST Endpoints</h3>
                 <p className="text-xs text-slate-500 mt-1">
@@ -239,7 +252,7 @@ print("Response:", response.json())`,
                 {endpoints.map((ep) => (
                   <div
                     key={ep.path}
-                    className="p-3 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
+                    className="p-3 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs hover:border-blue-500/40 transition-all"
                   >
                     <div className="flex items-center gap-2">
                       <span
@@ -257,10 +270,10 @@ print("Response:", response.json())`,
                   </div>
                 ))}
               </div>
-            </div>
+            </ScrollReveal>
 
             {/* Right: Code Snippet Card */}
-            <div className="rounded-3xl bg-slate-950 border border-slate-800 shadow-2xl overflow-hidden">
+            <ScrollReveal animation="fade-left" delay={200} className="rounded-3xl bg-slate-950 border border-slate-800 shadow-2xl overflow-hidden">
               {/* Header */}
               <div className="flex items-center justify-between px-4 py-3 bg-slate-900/80 border-b border-slate-800 text-xs">
                 <div className="flex items-center gap-2">
@@ -301,7 +314,7 @@ print("Response:", response.json())`,
               <pre className="p-5 text-xs font-mono text-emerald-400 overflow-x-auto leading-relaxed">
                 <code>{codeSnippets[activeLang]}</code>
               </pre>
-            </div>
+            </ScrollReveal>
           </div>
         </div>
       </section>

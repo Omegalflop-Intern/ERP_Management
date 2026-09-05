@@ -43,67 +43,15 @@ import {
   Wrench,
   Zap,
 } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { toast } from 'sonner';
+import AnimatedCounter from '../../components/public/AnimatedCounter';
+import ScrollReveal from '../../components/public/ScrollReveal';
+import Typewriter from '../../components/public/Typewriter';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import api from '../../lib/api';
-
-function AnimatedCounter({ end, suffix = '', prefix = '', duration = 2000 }) {
-  const [count, setCount] = useState(0);
-  const [hasStarted, setHasStarted] = useState(false);
-  const ref = useRef(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setHasStarted(true);
-        }
-      },
-      { threshold: 0.15 }
-    );
-
-    if (ref.current) {
-      observer.observe(ref.current);
-    }
-
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!hasStarted) return;
-    let startTimestamp = null;
-    const target = typeof end === 'number' ? end : parseFloat(end) || 0;
-    const isDecimal = String(end).includes('.');
-
-    const step = (timestamp) => {
-      if (!startTimestamp) startTimestamp = timestamp;
-      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-      const easeProgress = 1 - Math.pow(1 - progress, 3);
-      const currentVal = easeProgress * target;
-
-      setCount(isDecimal ? parseFloat(currentVal.toFixed(1)) : Math.floor(currentVal));
-
-      if (progress < 1) {
-        window.requestAnimationFrame(step);
-      } else {
-        setCount(target);
-      }
-    };
-
-    window.requestAnimationFrame(step);
-  }, [hasStarted, end, duration]);
-
-  return (
-    <span ref={ref}>
-      {prefix}
-      {count.toLocaleString()}
-      {suffix}
-    </span>
-  );
-}
 
 export default function LandingPage() {
   useDocumentTitle('OmniManage - Enterprise ERP for Gadget Shops & Repair Labs');
@@ -119,10 +67,6 @@ export default function LandingPage() {
 
   // FAQ open item
   const [openFaq, setOpenFaq] = useState(0);
-
-  // Interactive ROI Calculator State
-  const [dailySales, setDailySales] = useState(25);
-  const [avgTicketPrice, setAvgTicketPrice] = useState(15000);
 
   // Sample analytics chart data
   const revenueTrendData = [
@@ -284,63 +228,84 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-3xl mx-auto space-y-6">
             {/* Top Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-800/80 text-blue-600 dark:text-blue-300 text-xs font-semibold shadow-xs">
-              <Sparkles className="w-3.5 h-3.5 text-blue-500" />
-              <span>Engineered Exclusively for Gadget & Mobile Retailers</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-              <span className="text-[11px] opacity-80">v2.4 Live</span>
-            </div>
+            <ScrollReveal animation="fade-down" duration={500}>
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-800/80 text-blue-600 dark:text-blue-300 text-xs font-semibold shadow-xs">
+                <Sparkles className="w-3.5 h-3.5 text-blue-500" />
+                <span>Engineered Exclusively for Gadget & Mobile Retailers</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                <span className="text-[11px] opacity-80">v2.4 Live</span>
+              </div>
+            </ScrollReveal>
 
-            {/* Main Headline */}
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12]">
-              Run Your Gadget Store with{' '}
-              <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">
-                Flawless Precision
-              </span>
-            </h1>
+            {/* Main Headline with Typewriter */}
+            <ScrollReveal animation="fade-up" delay={150} duration={600}>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15]">
+                Run Your Gadget Store with <br className="hidden sm:inline" />
+                <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">
+                  <Typewriter
+                    words={[
+                      'Flawless IMEI Tracking',
+                      'Sub-Second POS Billing',
+                      'Smart Repair Lab Hub',
+                      'Unified Stock Sync',
+                      'Audit-Ready Accounting',
+                    ]}
+                    typingSpeed={80}
+                    deletingSpeed={45}
+                    pauseTime={1900}
+                  />
+                </span>
+              </h1>
+            </ScrollReveal>
 
             {/* Subtitle */}
-            <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
-              Eliminate lost devices and stock chaos. OmniManage unites <strong>IMEI tracking</strong>,{' '}
-              <strong>POS billing</strong>, <strong>repair servicing</strong>, and{' '}
-              <strong>audit-ready accounting</strong> into one unified cloud ERP.
-            </p>
+            <ScrollReveal animation="fade-up" delay={300} duration={600}>
+              <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
+                Eliminate lost devices and stock chaos. OmniManage unites <strong>IMEI tracking</strong>,{' '}
+                <strong>POS billing</strong>, <strong>repair servicing</strong>, and{' '}
+                <strong>audit-ready accounting</strong> into one unified cloud ERP.
+              </p>
+            </ScrollReveal>
 
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-              <Link
-                to="/register-shop"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 hover:from-blue-500 hover:to-indigo-500 shadow-xl shadow-blue-500/25 active:scale-95 transition-all"
-              >
-                <Sparkles className="w-4 h-4 text-blue-200" />
-                <span>Start 14-Day Free Trial</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-              <a
-                href="#modules"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 shadow-xs transition-all"
-              >
-                <span>Explore Live Demo</span>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
-              </a>
-            </div>
+            <ScrollReveal animation="fade-up" delay={450} duration={600}>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                <Link
+                  to="/register-shop"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 hover:from-blue-500 hover:to-indigo-500 shadow-xl shadow-blue-500/25 active:scale-95 transition-all"
+                >
+                  <Sparkles className="w-4 h-4 text-blue-200" />
+                  <span>Start 14-Day Free Trial</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <a
+                  href="#modules"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 shadow-xs transition-all"
+                >
+                  <span>Explore Live Demo</span>
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                </a>
+              </div>
+            </ScrollReveal>
 
             {/* Micro proof points */}
-            <div className="pt-4 flex flex-wrap items-center justify-center gap-y-2 gap-x-6 text-xs text-slate-500 dark:text-slate-400">
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500" /> No credit card required
-              </span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Instant cloud provisioning
-              </span>
-              <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Free data migration assistance
-              </span>
-            </div>
+            <ScrollReveal animation="fade" delay={600} duration={600}>
+              <div className="pt-4 flex flex-wrap items-center justify-center gap-y-2 gap-x-6 text-xs text-slate-500 dark:text-slate-400">
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" /> No credit card required
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Instant cloud provisioning
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Free data migration assistance
+                </span>
+              </div>
+            </ScrollReveal>
           </div>
 
-          {/* Interactive Preview Mockup Card */}
-          <div className="mt-14 max-w-5xl mx-auto">
+          {/* Interactive Preview Mockup Card with Zoom-in Reveal */}
+          <ScrollReveal animation="zoom-in" delay={300} duration={800} className="mt-14 max-w-5xl mx-auto">
             <div className="relative rounded-2xl sm:rounded-3xl p-2 sm:p-3 bg-gradient-to-b from-slate-200 to-slate-100 dark:from-slate-800 dark:to-slate-950 border border-slate-300/80 dark:border-slate-800 shadow-2xl shadow-blue-500/10">
               {/* Fake browser bar */}
               <div className="flex items-center justify-between px-4 py-2.5 bg-slate-100 dark:bg-slate-900/90 rounded-xl mb-2 border border-slate-200 dark:border-slate-800 text-xs">
@@ -361,14 +326,16 @@ export default function LandingPage() {
 
               {/* Mock Dashboard Grid */}
               <div className="bg-white dark:bg-[#0c1220] rounded-xl p-4 sm:p-6 space-y-6 border border-slate-200 dark:border-slate-800/80">
-                {/* Metric Quick Stats */}
+                {/* Metric Quick Stats with CountUp */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                   <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800">
                     <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                       <span>Today's Sales</span>
                       <Receipt className="w-4 h-4 text-blue-500" />
                     </div>
-                    <p className="text-xl font-extrabold text-slate-900 dark:text-white mt-1">৳ 1,48,500</p>
+                    <p className="text-xl font-extrabold text-slate-900 dark:text-white mt-1">
+                      <AnimatedCounter end={148500} prefix="৳ " />
+                    </p>
                     <span className="text-[10px] font-semibold text-emerald-500 flex items-center gap-0.5 mt-1">
                       <TrendingUp className="w-3 h-3" /> +18.4% vs yesterday
                     </span>
@@ -379,7 +346,9 @@ export default function LandingPage() {
                       <span>Active IMEIs</span>
                       <Smartphone className="w-4 h-4 text-cyan-500" />
                     </div>
-                    <p className="text-xl font-extrabold text-slate-900 dark:text-white mt-1">1,248 Units</p>
+                    <p className="text-xl font-extrabold text-slate-900 dark:text-white mt-1">
+                      <AnimatedCounter end={1248} suffix=" Units" />
+                    </p>
                     <span className="text-[10px] font-medium text-slate-500 mt-1">Across 3 branches</span>
                   </div>
 
@@ -388,7 +357,9 @@ export default function LandingPage() {
                       <span>Repair Jobs</span>
                       <Wrench className="w-4 h-4 text-amber-500" />
                     </div>
-                    <p className="text-xl font-extrabold text-slate-900 dark:text-white mt-1">14 In-Progress</p>
+                    <p className="text-xl font-extrabold text-slate-900 dark:text-white mt-1">
+                      <AnimatedCounter end={14} suffix=" In-Progress" />
+                    </p>
                     <span className="text-[10px] font-semibold text-amber-500 mt-1">4 ready for delivery</span>
                   </div>
 
@@ -397,7 +368,9 @@ export default function LandingPage() {
                       <span>Net Margin</span>
                       <CircleDollarSign className="w-4 h-4 text-emerald-500" />
                     </div>
-                    <p className="text-xl font-extrabold text-slate-900 dark:text-white mt-1">22.8%</p>
+                    <p className="text-xl font-extrabold text-slate-900 dark:text-white mt-1">
+                      <AnimatedCounter end={22.8} suffix="%" />
+                    </p>
                     <span className="text-[10px] font-semibold text-emerald-500 mt-1">After technician cuts</span>
                   </div>
                 </div>
@@ -480,54 +453,65 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
-          </div>
+          </ScrollReveal>
         </div>
       </section>
 
-      {/* ─── PROOF OF SCALE STATS ─────────────────────────────────────────────── */}
+      {/* ─── PROOF OF SCALE STATS WITH ANIMATED COUNTER ─────────────────────── */}
       <section className="py-12 border-y border-slate-200/80 dark:border-slate-800/80 bg-white/50 dark:bg-slate-900/40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div className="space-y-1">
-              <p className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
-                <AnimatedCounter end={500} suffix="+" />
-              </p>
-              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Gadget Retailers Empowered
-              </p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-3xl sm:text-4xl font-black text-blue-600 dark:text-blue-400">
-                <AnimatedCounter end={1.2} suffix="M+" />
-              </p>
-              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                IMEI Records Tracked
-              </p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-3xl sm:text-4xl font-black text-indigo-600 dark:text-indigo-400">
-                <AnimatedCounter end={450} suffix="K+" />
-              </p>
-              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Repair Orders Processed
-              </p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-3xl sm:text-4xl font-black text-emerald-600 dark:text-emerald-400">
-                <AnimatedCounter end={99.98} suffix="%" />
-              </p>
-              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                High-Availability Uptime
-              </p>
-            </div>
+            <ScrollReveal animation="fade-up" delay={0}>
+              <div className="space-y-1">
+                <p className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
+                  <AnimatedCounter end={500} suffix="+" />
+                </p>
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Gadget Retailers Empowered
+                </p>
+              </div>
+            </ScrollReveal>
+
+            <ScrollReveal animation="fade-up" delay={100}>
+              <div className="space-y-1">
+                <p className="text-3xl sm:text-4xl font-black text-blue-600 dark:text-blue-400">
+                  <AnimatedCounter end={1.2} suffix="M+" />
+                </p>
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  IMEI Records Tracked
+                </p>
+              </div>
+            </ScrollReveal>
+
+            <ScrollReveal animation="fade-up" delay={200}>
+              <div className="space-y-1">
+                <p className="text-3xl sm:text-4xl font-black text-indigo-600 dark:text-indigo-400">
+                  <AnimatedCounter end={450} suffix="K+" />
+                </p>
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Repair Orders Processed
+                </p>
+              </div>
+            </ScrollReveal>
+
+            <ScrollReveal animation="fade-up" delay={300}>
+              <div className="space-y-1">
+                <p className="text-3xl sm:text-4xl font-black text-emerald-600 dark:text-emerald-400">
+                  <AnimatedCounter end={99.98} suffix="%" />
+                </p>
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  High-Availability Uptime
+                </p>
+              </div>
+            </ScrollReveal>
           </div>
         </div>
       </section>
 
-      {/* ─── FEATURES PILLARS GRID ────────────────────────────────────────────── */}
+      {/* ─── FEATURES PILLARS GRID WITH SCROLL REVEAL ───────────────────────── */}
       <section id="features" className="py-20 sm:py-28 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto space-y-3 mb-16">
+          <ScrollReveal animation="fade-up" className="text-center max-w-2xl mx-auto space-y-3 mb-16">
             <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">
               Tailored Capabilities
             </h2>
@@ -538,40 +522,44 @@ export default function LandingPage() {
               Generic POS software fails when handling IMEIs, warranty repairs, and technician payouts.
               OmniManage was built from the ground up for electronics retailers.
             </p>
-          </div>
+          </ScrollReveal>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featurePillars.map((pillar) => {
+            {featurePillars.map((pillar, idx) => {
               const Icon = pillar.icon;
               return (
-                <div
+                <ScrollReveal
                   key={pillar.title}
-                  className="p-6 sm:p-7 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200/90 dark:border-slate-800 hover:border-blue-500/50 dark:hover:border-blue-500/50 hover:shadow-xl transition-all duration-300 group flex flex-col justify-between"
+                  animation="fade-up"
+                  delay={idx * 100}
+                  className="h-full"
                 >
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className={`p-3 rounded-xl bg-gradient-to-br ${pillar.gradient}`}>
-                        <Icon className="w-6 h-6" />
+                  <div className="h-full p-6 sm:p-7 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200/90 dark:border-slate-800 hover:border-blue-500/50 dark:hover:border-blue-500/50 hover:shadow-xl transition-all duration-300 group flex flex-col justify-between">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className={`p-3 rounded-xl bg-gradient-to-br ${pillar.gradient}`}>
+                          <Icon className="w-6 h-6" />
+                        </div>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                          {pillar.badge}
+                        </span>
                       </div>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                        {pillar.badge}
-                      </span>
+
+                      <h4 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        {pillar.title}
+                      </h4>
+
+                      <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                        {pillar.desc}
+                      </p>
                     </div>
 
-                    <h4 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                      {pillar.title}
-                    </h4>
-
-                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                      {pillar.desc}
-                    </p>
+                    <div className="pt-6 mt-4 border-t border-slate-100 dark:border-slate-800/80 flex items-center gap-1 text-xs font-bold text-blue-600 dark:text-blue-400">
+                      <span>Learn module details</span>
+                      <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                    </div>
                   </div>
-
-                  <div className="pt-6 mt-4 border-t border-slate-100 dark:border-slate-800/80 flex items-center gap-1 text-xs font-bold text-blue-600 dark:text-blue-400">
-                    <span>Learn module details</span>
-                    <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                  </div>
-                </div>
+                </ScrollReveal>
               );
             })}
           </div>
@@ -581,7 +569,7 @@ export default function LandingPage() {
       {/* ─── INTERACTIVE MODULES EXPLORER ────────────────────────────────────── */}
       <section id="modules" className="py-20 sm:py-28 bg-slate-100/70 dark:bg-slate-900/50 border-t border-slate-200/80 dark:border-slate-800/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto space-y-3 mb-12">
+          <ScrollReveal animation="fade-up" className="text-center max-w-2xl mx-auto space-y-3 mb-12">
             <h2 className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
               Interactive Explorer
             </h2>
@@ -591,10 +579,10 @@ export default function LandingPage() {
             <p className="text-sm text-slate-600 dark:text-slate-400">
               Click through the modules below to see how effortless everyday gadget shop tasks become.
             </p>
-          </div>
+          </ScrollReveal>
 
           {/* Module Selector Tabs */}
-          <div className="flex flex-wrap items-center justify-center gap-2 mb-8">
+          <ScrollReveal animation="fade" delay={150} className="flex flex-wrap items-center justify-center gap-2 mb-8">
             {[
               { id: 'pos', name: 'POS & Billing', icon: Receipt },
               { id: 'imei', name: 'IMEI Lifecycle', icon: Smartphone },
@@ -618,193 +606,195 @@ export default function LandingPage() {
                 </button>
               );
             })}
-          </div>
+          </ScrollReveal>
 
-          {/* Active Tab Preview Display */}
-          <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-xl">
-            {activeModuleTab === 'pos' && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-                <div className="space-y-4">
-                  <span className="px-2.5 py-1 text-xs font-bold rounded-md bg-emerald-100 dark:bg-emerald-950 text-emerald-600">
-                    High-Throughput POS
-                  </span>
-                  <h4 className="text-2xl font-black text-slate-900 dark:text-white">
-                    Scan Barcode, Choose IMEI, Print Thermal Invoice in 3 Seconds
-                  </h4>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                    Designed for peak retail rush hours. Search by serial number, filter by accessories or
-                    gadget models, calculate VAT automatically, and accept split payments via bKash, Nagad,
-                    or Card.
-                  </p>
-                  <ul className="space-y-2 text-xs font-medium text-slate-700 dark:text-slate-300">
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-500" /> Offline resilient cashier mode
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-500" /> Customer phone lookup with due alerts
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-500" /> Auto-SMS receipt delivery
-                    </li>
-                  </ul>
-                  <Link
-                    to="/register-shop"
-                    className="inline-flex items-center gap-2 text-xs font-bold text-blue-600 hover:underline pt-2"
-                  >
-                    <span>Launch POS Demo</span> <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-
-                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3 font-mono text-xs">
-                  <div className="flex justify-between border-b pb-2 text-slate-500">
-                    <span>INVOICE #INV-2026-881</span>
-                    <span className="text-emerald-500 font-bold">PAID (SPLIT)</span>
-                  </div>
-                  <div className="space-y-1 text-slate-800 dark:text-slate-200">
-                    <div className="flex justify-between">
-                      <span>1x Galaxy S24 Ultra (Titanium)</span>
-                      <span>৳ 135,000</span>
-                    </div>
-                    <p className="text-[10px] text-slate-400">IMEI: 359128092817412 • 1 Yr Warranty</p>
-                  </div>
-                  <div className="space-y-1 text-slate-800 dark:text-slate-200">
-                    <div className="flex justify-between">
-                      <span>1x 45W Type-C Super Fast Adapter</span>
-                      <span>৳ 2,400</span>
-                    </div>
-                  </div>
-                  <div className="pt-2 border-t flex justify-between font-bold text-slate-900 dark:text-white">
-                    <span>Total Bill:</span>
-                    <span>৳ 137,400</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeModuleTab === 'imei' && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-                <div className="space-y-4">
-                  <span className="px-2.5 py-1 text-xs font-bold rounded-md bg-blue-100 dark:bg-blue-950 text-blue-600">
-                    Unique Device Tracking
-                  </span>
-                  <h4 className="text-2xl font-black text-slate-900 dark:text-white">
-                    Full Historical Timeline for Every Single Phone
-                  </h4>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                    Instantly search any IMEI or Serial Number to view its purchase source, supplier warranty,
-                    customer sale date, previous repair tickets, and return claims.
-                  </p>
-                  <ul className="space-y-2 text-xs font-medium text-slate-700 dark:text-slate-300">
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-blue-500" /> Batch upload IMEIs via Excel / CSV
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-blue-500" /> Blacklist & lost device protection
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-blue-500" /> Automated warranty expiry calculators
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3 font-sans text-xs">
-                  <p className="font-bold text-slate-900 dark:text-white">Device Audit Passport</p>
-                  <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border flex justify-between">
-                    <div>
-                      <p className="font-bold">Apple iPhone 15 Pro 256GB</p>
-                      <p className="text-[10px] text-slate-400 font-mono">IMEI: 358102948210941</p>
-                    </div>
-                    <span className="text-[10px] font-bold text-emerald-500">In Stock (Main Outlet)</span>
-                  </div>
-                  <div className="text-[11px] space-y-1.5 text-slate-600 dark:text-slate-400 border-l-2 border-blue-500 pl-3">
-                    <p>• <strong>Purchased:</strong> 12 Aug 2026 from Star Distributor (PO-991)</p>
-                    <p>• <strong>QC Passed:</strong> Battery 100%, Display Genuine</p>
-                    <p>• <strong>Price:</strong> ৳ 118,000 (Purchase) / ৳ 128,000 (MRP)</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeModuleTab === 'repair' && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-                <div className="space-y-4">
-                  <span className="px-2.5 py-1 text-xs font-bold rounded-md bg-amber-100 dark:bg-amber-950 text-amber-600">
-                    Hardware Servicing & Lab
-                  </span>
-                  <h4 className="text-2xl font-black text-slate-900 dark:text-white">
-                    From Diagnostic Intake to Delivery & Tech Commission
-                  </h4>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                    Provide customers with a printed job sheet and digital tracking link. Assign tasks to
-                    in-house technicians, log spare parts used, and calculate payout shares automatically.
-                  </p>
-                </div>
-
-                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3 text-xs">
-                  <div className="flex justify-between items-center font-bold">
-                    <span>Job Sheet #JOB-4029</span>
-                    <span className="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-600 font-bold text-[10px]">
-                      Awaiting Spare Parts
+          {/* Active Tab Preview Display with Zoom-in */}
+          <ScrollReveal animation="zoom-in" delay={200}>
+            <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-xl">
+              {activeModuleTab === 'pos' && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                  <div className="space-y-4">
+                    <span className="px-2.5 py-1 text-xs font-bold rounded-md bg-emerald-100 dark:bg-emerald-950 text-emerald-600">
+                      High-Throughput POS
                     </span>
+                    <h4 className="text-2xl font-black text-slate-900 dark:text-white">
+                      Scan Barcode, Choose IMEI, Print Thermal Invoice in 3 Seconds
+                    </h4>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                      Designed for peak retail rush hours. Search by serial number, filter by accessories or
+                      gadget models, calculate VAT automatically, and accept split payments via bKash, Nagad,
+                      or Card.
+                    </p>
+                    <ul className="space-y-2 text-xs font-medium text-slate-700 dark:text-slate-300">
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-emerald-500" /> Offline resilient cashier mode
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-emerald-500" /> Customer phone lookup with due alerts
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-emerald-500" /> Auto-SMS receipt delivery
+                      </li>
+                    </ul>
+                    <Link
+                      to="/register-shop"
+                      className="inline-flex items-center gap-2 text-xs font-bold text-blue-600 hover:underline pt-2"
+                    >
+                      <span>Launch POS Demo</span> <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
                   </div>
-                  <p className="text-slate-700 dark:text-slate-300">
-                    <strong>Issue:</strong> Water damage, display flickering, charging port loose.
-                  </p>
-                  <p className="text-slate-500">
-                    <strong>Technician:</strong> Tanvir Ahmed (Commission: 25%)
-                  </p>
-                  <div className="pt-2 border-t flex justify-between font-bold text-slate-900 dark:text-white">
-                    <span>Estimated Cost:</span>
-                    <span>৳ 4,500</span>
-                  </div>
-                </div>
-              </div>
-            )}
 
-            {activeModuleTab === 'accounting' && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-                <div className="space-y-4">
-                  <span className="px-2.5 py-1 text-xs font-bold rounded-md bg-purple-100 dark:bg-purple-950 text-purple-600">
-                    Real Financial Accuracy
-                  </span>
-                  <h4 className="text-2xl font-black text-slate-900 dark:text-white">
-                    Automated General Ledger, P&L, and Customer Due Tracking
-                  </h4>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                    No manual bookkeeping. Every purchase, sale, repair expense, and salary payment
-                    automatically creates double-entry journal postings with real-time auditability.
-                  </p>
+                  <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3 font-mono text-xs">
+                    <div className="flex justify-between border-b pb-2 text-slate-500">
+                      <span>INVOICE #INV-2026-881</span>
+                      <span className="text-emerald-500 font-bold">PAID (SPLIT)</span>
+                    </div>
+                    <div className="space-y-1 text-slate-800 dark:text-slate-200">
+                      <div className="flex justify-between">
+                        <span>1x Galaxy S24 Ultra (Titanium)</span>
+                        <span>৳ 135,000</span>
+                      </div>
+                      <p className="text-[10px] text-slate-400">IMEI: 359128092817412 • 1 Yr Warranty</p>
+                    </div>
+                    <div className="space-y-1 text-slate-800 dark:text-slate-200">
+                      <div className="flex justify-between">
+                        <span>1x 45W Type-C Super Fast Adapter</span>
+                        <span>৳ 2,400</span>
+                      </div>
+                    </div>
+                    <div className="pt-2 border-t flex justify-between font-bold text-slate-900 dark:text-white">
+                      <span>Total Bill:</span>
+                      <span>৳ 137,400</span>
+                    </div>
+                  </div>
                 </div>
+              )}
 
-                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
-                  <p className="font-bold text-slate-900 dark:text-white mb-2">Live Profit & Loss Summary</p>
-                  <div className="flex justify-between py-1 border-b text-slate-600 dark:text-slate-300">
-                    <span>Gross Sales Revenue</span>
-                    <span className="font-bold text-emerald-500">৳ 24,80,000</span>
+              {activeModuleTab === 'imei' && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                  <div className="space-y-4">
+                    <span className="px-2.5 py-1 text-xs font-bold rounded-md bg-blue-100 dark:bg-blue-950 text-blue-600">
+                      Unique Device Tracking
+                    </span>
+                    <h4 className="text-2xl font-black text-slate-900 dark:text-white">
+                      Full Historical Timeline for Every Single Phone
+                    </h4>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                      Instantly search any IMEI or Serial Number to view its purchase source, supplier warranty,
+                      customer sale date, previous repair tickets, and return claims.
+                    </p>
+                    <ul className="space-y-2 text-xs font-medium text-slate-700 dark:text-slate-300">
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-blue-500" /> Batch upload IMEIs via Excel / CSV
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-blue-500" /> Blacklist & lost device protection
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-blue-500" /> Automated warranty expiry calculators
+                      </li>
+                    </ul>
                   </div>
-                  <div className="flex justify-between py-1 border-b text-slate-600 dark:text-slate-300">
-                    <span>Cost of Goods Sold (COGS)</span>
-                    <span className="font-bold text-red-500">- ৳ 19,40,000</span>
-                  </div>
-                  <div className="flex justify-between py-1 border-b text-slate-600 dark:text-slate-300">
-                    <span>Operating Expenses & Payroll</span>
-                    <span className="font-bold text-red-500">- ৳ 1,85,000</span>
-                  </div>
-                  <div className="flex justify-between pt-2 font-black text-sm text-slate-900 dark:text-white">
-                    <span>Net Operating Profit</span>
-                    <span className="text-emerald-500">৳ 3,55,000</span>
+
+                  <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3 font-sans text-xs">
+                    <p className="font-bold text-slate-900 dark:text-white">Device Audit Passport</p>
+                    <div className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border flex justify-between">
+                      <div>
+                        <p className="font-bold">Apple iPhone 15 Pro 256GB</p>
+                        <p className="text-[10px] text-slate-400 font-mono">IMEI: 358102948210941</p>
+                      </div>
+                      <span className="text-[10px] font-bold text-emerald-500">In Stock (Main Outlet)</span>
+                    </div>
+                    <div className="text-[11px] space-y-1.5 text-slate-600 dark:text-slate-400 border-l-2 border-blue-500 pl-3">
+                      <p>• <strong>Purchased:</strong> 12 Aug 2026 from Star Distributor (PO-991)</p>
+                      <p>• <strong>QC Passed:</strong> Battery 100%, Display Genuine</p>
+                      <p>• <strong>Price:</strong> ৳ 118,000 (Purchase) / ৳ 128,000 (MRP)</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+
+              {activeModuleTab === 'repair' && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                  <div className="space-y-4">
+                    <span className="px-2.5 py-1 text-xs font-bold rounded-md bg-amber-100 dark:bg-amber-950 text-amber-600">
+                      Hardware Servicing & Lab
+                    </span>
+                    <h4 className="text-2xl font-black text-slate-900 dark:text-white">
+                      From Diagnostic Intake to Delivery & Tech Commission
+                    </h4>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                      Provide customers with a printed job sheet and digital tracking link. Assign tasks to
+                      in-house technicians, log spare parts used, and calculate payout shares automatically.
+                    </p>
+                  </div>
+
+                  <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3 text-xs">
+                    <div className="flex justify-between items-center font-bold">
+                      <span>Job Sheet #JOB-4029</span>
+                      <span className="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-600 font-bold text-[10px]">
+                        Awaiting Spare Parts
+                      </span>
+                    </div>
+                    <p className="text-slate-700 dark:text-slate-300">
+                      <strong>Issue:</strong> Water damage, display flickering, charging port loose.
+                    </p>
+                    <p className="text-slate-500">
+                      <strong>Technician:</strong> Tanvir Ahmed (Commission: 25%)
+                    </p>
+                    <div className="pt-2 border-t flex justify-between font-bold text-slate-900 dark:text-white">
+                      <span>Estimated Cost:</span>
+                      <span>৳ 4,500</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeModuleTab === 'accounting' && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                  <div className="space-y-4">
+                    <span className="px-2.5 py-1 text-xs font-bold rounded-md bg-purple-100 dark:bg-purple-950 text-purple-600">
+                      Real Financial Accuracy
+                    </span>
+                    <h4 className="text-2xl font-black text-slate-900 dark:text-white">
+                      Automated General Ledger, P&L, and Customer Due Tracking
+                    </h4>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                      No manual bookkeeping. Every purchase, sale, repair expense, and salary payment
+                      automatically creates double-entry journal postings with real-time auditability.
+                    </p>
+                  </div>
+
+                  <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
+                    <p className="font-bold text-slate-900 dark:text-white mb-2">Live Profit & Loss Summary</p>
+                    <div className="flex justify-between py-1 border-b text-slate-600 dark:text-slate-300">
+                      <span>Gross Sales Revenue</span>
+                      <span className="font-bold text-emerald-500">৳ 24,80,000</span>
+                    </div>
+                    <div className="flex justify-between py-1 border-b text-slate-600 dark:text-slate-300">
+                      <span>Cost of Goods Sold (COGS)</span>
+                      <span className="font-bold text-red-500">- ৳ 19,40,000</span>
+                    </div>
+                    <div className="flex justify-between py-1 border-b text-slate-600 dark:text-slate-300">
+                      <span>Operating Expenses & Payroll</span>
+                      <span className="font-bold text-red-500">- ৳ 1,85,000</span>
+                    </div>
+                    <div className="flex justify-between pt-2 font-black text-sm text-slate-900 dark:text-white">
+                      <span>Net Operating Profit</span>
+                      <span className="text-emerald-500">৳ 3,55,000</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </ScrollReveal>
         </div>
       </section>
 
-      {/* ─── PRICING PLANS ────────────────────────────────────────────────────── */}
+      {/* ─── PRICING PLANS WITH SCROLL REVEAL ─────────────────────────────────── */}
       <section id="pricing" className="py-20 sm:py-28 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto space-y-3 mb-12">
+          <ScrollReveal animation="fade-up" className="text-center max-w-2xl mx-auto space-y-3 mb-12">
             <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">
               Simple & Transparent
             </h2>
@@ -843,72 +833,82 @@ export default function LandingPage() {
                 </span>
               </div>
             </div>
-          </div>
+          </ScrollReveal>
 
           {/* Pricing Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {plans.map((plan) => {
+            {plans.map((plan, idx) => {
               const price = isYearly ? plan.priceYearly : plan.priceMonthly;
               const formattedPrice = typeof price === 'number' ? `৳ ${price.toLocaleString()}` : price;
 
               return (
-                <div
+                <ScrollReveal
                   key={plan._id || plan.name}
-                  className={`relative rounded-3xl p-7 flex flex-col justify-between transition-all duration-300 ${
-                    plan.isPopular
-                      ? 'bg-gradient-to-b from-blue-50 to-white dark:from-slate-900 dark:to-slate-950 border-2 border-blue-500 shadow-2xl shadow-blue-500/15 scale-105 z-10'
-                      : 'bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800'
-                  }`}
+                  animation="fade-up"
+                  delay={idx * 150}
+                  className="h-full"
                 >
-                  {plan.isPopular && (
-                    <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-600 text-white shadow-md">
-                      Most Popular for Retailers
-                    </span>
-                  )}
-
-                  <div className="space-y-5">
-                    <div>
-                      <h4 className="text-xl font-black text-slate-900 dark:text-white">{plan.name}</h4>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 min-h-[32px]">
-                        {plan.description}
-                      </p>
-                    </div>
-
-                    <div className="flex items-baseline gap-1 border-y border-slate-100 dark:border-slate-800/80 py-4">
-                      <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
-                        {formattedPrice}
+                  <div
+                    className={`h-full relative rounded-3xl p-7 flex flex-col justify-between transition-all duration-300 ${
+                      plan.isPopular
+                        ? 'bg-gradient-to-b from-blue-50 to-white dark:from-slate-900 dark:to-slate-950 border-2 border-blue-500 shadow-2xl shadow-blue-500/15 scale-105 z-10'
+                        : 'bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                    }`}
+                  >
+                    {plan.isPopular && (
+                      <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-600 text-white shadow-md">
+                        Most Popular for Retailers
                       </span>
-                      {typeof price === 'number' && (
-                        <span className="text-xs text-slate-500 font-semibold">/month</span>
-                      )}
+                    )}
+
+                    <div className="space-y-5">
+                      <div>
+                        <h4 className="text-xl font-black text-slate-900 dark:text-white">{plan.name}</h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 min-h-[32px]">
+                          {plan.description}
+                        </p>
+                      </div>
+
+                      <div className="flex items-baseline gap-1 border-y border-slate-100 dark:border-slate-800/80 py-4">
+                        <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
+                          {typeof price === 'number' ? (
+                            <AnimatedCounter end={price} prefix="৳ " />
+                          ) : (
+                            formattedPrice
+                          )}
+                        </span>
+                        {typeof price === 'number' && (
+                          <span className="text-xs text-slate-500 font-semibold">/month</span>
+                        )}
+                      </div>
+
+                      <div className="space-y-2.5 text-xs text-slate-700 dark:text-slate-300">
+                        <p className="font-bold text-[11px] uppercase tracking-wider text-slate-400">
+                          Included capabilities:
+                        </p>
+                        {plan.features?.map((f) => (
+                          <div key={f} className="flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                            <span>{f}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
-                    <div className="space-y-2.5 text-xs text-slate-700 dark:text-slate-300">
-                      <p className="font-bold text-[11px] uppercase tracking-wider text-slate-400">
-                        Included capabilities:
-                      </p>
-                      {plan.features?.map((f) => (
-                        <div key={f} className="flex items-center gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                          <span>{f}</span>
-                        </div>
-                      ))}
+                    <div className="pt-6 mt-6">
+                      <Link
+                        to="/register-shop"
+                        className={`w-full py-3 rounded-xl text-xs font-bold text-center block transition-all ${
+                          plan.isPopular
+                            ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/25 active:scale-95'
+                            : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white active:scale-95'
+                        }`}
+                      >
+                        Start 14-Day Free Trial
+                      </Link>
                     </div>
                   </div>
-
-                  <div className="pt-6 mt-6">
-                    <Link
-                      to="/register-shop"
-                      className={`w-full py-3 rounded-xl text-xs font-bold text-center block transition-all ${
-                        plan.isPopular
-                          ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/25'
-                          : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white'
-                      }`}
-                    >
-                      Start 14-Day Free Trial
-                    </Link>
-                  </div>
-                </div>
+                </ScrollReveal>
               );
             })}
           </div>
@@ -918,39 +918,38 @@ export default function LandingPage() {
       {/* ─── FAQ SECTION ──────────────────────────────────────────────────────── */}
       <section className="py-20 border-t border-slate-200/80 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/30">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center space-y-3 mb-12">
+          <ScrollReveal animation="fade-up" className="text-center space-y-3 mb-12">
             <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">
               Got Questions?
             </h2>
             <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
               Frequently Asked Questions
             </h3>
-          </div>
+          </ScrollReveal>
 
           <div className="space-y-3">
             {faqs.map((faq, idx) => (
-              <div
-                key={faq.q}
-                className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden"
-              >
-                <button
-                  type="button"
-                  onClick={() => setOpenFaq(openFaq === idx ? -1 : idx)}
-                  className="w-full px-6 py-4 text-left flex items-center justify-between gap-4 font-bold text-sm text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                >
-                  <span>{faq.q}</span>
-                  <ChevronDown
-                    className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
-                      openFaq === idx ? 'rotate-180 text-blue-500' : ''
-                    }`}
-                  />
-                </button>
-                {openFaq === idx && (
-                  <div className="px-6 pb-4 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed border-t border-slate-100 dark:border-slate-800 pt-3">
-                    {faq.a}
-                  </div>
-                )}
-              </div>
+              <ScrollReveal key={faq.q} animation="fade-up" delay={idx * 60}>
+                <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setOpenFaq(openFaq === idx ? -1 : idx)}
+                    className="w-full px-6 py-4 text-left flex items-center justify-between gap-4 font-bold text-sm text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                  >
+                    <span>{faq.q}</span>
+                    <ChevronDown
+                      className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
+                        openFaq === idx ? 'rotate-180 text-blue-500' : ''
+                      }`}
+                    />
+                  </button>
+                  {openFaq === idx && (
+                    <div className="px-6 pb-4 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed border-t border-slate-100 dark:border-slate-800 pt-3">
+                      {faq.a}
+                    </div>
+                  )}
+                </div>
+              </ScrollReveal>
             ))}
           </div>
         </div>
@@ -958,7 +957,7 @@ export default function LandingPage() {
 
       {/* ─── BOTTOM CTA BANNER ────────────────────────────────────────────────── */}
       <section className="py-20 relative overflow-hidden bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-700 text-white">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6 relative z-10">
+        <ScrollReveal animation="zoom-in" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6 relative z-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-bold border border-white/20">
             <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
             <span>Ready to transform your gadget shop?</span>
@@ -987,7 +986,7 @@ export default function LandingPage() {
               Talk to ERP Specialist
             </Link>
           </div>
-        </div>
+        </ScrollReveal>
       </section>
     </div>
   );
