@@ -72,6 +72,7 @@ const SystemAnalytics = lazy(() => import('./pages/Settings/SystemAnalytics'));
 const PublicInvoice = lazy(() => import('./pages/Sales/PublicInvoice'));
 const ResetPassword = lazy(() => import('./pages/Auth/ResetPassword'));
 const RegisterShop = lazy(() => import('./pages/Auth/RegisterShop'));
+const PublicLayout = lazy(() => import('./layouts/PublicLayout'));
 const LandingPage = lazy(() => import('./pages/Public/LandingPage'));
 const DeveloperPage = lazy(() => import('./pages/Public/DeveloperPage'));
 const AboutPage = lazy(() => import('./pages/Public/AboutPage'));
@@ -231,30 +232,33 @@ export default function App() {
     <Suspense fallback={<PageSkeletonLoader />}>
       <ScrollToTop />
       <Routes>
+        {/* Standalone Auth & Verification Routes */}
         <Route
           path="/login"
           element={isMatchingShopSession ? <Navigate to={homeRedirect} replace /> : <Login />}
         />
-        <Route path="/landing" element={<LandingPage />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/register-shop" element={<RegisterShop />} />
         <Route path="/invoice/:token" element={<PublicInvoice />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
-        <Route path="/pricing" element={<LandingPage />} />
-        <Route path="/developer" element={<DeveloperPage />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/terms" element={<TermsPage />} />
-        <Route path="/terms-and-conditions" element={<TermsPage />} />
-        <Route path="/privacy" element={<PrivacyPolicy />} />
-        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-        <Route path="/refund-policy" element={<RefundPolicy />} />
-        <Route path="/refund" element={<RefundPolicy />} />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="/404" element={<NotFoundPage />} />
 
-        {/* Public / Root Route */}
-        <Route path="/" element={<RootIndex />} />
+        {/* Public Pages with Unified Layout */}
+        <Route element={<PublicLayout />}>
+          <Route path="/" element={<RootIndex />} />
+          <Route path="/landing" element={<LandingPage />} />
+          <Route path="/pricing" element={<LandingPage />} />
+          <Route path="/developer" element={<DeveloperPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/terms-and-conditions" element={<TermsPage />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/refund-policy" element={<RefundPolicy />} />
+          <Route path="/refund" element={<RefundPolicy />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/404" element={<NotFoundPage />} />
+        </Route>
 
         {/* Dashboard & App Routes */}
         <Route
@@ -726,7 +730,14 @@ export default function App() {
           <Route path="profile" element={<SAProfile />} />
         </Route>
 
-        <Route path="*" element={<NotFoundPage />} />
+        <Route
+          path="*"
+          element={
+            <PublicLayout>
+              <NotFoundPage />
+            </PublicLayout>
+          }
+        />
       </Routes>
     </Suspense>
   );
