@@ -29,6 +29,8 @@ const envSchema = z.object({
   APP_NAME: z.string().default('OmniManage'),
   APP_URL: z.string().default('https://respawnalley.com'),
   CLIENT_URL: z.string().optional(),
+  ALLOWED_ORIGIN: z.string().optional(),
+  SHOP_URLS: z.string().optional(),
   CLIENT_DIST_PATH: z.string().optional(),
   TLS_CERT_PATH: z.string().optional(),
   TLS_KEY_PATH: z.string().optional(),

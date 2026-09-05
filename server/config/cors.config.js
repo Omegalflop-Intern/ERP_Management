@@ -5,6 +5,8 @@ const parseEnvList = (val) =>
     .map((s) => s.trim())
     .filter(Boolean);
 
+const baseDomain = (process.env.BASE_DOMAIN || 'respawnalley.com').toLowerCase().trim();
+
 const rawOrigins = [
   process.env.CLIENT_URL,
   process.env.APP_URL,
@@ -20,15 +22,51 @@ const rawOrigins = [
   'https://127.0.0.1:5173',
 ];
 
-const allowedOrigins = rawOrigins
-  .filter(Boolean)
-  .flatMap((item) => item.split(','))
-  .map((o) => o.trim().replace(/\/+$/, ''))
-  .filter(Boolean);
+const explicitOrigins = new Set(
+  rawOrigins
+    .filter(Boolean)
+    .flatMap((item) => item.split(','))
+    .map((o) => o.trim().replace(/\/+$/, ''))
+    .filter(Boolean)
+);
 
-if (allowedOrigins.length === 0) {
-  console.warn('[CORS] No allowed origins configured. Set CLIENT_URL, APP_URL, ALLOWED_ORIGIN, or SHOP_URLS env vars.');
-}
+export const isOriginAllowed = (origin) => {
+  if (!origin) return true;
+
+  // 1. Exact match with configured explicit origins
+  const cleanOrigin = origin.replace(/\/+$/, '');
+  if (explicitOrigins.has(cleanOrigin)) return true;
+
+  try {
+    const url = new URL(origin);
+    const hostname = url.hostname.toLowerCase();
+
+    // 2. Localhost & development subdomains
+    if (
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname.endsWith('.localhost')
+    ) {
+      return true;
+    }
+
+    // 3. Base domain and wildcard subdomains (e.g., respawnalley.com, shop1.respawnalley.com, etc.)
+    if (
+      baseDomain &&
+      (hostname === baseDomain ||
+        hostname === `www.${baseDomain}` ||
+        hostname === `api.${baseDomain}` ||
+        hostname.endsWith(`.${baseDomain}`))
+    ) {
+      return true;
+    }
+  } catch {
+    // Malformed origin URL
+    return false;
+  }
+
+  return false;
+};
 
 export const corsOptions = {
   origin: (origin, callback) => {
@@ -36,9 +74,10 @@ export const corsOptions = {
     if (!origin) return callback(null, true);
 
     if (process.env.NODE_ENV === 'production') {
-      if (allowedOrigins.some((o) => origin.startsWith(o))) {
+      if (isOriginAllowed(origin)) {
         callback(null, true);
       } else {
+        console.warn(`[CORS Blocked]: Origin not allowed: ${origin}`);
         callback(new Error(`Not allowed by CORS: ${origin}`));
       }
     } else {
@@ -47,5 +86,15 @@ export const corsOptions = {
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Subdomain',
+    'x-subdomain',
+    'Accept',
+    'Origin',
+    'X-Requested-With',
+  ],
+  exposedHeaders: ['Content-Disposition'],
 };
+
