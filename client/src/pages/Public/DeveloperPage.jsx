@@ -1,455 +1,310 @@
 import {
-  ArrowLeft,
-  Award,
-  BookOpen,
+  ArrowRight,
+  Boxes,
+  Check,
   CheckCircle2,
-  ChevronUp,
   Code2,
+  Copy,
   Cpu,
   Database,
   ExternalLink,
-  Github,
-  Globe,
-  Heart,
+  FileCode,
+  Globe2,
+  Key,
   Layers,
-  Linkedin,
-  Mail,
-  MapPin,
+  Lock,
+  Radio,
   Rocket,
   Server,
+  ShieldCheck,
   Sparkles,
-  Star,
   Terminal,
   Zap,
 } from 'lucide-react';
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 export default function DeveloperPage() {
-  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+  useDocumentTitle('Developer API & Platform Architecture - OmniManage ERP');
+  const [activeLang, setActiveLang] = useState('curl');
+  const [copied, setCopied] = useState(false);
 
-  const skills = [
+  const codeSnippets = {
+    curl: `curl -X POST "https://api.omnimanage.app/api/v1/sales" \\
+  -H "Authorization: Bearer YOUR_API_JWT_TOKEN" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "customerId": "cust_90124",
+    "items": [
+      {
+        "productId": "prod_iph15pm",
+        "imei": "358102948210941",
+        "price": 135000,
+        "quantity": 1
+      }
+    ],
+    "paymentMethod": "CASH",
+    "receivedAmount": 135000
+  }'`,
+
+    js: `import axios from 'axios';
+
+const client = axios.create({
+  baseURL: 'https://api.omnimanage.app/api/v1',
+  headers: {
+    Authorization: \`Bearer \${process.env.OMNIMANAGE_API_KEY}\`,
+    'Content-Type': 'application/json'
+  }
+});
+
+// Create sale with unique IMEI attachment
+const { data } = await client.post('/sales', {
+  customerId: 'cust_90124',
+  items: [{
+    productId: 'prod_iph15pm',
+    imei: '358102948210941',
+    price: 135000,
+    quantity: 1
+  }],
+  paymentMethod: 'CASH',
+  receivedAmount: 135000
+});
+
+console.log('Invoice Generated:', data.data.invoiceNumber);`,
+
+    python: `import requests
+
+url = "https://api.omnimanage.app/api/v1/sales"
+headers = {
+    "Authorization": "Bearer YOUR_API_JWT_TOKEN",
+    "Content-Type": "application/json"
+}
+payload = {
+    "customerId": "cust_90124",
+    "items": [{
+        "productId": "prod_iph15pm",
+        "imei": "358102948210941",
+        "price": 135000,
+        "quantity": 1
+    }],
+    "paymentMethod": "CASH",
+    "receivedAmount": 135000
+}
+
+response = requests.post(url, json=payload, headers=headers)
+print("Response:", response.json())`,
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(codeSnippets[activeLang]);
+    setCopied(true);
+    toast.success('Code copied to clipboard!');
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const stackLayers = [
     {
-      category: 'Frontend & UI Core',
-      bgColor: 'bg-amber-300',
-      skills: [
-        'React.js 18',
-        'Vite 5',
-        'TailwindCSS v3',
-        'Neo-Brutalism UI',
-        'Zustand State',
-        'TanStack Query',
-      ],
+      title: 'Backend API Engine',
+      tech: 'Node.js (ESM) • Express.js',
+      desc: 'Modular controller-service-validator architecture. Enforced with Zod schemas and sub-second execution.',
+      icon: Server,
+      color: 'from-emerald-500/20 to-teal-500/20 text-emerald-500 dark:text-emerald-400',
     },
     {
-      category: 'Backend & APIs',
-      bgColor: 'bg-lime-400',
-      skills: [
-        'Node.js (ESM)',
-        'Express.js',
-        'Python 3',
-        'Django Framework',
-        'RESTful APIs',
-        'SSE Real-time',
-      ],
+      title: 'Relational Database Layer',
+      tech: 'MySQL 8 / MariaDB • Knex.js Query Builder',
+      desc: 'Strict relational data integrity, multi-tenant schemas, atomic ACID transactions for invoicing and double-entry accounting.',
+      icon: Database,
+      color: 'from-blue-500/20 to-indigo-500/20 text-blue-500 dark:text-blue-400',
     },
     {
-      category: 'Databases & ORM',
-      bgColor: 'bg-cyan-300',
-      skills: [
-        'MongoDB',
-        'MySQL / MariaDB',
-        'PostgreSQL',
-        'Knex.js Query Builder',
-        'Mongoose',
-        'Schema Migrations',
-      ],
+      title: 'Real-Time Event Stream',
+      tech: 'Server-Sent Events (SSE) • Node EventEmitter',
+      desc: 'Lightweight, firewall-friendly real-time updates for stock changes, technician job status, and sale alerts without heavy websocket overhead.',
+      icon: Radio,
+      color: 'from-amber-500/20 to-orange-500/20 text-amber-500 dark:text-amber-400',
     },
     {
-      category: 'Architecture & DevOps',
-      bgColor: 'bg-pink-400',
-      skills: [
-        'Multi-Tenancy SaaS',
-        'JWT & MFA TOTP',
-        'Docker',
-        'Git & GitHub',
-        'Linux Server Admin',
-        'Clean Architecture',
-      ],
+      title: 'Frontend Client Architecture',
+      tech: 'React 18 • Vite 5 • TailwindCSS v3 • Zustand',
+      desc: 'Ultra-fast single-page app with TanStack Query caching, offline indexedDB queueing, and smooth 60fps micro-animations.',
+      icon: Cpu,
+      color: 'from-purple-500/20 to-violet-500/20 text-purple-500 dark:text-purple-400',
     },
   ];
 
-  const featuredProjects = [
-    {
-      title: 'OmniManage ERP & Multi-Branch POS',
-      category: 'Flagship Enterprise SaaS',
-      badgeColor: 'bg-yellow-300',
-      description:
-        'A multi-tenant Gadget & Mobile Shop ERP system featuring real-time IMEI lifetime passport tracking, thermal billing, inter-branch stock transfers, double-entry accounting, and workforce management.',
-      tech: ['MERN Stack', 'Node.js', 'Express', 'React 18', 'MongoDB', 'MySQL', 'TailwindCSS'],
-      highlights: [
-        'Multi-tenant Subdomain Scoping',
-        'IMEI Lifetime History Passport',
-        'Inter-Branch Stock Transfer Engine',
-        'Double-Entry Chart of Accounts',
-      ],
-      link: '/',
-    },
-    {
-      title: 'School Management ERP System',
-      category: 'Educational Platform',
-      badgeColor: 'bg-lime-300',
-      description:
-        'An all-in-one educational ERP platform managing student enrollment, attendance tracking, fee collection, examination grading, teacher payroll, and parent portal notifications.',
-      tech: ['Python', 'Django', 'React', 'PostgreSQL', 'Redis', 'TailwindCSS'],
-      highlights: [
-        'Automated Fee Invoice Generation',
-        'Student Attendance Analytics',
-        'Report Card Generation Engine',
-        'Role-Based Staff Access',
-      ],
-      link: '#',
-    },
-    {
-      title: 'Enterprise Custom SaaS Solutions',
-      category: 'Bespoke Web Systems',
-      badgeColor: 'bg-cyan-300',
-      description:
-        'Custom web applications engineered with modular architecture, high-performance database indexing, audit logging, and responsive neo-brutalist & glassmorphism design modes.',
-      tech: ['Node.js', 'Python', 'React', 'PostgreSQL', 'MongoDB', 'REST APIs'],
-      highlights: [
-        'High-Concurrency API Endpoints',
-        'Audit-Grade Security Protocols',
-        'Custom Design Theme Engines',
-      ],
-      link: 'https://salahuddin.codes',
-    },
-  ];
-
-  const stats = [
-    { label: 'Featured ERP Projects', value: '15+', bg: 'bg-yellow-300' },
-    { label: 'Core Tech Stack Packs', value: 'MERN + Django', bg: 'bg-lime-300' },
-    { label: 'Relational DBs', value: 'MySQL & Postgres', bg: 'bg-cyan-300' },
-    { label: 'GitHub Handle', value: '@salahuddingfx', bg: 'bg-pink-300' },
+  const endpoints = [
+    { method: 'POST', path: '/api/v1/auth/login-direct', desc: 'Direct JWT auth exchange with role claims' },
+    { method: 'GET', path: '/api/v1/products', desc: 'Query stock catalogue, barcode filters, and prices' },
+    { method: 'GET', path: '/api/v1/imei/:imei/history', desc: 'Query complete device lifecycle passport' },
+    { method: 'POST', path: '/api/v1/sales', desc: 'Process POS invoice, attach IMEIs, update ledger' },
+    { method: 'POST', path: '/api/v1/repair', desc: 'Generate repair ticket and assign lab technician' },
+    { method: 'GET', path: '/api/v1/sse', desc: 'Subscribe to real-time shop notification events' },
   ];
 
   return (
-    <div className="min-h-screen bg-[#fffbeb] text-black font-sans selection:bg-yellow-300 selection:text-black">
-      {/* ─── NEO-BRUTALIST NAVBAR ────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 bg-yellow-300 border-b-4 border-black px-4 sm:px-8 py-3 shadow-[0_4px_0_0_#000]">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link
-            to="/"
-            className="flex items-center gap-2 font-black text-sm uppercase bg-white border-2 border-black px-3.5 py-1.5 rounded-lg shadow-[3px_3px_0px_0px_#000] hover:bg-lime-300 hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
-          >
-            <ArrowLeft className="h-4 w-4 stroke-[3]" />
-            Back to App
-          </Link>
-
-          <div className="flex items-center gap-2">
-            <a
-              href="https://salahuddin.codes"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 font-black text-xs uppercase bg-pink-400 border-2 border-black px-3.5 py-1.5 rounded-lg shadow-[3px_3px_0px_0px_#000] hover:bg-pink-300 hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
-            >
-              <Globe className="h-3.5 w-3.5 stroke-[3]" />
-              salahuddin.codes
-            </a>
-          </div>
-        </div>
-      </header>
-
-      {/* ─── HERO SECTION ────────────────────────────────────────────────── */}
-      <section className="py-16 sm:py-24 px-4 sm:px-8 border-b-4 border-black bg-[#faf5ff] relative overflow-hidden">
-        <div className="max-w-5xl mx-auto">
-          <div className="inline-block bg-lime-400 border-3 border-black px-4 py-1.5 rounded-full font-black text-xs uppercase tracking-wider shadow-[4px_4px_0px_0px_#000] mb-6">
-            ⚡ Neo-Brutalist Architect & Full-Stack Engineer
+    <div className="relative overflow-hidden font-sans">
+      {/* ─── HERO HEADER ──────────────────────────────────────────────────────── */}
+      <section className="relative pt-12 pb-16 sm:pt-20 sm:pb-24 bg-gradient-to-b from-blue-50/50 via-transparent to-transparent dark:from-slate-900/40 text-center">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-300 text-xs font-bold">
+            <Code2 className="w-3.5 h-3.5" />
+            <span>Developer Hub & Integration Specs</span>
           </div>
 
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
-            <div className="space-y-5 text-left flex-1">
-              <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black uppercase tracking-tight text-black leading-none drop-shadow-[4px_4px_0px_#facc15]">
-                Salah Uddin Kader{' '}
-                <span className="bg-cyan-300 border-2 border-black px-2 py-0.5 shadow-[3px_3px_0px_0px_#000]">
-                  .codes
-                </span>
-              </h1>
-
-              <p className="text-base sm:text-lg font-bold text-black max-w-2xl leading-relaxed bg-white border-3 border-black p-4 rounded-xl shadow-[5px_5px_0px_0px_#000]">
-                Passionate software developer building enterprise ERP systems, school management
-                suites, and SaaS platforms. Specializing in
-                <span className="bg-yellow-300 border border-black px-1 mx-1">MERN Stack</span>,
-                <span className="bg-lime-300 border border-black px-1 mx-1">Python & Django</span>,
-                and
-                <span className="bg-cyan-300 border border-black px-1 mx-1">
-                  MySQL & PostgreSQL
-                </span>
-                .
-              </p>
-
-              {/* Badges and Links */}
-              <div className="flex flex-wrap items-center gap-3 pt-2">
-                <a
-                  href="https://salahuddin.codes"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 font-black text-xs uppercase bg-yellow-300 border-3 border-black px-4 py-2.5 rounded-xl shadow-[4px_4px_0px_0px_#000] hover:bg-yellow-400 hover:-translate-x-1 hover:-translate-y-1 transition-all"
-                >
-                  <Globe className="h-4 w-4 stroke-[2.5]" />
-                  Portfolio: salahuddin.codes
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </a>
-
-                <a
-                  href="https://github.com/salahuddingfx"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 font-black text-xs uppercase bg-lime-400 border-3 border-black px-4 py-2.5 rounded-xl shadow-[4px_4px_0px_0px_#000] hover:bg-lime-300 hover:-translate-x-1 hover:-translate-y-1 transition-all"
-                >
-                  <Github className="h-4 w-4 stroke-[2.5]" />
-                  GitHub: @salahuddingfx
-                </a>
-
-                <a
-                  href="mailto:info.salahuddindev@gmail.com"
-                  className="flex items-center gap-2 font-black text-xs uppercase bg-pink-400 border-3 border-black px-4 py-2.5 rounded-xl shadow-[4px_4px_0px_0px_#000] hover:bg-pink-300 hover:-translate-x-1 hover:-translate-y-1 transition-all text-black"
-                >
-                  <Mail className="h-4 w-4 stroke-[2.5]" />
-                  info.salahuddindev@gmail.com
-                </a>
-              </div>
-            </div>
-
-            {/* Profile Avatar Card */}
-            <div className="relative shrink-0 group">
-              <div className="w-52 h-56 sm:w-60 sm:h-64 rounded-3xl bg-cyan-300 border-4 border-black p-4 shadow-[8px_8px_0px_0px_#000] flex flex-col items-center justify-center text-center transition-transform hover:-translate-y-1">
-                <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-2xl bg-white border-3 border-black shadow-[4px_4px_0px_0px_#000] mb-3 overflow-hidden">
-                  <img
-                    src="https://github.com/salahuddingfx.png"
-                    alt="Salah Uddin Kader"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      const fallback = e.target.parentElement.querySelector('.avatar-fallback');
-                      if (fallback) fallback.style.display = 'flex';
-                    }}
-                  />
-                  <div
-                    className="avatar-fallback w-full h-full bg-amber-300 items-center justify-center font-black text-3xl text-black"
-                    style={{ display: 'none' }}
-                  >
-                    SD
-                  </div>
-                </div>
-                <div className="font-black text-sm uppercase tracking-wider text-black">
-                  Salah Uddin Kader
-                </div>
-                <div className="font-bold text-xs bg-yellow-300 border border-black px-2.5 py-0.5 rounded-md mt-1 shadow-[2px_2px_0px_0px_#000]">
-                  Full-Stack Architect
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ─── STATS BAR ───────────────────────────────────────────────────── */}
-      <section className="py-10 px-4 sm:px-8 border-b-4 border-black bg-white">
-        <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-          {stats.map((s, i) => (
-            <div
-              key={i}
-              className={`${s.bg} border-3 border-black p-4 rounded-xl shadow-[5px_5px_0px_0px_#000] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all text-center`}
-            >
-              <div className="font-black text-lg sm:text-xl text-black truncate">{s.value}</div>
-              <div className="font-bold text-xs uppercase text-black tracking-wider mt-1">
-                {s.label}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ─── SKILLS MATRIX ───────────────────────────────────────────────── */}
-      <section className="py-16 sm:py-20 px-4 sm:px-8 border-b-4 border-black bg-[#f0fdf4]">
-        <div className="max-w-6xl mx-auto space-y-10">
-          <div className="text-center space-y-2">
-            <span className="bg-yellow-300 border-2 border-black px-3 py-1 font-black text-xs uppercase tracking-wider shadow-[3px_3px_0px_0px_#000]">
-              Technology Arsenal
+          <h1 className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
+            Built for Developers,{' '}
+            <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">
+              Engineered for Speed
             </span>
-            <h2 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-black">
-              Skills Pack & Core Expertise
-            </h2>
-          </div>
+          </h1>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {skills.map((item, idx) => (
-              <div
-                key={idx}
-                className="bg-white border-4 border-black p-6 rounded-2xl shadow-[6px_6px_0px_0px_#000] hover:shadow-[8px_8px_0px_0px_#000] transition-all space-y-4"
-              >
-                <div className="flex items-center justify-between border-b-3 border-black pb-3">
-                  <h3 className="font-black text-lg uppercase tracking-tight text-black">
-                    {item.category}
-                  </h3>
-                  <span
-                    className={`${item.bgColor} border-2 border-black text-xs font-black px-2.5 py-0.5 rounded-md shadow-[2px_2px_0px_0px_#000]`}
-                  >
-                    Verified
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {item.skills.map((sk, sIdx) => (
-                    <span
-                      key={sIdx}
-                      className="bg-slate-100 border-2 border-black px-3 py-1 text-xs font-bold rounded-lg shadow-[2px_2px_0px_0px_#000] hover:bg-yellow-300 transition-colors"
-                    >
-                      {sk}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── FEATURED PROJECTS ────────────────────────────────────────────── */}
-      <section className="py-16 sm:py-20 px-4 sm:px-8 border-b-4 border-black bg-[#fef2f2]">
-        <div className="max-w-6xl mx-auto space-y-12">
-          <div className="text-center space-y-2">
-            <span className="bg-cyan-300 border-2 border-black px-3 py-1 font-black text-xs uppercase tracking-wider shadow-[3px_3px_0px_0px_#000]">
-              Built with Precision
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-black">
-              Featured ERP & SaaS Solutions
-            </h2>
-          </div>
-
-          <div className="space-y-8">
-            {featuredProjects.map((proj, i) => (
-              <div
-                key={i}
-                className="bg-white border-4 border-black p-6 sm:p-8 rounded-2xl shadow-[8px_8px_0px_0px_#000] hover:-translate-x-1 hover:-translate-y-1 transition-all space-y-5"
-              >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-3 border-black pb-4">
-                  <div>
-                    <span
-                      className={`${proj.badgeColor} border-2 border-black text-xs font-black px-2.5 py-0.5 rounded-md shadow-[2px_2px_0px_0px_#000] uppercase inline-block mb-2`}
-                    >
-                      {proj.category}
-                    </span>
-                    <h3 className="text-2xl font-black uppercase tracking-tight text-black">
-                      {proj.title}
-                    </h3>
-                  </div>
-                  {proj.link && (
-                    <a
-                      href={proj.link}
-                      target={proj.link.startsWith('http') ? '_blank' : '_self'}
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 font-black text-xs uppercase bg-yellow-300 border-2 border-black px-4 py-2 rounded-xl shadow-[3px_3px_0px_0px_#000] hover:bg-yellow-400 transition-all self-start sm:self-auto"
-                    >
-                      <span>Explore</span>
-                      <ExternalLink className="h-3.5 w-3.5 stroke-[3]" />
-                    </a>
-                  )}
-                </div>
-
-                <p className="font-bold text-sm text-slate-800 leading-relaxed">
-                  {proj.description}
-                </p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                  <div>
-                    <div className="font-black text-xs uppercase text-slate-500 mb-2">
-                      Tech Stack Used:
-                    </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {proj.tech.map((t, tIdx) => (
-                        <span
-                          key={tIdx}
-                          className="bg-lime-200 border border-black text-[11px] font-bold px-2.5 py-0.5 rounded-md"
-                        >
-                          {t}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="font-black text-xs uppercase text-slate-500 mb-2">
-                      Key Highlights:
-                    </div>
-                    <div className="space-y-1">
-                      {proj.highlights.map((h, hIdx) => (
-                        <div
-                          key={hIdx}
-                          className="flex items-center gap-1.5 text-xs font-bold text-slate-900"
-                        >
-                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                          <span>{h}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── CONTACT & CONNECT ────────────────────────────────────────────── */}
-      <section className="py-16 sm:py-20 px-4 sm:px-8 bg-yellow-300">
-        <div className="max-w-4xl mx-auto text-center space-y-6">
-          <span className="bg-white border-2 border-black px-3 py-1 font-black text-xs uppercase tracking-wider shadow-[3px_3px_0px_0px_#000]">
-            Let's Collaborate
-          </span>
-          <h2 className="text-3xl sm:text-5xl font-black uppercase tracking-tight text-black">
-            Ready to Build Your Next Big Solution?
-          </h2>
-          <p className="font-bold text-base text-slate-900 max-w-xl mx-auto">
-            Looking for a custom ERP solution, School Management suite, or specialized SaaS system?
-            Let's connect!
+          <p className="text-base text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
+            Integrate your e-commerce storefront, custom hardware kiosks, or enterprise data warehouses with
+            OmniManage's REST APIs and SSE streaming engine.
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
+          <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
             <a
-              href="mailto:info.salahuddindev@gmail.com"
-              className="inline-flex items-center gap-2 font-black text-sm uppercase bg-black text-white border-3 border-black px-6 py-3.5 rounded-xl shadow-[5px_5px_0px_0px_#fff] hover:bg-slate-900 hover:-translate-x-1 hover:-translate-y-1 transition-all"
+              href="/api-docs"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs text-white bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-500/20 transition-all"
             >
-              <Mail className="h-4 w-4" />
-              Email: info.salahuddindev@gmail.com
+              <span>Explore OpenAPI / Swagger</span>
+              <ExternalLink className="w-3.5 h-3.5" />
             </a>
             <a
-              href="https://salahuddin.codes"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 font-black text-sm uppercase bg-white text-black border-3 border-black px-6 py-3.5 rounded-xl shadow-[5px_5px_0px_0px_#000] hover:bg-lime-300 hover:-translate-x-1 hover:-translate-y-1 transition-all"
+              href="#code-sample"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
             >
-              <Globe className="h-4 w-4" />
-              Visit Portfolio: salahuddin.codes
+              <Terminal className="w-3.5 h-3.5" />
+              <span>View Code Samples</span>
             </a>
           </div>
         </div>
       </section>
 
-      {/* ─── FOOTER ───────────────────────────────────────────────────────── */}
-      <footer className="py-6 px-4 sm:px-8 bg-black text-white border-t-4 border-black">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold">
-          <div>
-            &copy; {new Date().getFullYear()} Salah Uddin Kader (@salahuddingfx) • All Rights
-            Reserved.
-          </div>
-          <button
-            onClick={scrollToTop}
-            className="flex items-center gap-1 bg-yellow-300 text-black border-2 border-white px-3 py-1.5 rounded-lg font-black hover:bg-yellow-400 transition-colors"
-          >
-            Top <ChevronUp className="h-4 w-4" />
-          </button>
+      {/* ─── TECH STACK ARCHITECTURE ─────────────────────────────────────────── */}
+      <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center max-w-2xl mx-auto space-y-2 mb-12">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">
+            System Architecture
+          </h2>
+          <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+            High-Performance Stack
+          </h3>
         </div>
-      </footer>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {stackLayers.map((layer) => {
+            const Icon = layer.icon;
+            return (
+              <div
+                key={layer.title}
+                className="p-6 rounded-3xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3 flex flex-col justify-between"
+              >
+                <div className="space-y-3">
+                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${layer.color} flex items-center justify-center`}>
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <h4 className="text-base font-bold text-slate-900 dark:text-white">{layer.title}</h4>
+                  <p className="text-[11px] font-mono font-bold text-blue-600 dark:text-blue-400">
+                    {layer.tech}
+                  </p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{layer.desc}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ─── CODE SAMPLE & ENDPOINTS ─────────────────────────────────────────── */}
+      <section id="code-sample" className="py-16 bg-slate-100/70 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
+            {/* Left: Endpoint List */}
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white">Core REST Endpoints</h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Authenticate requests via Bearer JWT token header or httpOnly cookies.
+                </p>
+              </div>
+
+              <div className="space-y-2.5">
+                {endpoints.map((ep) => (
+                  <div
+                    key={ep.path}
+                    className="p-3 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`px-2 py-0.5 rounded font-mono font-bold text-[10px] ${
+                          ep.method === 'GET'
+                            ? 'bg-blue-100 dark:bg-blue-950 text-blue-600'
+                            : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-600'
+                        }`}
+                      >
+                        {ep.method}
+                      </span>
+                      <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{ep.path}</span>
+                    </div>
+                    <span className="text-slate-500 text-[11px]">{ep.desc}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right: Code Snippet Card */}
+            <div className="rounded-3xl bg-slate-950 border border-slate-800 shadow-2xl overflow-hidden">
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 py-3 bg-slate-900/80 border-b border-slate-800 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
+                  <span className="ml-2 font-mono text-[11px] text-slate-400">create-sale-example</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center bg-slate-800 rounded-lg p-0.5 font-mono text-[10px]">
+                    {['curl', 'js', 'python'].map((lang) => (
+                      <button
+                        key={lang}
+                        type="button"
+                        onClick={() => setActiveLang(lang)}
+                        className={`px-2 py-1 rounded-md transition-colors ${
+                          activeLang === lang ? 'bg-blue-600 text-white font-bold' : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        {lang.toUpperCase()}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleCopy}
+                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+                    aria-label="Copy Code"
+                  >
+                    {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Code display */}
+              <pre className="p-5 text-xs font-mono text-emerald-400 overflow-x-auto leading-relaxed">
+                <code>{codeSnippets[activeLang]}</code>
+              </pre>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

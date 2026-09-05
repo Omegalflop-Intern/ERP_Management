@@ -1,103 +1,95 @@
 import {
   ArrowLeft,
   Compass,
+  FileQuestion,
+  HelpCircle,
   Home,
   LayoutDashboard,
   LifeBuoy,
   Search,
+  Smartphone,
   Sparkles,
+  Zap,
 } from 'lucide-react';
 import React from 'react';
-import { Link } from 'react-router-dom';
-import ThemeToggle from '../../components/ui/ThemeToggle';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 export default function NotFoundPage() {
-  useDocumentTitle('404 - Page Not Found');
+  useDocumentTitle('404 - Page Not Found | OmniManage');
+  const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
   const isSuperAdmin = isAuthenticated && !user?.tenantId && user?.roleName === 'ADMIN';
   const dashboardLink = isSuperAdmin ? '/super-admin/dashboard' : '/dashboard';
 
   return (
-    <div className="min-h-screen bg-amber-50 dark:bg-[#070b14] text-slate-900 dark:text-slate-100 font-sans flex flex-col justify-between selection:bg-black selection:text-yellow-300">
-      {/* ─── HEADER BAR ────────────────────────────────────────────────────────── */}
-      <header className="px-4 sm:px-8 py-4 border-b-4 border-black bg-white/90 dark:bg-slate-900/90 backdrop-blur-md flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 group">
-          <div className="w-9 h-9 bg-yellow-300 border-2 border-black rounded-xl flex items-center justify-center font-black text-lg shadow-[2px_2px_0px_0px_#000]">
-            ⚡
-          </div>
-          <span className="font-black text-lg tracking-tight uppercase dark:text-white">
-            OmniManage
-          </span>
-        </Link>
+    <div className="relative min-h-[75vh] flex items-center justify-center px-4 py-16 font-sans overflow-hidden">
+      {/* Ambient background glows */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-gradient-to-tr from-blue-600/20 via-indigo-600/15 to-purple-600/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="flex items-center gap-3">
-          <ThemeToggle />
-          <Link
-            to={isAuthenticated ? dashboardLink : '/'}
-            className="inline-flex items-center gap-1.5 font-bold text-xs uppercase bg-yellow-300 text-black border-2 border-black px-3.5 py-1.5 rounded-xl shadow-[2px_2px_0px_0px_#000] hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
-          >
-            {isAuthenticated ? (
-              <LayoutDashboard className="w-3.5 h-3.5" />
-            ) : (
-              <Home className="w-3.5 h-3.5" />
-            )}
-            {isAuthenticated ? 'Dashboard' : 'Home'}
-          </Link>
-        </div>
-      </header>
-
-      {/* ─── 404 CONTENT ───────────────────────────────────────────────────────── */}
-      <main className="flex-1 flex items-center justify-center p-6 my-8">
-        <div className="max-w-xl w-full text-center space-y-6 bg-white dark:bg-slate-900 border-4 border-black p-8 sm:p-12 rounded-3xl shadow-[8px_8px_0px_0px_#000]">
-          {/* Big Badge */}
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-pink-400 border-3 border-black rounded-3xl shadow-[4px_4px_0px_0px_#000] text-3xl font-black text-black mx-auto">
+      <div className="relative z-10 max-w-xl w-full text-center space-y-8">
+        {/* Animated 404 Visual Pill */}
+        <div className="relative inline-flex items-center justify-center">
+          <div className="text-8xl sm:text-9xl font-black tracking-tighter bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent opacity-90 select-none">
             404
           </div>
-
-          <div className="space-y-2">
-            <h1 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-slate-900 dark:text-white">
-              Lost in Cyber Orbit?
-            </h1>
-            <p className="text-sm sm:text-base font-medium text-slate-600 dark:text-slate-300 max-w-md mx-auto leading-relaxed">
-              The page or resource you are trying to access does not exist or may have been
-              relocated.
-            </p>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-            {isAuthenticated ? (
-              <Link
-                to={dashboardLink}
-                className="inline-flex items-center gap-2 font-black text-xs uppercase bg-yellow-300 text-black border-2 border-black px-5 py-3 rounded-xl shadow-[3px_3px_0px_0px_#000] hover:bg-yellow-400 hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
-              >
-                <LayoutDashboard className="w-4 h-4" /> Go to Workspace Dashboard
-              </Link>
-            ) : (
-              <Link
-                to="/"
-                className="inline-flex items-center gap-2 font-black text-xs uppercase bg-yellow-300 text-black border-2 border-black px-5 py-3 rounded-xl shadow-[3px_3px_0px_0px_#000] hover:bg-yellow-400 hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
-              >
-                <Home className="w-4 h-4" /> Return to Homepage
-              </Link>
-            )}
-
-            <Link
-              to="/contact"
-              className="inline-flex items-center gap-2 font-bold text-xs uppercase bg-white dark:bg-slate-800 text-slate-900 dark:text-white border-2 border-black px-5 py-3 rounded-xl shadow-[3px_3px_0px_0px_#000] hover:bg-slate-100 dark:hover:bg-slate-700 hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
-            >
-              <LifeBuoy className="w-4 h-4 text-cyan-500" /> Support Desk
-            </Link>
+          <div className="absolute -bottom-2 px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 text-xs font-black uppercase tracking-wider border border-blue-200 dark:border-blue-800 shadow-md">
+            Lost in Space
           </div>
         </div>
-      </main>
 
-      {/* ─── FOOTER ────────────────────────────────────────────────────────────── */}
-      <footer className="py-4 px-6 text-center text-xs font-bold text-slate-500 border-t-2 border-black/10 dark:border-white/10">
-        OmniManage Gadget ERP Solution • Error Code: HTTP 404
-      </footer>
+        {/* Message */}
+        <div className="space-y-3">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            Device Not Found in Network
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
+            The page, serial record, or route you requested might have been decommissioned, moved, or never
+            existed in this database.
+          </p>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 transition-all active:scale-95"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Go Back</span>
+          </button>
+
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-xs text-white bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-500/20 transition-all active:scale-95"
+          >
+            <Home className="w-4 h-4" />
+            <span>Back to Homepage</span>
+          </Link>
+
+          {isAuthenticated && (
+            <Link
+              to={dashboardLink}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs text-white bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-500/20 transition-all active:scale-95"
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              <span>ERP Dashboard</span>
+            </Link>
+          )}
+        </div>
+
+        {/* Quick Help Card */}
+        <div className="pt-6 border-t border-slate-200 dark:border-slate-800/80">
+          <p className="text-xs text-slate-500">
+            Need urgent assistance or looking for support?{' '}
+            <Link to="/contact" className="font-bold text-blue-600 hover:underline">
+              Contact OmniManage Help Desk
+            </Link>
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

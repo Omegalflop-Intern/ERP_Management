@@ -1,13 +1,19 @@
 import {
-  ArrowLeft,
   ArrowRight,
   Award,
+  BadgeCheck,
+  BarChart3,
+  Boxes,
   Building2,
   CheckCircle2,
   Cpu,
   Globe2,
+  Heart,
+  History,
   Layers,
+  Lock,
   Rocket,
+  Shield,
   ShieldCheck,
   Smartphone,
   Sparkles,
@@ -18,244 +24,215 @@ import {
 } from 'lucide-react';
 import React from 'react';
 import { Link } from 'react-router-dom';
-import ThemeToggle from '../../components/ui/ThemeToggle';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 export default function AboutPage() {
   useDocumentTitle('About Us - OmniManage Gadget ERP');
 
-  const stats = [
-    { label: 'Gadget Shops Empowered', value: '500+', color: 'bg-amber-300' },
-    { label: 'IMEI & Serial Records Managed', value: '1.2M+', color: 'bg-lime-400' },
-    { label: 'Repair Lifecycle Orders', value: '350K+', color: 'bg-cyan-300' },
-    { label: 'Platform Uptime SLA', value: '99.98%', color: 'bg-pink-400' },
+  const milestones = [
+    {
+      year: '2024',
+      title: 'The Challenge in Mobile Retail',
+      desc: 'Mobile retailers and repair labs were losing thousands of dollars each month due to duplicate IMEI errors, untracked warranty claims, and messy manual paper job sheets.',
+    },
+    {
+      year: '2025',
+      title: 'OmniManage Core Engine Born',
+      desc: 'We architected a purpose-built multi-tenant ERP centered on unique serial tracking, sub-second POS billing, and hardware technician commission workflows.',
+    },
+    {
+      year: '2026',
+      title: 'Enterprise Multi-Store Scale',
+      desc: 'Now powering 500+ gadget stores, handling over 1.2M IMEI assets with real-time SSE sync, double-entry financial ledger, and high-availability cloud infrastructure.',
+    },
   ];
 
-  const coreValues = [
+  const pillars = [
     {
-      title: 'Precision IMEI Tracking',
-      desc: 'Never lose a single device history. We treat every serial and IMEI like a unique digital passport.',
+      title: 'Precision IMEI & Asset Passports',
+      desc: 'Every smartphone, tablet, and accessory serial is treated as an immutable digital asset. From supplier purchase to customer handover and warranty returns, zero ambiguity.',
       icon: Smartphone,
-      color: 'bg-amber-300',
+      color: 'from-blue-500/20 to-cyan-500/20 text-blue-500 dark:text-blue-400',
     },
     {
-      title: 'Full Repair Cycle Transparency',
-      desc: 'From diagnostic notes to technician assignments, technician commission, and SMS updates to customers.',
+      title: 'Hardware Servicing & Lab Operations',
+      desc: 'From initial diagnostic job sheets to technician commission splits, spare parts inventory deduction, and instant customer SMS updates, repair workflows are automated.',
       icon: Wrench,
-      color: 'bg-lime-400',
+      color: 'from-amber-500/20 to-orange-500/20 text-amber-500 dark:text-amber-400',
     },
     {
-      title: 'Multi-Branch & Warehouse Sync',
-      desc: 'Manage inventory transfers, inter-branch billing, and real-time stock balances across all locations.',
-      icon: Building2,
-      color: 'bg-cyan-300',
+      title: 'Audit-Ready Double-Entry Accounting',
+      desc: 'Automatic journal postings, real-time Profit & Loss statements, balance sheets, and customer due ledgers without needing a full-time chartered accountant on staff.',
+      icon: Layers,
+      color: 'from-purple-500/20 to-indigo-500/20 text-purple-500 dark:text-purple-400',
     },
     {
-      title: 'Bank-Grade Security & Isolation',
-      desc: 'Strict multi-tenant architecture ensures each shop’s sales, accounting, and customer data remains 100% private.',
+      title: 'Bank-Grade Multi-Tenant Isolation',
+      desc: 'Every shop is strictly isolated with independent data partitioning, encrypted credentials, granular role permissions, and continuous automated backup snapshots.',
       icon: ShieldCheck,
-      color: 'bg-pink-400',
+      color: 'from-emerald-500/20 to-teal-500/20 text-emerald-500 dark:text-emerald-400',
     },
   ];
 
   return (
-    <div className="min-h-screen bg-amber-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans selection:bg-black selection:text-yellow-300">
-      {/* ─── TOP NAVBAR ────────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b-4 border-black px-4 sm:px-8 py-3.5 shadow-[0_4px_0_0_#000]">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 bg-yellow-300 border-2 border-black rounded-xl flex items-center justify-center font-black text-xl shadow-[3px_3px_0px_0px_#000] group-hover:translate-x-0.5 group-hover:translate-y-0.5 group-hover:shadow-[1px_1px_0px_0px_#000] transition-all">
-              ⚡
+    <div className="relative overflow-hidden font-sans">
+      {/* ─── HERO HEADER ──────────────────────────────────────────────────────── */}
+      <section className="relative pt-12 pb-20 sm:pt-20 sm:pb-28 overflow-hidden bg-gradient-to-b from-blue-50/50 via-transparent to-transparent dark:from-slate-900/40">
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center space-y-6">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-300 text-xs font-bold">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Built by Engineers & Retail Veterans</span>
+          </div>
+
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
+            Transforming How Gadget Businesses{' '}
+            <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">
+              Operate & Scale
+            </span>
+          </h1>
+
+          <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-3xl mx-auto leading-relaxed">
+            OmniManage was created to solve the real operational headaches of mobile retailers, electronics
+            distributors, and repair workshops. We replace scattered spreadsheets and generic POS tools with
+            an integrated operating system.
+          </p>
+        </div>
+      </section>
+
+      {/* ─── STATS STRIP ──────────────────────────────────────────────────────── */}
+      <section className="py-10 border-y border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 backdrop-blur-md">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            <div>
+              <p className="text-3xl font-black text-slate-900 dark:text-white">500+</p>
+              <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mt-1">
+                Active Outlets
+              </p>
             </div>
             <div>
-              <span className="font-black text-xl tracking-tight uppercase dark:text-white">
-                OmniManage
-              </span>
-              <span className="block text-[10px] font-bold tracking-widest text-slate-500 uppercase -mt-1">
-                Gadget ERP Solution
-              </span>
+              <p className="text-3xl font-black text-blue-600 dark:text-blue-400">1.2M+</p>
+              <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mt-1">
+                IMEI Records Tracked
+              </p>
             </div>
-          </Link>
-
-          <nav className="hidden md:flex items-center gap-6 text-sm font-bold">
-            <Link
-              to="/"
-              className="hover:text-blue-600 dark:hover:text-yellow-400 transition-colors"
-            >
-              Home
-            </Link>
-            <Link
-              to="/pricing"
-              className="hover:text-blue-600 dark:hover:text-yellow-400 transition-colors"
-            >
-              Pricing
-            </Link>
-            <Link
-              to="/contact"
-              className="hover:text-blue-600 dark:hover:text-yellow-400 transition-colors"
-            >
-              Contact
-            </Link>
-            <Link
-              to="/developer"
-              className="hover:text-blue-600 dark:hover:text-yellow-400 transition-colors"
-            >
-              Developer
-            </Link>
-          </nav>
-
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            <Link
-              to="/login"
-              className="hidden sm:inline-flex font-bold text-xs uppercase bg-white dark:bg-slate-800 text-black dark:text-white border-2 border-black px-4 py-2 rounded-xl shadow-[3px_3px_0px_0px_#000] hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0px_0px_#000] transition-all"
-            >
-              Sign In
-            </Link>
-            <Link
-              to="/register-shop"
-              className="font-black text-xs uppercase bg-yellow-300 text-black border-2 border-black px-4 py-2 rounded-xl shadow-[3px_3px_0px_0px_#000] hover:bg-yellow-400 hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[1px_1px_0px_0px_#000] transition-all"
-            >
-              Start Free Trial
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      {/* ─── HERO SECTION ──────────────────────────────────────────────────────── */}
-      <section className="py-16 sm:py-24 px-4 sm:px-8 border-b-4 border-black bg-gradient-to-b from-yellow-200/50 to-amber-50 dark:from-slate-900 dark:to-slate-950">
-        <div className="max-w-4xl mx-auto text-center space-y-6">
-          <div className="inline-flex items-center gap-2 bg-black text-yellow-300 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider shadow-[3px_3px_0px_0px_#000]">
-            <Sparkles className="w-4 h-4" /> The Story Behind OmniManage
-          </div>
-          <h1 className="text-4xl sm:text-6xl font-black uppercase tracking-tight text-slate-950 dark:text-white leading-tight">
-            Built Exclusively for Gadget Shops & Tech Retailers
-          </h1>
-          <p className="text-base sm:text-lg text-slate-700 dark:text-slate-300 font-medium max-w-2xl mx-auto leading-relaxed">
-            Standard ERP software fails when dealing with unique IMEI numbers, warranty claims,
-            multi-part repairs, and technician commissions. OmniManage was engineered from the
-            ground up to solve these exact gadget industry challenges.
-          </p>
-        </div>
-      </section>
-
-      {/* ─── STATS GRID ────────────────────────────────────────────────────────── */}
-      <section className="py-12 px-4 sm:px-8 max-w-6xl mx-auto">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {stats.map((stat, i) => (
-            <div
-              key={i}
-              className={`${stat.color} p-6 border-3 border-black rounded-2xl shadow-[5px_5px_0px_0px_#000] text-slate-950 flex flex-col justify-between`}
-            >
-              <div className="text-3xl sm:text-4xl font-black">{stat.value}</div>
-              <div className="text-xs sm:text-sm font-bold uppercase mt-2">{stat.label}</div>
+            <div>
+              <p className="text-3xl font-black text-indigo-600 dark:text-indigo-400">৳ 250M+</p>
+              <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mt-1">
+                Monthly Invoices Settled
+              </p>
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ─── OUR MISSION & VISION ──────────────────────────────────────────────── */}
-      <section className="py-16 px-4 sm:px-8 border-y-4 border-black bg-white dark:bg-slate-900">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-          <div className="space-y-6">
-            <span className="bg-lime-400 border-2 border-black px-3 py-1 font-black text-xs uppercase tracking-wider shadow-[3px_3px_0px_0px_#000] text-black">
-              Our Vision
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-black uppercase tracking-tight dark:text-white">
-              Empowering Gadget Entrepreneurs with Automated Intelligence
-            </h2>
-            <p className="text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
-              We envision a future where every phone repair center, electronics distributor, and
-              multi-branch gadget showroom operates with zero stock discrepancies, frictionless
-              warranty validations, and crystal-clear double-entry accounting.
-            </p>
-            <ul className="space-y-3 font-bold text-sm">
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-                Zero-loss IMEI inventory auditing with barcode and QR scanning.
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-                Comprehensive technician commission tracking and ticket workflows.
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-                Instant WhatsApp and SMS invoices with QR verification.
-              </li>
-            </ul>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {coreValues.map((val, idx) => {
-              const Icon = val.icon;
-              return (
-                <div
-                  key={idx}
-                  className="bg-amber-50 dark:bg-slate-800 p-5 border-3 border-black rounded-2xl shadow-[4px_4px_0px_0px_#000] space-y-3"
-                >
-                  <div
-                    className={`w-10 h-10 ${val.color} border-2 border-black rounded-xl flex items-center justify-center text-black`}
-                  >
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <h3 className="font-black text-base uppercase dark:text-white">{val.title}</h3>
-                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
-                    {val.desc}
-                  </p>
-                </div>
-              );
-            })}
+            <div>
+              <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400">99.98%</p>
+              <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mt-1">
+                Platform Reliability
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ─── CALL TO ACTION ────────────────────────────────────────────────────── */}
-      <section className="py-16 sm:py-20 px-4 sm:px-8 bg-yellow-300 text-black border-b-4 border-black text-center">
-        <div className="max-w-3xl mx-auto space-y-6">
-          <h2 className="text-3xl sm:text-5xl font-black uppercase tracking-tight">
-            Ready to Scale Your Gadget Business?
+      {/* ─── MISSION & PILLARS ────────────────────────────────────────────────── */}
+      <section className="py-20 sm:py-28 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center max-w-2xl mx-auto space-y-3 mb-16">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">
+            Our Architectural Core
           </h2>
-          <p className="font-bold text-base max-w-xl mx-auto">
-            Join hundreds of thriving retail shops and repair centers. Start your 14-day risk-free
-            trial today.
+          <h3 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+            Designed for the Real World of Electronics
+          </h3>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Every feature in OmniManage is engineered around the specialized workflows of gadgets and
+            hardware repair.
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
-            <Link
-              to="/register-shop"
-              className="inline-flex items-center gap-2 font-black text-sm uppercase bg-black text-yellow-300 border-3 border-black px-8 py-4 rounded-xl shadow-[5px_5px_0px_0px_#fff] hover:bg-slate-900 hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
-            >
-              <Rocket className="w-4 h-4" /> Create Your Shop Workspace
-            </Link>
-            <Link
-              to="/contact"
-              className="inline-flex items-center gap-2 font-black text-sm uppercase bg-white text-black border-3 border-black px-6 py-4 rounded-xl shadow-[5px_5px_0px_0px_#000] hover:bg-lime-300 hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
-            >
-              Talk to Sales Team <ArrowRight className="w-4 h-4" />
-            </Link>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {pillars.map((p) => {
+            const Icon = p.icon;
+            return (
+              <div
+                key={p.title}
+                className="p-8 rounded-3xl bg-white dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 shadow-lg shadow-slate-900/5 space-y-4 hover:border-blue-500/50 transition-all duration-300"
+              >
+                <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${p.color} flex items-center justify-center`}>
+                  <Icon className="w-6 h-6" />
+                </div>
+                <h4 className="text-xl font-bold text-slate-900 dark:text-white">{p.title}</h4>
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{p.desc}</p>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ─── TIMELINE / STORY ─────────────────────────────────────────────────── */}
+      <section className="py-20 bg-slate-100/70 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center space-y-3 mb-16">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
+              Our Journey
+            </h2>
+            <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+              Evolution of the OmniManage Platform
+            </h3>
+          </div>
+
+          <div className="space-y-8 relative before:absolute before:inset-0 before:left-4 sm:before:left-1/2 before:w-0.5 before:bg-slate-300 dark:before:bg-slate-800">
+            {milestones.map((m, idx) => (
+              <div
+                key={m.year}
+                className={`relative flex flex-col sm:flex-row items-start ${
+                  idx % 2 === 0 ? 'sm:flex-row-reverse' : ''
+                } gap-6 sm:gap-12`}
+              >
+                {/* Center Badge */}
+                <div className="absolute left-4 sm:left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-blue-600 border-4 border-white dark:border-slate-950 flex items-center justify-center text-white text-[10px] font-black shadow-md z-10">
+                  ✓
+                </div>
+
+                <div className={`w-full sm:w-1/2 pl-12 sm:pl-0 ${idx % 2 === 0 ? 'sm:text-left sm:pl-8' : 'sm:text-right sm:pr-8'}`}>
+                  <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400">
+                      {m.year}
+                    </span>
+                    <h4 className="text-lg font-bold text-slate-900 dark:text-white">{m.title}</h4>
+                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                      {m.desc}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ─── FOOTER ────────────────────────────────────────────────────────────── */}
-      <footer className="py-8 px-4 sm:px-8 bg-black text-white">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold">
-          <div>&copy; {new Date().getFullYear()} OmniManage ERP Inc. All rights reserved.</div>
-          <div className="flex items-center gap-6">
-            <Link to="/terms" className="hover:text-yellow-400 transition-colors">
-              Terms of Service
-            </Link>
-            <Link to="/privacy" className="hover:text-yellow-400 transition-colors">
-              Privacy Policy
-            </Link>
-            <Link to="/refund-policy" className="hover:text-yellow-400 transition-colors">
-              Refund Policy
-            </Link>
-            <Link to="/contact" className="hover:text-yellow-400 transition-colors">
-              Contact
-            </Link>
-          </div>
+      {/* ─── CALL TO ACTION ───────────────────────────────────────────────────── */}
+      <section className="py-20 text-center max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+          Ready to Modernize Your Gadget Operations?
+        </h3>
+        <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
+          Start your 14-day unrestricted trial today and experience the speed of OmniManage.
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <Link
+            to="/register-shop"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-white bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-500/25 transition-all"
+          >
+            <span>Register Your Shop</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+          <Link
+            to="/contact"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 transition-all"
+          >
+            <span>Contact Sales</span>
+          </Link>
         </div>
-      </footer>
+      </section>
     </div>
   );
 }
