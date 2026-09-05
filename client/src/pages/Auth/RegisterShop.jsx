@@ -97,6 +97,7 @@ export default function RegisterShop() {
 
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [availablePlans, setAvailablePlans] = useState(PLANS);
   const [selectedPlan, setSelectedPlan] = useState(defaultPlanParam.toLowerCase());
   const [billingCycle, setBillingCycle] = useState('yearly');
 
@@ -117,15 +118,37 @@ export default function RegisterShop() {
   });
 
   useEffect(() => {
-    const fetchPublicSettings = async () => {
+    const fetchPublicData = async () => {
       try {
-        const res = await api.get('/settings/public');
-        if (res.data?.data) {
-          setPlatformSettings((prev) => ({ ...prev, ...res.data.data }));
+        const [settingsRes, plansRes] = await Promise.allSettled([
+          api.get('/settings/public'),
+          api.get('/plans'),
+        ]);
+
+        if (settingsRes.status === 'fulfilled' && settingsRes.value.data?.data) {
+          setPlatformSettings((prev) => ({ ...prev, ...settingsRes.value.data.data }));
+        }
+
+        if (plansRes.status === 'fulfilled' && Array.isArray(plansRes.value.data?.data)) {
+          const list = plansRes.value.data.data;
+          if (list.length > 0) {
+            const mapped = list
+              .filter((p) => p.isPublic !== false && p.name !== 'FREE')
+              .map((p) => ({
+                id: (p.name || '').toLowerCase(),
+                name: p.displayName || p.name,
+                monthlyPrice: Number(p.monthlyPrice || 0),
+                yearlyPrice: Number(p.yearlyPrice || 0),
+                users: p.maxUsers > 0 ? `${p.maxUsers} Staff Users` : 'Unlimited Users',
+                features: Array.isArray(p.features) ? p.features : [],
+                isPopular: p.name === 'PRO',
+              }));
+            if (mapped.length > 0) setAvailablePlans(mapped);
+          }
         }
       } catch {}
     };
-    fetchPublicSettings();
+    fetchPublicData();
   }, []);
 
   const [form, setForm] = useState({
@@ -790,7 +813,7 @@ export default function RegisterShop() {
 
                     {/* Plan Cards Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      {PLANS.map((plan) => {
+                      {availablePlans.map((plan) => {
                         const isSelected = selectedPlan === plan.id;
                         const price =
                           billingCycle === 'yearly' ? plan.yearlyPrice : plan.monthlyPrice;
@@ -908,7 +931,9 @@ export default function RegisterShop() {
               <div className="space-y-3 text-xs">
                 <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
                   <span className="text-slate-500">Selected Plan:</span>
-                  <span className="font-bold text-slate-800 dark:text-slate-200">{activePlanObj.name}</span>
+                  <span className="font-bold text-slate-800 dark:text-slate-200">
+                    {(availablePlans.find((p) => p.id === selectedPlan) || availablePlans[0])?.name}
+                  </span>
                 </div>
                 <div className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
                   <span className="text-slate-500">Billing Cycle:</span>

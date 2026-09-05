@@ -82,9 +82,21 @@ export default function LandingPage() {
   useEffect(() => {
     const fetchPlans = async () => {
       try {
-        const res = await api.get('/plans/public');
-        if (res.data?.success && Array.isArray(res.data.data) && res.data.data.length > 0) {
-          setPlans(res.data.data);
+        const res = await api.get('/plans');
+        const planList = res.data?.data;
+        if (Array.isArray(planList) && planList.length > 0) {
+          const visiblePlans = planList
+            .filter((p) => p.isPublic !== false && p.name !== 'FREE')
+            .map((p) => ({
+              _id: String(p.id || p._id),
+              name: p.displayName || p.name,
+              priceMonthly: p.monthlyPrice,
+              priceYearly: p.yearlyPrice,
+              description: p.description,
+              features: Array.isArray(p.features) ? p.features : [],
+              isPopular: p.name === 'PRO',
+            }));
+          setPlans(visiblePlans);
         } else {
           throw new Error('No public plans');
         }
@@ -92,50 +104,56 @@ export default function LandingPage() {
         setPlans([
           {
             _id: 'starter',
-            name: 'Retail Starter',
-            priceMonthly: 1500,
-            priceYearly: 1200,
-            description: 'Ideal for single gadget shops and repair kiosks.',
+            name: 'Starter',
+            priceMonthly: 999,
+            priceYearly: 9990,
+            description: 'For growing shops that need more features',
             features: [
-              'Single Branch & 3 Staff Users',
-              'Up to 1,500 IMEIs & Serials',
-              'POS & Barcode Invoicing',
-              'Repair Job Sheets & SMS Updates',
-              'Customer Due & CRM',
-              'Standard Reports & Backups',
+              'Everything in Free',
+              'IMEI / Serial Tracking',
+              'Customer CRM & Due',
+              'Supplier Management',
+              'Purchase Orders',
+              'Up to 5 Users',
+              'Repair Job Sheets',
+              'SMS & Email Invoices',
             ],
             isPopular: false,
           },
           {
             _id: 'pro',
-            name: 'Business Pro',
-            priceMonthly: 3500,
-            priceYearly: 2800,
-            description: 'Complete ERP suite for multi-branch gadget retailers.',
+            name: 'Pro',
+            priceMonthly: 2499,
+            priceYearly: 24990,
+            description: 'For established gadget businesses',
             features: [
-              'Multi-Branch & 15 Staff Accounts',
-              'Unlimited IMEIs & Warranty Claims',
-              'Double-Entry Accounting & P&L',
-              'HR, Attendance & Payroll',
-              'Wholesale Tiers & Credit Limits',
-              'Technician Commission Tracking',
-              'Priority 24/7 Phone & Ticket Support',
+              'Everything in Starter',
+              'Double-Entry Accounting',
+              'Payroll & HR Module',
+              'Attendance Tracking',
+              'Leave Management',
+              'Wholesale Orders',
+              'Warranty Claims',
+              'Investor & Loan Tracking',
+              'Up to 20 Users',
             ],
             isPopular: true,
           },
           {
             _id: 'enterprise',
-            name: 'Franchise Enterprise',
-            priceMonthly: 7500,
-            priceYearly: 6000,
-            description: 'High-scale infrastructure for large gadget chains & importers.',
+            name: 'Enterprise',
+            priceMonthly: 0,
+            priceYearly: 0,
+            description: 'Unlimited capacity & dedicated setup for large franchises.',
             features: [
-              'Unlimited Branches & Custom Domains',
-              'Unlimited Staff & Fine-grained Roles',
-              'Full REST API & SSE Webhooks Access',
-              'Automated Daily Offsite Backups',
-              'Dedicated Technical Account Lead',
-              'Custom Accounting Integration & SLA',
+              'Everything in Pro',
+              'Unlimited Users',
+              'Custom Branding & Logo',
+              'API Access',
+              'Dedicated Account Manager',
+              'Custom Integrations',
+              'SLA Guarantee',
+              'Priority Phone Support',
             ],
             isPopular: false,
           },
