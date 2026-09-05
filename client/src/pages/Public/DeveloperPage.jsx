@@ -1,6 +1,9 @@
 import {
   ArrowRight,
+  Award,
+  BookOpen,
   Boxes,
+  Briefcase,
   Check,
   CheckCircle2,
   Code2,
@@ -9,225 +12,292 @@ import {
   Database,
   ExternalLink,
   FileCode,
+  Github,
+  Globe,
   Globe2,
+  Heart,
   Key,
+  Laptop,
   Layers,
+  Linkedin,
   Lock,
+  Mail,
+  MapPin,
+  MessageSquare,
+  Phone,
   Radio,
   Rocket,
   Server,
   ShieldCheck,
+  Smartphone,
   Sparkles,
+  Star,
   Terminal,
+  Users,
+  Wrench,
   Zap,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
+import AnimatedCounter from '../../components/public/AnimatedCounter';
 import ScrollReveal from '../../components/public/ScrollReveal';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 export default function DeveloperPage() {
-  useDocumentTitle('Developer API & Platform Architecture - OmniManage ERP');
-  const [activeLang, setActiveLang] = useState('curl');
-  const [copied, setCopied] = useState(false);
+  useDocumentTitle('System Architect & Creator Profile - OmniManage ERP');
+  const [activeTab, setActiveTab] = useState('architecture');
 
-  const codeSnippets = {
-    curl: `curl -X POST "https://api.omnimanage.app/api/v1/sales" \\
-  -H "Authorization: Bearer YOUR_API_JWT_TOKEN" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "customerId": "cust_90124",
-    "items": [
-      {
-        "productId": "prod_iph15pm",
-        "imei": "358102948210941",
-        "price": 135000,
-        "quantity": 1
-      }
-    ],
-    "paymentMethod": "CASH",
-    "receivedAmount": 135000
-  }'`,
-
-    js: `import axios from 'axios';
-
-const client = axios.create({
-  baseURL: 'https://api.omnimanage.app/api/v1',
-  headers: {
-    Authorization: \`Bearer \${process.env.OMNIMANAGE_API_KEY}\`,
-    'Content-Type': 'application/json'
-  }
-});
-
-// Create sale with unique IMEI attachment
-const { data } = await client.post('/sales', {
-  customerId: 'cust_90124',
-  items: [{
-    productId: 'prod_iph15pm',
-    imei: '358102948210941',
-    price: 135000,
-    quantity: 1
-  }],
-  paymentMethod: 'CASH',
-  receivedAmount: 135000
-});
-
-console.log('Invoice Generated:', data.data.invoiceNumber);`,
-
-    python: `import requests
-
-url = "https://api.omnimanage.app/api/v1/sales"
-headers = {
-    "Authorization": "Bearer YOUR_API_JWT_TOKEN",
-    "Content-Type": "application/json"
-}
-payload = {
-    "customerId": "cust_90124",
-    "items": [{
-        "productId": "prod_iph15pm",
-        "imei": "358102948210941",
-        "price": 135000,
-        "quantity": 1
-    }],
-    "paymentMethod": "CASH",
-    "receivedAmount": 135000
-}
-
-response = requests.post(url, json=payload, headers=headers)
-print("Response:", response.json())`,
-  };
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(codeSnippets[activeLang]);
-    setCopied(true);
-    toast.success('Code copied to clipboard!');
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const stackLayers = [
+  const skillsMatrix = [
     {
-      title: 'Backend API Engine',
-      tech: 'Node.js (ESM) • Express.js',
-      desc: 'Modular controller-service-validator architecture. Enforced with Zod schemas and sub-second execution.',
+      category: 'Backend & System Architecture',
       icon: Server,
       color: 'from-emerald-500/20 to-teal-500/20 text-emerald-500 dark:text-emerald-400',
+      items: [
+        'Node.js (ESM Modular Architecture)',
+        'Express.js RESTful API Framework',
+        'Server-Sent Events (SSE) Real-Time',
+        'Zod Runtime Schema Validation',
+        'RBAC Permission Matrices & MFA Auth',
+        'Multi-Tenant Subdomain Routing',
+      ],
     },
     {
-      title: 'Relational Database Layer',
-      tech: 'MySQL 8 / MariaDB • Knex.js Query Builder',
-      desc: 'Strict relational data integrity, multi-tenant schemas, atomic ACID transactions for invoicing and double-entry accounting.',
+      category: 'Relational Database Engineering',
       icon: Database,
       color: 'from-blue-500/20 to-indigo-500/20 text-blue-500 dark:text-blue-400',
+      items: [
+        'MySQL 8 & MariaDB Relational Models',
+        'Knex.js Query Builder & Migrations',
+        'ACID Double-Entry Accounting Engine',
+        'Atomic Transactions & Foreign Key Integrity',
+        'Sub-Millisecond IMEI Index Querying',
+        'Automated Point-in-Time Database Dumps',
+      ],
     },
     {
-      title: 'Real-Time Event Stream',
-      tech: 'Server-Sent Events (SSE) • Node EventEmitter',
-      desc: 'Lightweight, firewall-friendly real-time updates for stock changes, technician job status, and sale alerts without heavy websocket overhead.',
-      icon: Radio,
-      color: 'from-amber-500/20 to-orange-500/20 text-amber-500 dark:text-amber-400',
-    },
-    {
-      title: 'Frontend Client Architecture',
-      tech: 'React 18 • Vite 5 • TailwindCSS v3 • Zustand',
-      desc: 'Ultra-fast single-page app with TanStack Query caching, offline indexedDB queueing, and smooth 60fps micro-animations.',
+      category: 'Frontend & UI/UX Craftsmanship',
       icon: Cpu,
       color: 'from-purple-500/20 to-violet-500/20 text-purple-500 dark:text-purple-400',
+      items: [
+        'React 18 & Vite 5 Single Page App',
+        'TailwindCSS v3 Custom Design System',
+        '5 Dynamic Modes (Liquid Glass, Aurora, etc.)',
+        'Zustand Global State & Persist Storage',
+        'TanStack Query Server Caching',
+        'IndexedDB Offline-First Sync Engine',
+      ],
+    },
+    {
+      category: 'Retail Hardware & Integrations',
+      icon: Smartphone,
+      color: 'from-amber-500/20 to-orange-500/20 text-amber-500 dark:text-amber-400',
+      items: [
+        '80mm & 58mm ESC/POS Thermal Printing',
+        'USB & Bluetooth 1D/2D Barcode Scanners',
+        'Unique IMEI & Serial Number Generation',
+        'Automated SMS Gateway Integrations',
+        'PDF Generation (Invoices & Balance Sheets)',
+        'Excel / CSV Data Exporter Engine',
+      ],
     },
   ];
 
-  const endpoints = [
-    { method: 'POST', path: '/api/v1/auth/login-direct', desc: 'Direct JWT auth exchange with role claims' },
-    { method: 'GET', path: '/api/v1/products', desc: 'Query stock catalogue, barcode filters, and prices' },
-    { method: 'GET', path: '/api/v1/imei/:imei/history', desc: 'Query complete device lifecycle passport' },
-    { method: 'POST', path: '/api/v1/sales', desc: 'Process POS invoice, attach IMEIs, update ledger' },
-    { method: 'POST', path: '/api/v1/repair', desc: 'Generate repair ticket and assign lab technician' },
-    { method: 'GET', path: '/api/v1/sse', desc: 'Subscribe to real-time shop notification events' },
+  const architecturalPillars = [
+    {
+      title: '32 Mounted Enterprise Modules',
+      badge: 'Complete Suite',
+      desc: 'Engineered an end-to-end gadget retail solution covering POS, IMEI Lifecycle, Repairs, Double-Entry Accounting, HR & Payroll, Wholesale, CRM, and Super Admin Governance.',
+      stat: '32 Modules',
+    },
+    {
+      title: 'Multi-Tenant Data Isolation',
+      badge: 'Zero Leakage',
+      desc: 'Every shop runs on an independent tenant scope with custom subdomains, scoped queries, tenant validation middleware, and hourly automated subscription checking.',
+      stat: '100% Isolated',
+    },
+    {
+      title: 'Double-Entry Accounting Ledger',
+      badge: 'Audit Ready',
+      desc: 'Built-in automated journal entries matching debits and credits on every sale, refund, purchase, technician commission, and operating expense.',
+      stat: 'Real-time P&L',
+    },
+    {
+      title: 'Lightweight Real-Time SSE',
+      badge: 'Sub-Second',
+      desc: 'Replaced resource-heavy websockets with an efficient Server-Sent Events architecture powered by Node EventEmitters for instant cross-terminal inventory sync.',
+      stat: 'Zero Polling',
+    },
   ];
 
   return (
     <div className="relative overflow-hidden font-sans">
-      {/* ─── HERO HEADER ──────────────────────────────────────────────────────── */}
-      <section className="relative pt-12 pb-16 sm:pt-20 sm:pb-24 bg-gradient-to-b from-blue-50/50 via-transparent to-transparent dark:from-slate-900/40 text-center">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
-          <ScrollReveal animation="fade-down">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-300 text-xs font-bold">
-              <Code2 className="w-3.5 h-3.5" />
-              <span>Developer Hub & Integration Specs</span>
+      {/* ─── DEVELOPER HERO PROFILE ────────────────────────────────────────────── */}
+      <section className="relative pt-12 pb-20 sm:pt-20 sm:pb-28 bg-gradient-to-b from-blue-50/50 via-transparent to-transparent dark:from-slate-900/40">
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-gradient-to-tr from-blue-600/20 via-indigo-600/15 to-purple-600/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
+            {/* Developer Avatar / Badge */}
+            <ScrollReveal animation="zoom-in" duration={600} className="shrink-0 text-center">
+              <div className="relative inline-block">
+                <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-3xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 p-1 shadow-2xl shadow-blue-500/25">
+                  <div className="w-full h-full bg-slate-950 rounded-[22px] flex items-center justify-center relative overflow-hidden">
+                    <Code2 className="w-16 h-16 sm:w-20 sm:h-20 text-blue-400" />
+                    <span className="absolute bottom-2 text-[10px] font-mono font-bold text-slate-400">
+                      ARCHITECT
+                    </span>
+                  </div>
+                </div>
+                <div className="absolute -bottom-2 -right-2 px-3 py-1 rounded-full bg-emerald-500 text-white text-[10px] font-black uppercase tracking-wider shadow-md flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                  <span>Available</span>
+                </div>
+              </div>
+            </ScrollReveal>
+
+            {/* Bio & Intro */}
+            <div className="space-y-4 text-center md:text-left">
+              <ScrollReveal animation="fade-down" delay={100}>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 text-xs font-bold">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Lead Full-Stack Software Architect & Creator</span>
+                </div>
+              </ScrollReveal>
+
+              <ScrollReveal animation="fade-up" delay={200}>
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
+                  Crafting High-Performance{' '}
+                  <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">
+                    Enterprise Systems
+                  </span>
+                </h1>
+              </ScrollReveal>
+
+              <ScrollReveal animation="fade-up" delay={300}>
+                <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl">
+                  Hi, I’m the system architect behind <strong>OmniManage ERP</strong>. I specialize in designing
+                  mission-critical web applications, relational databases with ACID double-entry accounting,
+                  multi-tenant cloud isolation, and real-time retail systems.
+                </p>
+              </ScrollReveal>
+
+              {/* Social & Contact Actions */}
+              <ScrollReveal animation="fade-up" delay={400}>
+                <div className="pt-2 flex flex-wrap items-center justify-center md:justify-start gap-3">
+                  <a
+                    href="mailto:contact@omnimanage.app"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs text-white bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-500/20 active:scale-95 transition-all"
+                  >
+                    <Mail className="w-3.5 h-3.5" />
+                    <span>Get in Touch</span>
+                  </a>
+                  <Link
+                    to="/contact"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-95"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span>Hire for Custom Project</span>
+                  </Link>
+                </div>
+              </ScrollReveal>
             </div>
-          </ScrollReveal>
-
-          <ScrollReveal animation="fade-up" delay={150}>
-            <h1 className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
-              Built for Developers,{' '}
-              <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">
-                Engineered for Speed
-              </span>
-            </h1>
-          </ScrollReveal>
-
-          <ScrollReveal animation="fade-up" delay={300}>
-            <p className="text-base text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
-              Integrate your e-commerce storefront, custom hardware kiosks, or enterprise data warehouses with
-              OmniManage's REST APIs and SSE streaming engine.
-            </p>
-          </ScrollReveal>
-
-          <ScrollReveal animation="fade-up" delay={450}>
-            <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
-              <a
-                href="/api-docs"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs text-white bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-500/20 transition-all active:scale-95"
-              >
-                <span>Explore OpenAPI / Swagger</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-              <a
-                href="#code-sample"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all active:scale-95"
-              >
-                <Terminal className="w-3.5 h-3.5" />
-                <span>View Code Samples</span>
-              </a>
-            </div>
-          </ScrollReveal>
+          </div>
         </div>
       </section>
 
-      {/* ─── TECH STACK ARCHITECTURE ─────────────────────────────────────────── */}
-      <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <ScrollReveal animation="fade-up" className="text-center max-w-2xl mx-auto space-y-2 mb-12">
+      {/* ─── SYSTEM BUILD STATS ───────────────────────────────────────────────── */}
+      <section className="py-10 border-y border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 backdrop-blur-md">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+            <ScrollReveal animation="fade-up" delay={0}>
+              <div>
+                <p className="text-3xl font-black text-slate-900 dark:text-white">
+                  <AnimatedCounter end={32} />
+                </p>
+                <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mt-1">
+                  ERP Modules Engineered
+                </p>
+              </div>
+            </ScrollReveal>
+
+            <ScrollReveal animation="fade-up" delay={100}>
+              <div>
+                <p className="text-3xl font-black text-blue-600 dark:text-blue-400">
+                  <AnimatedCounter end={100} suffix="%" />
+                </p>
+                <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mt-1">
+                  TypeScript & ESM Compliant
+                </p>
+              </div>
+            </ScrollReveal>
+
+            <ScrollReveal animation="fade-up" delay={200}>
+              <div>
+                <p className="text-3xl font-black text-indigo-600 dark:text-indigo-400">
+                  <AnimatedCounter end={1.2} suffix="M+" />
+                </p>
+                <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mt-1">
+                  IMEI Throughput Capable
+                </p>
+              </div>
+            </ScrollReveal>
+
+            <ScrollReveal animation="fade-up" delay={300}>
+              <div>
+                <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400">
+                  <AnimatedCounter end={0} suffix=" Subscriptions Dropped" />
+                </p>
+                <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mt-1">
+                  ACID Transaction Safety
+                </p>
+              </div>
+            </ScrollReveal>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── SKILLS & TECH MASTERY MATRIX ────────────────────────────────────── */}
+      <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <ScrollReveal animation="fade-up" className="text-center max-w-2xl mx-auto space-y-3 mb-16">
           <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">
-            System Architecture
+            Technical Arsenal
           </h2>
-          <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-            High-Performance Stack
+          <h3 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+            Full-Stack & Architectural Mastery
           </h3>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Built from scratch with zero framework bloat, prioritizing raw execution speed, data safety, and
+            exceptional developer ergonomics.
+          </p>
         </ScrollReveal>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stackLayers.map((layer, idx) => {
-            const Icon = layer.icon;
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {skillsMatrix.map((matrix, idx) => {
+            const Icon = matrix.icon;
             return (
               <ScrollReveal
-                key={layer.title}
+                key={matrix.category}
                 animation="fade-up"
-                delay={idx * 100}
+                delay={idx * 120}
                 className="h-full"
               >
-                <div className="h-full p-6 rounded-3xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3 flex flex-col justify-between hover:border-blue-500/40 hover:shadow-lg transition-all">
-                  <div className="space-y-3">
-                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${layer.color} flex items-center justify-center`}>
-                      <Icon className="w-5 h-5" />
+                <div className="h-full p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl space-y-5 hover:border-blue-500/40 transition-all duration-300">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-3 rounded-2xl bg-gradient-to-br ${matrix.color}`}>
+                      <Icon className="w-6 h-6" />
                     </div>
-                    <h4 className="text-base font-bold text-slate-900 dark:text-white">{layer.title}</h4>
-                    <p className="text-[11px] font-mono font-bold text-blue-600 dark:text-blue-400">
-                      {layer.tech}
-                    </p>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{layer.desc}</p>
+                    <h4 className="text-lg font-bold text-slate-900 dark:text-white">{matrix.category}</h4>
                   </div>
+
+                  <ul className="space-y-2.5 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+                    {matrix.items.map((item) => (
+                      <li key={item} className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </ScrollReveal>
             );
@@ -235,88 +305,99 @@ print("Response:", response.json())`,
         </div>
       </section>
 
-      {/* ─── CODE SAMPLE & ENDPOINTS ─────────────────────────────────────────── */}
-      <section id="code-sample" className="py-16 bg-slate-100/70 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
-            {/* Left: Endpoint List */}
-            <ScrollReveal animation="fade-right" className="space-y-4">
-              <div>
-                <h3 className="text-2xl font-black text-slate-900 dark:text-white">Core REST Endpoints</h3>
-                <p className="text-xs text-slate-500 mt-1">
-                  Authenticate requests via Bearer JWT token header or httpOnly cookies.
-                </p>
-              </div>
+      {/* ─── OMNIMANAGE ARCHITECTURE HIGHLIGHTS ─────────────────────────────────── */}
+      <section className="py-20 bg-slate-100/70 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <ScrollReveal animation="fade-up" className="text-center max-w-2xl mx-auto space-y-3 mb-16">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
+              System Blueprint
+            </h2>
+            <h3 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+              Architectural Pillars of OmniManage
+            </h3>
+          </ScrollReveal>
 
-              <div className="space-y-2.5">
-                {endpoints.map((ep) => (
-                  <div
-                    key={ep.path}
-                    className="p-3 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs hover:border-blue-500/40 transition-all"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`px-2 py-0.5 rounded font-mono font-bold text-[10px] ${
-                          ep.method === 'GET'
-                            ? 'bg-blue-100 dark:bg-blue-950 text-blue-600'
-                            : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-600'
-                        }`}
-                      >
-                        {ep.method}
-                      </span>
-                      <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{ep.path}</span>
-                    </div>
-                    <span className="text-slate-500 text-[11px]">{ep.desc}</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {architecturalPillars.map((pillar, idx) => (
+              <ScrollReveal
+                key={pillar.title}
+                animation="fade-up"
+                delay={idx * 100}
+                className="h-full"
+              >
+                <div className="h-full p-6 rounded-3xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3 flex flex-col justify-between hover:border-blue-500/40 transition-all">
+                  <div className="space-y-3">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400">
+                      {pillar.badge}
+                    </span>
+                    <h4 className="text-base font-bold text-slate-900 dark:text-white">{pillar.title}</h4>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{pillar.desc}</p>
                   </div>
-                ))}
-              </div>
-            </ScrollReveal>
-
-            {/* Right: Code Snippet Card */}
-            <ScrollReveal animation="fade-left" delay={200} className="rounded-3xl bg-slate-950 border border-slate-800 shadow-2xl overflow-hidden">
-              {/* Header */}
-              <div className="flex items-center justify-between px-4 py-3 bg-slate-900/80 border-b border-slate-800 text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
-                  <span className="ml-2 font-mono text-[11px] text-slate-400">create-sale-example</span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center bg-slate-800 rounded-lg p-0.5 font-mono text-[10px]">
-                    {['curl', 'js', 'python'].map((lang) => (
-                      <button
-                        key={lang}
-                        type="button"
-                        onClick={() => setActiveLang(lang)}
-                        className={`px-2 py-1 rounded-md transition-colors ${
-                          activeLang === lang ? 'bg-blue-600 text-white font-bold' : 'text-slate-400 hover:text-white'
-                        }`}
-                      >
-                        {lang.toUpperCase()}
-                      </button>
-                    ))}
+                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-xs font-mono font-bold text-blue-600 dark:text-blue-400">
+                    <span>Target Metric:</span>
+                    <span>{pillar.stat}</span>
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={handleCopy}
-                    className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
-                    aria-label="Copy Code"
-                  >
-                    {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                  </button>
                 </div>
-              </div>
-
-              {/* Code display */}
-              <pre className="p-5 text-xs font-mono text-emerald-400 overflow-x-auto leading-relaxed">
-                <code>{codeSnippets[activeLang]}</code>
-              </pre>
-            </ScrollReveal>
+              </ScrollReveal>
+            ))}
           </div>
         </div>
+      </section>
+
+      {/* ─── INTERACTIVE ARCHITECT TERMINAL ───────────────────────────────────── */}
+      <section className="py-20 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <ScrollReveal animation="zoom-in" className="rounded-3xl bg-slate-950 border border-slate-800 shadow-2xl overflow-hidden font-mono text-xs">
+          <div className="px-5 py-3.5 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between text-slate-400">
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-red-500/80" />
+              <span className="w-3 h-3 rounded-full bg-amber-500/80" />
+              <span className="w-3 h-3 rounded-full bg-emerald-500/80" />
+              <span className="ml-2 font-bold text-slate-300">architect@omnimanage-core:~$</span>
+            </div>
+            <span className="text-[11px] text-emerald-400 flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Live Terminal
+            </span>
+          </div>
+
+          <div className="p-6 space-y-3 text-emerald-400 leading-relaxed overflow-x-auto">
+            <p className="text-slate-400">$ node --version && npm run system:status</p>
+            <p className="text-blue-400">✓ System: Node.js v20+ ESM • Express • Knex Query Engine</p>
+            <p className="text-purple-400">✓ Modules: 32 Mounted Controllers • RBAC Granular Guards Active</p>
+            <p className="text-cyan-400">✓ Realtime: Server-Sent Events (SSE) Hub Listening on /api/v1/sse</p>
+            <p className="text-amber-400">✓ Database: MySQL 8 Multi-Tenant Pool Connected • 0 Failed Migrations</p>
+            <p className="text-white font-bold pt-2">
+              $ echo "Built with precision for gadget stores and electronics retailers worldwide."
+            </p>
+          </div>
+        </ScrollReveal>
+      </section>
+
+      {/* ─── HIRE & COLLABORATION CTA ─────────────────────────────────────────── */}
+      <section className="py-20 text-center max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        <ScrollReveal animation="fade-up" className="space-y-4">
+          <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+            Interested in Custom ERP Engineering or Systems Consulting?
+          </h3>
+          <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
+            Whether you need a custom retail platform, multi-store data pipeline, or technical consulting,
+            let’s connect and bring your vision to life.
+          </p>
+          <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              to="/contact"
+              className="inline-flex items-center gap-2 px-7 py-3 rounded-xl font-bold text-xs text-white bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-500/25 transition-all active:scale-95"
+            >
+              <Mail className="w-4 h-4" />
+              <span>Contact the Architect</span>
+            </Link>
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 transition-all active:scale-95"
+            >
+              <span>Back to Home</span>
+            </Link>
+          </div>
+        </ScrollReveal>
       </section>
     </div>
   );
