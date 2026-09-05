@@ -155,6 +155,7 @@ export default function SalesForm() {
       imeiOrSerial: '',
       currentSellingPrice: p.sellingPrice,
       purchasePrice: p.costPrice,
+      wholesalePrice: p.wholesalePrice,
       stockQuantity: p.stockQuantity,
     })),
   ];
@@ -385,6 +386,7 @@ export default function SalesForm() {
           imeiOrSerial: '',
           currentSellingPrice: prod.sellingPrice,
           purchasePrice: prod.costPrice,
+          wholesalePrice: prod.wholesalePrice,
           stockQuantity: prod.stockQuantity,
         });
         toast.success(`Scanned & Added Product: ${prod.name}`);

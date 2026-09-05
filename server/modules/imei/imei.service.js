@@ -24,6 +24,8 @@ export function formatInventoryUnit(row, productRow = null, supplierRow = null) 
       sku: productRow.sku,
       sellingPrice: Number(productRow.selling_price || 0),
       costPrice: Number(productRow.cost_price || 0),
+      wholesalePrice: Number(productRow.wholesale_price || 0),
+      stockQuantity: Number(productRow.stock_quantity || 0),
     } : String(row.product_id),
     supplierId: supplierRow ? {
       _id: String(supplierRow.id),
@@ -89,7 +91,9 @@ export const getAllIMEI = async (page = 1, limit = 20, search = '', status = '',
       'products.model as p_model',
       'products.sku as p_sku',
       'products.selling_price as p_selling_price',
-      'products.cost_price as p_cost_price'
+      'products.cost_price as p_cost_price',
+      'products.wholesale_price as p_wholesale_price',
+      'products.stock_quantity as p_stock_quantity'
     );
   applyTenantScope(dataQuery, tenantId);
 
@@ -111,7 +115,9 @@ export const getAllIMEI = async (page = 1, limit = 20, search = '', status = '',
   const units = rows.map((row) => {
     const pRow = row.p_id ? {
       id: row.p_id, name: row.p_name, brand: row.p_brand, category: row.p_category,
-      model: row.p_model, sku: row.p_sku, selling_price: row.p_selling_price, cost_price: row.p_cost_price
+      model: row.p_model, sku: row.p_sku, selling_price: row.p_selling_price,
+      cost_price: row.p_cost_price, wholesale_price: row.p_wholesale_price,
+      stock_quantity: row.p_stock_quantity
     } : null;
     return formatInventoryUnit(row, pRow);
   });
@@ -129,7 +135,8 @@ export const getIMEIBySerial = async (imeiOrSerial, tenantId = null) => {
       'inventory_units.*',
       'products.id as p_id', 'products.name as p_name', 'products.brand as p_brand',
       'products.category as p_category', 'products.model as p_model', 'products.sku as p_sku',
-      'products.selling_price as p_selling_price', 'products.cost_price as p_cost_price'
+      'products.selling_price as p_selling_price', 'products.cost_price as p_cost_price',
+      'products.wholesale_price as p_wholesale_price', 'products.stock_quantity as p_stock_quantity'
     );
   applyTenantScope(dataQuery, tenantId);
 
@@ -138,7 +145,9 @@ export const getIMEIBySerial = async (imeiOrSerial, tenantId = null) => {
 
   const pRow = row.p_id ? {
     id: row.p_id, name: row.p_name, brand: row.p_brand, category: row.p_category,
-    model: row.p_model, sku: row.p_sku, selling_price: row.p_selling_price, cost_price: row.p_cost_price
+    model: row.p_model, sku: row.p_sku, selling_price: row.p_selling_price,
+    cost_price: row.p_cost_price, wholesale_price: row.p_wholesale_price,
+    stock_quantity: row.p_stock_quantity
   } : null;
 
   return formatInventoryUnit(row, pRow);
