@@ -815,8 +815,13 @@ export default function RegisterShop() {
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       {availablePlans.map((plan) => {
                         const isSelected = selectedPlan === plan.id;
-                        const price =
+                        const rawPrice =
                           billingCycle === 'yearly' ? plan.yearlyPrice : plan.monthlyPrice;
+                        const isCustom =
+                          !rawPrice ||
+                          rawPrice === 0 ||
+                          plan.id?.includes('enterprise') ||
+                          plan.name?.toLowerCase().includes('enterprise');
 
                         return (
                           <div
@@ -840,11 +845,17 @@ export default function RegisterShop() {
                                 )}
                               </div>
                               <p className="text-xl font-black text-slate-900 dark:text-white">
-                                ৳ {price.toLocaleString()}
-                                <span className="text-[10px] text-slate-500 font-normal">/mo</span>
+                                {isCustom ? (
+                                  <span>Custom</span>
+                                ) : (
+                                  <>
+                                    ৳ {rawPrice.toLocaleString()}
+                                    <span className="text-[10px] text-slate-500 font-normal">/mo</span>
+                                  </>
+                                )}
                               </p>
                               <p className="text-[11px] font-semibold text-blue-600 dark:text-blue-400">
-                                {plan.users}
+                                {isCustom ? 'Tailored Multi-Outlet' : plan.users}
                               </p>
                               <ul className="space-y-1 text-[11px] text-slate-600 dark:text-slate-400 pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
                                 {plan.features.slice(0, 4).map((f) => (

@@ -317,6 +317,14 @@ export default function DeveloperPage() {
                     <Twitter className="w-4 h-4" />
                     <span>Twitter/X</span>
                   </a>
+
+                  <a
+                    href="mailto:info.salahuddindev@gmail.com"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/80 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-all active:scale-95"
+                  >
+                    <Mail className="w-4 h-4" />
+                    <span>info.salahuddindev@gmail.com</span>
+                  </a>
                 </div>
               </ScrollReveal>
             </div>
@@ -484,6 +492,7 @@ export default function DeveloperPage() {
                 {
                   creator: 'Salah Uddin Kader',
                   handle: 'salahuddingfx',
+                  email: 'info.salahuddindev@gmail.com',
                   portfolio: 'https://salahuddin.codes',
                   roles: ['Lead Full-Stack Architect', 'Database Engineer', 'UI/UX Craftsman'],
                   stack: ['MERN', 'TypeScript', 'Next.js', 'PHP/Laravel', 'MySQL/Postgres', 'GSAP/Three.js', 'Python/AI'],
@@ -508,7 +517,7 @@ export default function DeveloperPage() {
           </h3>
           <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
             Connect directly with <strong>Salah Uddin Kader</strong> to discuss custom SaaS development,
-            high-performance database design, or technology consulting.
+            high-performance database design, or enterprise engineering consulting.
           </p>
           <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
             <a
@@ -521,13 +530,13 @@ export default function DeveloperPage() {
               <span>Visit Official Portfolio (salahuddin.codes)</span>
               <ExternalLink className="w-3 h-3" />
             </a>
-            <Link
-              to="/contact"
+            <a
+              href="mailto:info.salahuddindev@gmail.com"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 transition-all active:scale-95"
             >
-              <Mail className="w-4 h-4" />
-              <span>Send Message</span>
-            </Link>
+              <Mail className="w-4 h-4 text-blue-500" />
+              <span>info.salahuddindev@gmail.com</span>
+            </a>
           </div>
         </ScrollReveal>
       </section>

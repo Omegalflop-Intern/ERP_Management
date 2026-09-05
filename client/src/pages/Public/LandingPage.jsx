@@ -856,8 +856,13 @@ export default function LandingPage() {
           {/* Pricing Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {plans.map((plan, idx) => {
-              const price = isYearly ? plan.priceYearly : plan.priceMonthly;
-              const formattedPrice = typeof price === 'number' ? `৳ ${price.toLocaleString()}` : price;
+              const rawPrice = isYearly ? plan.priceYearly : plan.priceMonthly;
+              const isCustom =
+                !rawPrice ||
+                rawPrice === 0 ||
+                plan.name?.toUpperCase().includes('ENTERPRISE');
+              const price = typeof rawPrice === 'number' ? rawPrice : Number(rawPrice) || 0;
+              const formattedPrice = isCustom ? 'Custom' : `৳ ${price.toLocaleString()}`;
 
               return (
                 <ScrollReveal
@@ -889,15 +894,15 @@ export default function LandingPage() {
 
                       <div className="flex items-baseline gap-1 border-y border-slate-100 dark:border-slate-800/80 py-4">
                         <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
-                          {typeof price === 'number' ? (
-                            <AnimatedCounter end={price} prefix="৳ " />
+                          {isCustom ? (
+                            <span>Custom</span>
                           ) : (
-                            formattedPrice
+                            <AnimatedCounter end={price} prefix="৳ " />
                           )}
                         </span>
-                        {typeof price === 'number' && (
-                          <span className="text-xs text-slate-500 font-semibold">/month</span>
-                        )}
+                        <span className="text-xs text-slate-500 font-semibold">
+                          {isCustom ? 'Tailored quote' : '/month'}
+                        </span>
                       </div>
 
                       <div className="space-y-2.5 text-xs text-slate-700 dark:text-slate-300">
@@ -915,14 +920,16 @@ export default function LandingPage() {
 
                     <div className="pt-6 mt-6">
                       <Link
-                        to="/register-shop"
+                        to={isCustom ? '/contact' : `/register-shop?plan=${(plan._id || plan.name || '').toLowerCase()}`}
                         className={`w-full py-3 rounded-xl text-xs font-bold text-center block transition-all ${
                           plan.isPopular
                             ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/25 active:scale-95'
+                            : isCustom
+                            ? 'bg-gradient-to-r from-slate-900 to-indigo-950 dark:from-slate-800 dark:to-indigo-950 text-white hover:opacity-90 shadow-sm active:scale-95'
                             : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white active:scale-95'
                         }`}
                       >
-                        Start 14-Day Free Trial
+                        {isCustom ? 'Contact Enterprise Sales' : 'Start 14-Day Free Trial'}
                       </Link>
                     </div>
                   </div>

@@ -2,6 +2,7 @@ import {
   ArrowUp,
   Boxes,
   Code2,
+  Facebook,
   FileCheck2,
   FileText,
   Github,
@@ -21,13 +22,52 @@ import {
   Wrench,
   Youtube,
 } from 'lucide-react';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../../lib/api';
 
 export default function PublicFooter() {
+  const [platformSettings, setPlatformSettings] = useState({
+    platformName: 'OmniManage ERP',
+    platformPhone: '+880 1700-000000',
+    platformWhatsApp: '+880 1700-000000',
+    platformEmail: 'support@omnimanage.bd',
+    platformAddress: 'Dhanmondi, Dhaka - 1209, Bangladesh',
+    platformSocials: {
+      facebook: 'https://facebook.com/omnimanage',
+      twitter: 'https://x.com/omnimanage',
+      linkedin: 'https://linkedin.com/company/omnimanage',
+      youtube: 'https://youtube.com/@omnimanage',
+      instagram: 'https://instagram.com/omnimanage',
+    },
+  });
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await api.get('/settings/public');
+        if (res.data?.data) {
+          setPlatformSettings((prev) => ({
+            ...prev,
+            ...res.data.data,
+            platformSocials: {
+              ...prev.platformSocials,
+              ...(res.data.data.platformSocials || {}),
+            },
+          }));
+        }
+      } catch {
+        // Fallback defaults retained
+      }
+    };
+    fetchSettings();
+  }, []);
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  const socials = platformSettings.platformSocials || {};
 
   return (
     <footer className="relative bg-slate-950 text-slate-300 border-t border-slate-800/80 overflow-hidden font-sans">
@@ -37,7 +77,7 @@ export default function PublicFooter() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-12 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8 mb-12">
-          {/* Col 1: Brand Info & Mission */}
+          {/* Col 1: Brand Info & Company Contacts */}
           <div className="lg:col-span-2 space-y-4">
             <Link to="/" className="flex items-center gap-3 group inline-block">
               <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 p-0.5 shadow-lg shadow-blue-500/20">
@@ -47,7 +87,9 @@ export default function PublicFooter() {
               </div>
               <div className="flex flex-col">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xl font-black text-white tracking-tight">OmniManage</span>
+                  <span className="text-xl font-black text-white tracking-tight">
+                    {platformSettings.platformName || 'OmniManage'}
+                  </span>
                   <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded">
                     ERP
                   </span>
@@ -61,51 +103,89 @@ export default function PublicFooter() {
               smartphone retailers, repair labs, and electronics distributors.
             </p>
 
-            <div className="flex items-center gap-3 pt-2">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                All Systems Operational
-              </span>
-              <span className="text-xs text-slate-500">v2.4.0 Production</span>
+            {/* Official Company Contact Details */}
+            <div className="space-y-1.5 text-xs text-slate-400 pt-1">
+              {platformSettings.platformPhone && (
+                <div className="flex items-center gap-2">
+                  <Phone className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                  <a href={`tel:${platformSettings.platformPhone}`} className="hover:text-white transition-colors">
+                    {platformSettings.platformPhone}
+                  </a>
+                </div>
+              )}
+              {platformSettings.platformEmail && (
+                <div className="flex items-center gap-2">
+                  <Mail className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <a href={`mailto:${platformSettings.platformEmail}`} className="hover:text-white transition-colors">
+                    {platformSettings.platformEmail}
+                  </a>
+                </div>
+              )}
+              {platformSettings.platformAddress && (
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span>{platformSettings.platformAddress}</span>
+                </div>
+              )}
             </div>
 
-            <div className="pt-2 flex items-center gap-3">
-              <a
-                href="https://github.com/salahuddingfx"
-                target="_blank"
-                rel="noreferrer"
-                className="w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
-                aria-label="GitHub - salahuddingfx"
-              >
-                <Github className="w-4 h-4" />
-              </a>
-              <a
-                href="https://x.com/salahuddingfx"
-                target="_blank"
-                rel="noreferrer"
-                className="w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-blue-400 transition-colors"
-                aria-label="Twitter/X - salahuddingfx"
-              >
-                <Twitter className="w-4 h-4" />
-              </a>
-              <a
-                href="https://linkedin.com/in/salahuddingfx"
-                target="_blank"
-                rel="noreferrer"
-                className="w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-blue-500 transition-colors"
-                aria-label="LinkedIn - salahuddingfx"
-              >
-                <Linkedin className="w-4 h-4" />
-              </a>
-              <a
-                href="https://salahuddin.codes"
-                target="_blank"
-                rel="noreferrer"
-                className="w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-emerald-400 transition-colors"
-                aria-label="Portfolio - salahuddin.codes"
-              >
-                <Globe className="w-4 h-4" />
-              </a>
+            {/* Official Platform Social Channels */}
+            <div className="pt-2 flex items-center gap-2.5">
+              {socials.facebook && (
+                <a
+                  href={socials.facebook}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-blue-500 transition-colors"
+                  aria-label="Facebook - OmniManage"
+                >
+                  <Facebook className="w-4 h-4" />
+                </a>
+              )}
+              {socials.twitter && (
+                <a
+                  href={socials.twitter}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-blue-400 transition-colors"
+                  aria-label="Twitter/X - OmniManage"
+                >
+                  <Twitter className="w-4 h-4" />
+                </a>
+              )}
+              {socials.linkedin && (
+                <a
+                  href={socials.linkedin}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-blue-500 transition-colors"
+                  aria-label="LinkedIn - OmniManage"
+                >
+                  <Linkedin className="w-4 h-4" />
+                </a>
+              )}
+              {socials.youtube && (
+                <a
+                  href={socials.youtube}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors"
+                  aria-label="YouTube - OmniManage"
+                >
+                  <Youtube className="w-4 h-4" />
+                </a>
+              )}
+              {socials.instagram && (
+                <a
+                  href={socials.instagram}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-8 h-8 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-pink-500 transition-colors"
+                  aria-label="Instagram - OmniManage"
+                >
+                  <Instagram className="w-4 h-4" />
+                </a>
+              )}
             </div>
           </div>
 
@@ -176,6 +256,15 @@ export default function PublicFooter() {
                 >
                   <FileText className="w-3.5 h-3.5 text-cyan-400" />
                   <span>Swagger OpenAPI Spec</span>
+                </a>
+              </li>
+              <li>
+                <a
+                  href="mailto:info.salahuddindev@gmail.com"
+                  className="hover:text-white transition-colors flex items-center gap-1.5"
+                >
+                  <Mail className="w-3.5 h-3.5 text-blue-400" />
+                  <span>info.salahuddindev@gmail.com</span>
                 </a>
               </li>
               <li>
