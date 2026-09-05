@@ -228,24 +228,13 @@ export default function PublicFooter() {
 
           {/* Col 3: Developers & Creator */}
           <div className="space-y-3">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-200">Engineering & Architect</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-200">Engineering & Architecture</p>
             <ul className="space-y-2 text-sm text-slate-400">
               <li>
                 <Link to="/developer" className="hover:text-white transition-colors flex items-center gap-1.5">
                   <Code2 className="w-3.5 h-3.5 text-blue-400" />
                   <span>Architect: Salah Uddin Kader</span>
                 </Link>
-              </li>
-              <li>
-                <a
-                  href="https://salahuddin.codes"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="hover:text-white transition-colors flex items-center gap-1.5"
-                >
-                  <Globe className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Creator Portfolio (salahuddin.codes)</span>
-                </a>
               </li>
               <li>
                 <a
@@ -256,15 +245,6 @@ export default function PublicFooter() {
                 >
                   <FileText className="w-3.5 h-3.5 text-cyan-400" />
                   <span>Swagger OpenAPI Spec</span>
-                </a>
-              </li>
-              <li>
-                <a
-                  href="mailto:info.salahuddindev@gmail.com"
-                  className="hover:text-white transition-colors flex items-center gap-1.5"
-                >
-                  <Mail className="w-3.5 h-3.5 text-blue-400" />
-                  <span>info.salahuddindev@gmail.com</span>
                 </a>
               </li>
               <li>
