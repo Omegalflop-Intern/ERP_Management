@@ -1601,3 +1601,129 @@ input.global-search-input,
   transition: all 0.2s ease !important;
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   SECTION 8: PUBLIC PAGES DYNAMIC DESIGN MODES
+   (Liquid Glass, Aurora, Glassmorphism Pro, Neumorphism, Flat)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── 1. LIQUID GLASS MODE (3D Ultra Depth) ─── */
+[data-mode="liquidglass"] main section .rounded-2xl,
+[data-mode="liquidglass"] main section .rounded-3xl {
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+}
+
+[data-mode="liquidglass"]:not(.dark) main section .rounded-2xl,
+[data-mode="liquidglass"]:not(.dark) main section .rounded-3xl {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(241, 245, 249, 0.75)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.85) !important;
+  box-shadow:
+    0 20px 40px -15px rgba(37, 99, 235, 0.08),
+    0 8px 16px -8px rgba(30, 41, 59, 0.04),
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.95) !important;
+}
+
+[data-mode="liquidglass"].dark main section .rounded-2xl,
+[data-mode="liquidglass"].dark main section .rounded-3xl {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.82), rgba(30, 41, 59, 0.65)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow:
+    0 20px 40px -15px rgba(0, 0, 0, 0.5),
+    0 0 25px -5px rgba(59, 130, 246, 0.15),
+    inset 0 1px 1px rgba(255, 255, 255, 0.18) !important;
+}
+
+/* ─── 2. AURORA MESH GLOW MODE ─── */
+[data-mode="aurora"] main section .rounded-2xl,
+[data-mode="aurora"] main section .rounded-3xl {
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+
+[data-mode="aurora"]:not(.dark) main section .rounded-2xl,
+[data-mode="aurora"]:not(.dark) main section .rounded-3xl {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(245, 243, 255, 0.85)) !important;
+  border: 1px solid rgba(168, 85, 247, 0.35) !important;
+  box-shadow:
+    0 0 35px -10px rgba(139, 92, 246, 0.18),
+    0 0 20px -5px rgba(236, 72, 153, 0.12),
+    0 10px 25px -5px rgba(59, 130, 246, 0.08) !important;
+}
+
+[data-mode="aurora"].dark main section .rounded-2xl,
+[data-mode="aurora"].dark main section .rounded-3xl {
+  background: linear-gradient(135deg, rgba(15, 17, 32, 0.88), rgba(20, 15, 38, 0.78)) !important;
+  border: 1px solid rgba(147, 51, 234, 0.35) !important;
+  box-shadow:
+    0 0 40px -10px rgba(147, 51, 234, 0.28),
+    0 0 25px -5px rgba(236, 72, 153, 0.2),
+    inset 0 1px 1px rgba(192, 132, 252, 0.25) !important;
+}
+
+/* ─── 3. GLASSMORPHISM PRO MODE ─── */
+[data-mode="glassmorphismpro"] main section .rounded-2xl,
+[data-mode="glassmorphismpro"] main section .rounded-3xl {
+  backdrop-filter: blur(24px) contrast(105%) !important;
+  -webkit-backdrop-filter: blur(24px) contrast(105%) !important;
+}
+
+[data-mode="glassmorphismpro"]:not(.dark) main section .rounded-2xl,
+[data-mode="glassmorphismpro"]:not(.dark) main section .rounded-3xl {
+  background: rgba(255, 255, 255, 0.75) !important;
+  border: 1px solid rgba(255, 255, 255, 0.85) !important;
+  box-shadow: 0 16px 32px -8px rgba(30, 41, 59, 0.07) !important;
+}
+
+[data-mode="glassmorphismpro"].dark main section .rounded-2xl,
+[data-mode="glassmorphismpro"].dark main section .rounded-3xl {
+  background: rgba(15, 23, 42, 0.72) !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* ─── 4. NEUMORPHISM MODE (Soft 3D Emboss) ─── */
+[data-mode="neumorphism"] main section .rounded-2xl,
+[data-mode="neumorphism"] main section .rounded-3xl {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+[data-mode="neumorphism"]:not(.dark) main section .rounded-2xl,
+[data-mode="neumorphism"]:not(.dark) main section .rounded-3xl {
+  background: #eef2f8 !important;
+  border: 1px solid rgba(255, 255, 255, 0.7) !important;
+  box-shadow:
+    6px 6px 16px rgba(163, 177, 198, 0.45),
+    -6px -6px 16px rgba(255, 255, 255, 0.85) !important;
+}
+
+[data-mode="neumorphism"].dark main section .rounded-2xl,
+[data-mode="neumorphism"].dark main section .rounded-3xl {
+  background: #0f172a !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  box-shadow:
+    7px 7px 18px rgba(0, 0, 0, 0.55),
+    -7px -7px 18px rgba(255, 255, 255, 0.03) !important;
+}
+
+/* ─── 5. FLAT MINIMAL MODE (Pure High-Contrast Solid) ─── */
+[data-mode="flat"] main section .rounded-2xl,
+[data-mode="flat"] main section .rounded-3xl {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+
+[data-mode="flat"]:not(.dark) main section .rounded-2xl,
+[data-mode="flat"]:not(.dark) main section .rounded-3xl {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+[data-mode="flat"].dark main section .rounded-2xl,
+[data-mode="flat"].dark main section .rounded-3xl {
+  background: #0f172a !important;
+  border: 1px solid #1e293b !important;
+}
+
+
