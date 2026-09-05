@@ -561,17 +561,70 @@ export const getPublicTenantBySubdomain = async (subdomain) => {
   const clean = subdomain?.toLowerCase().trim();
   if (!clean) return null;
   const row = await db('tenants')
-    .where({ is_deleted: false, status: 'ACTIVE' })
+    .where({ is_deleted: false })
     .andWhere((b) => {
       b.where({ subdomain: clean }).orWhere({ custom_domain: clean });
     })
     .first();
   if (!row) return null;
+
+  let logo = row.logo || null;
+  let loginAnimation = 'waves';
+
+  const settingRows = await db('settings')
+    .where({ tenant_id: row.id })
+    .whereIn('key', ['companyLogo', 'loginAnimation']);
+
+  for (const s of settingRows) {
+    if (s.key === 'companyLogo' && !logo && s.value) {
+      try {
+        logo = JSON.parse(s.value);
+      } catch {
+        logo = s.value;
+      }
+    } else if (s.key === 'loginAnimation' && s.value) {
+      try {
+        loginAnimation = JSON.parse(s.value);
+      } catch {
+        loginAnimation = s.value;
+      }
+    }
+  }
+
+  const platformRows = await db('settings')
+    .where({ tenant_id: null })
+    .whereIn('key', ['platformPhone', 'platformWhatsApp', 'platformEmail', 'platformName', 'platformAddress']);
+
+  const platformSupport = {
+    name: 'OmniManage ERP',
+    phone: '+880 1700-000000',
+    whatsapp: '+880 1700-000000',
+    email: 'support@omnimanage.bd',
+  };
+
+  for (const p of platformRows) {
+    let val = p.value;
+    try {
+      val = JSON.parse(p.value);
+    } catch {
+      // keep raw string
+    }
+    if (p.key === 'platformName' && val) platformSupport.name = val;
+    if (p.key === 'platformPhone' && val) platformSupport.phone = val;
+    if (p.key === 'platformWhatsApp' && val) platformSupport.whatsapp = val;
+    if (p.key === 'platformEmail' && val) platformSupport.email = val;
+  }
+
   return {
     id: row.id,
     shopName: row.shop_name,
     subdomain: row.subdomain,
-    logo: row.logo || null,
+    customDomain: row.custom_domain || null,
+    status: row.status || 'ACTIVE',
+    expiresAt: row.expires_at || null,
+    logo: logo || null,
+    loginAnimation: loginAnimation || 'waves',
+    platformSupport,
   };
 };
 

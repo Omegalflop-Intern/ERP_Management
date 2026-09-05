@@ -107,7 +107,7 @@ router.put('/me', uploadAvatar, userController.updateMyProfile);
  *       403:
  *         description: Forbidden
  */
-router.get('/', authorize('ADMIN', 'MANAGER'), userController.getAllUsers);
+router.get('/', userController.getAllUsers);
 
 /**
  * @swagger
@@ -130,7 +130,7 @@ router.get('/', authorize('ADMIN', 'MANAGER'), userController.getAllUsers);
  *       404:
  *         description: User not found
  */
-router.get('/:id', authorize('ADMIN', 'MANAGER'), userController.getUserById);
+router.get('/:id', userController.getUserById);
 
 /**
  * @swagger

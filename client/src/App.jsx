@@ -4,6 +4,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import RoleBasedRoute from './components/auth/RoleBasedRoute';
 import DashboardLayout from './components/layout/DashboardLayout';
 import { useAuth } from './context/AuthContext';
+import { useDocumentTitle } from './hooks/useDocumentTitle';
 import { useInactivityLogout } from './hooks/useInactivityLogout';
 import { useSSE } from './hooks/useSSE';
 import { detectSubdomain } from './utils/subdomain';
@@ -215,6 +216,7 @@ export default function App() {
 
   useSSE();
   useInactivityLogout();
+  useDocumentTitle();
 
   // Only auto-redirect away from /login if user is not logged into a different shop's subdomain
   const isMatchingShopSession =

@@ -126,13 +126,29 @@ export function useSSE() {
               qc.invalidateQueries({ queryKey: ['audit-logs'] });
               break;
 
-            case 'TENANT_UPDATED':
+            case 'TENANT_UPDATED': {
               qc.invalidateQueries({ queryKey: ['my-tenant-info'] });
               qc.invalidateQueries({ queryKey: ['tenants'] });
               qc.invalidateQueries({ queryKey: ['sa-shops'] });
               qc.invalidateQueries({ queryKey: ['sa-stats'] });
               qc.invalidateQueries({ queryKey: ['users'] });
+
+              const currentShopId = String(user?.tenantId || '');
+              const updatedShopId = String(payload.data?.id || payload.data?._id || '');
+
+              if (currentShopId && updatedShopId && currentShopId === updatedShopId) {
+                if (payload.data?.status === 'SUSPENDED' || payload.data?.isDeleted) {
+                  toast.error('Your shop has been suspended by Super Admin. Logging out...', { duration: 5000 });
+                  setTimeout(async () => {
+                    await useAuthStore.getState().logout();
+                    if (window.location.pathname !== '/login') {
+                      window.location.href = '/login';
+                    }
+                  }, 800);
+                }
+              }
               break;
+            }
 
             default:
               qc.invalidateQueries({ queryKey: ['audit-logs'] });

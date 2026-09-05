@@ -34,6 +34,7 @@ const settingGroups = [
       'companyPhone',
       'companyEmail',
       'companyLogo',
+      'loginAnimation',
     ],
   },
   {
@@ -80,9 +81,23 @@ const fieldLabels = {
   autoReorderEnabled: 'Auto Reorder',
   defaultWarrantyMonths: 'Default Warranty (Months)',
   invoiceFooter: 'Invoice Footer Text',
+  loginAnimation: 'Store Login Page Animation Effect',
   timezone: 'Timezone',
   dateFormat: 'Date Format',
 };
+
+const LOGIN_ANIMATION_OPTIONS = [
+  { id: 'samurai', name: 'Samurai Sakura', desc: '🌸 Falling Japanese Petals & Floating Embers' },
+  { id: 'waves', name: 'Sea Waves', desc: '🌊 Multi-Layer 3D Oceanic Fluid' },
+  { id: 'particles', name: 'Constellations', desc: '✨ Neural Network Star Nodes' },
+  { id: 'matrix', name: 'Cyber Matrix', desc: '🟢 Digital Katakana Code Stream' },
+  { id: 'galaxy', name: 'Cosmic Galaxy', desc: '🌌 Orbiting Deep Space Nebula' },
+  { id: 'aurora', name: 'Aurora Borealis', desc: '🌈 Shifting Northern Light Beams' },
+  { id: 'synthwave', name: 'Retro Synthwave', desc: '🌆 80s Neon Grid & Sun' },
+  { id: 'lava', name: 'Liquid Lava', desc: '🔮 Chromatic Metaball Blobs' },
+  { id: 'slideshow', name: 'Device Showcase', desc: '📱 Luxury Hardware Gallery' },
+  { id: 'hybrid', name: 'Hybrid Fusion', desc: '⚡ All-in-One Sensory Experience' },
+];
 
 import PageHeader from '../../components/layout/PageHeader';
 
@@ -337,7 +352,43 @@ export default function SettingsPage() {
                   <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
                     {fieldLabels[key] || key}
                   </label>
-                  {key === 'companyLogo' ? (
+                  {key === 'loginAnimation' ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                      {LOGIN_ANIMATION_OPTIONS.map((anim) => {
+                        const isSelected = (form.loginAnimation || 'samurai') === anim.id;
+                        return (
+                          <button
+                            key={anim.id}
+                            type="button"
+                            onClick={() => setForm({ ...form, loginAnimation: anim.id })}
+                            className={`p-3 rounded-2xl text-left border transition-all cursor-pointer flex items-start gap-2.5 ${
+                              isSelected
+                                ? 'bg-blue-50/90 dark:bg-blue-950/50 border-[#2563EB] shadow-md ring-2 ring-blue-500/20'
+                                : 'bg-white/80 dark:bg-gray-800/40 border-gray-200 dark:border-gray-700/80 hover:bg-gray-50 dark:hover:bg-gray-800'
+                            }`}
+                          >
+                            <div
+                              className={`w-4 h-4 rounded-full mt-0.5 shrink-0 flex items-center justify-center border ${
+                                isSelected
+                                  ? 'border-[#2563EB] bg-[#2563EB] ring-2 ring-blue-300 dark:ring-blue-900'
+                                  : 'border-gray-400 dark:border-gray-600'
+                              }`}
+                            >
+                              {isSelected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                            </div>
+                            <div>
+                              <div className="text-xs font-bold text-gray-900 dark:text-white">
+                                {anim.name}
+                              </div>
+                              <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">
+                                {anim.desc}
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : key === 'companyLogo' ? (
                     <div className="flex items-center gap-4 border border-dashed border-gray-300 dark:border-gray-700 rounded-xl p-4 bg-gray-50 dark:bg-gray-800/40">
                       {form.companyLogo ? (
                         <img

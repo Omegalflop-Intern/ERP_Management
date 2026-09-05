@@ -26,25 +26,16 @@ import { confirmDelete } from '../../lib/confirm';
 
 export default function UserList() {
   const [search, setSearch] = useState('');
-  const [branchFilter, setBranchFilter] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editUser, setEditUser] = useState(null);
   const [verifyUserModal, setVerifyUserModal] = useState(null);
   const queryClient = useQueryClient();
 
-  const { data: branches = [] } = useQuery({
-    queryKey: ['branches-flat'],
-    queryFn: async () => {
-      const { data } = await api.get('/branches/flat');
-      return data.data || [];
-    },
-  });
-
   const { data, isLoading } = useQuery({
-    queryKey: ['users', search, branchFilter],
+    queryKey: ['users', search],
     queryFn: async () => {
       const { data } = await api.get('/users', {
-        params: { search, branchId: branchFilter || undefined, limit: 50 },
+        params: { search, limit: 50 },
       });
       return data;
     },
@@ -76,7 +67,7 @@ export default function UserList() {
       {/* Header */}
       <PageHeader
         title="User Management & Access Control"
-        subtitle="Create system users and assign specific branch access. Admin oversees all branches while Managers/Staff are locked to their assigned outlet."
+        subtitle="Create system users, manage employee credentials, and assign role-based permissions."
         icon={UserCog}
         breadcrumbs={['Administration', 'User Management']}
         actions={
@@ -103,21 +94,6 @@ export default function UserList() {
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-mono text-slate-900 dark:text-slate-100 placeholder:text-slate-400 outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-all"
           />
-        </div>
-
-        <div className="flex items-center gap-2">
-          <select
-            value={branchFilter}
-            onChange={(e) => setBranchFilter(e.target.value)}
-            className="px-3.5 py-2.5 bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-all"
-          >
-            <option value="">Filter by Branch: All Branches</option>
-            {branches.map((b, idx) => (
-              <option key={b._id || b.id || idx} value={b._id || b.id}>
-                {b.name}
-              </option>
-            ))}
-          </select>
         </div>
       </div>
 
@@ -330,14 +306,6 @@ function UserFormModal({ user, onClose, onSuccess }) {
     },
   });
 
-  const { data: branches = [] } = useQuery({
-    queryKey: ['branches-flat'],
-    queryFn: async () => {
-      const { data } = await api.get('/branches/flat');
-      return data.data || [];
-    },
-  });
-
   const inputCls =
     'w-full px-3.5 py-2 bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-all';
 
@@ -453,35 +421,17 @@ function UserFormModal({ user, onClose, onSuccess }) {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                  Full Name
-                </label>
-                <input
-                  value={form.fullName}
-                  onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-                  placeholder="e.g. John Doe"
-                  className={inputCls}
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                  Assigned Outlet (Branch)
-                </label>
-                <select
-                  value={form.branchId}
-                  onChange={(e) => setForm({ ...form, branchId: e.target.value })}
-                  className={inputCls}
-                >
-                  <option value="">All Outlets (Owner / Unrestricted)</option>
-                  {branches.map((b, idx) => (
-                    <option key={b._id || b.id || idx} value={b._id || b.id}>
-                      {b.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                Full Name
+              </label>
+              <input
+                type="text"
+                value={form.fullName}
+                onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+                placeholder="e.g. John Doe"
+                className={inputCls}
+              />
             </div>
 
             <div>

@@ -90,8 +90,6 @@ api.interceptors.response.use(
         processQueue(refreshError, null);
         localStorage.removeItem('accessToken');
         localStorage.removeItem('user');
-        localStorage.removeItem('auth-storage');
-        localStorage.removeItem('omni_last_activity');
         try {
           const { useAuthStore } = await import('../store/authStore.js');
           useAuthStore.setState({ user: null, token: null });
@@ -104,6 +102,25 @@ api.interceptors.response.use(
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
+      }
+    }
+
+    if (error.response?.status === 403) {
+      const msg = String(error.response?.data?.message || '').toLowerCase();
+      if (msg.includes('suspended') || msg.includes('inactive') || msg.includes('deleted')) {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('user');
+        localStorage.removeItem('auth-storage');
+        localStorage.removeItem('omni_last_activity');
+        try {
+          const { useAuthStore } = await import('../store/authStore.js');
+          useAuthStore.setState({ user: null, token: null });
+        } catch {
+          // store not available
+        }
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
       }
     }
 

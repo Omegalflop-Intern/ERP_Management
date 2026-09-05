@@ -33,19 +33,17 @@ const PLANS = [
     name: 'Free',
     monthlyPrice: 0,
     yearlyPrice: 0,
-    branches: '1 Branch',
     users: '2 Staff Users',
-    features: ['1 Branch / Outlet', '2 Staff Users', 'Up to 500 Products', 'Basic POS Billing'],
+    features: ['Single Shop Inventory', '2 Staff Users', 'Up to 500 Products', 'Basic POS Billing'],
   },
   {
     id: 'starter',
     name: 'Starter',
     monthlyPrice: 999,
     yearlyPrice: 9990,
-    branches: '2 Branches',
     users: '5 Staff Users',
     features: [
-      '2 Branches',
+      'Single Shop Inventory',
       '5 Staff Users',
       '2,000 Products & IMEIs',
       'IMEI History Passport',
@@ -58,15 +56,14 @@ const PLANS = [
     name: 'Pro',
     monthlyPrice: 2499,
     yearlyPrice: 24990,
-    branches: '5 Branches',
     users: '20 Staff Users',
     features: [
-      '5 Branches',
+      'Full ERP & POS Suite',
       '20 Staff Users',
-      '10,000 IMEIs',
+      '10,000 IMEIs & Serial Tracking',
       'Double-Entry Accounting',
-      'HR & Payroll',
-      'Wholesale Tiers',
+      'HR, Leave & Payroll',
+      'Wholesale Tiers & Warranty Claims',
     ],
     isPopular: true,
   },
@@ -75,14 +72,13 @@ const PLANS = [
     name: 'Enterprise',
     monthlyPrice: 'Custom',
     yearlyPrice: 'Custom',
-    branches: 'Unlimited',
     users: 'Unlimited',
     features: [
-      'Unlimited Branches',
-      'Unlimited Users',
+      'Custom ERP Workflows',
+      'Unlimited Staff Users',
       'Dedicated Account Manager',
-      'Custom Domain',
-      '24/7 SLA Uptime',
+      'Custom Domain Integration',
+      '24/7 SLA Priority Support',
     ],
   },
 ];
@@ -430,7 +426,7 @@ export default function RegisterShop() {
                       </div>
 
                       <div className="text-[10px] text-[#2563EB] dark:text-blue-300 font-bold mb-2">
-                        {plan.branches} • {plan.users}
+                        {plan.users}
                       </div>
 
                       <ul className="space-y-1 text-[10px] text-slate-600 dark:text-slate-300 border-t border-slate-200 dark:border-white/5 pt-2">

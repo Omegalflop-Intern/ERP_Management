@@ -1,16 +1,30 @@
-import { ArrowLeft, CheckCircle, Mail, RefreshCw, Smartphone } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Mail, RefreshCw, Smartphone, Store } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import ThemeToggle from '../../components/ui/ThemeToggle';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
-import api from '../../lib/api';
+import api, { getAssetUrl } from '../../lib/api';
+import { detectSubdomain } from '../../utils/subdomain';
 
 export default function ForgotPassword() {
   useDocumentTitle('Forgot Password');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+
+  const subdomain = detectSubdomain();
+  const { data: publicShop } = useQuery({
+    queryKey: ['public-tenant-login', subdomain],
+    queryFn: async () => {
+      const res = await api.get(`/tenants/public/by-subdomain/${subdomain}`);
+      return res.data?.data;
+    },
+    staleTime: 10 * 60 * 1000,
+    enabled: !!subdomain,
+    retry: false,
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -42,10 +56,31 @@ export default function ForgotPassword() {
 
       {/* Card */}
       <div className="relative z-10 w-full max-w-md mx-4">
-        <div className="flex justify-center mb-6">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-white/90 dark:bg-slate-800/90 border border-slate-200/80 dark:border-white/10 shadow-xl shadow-slate-900/5">
-            <Smartphone className="w-8 h-8 text-[#2563EB]" />
-          </div>
+        <div className="flex justify-center mb-5">
+          {publicShop?.logo ? (
+            <div className="w-20 h-20 rounded-2xl flex items-center justify-center bg-white/95 dark:bg-slate-900/90 backdrop-blur-2xl border border-slate-200/80 dark:border-white/20 shadow-2xl p-2 overflow-hidden">
+              <img
+                src={getAssetUrl(publicShop.logo)}
+                alt={publicShop.shopName || 'Shop Logo'}
+                className="w-full h-full object-contain rounded-xl"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                }}
+              />
+              <div className="hidden w-full h-full flex items-center justify-center">
+                <Store className="w-8 h-8 text-[#2563EB] dark:text-blue-400 stroke-[2.2]" />
+              </div>
+            </div>
+          ) : (
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-white/90 dark:bg-slate-800/90 border border-slate-200/80 dark:border-white/10 shadow-xl shadow-slate-900/5">
+              {subdomain ? (
+                <Store className="w-8 h-8 text-[#2563EB] dark:text-blue-400 stroke-[2.2]" />
+              ) : (
+                <Smartphone className="w-8 h-8 text-[#2563EB] stroke-[2.2]" />
+              )}
+            </div>
+          )}
         </div>
 
         <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white mb-1 tracking-tight text-center">

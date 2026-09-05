@@ -54,3 +54,18 @@ export function detectSubdomain() {
 export function isSubdomainAccess() {
   return detectSubdomain() !== null;
 }
+
+/**
+ * Get URL to the main portal domain from a subdomain/custom domain.
+ */
+export function getMainPortalUrl(path = '') {
+  if (typeof window === 'undefined') return path || '/';
+  const protocol = window.location.protocol;
+  const port = window.location.port ? `:${window.location.port}` : '';
+  const host = window.location.hostname;
+
+  if (host.endsWith('.localhost') || host === 'localhost') {
+    return `${protocol}//localhost${port}${path}`;
+  }
+  return `${protocol}//${baseDomain}${port}${path}`;
+}

@@ -18,12 +18,13 @@ router.use(checkTenantStatus);
 router.get('/platform', requireSuperAdmin, settingsController.getPlatformSettings);
 router.put('/platform', requireSuperAdmin, settingsController.updatePlatformSettings);
 
-router.use(authorize('ADMIN', 'MANAGER'));
-
+// Tenant Store Profile / Settings (readable by all authenticated shop users for invoices, POS branding, headers)
 router.get('/', settingsController.getAllSettings);
 router.get('/array', settingsController.getSettingsArray);
-router.put('/', settingsController.updateSettings);
-router.post('/logo', uploadCompanyLogo, settingsController.uploadLogo);
+
+// Store settings modifications — Admin & Manager only
+router.put('/', authorize('ADMIN', 'MANAGER'), settingsController.updateSettings);
+router.post('/logo', authorize('ADMIN', 'MANAGER'), uploadCompanyLogo, settingsController.uploadLogo);
 
 // Database Backup & Restore routes — super-admin only (cross-tenant data)
 router.get('/backup', requireSuperAdmin, settingsController.exportBackup);
