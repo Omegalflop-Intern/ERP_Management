@@ -72,7 +72,7 @@ export default function ContactPage() {
   return (
     <div className="relative overflow-hidden font-sans">
       {/* ─── HERO HEADER ──────────────────────────────────────────────────────── */}
-      <section className="relative pt-12 pb-16 sm:pt-20 sm:pb-24 bg-gradient-to-b from-blue-50/50 via-transparent to-transparent dark:from-slate-900/40 text-center">
+      <section className="relative pt-6 pb-10 sm:pt-10 sm:pb-14 bg-gradient-to-b from-blue-50/50 via-transparent to-transparent dark:from-slate-900/40 text-center">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
           <ScrollReveal animation="fade-down">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-300 text-xs font-bold">

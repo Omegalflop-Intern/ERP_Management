@@ -79,7 +79,7 @@ export default function AboutPage() {
   return (
     <div className="relative overflow-hidden font-sans">
       {/* ─── HERO HEADER ──────────────────────────────────────────────────────── */}
-      <section className="relative pt-12 pb-20 sm:pt-20 sm:pb-28 overflow-hidden bg-gradient-to-b from-blue-50/50 via-transparent to-transparent dark:from-slate-900/40">
+      <section className="relative pt-6 pb-12 sm:pt-10 sm:pb-16 overflow-hidden bg-gradient-to-b from-blue-50/50 via-transparent to-transparent dark:from-slate-900/40">
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center space-y-6">
@@ -161,7 +161,7 @@ export default function AboutPage() {
       </section>
 
       {/* ─── MISSION & PILLARS ────────────────────────────────────────────────── */}
-      <section className="py-20 sm:py-28 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-10 sm:py-16 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal animation="fade-up" className="text-center max-w-2xl mx-auto space-y-3 mb-16">
           <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">
             Our Architectural Core
@@ -199,7 +199,7 @@ export default function AboutPage() {
       </section>
 
       {/* ─── TIMELINE / STORY WITH DIRECTIONAL SCROLL REVEAL ────────────────── */}
-      <section className="py-20 bg-slate-100/70 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800">
+      <section className="py-10 sm:py-16 bg-slate-100/70 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <ScrollReveal animation="fade-up" className="text-center space-y-3 mb-16">
             <h2 className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
@@ -249,7 +249,7 @@ export default function AboutPage() {
       </section>
 
       {/* ─── CALL TO ACTION ───────────────────────────────────────────────────── */}
-      <section className="py-20 text-center max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-10 sm:py-16 text-center max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal animation="zoom-in" className="space-y-6">
           <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
             Ready to Modernize Your Gadget Operations?
