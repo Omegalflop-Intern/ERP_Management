@@ -374,7 +374,7 @@ export default function SASubscriptionPlans() {
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['sa-plans-manage']);
+      queryClient.invalidateQueries({ queryKey: ['sa-plans-manage'] });
       setShowCreate(false);
       setForm({ ...emptyPlan });
       toast.success('Subscription plan created successfully');
@@ -388,7 +388,7 @@ export default function SASubscriptionPlans() {
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['sa-plans-manage']);
+      queryClient.invalidateQueries({ queryKey: ['sa-plans-manage'] });
       setEditingId(null);
       toast.success('Subscription plan updated successfully');
     },
@@ -401,7 +401,7 @@ export default function SASubscriptionPlans() {
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['sa-plans-manage']);
+      queryClient.invalidateQueries({ queryKey: ['sa-plans-manage'] });
       toast.success('Subscription plan deleted');
     },
     onError: (err) => toast.error(err.response?.data?.message || 'Failed to delete plan'),
@@ -413,7 +413,7 @@ export default function SASubscriptionPlans() {
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['sa-plans-manage']);
+      queryClient.invalidateQueries({ queryKey: ['sa-plans-manage'] });
       toast.success('Plan active state updated');
     },
     onError: (err) => toast.error(err.response?.data?.message || 'Failed to toggle plan'),

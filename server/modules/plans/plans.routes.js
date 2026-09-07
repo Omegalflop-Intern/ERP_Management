@@ -10,6 +10,7 @@ router.get('/', plansController.listPlans);
 
 // Super admin only — plan management
 router.get('/manage', authenticate, requireSuperAdmin, plansController.getAllPlans);
+router.get('/manage/all', authenticate, requireSuperAdmin, plansController.getAllPlans);
 router.get('/manage/:id', authenticate, requireSuperAdmin, plansController.getPlanById);
 router.post('/manage', authenticate, requireSuperAdmin, plansController.createPlan);
 router.put('/manage/:id', authenticate, requireSuperAdmin, plansController.updatePlan);

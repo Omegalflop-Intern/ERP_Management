@@ -148,6 +148,14 @@ export const updatePlan = async (id, data) => {
   if (!plan) throw ApiError.notFound('Plan not found');
 
   const updateFields = {};
+  if (data.name !== undefined && data.name.trim() && plan.name !== 'FREE') {
+    const newName = data.name.trim().toUpperCase();
+    if (newName !== plan.name) {
+      const existing = await db('subscription_plans').where({ name: newName }).whereNot({ id }).first();
+      if (existing) throw ApiError.conflict(`Plan key "${newName}" already exists`);
+      updateFields.name = newName;
+    }
+  }
   if (data.displayName !== undefined) updateFields.display_name = data.displayName;
   if (data.description !== undefined) updateFields.description = data.description;
   if (data.monthlyPrice !== undefined) updateFields.monthly_price = Number(data.monthlyPrice);
