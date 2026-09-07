@@ -52,8 +52,13 @@ export const extractTenantFromHost = async (req, res, next) => {
 
     if (subdomain || customDomain) {
       const query = db('tenants').where({ is_deleted: false });
-      if (subdomain) query.where({ subdomain });
-      else if (customDomain) query.where({ custom_domain: customDomain });
+      if (subdomain) {
+        query.andWhere((b) => {
+          b.where({ subdomain }).orWhere({ custom_domain: subdomain });
+        });
+      } else if (customDomain) {
+        query.where({ custom_domain: customDomain });
+      }
 
       const tenant = await query
         .select('id', 'shop_name', 'subdomain', 'custom_domain', 'plan', 'status', 'is_deleted')

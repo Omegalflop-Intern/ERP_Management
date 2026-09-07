@@ -34,6 +34,7 @@ import {
 import { Link } from 'react-router-dom';
 import api from '../../lib/api';
 import { format, formatDistanceToNow } from 'date-fns';
+import { getBaseDomain } from '../../utils/subdomain';
 
 const PLAN_BADGES = {
   FREE: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700',
@@ -472,7 +473,9 @@ export default function SADashboard() {
                             <span className="font-extrabold text-slate-900 dark:text-white">
                               {t.shopName}
                             </span>
-                            <div className="text-[10px] text-slate-400">{t.domain || t.subdomain || 'omnimanage.app'}</div>
+                            <div className="text-[10px] text-slate-400 font-mono">
+                              {t.customDomain || (t.subdomain ? `${t.subdomain}.${getBaseDomain()}` : getBaseDomain())}
+                            </div>
                           </div>
                         </div>
                       </td>

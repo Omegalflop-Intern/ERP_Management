@@ -1,19 +1,33 @@
-export const baseDomain = import.meta.env.VITE_BASE_DOMAIN || 'respawnalley.com';
-
 export function getBaseDomain() {
-  const host = window.location.hostname;
-  if (host.endsWith('.localhost')) return 'localhost';
-  return baseDomain;
+  if (typeof window === 'undefined') {
+    return import.meta.env.VITE_BASE_DOMAIN || 'localhost';
+  }
+  const host = window.location.hostname.toLowerCase();
+  if (host === 'localhost' || host === '127.0.0.1' || host.endsWith('.localhost')) {
+    return 'localhost';
+  }
+  if (import.meta.env.VITE_BASE_DOMAIN) {
+    return import.meta.env.VITE_BASE_DOMAIN;
+  }
+  const parts = host.split('.');
+  if (parts.length > 2) {
+    return parts.slice(-2).join('.');
+  }
+  return host;
 }
+
+export const baseDomain = typeof window !== 'undefined' ? getBaseDomain() : (import.meta.env.VITE_BASE_DOMAIN || 'localhost');
 
 /**
  * Detect subdomain from current URL.
  * salah.localhost → "salah"
- * shop.respawnalley.com → "shop"
- * respawnalley.com / www.respawnalley.com → null (main domain)
+ * shop.yourdomain.com → "shop"
+ * yourdomain.com / www.yourdomain.com → null (main domain)
  */
 export function detectSubdomain() {
+  if (typeof window === 'undefined') return null;
   const host = window.location.hostname.toLowerCase();
+  const currentBase = getBaseDomain();
 
   // Localhost subdomain: salah.localhost
   if (host.endsWith('.localhost')) {
@@ -23,13 +37,13 @@ export function detectSubdomain() {
   }
 
   // Exact main domain or www/api subdomains -> return null (main domain)
-  if (host === baseDomain || host === `www.${baseDomain}` || host === `api.${baseDomain}`) {
+  if (host === currentBase || host === `www.${currentBase}` || host === `api.${currentBase}`) {
     return null;
   }
 
-  // Subdomain: shop.respawnalley.com
-  if (host.endsWith(`.${baseDomain}`)) {
-    const sub = host.replace(`.${baseDomain}`, '');
+  // Subdomain: shop.yourdomain.com
+  if (currentBase !== 'localhost' && host.endsWith(`.${currentBase}`)) {
+    const sub = host.replace(`.${currentBase}`, '');
     if (sub && sub !== 'www' && sub !== 'api') return sub;
     return null;
   }
@@ -41,7 +55,7 @@ export function detectSubdomain() {
 
   // Custom domain: e.g. custombrand.com
   const cleanHost = host.startsWith('www.') ? host.slice(4) : host;
-  if (cleanHost !== baseDomain) {
+  if (cleanHost !== currentBase) {
     return cleanHost;
   }
 
@@ -62,10 +76,11 @@ export function getMainPortalUrl(path = '') {
   if (typeof window === 'undefined') return path || '/';
   const protocol = window.location.protocol;
   const port = window.location.port ? `:${window.location.port}` : '';
-  const host = window.location.hostname;
+  const currentBase = getBaseDomain();
 
-  if (host.endsWith('.localhost') || host === 'localhost') {
+  if (currentBase === 'localhost') {
     return `${protocol}//localhost${port}${path}`;
   }
-  return `${protocol}//${baseDomain}${port}${path}`;
+  return `${protocol}//${currentBase}${port}${path}`;
 }
+

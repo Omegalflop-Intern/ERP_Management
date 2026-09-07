@@ -506,13 +506,13 @@ function EditTenantModal({ tenant, onClose, onSuccess }) {
                       className="flex-1 px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-l-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                     <span className="px-2 py-2 text-xs text-slate-400 bg-slate-100 dark:bg-slate-800 border border-l-0 border-slate-200 dark:border-slate-700 rounded-r-xl whitespace-nowrap">
-                      .erp.com
+                      .{getBaseDomain()}
                     </span>
                   </div>
                   {form.subdomain && (
                     <p className="text-[11px] text-slate-400 mt-1">
                       Preview:{' '}
-                      <span className="font-mono text-indigo-500">{form.subdomain}.erp.com</span>
+                      <span className="font-mono text-indigo-500">{form.subdomain}.{getBaseDomain()}</span>
                     </p>
                   )}
                 </div>
@@ -1552,14 +1552,14 @@ export default function SAShopManagement() {
                       className="flex-1 px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-l-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                     <span className="px-2 py-2 text-xs text-slate-400 bg-slate-100 dark:bg-slate-800 border border-l-0 border-slate-200 dark:border-slate-700 rounded-r-xl whitespace-nowrap">
-                      .erp.com
+                      .{getBaseDomain()}
                     </span>
                   </div>
                   {createForm.subdomain && (
                     <p className="text-[11px] text-slate-400 mt-1">
                       Preview:{' '}
                       <span className="font-mono text-indigo-500">
-                        {createForm.subdomain}.erp.com
+                        {createForm.subdomain}.{getBaseDomain()}
                       </span>
                     </p>
                   )}

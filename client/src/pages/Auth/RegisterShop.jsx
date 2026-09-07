@@ -36,6 +36,7 @@ import PasswordInput from '../../components/ui/PasswordInput';
 import ThemeToggle from '../../components/ui/ThemeToggle';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import api from '../../lib/api';
+import { getBaseDomain } from '../../utils/subdomain';
 
 const PLANS = [
   {
@@ -498,7 +499,7 @@ export default function RegisterShop() {
                             className="w-full px-4 py-2.5 pr-44 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs font-mono font-bold text-blue-600 dark:text-blue-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                           />
                           <span className="absolute right-3 text-xs font-mono font-medium text-slate-400">
-                            .omnimanage.app
+                            .{getBaseDomain()}
                           </span>
                         </div>
                         {form.subdomain && (
@@ -506,7 +507,7 @@ export default function RegisterShop() {
                             <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                             <span>
                               Your store URL will be:{' '}
-                              <strong className="font-mono">{form.subdomain}.omnimanage.app</strong>
+                              <strong className="font-mono">{form.subdomain}.{getBaseDomain()}</strong>
                             </span>
                           </div>
                         )}
@@ -935,7 +936,7 @@ export default function RegisterShop() {
                   {form.shopName || 'Apex Gadget Store'}
                 </p>
                 <p className="text-xs font-mono text-blue-600 dark:text-blue-400">
-                  {form.subdomain ? `${form.subdomain}.omnimanage.app` : 'yourshop.omnimanage.app'}
+                  {form.subdomain ? `${form.subdomain}.${getBaseDomain()}` : `yourshop.${getBaseDomain()}`}
                 </p>
               </div>
 
