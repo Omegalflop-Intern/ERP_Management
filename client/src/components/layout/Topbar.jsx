@@ -59,11 +59,10 @@ function UserAvatar({ user, size = 'md', online = true }) {
   return (
     <div className="relative inline-block flex-shrink-0">
       <div
-        className={`${sz} rounded-full overflow-hidden flex items-center justify-center font-bold border border-blue-200 dark:border-blue-500/30 ${
-          user?.avatar && !imgError
+        className={`${sz} rounded-full overflow-hidden flex items-center justify-center font-bold border border-blue-200 dark:border-blue-500/30 ${user?.avatar && !imgError
             ? ''
             : 'bg-green-600/10 dark:bg-green-600/20 text-green-700 dark:text-green-400'
-        }`}
+          }`}
       >
         {user?.avatar && !imgError ? (
           <img
@@ -199,10 +198,10 @@ function GlobalSearch() {
 
   const filteredPages = query.trim()
     ? pagesList.filter(
-        (p) =>
-          p.title.toLowerCase().includes(query.toLowerCase()) ||
-          p.category.toLowerCase().includes(query.toLowerCase())
-      )
+      (p) =>
+        p.title.toLowerCase().includes(query.toLowerCase()) ||
+        p.category.toLowerCase().includes(query.toLowerCase())
+    )
     : pagesList.slice(0, 6);
 
   const handleSelect = (path) => {
@@ -224,11 +223,10 @@ function GlobalSearch() {
           setIsOpen(true);
           inputRef.current?.focus();
         }}
-        className={`relative flex items-center w-full px-3.5 py-2 rounded-xl border text-xs cursor-text transition-all bg-white dark:bg-[#0f172a] border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 shadow-xs ${
-          isOpen
+        className={`relative flex items-center w-full px-3.5 py-2 rounded-xl border text-xs cursor-text transition-all bg-white dark:bg-[#0f172a] border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 shadow-xs ${isOpen
             ? 'ring-2 ring-[#2563EB]/30 border-[#2563EB] dark:border-blue-500 bg-white dark:bg-[#0f172a]'
             : ''
-        }`}
+          }`}
       >
         <Search className="w-4 h-4 text-slate-500 dark:text-slate-400 mr-2 flex-shrink-0 stroke-[2]" />
         <input
@@ -503,7 +501,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
         const fresh = r.data?.data;
         if (fresh) setUser((prev) => ({ ...(prev || {}), ...fresh }));
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const { data: tenantInfo } = useQuery({
@@ -629,11 +627,10 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
                 (user?.tenantId ? 'OmniManage' : 'Super Admin Portal')}
             </span>
             <span
-              className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${
-                user?.tenantId
+              className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${user?.tenantId
                   ? 'bg-blue-500/10 text-[#2563EB] dark:text-blue-400 border border-blue-300/40 dark:border-blue-500/30'
                   : 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-300/40 dark:border-violet-500/30'
-              }`}
+                }`}
             >
               {tenantInfo?.plan ||
                 user?.tenant?.plan ||
@@ -793,11 +790,10 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
                 setShowNotifs(false);
                 setShowMobileSettings(false);
               }}
-              className={`hidden md:flex items-center gap-2.5 px-3 py-1.5 rounded-xl transition-all ${
-                styled
+              className={`hidden md:flex items-center gap-2.5 px-3 py-1.5 rounded-xl transition-all ${styled
                   ? 'neu-flat !border-none !shadow-none hover:bg-white/10 dark:hover:bg-gray-800/40'
                   : 'bg-gradient-to-br from-white/60 to-white/30 dark:from-white/[0.08] dark:to-white/[0.02] backdrop-blur-[24px] saturate-[1.7] border border-white/40 dark:border-white/[0.08] hover:from-white/70 hover:to-white/40 dark:hover:from-white/[0.12] dark:hover:to-white/[0.04] shadow-[0_2px_16px_rgba(15,23,42,0.04)] dark:shadow-[0_2px_16px_rgba(0,0,0,0.2)]'
-              }`}
+                }`}
             >
               <UserAvatar user={user} size="sm" online={online} />
               <div className="text-left leading-tight min-w-0">

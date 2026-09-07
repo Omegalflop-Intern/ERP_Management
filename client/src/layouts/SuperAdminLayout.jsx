@@ -327,6 +327,16 @@ export default function SuperAdminLayout() {
                 <div className="text-[10px] text-slate-400 font-medium">Super Admin</div>
               </div>
             </div>
+
+            {/* Topbar Logout Button */}
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-black text-white bg-rose-600 hover:bg-rose-700 active:scale-95 shadow-sm shadow-rose-600/20 border border-rose-600 transition-all duration-150 group"
+              title="Sign Out"
+            >
+              <LogOut className="w-3.5 h-3.5 flex-shrink-0 group-hover:-translate-x-0.5 transition-transform" />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
           </div>
         </header>
 
