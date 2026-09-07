@@ -257,8 +257,16 @@ export const updateTenant = async (id, data) => {
   }
 
   if (data.phone !== undefined) updateFields.phone = data.phone;
-  if (data.plan !== undefined) updateFields.plan = data.plan;
-  if (data.maxUsers !== undefined) updateFields.max_users = data.maxUsers;
+  if (data.plan !== undefined) {
+    updateFields.plan = String(data.plan).toUpperCase();
+    if (data.maxUsers === undefined) {
+      const dbPlan = await db('subscription_plans').where({ name: updateFields.plan }).first();
+      if (dbPlan?.max_users) {
+        updateFields.max_users = Number(dbPlan.max_users);
+      }
+    }
+  }
+  if (data.maxUsers !== undefined) updateFields.max_users = Number(data.maxUsers);
   if (data.expiresAt !== undefined) updateFields.expires_at = data.expiresAt ? new Date(data.expiresAt) : null;
   if (data.notes !== undefined) updateFields.notes = data.notes;
   if (data.nidNumber !== undefined) updateFields.nid_number = data.nidNumber;
@@ -401,17 +409,22 @@ export const createTenant = async (data, isSuperAdmin = false) => {
     if (exists) throw ApiError.conflict(`Custom domain "${customDomain}" is already in use.`);
   }
 
+  const rawPlan = data.plan || data.selectedPlan || 'STARTER';
+  const planName = String(rawPlan).toUpperCase();
+  const dbPlan = await db('subscription_plans').where({ name: planName }).first();
+
   let expiresAt = data.expiresAt ? new Date(data.expiresAt) : null;
   if (!expiresAt) {
     const isYearly = (data.billingCycle || '').toLowerCase() === 'yearly';
-    const durationDays = data.durationDays ? Number(data.durationDays) : (isYearly ? 365 : 30);
+    let durationDays = data.durationDays ? Number(data.durationDays) : (isYearly ? 365 : 30);
+    if (!data.durationDays && dbPlan && dbPlan.trial_days > 0 && planName === 'FREE') {
+      durationDays = Number(dbPlan.trial_days);
+    }
     expiresAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
   }
 
-  const rawPlan = data.plan || data.selectedPlan || 'STARTER';
-  const planName = String(rawPlan).toUpperCase();
-  let maxUsers = data.maxUsers !== undefined ? Number(data.maxUsers) : 5;
-  if (data.maxUsers === undefined) {
+  let maxUsers = data.maxUsers !== undefined ? Number(data.maxUsers) : (dbPlan?.max_users ? Number(dbPlan.max_users) : 5);
+  if (data.maxUsers === undefined && !dbPlan) {
     if (planName === 'ENTERPRISE') maxUsers = 999;
     else if (planName === 'PRO' || planName === 'BUSINESS') maxUsers = 20;
     else if (planName === 'FREE') maxUsers = 2;

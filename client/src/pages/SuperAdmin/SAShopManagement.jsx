@@ -306,8 +306,31 @@ function TempAdminModal({ tenant, onClose }) {
   );
 }
 
-function EditTenantModal({ tenant, onClose, onSuccess }) {
-  const PLAN_DEFAULTS = { FREE: 30, STARTER: 30, PRO: 90, ENTERPRISE: 365 };
+function EditTenantModal({ tenant, onClose, onSuccess, dbPlans = [] }) {
+  const planList = dbPlans.length > 0 ? dbPlans : [
+    { name: 'FREE', displayName: 'Free', maxUsers: 2, maxBranches: 1, trialDays: 0 },
+    { name: 'STARTER', displayName: 'Starter', maxUsers: 5, maxBranches: 2, trialDays: 30 },
+    { name: 'PRO', displayName: 'Pro', maxUsers: 20, maxBranches: 5, trialDays: 90 },
+    { name: 'ENTERPRISE', displayName: 'Enterprise', maxUsers: 999, maxBranches: 999, trialDays: 365 },
+  ];
+
+  const getPlanDays = (pName) => {
+    const p = planList.find((x) => x.name === pName);
+    if (p && p.trialDays > 0) return p.trialDays;
+    if (pName === 'ENTERPRISE') return 365;
+    if (pName === 'PRO') return 90;
+    return 30;
+  };
+
+  const getPlanLimits = (pName) => {
+    const p = planList.find((x) => x.name === pName);
+    if (p) return { branches: p.maxBranches || 1, users: p.maxUsers || 5 };
+    if (pName === 'ENTERPRISE') return { branches: 999, users: 999 };
+    if (pName === 'PRO') return { branches: 5, users: 20 };
+    if (pName === 'FREE') return { branches: 1, users: 2 };
+    return { branches: 2, users: 5 };
+  };
+
   const [form, setForm] = useState({
     shopName: tenant.shopName || '',
     ownerName: tenant.ownerName || '',
@@ -322,7 +345,7 @@ function EditTenantModal({ tenant, onClose, onSuccess }) {
     customDomain: tenant.customDomain || '',
     durationDays: tenant.expiresAt
       ? Math.max(1, Math.ceil((new Date(tenant.expiresAt) - new Date()) / 86400000))
-      : PLAN_DEFAULTS[tenant.plan || 'STARTER'] || 30,
+      : getPlanDays(tenant.plan || 'STARTER'),
     expiresAt: tenant.expiresAt ? new Date(tenant.expiresAt).toISOString().slice(0, 10) : '',
     notes: tenant.notes || '',
     nidNumber: tenant.kycDocuments?.nidNumber || '',
@@ -340,16 +363,9 @@ function EditTenantModal({ tenant, onClose, onSuccess }) {
     return d.toISOString().slice(0, 10);
   };
 
-  const PLAN_LIMITS = {
-    FREE: { branches: 1, users: 2 },
-    STARTER: { branches: 2, users: 5 },
-    PRO: { branches: 5, users: 20 },
-    ENTERPRISE: { branches: 999, users: 999 },
-  };
-
   const handlePlanChange = (newPlan) => {
-    const days = PLAN_DEFAULTS[newPlan] || 30;
-    const limits = PLAN_LIMITS[newPlan] || { branches: 2, users: 5 };
+    const days = getPlanDays(newPlan);
+    const limits = getPlanLimits(newPlan);
     setIsCustomDays(false);
     setForm((f) => ({
       ...f,
@@ -542,11 +558,11 @@ function EditTenantModal({ tenant, onClose, onSuccess }) {
                     <select
                       value={form.plan}
                       onChange={(e) => handlePlanChange(e.target.value)}
-                      className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold uppercase"
                     >
-                      {['FREE', 'STARTER', 'PRO', 'ENTERPRISE'].map((p) => (
-                        <option key={p} value={p}>
-                          {p}
+                      {planList.map((p) => (
+                        <option key={p.name} value={p.name}>
+                          {p.displayName || p.name}
                         </option>
                       ))}
                     </select>
@@ -938,7 +954,6 @@ export default function SAShopManagement() {
   const [showCreate, setShowCreate] = useState(false);
   const [createdShopCredentials, setCreatedShopCredentials] = useState(null);
   const [isCreateCustomDays, setIsCreateCustomDays] = useState(false);
-  const PLAN_DEFAULTS = { FREE: 30, STARTER: 30, PRO: 90, ENTERPRISE: 365 };
   const [createForm, setCreateForm] = useState({
     shopName: '',
     ownerName: '',
@@ -950,6 +965,21 @@ export default function SAShopManagement() {
     subdomain: '',
     password: '',
   });
+
+  const { data: dbPlans = [] } = useQuery({
+    queryKey: ['sa-plans-manage'],
+    queryFn: async () => {
+      const res = await api.get('/plans/manage/all');
+      return res.data?.data || [];
+    },
+  });
+
+  const planList = dbPlans.length > 0 ? dbPlans : [
+    { name: 'FREE', displayName: 'Free', maxUsers: 2, maxBranches: 1, trialDays: 0 },
+    { name: 'STARTER', displayName: 'Starter', maxUsers: 5, maxBranches: 2, trialDays: 30 },
+    { name: 'PRO', displayName: 'Pro', maxUsers: 20, maxBranches: 5, trialDays: 90 },
+    { name: 'ENTERPRISE', displayName: 'Enterprise', maxUsers: 999, maxBranches: 999, trialDays: 365 },
+  ];
 
   const { data: tenants = [], isLoading } = useQuery({
     queryKey: ['sa-shops', search],
@@ -1363,6 +1393,7 @@ export default function SAShopManagement() {
       {editingTenant && (
         <EditTenantModal
           tenant={editingTenant}
+          dbPlans={dbPlans}
           onClose={() => setEditingTenant(null)}
           onSuccess={() => setEditingTenant(null)}
         />
@@ -1461,18 +1492,26 @@ export default function SAShopManagement() {
                     value={createForm.plan}
                     onChange={(e) => {
                       const p = e.target.value;
+                      const selectedPlanObj = planList.find((x) => x.name === p);
+                      const days = selectedPlanObj?.trialDays > 0
+                        ? selectedPlanObj.trialDays
+                        : p === 'ENTERPRISE'
+                        ? 365
+                        : p === 'PRO'
+                        ? 90
+                        : 30;
                       setIsCreateCustomDays(false);
                       setCreateForm({
                         ...createForm,
                         plan: p,
-                        durationDays: PLAN_DEFAULTS[p] || 30,
+                        durationDays: days,
                       });
                     }}
-                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 font-bold uppercase"
                   >
-                    {['FREE', 'STARTER', 'PRO', 'ENTERPRISE'].map((p) => (
-                      <option key={p} value={p}>
-                        {p}
+                    {planList.map((p) => (
+                      <option key={p.name} value={p.name}>
+                        {p.displayName || p.name}
                       </option>
                     ))}
                   </select>
