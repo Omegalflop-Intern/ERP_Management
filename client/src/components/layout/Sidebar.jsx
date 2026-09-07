@@ -181,21 +181,9 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
           }
         `}
       >
-        {/* Minimal Header */}
-        <div className="h-14 px-3.5 border-b border-slate-200/50 dark:border-slate-800/50 flex items-center justify-between">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-[#2563EB] flex items-center justify-center text-white shrink-0 shadow-sm shadow-blue-600/20">
-              <Smartphone className="w-4 h-4" />
-            </div>
-
-            {!isCollapsed && (
-              <span className="font-extrabold text-sm text-slate-900 dark:text-white truncate tracking-tight">
-                Omni<span className="text-[#2563EB] dark:text-blue-400">Manage</span>
-              </span>
-            )}
-          </div>
-
-          {isMobile && (
+        {/* Mobile Close Button */}
+        {isMobile && (
+          <div className="flex justify-end p-2 border-b border-slate-200/50 dark:border-slate-800/50">
             <button
               type="button"
               onClick={onClose}
@@ -203,8 +191,8 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
             >
               <X className="w-4 h-4" />
             </button>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Scrollable Navigation */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-3 space-y-4 overscroll-contain sidebar-scrollbar">

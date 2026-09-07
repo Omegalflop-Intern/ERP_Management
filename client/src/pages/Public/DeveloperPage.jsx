@@ -213,10 +213,10 @@ export default function DeveloperPage() {
   return (
     <div className="relative overflow-hidden font-sans">
       {/* ─── DEVELOPER HERO PROFILE ────────────────────────────────────────────── */}
-      <section className="relative pt-12 pb-20 sm:pt-20 sm:pb-28 bg-gradient-to-b from-blue-50/50 via-transparent to-transparent dark:from-slate-900/40">
+      <section className="relative pt-6 pb-12 sm:pt-10 sm:pb-16 bg-gradient-to-b from-blue-50/50 via-transparent to-transparent dark:from-slate-900/40">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] h-[380px] bg-gradient-to-tr from-blue-600/20 via-indigo-600/15 to-purple-600/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
             {/* Developer Profile Image */}
             <ScrollReveal animation="zoom-in" duration={600} className="shrink-0 text-center">
@@ -384,8 +384,8 @@ export default function DeveloperPage() {
       </section>
 
       {/* ─── TECHNICAL ARSENAL: REAL ICONS & DOMAINS ─────────────────────────── */}
-      <section className="py-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <ScrollReveal animation="fade-up" className="text-center max-w-2xl mx-auto space-y-3 mb-16">
+      <section className="py-10 sm:py-14 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <ScrollReveal animation="fade-up" className="text-center max-w-2xl mx-auto space-y-3 mb-10">
           <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">
             Technical Arsenal
           </h2>
@@ -436,9 +436,9 @@ export default function DeveloperPage() {
       </section>
 
       {/* ─── OMNIMANAGE ARCHITECTURE BLUEPRINT ───────────────────────────────── */}
-      <section className="py-20 bg-slate-100/70 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800">
+      <section className="py-10 sm:py-14 bg-slate-100/70 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <ScrollReveal animation="fade-up" className="text-center max-w-2xl mx-auto space-y-3 mb-16">
+          <ScrollReveal animation="fade-up" className="text-center max-w-2xl mx-auto space-y-3 mb-10">
             <h2 className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
               System Blueprint
             </h2>
@@ -471,7 +471,7 @@ export default function DeveloperPage() {
       </section>
 
       {/* ─── LIVE ARCHITECT TERMINAL ─────────────────────────────────────────── */}
-      <section className="py-20 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-10 sm:py-14 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal animation="zoom-in" className="rounded-3xl bg-slate-950 border border-slate-800 shadow-2xl overflow-hidden font-mono text-xs">
           <div className="px-5 py-3.5 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between text-slate-400">
             <div className="flex items-center gap-2">
@@ -510,7 +510,7 @@ export default function DeveloperPage() {
       </section>
 
       {/* ─── HIRE & COLLABORATION CTA ─────────────────────────────────────────── */}
-      <section className="py-20 text-center max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+      <section className="py-10 sm:py-14 text-center max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         <ScrollReveal animation="fade-up" className="space-y-4">
           <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
             Need Custom Enterprise Architecture or Technical Leadership?

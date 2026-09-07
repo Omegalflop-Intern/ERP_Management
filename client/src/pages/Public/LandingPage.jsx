@@ -237,7 +237,7 @@ export default function LandingPage() {
   return (
     <div className="relative overflow-hidden font-sans">
       {/* ─── HERO SECTION ──────────────────────────────────────────────────────── */}
-      <section className="relative pt-10 pb-20 sm:pt-16 sm:pb-28 lg:pt-20 lg:pb-36 overflow-hidden">
+      <section className="relative pt-6 pb-12 sm:pt-10 sm:pb-16 lg:pt-14 lg:pb-20 overflow-hidden">
         {/* Background glow meshes */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-gradient-to-tr from-blue-600/20 via-indigo-500/15 to-purple-600/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute top-20 -left-20 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -527,7 +527,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── FEATURES PILLARS GRID WITH SCROLL REVEAL ───────────────────────── */}
-      <section id="features" className="py-20 sm:py-28 relative">
+      <section id="features" className="py-12 sm:py-16 relative">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <ScrollReveal animation="fade-up" className="text-center max-w-2xl mx-auto space-y-3 mb-16">
             <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">
@@ -585,7 +585,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── INTERACTIVE MODULES EXPLORER ────────────────────────────────────── */}
-      <section id="modules" className="py-20 sm:py-28 bg-slate-100/70 dark:bg-slate-900/50 border-t border-slate-200/80 dark:border-slate-800/80">
+      <section id="modules" className="py-12 sm:py-16 bg-slate-100/70 dark:bg-slate-900/50 border-t border-slate-200/80 dark:border-slate-800/80">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <ScrollReveal animation="fade-up" className="text-center max-w-2xl mx-auto space-y-3 mb-12">
             <h2 className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
@@ -810,7 +810,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── PRICING PLANS WITH SCROLL REVEAL ─────────────────────────────────── */}
-      <section id="pricing" className="py-20 sm:py-28 relative">
+      <section id="pricing" className="py-12 sm:py-16 relative">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <ScrollReveal animation="fade-up" className="text-center max-w-2xl mx-auto space-y-3 mb-12">
             <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">
@@ -941,7 +941,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── FAQ SECTION ──────────────────────────────────────────────────────── */}
-      <section className="py-20 border-t border-slate-200/80 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/30">
+      <section className="py-12 sm:py-16 border-t border-slate-200/80 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/30">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <ScrollReveal animation="fade-up" className="text-center space-y-3 mb-12">
             <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">
@@ -981,7 +981,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── BOTTOM CTA BANNER ────────────────────────────────────────────────── */}
-      <section className="py-20 relative overflow-hidden bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-700 text-white">
+      <section className="py-12 sm:py-16 relative overflow-hidden bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-700 text-white">
         <ScrollReveal animation="zoom-in" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6 relative z-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-bold border border-white/20">
             <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
