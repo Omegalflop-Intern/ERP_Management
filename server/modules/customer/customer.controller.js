@@ -56,10 +56,10 @@ export const getCustomerHistory = async (req, res, next) => {
 
 export const collectDue = async (req, res, next) => {
   try {
-    const { amount, paymentMethod } = req.body;
+    const { amount, paymentMethod, saleId } = req.body;
     const tenantId = req.user?.tenantId || null;
-    const result = await customerService.collectDue(req.params.id, amount, paymentMethod, req.user._id, tenantId);
-    logAction({ userId: req.user?.userId, username: req.user?.username, action: 'COLLECT_DUE', module: 'customer', entityId: req.params.id, entityType: 'Customer', details: { amount, paymentMethod }, req });
+    const result = await customerService.collectDue(req.params.id, amount, paymentMethod, req.user._id, tenantId, saleId);
+    logAction({ userId: req.user?.userId, username: req.user?.username, action: 'COLLECT_DUE', module: 'customer', entityId: req.params.id, entityType: 'Customer', details: { amount, paymentMethod, saleId }, req });
     return ApiResponse.success(res, result, `৳${result.collected} collected`);
   } catch (error) { next(error); }
 };

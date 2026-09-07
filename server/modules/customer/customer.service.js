@@ -195,7 +195,7 @@ export const getCustomerHistory = async (id, tenantId = null) => {
   };
 };
 
-export const collectDue = async (id, amount, paymentMethod, userId, tenantId = null) => {
+export const collectDue = async (id, amount, paymentMethod, userId, tenantId = null, saleId = null) => {
   const customer = await getCustomerById(id, tenantId);
   if (!customer) throw ApiError.notFound('Customer not found');
 
@@ -215,9 +215,28 @@ export const collectDue = async (id, amount, paymentMethod, userId, tenantId = n
   });
   const salesRows = await salesQuery.orderBy('created_at', 'asc');
 
+  // If a specific saleId is requested, prioritize that sale first
+  let sortedSales = [...salesRows];
+  if (saleId) {
+    const targetIdStr = String(saleId);
+    const targetIdx = sortedSales.findIndex((r) => String(r.id) === targetIdStr || String(r._id) === targetIdStr);
+    if (targetIdx > -1) {
+      const [targetRow] = sortedSales.splice(targetIdx, 1);
+      sortedSales = [targetRow, ...sortedSales];
+    } else {
+      // If sale wasn't in customer's current list, fetch it directly
+      const directSaleQuery = db('transactions').where({ id: saleId, is_deleted: false, tx_type: 'SALE' });
+      if (tenantId) directSaleQuery.andWhere('tenant_id', tenantId);
+      const directSale = await directSaleQuery.first();
+      if (directSale) {
+        sortedSales = [directSale, ...sortedSales];
+      }
+    }
+  }
+
   let remainingToApply = numAmount;
 
-  for (const row of salesRows) {
+  for (const row of sortedSales) {
     if (remainingToApply <= 0) break;
     let pb = {};
     try {

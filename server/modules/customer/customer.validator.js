@@ -25,4 +25,5 @@ export const updateCustomerSchema = z.object({
 export const collectDueSchema = z.object({
   amount: z.number().min(0.01),
   paymentMethod: z.enum(['cash', 'bkash', 'rocket', 'nagad', 'bank']),
+  saleId: z.union([z.string(), z.number()]).optional().nullable(),
 });

@@ -502,6 +502,7 @@ function SaleCollectDueModal({ sale, onClose, onSuccess }) {
         return api.post(`/customers/${custId}/collect-due`, {
           amount: collectAmount,
           paymentMethod: method,
+          saleId: sale.id || sale._id,
         });
       }
 
