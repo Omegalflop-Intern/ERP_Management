@@ -5,7 +5,6 @@ import {
   ChevronDown,
   ChevronUp,
   CreditCard,
-  Gift,
   Package,
   Percent,
   Plus,
@@ -14,7 +13,6 @@ import {
   Search,
   ShoppingCart,
   Smartphone,
-  Tag,
   Trash2,
   User,
   UserCheck,
@@ -58,7 +56,7 @@ export default function SalesForm() {
   const [payment, setPayment] = useState({ cash: '', bkash: '', rocket: '', nagad: '', bank: '' });
   const [showCustomerCreate, setShowCustomerCreate] = useState(false);
   const [showProductCreate, setShowProductCreate] = useState(false);
-  const [showInvoicePreview, setShowInvoicePreview] = useState(false);
+  const [showInvoicePreview, setShowInvoicePreview] = useState(true);
   const [isFocused, setIsFocused] = useState(false);
 
   const { data: imeiResults, isLoading: searchingImei } = useQuery({
@@ -749,22 +747,6 @@ export default function SalesForm() {
               </button>
             </div>
 
-            {/* Free Gift Promo Reminder Banner (PDF Spec 3.2) */}
-            {cart.length > 0 && (
-              <div className="mx-4 my-2 p-2.5 bg-gradient-to-r from-amber-500/15 to-purple-500/15 border border-amber-500/30 rounded-xl flex items-center gap-2.5">
-                <Gift className="w-5 h-5 text-amber-500 shrink-0 animate-bounce" />
-                <div className="text-xs text-gray-800 dark:text-gray-200">
-                  <span className="font-bold text-amber-600 dark:text-amber-400">
-                    🎁 Free Gift Promo Reminder:
-                  </span>
-                  <span className="ml-1">
-                    Remind cashier to offer free screen protector, back cover or gift box for device
-                    purchase!
-                  </span>
-                </div>
-              </div>
-            )}
-
             {cart.length === 0 ? (
               <div className="px-4 py-12 text-center text-gray-400">
                 <ShoppingCart className="w-10 h-10 mx-auto mb-2 opacity-50" />
@@ -1297,25 +1279,6 @@ export default function SalesForm() {
                   ))}
                 </div>
               </div>
-            </div>
-
-            <div>
-              <label className="text-[11px] font-bold text-gray-500 uppercase flex items-center gap-1 mb-1">
-                <Tag className="w-3 h-3 text-indigo-500" /> Promo Code / Gift Card
-              </label>
-              <input
-                type="text"
-                placeholder="Enter Coupon Code (e.g. GIFT500)"
-                onChange={(e) => {
-                  const code = e.target.value.toUpperCase();
-                  if (code === 'GIFT500' || code === 'PROMO500') {
-                    setDiscountType('FIXED');
-                    setDiscount(500);
-                    toast.success(`Promo Code "${code}" applied: ৳500 Discount!`);
-                  }
-                }}
-                className={`w-full ${inputCls} font-mono uppercase`}
-              />
             </div>
           </div>
 

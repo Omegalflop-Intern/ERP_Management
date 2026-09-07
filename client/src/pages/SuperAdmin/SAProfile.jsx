@@ -150,8 +150,20 @@ export default function SAProfile() {
       setPwError('New passwords do not match');
       return;
     }
-    if (pwForm.newPassword.length < 6) {
-      setPwError('Password must be at least 6 characters');
+    if (pwForm.newPassword.length < 8) {
+      setPwError('Password must be at least 8 characters');
+      return;
+    }
+    if (!/[A-Z]/.test(pwForm.newPassword)) {
+      setPwError('Password must contain at least one uppercase letter (A-Z)');
+      return;
+    }
+    if (!/[a-z]/.test(pwForm.newPassword)) {
+      setPwError('Password must contain at least one lowercase letter (a-z)');
+      return;
+    }
+    if (!/[0-9]/.test(pwForm.newPassword)) {
+      setPwError('Password must contain at least one number (0-9)');
       return;
     }
     passwordMutation.mutate(pwForm);

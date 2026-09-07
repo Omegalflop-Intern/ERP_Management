@@ -132,7 +132,21 @@ export default function MyProfile() {
 
   const passwordMutation = useMutation({
     mutationFn: async () => {
-      if (pwForm.newPassword !== pwForm.confirmPassword) throw new Error('Passwords do not match');
+      if (pwForm.newPassword !== pwForm.confirmPassword) {
+        throw new Error('Passwords do not match');
+      }
+      if (pwForm.newPassword.length < 8) {
+        throw new Error('Password must be at least 8 characters');
+      }
+      if (!/[A-Z]/.test(pwForm.newPassword)) {
+        throw new Error('Password must contain at least one uppercase letter (A-Z)');
+      }
+      if (!/[a-z]/.test(pwForm.newPassword)) {
+        throw new Error('Password must contain at least one lowercase letter (a-z)');
+      }
+      if (!/[0-9]/.test(pwForm.newPassword)) {
+        throw new Error('Password must contain at least one number (0-9)');
+      }
       const r = await api.patch(`/users/${authUser._id || authUser.userId}/change-password`, {
         currentPassword: pwForm.currentPassword,
         newPassword: pwForm.newPassword,
@@ -348,6 +362,38 @@ export default function MyProfile() {
             />
           </div>
         </div>
+        {/* Password Requirements Guidance */}
+        <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/80 dark:border-slate-700/60 space-y-2">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300">
+            <ShieldCheck className="w-4 h-4 text-blue-500" />
+            <span>Password Requirements:</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+            {[
+              { label: 'Min 8 characters', met: pwForm.newPassword.length >= 8 },
+              { label: '1 uppercase letter (A-Z)', met: /[A-Z]/.test(pwForm.newPassword) },
+              { label: '1 lowercase letter (a-z)', met: /[a-z]/.test(pwForm.newPassword) },
+              { label: '1 number (0-9)', met: /[0-9]/.test(pwForm.newPassword) },
+            ].map((item, idx) => (
+              <div
+                key={idx}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-colors ${
+                  item.met
+                    ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 font-medium'
+                    : 'bg-gray-100 dark:bg-gray-800/80 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400'
+                }`}
+              >
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    item.met ? 'bg-emerald-500' : 'bg-gray-400'
+                  }`}
+                />
+                <span>{item.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div className="flex justify-end">
           <button
             onClick={() => passwordMutation.mutate()}

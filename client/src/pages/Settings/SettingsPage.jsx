@@ -47,7 +47,7 @@ const settingGroups = [
     key: 'finance',
     label: 'Finance & Tax',
     icon: DollarSign,
-    keys: ['currency', 'currencySymbol', 'defaultVatRate', 'taxEnabled'],
+    keys: ['currency', 'currencySymbol', 'defaultVatRate'],
   },
   {
     key: 'inventory',
@@ -76,7 +76,6 @@ const fieldLabels = {
   currency: 'Currency',
   currencySymbol: 'Currency Symbol',
   defaultVatRate: 'Default VAT Rate (%)',
-  taxEnabled: 'Tax Enabled',
   lowStockThreshold: 'Low Stock Threshold',
   autoReorderEnabled: 'Auto Reorder',
   defaultWarrantyMonths: 'Default Warranty (Months)',
@@ -423,7 +422,7 @@ export default function SettingsPage() {
                         </p>
                       </div>
                     </div>
-                  ) : key === 'taxEnabled' || key === 'autoReorderEnabled' ? (
+                  ) : key === 'autoReorderEnabled' ? (
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"
