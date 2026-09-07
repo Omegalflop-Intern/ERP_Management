@@ -51,11 +51,11 @@ export default function SAContacts() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-6 max-w-7xl mx-auto">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 p-6 shadow-sm">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
-            <MessageSquare className="h-7 w-7 text-orange-500" />
+          <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
+            <MessageSquare className="h-6 w-6 text-orange-500" />
             Website Contact Inquiries
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
