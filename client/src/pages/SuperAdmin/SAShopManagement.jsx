@@ -970,7 +970,10 @@ export default function SAShopManagement() {
     queryKey: ['sa-plans-manage'],
     queryFn: async () => {
       const res = await api.get('/plans/manage/all');
-      return res.data?.data || [];
+      if (Array.isArray(res.data?.data)) return res.data.data;
+      if (Array.isArray(res.data?.data?.plans)) return res.data.data.plans;
+      if (Array.isArray(res.data)) return res.data;
+      return [];
     },
   });
 
