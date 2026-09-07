@@ -178,28 +178,38 @@ export default function SAProfile() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-xl font-black text-slate-900 dark:text-white">My Profile</h1>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Manage your platform administrator account
-        </p>
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Header Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 p-6 rounded-3xl shadow-sm">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 bg-gradient-to-tr from-blue-600 to-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-md shadow-blue-600/20 shrink-0">
+            <User className="w-6 h-6 stroke-[2.2]" />
+          </div>
+          <div>
+            <h1 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">
+              Root Administrator Profile
+            </h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Personal credentials, avatar image, and cryptographic security credentials
+            </p>
+          </div>
+        </div>
       </div>
 
       <Toast message={toast?.message} type={toast?.type} />
 
       {/* Profile Card */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-800/30">
           <div className="flex items-center gap-2">
-            <User className="w-4 h-4 text-indigo-500" />
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+            <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <h2 className="text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white">
               Personal Information
             </h2>
           </div>
         </div>
 
-        <form onSubmit={handleProfileSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleProfileSubmit} className="p-6 md:p-8 space-y-5">
           {/* Avatar */}
           <div className="flex items-center gap-4">
             <div className="relative">
@@ -321,15 +331,15 @@ export default function SAProfile() {
       </div>
 
       {/* Password Card */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-800/30">
           <div className="flex items-center gap-2">
-            <Lock className="w-4 h-4 text-indigo-500" />
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white">Change Password</h2>
+            <Lock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <h2 className="text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white">Change Root Password</h2>
           </div>
         </div>
 
-        <form onSubmit={handlePasswordSubmit} className="p-6 space-y-4">
+        <form onSubmit={handlePasswordSubmit} className="p-6 md:p-8 space-y-4">
           {pwError && (
             <div className="flex items-center gap-2 px-4 py-3 rounded-xl text-xs font-bold bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800">
               <AlertCircle className="w-4 h-4" />

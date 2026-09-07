@@ -177,20 +177,19 @@ export default function SATickets() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto">
       {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
         <div className="flex items-center gap-3.5">
-          <div className="p-3 bg-blue-600 text-white rounded-xl shadow-md shadow-blue-600/20">
+          <div className="w-11 h-11 bg-gradient-to-tr from-blue-600 to-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-md shadow-blue-600/20 shrink-0">
             <LifeBuoy className="w-6 h-6 stroke-[2.2]" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-900 dark:text-white">
-              Shop Support Tickets
+            <h1 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">
+              Support & Helpdesk Command
             </h1>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Central helpdesk to review shop assistance requests, contact shop owners, and mark
-              issues as resolved.
+              Review assistance tickets, resolve tenant technical issues, and communicate with shop owners
             </p>
           </div>
         </div>
@@ -198,57 +197,57 @@ export default function SATickets() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between shadow-sm hover:shadow-md transition-all group">
           <div>
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Total Tickets</p>
+            <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Total Tickets</p>
             <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1">
               {totalCount}
             </h3>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center">
+          <div className="w-11 h-11 rounded-2xl bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-transform group-hover:scale-105">
             <LifeBuoy className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between shadow-sm hover:shadow-md transition-all group">
           <div>
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Open</p>
+            <p className="text-[10px] font-black uppercase tracking-wider text-amber-500">Open Tickets</p>
             <h3 className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">
               {openCount}
             </h3>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+          <div className="w-11 h-11 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center transition-transform group-hover:scale-105">
             <Clock className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between shadow-sm hover:shadow-md transition-all group">
           <div>
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">In Progress</p>
+            <p className="text-[10px] font-black uppercase tracking-wider text-blue-500">In Progress</p>
             <h3 className="text-2xl font-black text-blue-600 dark:text-blue-400 mt-1">
               {inProgressCount}
             </h3>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+          <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center transition-transform group-hover:scale-105">
             <AlertTriangle className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between shadow-sm hover:shadow-md transition-all group">
           <div>
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Resolved</p>
+            <p className="text-[10px] font-black uppercase tracking-wider text-emerald-500">Resolved</p>
             <h3 className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
               {resolvedCount}
             </h3>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+          <div className="w-11 h-11 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center transition-transform group-hover:scale-105">
             <CheckCircle2 className="w-5 h-5" />
           </div>
         </div>
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-4">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 p-6 space-y-4 shadow-sm">
         {/* Filters */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <div className="relative">

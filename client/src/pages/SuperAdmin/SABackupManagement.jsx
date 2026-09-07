@@ -104,109 +104,113 @@ export default function SABackupManagement() {
     : 'No backups yet';
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
-            <Database className="w-7 h-7 text-[#2563EB]" /> System Database Backups
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Manage automated snapshots, trigger manual backups, download full dumps, and restore
-            system state.
-          </p>
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Header Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 p-6 rounded-3xl shadow-sm">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 bg-gradient-to-tr from-blue-600 to-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-md shadow-blue-600/20 shrink-0">
+            <Database className="w-6 h-6 stroke-[2.2]" />
+          </div>
+          <div>
+            <h1 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">
+              Database Snapshots & Disaster Recovery
+            </h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Automated database snapshots, manual exports, full JSON dumps, and state restoration
+            </p>
+          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2.5">
           <button
             onClick={() => triggerBackupMutation.mutate()}
             disabled={triggerBackupMutation.isPending}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-md"
+            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-black uppercase tracking-wider rounded-2xl transition-all shadow-md shadow-blue-600/20 hover:scale-[1.02]"
           >
             {triggerBackupMutation.isPending ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <RefreshCw className="w-4 h-4" />
             )}
-            Trigger Backup Now
+            <span>Trigger Backup Now</span>
           </button>
 
           <button
             onClick={handleDownloadInstantDump}
             disabled={isExporting}
-            className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-bold rounded-xl transition-all shadow-md border border-slate-700/50"
+            className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-black uppercase tracking-wider rounded-2xl transition-all shadow-sm border border-slate-700/50"
           >
             {isExporting ? (
               <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
             ) : (
               <Download className="w-4 h-4 text-emerald-400" />
             )}
-            Download Dump (JSON)
+            <span>Download JSON Dump</span>
           </button>
         </div>
       </div>
 
       {/* Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm hover:shadow-md transition-all group">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Total Backups
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              Total Snapshots
             </span>
-            <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-[#2563EB]">
+            <div className="w-10 h-10 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center transition-transform group-hover:scale-105">
               <Database className="w-5 h-5" />
             </div>
           </div>
-          <div className="mt-3 text-2xl font-bold text-slate-900 dark:text-white">
-            {backups.length} Snapshots
+          <div className="mt-2 text-2xl font-black text-slate-900 dark:text-white">
+            {backups.length} Files
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm hover:shadow-md transition-all group">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Backup Storage
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              Allocated Storage
             </span>
-            <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center transition-transform group-hover:scale-105">
               <HardDrive className="w-5 h-5" />
             </div>
           </div>
-          <div className="mt-3 text-2xl font-bold text-slate-900 dark:text-white">{totalMB} MB</div>
+          <div className="mt-2 text-2xl font-black text-slate-900 dark:text-white">{totalMB} MB</div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm hover:shadow-md transition-all group">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Last Backup Date
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              Last Snapshot
             </span>
-            <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600">
+            <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center transition-transform group-hover:scale-105">
               <Clock className="w-5 h-5" />
             </div>
           </div>
           <div
-            className="mt-3 text-xs font-semibold text-slate-800 dark:text-slate-200 truncate"
+            className="mt-2 text-xs font-bold text-slate-800 dark:text-slate-200 truncate"
             title={lastBackup}
           >
             {lastBackup}
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm hover:shadow-md transition-all group">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Database Engine
+            <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              RDBMS Engine
             </span>
-            <div className="p-2 rounded-xl bg-violet-50 dark:bg-violet-950/40 text-violet-600">
+            <div className="w-10 h-10 rounded-2xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center transition-transform group-hover:scale-105">
               <ShieldCheck className="w-5 h-5" />
             </div>
           </div>
-          <div className="mt-3 text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-            <CheckCircle2 className="w-4 h-4" /> MariaDB / MySQL Active
+          <div className="mt-2 text-xs font-black text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 uppercase tracking-wider">
+            <CheckCircle2 className="w-4 h-4" /> MariaDB Active
           </div>
         </div>
       </div>
 
       {/* Restore Section */}
-      <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm">
         <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <Upload className="w-5 h-5 text-indigo-600 dark:text-indigo-400" /> Restore Database from
           Backup

@@ -107,24 +107,27 @@ export default function SAPlatformSettings() {
   }
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-12">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm">
-        <div>
-          <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
-            <Building2 className="w-6 h-6 text-blue-500" />
-            Platform & Footer Settings
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Manage public platform contacts, shop activation support details, and landing page
-            footer social media links.
-          </p>
+    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+      {/* Header Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 p-6 rounded-3xl shadow-sm">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 bg-gradient-to-tr from-blue-600 to-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-md shadow-blue-600/20 shrink-0">
+            <Building2 className="w-6 h-6 stroke-[2.2]" />
+          </div>
+          <div>
+            <h1 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">
+              Platform & Global Settings
+            </h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Manage platform branding, emergency contacts, merchant payment options, and footer socials
+            </p>
+          </div>
         </div>
         <button
           type="button"
           onClick={handleSubmit}
           disabled={saving}
-          className="px-6 py-2.5 rounded-xl font-bold text-xs text-white bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2 self-start sm:self-auto disabled:opacity-50"
+          className="px-6 py-2.5 rounded-2xl font-black uppercase tracking-wider text-xs text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md shadow-blue-600/20 transition-all flex items-center gap-2 self-start sm:self-auto disabled:opacity-50 hover:scale-[1.02]"
         >
           {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           <span>Save Changes</span>
@@ -133,27 +136,29 @@ export default function SAPlatformSettings() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Section 1: Public Contact Info */}
-        <div className="bg-white dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-4 shadow-sm">
-          <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-            <Phone className="w-4 h-4 text-blue-500 dark:text-blue-400" />
-            Support Contact Details (Landing Page & Shop Activation)
-          </h2>
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl p-6 md:p-8 space-y-5 shadow-sm">
+          <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-4">
+            <Phone className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <h2 className="text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white">
+              Support & Hotline Coordinates
+            </h2>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                 Platform Name
               </label>
               <input
                 type="text"
                 value={form.platformName}
                 onChange={(e) => setForm({ ...form, platformName: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                 Support Phone Number
               </label>
               <input
@@ -161,25 +166,25 @@ export default function SAPlatformSettings() {
                 value={form.platformPhone}
                 onChange={(e) => setForm({ ...form, platformPhone: e.target.value })}
                 placeholder="+880 1700-000000"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                WhatsApp Support Number
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                WhatsApp Hotline
               </label>
               <input
                 type="text"
                 value={form.platformWhatsApp}
                 onChange={(e) => setForm({ ...form, platformWhatsApp: e.target.value })}
                 placeholder="+880 1700-000000"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                 Support Email Address
               </label>
               <input
@@ -187,66 +192,68 @@ export default function SAPlatformSettings() {
                 value={form.platformEmail}
                 onChange={(e) => setForm({ ...form, platformEmail: e.target.value })}
                 placeholder="support@omnimanage.bd"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <div className="sm:col-span-2">
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                Office Address
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                Office HQ Address
               </label>
               <input
                 type="text"
                 value={form.platformAddress}
                 onChange={(e) => setForm({ ...form, platformAddress: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
         </div>
 
         {/* Section 2: Shop Activation Popup Instructions & Merchant Payments */}
-        <div className="bg-white dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-4 shadow-sm">
-          <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl p-6 md:p-8 space-y-5 shadow-sm">
+          <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-4">
             <ShieldCheck className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
-            Shop Activation Modal Settings
-          </h2>
+            <h2 className="text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white">
+              Shop Activation & Merchant Gateway Settings
+            </h2>
+          </div>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                 Shop Activation Note / Instructions
               </label>
               <textarea
                 rows={3}
                 value={form.activationInstructions}
                 onChange={(e) => setForm({ ...form, activationInstructions: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                   bKash Merchant / Personal Number
                 </label>
                 <input
                   type="text"
                   value={form.bkashNumber}
                   onChange={(e) => setForm({ ...form, bkashNumber: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-blue-500"
+                  className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-bold font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                   Nagad Merchant / Personal Number
                 </label>
                 <input
                   type="text"
                   value={form.nagadNumber}
                   onChange={(e) => setForm({ ...form, nagadNumber: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-blue-500"
+                  className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-bold font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
@@ -254,15 +261,17 @@ export default function SAPlatformSettings() {
         </div>
 
         {/* Section 3: Footer Social Links */}
-        <div className="bg-white dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-4 shadow-sm">
-          <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl p-6 md:p-8 space-y-5 shadow-sm">
+          <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-4">
             <Share2 className="w-4 h-4 text-purple-500 dark:text-purple-400" />
-            Landing Page Footer Social Media Links
-          </h2>
+            <h2 className="text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white">
+              Public Website & Social Media Channels
+            </h2>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
                 <Facebook className="w-3.5 h-3.5 text-blue-500" /> Facebook Page URL
               </label>
               <input
@@ -275,12 +284,12 @@ export default function SAPlatformSettings() {
                   })
                 }
                 placeholder="https://facebook.com/yourpage"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
                 <Twitter className="w-3.5 h-3.5 text-sky-400" /> Twitter / X Profile URL
               </label>
               <input
@@ -293,12 +302,12 @@ export default function SAPlatformSettings() {
                   })
                 }
                 placeholder="https://x.com/yourhandle"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
                 <Linkedin className="w-3.5 h-3.5 text-blue-600" /> LinkedIn Company URL
               </label>
               <input
@@ -311,12 +320,12 @@ export default function SAPlatformSettings() {
                   })
                 }
                 placeholder="https://linkedin.com/company/yourcompany"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
                 <Youtube className="w-3.5 h-3.5 text-red-500" /> YouTube Channel URL
               </label>
               <input
@@ -329,12 +338,12 @@ export default function SAPlatformSettings() {
                   })
                 }
                 placeholder="https://youtube.com/@yourchannel"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
                 <Instagram className="w-3.5 h-3.5 text-pink-500" /> Instagram Profile URL
               </label>
               <input
@@ -347,7 +356,7 @@ export default function SAPlatformSettings() {
                   })
                 }
                 placeholder="https://instagram.com/yourprofile"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
@@ -357,7 +366,7 @@ export default function SAPlatformSettings() {
           <button
             type="submit"
             disabled={saving}
-            className="px-8 py-3 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-xl shadow-blue-600/30 transition-all flex items-center gap-2 disabled:opacity-50"
+            className="px-8 py-3 rounded-2xl font-black uppercase tracking-wider text-xs text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-xl shadow-blue-600/25 transition-all flex items-center gap-2 disabled:opacity-50 hover:scale-[1.02]"
           >
             {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             <span>Save Platform & Social Settings</span>

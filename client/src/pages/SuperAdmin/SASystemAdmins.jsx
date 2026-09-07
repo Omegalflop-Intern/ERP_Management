@@ -192,55 +192,60 @@ export default function SASystemAdmins() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
-            <UserCog className="w-5 h-5 text-blue-500" />
-            System Admins
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            Platform-level administrators with full access
-          </p>
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Header Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 p-6 rounded-3xl shadow-sm">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 bg-gradient-to-tr from-blue-600 to-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-md shadow-blue-600/20 shrink-0">
+            <UserCog className="w-6 h-6 stroke-[2.2]" />
+          </div>
+          <div>
+            <h1 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">
+              Root System Administrators
+            </h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Super-admin staff members with unrestricted root access to platform infrastructure
+            </p>
+          </div>
         </div>
         <button
           id="create-admin-btn"
           onClick={() => setCreateOpen(true)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-all shadow-md shadow-blue-600/20 hover:shadow-blue-600/30"
+          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-black uppercase tracking-wider rounded-2xl transition-all shadow-md shadow-blue-600/20 hover:scale-[1.02]"
         >
           <Plus className="w-4 h-4" />
-          Add Admin
+          Add System Admin
         </button>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+      {/* Search Bar */}
+      <div className="relative">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
         <input
           id="admin-search"
           type="text"
-          placeholder="Search by name, email or username..."
+          placeholder="Search by full name, email address or root username..."
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
             setPage(1);
           }}
-          className="w-full pl-9 pr-4 py-2.5 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white placeholder:text-slate-400 transition-all"
+          className="w-full pl-11 pr-4 py-3 text-xs bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white placeholder:text-slate-400 font-medium shadow-sm transition-all"
         />
       </div>
 
       {/* Table Card */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 overflow-hidden shadow-sm">
         {isLoading ? (
-          <div className="flex items-center justify-center h-40">
-            <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+          <div className="flex flex-col items-center justify-center py-20 space-y-3">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Loading System Admins...</p>
           </div>
         ) : admins.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-slate-400 dark:text-slate-600">
+          <div className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-600">
             <Shield className="w-12 h-12 mb-3 opacity-30" />
-            <p className="text-sm font-medium">No system admins found</p>
-            <p className="text-xs mt-1">Run the seed script or create one above</p>
+            <p className="text-sm font-bold text-slate-700 dark:text-slate-300">No system admins found</p>
+            <p className="text-xs mt-1">Create one using the button above</p>
           </div>
         ) : (
           <div className="overflow-x-auto">

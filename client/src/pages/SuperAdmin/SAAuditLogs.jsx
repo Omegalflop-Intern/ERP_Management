@@ -117,67 +117,74 @@ export default function SAAuditLogs() {
   });
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Audit Logs</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Track all user activity across all shops — who did what, when, and where
-          </p>
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Header Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 p-6 rounded-3xl shadow-sm">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 bg-gradient-to-tr from-blue-600 to-indigo-600 text-white rounded-2xl flex items-center justify-center shadow-md shadow-blue-600/20 shrink-0">
+            <Activity className="w-6 h-6 stroke-[2.2]" />
+          </div>
+          <div>
+            <h1 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">
+              Platform Security & Audit Logs
+            </h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Immutable telemetry tracking all user and administrative operations across all tenant stores
+            </p>
+          </div>
         </div>
       </div>
 
       {/* Stats Cards */}
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 p-5 shadow-sm hover:shadow-md transition-all group">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center">
-                <Activity className="w-5 h-5 text-blue-500" />
+              <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/60 flex items-center justify-center transition-transform group-hover:scale-105">
+                <Activity className="w-5 h-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Total Logs</p>
-                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Total Telemetry</p>
+                <p className="text-xl font-black text-slate-900 dark:text-white mt-0.5">
                   {stats.totalLogs?.toLocaleString()}
                 </p>
               </div>
             </div>
           </div>
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 p-5 shadow-sm hover:shadow-md transition-all group">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-emerald-500" />
+              <div className="w-11 h-11 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 flex items-center justify-center transition-transform group-hover:scale-105">
+                <Calendar className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Today</p>
-                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Today</p>
+                <p className="text-xl font-black text-slate-900 dark:text-white mt-0.5">
                   {stats.todayLogs?.toLocaleString()}
                 </p>
               </div>
             </div>
           </div>
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 p-5 shadow-sm hover:shadow-md transition-all group">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center">
-                <Shield className="w-5 h-5 text-purple-500" />
+              <div className="w-11 h-11 rounded-2xl bg-purple-50 dark:bg-purple-950/60 flex items-center justify-center transition-transform group-hover:scale-105">
+                <Shield className="w-5 h-5 text-purple-600 dark:text-purple-400" />
               </div>
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">This Week</p>
-                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">This Week</p>
+                <p className="text-xl font-black text-slate-900 dark:text-white mt-0.5">
                   {stats.weekLogs?.toLocaleString()}
                 </p>
               </div>
             </div>
           </div>
-          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 p-5 shadow-sm hover:shadow-md transition-all group">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
-                <User className="w-5 h-5 text-amber-500" />
+              <div className="w-11 h-11 rounded-2xl bg-amber-50 dark:bg-amber-950/60 flex items-center justify-center transition-transform group-hover:scale-105">
+                <User className="w-5 h-5 text-amber-600 dark:text-amber-400" />
               </div>
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Login Events</p>
-                <p className="text-lg font-bold text-gray-900 dark:text-white">
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Auth Events</p>
+                <p className="text-xl font-black text-slate-900 dark:text-white mt-0.5">
                   {stats.loginAttempts?.toLocaleString()}
                 </p>
               </div>
@@ -187,16 +194,16 @@ export default function SAAuditLogs() {
       )}
 
       {/* Search & Filters */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 p-5 shadow-sm">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
-              placeholder="Search by user, action, shop..."
+              placeholder="Search telemetry by actor username, action verb, shop name..."
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-              className="w-full pl-10 pr-4 py-2 text-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-11 pr-4 py-2.5 text-xs bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white font-medium"
             />
           </div>
           <button
