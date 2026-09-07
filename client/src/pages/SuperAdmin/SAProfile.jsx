@@ -372,9 +372,9 @@ export default function SAProfile() {
                 value={pwForm.newPassword}
                 onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })}
                 className="w-full pl-10 pr-10 py-2.5 rounded-xl text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all"
-                placeholder="Enter new password (min 6 chars)"
+                placeholder="Enter new password (min 8 chars)"
                 required
-                minLength={6}
+                minLength={8}
               />
               <button
                 type="button"
@@ -383,6 +383,38 @@ export default function SAProfile() {
               >
                 {showNewPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
+            </div>
+          </div>
+
+          {/* Password Requirements Guidance */}
+          <div className="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/80 dark:border-slate-700/60 space-y-2">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
+              <Shield className="w-4 h-4 text-indigo-500" />
+              <span>Password Requirements:</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              {[
+                { label: 'Min 8 characters', met: pwForm.newPassword.length >= 8 },
+                { label: '1 uppercase letter (A-Z)', met: /[A-Z]/.test(pwForm.newPassword) },
+                { label: '1 lowercase letter (a-z)', met: /[a-z]/.test(pwForm.newPassword) },
+                { label: '1 number (0-9)', met: /[0-9]/.test(pwForm.newPassword) },
+              ].map((item, idx) => (
+                <div
+                  key={idx}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-colors ${
+                    item.met
+                      ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 font-medium'
+                      : 'bg-slate-100 dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400'
+                  }`}
+                >
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      item.met ? 'bg-emerald-500' : 'bg-slate-400'
+                    }`}
+                  />
+                  <span>{item.label}</span>
+                </div>
+              ))}
             </div>
           </div>
 
