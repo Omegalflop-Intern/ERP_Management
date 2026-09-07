@@ -100,7 +100,7 @@ export default function ContactPage() {
       </section>
 
       {/* ─── CONTACT MAIN GRID ────────────────────────────────────────────────── */}
-      <section className="py-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6">
+      <section className="py-12 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column: Direct Info Cards */}
           <div className="space-y-6">

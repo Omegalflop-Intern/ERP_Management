@@ -243,7 +243,7 @@ export default function LandingPage() {
         <div className="absolute top-20 -left-20 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute top-40 -right-20 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-3xl mx-auto space-y-6">
             {/* Top Badge */}
             <ScrollReveal animation="fade-down" duration={500}>
@@ -477,7 +477,7 @@ export default function LandingPage() {
 
       {/* ─── PROOF OF SCALE STATS WITH ANIMATED COUNTER ─────────────────────── */}
       <section className="py-12 border-y border-slate-200/80 dark:border-slate-800/80 bg-white/50 dark:bg-slate-900/40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <ScrollReveal animation="fade-up" delay={0}>
               <div className="space-y-1">
@@ -528,7 +528,7 @@ export default function LandingPage() {
 
       {/* ─── FEATURES PILLARS GRID WITH SCROLL REVEAL ───────────────────────── */}
       <section id="features" className="py-20 sm:py-28 relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <ScrollReveal animation="fade-up" className="text-center max-w-2xl mx-auto space-y-3 mb-16">
             <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">
               Tailored Capabilities
@@ -586,7 +586,7 @@ export default function LandingPage() {
 
       {/* ─── INTERACTIVE MODULES EXPLORER ────────────────────────────────────── */}
       <section id="modules" className="py-20 sm:py-28 bg-slate-100/70 dark:bg-slate-900/50 border-t border-slate-200/80 dark:border-slate-800/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <ScrollReveal animation="fade-up" className="text-center max-w-2xl mx-auto space-y-3 mb-12">
             <h2 className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
               Interactive Explorer
@@ -811,7 +811,7 @@ export default function LandingPage() {
 
       {/* ─── PRICING PLANS WITH SCROLL REVEAL ─────────────────────────────────── */}
       <section id="pricing" className="py-20 sm:py-28 relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <ScrollReveal animation="fade-up" className="text-center max-w-2xl mx-auto space-y-3 mb-12">
             <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">
               Simple & Transparent

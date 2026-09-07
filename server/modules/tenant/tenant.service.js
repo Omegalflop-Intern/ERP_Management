@@ -224,7 +224,26 @@ export const updateTenant = async (id, data) => {
     updateFields.custom_domain = domain;
   }
 
-  if (data.shopName !== undefined) updateFields.shop_name = data.shopName;
+  if (data.shopName !== undefined) {
+    updateFields.shop_name = data.shopName;
+    try {
+      const existingSetting = await db('settings').where({ tenant_id: id, key: 'companyName' }).first();
+      if (existingSetting) {
+        await db('settings').where({ tenant_id: id, key: 'companyName' }).update({ value: JSON.stringify(data.shopName), updated_at: new Date() });
+      } else {
+        await db('settings').insert({
+          tenant_id: id,
+          key: 'companyName',
+          value: JSON.stringify(data.shopName),
+          category: 'company',
+          created_at: new Date(),
+          updated_at: new Date(),
+        });
+      }
+    } catch {
+      // Ignore setting sync errors
+    }
+  }
   if (data.ownerName !== undefined) updateFields.owner_name = data.ownerName;
 
   if (data.email !== undefined && data.email.trim()) {

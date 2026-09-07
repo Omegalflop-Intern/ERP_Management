@@ -93,7 +93,7 @@ export default function PublicNavbar() {
           : 'bg-white/40 dark:bg-slate-950/40 backdrop-blur-md border-b border-slate-200/30 dark:border-slate-800/30'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Brand Logo */}
           <Link to="/" className="flex items-center gap-3 group">

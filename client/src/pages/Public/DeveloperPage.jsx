@@ -384,7 +384,7 @@ export default function DeveloperPage() {
       </section>
 
       {/* ─── TECHNICAL ARSENAL: REAL ICONS & DOMAINS ─────────────────────────── */}
-      <section className="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal animation="fade-up" className="text-center max-w-2xl mx-auto space-y-3 mb-16">
           <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">
             Technical Arsenal
@@ -437,7 +437,7 @@ export default function DeveloperPage() {
 
       {/* ─── OMNIMANAGE ARCHITECTURE BLUEPRINT ───────────────────────────────── */}
       <section className="py-20 bg-slate-100/70 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <ScrollReveal animation="fade-up" className="text-center max-w-2xl mx-auto space-y-3 mb-16">
             <h2 className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
               System Blueprint

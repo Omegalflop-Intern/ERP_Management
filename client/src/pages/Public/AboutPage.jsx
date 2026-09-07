@@ -161,7 +161,7 @@ export default function AboutPage() {
       </section>
 
       {/* ─── MISSION & PILLARS ────────────────────────────────────────────────── */}
-      <section className="py-20 sm:py-28 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-20 sm:py-28 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal animation="fade-up" className="text-center max-w-2xl mx-auto space-y-3 mb-16">
           <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">
             Our Architectural Core

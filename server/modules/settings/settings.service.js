@@ -232,9 +232,13 @@ export const getSettingsArray = async (category, tenantId = null) => {
   }));
 };
 
-export const updateSettings = async (updates, userId, tenantId = null) => {
+export const updateSettings = async (updates, userId, tenantId = null, isSuperAdmin = false) => {
   const results = [];
   for (const [key, value] of Object.entries(updates)) {
+    // Prevent non-superadmins from modifying company/shop name for a tenant
+    if (key === 'companyName' && tenantId && !isSuperAdmin) {
+      continue;
+    }
     const targetTenantId = tenantId || null;
     const existing = await db('settings').where({ key, tenant_id: targetTenantId }).first();
 

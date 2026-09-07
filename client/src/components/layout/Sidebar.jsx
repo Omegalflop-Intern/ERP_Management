@@ -184,22 +184,13 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
         {/* Minimal Header */}
         <div className="h-14 px-3.5 border-b border-slate-200/50 dark:border-slate-800/50 flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-blue-600/10 dark:bg-blue-500/15 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 overflow-hidden">
-              {settings?.companyLogo && !logoError ? (
-                <img
-                  src={getAssetUrl(settings.companyLogo)}
-                  alt="Logo"
-                  className="w-full h-full object-cover"
-                  onError={() => setLogoError(true)}
-                />
-              ) : (
-                <Smartphone className="w-4 h-4" />
-              )}
+            <div className="w-8 h-8 rounded-lg bg-[#2563EB] flex items-center justify-center text-white shrink-0 shadow-sm shadow-blue-600/20">
+              <Smartphone className="w-4 h-4" />
             </div>
 
             {!isCollapsed && (
-              <span className="font-semibold text-sm text-slate-800 dark:text-slate-100 truncate tracking-tight">
-                {shopName}
+              <span className="font-extrabold text-sm text-slate-900 dark:text-white truncate tracking-tight">
+                Omni<span className="text-[#2563EB] dark:text-blue-400">Manage</span>
               </span>
             )}
           </div>

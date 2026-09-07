@@ -43,7 +43,8 @@ export const getSettingsArray = async (req, res, next) => {
 export const updateSettings = async (req, res, next) => {
   try {
     const tenantId = req.user?.tenantId || null;
-    const result = await settingsService.updateSettings(req.body, req.user.userId, tenantId);
+    const isSuperAdmin = req.user?.role === 'SUPER_ADMIN' || req.user?.roleName === 'SUPER_ADMIN' || (!req.user?.tenantId && (req.user?.role === 'ADMIN' || req.user?.roleName === 'ADMIN'));
+    const result = await settingsService.updateSettings(req.body, req.user?.userId, tenantId, isSuperAdmin);
     logAction({ userId: req.user?.userId, username: req.user?.username, action: 'UPDATE_SETTINGS', module: 'settings', entityType: 'Settings', details: { keys: Object.keys(req.body) }, req });
     return ApiResponse.success(res, result, 'Settings updated');
   } catch (error) { next(error); }

@@ -98,10 +98,13 @@ const LOGIN_ANIMATION_OPTIONS = [
   { id: 'hybrid', name: 'Hybrid Fusion', desc: '⚡ All-in-One Sensory Experience' },
 ];
 
+import { useAuth } from '../../context/AuthContext';
 import PageHeader from '../../components/layout/PageHeader';
 
 export default function SettingsPage() {
   const { styled } = useTheme();
+  const { user } = useAuth();
+  const isSuperAdmin = user?.role === 'SUPER_ADMIN' || user?.roleName === 'SUPER_ADMIN' || (!user?.tenantId && user?.role?.name === 'ADMIN');
   const qc = useQueryClient();
   const [activeGroup, setActiveGroup] = useState('company');
 
@@ -449,6 +452,18 @@ export default function SettingsPage() {
                       className={inputCls}
                       rows={3}
                     />
+                  ) : key === 'companyName' && !isSuperAdmin ? (
+                    <div className="space-y-1.5">
+                      <input
+                        value={form[key] || ''}
+                        disabled
+                        readOnly
+                        className={`${inputCls} bg-gray-100 dark:bg-gray-800/80 text-gray-500 dark:text-gray-400 cursor-not-allowed select-none`}
+                      />
+                      <p className="text-[11px] text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1">
+                        🔒 Shop Name is fixed and can only be modified by Super Admin.
+                      </p>
+                    </div>
                   ) : (
                     <input
                       value={form[key] || ''}
