@@ -123,11 +123,34 @@ export default function SADashboard() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-80 space-y-3">
-        <Loader2 className="w-9 h-9 animate-spin text-blue-600" />
-        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-          Loading Platform Command Center...
-        </p>
+      <div className="space-y-6 max-w-7xl mx-auto animate-pulse">
+        {/* Executive Hero Banner Skeleton */}
+        <div className="h-44 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 p-6 md:p-8" />
+
+        {/* 4 KPI Cards Skeleton */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="h-28 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 p-5 space-y-3"
+            >
+              <div className="flex items-center justify-between">
+                <div className="h-3 w-20 bg-slate-100 dark:bg-slate-800 rounded" />
+                <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800" />
+              </div>
+              <div className="h-7 w-16 bg-slate-100 dark:bg-slate-800 rounded-lg" />
+            </div>
+          ))}
+        </div>
+
+        {/* 2 Charts Grid Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 h-80 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 p-6" />
+          <div className="h-80 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 p-6" />
+        </div>
+
+        {/* Recent Shops Table Skeleton */}
+        <div className="h-64 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 p-6" />
       </div>
     );
   }

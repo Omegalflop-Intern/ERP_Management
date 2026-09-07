@@ -266,8 +266,24 @@ export default function SABackupManagement() {
         </div>
 
         {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="w-7 h-7 animate-spin text-[#2563EB]" />
+          <div className="p-6 space-y-3 animate-pulse">
+            {[1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-800" />
+                  <div className="h-4 w-48 bg-slate-200 dark:bg-slate-800 rounded" />
+                </div>
+                <div className="h-4 w-20 bg-slate-200 dark:bg-slate-800 rounded" />
+                <div className="h-4 w-32 bg-slate-200 dark:bg-slate-800 rounded" />
+                <div className="flex gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-slate-200 dark:bg-slate-800" />
+                  <div className="w-7 h-7 rounded-lg bg-slate-200 dark:bg-slate-800" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : backups.length === 0 ? (
           <div className="py-12 text-center text-slate-500 dark:text-slate-400 text-sm">

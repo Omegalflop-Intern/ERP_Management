@@ -1201,9 +1201,30 @@ export default function SAShopManagement() {
 
       {/* List */}
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-20 space-y-3">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Loading Shop Registry...</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 animate-pulse">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div
+              key={i}
+              className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 shadow-sm space-y-4"
+            >
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <div className="h-4 w-36 bg-slate-200 dark:bg-slate-800 rounded" />
+                  <div className="h-3 w-20 bg-slate-100 dark:bg-slate-800 rounded" />
+                </div>
+                <div className="h-6 w-16 bg-slate-100 dark:bg-slate-800 rounded-full" />
+              </div>
+              <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <div className="h-3 w-44 bg-slate-100 dark:bg-slate-800 rounded" />
+                <div className="h-3 w-32 bg-slate-100 dark:bg-slate-800 rounded" />
+              </div>
+              <div className="grid grid-cols-2 gap-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+                <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded" />
+                <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded" />
+              </div>
+              <div className="h-8 bg-slate-100 dark:bg-slate-800 rounded-xl" />
+            </div>
+          ))}
         </div>
       ) : tenants.length === 0 ? (
         <div className="py-20 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 max-w-md mx-auto shadow-sm">

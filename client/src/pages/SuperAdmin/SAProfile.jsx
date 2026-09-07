@@ -171,8 +171,44 @@ export default function SAProfile() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-6 h-6 animate-spin text-indigo-400" />
+      <div className="max-w-4xl mx-auto space-y-6 animate-pulse">
+        {/* Header Banner Skeleton */}
+        <div className="flex items-center justify-between p-6 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl shadow-sm">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 bg-slate-200 dark:bg-slate-800 rounded-2xl shrink-0" />
+            <div className="space-y-1.5">
+              <div className="h-5 w-48 bg-slate-200 dark:bg-slate-800 rounded" />
+              <div className="h-3 w-64 bg-slate-100 dark:bg-slate-800/60 rounded" />
+            </div>
+          </div>
+        </div>
+
+        {/* Profile Card Skeleton */}
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm p-6 space-y-6">
+          <div className="flex items-center gap-4">
+            <div className="w-20 h-20 rounded-full bg-slate-200 dark:bg-slate-800" />
+            <div className="space-y-2">
+              <div className="h-4 w-32 bg-slate-200 dark:bg-slate-800 rounded" />
+              <div className="h-3 w-20 bg-slate-100 dark:bg-slate-800/60 rounded" />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <div className="h-10 bg-slate-100 dark:bg-slate-800/60 rounded-xl" />
+            <div className="h-10 bg-slate-100 dark:bg-slate-800/60 rounded-xl" />
+            <div className="h-10 bg-slate-100 dark:bg-slate-800/60 rounded-xl" />
+            <div className="h-10 bg-slate-100 dark:bg-slate-800/60 rounded-xl" />
+          </div>
+        </div>
+
+        {/* Password Card Skeleton */}
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm p-6 space-y-4">
+          <div className="h-5 w-40 bg-slate-200 dark:bg-slate-800 rounded" />
+          <div className="space-y-3">
+            <div className="h-10 bg-slate-100 dark:bg-slate-800/60 rounded-xl" />
+            <div className="h-10 bg-slate-100 dark:bg-slate-800/60 rounded-xl" />
+            <div className="h-10 bg-slate-100 dark:bg-slate-800/60 rounded-xl" />
+          </div>
+        </div>
       </div>
     );
   }

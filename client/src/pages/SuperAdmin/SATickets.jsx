@@ -337,9 +337,22 @@ export default function SATickets() {
 
         {/* Tickets Table */}
         {isLoading ? (
-          <div className="py-16 text-center">
-            <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-600" />
-            <p className="text-xs text-slate-500 mt-2">Loading shop tickets...</p>
+          <div className="p-6 space-y-4 animate-pulse">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-3">
+                  <div className="w-5 h-5 bg-slate-100 dark:bg-slate-800 rounded" />
+                  <div className="space-y-1.5">
+                    <div className="h-4 w-40 bg-slate-200 dark:bg-slate-800 rounded" />
+                    <div className="h-3 w-28 bg-slate-100 dark:bg-slate-800 rounded" />
+                  </div>
+                </div>
+                <div className="h-6 w-20 bg-slate-100 dark:bg-slate-800 rounded-full" />
+                <div className="h-6 w-16 bg-slate-100 dark:bg-slate-800 rounded-full" />
+                <div className="h-4 w-24 bg-slate-100 dark:bg-slate-800 rounded" />
+                <div className="h-7 w-16 bg-slate-100 dark:bg-slate-800 rounded-xl" />
+              </div>
+            ))}
           </div>
         ) : tickets.length === 0 ? (
           <div className="py-16 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">

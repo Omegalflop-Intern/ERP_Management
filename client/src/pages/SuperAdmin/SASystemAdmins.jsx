@@ -237,9 +237,31 @@ export default function SASystemAdmins() {
       {/* Table Card */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 overflow-hidden shadow-sm">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20 space-y-3">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Loading System Admins...</p>
+          <div className="p-6 space-y-4 animate-pulse">
+            <div className="h-5 w-44 bg-slate-200 dark:bg-slate-800 rounded-md mb-2" />
+            <div className="space-y-3">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div
+                  key={i}
+                  className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 shrink-0" />
+                    <div className="space-y-1.5">
+                      <div className="h-4 w-36 bg-slate-200 dark:bg-slate-800 rounded" />
+                      <div className="h-3 w-24 bg-slate-100 dark:bg-slate-800/60 rounded" />
+                    </div>
+                  </div>
+                  <div className="hidden md:block h-3.5 w-40 bg-slate-200 dark:bg-slate-800 rounded" />
+                  <div className="hidden sm:block h-6 w-16 bg-slate-200 dark:bg-slate-800 rounded-full" />
+                  <div className="hidden lg:block h-3.5 w-20 bg-slate-200 dark:bg-slate-800 rounded" />
+                  <div className="flex gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-800" />
+                    <div className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-800" />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : admins.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-600">

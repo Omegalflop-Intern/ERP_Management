@@ -80,9 +80,32 @@ export default function SAKycVerification() {
       </div>
 
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-20 space-y-3">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Loading verification queue...</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl p-6 shadow-sm space-y-5"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-slate-200 dark:bg-slate-800" />
+                  <div className="space-y-1.5">
+                    <div className="h-4 w-32 bg-slate-200 dark:bg-slate-800 rounded-md" />
+                    <div className="h-3 w-20 bg-slate-100 dark:bg-slate-800/60 rounded-md" />
+                  </div>
+                </div>
+                <div className="h-6 w-24 bg-slate-200 dark:bg-slate-800 rounded-full" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="h-24 bg-slate-100 dark:bg-slate-800/50 rounded-2xl border border-slate-200/60 dark:border-slate-800/60" />
+                <div className="h-24 bg-slate-100 dark:bg-slate-800/50 rounded-2xl border border-slate-200/60 dark:border-slate-800/60" />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <div className="h-10 flex-1 bg-slate-200 dark:bg-slate-800 rounded-xl" />
+                <div className="h-10 flex-1 bg-slate-200 dark:bg-slate-800 rounded-xl" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : tenants.length === 0 ? (
         <div className="py-20 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm max-w-xl mx-auto">

@@ -75,7 +75,21 @@ export default function SAContacts() {
         {/* Messages List */}
         <div className="lg:col-span-1 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 space-y-3 max-h-[700px] overflow-y-auto">
           {loading ? (
-            <div className="p-8 text-center text-xs text-slate-400">Loading inquiries...</div>
+            <div className="space-y-3 animate-pulse">
+              {[1, 2, 3, 4].map((i) => (
+                <div
+                  key={i}
+                  className="p-4 rounded-xl border border-slate-100 dark:border-slate-800 space-y-2 bg-slate-50/50 dark:bg-slate-800/30"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="h-4 w-28 bg-slate-200 dark:bg-slate-800 rounded" />
+                    <div className="h-4 w-12 bg-slate-200 dark:bg-slate-800 rounded-full" />
+                  </div>
+                  <div className="h-3 w-20 bg-slate-200 dark:bg-slate-800 rounded" />
+                  <div className="h-6 w-full bg-slate-100 dark:bg-slate-800/60 rounded" />
+                </div>
+              ))}
+            </div>
           ) : messages.length === 0 ? (
             <div className="p-8 text-center text-xs text-slate-400">
               No contact inquiries received yet.

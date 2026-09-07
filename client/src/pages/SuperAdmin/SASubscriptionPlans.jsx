@@ -464,11 +464,50 @@ export default function SASubscriptionPlans() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 space-y-3">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-          Loading Subscription Architecture...
-        </p>
+      <div className="space-y-6 max-w-7xl mx-auto animate-pulse">
+        {/* Header Banner Skeleton */}
+        <div className="h-24 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 p-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-slate-800" />
+            <div className="space-y-2">
+              <div className="h-4 w-48 bg-slate-100 dark:bg-slate-800 rounded-lg" />
+              <div className="h-3 w-72 bg-slate-100 dark:bg-slate-800 rounded-lg" />
+            </div>
+          </div>
+          <div className="h-10 w-36 bg-slate-100 dark:bg-slate-800 rounded-2xl hidden sm:block" />
+        </div>
+
+        {/* 4 Plan Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 overflow-hidden shadow-sm flex flex-col justify-between"
+            >
+              <div className="h-24 bg-slate-200 dark:bg-slate-800 p-6 space-y-2">
+                <div className="h-3 w-16 bg-slate-300 dark:bg-slate-700 rounded" />
+                <div className="h-5 w-28 bg-slate-300 dark:bg-slate-700 rounded" />
+              </div>
+              <div className="p-6 space-y-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="h-7 w-24 bg-slate-100 dark:bg-slate-800 rounded-lg" />
+                <div className="h-3 w-36 bg-slate-100 dark:bg-slate-800 rounded" />
+                <div className="h-5 w-28 bg-slate-100 dark:bg-slate-800 rounded-full mt-2" />
+              </div>
+              <div className="p-6 grid grid-cols-2 gap-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
+                <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded" />
+                <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded" />
+                <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded" />
+                <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded" />
+              </div>
+              <div className="p-6 space-y-2.5">
+                <div className="h-3 w-20 bg-slate-100 dark:bg-slate-800 rounded" />
+                <div className="h-3.5 bg-slate-100 dark:bg-slate-800 rounded w-full" />
+                <div className="h-3.5 bg-slate-100 dark:bg-slate-800 rounded w-4/5" />
+                <div className="h-3.5 bg-slate-100 dark:bg-slate-800 rounded w-3/4" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
