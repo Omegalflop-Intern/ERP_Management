@@ -260,12 +260,19 @@ function GlobalSearch() {
       </div>
 
       {isOpen && (
-        <div className="absolute left-0 right-0 sm:-left-12 sm:-right-12 md:-left-20 md:-right-20 top-full mt-2 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-[200] max-h-[75vh] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/80">
-          {filteredPages.length > 0 && (
-            <div className="p-2">
-              <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-                <Sparkles className="w-3 h-3 text-[#2563EB]" /> Navigation & Features
-              </div>
+        <>
+          {/* Mobile Backdrop */}
+          <div
+            className="fixed inset-0 bg-slate-950/40 dark:bg-black/60 backdrop-blur-xs z-[190] sm:hidden"
+            onClick={() => setIsOpen(false)}
+          />
+
+          <div className="fixed inset-x-3 top-16 sm:absolute sm:inset-x-auto sm:left-0 sm:right-0 sm:-left-16 sm:-right-16 md:-left-28 md:-right-28 sm:top-full sm:mt-2 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-[200] max-h-[75vh] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/80 animate-in fade-in zoom-in-95 duration-150">
+            {filteredPages.length > 0 && (
+              <div className="p-2.5">
+                <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <Sparkles className="w-3 h-3 text-[#2563EB]" /> Navigation & Features
+                </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 mt-1">
                 {filteredPages.map((page, idx) => {
                   const Icon = page.icon;
@@ -424,7 +431,8 @@ function GlobalSearch() {
             <span className="text-[#2563EB] font-medium">Omni-Manage Quick Search</span>
           </div>
         </div>
-      )}
+      </>
+    )}
     </div>
   );
 }

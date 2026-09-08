@@ -739,12 +739,6 @@ export default function SalesForm() {
               <h3 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                 <ShoppingCart className="w-4 h-4" /> Cart ({cart.length})
               </h3>
-              <button
-                onClick={addManualItem}
-                className="text-xs text-red-600 dark:text-red-400 hover:underline"
-              >
-                + Add manually
-              </button>
             </div>
 
             {cart.length === 0 ? (
