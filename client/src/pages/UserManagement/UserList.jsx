@@ -235,8 +235,8 @@ export default function UserList() {
                         </button>
                         <button
                           onClick={() => {
-                            confirmDelete(`Delete user "${u.username}"?`, () => {
-                              deleteMutation.mutate(u._id);
+                            confirmDelete(`Delete user "${u.fullName || u.username}"?`, () => {
+                              deleteMutation.mutate(u._id || u.id);
                             });
                           }}
                           className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-all"
@@ -293,7 +293,7 @@ function UserFormModal({ user, onClose, onSuccess }) {
     email: user?.email || '',
     phone: user?.phone || '',
     fullName: user?.fullName || '',
-    role: user?.role?._id || user?.role || '',
+    role: user?.role?._id || user?.role?.id || user?.role || '',
     branchId: user?.branchId || '',
     password: '',
   });
@@ -318,7 +318,8 @@ function UserFormModal({ user, onClose, onSuccess }) {
       };
       if (user) {
         const { password, ...rest } = payload;
-        return api.put(`/users/${user._id}`, rest);
+        const targetId = user._id || user.id;
+        return api.put(`/users/${targetId}`, rest);
       }
       return api.post('/users', payload);
     },

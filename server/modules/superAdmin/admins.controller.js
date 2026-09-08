@@ -161,7 +161,7 @@ export const updateSystemAdmin = async (req, res, next) => {
 export const toggleAdminActive = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const requesterId = req.user?.id;
+    const requesterId = req.user?.id || req.user?.userId;
 
     if (Number(id) === Number(requesterId)) {
       throw ApiError.badRequest('You cannot deactivate your own account');
@@ -169,6 +169,22 @@ export const toggleAdminActive = async (req, res, next) => {
 
     const admin = await db('users').whereNull('tenant_id').where({ id, is_deleted: false }).first();
     if (!admin) throw ApiError.notFound('System admin not found');
+
+    if (admin.is_active) {
+      const otherAdmins = await db('users')
+        .whereNull('tenant_id')
+        .where({ is_deleted: false, is_active: true, role_name: 'ADMIN' })
+        .where(function () {
+          this.where('is_temp_admin', false).orWhereNull('is_temp_admin');
+        })
+        .whereNot({ id })
+        .count({ count: '*' })
+        .first();
+
+      if (Number(otherAdmins?.count || 0) < 1) {
+        throw ApiError.badRequest('Cannot deactivate the last active system administrator. At least one active admin account is required.');
+      }
+    }
 
     await db('users').where({ id }).update({ is_active: !admin.is_active });
 
@@ -193,7 +209,7 @@ export const toggleAdminActive = async (req, res, next) => {
 export const deleteSystemAdmin = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const requesterId = req.user?.id;
+    const requesterId = req.user?.id || req.user?.userId;
 
     if (Number(id) === Number(requesterId)) {
       throw ApiError.badRequest('You cannot delete your own account');
@@ -201,6 +217,20 @@ export const deleteSystemAdmin = async (req, res, next) => {
 
     const admin = await db('users').whereNull('tenant_id').where({ id, is_deleted: false }).first();
     if (!admin) throw ApiError.notFound('System admin not found');
+
+    const otherAdmins = await db('users')
+      .whereNull('tenant_id')
+      .where({ is_deleted: false, is_active: true, role_name: 'ADMIN' })
+      .where(function () {
+        this.where('is_temp_admin', false).orWhereNull('is_temp_admin');
+      })
+      .whereNot({ id })
+      .count({ count: '*' })
+      .first();
+
+    if (Number(otherAdmins?.count || 0) < 1) {
+      throw ApiError.badRequest('Cannot delete the last active system administrator. At least one active admin account is required.');
+    }
 
     await db('users').where({ id }).update({ is_deleted: true, is_active: false });
 

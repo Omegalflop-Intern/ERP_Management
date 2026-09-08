@@ -227,6 +227,27 @@ export const createUser = async (data, tenantId = null) => {
   return user;
 };
 
+export const countActiveAdmins = async (tenantId = null, excludeUserId = null) => {
+  const query = db('users')
+    .where({ is_deleted: false, is_active: true, role_name: 'ADMIN' })
+    .where(function () {
+      this.where('is_temp_admin', false).orWhereNull('is_temp_admin');
+    });
+
+  if (excludeUserId) {
+    query.whereNot({ id: excludeUserId });
+  }
+
+  if (tenantId) {
+    query.where('tenant_id', tenantId);
+  } else {
+    query.whereNull('tenant_id');
+  }
+
+  const res = await query.count({ count: '*' }).first();
+  return Number(res?.count || 0);
+};
+
 export const updateUser = async (id, data, tenantId = null) => {
   if (data.phone && typeof data.phone === 'string' && !data.phone.trim()) {
     data.phone = undefined;
@@ -283,6 +304,15 @@ export const updateUser = async (id, data, tenantId = null) => {
       role = await byName.where({ name: String(data.role).toUpperCase() }).first();
     }
     if (!role) throw ApiError.badRequest('Invalid role');
+
+    // Prevent demoting the last active administrator
+    if (user.roleName === 'ADMIN' && role.name !== 'ADMIN') {
+      const remainingAdmins = await countActiveAdmins(tenantId || user.tenantId, user.id);
+      if (remainingAdmins < 1) {
+        throw ApiError.badRequest('Cannot change role of the last active administrator. At least one active admin account is required.');
+      }
+    }
+
     updateFields.role_id = role.id;
     updateFields.role_name = role.name;
   }
@@ -290,7 +320,18 @@ export const updateUser = async (id, data, tenantId = null) => {
   if (data.fullName !== undefined) updateFields.full_name = data.fullName;
   if (data.name !== undefined && data.fullName === undefined) updateFields.full_name = data.name;
   if (data.avatar !== undefined) updateFields.avatar = data.avatar;
-  if (data.isActive !== undefined) updateFields.is_active = Boolean(data.isActive);
+
+  if (data.isActive !== undefined) {
+    const willBeActive = Boolean(data.isActive);
+    if (user.roleName === 'ADMIN' && user.isActive && !willBeActive) {
+      const remainingAdmins = await countActiveAdmins(tenantId || user.tenantId, user.id);
+      if (remainingAdmins < 1) {
+        throw ApiError.badRequest('Cannot deactivate the last active administrator. At least one active admin account is required.');
+      }
+    }
+    updateFields.is_active = willBeActive;
+  }
+
   if (data.commissionRate !== undefined) updateFields.commission_rate = data.commissionRate;
 
   if (Object.keys(updateFields).length > 0) {
@@ -312,14 +353,21 @@ export const deleteUser = async (id, tenantId = null) => {
   const user = await getUserById(id, tenantId);
   if (!user) throw ApiError.notFound('User not found');
 
+  if (user.roleName === 'ADMIN' && user.isActive) {
+    const remainingAdmins = await countActiveAdmins(tenantId || user.tenantId, user.id);
+    if (remainingAdmins < 1) {
+      throw ApiError.badRequest('Cannot delete the last active administrator. At least one active admin account is required.');
+    }
+  }
+
   const q1 = db('users').where({ id });
   if (tenantId) q1.andWhere('tenant_id', tenantId);
-  await q1.update({ is_deleted: true });
+  await q1.update({ is_deleted: true, is_active: false });
 
   // Mark employee record inactive/deleted as well
   await db('employees').where({ user_id: id }).update({ is_deleted: true, is_active: false });
 
-  const result = { ...user, isDeleted: true };
+  const result = { ...user, isDeleted: true, isActive: false };
   emitter.emit(EVENTS.USER_MUTATED, { ...result, tenantId: user?.tenantId || tenantId });
   return result;
 };
