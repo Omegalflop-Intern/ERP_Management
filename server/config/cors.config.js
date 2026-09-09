@@ -5,7 +5,7 @@ const parseEnvList = (val) =>
     .map((s) => s.trim())
     .filter(Boolean);
 
-const baseDomain = (process.env.BASE_DOMAIN || 'respawnalley.com').toLowerCase().trim();
+const baseDomain = (process.env.BASE_DOMAIN || 'medlog.icu').toLowerCase().trim();
 
 const rawOrigins = [
   process.env.CLIENT_URL,
@@ -50,7 +50,7 @@ export const isOriginAllowed = (origin) => {
       return true;
     }
 
-    // 3. Base domain and wildcard subdomains (e.g., respawnalley.com, shop1.respawnalley.com, etc.)
+    // 3. Base domain and wildcard subdomains (e.g., medlog.icu, shop1.medlog.icu, etc.)
     if (
       baseDomain &&
       (hostname === baseDomain ||

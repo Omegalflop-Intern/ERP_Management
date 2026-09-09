@@ -16,4 +16,4 @@ Disallow: /dashboard/
 Disallow: /super-admin/
 Disallow: /api/
 
-Sitemap: https://respawnalley.com/sitemap.xml
+Sitemap: https://medlog.icu/sitemap.xml

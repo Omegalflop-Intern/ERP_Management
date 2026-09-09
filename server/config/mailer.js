@@ -33,7 +33,7 @@ export const initMailer = async () => {
 };
 
 const SENDER_NAME = process.env.SMTP_SENDER_NAME || 'OmniManage';
-const SENDER_EMAIL = process.env.SMTP_SENDER_EMAIL || process.env.SMTP_USER || 'no-reply@respawnalley.com';
+const SENDER_EMAIL = process.env.SMTP_SENDER_EMAIL || process.env.SMTP_USER || 'no-reply@medlog.icu';
 const APP_NAME = process.env.APP_NAME || 'OmniManage';
 const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || SENDER_EMAIL;
 const COMPANY_ADDRESS = process.env.COMPANY_ADDRESS || '';

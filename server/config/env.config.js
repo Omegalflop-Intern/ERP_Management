@@ -27,14 +27,14 @@ const envSchema = z.object({
   ADMIN_EMAIL: z.string().optional(),
   ADMIN_PHONE: z.string().optional(),
   APP_NAME: z.string().default('OmniManage'),
-  APP_URL: z.string().default('https://respawnalley.com'),
+  APP_URL: z.string().default('https://medlog.icu'),
   CLIENT_URL: z.string().optional(),
   ALLOWED_ORIGIN: z.string().optional(),
   SHOP_URLS: z.string().optional(),
   CLIENT_DIST_PATH: z.string().optional(),
   TLS_CERT_PATH: z.string().optional(),
   TLS_KEY_PATH: z.string().optional(),
-  BASE_DOMAIN: z.string().default('respawnalley.com'),
+  BASE_DOMAIN: z.string().default('medlog.icu'),
 });
 
 const parsed = envSchema.safeParse(process.env);
