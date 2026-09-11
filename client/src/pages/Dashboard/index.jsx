@@ -25,7 +25,7 @@ import api from '../../lib/api';
 import PageHeader from '../../components/layout/PageHeader';
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   const navigate = useNavigate();
   const { styled } = useTheme();
   const [period, setPeriod] = React.useState('24h');
@@ -73,6 +73,7 @@ export default function Dashboard() {
       color: 'text-emerald-600 dark:text-emerald-400',
       bg: 'bg-emerald-50 dark:bg-emerald-950/40',
       hint: `${currentPeriodLabel} cash received`,
+      permission: 'dashboard:view_revenue',
     },
     {
       label: period === '24h' || period === 'today' ? "Today's Sales" : `Sales (${currentPeriodLabel})`,
@@ -112,6 +113,7 @@ export default function Dashboard() {
           ? 'bg-teal-50 dark:bg-teal-950/40'
           : 'bg-rose-50 dark:bg-rose-950/40',
       hint: 'Revenue - COGS - Expenses',
+      permission: 'dashboard:view_profit',
     },
     {
       label: 'Stock Value',
@@ -122,6 +124,7 @@ export default function Dashboard() {
       color: 'text-purple-600 dark:text-purple-400',
       bg: 'bg-purple-50 dark:bg-purple-950/40',
       hint: 'Live inventory asset value',
+      permission: 'dashboard:view_stock',
     },
     {
       label: 'Purchase Cost',
@@ -132,6 +135,7 @@ export default function Dashboard() {
       color: 'text-amber-600 dark:text-amber-400',
       bg: 'bg-amber-50 dark:bg-amber-950/40',
       hint: 'Total inventory purchases',
+      permission: 'dashboard:view_purchase',
     },
     {
       label: period === '24h' || period === 'today' ? "Today's Expenses" : `Expenses (${currentPeriodLabel})`,
@@ -154,6 +158,10 @@ export default function Dashboard() {
       hint: 'Devices currently in service',
     },
   ];
+
+  const visibleStatCards = statCards.filter(
+    (card) => !card.permission || hasPermission(card.permission)
+  );
 
   const PERIOD_OPTIONS = [
     { label: 'Today (Daily)', value: '24h' },
@@ -230,7 +238,7 @@ export default function Dashboard() {
 
       {/* Primary Key Metrics Grid — 4 Cards Per Row on Desktop, 2 on Tablet, 1 on Mobile */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {statCards.map((card) => (
+        {visibleStatCards.map((card) => (
           <div
             key={card.label}
             className="glass-secondary rounded-[20px] p-5 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg shadow-slate-900/5 flex flex-col justify-between h-full"

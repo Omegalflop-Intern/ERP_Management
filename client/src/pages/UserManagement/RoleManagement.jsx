@@ -7,7 +7,7 @@ import api from '../../lib/api';
 import { confirmDelete } from '../../lib/confirm';
 
 const PERMISSION_GROUPS = {
-  Dashboard: ['dashboard:view'],
+  Dashboard: ['dashboard:view', 'dashboard:view_revenue', 'dashboard:view_profit', 'dashboard:view_stock', 'dashboard:view_purchase'],
   Sales: ['sales:view', 'sales:create', 'sales:delete'],
   Products: ['products:view', 'products:create', 'products:edit', 'products:delete'],
   Categories: ['categories:view', 'categories:manage'],
