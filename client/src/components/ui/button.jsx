@@ -15,11 +15,11 @@ const buttonVariants = cva(
         destructive:
           'bg-[#DC2626] text-white shadow-xs hover:bg-red-700 hover:-translate-y-0.5 hover:shadow-md hover:shadow-red-500/20',
         outline:
-          'border border-slate-200 dark:border-neutral-800 bg-white/90 dark:bg-[#0c0c0c] text-slate-800 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-neutral-900 hover:-translate-y-0.5',
+          'border border-slate-200 dark:border-white/10 bg-white/90 dark:bg-[#121524] text-slate-800 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-[#171a2d] hover:-translate-y-0.5',
         secondary:
-          'bg-slate-100 dark:bg-[#141414] text-slate-800 dark:text-slate-200 hover:bg-slate-200/80 dark:hover:bg-[#1f1f1f] hover:-translate-y-0.5',
+          'bg-slate-100 dark:bg-[#171a2d] text-slate-800 dark:text-slate-200 hover:bg-slate-200/80 dark:hover:bg-[#1e2238] hover:-translate-y-0.5',
         ghost:
-          'text-slate-700 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-neutral-900',
+          'text-slate-700 dark:text-slate-300 hover:bg-slate-100/80 dark:hover:bg-[#171a2d]',
         link: 'text-[#9CE700] underline-offset-4 hover:underline font-semibold',
       },
       size: {

@@ -243,10 +243,18 @@ export default function SettingsPage() {
               <button
                 key={group.key}
                 onClick={() => setActiveGroup(group.key)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${activeGroup === group.key ? 'bg-blue-50 dark:bg-blue-950/40 text-[#2563EB] dark:text-blue-400 font-bold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50'}`}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                  activeGroup === group.key
+                    ? 'bg-[#9CE700]/15 text-[#7dbb00] dark:text-[#9CE700] font-bold border border-[#9CE700]/30 shadow-xs'
+                    : 'text-slate-600 dark:text-[#8892B0] hover:bg-slate-100/60 dark:hover:bg-[#171a2d] hover:text-[#9CE700] dark:hover:text-[#9CE700]'
+                }`}
               >
                 <group.icon
-                  className={`w-4 h-4 ${activeGroup === group.key ? 'text-[#2563EB] dark:text-blue-400' : 'text-slate-400'}`}
+                  className={`w-4 h-4 ${
+                    activeGroup === group.key
+                      ? 'text-[#7dbb00] dark:text-[#9CE700]'
+                      : 'text-slate-400'
+                  }`}
                 />
                 {group.label}
               </button>

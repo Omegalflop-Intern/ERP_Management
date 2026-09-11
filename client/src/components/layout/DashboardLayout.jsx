@@ -26,7 +26,7 @@ export default function DashboardLayout() {
   }, [collapsed]);
 
   return (
-    <div className="relative h-screen bg-slate-50 dark:bg-[#000000] flex flex-col overflow-hidden text-slate-900 dark:text-slate-100 font-sans">
+    <div className="relative h-screen bg-slate-50 dark:bg-[#080911] flex flex-col overflow-hidden text-slate-900 dark:text-slate-100 font-sans">
       {/* Subtle Lime Green Spotlight Backdrop */}
       <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[300px] bg-[#9CE700]/10 rounded-full blur-3xl z-0" />
       <AnimatedBackground />

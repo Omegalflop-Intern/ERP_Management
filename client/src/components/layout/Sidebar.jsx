@@ -18,12 +18,12 @@ function SidebarLink({ item, isCollapsed, onNavigate }) {
           isCollapsed ? 'justify-center px-2' : 'px-3'
         } ${
           isActive
-            ? 'bg-[#9CE700]/15 text-[#7dbb00] dark:text-[#9CE700] font-bold border-[#9CE700]/30 shadow-xs'
-            : 'text-slate-800 dark:text-slate-300 hover:text-[#7dbb00] dark:hover:text-[#9CE700] hover:bg-slate-100/80 dark:hover:bg-neutral-900/80 font-medium border-transparent'
+            ? 'bg-[#171a2d] text-[#9CE700] font-bold border-[#9CE700]/40 shadow-sm shadow-[#9CE700]/10'
+            : 'text-slate-700 dark:text-[#94A3B8] hover:text-[#9CE700] dark:hover:text-[#9CE700] hover:bg-slate-100/80 dark:hover:bg-[#171a2d] font-medium border-transparent'
         }`
       }
     >
-      <item.icon className="w-4 h-4 shrink-0 stroke-[2] text-slate-700 dark:text-slate-400 group-hover:text-[#7dbb00] dark:group-hover:text-[#9CE700] transition-colors" />
+      <item.icon className="w-4 h-4 shrink-0 stroke-[2] text-slate-600 dark:text-[#8892B0] group-hover:text-[#9CE700] dark:group-hover:text-[#9CE700] transition-colors" />
       {!isCollapsed && <span className="truncate">{item.label}</span>}
     </NavLink>
   );
@@ -45,17 +45,17 @@ function SubmenuGroup({ item, isCollapsed, openSubmenus, toggleSubmenu, location
           isCollapsed ? 'justify-center px-2' : 'px-3'
         } ${
           hasActiveChild
-            ? 'text-[#7dbb00] dark:text-[#9CE700] font-bold bg-[#9CE700]/10 border-[#9CE700]/30'
-            : 'text-slate-800 dark:text-slate-300 hover:text-[#7dbb00] dark:hover:text-[#9CE700] hover:bg-slate-100/80 dark:hover:bg-neutral-900/80 font-medium border-transparent'
+            ? 'text-[#9CE700] font-bold bg-[#171a2d] border-[#9CE700]/30 shadow-sm shadow-[#9CE700]/5'
+            : 'text-slate-700 dark:text-[#94A3B8] hover:text-[#9CE700] dark:hover:text-[#9CE700] hover:bg-slate-100/80 dark:hover:bg-[#171a2d] font-medium border-transparent'
         }`}
       >
         <div className="flex items-center gap-2.5 min-w-0">
-          <item.icon className="w-4 h-4 shrink-0 stroke-[2] text-slate-700 dark:text-slate-400 group-hover:text-[#7dbb00] dark:group-hover:text-[#9CE700] transition-colors" />
+          <item.icon className="w-4 h-4 shrink-0 stroke-[2] text-slate-600 dark:text-[#8892B0] group-hover:text-[#9CE700] dark:group-hover:text-[#9CE700] transition-colors" />
           {!isCollapsed && <span className="truncate">{item.label}</span>}
         </div>
 
         {!isCollapsed && (
-          <span className="shrink-0 text-slate-500 dark:text-slate-400 ml-1">
+          <span className="shrink-0 text-slate-500 dark:text-[#8892B0] ml-1">
             {isOpen ? (
               <ChevronDown className="w-3.5 h-3.5 stroke-[2]" />
             ) : (
@@ -75,12 +75,12 @@ function SubmenuGroup({ item, isCollapsed, openSubmenus, toggleSubmenu, location
               className={({ isActive }) =>
                 `flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs transition-colors duration-150 group border ${
                   isActive
-                    ? 'bg-[#9CE700]/15 text-[#7dbb00] dark:text-[#9CE700] font-semibold border-[#9CE700]/30'
-                    : 'text-slate-700 dark:text-slate-300 hover:text-[#7dbb00] dark:hover:text-[#9CE700] hover:bg-slate-100/60 dark:hover:bg-neutral-900/60 font-medium border-transparent'
+                    ? 'bg-[#171a2d] text-[#9CE700] font-semibold border-[#9CE700]/30'
+                    : 'text-slate-600 dark:text-[#94A3B8] hover:text-[#9CE700] dark:hover:text-[#9CE700] hover:bg-slate-100/60 dark:hover:bg-[#171a2d] font-medium border-transparent'
                 }`
               }
             >
-              <child.icon className="w-3.5 h-3.5 shrink-0 stroke-[2] text-slate-700 dark:text-slate-400 group-hover:text-[#7dbb00] dark:group-hover:text-[#9CE700] transition-colors" />
+              <child.icon className="w-3.5 h-3.5 shrink-0 stroke-[2] text-slate-600 dark:text-[#8892B0] group-hover:text-[#9CE700] dark:group-hover:text-[#9CE700] transition-colors" />
               <span className="truncate">{child.label}</span>
             </NavLink>
           ))}
@@ -159,7 +159,7 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
       <div
         aria-hidden="true"
         onClick={onClose}
-        className={`fixed inset-0 bg-black/40 backdrop-blur-xs z-40 lg:hidden transition-opacity duration-200 ${
+        className={`fixed inset-0 bg-black/60 backdrop-blur-xs z-40 lg:hidden transition-opacity duration-200 ${
           isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
       />
@@ -169,8 +169,8 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
         className={`
           z-50 lg:z-30 flex flex-col
           transition-all duration-200 ease-in-out select-none
-          bg-white/95 dark:bg-[#000000]/95 backdrop-blur-md
-          border-r border-slate-200/70 dark:border-neutral-900
+          bg-white/95 dark:bg-[#0c0e1a] backdrop-blur-md
+          border-r border-slate-200/70 dark:border-white/10
           ${
             isMobile
               ? `fixed top-0 bottom-0 left-0 w-64 h-full shadow-2xl
@@ -183,7 +183,7 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
       >
         {/* Mobile Close Button */}
         {isMobile && (
-          <div className="flex justify-end p-2 border-b border-slate-200/50 dark:border-slate-800/50">
+          <div className="flex justify-end p-2 border-b border-slate-200/50 dark:border-white/10">
             <button
               type="button"
               onClick={onClose}
@@ -208,12 +208,12 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
             return (
               <div key={group.section} className="space-y-0.5">
                 {!isCollapsed && (
-                  <div className="px-2.5 pb-1 text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                  <div className="px-2.5 pb-1 text-[10px] font-bold text-slate-400 dark:text-[#8892B0] uppercase tracking-wider">
                     {group.section}
                   </div>
                 )}
                 {isCollapsed && (
-                  <div className="mx-2 my-1 border-t border-slate-200/50 dark:border-slate-800/50" />
+                  <div className="mx-2 my-1 border-t border-slate-200/50 dark:border-white/10" />
                 )}
 
                 {visible.map((item) =>
@@ -242,14 +242,14 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
         </div>
 
         {/* Minimal Footer */}
-        <div className="p-2 border-t border-slate-200/50 dark:border-slate-800/50">
+        <div className="p-2 border-t border-slate-200/50 dark:border-white/10">
           <NavLink
             to="/profile"
             onClick={isMobile ? onClose : undefined}
-            className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-slate-800/40 transition-colors"
+            className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-100/60 dark:hover:bg-[#171a2d] transition-colors"
             title="Profile"
           >
-            <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 font-bold text-xs shrink-0 overflow-hidden border border-slate-200/60 dark:border-slate-700/60">
+            <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-[#171a2d] flex items-center justify-center text-slate-600 dark:text-slate-300 font-bold text-xs shrink-0 overflow-hidden border border-slate-200/60 dark:border-white/10">
               {user?.avatar && !avatarError ? (
                 <img
                   src={getAssetUrl(user.avatar)}
@@ -268,10 +268,10 @@ export default function Sidebar({ isOpen, onClose, collapsed = false }) {
 
             {!isCollapsed && (
               <div className="min-w-0 flex-1">
-                <div className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
+                <div className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
                   {user?.fullName || user?.username || 'Staff'}
                 </div>
-                <div className="text-[10px] text-slate-400 uppercase tracking-wider truncate">
+                <div className="text-[10px] text-slate-400 dark:text-[#8892B0] uppercase tracking-wider truncate font-medium">
                   {roleName}
                 </div>
               </div>

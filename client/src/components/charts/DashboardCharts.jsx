@@ -108,8 +108,8 @@ export default function DashboardCharts({
     if (!active || !payload || !payload.length) return null;
 
     return (
-      <div className="rounded-2xl p-3.5 shadow-2xl backdrop-blur-2xl bg-white/95 dark:bg-[#0c0c0c] border border-slate-200 dark:border-neutral-800 text-slate-900 dark:text-white min-w-[180px] space-y-2">
-        <div className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 border-b border-slate-100 dark:border-neutral-800/80 pb-1.5 flex items-center justify-between">
+      <div className="rounded-2xl p-3.5 shadow-2xl backdrop-blur-2xl bg-white/95 dark:bg-[#121524] border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white min-w-[180px] space-y-2">
+        <div className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 border-b border-slate-100 dark:border-white/10 pb-1.5 flex items-center justify-between">
           <span>{label}</span>
           <Sparkles className="w-3 h-3 text-[#9CE700]" />
         </div>
@@ -140,7 +140,7 @@ export default function DashboardCharts({
   };
 
   const EmptyChart = ({ title, icon: Icon = BarChart3 }) => (
-    <div className="flex flex-col items-center justify-center h-[280px] gap-3 bg-slate-50/50 dark:bg-[#080808] rounded-2xl border border-dashed border-slate-200 dark:border-neutral-800">
+    <div className="flex flex-col items-center justify-center h-[280px] gap-3 bg-slate-50/50 dark:bg-[#121524]/50 rounded-2xl border border-dashed border-slate-200 dark:border-neutral-800">
       <div className="w-12 h-12 rounded-2xl bg-[#9CE700]/10 text-[#9CE700] flex items-center justify-center shadow-inner">
         <Icon className="w-6 h-6 stroke-[2]" />
       </div>
@@ -162,7 +162,7 @@ export default function DashboardCharts({
   return (
     <div className="space-y-6">
       {/* ─── TIMEFRAME HEADER & KPI METRICS STRIP ───────────────────────── */}
-      <div className="bg-white/90 dark:bg-[#0c0c0c] backdrop-blur-xl border border-slate-200/80 dark:border-neutral-800 rounded-[20px] p-4 sm:p-5 shadow-sm space-y-4">
+      <div className="bg-white/90 dark:bg-[#121524] backdrop-blur-xl border border-slate-200/80 dark:border-white/10 rounded-[20px] p-4 sm:p-5 shadow-sm space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[#9CE700]/15 text-[#9CE700] border border-[#9CE700]/30 flex items-center justify-center shadow-md shadow-[#9CE700]/10">
@@ -275,7 +275,7 @@ export default function DashboardCharts({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* 1. Smooth Gradient Area Chart: Revenue & Sales Trend */}
         {(canViewRevenue || canViewSales) && (
-          <div className="bg-white/90 dark:bg-[#0c0c0c] backdrop-blur-xl border border-slate-200/80 dark:border-neutral-800 rounded-[20px] p-5 shadow-sm space-y-4">
+          <div className="bg-white/90 dark:bg-[#121524] backdrop-blur-xl border border-slate-200/80 dark:border-white/10 rounded-[20px] p-5 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-[#9CE700]" />
@@ -353,7 +353,7 @@ export default function DashboardCharts({
 
         {/* 2. Rounded Bar Chart: Paid Collection vs Due Balance */}
         {canViewDue && (
-          <div className="bg-white/90 dark:bg-[#0c0c0c] backdrop-blur-xl border border-slate-200/80 dark:border-neutral-800 rounded-[20px] p-5 shadow-sm space-y-4">
+          <div className="bg-white/90 dark:bg-[#121524] backdrop-blur-xl border border-slate-200/80 dark:border-white/10 rounded-[20px] p-5 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
                 <BarChart3 className="w-4 h-4 text-emerald-400" />
@@ -410,7 +410,7 @@ export default function DashboardCharts({
 
         {/* 3. Donut Pie Chart: Stock by Brand with Center Indicator */}
         {canViewStock && (
-          <div className="bg-white/90 dark:bg-[#0c0c0c] backdrop-blur-xl border border-slate-200/80 dark:border-neutral-800 rounded-[20px] p-5 shadow-sm space-y-4">
+          <div className="bg-white/90 dark:bg-[#121524] backdrop-blur-xl border border-slate-200/80 dark:border-white/10 rounded-[20px] p-5 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
                 <PieIcon className="w-4 h-4 text-[#9CE700]" />
@@ -438,7 +438,7 @@ export default function DashboardCharts({
                         <Cell
                           key={i}
                           fill={BRAND_COLORS[i % BRAND_COLORS.length]}
-                          stroke={isDark ? '#0c0c0c' : '#FFFFFF'}
+                          stroke={isDark ? '#121524' : '#FFFFFF'}
                           strokeWidth={2}
                         />
                       ))}
@@ -447,8 +447,8 @@ export default function DashboardCharts({
                       formatter={(val, name) => [`${val} pcs (units)`, name]}
                       contentStyle={{
                         borderRadius: 14,
-                        background: isDark ? '#0c0c0c' : '#FFFFFF',
-                        borderColor: isDark ? '#1f1f1f' : '#E2E8F0',
+                        background: isDark ? '#121524' : '#FFFFFF',
+                        borderColor: isDark ? '#1e2238' : '#E2E8F0',
                         color: isDark ? '#F8FAFC' : '#0F172A',
                         fontSize: 12,
                         boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.4)',

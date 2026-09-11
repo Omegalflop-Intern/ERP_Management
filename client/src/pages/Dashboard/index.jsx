@@ -197,7 +197,7 @@ export default function Dashboard() {
             {(hasPermission('purchases:view') || hasPermission('purchases:create')) && (
               <button
                 onClick={() => navigate('/purchases')}
-                className="px-3.5 py-2.5 bg-white dark:bg-[#0c0c0c] text-slate-800 dark:text-slate-200 font-semibold rounded-xl text-xs transition-all flex items-center gap-1.5 border border-slate-200 dark:border-neutral-800 shadow-xs hover:bg-slate-50 dark:hover:bg-neutral-900"
+                className="px-3.5 py-2.5 bg-white dark:bg-[#121524] text-slate-800 dark:text-slate-200 font-semibold rounded-xl text-xs transition-all flex items-center gap-1.5 border border-slate-200 dark:border-neutral-800 shadow-xs hover:bg-slate-50 dark:hover:bg-neutral-900"
               >
                 <Receipt className="w-4 h-4 text-purple-400" /> Purchases & Restock
               </button>
@@ -205,7 +205,7 @@ export default function Dashboard() {
             {(hasPermission('customers:view') || hasPermission('customers:manage') || hasPermission('sales:view')) && (
               <button
                 onClick={() => navigate('/customers/due-collection')}
-                className="px-3.5 py-2.5 bg-white dark:bg-[#0c0c0c] text-slate-800 dark:text-slate-200 font-semibold rounded-xl text-xs transition-all flex items-center gap-1.5 border border-slate-200 dark:border-neutral-800 shadow-xs hover:bg-slate-50 dark:hover:bg-neutral-900"
+                className="px-3.5 py-2.5 bg-white dark:bg-[#121524] text-slate-800 dark:text-slate-200 font-semibold rounded-xl text-xs transition-all flex items-center gap-1.5 border border-slate-200 dark:border-neutral-800 shadow-xs hover:bg-slate-50 dark:hover:bg-neutral-900"
               >
                 <DollarSign className="w-4 h-4 text-[#9CE700]" /> Collect Dues
               </button>
@@ -215,7 +215,7 @@ export default function Dashboard() {
       />
 
       {/* Period Filter Switcher Bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 bg-white/80 dark:bg-[#0c0c0c]/80 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-neutral-800">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 bg-white/80 dark:bg-[#121524]/80 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-neutral-800">
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider pl-1">
             Performance Window:
@@ -354,7 +354,7 @@ export default function Dashboard() {
                 <button
                   key={action.label}
                   onClick={() => navigate(action.path)}
-                  className="flex items-center gap-2.5 p-3 rounded-xl border border-slate-200/60 dark:border-neutral-800 hover:border-[#9CE700]/40 bg-white/60 dark:bg-[#0c0c0c] hover:bg-[#9CE700]/10 dark:hover:bg-[#9CE700]/10 transition-all text-left group btn-hover-lift"
+                  className="flex items-center gap-2.5 p-3 rounded-xl border border-slate-200/60 dark:border-neutral-800 hover:border-[#9CE700]/40 bg-white/60 dark:bg-[#121524] hover:bg-[#9CE700]/10 dark:hover:bg-[#9CE700]/10 transition-all text-left group btn-hover-lift"
                 >
                   <action.icon className={`w-4 h-4 ${action.color} flex-shrink-0`} />
                   <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 group-hover:text-[#7dbb00] dark:group-hover:text-[#9CE700]">

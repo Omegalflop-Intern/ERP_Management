@@ -39,31 +39,33 @@
   }
 
   .dark {
-    --background: 222 47% 8%;
-    /* #0B0F19 Deep Modern Slate */
+    --background: 233 42% 5%;
+    /* #080911 Reference Obsidian Canvas */
     --foreground: 210 40% 98%;
     /* #F8FAFC */
-    --card: 222 47% 11%;
-    /* #0F172A */
+    --card: 230 31% 11%;
+    /* #121524 Reference Sleek Card */
     --card-foreground: 210 40% 98%;
-    --popover: 222 47% 11%;
+    --popover: 230 31% 11%;
+    /* #121524 */
     --popover-foreground: 210 40% 98%;
     --primary: 82 100% 45%;
-    /* Lime Green #9CE700 */
+    /* Lime Green #9CE700 / Emerald #22C55E */
     --primary-foreground: 0 0% 0%;
-    --secondary: 217 33% 17%;
-    /* #1E293B */
+    --secondary: 228 29% 14%;
+    /* #171A2D Inner Card */
     --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 15%;
-    --muted-foreground: 215 20% 65%;
-    /* #94A3B8 */
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
+    --muted: 228 29% 13%;
+    --muted-foreground: 220 16% 65%;
+    /* #8892B0 */
+    --accent: 199 89% 48%;
+    /* #38BDF8 Electric Cyan */
+    --accent-foreground: 0 0% 0%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 217 33% 18%;
-    /* #1E293B */
-    --input: 217 33% 16%;
+    --border: 228 26% 17%;
+    /* #1E2238 */
+    --input: 228 29% 13%;
     --ring: 82 100% 45%;
   }
 }
@@ -83,13 +85,13 @@
 }
 
 .dark .glass-primary {
-  background: rgba(15, 23, 42, 0.82);
+  background: rgba(18, 21, 36, 0.92);
   backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   box-shadow:
     0 20px 30px -10px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .glass-secondary {
@@ -103,13 +105,13 @@
 }
 
 .dark .glass-secondary {
-  background: rgba(17, 24, 39, 0.88);
+  background: rgba(23, 26, 45, 0.95);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   box-shadow:
     0 12px 25px -8px rgba(0, 0, 0, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .glass-light {
@@ -121,10 +123,10 @@
 }
 
 .dark .glass-light {
-  background: rgba(30, 41, 59, 0.75);
+  background: rgba(23, 26, 45, 0.8);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .liquid-card {
@@ -140,13 +142,13 @@
 }
 
 .dark .liquid-card {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.8));
+  background: linear-gradient(135deg, rgba(23, 26, 45, 0.9), rgba(18, 21, 36, 0.85));
   backdrop-filter: blur(24px) saturate(180%) brightness(0.95);
   -webkit-backdrop-filter: blur(24px) saturate(180%) brightness(0.95);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   box-shadow:
     0 20px 40px -15px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
   border-radius: 20px;
 }
 
@@ -675,11 +677,11 @@ input[type="checkbox"]:focus {
 .dark[data-mode="neumorphism"] main div[class*="rounded-xl"],
 .dark[data-mode="neumorphism"] main div[class*="rounded-[20px]"],
 .dark[data-mode="neumorphism"] main section [class*="rounded-"] {
-  background: #0f172a !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: #121524 !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
   box-shadow:
     6px 6px 18px rgba(0, 0, 0, 0.45),
-    -3px -3px 10px rgba(255, 255, 255, 0.03) !important;
+    -3px -3px 10px rgba(255, 255, 255, 0.02) !important;
 }
 
 [data-mode="neumorphism"] .neu-pressed {
@@ -694,10 +696,10 @@ input[type="checkbox"]:focus {
 }
 [data-mode="neumorphism"].dark .neu-pressed,
 .dark[data-mode="neumorphism"] .neu-pressed {
-  background: #0b0f19 !important;
+  background: #080911 !important;
   box-shadow:
     inset 3px 3px 6px rgba(0, 0, 0, 0.5),
-    inset -2px -2px 5px rgba(255, 255, 255, 0.03) !important;
+    inset -2px -2px 5px rgba(255, 255, 255, 0.02) !important;
 }
 
 [data-mode="neumorphism"]:not(.dark) .neu-btn {
@@ -712,11 +714,11 @@ input[type="checkbox"]:focus {
 }
 [data-mode="neumorphism"].dark .neu-btn,
 .dark[data-mode="neumorphism"] .neu-btn {
-  background: #1e293b !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: #171a2d !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
   box-shadow:
     4px 4px 10px rgba(0, 0, 0, 0.4),
-    -2px -2px 6px rgba(255, 255, 255, 0.03) !important;
+    -2px -2px 6px rgba(255, 255, 255, 0.02) !important;
   border-radius: 10px !important;
   color: #f1f5f9 !important;
   transition: all 0.15s ease !important;
@@ -813,11 +815,11 @@ input[type="checkbox"]:focus {
 .dark[data-mode="glassmorphismpro"] main div[class*="rounded-xl"],
 .dark[data-mode="glassmorphismpro"] main div[class*="rounded-[20px]"],
 .dark[data-mode="glassmorphismpro"] main section [class*="rounded-"] {
-  background: rgba(15, 23, 42, 0.68) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  background: rgba(18, 21, 36, 0.75) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
   box-shadow:
     0 24px 48px -12px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
 }
 
 /* ─── 3. AURORA MESH GLOW MODE (Vibrant Colored Halo) ─── */
@@ -896,7 +898,7 @@ input[type="checkbox"]:focus {
 .dark[data-mode="aurora"] main div[class*="rounded-xl"],
 .dark[data-mode="aurora"] main div[class*="rounded-[20px]"],
 .dark[data-mode="aurora"] main section [class*="rounded-"] {
-  background: linear-gradient(145deg, rgba(13, 27, 20, 0.92), rgba(15, 23, 42, 0.88)) !important;
+  background: linear-gradient(145deg, rgba(13, 27, 20, 0.92), rgba(18, 21, 36, 0.88)) !important;
   border: 1px solid rgba(156, 231, 0, 0.45) !important;
   box-shadow:
     0 0 36px -6px rgba(156, 231, 0, 0.28),
@@ -980,11 +982,11 @@ input[type="checkbox"]:focus {
 .dark[data-mode="liquidglass"] main div[class*="rounded-xl"],
 .dark[data-mode="liquidglass"] main div[class*="rounded-[20px]"],
 .dark[data-mode="liquidglass"] main section [class*="rounded-"] {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.8)) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: linear-gradient(135deg, rgba(23, 26, 45, 0.9), rgba(18, 21, 36, 0.85)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
   box-shadow:
     0 20px 40px -15px rgba(0, 0, 0, 0.5),
-    inset 0 1.5px 0.5px rgba(255, 255, 255, 0.1) !important;
+    inset 0 1.5px 0.5px rgba(255, 255, 255, 0.08) !important;
 }
 
 /* ─── 5. MINIMAL FLAT MODE (Solid High-Contrast) ─── */
@@ -1061,8 +1063,8 @@ input[type="checkbox"]:focus {
 .dark[data-mode="flat"] main div[class*="rounded-xl"],
 .dark[data-mode="flat"] main div[class*="rounded-[20px]"],
 .dark[data-mode="flat"] main section [class*="rounded-"] {
-  background: #0f172a !important;
-  border: 1px solid #1e293b !important;
+  background: #121524 !important;
+  border: 1px solid #1e2238 !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1106,8 +1108,8 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="
 [data-mode] .dark textarea,
 .dark[data-mode] .neu-input,
 [data-mode][data-theme="dark"] .neu-input {
-  background: #0f172a !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  background: #171a2d !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4) !important;
   border-radius: 10px !important;
   color: #f8fafc !important;
@@ -1644,10 +1646,21 @@ input.global-search-input,
 .dark .app-layout,
 .dark main,
 .dark [data-app-root] {
-  background-color: #0b0f19 !important;
+  background-color: #080911 !important;
   color: #f8fafc !important;
 }
 
+/* Sidebar & Navigation Panels */
+.dark aside,
+.dark [data-sidebar],
+.dark .sidebar-container {
+  background-color: #0c0e1a !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.dark .bg-black,
+.dark .bg-\[\#000000\],
+.dark .bg-\[\#000\],
 .dark .bg-slate-900,
 .dark .bg-slate-950,
 .dark .bg-gray-900,
@@ -1659,8 +1672,9 @@ input.global-search-input,
 .dark .bg-\[\#0B0F17\],
 .dark .bg-\[\#0f172a\],
 .dark .bg-\[\#070b14\],
+.dark .bg-\[\#080911\],
 .dark .bg-\[\#050810\] {
-  background-color: #0b0f19 !important;
+  background-color: #080911 !important;
 }
 
 .dark .bg-slate-800,
@@ -1675,10 +1689,12 @@ input.global-search-input,
 .dark .bg-\[\#1e293b\],
 .dark .bg-\[\#1f2937\],
 .dark .bg-\[\#1c2237\],
+.dark .bg-\[\#121524\],
+.dark .bg-\[\#171a2d\],
 .dark .bg-\[\#0f172a\]\/80,
 .dark .bg-\[\#0f172a\]\/90 {
-  background-color: #0f172a;
-  border-color: rgba(255, 255, 255, 0.08);
+  background-color: #121524;
+  border-color: rgba(255, 255, 255, 0.06);
 }
 
 .dark .border-slate-800,
@@ -1689,36 +1705,38 @@ input.global-search-input,
 .dark .border-slate-700\/60,
 .dark .border-gray-800,
 .dark .border-gray-800\/80,
-.dark .border-gray-700 {
-  border-color: rgba(255, 255, 255, 0.08) !important;
+.dark .border-gray-700,
+.dark .border-neutral-900,
+.dark .border-neutral-800 {
+  border-color: rgba(255, 255, 255, 0.06) !important;
 }
 
 /* Table styling in Dark mode */
 .dark table {
-  background-color: #0f172a !important;
+  background-color: #121524 !important;
 }
 
 .dark thead tr,
 .dark th {
-  background-color: #1e293b !important;
-  color: #cbd5e1 !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
-}
-
-.dark tbody tr {
+  background-color: #171a2d !important;
+  color: #8892b0 !important;
   border-color: rgba(255, 255, 255, 0.06) !important;
 }
 
+.dark tbody tr {
+  border-color: rgba(255, 255, 255, 0.04) !important;
+}
+
 .dark tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.04) !important;
+  background-color: rgba(255, 255, 255, 0.03) !important;
 }
 
 /* Dialog / Modal in Dark mode */
 .dark [role="dialog"],
 .dark [data-radix-portal] > div,
 .dark .dialog-content {
-  background-color: #0f172a !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background-color: #121524 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
 /* Universal Primary & Action Buttons (Lime Green with Black Bold Text & Glow) */
@@ -1936,25 +1954,25 @@ textarea {
 
 /* Super Admin Scope Global Overrides */
 .super-admin-scope aside {
-  background-color: #0d121f !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  background-color: #0c0e1a !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
 }
 
 .super-admin-scope header {
-  background-color: rgba(13, 18, 31, 0.85) !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  background-color: rgba(12, 14, 26, 0.9) !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
 }
 
 .super-admin-scope main {
-  background-color: #0b0f19 !important;
+  background-color: #080911 !important;
 }
 
 .super-admin-scope .bg-slate-900,
 .super-admin-scope .dark\:bg-slate-900,
 .super-admin-scope .bg-slate-950,
 .super-admin-scope .dark\:bg-slate-950 {
-  background-color: #0f172a !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  background-color: #121524 !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
 }
 
 /* Selection highlight */

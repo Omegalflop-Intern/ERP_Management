@@ -69,10 +69,10 @@ export default {
           900: '#2a3e00',
         },
         dark: {
-          bg: '#000000', // Pure Black #000000
-          card: '#0c0c0c',
-          border: '#1f1f1f',
-          hover: '#262626',
+          bg: '#080911', // Reference Midnight Obsidian Canvas
+          card: '#121524', // Reference Sleek Card
+          border: '#1e2238',
+          hover: '#171a2d',
         },
       },
       borderRadius: {

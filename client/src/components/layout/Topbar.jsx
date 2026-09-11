@@ -223,8 +223,8 @@ function GlobalSearch() {
           setIsOpen(true);
           inputRef.current?.focus();
         }}
-        className={`relative flex items-center w-full px-3.5 py-2 rounded-full border text-xs cursor-text transition-all bg-slate-50 dark:bg-[#0c0c0c] border-slate-200 dark:border-neutral-800 hover:border-slate-300 dark:hover:border-neutral-700 shadow-xs ${isOpen
-            ? 'ring-2 ring-[#9CE700]/30 border-[#9CE700] dark:border-[#9CE700] bg-white dark:bg-[#0c0c0c]'
+        className={`relative flex items-center w-full px-3.5 py-2 rounded-full border text-xs cursor-text transition-all bg-slate-50 dark:bg-[#121524] border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 shadow-xs ${isOpen
+            ? 'ring-2 ring-[#9CE700]/30 border-[#9CE700] dark:border-[#9CE700] bg-white dark:bg-[#121524]'
             : ''
           }`}
       >
@@ -252,7 +252,7 @@ function GlobalSearch() {
             <X className="w-3.5 h-3.5" />
           </button>
         ) : (
-          <div className="hidden md:flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-slate-200/80 dark:bg-neutral-900 text-[10px] font-mono text-slate-600 dark:text-neutral-400 flex-shrink-0 ml-1 border border-slate-300/60 dark:border-neutral-800">
+          <div className="hidden md:flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-slate-200/80 dark:bg-[#171a2d] text-[10px] font-mono text-slate-600 dark:text-neutral-400 flex-shrink-0 ml-1 border border-slate-300/60 dark:border-white/10">
             <Command className="w-2.5 h-2.5" />
             <span>K</span>
           </div>
@@ -267,7 +267,7 @@ function GlobalSearch() {
             onClick={() => setIsOpen(false)}
           />
 
-          <div className="fixed inset-x-3 top-16 sm:absolute sm:inset-x-auto sm:left-0 sm:right-0 sm:-left-16 sm:-right-16 md:-left-28 md:-right-28 sm:top-full sm:mt-2 bg-white dark:bg-[#0c0c0c] border border-slate-200 dark:border-neutral-800 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] z-[200] max-h-[75vh] overflow-y-auto divide-y divide-slate-100 dark:divide-neutral-900 animate-in fade-in zoom-in-95 duration-150">
+          <div className="fixed inset-x-3 top-16 sm:absolute sm:inset-x-auto sm:left-0 sm:right-0 sm:-left-16 sm:-right-16 md:-left-28 md:-right-28 sm:top-full sm:mt-2 bg-white dark:bg-[#121524] border border-slate-200 dark:border-white/10 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] z-[200] max-h-[75vh] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800 animate-in fade-in zoom-in-95 duration-150">
             {filteredPages.length > 0 && (
               <div className="p-2.5">
                 <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 dark:text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -667,15 +667,15 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
             <Palette className="w-5 h-5 text-slate-700 dark:text-slate-200 stroke-[2]" />
           </button>
           {showMobileSettings && (
-            <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#0c0c0c] border border-slate-200 dark:border-neutral-800 rounded-2xl shadow-2xl z-[9999] overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-              <div className="px-3.5 py-2 border-b border-slate-200 dark:border-neutral-800 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 dark:bg-neutral-900/60">
+            <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#121524] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl z-[9999] overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+              <div className="px-3.5 py-2 border-b border-slate-200 dark:border-white/10 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 dark:bg-[#171a2d]">
                 Theme & Design
               </div>
               <button
                 onClick={() => {
                   toggleTheme();
                 }}
-                className="w-full flex items-center gap-3 px-3.5 py-2.5 hover:bg-slate-50 dark:hover:bg-neutral-900/60 text-xs font-semibold text-slate-800 dark:text-slate-200"
+                className="w-full flex items-center gap-3 px-3.5 py-2.5 hover:bg-slate-50 dark:hover:bg-[#171a2d] text-xs font-semibold text-slate-800 dark:text-slate-200"
               >
                 {theme === 'dark' ? (
                   <Moon className="w-4 h-4 text-[#9CE700]" />
@@ -701,7 +701,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
                   };
                   toast.info(`✨ Mode: ${labels[nextMode] || nextMode}`, { duration: 1000 });
                 }}
-                className="w-full flex items-center gap-3 px-3.5 py-2.5 hover:bg-slate-50 dark:hover:bg-neutral-900/60 text-xs font-semibold text-slate-800 dark:text-slate-200"
+                className="w-full flex items-center gap-3 px-3.5 py-2.5 hover:bg-slate-50 dark:hover:bg-[#171a2d] text-xs font-semibold text-slate-800 dark:text-slate-200"
               >
                 <Sparkles className="w-4 h-4 text-[#9CE700]" />
                 <span className="capitalize">{designMode || 'liquidglass'}</span>
@@ -722,7 +722,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
               setShowMobileSettings(false);
               if (nextState) qc.invalidateQueries({ queryKey: ['notifications'] });
             }}
-            className={`relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors ${styled ? 'neu-btn !p-2' : ''}`}
+            className={`relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#171a2d] transition-colors ${styled ? 'neu-btn !p-2' : ''}`}
           >
             <Bell className="w-5 h-5 text-slate-700 dark:text-slate-200 stroke-[2]" />
             {notifData?.unreadCount > 0 && (
@@ -732,8 +732,8 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
             )}
           </button>
           {showNotifs && (
-            <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-[#0c0c0c] border border-slate-200 dark:border-neutral-800 rounded-2xl shadow-2xl z-[9999] max-h-96 overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-900/60">
+            <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-[#121524] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl z-[9999] max-h-96 overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#171a2d]">
                 <h3 className="font-bold text-xs text-slate-900 dark:text-slate-100">
                   Notifications
                 </h3>
@@ -757,7 +757,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
                       if (n.link) navigate(n.link);
                       setShowNotifs(false);
                     }}
-                    className={`w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-neutral-900/60 border-b border-slate-100 dark:border-neutral-800/80 transition-colors ${!n.isRead ? 'bg-[#9CE700]/10 dark:bg-[#9CE700]/10' : ''}`}
+                    className={`w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-[#171a2d] border-b border-slate-100 dark:border-white/5 transition-colors ${!n.isRead ? 'bg-[#9CE700]/10 dark:bg-[#9CE700]/10' : ''}`}
                   >
                     <div className="flex items-start gap-3">
                       {getNotificationIcon(n.type)}
@@ -806,7 +806,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
               }}
               className={`hidden md:flex items-center gap-2.5 px-3 py-1.5 rounded-full transition-all ${styled
                   ? 'neu-flat !border-none !shadow-none hover:bg-white/10 dark:hover:bg-neutral-800/40'
-                  : 'bg-white/60 dark:bg-neutral-900/80 border border-slate-200 dark:border-neutral-800 hover:border-slate-300 dark:hover:border-neutral-700 shadow-sm'
+                  : 'bg-white/60 dark:bg-[#171a2d] border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 shadow-sm'
                 }`}
             >
               <UserAvatar user={user} size="sm" online={online} />
@@ -822,7 +822,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
             </button>
 
             {showUserMenu && (
-              <div className="absolute right-0 top-full mt-2 w-60 bg-white dark:bg-[#0c0c0c] border border-slate-200 dark:border-neutral-800 rounded-2xl shadow-2xl z-[9999] overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+              <div className="absolute right-0 top-full mt-2 w-60 bg-white dark:bg-[#121524] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl z-[9999] overflow-hidden animate-in fade-in zoom-in-95 duration-150">
                 <div className="md:hidden px-3 py-3 border-b border-gray-100 dark:border-neutral-800">
                   <div className="flex items-center gap-2.5">
                     <UserAvatar user={user} size="lg" online={online} />

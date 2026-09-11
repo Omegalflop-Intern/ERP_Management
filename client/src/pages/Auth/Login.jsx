@@ -958,9 +958,9 @@ export default function Login() {
   ];
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-slate-100 dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 font-sans selection:bg-[#9CE700] selection:text-black">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-slate-100 dark:bg-[#080911] text-slate-900 dark:text-slate-100 font-sans selection:bg-[#9CE700] selection:text-black">
       {/* Dynamic Background Base */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-slate-50 to-slate-200/50 dark:from-[#0b0f19] dark:via-[#0e1424] dark:to-[#090d16] z-0" />
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-slate-50 to-slate-200/50 dark:from-[#080911] dark:via-[#0d0f1c] dark:to-[#06070d] z-0" />
 
       {/* 10 Active Canvas Background Animation Layers */}
       {bgMode === 'samurai' && <SamuraiCanvas isDark={isDark} />}
@@ -983,7 +983,7 @@ export default function Login() {
         <div className="relative">
           <button
             onClick={() => setShowAnimDropdown(!showAnimDropdown)}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-white/90 dark:bg-[#0f172a]/90 backdrop-blur-md border border-slate-200/80 dark:border-slate-800 shadow-lg text-xs font-bold text-slate-800 dark:text-white hover:bg-white dark:hover:bg-[#1e293b] transition-all cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-white/90 dark:bg-[#121524]/90 backdrop-blur-md border border-slate-200/80 dark:border-white/10 shadow-lg text-xs font-bold text-slate-800 dark:text-white hover:bg-white dark:hover:bg-[#171a2d] transition-all cursor-pointer"
           >
             <Sparkles className="w-3.5 h-3.5 text-[#9CE700]" />
             <span className="capitalize">
@@ -992,7 +992,7 @@ export default function Login() {
           </button>
 
           {showAnimDropdown && (
-            <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white/95 dark:bg-[#0f172a] backdrop-blur-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+            <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white/95 dark:bg-[#121524] backdrop-blur-2xl border border-slate-200 dark:border-white/10 shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
               <div className="px-2.5 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                 Visual Themes
               </div>
@@ -1007,7 +1007,7 @@ export default function Login() {
                     className={`w-full text-left px-3 py-2 rounded-xl text-xs flex flex-col transition-all ${
                       bgMode === anim.id
                         ? 'bg-[#9CE700] text-black font-extrabold shadow-sm'
-                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1e293b]'
+                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#171a2d]'
                     }`}
                   >
                     <span className="font-semibold">{anim.name}</span>
@@ -1033,7 +1033,7 @@ export default function Login() {
         {/* Brand Header */}
         <div className="flex justify-center mb-4">
           {publicShop?.logo ? (
-            <div className="w-20 h-20 rounded-2xl flex items-center justify-center bg-white/95 dark:bg-[#0f172a] backdrop-blur-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xl p-2 overflow-hidden">
+            <div className="w-20 h-20 rounded-2xl flex items-center justify-center bg-white/95 dark:bg-[#121524] backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 shadow-2xl p-2 overflow-hidden">
               <img
                 src={getAssetUrl(publicShop.logo)}
                 alt={displayShopName}
@@ -1048,7 +1048,7 @@ export default function Login() {
               </div>
             </div>
           ) : (
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-white/90 dark:bg-[#0f172a] backdrop-blur-2xl border border-slate-200/80 dark:border-slate-800 shadow-xl">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-white/90 dark:bg-[#121524] backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 shadow-xl">
               {subdomain ? (
                 <Store className="w-8 h-8 text-[#9CE700] stroke-[2.2]" />
               ) : (
@@ -1068,7 +1068,7 @@ export default function Login() {
         {/* Apple macOS / iOS Liquid Glass Form Card */}
         <form
           onSubmit={handleSubmit}
-          className="bg-white/85 dark:bg-[#0f172a]/90 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.07)] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] rounded-[28px] p-8 md:p-10 relative overflow-hidden"
+          className="bg-white/85 dark:bg-[#121524]/95 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.07)] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] rounded-[28px] p-8 md:p-10 relative overflow-hidden"
         >
           {/* Internal Liquid Shine Highlight */}
           <div className="absolute -top-24 -left-24 w-48 h-48 bg-[#9CE700]/10 rounded-full blur-2xl pointer-events-none" />
@@ -1087,7 +1087,7 @@ export default function Login() {
                   value={loginField}
                   onChange={(e) => setLoginField(e.target.value)}
                   placeholder="Enter username, email or phone"
-                  className="w-full pl-11 pr-4 py-3.5 rounded-full text-sm font-semibold transition-all duration-200 bg-slate-50 dark:bg-[#1e293b] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-400 focus:bg-white dark:focus:bg-[#1e293b] focus:border-[#9CE700] focus:ring-4 focus:ring-[#9CE700]/20 shadow-xs outline-none"
+                  className="w-full pl-11 pr-4 py-3.5 rounded-full text-sm font-semibold transition-all duration-200 bg-slate-50 dark:bg-[#171a2d] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-400 focus:bg-white dark:focus:bg-[#171a2d] focus:border-[#9CE700] focus:ring-4 focus:ring-[#9CE700]/20 shadow-xs outline-none"
                   autoComplete="username"
                 />
               </div>

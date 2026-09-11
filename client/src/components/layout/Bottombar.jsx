@@ -3,13 +3,13 @@ import React from 'react';
 
 export default function Bottombar() {
   return (
-    <footer className="mt-8 pt-3 pb-2 px-4 border-t border-gray-200 dark:border-gray-800/80 flex flex-col sm:flex-row items-center gap-2 text-xs text-gray-500 dark:text-gray-400 font-medium transition-all bg-white/40 dark:bg-gray-900/30 backdrop-blur-xs rounded-xl">
+    <footer className="mt-8 pt-3 pb-2 px-4 border-t border-slate-200 dark:border-white/10 flex flex-col sm:flex-row items-center gap-2 text-xs text-slate-500 dark:text-[#8892B0] font-medium transition-all bg-white/40 dark:bg-[#121524]/60 backdrop-blur-xs rounded-xl">
       <div className="flex items-center gap-2">
-        <div className="w-6 h-6 rounded-lg bg-[#2563EB]/10 text-[#2563EB] flex items-center justify-center font-bold">
+        <div className="w-6 h-6 rounded-lg bg-[#9CE700]/10 text-[#9CE700] flex items-center justify-center font-bold">
           <Smartphone className="w-3.5 h-3.5" />
         </div>
-        <span className="font-bold text-gray-900 dark:text-gray-200">Omni-Manage</span>
-        <span className="px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-[#2563EB] dark:text-blue-400 font-mono font-bold text-[10px] border border-blue-200 dark:border-blue-500/20">
+        <span className="font-bold text-slate-900 dark:text-slate-200">Omni-Manage</span>
+        <span className="px-2 py-0.5 rounded-full bg-[#9CE700]/10 text-[#7dbb00] dark:text-[#9CE700] font-mono font-bold text-[10px] border border-[#9CE700]/30">
           v2.4.5
         </span>
         <span className="hidden sm:inline text-gray-300 dark:text-gray-700">•</span>

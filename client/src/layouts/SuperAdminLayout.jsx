@@ -120,7 +120,7 @@ export default function SuperAdminLayout() {
   }
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full bg-white dark:bg-[#000000] select-none">
+    <div className="flex flex-col h-full bg-white dark:bg-[#0c0e1a] select-none">
       {/* Brand Header */}
       <div
         className={`flex items-center gap-3 px-4 py-4 border-b border-slate-200/80 dark:border-neutral-800 ${
@@ -242,17 +242,17 @@ export default function SuperAdminLayout() {
   );
 
   return (
-    <div className="super-admin-scope flex h-screen bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 font-sans overflow-hidden">
+    <div className="super-admin-scope flex h-screen bg-slate-50 dark:bg-[#080911] text-slate-900 dark:text-slate-100 font-sans overflow-hidden">
       {/* Desktop Sidebar */}
       <aside
-        className={`hidden lg:flex flex-col flex-shrink-0 relative bg-white dark:bg-[#0d121f] border-r border-slate-200/80 dark:border-slate-800 transition-all duration-300 z-20 ${
+        className={`hidden lg:flex flex-col flex-shrink-0 relative bg-white dark:bg-[#0c0e1a] border-r border-slate-200/80 dark:border-slate-800 transition-all duration-300 z-20 ${
           collapsed ? 'w-16' : 'w-64'
         }`}
       >
         <SidebarContent />
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="absolute -right-3 top-16 z-30 w-6 h-6 bg-white dark:bg-[#1e293b] hover:bg-slate-100 dark:hover:bg-[#1e293b]/80 text-slate-600 dark:text-white border border-slate-200 dark:border-slate-700 rounded-full flex items-center justify-center transition-all shadow-md hover:scale-110"
+          className="absolute -right-3 top-16 z-30 w-6 h-6 bg-white dark:bg-[#171a2d] hover:bg-slate-100 dark:hover:bg-[#171a2d]/80 text-slate-600 dark:text-white border border-slate-200 dark:border-slate-700 rounded-full flex items-center justify-center transition-all shadow-md hover:scale-110"
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
@@ -266,7 +266,7 @@ export default function SuperAdminLayout() {
             className="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
             onClick={() => setMobileOpen(false)}
           />
-          <aside className="relative z-10 w-72 flex flex-col bg-white dark:bg-[#0d121f] border-r border-slate-200 dark:border-slate-800 h-full shadow-2xl">
+          <aside className="relative z-10 w-72 flex flex-col bg-white dark:bg-[#0c0e1a] border-r border-slate-200 dark:border-slate-800 h-full shadow-2xl">
             <button
               onClick={() => setMobileOpen(false)}
               className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 z-20"
@@ -281,7 +281,7 @@ export default function SuperAdminLayout() {
       {/* Main Content Area */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         {/* Top Header */}
-        <header className="flex-shrink-0 h-16 flex items-center justify-between px-4 md:px-8 bg-white/80 dark:bg-[#0d121f]/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 z-10">
+        <header className="flex-shrink-0 h-16 flex items-center justify-between px-4 md:px-8 bg-white/80 dark:bg-[#0c0e1a]/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 z-10">
           <div className="flex items-center gap-3">
             <button
               className="lg:hidden p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-slate-200 dark:border-slate-800"
