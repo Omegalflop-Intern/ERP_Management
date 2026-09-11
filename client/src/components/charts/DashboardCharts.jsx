@@ -29,6 +29,7 @@ import {
   ArrowUpRight,
   PackageCheck,
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 
 const BRAND_COLORS = [
@@ -67,7 +68,18 @@ export default function DashboardCharts({
   onPeriodChange,
 }) {
   const { theme } = useTheme();
+  const { hasPermission } = useAuth();
   const isDark = theme === 'dark';
+
+  const canViewRevenue = hasPermission('dashboard:view_revenue');
+  const canViewSales = hasPermission('dashboard:view_sales');
+  const canViewDue = hasPermission('dashboard:view_due');
+  const canViewStock = hasPermission('dashboard:view_stock');
+
+  // If user has no access to any of the analytics/charts, hide component entirely
+  if (!canViewRevenue && !canViewSales && !canViewDue && !canViewStock) {
+    return null;
+  }
 
   const textColor = isDark ? '#94A3B8' : '#64748B';
   const gridColor = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)';
@@ -152,6 +164,8 @@ export default function DashboardCharts({
 
   const currentPeriodLabel = PERIOD_LABELS[period] || 'Last 7 Days';
 
+  const hasAnyKpi = canViewRevenue || canViewSales || canViewDue || canViewStock;
+
   return (
     <div className="space-y-6">
       {/* ─── TIMEFRAME HEADER & KPI METRICS STRIP ───────────────────────── */}
@@ -193,265 +207,287 @@ export default function DashboardCharts({
         </div>
 
         {/* Aggregate KPI Badges */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-slate-200/60 dark:border-slate-800">
-          <div className="p-3 rounded-xl bg-indigo-500/5 dark:bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-between">
-            <div>
-              <div className="text-[10px] font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400">
-                Period Revenue
+        {hasAnyKpi && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-slate-200/60 dark:border-slate-800">
+            {canViewRevenue && (
+              <div className="p-3 rounded-xl bg-indigo-500/5 dark:bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-between">
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400">
+                    Period Revenue
+                  </div>
+                  <div className="text-lg font-black text-slate-900 dark:text-white font-mono mt-0.5">
+                    ৳{summaryMetrics.totalRev.toLocaleString()}
+                  </div>
+                </div>
+                <div className="h-8 w-8 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                  <DollarSign className="w-4 h-4 stroke-[2.5]" />
+                </div>
               </div>
-              <div className="text-lg font-black text-slate-900 dark:text-white font-mono mt-0.5">
-                ৳{summaryMetrics.totalRev.toLocaleString()}
-              </div>
-            </div>
-            <div className="h-8 w-8 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
-              <DollarSign className="w-4 h-4 stroke-[2.5]" />
-            </div>
-          </div>
+            )}
 
-          <div className="p-3 rounded-xl bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between">
-            <div>
-              <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-500 dark:text-emerald-400">
-                Sales Completed
+            {canViewSales && (
+              <div className="p-3 rounded-xl bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between">
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-500 dark:text-emerald-400">
+                    Sales Completed
+                  </div>
+                  <div className="text-lg font-black text-slate-900 dark:text-white font-mono mt-0.5">
+                    {summaryMetrics.totalSalesCount.toLocaleString()}{' '}
+                    <span className="text-xs text-slate-400 font-normal">units</span>
+                  </div>
+                </div>
+                <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                  <ShoppingBag className="w-4 h-4 stroke-[2.5]" />
+                </div>
               </div>
-              <div className="text-lg font-black text-slate-900 dark:text-white font-mono mt-0.5">
-                {summaryMetrics.totalSalesCount.toLocaleString()}{' '}
-                <span className="text-xs text-slate-400 font-normal">units</span>
-              </div>
-            </div>
-            <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-              <ShoppingBag className="w-4 h-4 stroke-[2.5]" />
-            </div>
-          </div>
+            )}
 
-          <div className="p-3 rounded-xl bg-sky-500/5 dark:bg-sky-500/10 border border-sky-500/20 flex items-center justify-between">
-            <div>
-              <div className="text-[10px] font-bold uppercase tracking-wider text-sky-500 dark:text-sky-400">
-                Paid Collection
+            {canViewDue && (
+              <div className="p-3 rounded-xl bg-sky-500/5 dark:bg-sky-500/10 border border-sky-500/20 flex items-center justify-between">
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-sky-500 dark:text-sky-400">
+                    Paid Collection
+                  </div>
+                  <div className="text-lg font-black text-slate-900 dark:text-white font-mono mt-0.5">
+                    {summaryMetrics.collectionRate}%{' '}
+                    <span className="text-xs text-slate-400 font-normal">rate</span>
+                  </div>
+                </div>
+                <div className="h-8 w-8 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0">
+                  <PackageCheck className="w-4 h-4 stroke-[2.5]" />
+                </div>
               </div>
-              <div className="text-lg font-black text-slate-900 dark:text-white font-mono mt-0.5">
-                {summaryMetrics.collectionRate}%{' '}
-                <span className="text-xs text-slate-400 font-normal">rate</span>
-              </div>
-            </div>
-            <div className="h-8 w-8 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0">
-              <PackageCheck className="w-4 h-4 stroke-[2.5]" />
-            </div>
-          </div>
+            )}
 
-          <div className="p-3 rounded-xl bg-violet-500/5 dark:bg-violet-500/10 border border-violet-500/20 flex items-center justify-between">
-            <div>
-              <div className="text-[10px] font-bold uppercase tracking-wider text-violet-500 dark:text-violet-400">
-                Top Stock Brand
+            {canViewStock && (
+              <div className="p-3 rounded-xl bg-violet-500/5 dark:bg-violet-500/10 border border-violet-500/20 flex items-center justify-between">
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-violet-500 dark:text-violet-400">
+                    Top Stock Brand
+                  </div>
+                  <div className="text-sm font-black text-slate-900 dark:text-white truncate mt-0.5">
+                    {summaryMetrics.topBrand ? summaryMetrics.topBrand.name : 'N/A'}
+                  </div>
+                </div>
+                <div className="h-8 w-8 rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
+                  <PieIcon className="w-4 h-4 stroke-[2.5]" />
+                </div>
               </div>
-              <div className="text-sm font-black text-slate-900 dark:text-white truncate mt-0.5">
-                {summaryMetrics.topBrand ? summaryMetrics.topBrand.name : 'N/A'}
-              </div>
-            </div>
-            <div className="h-8 w-8 rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center shrink-0">
-              <PieIcon className="w-4 h-4 stroke-[2.5]" />
-            </div>
+            )}
           </div>
-        </div>
+        )}
       </div>
 
       {/* ─── MAIN CHARTS GRID ───────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* 1. Smooth Gradient Area Chart: Revenue & Sales Trend */}
-        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-indigo-500" />
-              Revenue & Order Trend
-            </h3>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              {currentPeriodLabel}
-            </span>
-          </div>
+        {(canViewRevenue || canViewSales) && (
+          <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-indigo-500" />
+                {canViewRevenue && canViewSales
+                  ? 'Revenue & Order Trend'
+                  : canViewRevenue
+                    ? 'Revenue Trend'
+                    : 'Order Trend'}
+              </h3>
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                {currentPeriodLabel}
+              </span>
+            </div>
 
-          {salesTrendData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={280}>
-              <AreaChart
-                data={salesTrendData}
-                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-              >
-                <defs>
-                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366F1" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="#6366F1" stopOpacity={0.0} />
-                  </linearGradient>
-                  <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.35} />
-                    <stop offset="95%" stopColor="#10B981" stopOpacity={0.0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
-                <XAxis
-                  dataKey="day"
-                  tick={{ fontSize: 10, fill: textColor }}
-                  tickLine={false}
-                  axisLine={{ stroke: gridColor }}
-                />
-                <YAxis
-                  tick={{ fontSize: 10, fill: textColor }}
-                  tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v)}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <Tooltip content={<CustomTooltip />} />
-                <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} />
-                <Area
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="#6366F1"
-                  strokeWidth={3}
-                  fillOpacity={1}
-                  fill="url(#colorRevenue)"
-                  name="Revenue (৳)"
-                />
-                {salesTrendData[0]?.sales !== undefined && (
-                  <Area
-                    type="monotone"
-                    dataKey="sales"
-                    stroke="#10B981"
-                    strokeWidth={2}
-                    fillOpacity={1}
-                    fill="url(#colorSales)"
-                    name="Sales Count"
+            {salesTrendData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={280}>
+                <AreaChart
+                  data={salesTrendData}
+                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                >
+                  <defs>
+                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#6366F1" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#6366F1" stopOpacity={0.0} />
+                    </linearGradient>
+                    <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.35} />
+                      <stop offset="95%" stopColor="#10B981" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+                  <XAxis
+                    dataKey="day"
+                    tick={{ fontSize: 10, fill: textColor }}
+                    tickLine={false}
+                    axisLine={{ stroke: gridColor }}
                   />
-                )}
-              </AreaChart>
-            </ResponsiveContainer>
-          ) : (
-            <EmptyChart title="Sales Trend" icon={TrendingUp} />
-          )}
-        </div>
+                  <YAxis
+                    tick={{ fontSize: 10, fill: textColor }}
+                    tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v)}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} />
+                  {canViewRevenue && (
+                    <Area
+                      type="monotone"
+                      dataKey="revenue"
+                      stroke="#6366F1"
+                      strokeWidth={3}
+                      fillOpacity={1}
+                      fill="url(#colorRevenue)"
+                      name="Revenue (৳)"
+                    />
+                  )}
+                  {canViewSales && salesTrendData[0]?.sales !== undefined && (
+                    <Area
+                      type="monotone"
+                      dataKey="sales"
+                      stroke="#10B981"
+                      strokeWidth={2}
+                      fillOpacity={1}
+                      fill="url(#colorSales)"
+                      name="Sales Count"
+                    />
+                  )}
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <EmptyChart title="Sales Trend" icon={TrendingUp} />
+            )}
+          </div>
+        )}
 
         {/* 2. Rounded Bar Chart: Paid Collection vs Due Balance */}
-        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
-              <BarChart3 className="w-4 h-4 text-emerald-500" />
-              Paid vs Due Collection
-            </h3>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              {currentPeriodLabel}
-            </span>
-          </div>
+        {canViewDue && (
+          <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-emerald-500" />
+                Paid vs Due Collection
+              </h3>
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                {currentPeriodLabel}
+              </span>
+            </div>
 
-          {dueTrendData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={dueTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
-                <XAxis
-                  dataKey="day"
-                  tick={{ fontSize: 10, fill: textColor }}
-                  tickLine={false}
-                  axisLine={{ stroke: gridColor }}
-                />
-                <YAxis
-                  tick={{ fontSize: 10, fill: textColor }}
-                  tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v)}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <Tooltip
-                  content={<CustomTooltip />}
-                  cursor={{
-                    fill: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)',
-                    rx: 8,
-                  }}
-                />
-                <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} />
-                <Bar
-                  dataKey="paidAmount"
-                  fill="#10B981"
-                  radius={[6, 6, 0, 0]}
-                  name="Paid Collected (৳)"
-                />
-                <Bar
-                  dataKey="dueAmount"
-                  fill="#F43F5E"
-                  radius={[6, 6, 0, 0]}
-                  name="Due Balance (৳)"
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <EmptyChart title="Due Collection" icon={BarChart3} />
-          )}
-        </div>
-
-        {/* 3. Donut Pie Chart: Stock by Brand with Center Indicator */}
-        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
-              <PieIcon className="w-4 h-4 text-violet-500" />
-              Stock Brand Distribution
-            </h3>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              {summaryMetrics.totalBrandUnits} Units
-            </span>
-          </div>
-
-          {brandDistribution.length > 0 ? (
-            <div className="relative">
+            {dueTrendData.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <Pie
-                    data={brandDistribution}
-                    cx="50%"
-                    cy="45%"
-                    innerRadius={65}
-                    outerRadius={95}
-                    paddingAngle={4}
-                    dataKey="value"
-                  >
-                    {brandDistribution.map((_, i) => (
-                      <Cell
-                        key={i}
-                        fill={BRAND_COLORS[i % BRAND_COLORS.length]}
-                        stroke={isDark ? '#0F172A' : '#FFFFFF'}
-                        strokeWidth={2}
-                      />
-                    ))}
-                  </Pie>
+                <BarChart data={dueTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+                  <XAxis
+                    dataKey="day"
+                    tick={{ fontSize: 10, fill: textColor }}
+                    tickLine={false}
+                    axisLine={{ stroke: gridColor }}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 10, fill: textColor }}
+                    tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v)}
+                    tickLine={false}
+                    axisLine={false}
+                  />
                   <Tooltip
-                    formatter={(val, name) => [`${val} pcs (units)`, name]}
-                    contentStyle={{
-                      borderRadius: 12,
-                      background: isDark ? '#0F172A' : '#FFFFFF',
-                      borderColor: isDark ? '#334155' : '#E2E8F0',
-                      color: isDark ? '#F8FAFC' : '#0F172A',
-                      fontSize: 12,
-                      boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
-                    }}
-                    itemStyle={{
-                      color: isDark ? '#F8FAFC' : '#0F172A',
-                      fontWeight: 600,
-                    }}
-                    labelStyle={{
-                      color: isDark ? '#94A3B8' : '#64748B',
-                      fontWeight: 700,
+                    content={<CustomTooltip />}
+                    cursor={{
+                      fill: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)',
+                      rx: 8,
                     }}
                   />
-                  <Legend wrapperStyle={{ fontSize: 11, paddingTop: 5 }} />
-                </PieChart>
+                  <Legend wrapperStyle={{ fontSize: 11, paddingTop: 10 }} />
+                  <Bar
+                    dataKey="paidAmount"
+                    fill="#10B981"
+                    radius={[6, 6, 0, 0]}
+                    name="Paid Collected (৳)"
+                  />
+                  <Bar
+                    dataKey="dueAmount"
+                    fill="#F43F5E"
+                    radius={[6, 6, 0, 0]}
+                    name="Due Balance (৳)"
+                  />
+                </BarChart>
               </ResponsiveContainer>
+            ) : (
+              <EmptyChart title="Due Collection" icon={BarChart3} />
+            )}
+          </div>
+        )}
 
-              {/* Center Donut Label */}
-              <div className="absolute top-[45%] left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
-                <div className="text-xl font-black text-slate-900 dark:text-white font-mono leading-none">
-                  {summaryMetrics.totalBrandUnits.toLocaleString()}
-                </div>
-                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
-                  Total Units
+        {/* 3. Donut Pie Chart: Stock by Brand with Center Indicator */}
+        {canViewStock && (
+          <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <PieIcon className="w-4 h-4 text-violet-500" />
+                Stock Brand Distribution
+              </h3>
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                {summaryMetrics.totalBrandUnits} Units
+              </span>
+            </div>
+
+            {brandDistribution.length > 0 ? (
+              <div className="relative">
+                <ResponsiveContainer width="100%" height={280}>
+                  <PieChart>
+                    <Pie
+                      data={brandDistribution}
+                      cx="50%"
+                      cy="45%"
+                      innerRadius={65}
+                      outerRadius={95}
+                      paddingAngle={4}
+                      dataKey="value"
+                    >
+                      {brandDistribution.map((_, i) => (
+                        <Cell
+                          key={i}
+                          fill={BRAND_COLORS[i % BRAND_COLORS.length]}
+                          stroke={isDark ? '#0F172A' : '#FFFFFF'}
+                          strokeWidth={2}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(val, name) => [`${val} pcs (units)`, name]}
+                      contentStyle={{
+                        borderRadius: 12,
+                        background: isDark ? '#0F172A' : '#FFFFFF',
+                        borderColor: isDark ? '#334155' : '#E2E8F0',
+                        color: isDark ? '#F8FAFC' : '#0F172A',
+                        fontSize: 12,
+                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
+                      }}
+                      itemStyle={{
+                        color: isDark ? '#F8FAFC' : '#0F172A',
+                        fontWeight: 600,
+                      }}
+                      labelStyle={{
+                        color: isDark ? '#94A3B8' : '#64748B',
+                        fontWeight: 700,
+                      }}
+                    />
+                    <Legend wrapperStyle={{ fontSize: 11, paddingTop: 5 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+
+                {/* Center Donut Label */}
+                <div className="absolute top-[45%] left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
+                  <div className="text-xl font-black text-slate-900 dark:text-white font-mono leading-none">
+                    {summaryMetrics.totalBrandUnits.toLocaleString()}
+                  </div>
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                    Total Units
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <EmptyChart title="Stock Distribution" icon={PieIcon} />
-          )}
-        </div>
+            ) : (
+              <EmptyChart title="Stock Distribution" icon={PieIcon} />
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

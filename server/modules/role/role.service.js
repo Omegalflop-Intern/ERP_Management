@@ -5,6 +5,7 @@ import { getPagination } from '../../utils/http/pagination.js';
 export const ALL_PERMISSIONS = [
   'dashboard:view',
   'dashboard:view_revenue', 'dashboard:view_profit', 'dashboard:view_stock', 'dashboard:view_purchase',
+  'dashboard:view_sales', 'dashboard:view_due', 'dashboard:view_expenses', 'dashboard:view_repairs',
   'sales:view', 'sales:create', 'sales:delete',
   'products:view', 'products:create', 'products:edit', 'products:delete',
   'categories:view', 'categories:manage',
@@ -167,6 +168,7 @@ export const seedDefaultRoles = async () => {
     { name: 'ADMIN', displayName: 'Administrator', description: 'Full system access', isSystem: true, permissions: ALL_PERMISSIONS },
     { name: 'MANAGER', displayName: 'Manager', description: 'Store manager with most access', isSystem: true, permissions: [
       'dashboard:view', 'dashboard:view_revenue', 'dashboard:view_profit', 'dashboard:view_stock', 'dashboard:view_purchase',
+      'dashboard:view_sales', 'dashboard:view_due', 'dashboard:view_expenses', 'dashboard:view_repairs',
       'sales:view', 'sales:create', 'sales:delete',
       'products:view', 'products:create', 'products:edit', 'products:delete',
       'categories:view', 'categories:manage', 'inventory:view', 'inventory:manage',
@@ -179,13 +181,13 @@ export const seedDefaultRoles = async () => {
       'users:view', 'settings:view',
     ]},
     { name: 'CASHIER', displayName: 'Cashier', description: 'Sales and basic operations', isSystem: true, permissions: [
-      'dashboard:view', 'dashboard:view_revenue', 'dashboard:view_stock',
+      'dashboard:view', 'dashboard:view_sales', 'dashboard:view_due',
       'sales:view', 'sales:create',
       'products:view', 'customers:view', 'customers:manage',
       'repairs:view', 'warranties:view', 'attendance:view', 'leaves:view',
     ]},
     { name: 'TECHNICIAN', displayName: 'Technician', description: 'Repair and warranty operations', isSystem: true, permissions: [
-      'dashboard:view', 'dashboard:view_stock',
+      'dashboard:view', 'dashboard:view_repairs',
       'repairs:view', 'repairs:manage',
       'warranties:view', 'warranties:manage', 'products:view',
       'inventory:view', 'attendance:view', 'leaves:view',

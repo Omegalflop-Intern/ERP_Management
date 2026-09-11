@@ -8,7 +8,6 @@ import { authorize } from '../../middleware/role.middleware.js';
 const router = Router();
 router.use(authenticate);
 router.use(checkTenantStatus);
-router.use(authorize('ADMIN', 'MANAGER', 'CASHIER', 'STAFF'));
 
 const getTenantScope = (req) => {
   const tenantId = req.user?.tenantId || null;

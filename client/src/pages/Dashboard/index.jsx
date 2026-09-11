@@ -84,6 +84,7 @@ export default function Dashboard() {
       color: 'text-blue-600 dark:text-blue-400',
       bg: 'bg-blue-50 dark:bg-blue-950/40',
       hint: `${currentPeriodLabel} completed orders`,
+      permission: 'dashboard:view_sales',
     },
     {
       label: period === '24h' || period === 'today' ? "Today's Due" : `Due (${currentPeriodLabel})`,
@@ -94,6 +95,7 @@ export default function Dashboard() {
       color: 'text-red-600 dark:text-red-400',
       bg: 'bg-red-50 dark:bg-red-950/40',
       hint: `${currentPeriodLabel} customer credit`,
+      permission: 'dashboard:view_due',
     },
     {
       label: period === '24h' || period === 'today' ? "Today's Profit" : `Net Profit (${currentPeriodLabel})`,
@@ -146,6 +148,7 @@ export default function Dashboard() {
       color: 'text-rose-600 dark:text-rose-400',
       bg: 'bg-rose-50 dark:bg-rose-950/40',
       hint: `${currentPeriodLabel} operating expenses`,
+      permission: 'dashboard:view_expenses',
     },
     {
       label: 'Active Repairs',
@@ -156,6 +159,7 @@ export default function Dashboard() {
       color: 'text-indigo-600 dark:text-indigo-400',
       bg: 'bg-indigo-50 dark:bg-indigo-950/40',
       hint: 'Devices currently in service',
+      permission: 'dashboard:view_repairs',
     },
   ];
 
@@ -182,24 +186,30 @@ export default function Dashboard() {
         badgeVariant="success"
         actions={
           <>
-            <button
-              onClick={() => navigate('/sales/new')}
-              className="px-4 py-2.5 bg-primary text-white font-semibold rounded-xl text-xs transition-all shadow-xs hover:bg-primary/90 flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" /> New Sale (POS)
-            </button>
-            <button
-              onClick={() => navigate('/purchases')}
-              className="px-3.5 py-2.5 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold rounded-xl text-xs transition-all flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-700"
-            >
-              <Receipt className="w-4 h-4 text-purple-500" /> Purchases & Restock
-            </button>
-            <button
-              onClick={() => navigate('/customers/due-collection')}
-              className="px-3.5 py-2.5 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold rounded-xl text-xs transition-all flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-700"
-            >
-              <DollarSign className="w-4 h-4 text-emerald-500" /> Collect Dues
-            </button>
+            {hasPermission('sales:create') && (
+              <button
+                onClick={() => navigate('/sales/new')}
+                className="px-4 py-2.5 bg-primary text-white font-semibold rounded-xl text-xs transition-all shadow-xs hover:bg-primary/90 flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" /> New Sale (POS)
+              </button>
+            )}
+            {(hasPermission('purchases:view') || hasPermission('purchases:create')) && (
+              <button
+                onClick={() => navigate('/purchases')}
+                className="px-3.5 py-2.5 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold rounded-xl text-xs transition-all flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-700"
+              >
+                <Receipt className="w-4 h-4 text-purple-500" /> Purchases & Restock
+              </button>
+            )}
+            {(hasPermission('customers:view') || hasPermission('customers:manage') || hasPermission('sales:view')) && (
+              <button
+                onClick={() => navigate('/customers/due-collection')}
+                className="px-3.5 py-2.5 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold rounded-xl text-xs transition-all flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-700"
+              >
+                <DollarSign className="w-4 h-4 text-emerald-500" /> Collect Dues
+              </button>
+            )}
           </>
         }
       />
@@ -294,146 +304,162 @@ export default function Dashboard() {
                 path: '/sales/new',
                 icon: ShoppingCart,
                 color: 'text-emerald-600 dark:text-emerald-400',
+                permission: 'sales:create',
               },
               {
                 label: 'Purchase & Restock',
                 path: '/purchases',
                 icon: Truck,
                 color: 'text-purple-600 dark:text-purple-400',
+                permission: 'purchases:view',
               },
               {
                 label: 'Stock & Items',
                 path: '/products',
                 icon: Package,
                 color: 'text-indigo-600 dark:text-indigo-400',
+                permission: 'products:view',
               },
               {
                 label: 'Due Collection',
                 path: '/customers/due-collection',
                 icon: DollarSign,
                 color: 'text-amber-600 dark:text-amber-400',
+                permission: 'customers:view',
               },
               {
                 label: 'Repairs Service',
                 path: '/repairs',
                 icon: Wrench,
                 color: 'text-rose-600 dark:text-rose-400',
+                permission: 'repairs:view',
               },
               {
                 label: 'Costing & Expenses',
                 path: '/accounting/expenses',
                 icon: Receipt,
                 color: 'text-red-600 dark:text-red-400',
+                permission: 'accounting:view',
               },
               {
                 label: 'Financial Reports',
                 path: '/reports',
                 icon: TrendingUp,
                 color: 'text-blue-600 dark:text-blue-400',
+                permission: 'reports:view',
               },
-            ].map((action) => (
-              <button
-                key={action.label}
-                onClick={() => navigate(action.path)}
-                className="flex items-center gap-2.5 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800/60 hover:border-[#2563EB]/40 bg-white/60 dark:bg-slate-900/60 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-all text-left group btn-hover-lift"
-              >
-                <action.icon className={`w-4 h-4 ${action.color} flex-shrink-0`} />
-                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 group-hover:text-[#2563EB] dark:group-hover:text-blue-400">
-                  {action.label}
-                </span>
-              </button>
-            ))}
+            ]
+              .filter((action) => !action.permission || hasPermission(action.permission))
+              .map((action) => (
+                <button
+                  key={action.label}
+                  onClick={() => navigate(action.path)}
+                  className="flex items-center gap-2.5 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800/60 hover:border-[#2563EB]/40 bg-white/60 dark:bg-slate-900/60 hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-all text-left group btn-hover-lift"
+                >
+                  <action.icon className={`w-4 h-4 ${action.color} flex-shrink-0`} />
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 group-hover:text-[#2563EB] dark:group-hover:text-blue-400">
+                    {action.label}
+                  </span>
+                </button>
+              ))}
           </div>
         </div>
 
         {/* Low Stock Alert */}
-        <div className="glass-secondary rounded-[20px] p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-amber-500" /> Low Stock Items
-            </h3>
-            <button
-              onClick={() => navigate('/stock')}
-              className="text-xs font-semibold text-[#2563EB] dark:text-blue-400 hover:underline flex items-center gap-1"
-            >
-              View All <ArrowRight className="w-3 h-3" />
-            </button>
+        {(hasPermission('dashboard:view_stock') ||
+          hasPermission('stock:view') ||
+          hasPermission('products:view') ||
+          hasPermission('inventory:view')) && (
+          <div className="glass-secondary rounded-[20px] p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-500" /> Low Stock Items
+              </h3>
+              <button
+                onClick={() => navigate('/stock')}
+                className="text-xs font-semibold text-[#2563EB] dark:text-blue-400 hover:underline flex items-center gap-1"
+              >
+                View All <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+            {!lowStockData || lowStockData.length === 0 ? (
+              <div className="text-center py-8 text-slate-400">
+                <Package className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                <p className="text-xs">All product stocks look healthy!</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {lowStockData.map((item, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between p-2.5 rounded-xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/30"
+                  >
+                    <div>
+                      <div className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                        {item.name}
+                      </div>
+                      <div className="text-[10px] text-slate-500">{item.brand}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs font-extrabold text-amber-600 dark:text-amber-400 font-mono">
+                        <AnimatedNumber value={item.count} /> in stock
+                      </div>
+                      <div className="text-[10px] text-slate-400">Min limit: {item.minAlert}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-          {!lowStockData || lowStockData.length === 0 ? (
-            <div className="text-center py-8 text-slate-400">
-              <Package className="w-8 h-8 mx-auto mb-2 opacity-40" />
-              <p className="text-xs">All product stocks look healthy!</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {lowStockData.map((item, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between p-2.5 rounded-xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/30"
-                >
-                  <div>
-                    <div className="text-xs font-bold text-slate-900 dark:text-slate-100">
-                      {item.name}
-                    </div>
-                    <div className="text-[10px] text-slate-500">{item.brand}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xs font-extrabold text-amber-600 dark:text-amber-400 font-mono">
-                      <AnimatedNumber value={item.count} /> in stock
-                    </div>
-                    <div className="text-[10px] text-slate-400">Min limit: {item.minAlert}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        )}
 
         {/* Recent Sales History */}
-        <div className="glass-secondary rounded-[20px] p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Recent Sales</h3>
-            <button
-              onClick={() => navigate('/sales')}
-              className="text-xs font-semibold text-[#2563EB] dark:text-blue-400 hover:underline flex items-center gap-1"
-            >
-              View History <ArrowRight className="w-3 h-3" />
-            </button>
-          </div>
-          {!recentSales || recentSales.length === 0 ? (
-            <div className="text-center py-8 text-slate-400">
-              <ShoppingCart className="w-8 h-8 mx-auto mb-2 opacity-40" />
-              <p className="text-xs">No recent sales recorded yet</p>
+        {hasPermission('sales:view') && (
+          <div className="glass-secondary rounded-[20px] p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Recent Sales</h3>
+              <button
+                onClick={() => navigate('/sales')}
+                className="text-xs font-semibold text-[#2563EB] dark:text-blue-400 hover:underline flex items-center gap-1"
+              >
+                View History <ArrowRight className="w-3 h-3" />
+              </button>
             </div>
-          ) : (
-            <div className="space-y-2">
-              {recentSales.map((s) => (
-                <button
-                  key={s._id}
-                  onClick={() => navigate(`/sales/${s._id}`)}
-                  className="w-full flex items-center justify-between p-2.5 rounded-xl border border-slate-100 dark:border-slate-800/80 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors text-left"
-                >
-                  <div>
-                    <div className="text-xs font-mono font-bold text-slate-900 dark:text-slate-100">
-                      {s.invoiceNumber}
-                    </div>
-                    <div className="text-[11px] text-slate-500">{s.customerName}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xs font-extrabold text-slate-900 dark:text-slate-100 font-mono">
-                      ৳{s.netTotal?.toLocaleString()}
-                    </div>
-                    {s.paymentBreakdown?.dueAmount > 0 && (
-                      <div className="text-[10px] font-bold text-red-500">
-                        Due: ৳{s.paymentBreakdown.dueAmount?.toLocaleString()}
+            {!recentSales || recentSales.length === 0 ? (
+              <div className="text-center py-8 text-slate-400">
+                <ShoppingCart className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                <p className="text-xs">No recent sales recorded yet</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {recentSales.map((s) => (
+                  <button
+                    key={s._id}
+                    onClick={() => navigate(`/sales/${s._id}`)}
+                    className="w-full flex items-center justify-between p-2.5 rounded-xl border border-slate-100 dark:border-slate-800/80 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors text-left"
+                  >
+                    <div>
+                      <div className="text-xs font-mono font-bold text-slate-900 dark:text-slate-100">
+                        {s.invoiceNumber}
                       </div>
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+                      <div className="text-[11px] text-slate-500">{s.customerName}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs font-extrabold text-slate-900 dark:text-slate-100 font-mono">
+                        ৳{s.netTotal?.toLocaleString()}
+                      </div>
+                      {s.paymentBreakdown?.dueAmount > 0 && (
+                        <div className="text-[10px] font-bold text-red-500">
+                          Due: ৳{s.paymentBreakdown.dueAmount?.toLocaleString()}
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

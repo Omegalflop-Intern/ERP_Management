@@ -7,7 +7,17 @@ import api from '../../lib/api';
 import { confirmDelete } from '../../lib/confirm';
 
 const PERMISSION_GROUPS = {
-  Dashboard: ['dashboard:view', 'dashboard:view_revenue', 'dashboard:view_profit', 'dashboard:view_stock', 'dashboard:view_purchase'],
+  Dashboard: [
+    'dashboard:view',
+    'dashboard:view_revenue',
+    'dashboard:view_profit',
+    'dashboard:view_stock',
+    'dashboard:view_purchase',
+    'dashboard:view_sales',
+    'dashboard:view_due',
+    'dashboard:view_expenses',
+    'dashboard:view_repairs',
+  ],
   Sales: ['sales:view', 'sales:create', 'sales:delete'],
   Products: ['products:view', 'products:create', 'products:edit', 'products:delete'],
   Categories: ['categories:view', 'categories:manage'],
@@ -29,6 +39,25 @@ const PERMISSION_GROUPS = {
   Roles: ['roles:view', 'roles:manage'],
   Branches: ['branches:view', 'branches:manage'],
   Settings: ['settings:view', 'settings:manage'],
+};
+
+const PERMISSION_LABELS = {
+  'dashboard:view': 'Dashboard View',
+  'dashboard:view_revenue': "Today's Revenue",
+  'dashboard:view_profit': "Today's Profit",
+  'dashboard:view_stock': 'Stock Value',
+  'dashboard:view_purchase': 'Purchase Cost',
+  'dashboard:view_sales': "Today's Sales",
+  'dashboard:view_due': "Today's Due",
+  'dashboard:view_expenses': "Today's Expenses",
+  'dashboard:view_repairs': 'Active Repairs',
+};
+
+const formatPermissionLabel = (perm) => {
+  if (PERMISSION_LABELS[perm]) return PERMISSION_LABELS[perm];
+  const parts = perm.split(':');
+  const action = parts[1] || parts[0];
+  return action.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 };
 
 export default function RoleManagement() {
@@ -138,9 +167,9 @@ export default function RoleManagement() {
                 {role.permissions?.slice(0, 8).map((p) => (
                   <span
                     key={p}
-                    className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                    className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 font-medium"
                   >
-                    {p.split(':')[1]}
+                    {formatPermissionLabel(p)}
                   </span>
                 ))}
                 {role.permissions?.length > 8 && (
@@ -322,16 +351,16 @@ function RoleFormModal({ role, onClose, onSuccess }) {
                     </div>
                     <div className="flex flex-wrap gap-1.5 ml-7">
                       {perms.map((p) => {
-                        const action = p.split(':')[1];
+                        const label = formatPermissionLabel(p);
                         const selected = form.permissions.includes(p);
                         return (
                           <button
                             key={p}
                             type="button"
                             onClick={() => togglePermission(p)}
-                            className={`text-[11px] px-2 py-1 rounded-lg font-medium transition-all ${selected ? 'bg-[#2563EB] text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600'}`}
+                            className={`text-[11px] px-2.5 py-1 rounded-lg font-medium transition-all ${selected ? 'bg-[#2563EB] text-white shadow-xs font-semibold' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'}`}
                           >
-                            {action}
+                            {label}
                           </button>
                         );
                       })}
