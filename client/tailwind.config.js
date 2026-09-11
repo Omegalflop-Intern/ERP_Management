@@ -15,8 +15,8 @@ export default {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         primary: {
-          DEFAULT: 'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))',
+          DEFAULT: '#9CE700', // Lime Green
+          foreground: '#000000',
         },
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
@@ -41,6 +41,20 @@ export default {
         card: {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
+        },
+        /* ── Lime Green Palette mapped to Blue so legacy blue utilities inherit Lime Green ── */
+        blue: {
+          50: '#f4ffe6',
+          100: '#e5ffbf',
+          200: '#ccff99',
+          300: '#b3ff73',
+          400: '#9CE700',
+          500: '#9CE700',
+          600: '#9CE700',
+          700: '#7dbb00',
+          800: '#609200',
+          900: '#426600',
+          950: '#1a2b00',
         },
         brand: {
           50: '#f4ffe6',

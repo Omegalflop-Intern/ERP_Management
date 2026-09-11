@@ -59,9 +59,9 @@ function UserAvatar({ user, size = 'md', online = true }) {
   return (
     <div className="relative inline-block flex-shrink-0">
       <div
-        className={`${sz} rounded-full overflow-hidden flex items-center justify-center font-bold border border-blue-200 dark:border-blue-500/30 ${user?.avatar && !imgError
+        className={`${sz} rounded-full overflow-hidden flex items-center justify-center font-bold border border-slate-200 dark:border-neutral-800 ${user?.avatar && !imgError
             ? ''
-            : 'bg-green-600/10 dark:bg-green-600/20 text-green-700 dark:text-green-400'
+            : 'bg-[#9CE700]/15 text-[#9CE700]'
           }`}
       >
         {user?.avatar && !imgError ? (
@@ -76,12 +76,12 @@ function UserAvatar({ user, size = 'md', online = true }) {
         )}
       </div>
       <span
-        className={`absolute bottom-0 right-0 ${dotSize} rounded-full ring-2 ring-white dark:ring-slate-900 flex items-center justify-center`}
+        className={`absolute bottom-0 right-0 ${dotSize} rounded-full ring-2 ring-white dark:ring-black flex items-center justify-center`}
       >
         {online ? (
           <span className="relative flex h-full w-full">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-full w-full bg-emerald-500"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#9CE700] opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-full w-full bg-[#9CE700]"></span>
           </span>
         ) : (
           <span className="inline-flex rounded-full h-full w-full bg-amber-500"></span>
@@ -223,12 +223,12 @@ function GlobalSearch() {
           setIsOpen(true);
           inputRef.current?.focus();
         }}
-        className={`relative flex items-center w-full px-3.5 py-2 rounded-xl border text-xs cursor-text transition-all bg-white dark:bg-[#0f172a] border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 shadow-xs ${isOpen
-            ? 'ring-2 ring-[#2563EB]/30 border-[#2563EB] dark:border-blue-500 bg-white dark:bg-[#0f172a]'
+        className={`relative flex items-center w-full px-3.5 py-2 rounded-full border text-xs cursor-text transition-all bg-slate-50 dark:bg-[#0c0c0c] border-slate-200 dark:border-neutral-800 hover:border-slate-300 dark:hover:border-neutral-700 shadow-xs ${isOpen
+            ? 'ring-2 ring-[#9CE700]/30 border-[#9CE700] dark:border-[#9CE700] bg-white dark:bg-[#0c0c0c]'
             : ''
           }`}
       >
-        <Search className="w-4 h-4 text-slate-500 dark:text-slate-400 mr-2 flex-shrink-0 stroke-[2]" />
+        <Search className={`w-4 h-4 mr-2 flex-shrink-0 stroke-[2] transition-colors ${isOpen ? 'text-[#9CE700]' : 'text-slate-400 dark:text-neutral-500'}`} />
         <input
           ref={inputRef}
           type="text"
@@ -239,7 +239,7 @@ function GlobalSearch() {
           }}
           onFocus={() => setIsOpen(true)}
           placeholder="Search products, customers, IMEIs, sales... (Ctrl+K)"
-          className="global-search-input w-full bg-transparent border-0 ring-0 outline-none text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-0 text-xs font-medium"
+          className="global-search-input w-full bg-transparent border-0 ring-0 outline-none text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-0 text-xs font-medium"
         />
         {query ? (
           <button
@@ -247,12 +247,12 @@ function GlobalSearch() {
               e.stopPropagation();
               setQuery('');
             }}
-            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
           >
             <X className="w-3.5 h-3.5" />
           </button>
         ) : (
-          <div className="hidden md:flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-slate-200/70 dark:bg-slate-800 text-[10px] font-mono text-slate-500 dark:text-slate-400 flex-shrink-0 ml-1 border border-slate-300/40 dark:border-slate-700/40">
+          <div className="hidden md:flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-slate-200/80 dark:bg-neutral-900 text-[10px] font-mono text-slate-600 dark:text-neutral-400 flex-shrink-0 ml-1 border border-slate-300/60 dark:border-neutral-800">
             <Command className="w-2.5 h-2.5" />
             <span>K</span>
           </div>
@@ -263,15 +263,15 @@ function GlobalSearch() {
         <>
           {/* Mobile Backdrop */}
           <div
-            className="fixed inset-0 bg-slate-950/40 dark:bg-black/60 backdrop-blur-xs z-[190] sm:hidden"
+            className="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-xs z-[190] sm:hidden"
             onClick={() => setIsOpen(false)}
           />
 
-          <div className="fixed inset-x-3 top-16 sm:absolute sm:inset-x-auto sm:left-0 sm:right-0 sm:-left-16 sm:-right-16 md:-left-28 md:-right-28 sm:top-full sm:mt-2 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-[200] max-h-[75vh] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/80 animate-in fade-in zoom-in-95 duration-150">
+          <div className="fixed inset-x-3 top-16 sm:absolute sm:inset-x-auto sm:left-0 sm:right-0 sm:-left-16 sm:-right-16 md:-left-28 md:-right-28 sm:top-full sm:mt-2 bg-white dark:bg-[#0c0c0c] border border-slate-200 dark:border-neutral-800 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] z-[200] max-h-[75vh] overflow-y-auto divide-y divide-slate-100 dark:divide-neutral-900 animate-in fade-in zoom-in-95 duration-150">
             {filteredPages.length > 0 && (
               <div className="p-2.5">
-                <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Sparkles className="w-3 h-3 text-[#2563EB]" /> Navigation & Features
+                <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 dark:text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-[#9CE700]" /> Navigation & Features
                 </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 mt-1">
                 {filteredPages.map((page, idx) => {
@@ -280,18 +280,18 @@ function GlobalSearch() {
                     <button
                       key={idx}
                       onClick={() => handleSelect(page.path)}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-left hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors group"
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-left hover:bg-slate-100 dark:hover:bg-neutral-900 transition-all group"
                     >
-                      <div className="w-7 h-7 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 flex items-center justify-center group-hover:bg-[#2563EB]/10 group-hover:text-[#2563EB] transition-colors">
+                      <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-neutral-900 text-slate-600 dark:text-neutral-300 flex items-center justify-center group-hover:bg-[#9CE700]/15 group-hover:text-[#9CE700] transition-colors">
                         <Icon className="w-4 h-4" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs font-semibold text-gray-800 dark:text-gray-200 group-hover:text-[#2563EB] dark:group-hover:text-blue-400 truncate">
+                        <div className="text-xs font-semibold text-slate-800 dark:text-neutral-200 group-hover:text-[#9CE700] dark:group-hover:text-[#9CE700] transition-colors truncate">
                           {page.title}
                         </div>
-                        <div className="text-[10px] text-gray-400 font-mono">{page.category}</div>
+                        <div className="text-[10px] text-slate-400 dark:text-neutral-500 font-mono">{page.category}</div>
                       </div>
-                      <ArrowRight className="w-3.5 h-3.5 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <ArrowRight className="w-3.5 h-3.5 text-slate-400 dark:text-neutral-500 opacity-0 group-hover:opacity-100 group-hover:text-[#9CE700] transition-all" />
                     </button>
                   );
                 })}
@@ -300,41 +300,41 @@ function GlobalSearch() {
           )}
 
           {loading && (
-            <div className="p-4 text-center text-xs text-gray-400 flex items-center justify-center gap-2">
-              <RefreshCw className="w-4 h-4 animate-spin text-[#2563EB]" /> Searching database...
+            <div className="p-4 text-center text-xs text-slate-400 dark:text-neutral-400 flex items-center justify-center gap-2">
+              <RefreshCw className="w-4 h-4 animate-spin text-[#9CE700]" /> Searching database...
             </div>
           )}
 
           {!loading && products.length > 0 && (
             <div className="p-2">
-              <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-                <Package className="w-3 h-3 text-blue-500" /> Products & IMEIs
+              <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 dark:text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Package className="w-3.5 h-3.5 text-[#9CE700]" /> Products & IMEIs
               </div>
               <div className="space-y-1 mt-1">
                 {products.map((p) => (
                   <button
                     key={p._id}
                     onClick={() => handleSelect('/products')}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors group"
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left hover:bg-slate-100 dark:hover:bg-neutral-900 transition-all group"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center flex-shrink-0">
+                      <div className="w-7 h-7 rounded-lg bg-[#9CE700]/15 text-[#9CE700] flex items-center justify-center flex-shrink-0">
                         <Smartphone className="w-4 h-4" />
                       </div>
                       <div className="truncate">
-                        <div className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">
+                        <div className="text-xs font-semibold text-slate-800 dark:text-neutral-200 group-hover:text-[#9CE700] dark:group-hover:text-[#9CE700] truncate transition-colors">
                           {p.name}
                         </div>
-                        <div className="text-[10px] text-gray-400 font-mono">
+                        <div className="text-[10px] text-slate-400 dark:text-neutral-500 font-mono">
                           {p.brand} | {p.category?.name || 'Device'}
                         </div>
                       </div>
                     </div>
                     <div className="text-right flex-shrink-0 ml-2">
-                      <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                      <div className="text-xs font-bold text-[#9CE700] font-mono">
                         ৳{p.sellingPrice?.toLocaleString()}
                       </div>
-                      <div className="text-[10px] text-gray-400">Stock: {p.stockQuantity ?? 0}</div>
+                      <div className="text-[10px] text-slate-400 dark:text-neutral-500">Stock: {p.stockQuantity ?? 0}</div>
                     </div>
                   </button>
                 ))}
@@ -344,30 +344,30 @@ function GlobalSearch() {
 
           {!loading && customers.length > 0 && (
             <div className="p-2">
-              <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-                <Users className="w-3 h-3 text-emerald-500" /> Customers
+              <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 dark:text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5 text-[#9CE700]" /> Customers
               </div>
               <div className="space-y-1 mt-1">
                 {customers.map((c) => (
                   <button
                     key={c._id}
                     onClick={() => handleSelect(`/customers/${c._id}`)}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors group"
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left hover:bg-slate-100 dark:hover:bg-neutral-900 transition-all group"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center flex-shrink-0 font-bold text-xs">
+                      <div className="w-7 h-7 rounded-lg bg-[#9CE700]/15 text-[#9CE700] flex items-center justify-center flex-shrink-0 font-bold text-xs">
                         {c.name?.[0]?.toUpperCase() || 'C'}
                       </div>
                       <div className="truncate">
-                        <div className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">
+                        <div className="text-xs font-semibold text-slate-800 dark:text-neutral-200 group-hover:text-[#9CE700] dark:group-hover:text-[#9CE700] truncate transition-colors">
                           {c.name}
                         </div>
-                        <div className="text-[10px] text-gray-400 font-mono">
+                        <div className="text-[10px] text-slate-400 dark:text-neutral-500 font-mono">
                           {c.phone || c.email || 'No contact'}
                         </div>
                       </div>
                     </div>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 font-medium capitalize">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#9CE700]/15 text-[#9CE700] font-medium capitalize">
                       {c.type || 'Retail'}
                     </span>
                   </button>
@@ -378,34 +378,34 @@ function GlobalSearch() {
 
           {!loading && sales.length > 0 && (
             <div className="p-2">
-              <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-                <ShoppingCart className="w-3 h-3 text-purple-500" /> Sales Invoices
+              <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 dark:text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
+                <ShoppingCart className="w-3.5 h-3.5 text-[#9CE700]" /> Sales Invoices
               </div>
               <div className="space-y-1 mt-1">
                 {sales.map((s) => (
                   <button
                     key={s._id}
                     onClick={() => handleSelect(`/sales/${s._id}`)}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors group"
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-left hover:bg-slate-100 dark:hover:bg-neutral-900 transition-all group"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-7 h-7 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center flex-shrink-0">
+                      <div className="w-7 h-7 rounded-lg bg-[#9CE700]/15 text-[#9CE700] flex items-center justify-center flex-shrink-0">
                         <FileText className="w-4 h-4" />
                       </div>
                       <div className="truncate">
-                        <div className="text-xs font-semibold text-gray-800 dark:text-gray-200 font-mono">
+                        <div className="text-xs font-semibold text-slate-800 dark:text-neutral-200 group-hover:text-[#9CE700] dark:group-hover:text-[#9CE700] font-mono truncate transition-colors">
                           {s.invoiceNo}
                         </div>
-                        <div className="text-[10px] text-gray-400">
+                        <div className="text-[10px] text-slate-400 dark:text-neutral-500 truncate">
                           {s.customer?.name || 'Walk-in Customer'}
                         </div>
                       </div>
                     </div>
                     <div className="text-right flex-shrink-0 ml-2">
-                      <div className="text-xs font-bold text-purple-600 dark:text-purple-400 font-mono">
+                      <div className="text-xs font-bold text-[#9CE700] font-mono">
                         ৳{s.grandTotal?.toLocaleString()}
                       </div>
-                      <div className="text-[10px] text-gray-400">
+                      <div className="text-[10px] text-slate-400 dark:text-neutral-500">
                         {new Date(s.createdAt).toLocaleDateString()}
                       </div>
                     </div>
@@ -416,19 +416,19 @@ function GlobalSearch() {
           )}
 
           {!loading && query.length >= 2 && !hasResults && (
-            <div className="p-6 text-center text-xs text-gray-400">
+            <div className="p-6 text-center text-xs text-slate-400 dark:text-neutral-500">
               No products, customers, or invoices match "
-              <span className="font-semibold text-gray-300">{query}</span>"
+              <span className="font-semibold text-slate-700 dark:text-neutral-300">{query}</span>"
             </div>
           )}
 
-          <div className="px-4 py-2 bg-gray-50/50 dark:bg-gray-900/40 text-[10px] text-gray-400 flex items-center justify-between">
+          <div className="px-4 py-2.5 bg-slate-50 dark:bg-[#080808] border-t border-slate-100 dark:border-neutral-850 text-[10px] text-slate-500 dark:text-neutral-500 flex items-center justify-between">
             <span>
               Press{' '}
-              <kbd className="px-1 py-0.5 bg-gray-200 dark:bg-gray-800 rounded font-mono">Esc</kbd>{' '}
+              <kbd className="px-1.5 py-0.5 bg-slate-200 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 rounded font-mono border border-slate-300/50 dark:border-neutral-700">Esc</kbd>{' '}
               to close
             </span>
-            <span className="text-[#2563EB] font-medium">Omni-Manage Quick Search</span>
+            <span className="text-[#9CE700] font-bold tracking-wide">Omni-Manage Quick Search</span>
           </div>
         </div>
       </>
@@ -447,31 +447,31 @@ function getNotificationIcon(type) {
       );
     case 'DUE_REMINDER':
       return (
-        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center flex-shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-[#9CE700]/15 text-[#9CE700] flex items-center justify-center flex-shrink-0">
           <DollarSign className="w-4 h-4" />
         </div>
       );
     case 'SALE_COMPLETED':
       return (
-        <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center flex-shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-[#9CE700]/15 text-[#9CE700] flex items-center justify-center flex-shrink-0">
           <ShoppingCart className="w-4 h-4" />
         </div>
       );
     case 'WARRANTY_EXPIRING':
       return (
-        <div className="w-8 h-8 rounded-lg bg-[#2563EB]/10 text-[#2563EB] flex items-center justify-center flex-shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-[#9CE700]/15 text-[#9CE700] flex items-center justify-center flex-shrink-0">
           <FileText className="w-4 h-4" />
         </div>
       );
     case 'SYSTEM':
       return (
-        <div className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center flex-shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center flex-shrink-0">
           <Sparkles className="w-4 h-4" />
         </div>
       );
     default:
       return (
-        <div className="w-8 h-8 rounded-lg bg-gray-500/10 text-gray-500 flex items-center justify-center flex-shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-neutral-800 text-neutral-400 flex items-center justify-center flex-shrink-0">
           <Bell className="w-4 h-4" />
         </div>
       );
@@ -598,13 +598,13 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
       <div className="flex items-center gap-2">
         <button
           onClick={onToggleSidebar}
-          className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors lg:hidden ${styled ? 'neu-btn !p-2' : ''}`}
+          className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors lg:hidden ${styled ? 'neu-btn !p-2' : ''}`}
         >
           <PanelLeftOpen className="w-5 h-5 text-slate-700 dark:text-slate-200 stroke-[2]" />
         </button>
         <button
           onClick={onToggleCollapse}
-          className={`hidden lg:flex p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${styled ? 'neu-btn !p-2' : ''}`}
+          className={`hidden lg:flex p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors ${styled ? 'neu-btn !p-2' : ''}`}
         >
           {collapsed ? (
             <PanelLeft className="w-5 h-5 text-slate-700 dark:text-slate-200 stroke-[2]" />
@@ -612,9 +612,9 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
             <PanelLeftClose className="w-5 h-5 text-slate-700 dark:text-slate-200 stroke-[2]" />
           )}
         </button>
-        <div className="flex items-center gap-2 font-bold text-xl text-[#2563EB] dark:text-blue-400">
+        <div className="flex items-center gap-2 font-bold text-xl text-[#9CE700] dark:text-[#9CE700]">
           <div
-            className={`w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/40 flex items-center justify-center text-[#2563EB] dark:text-blue-400 overflow-hidden shrink-0 ${styled ? 'neu-icon !bg-blue-50 !border-none' : ''}`}
+            className={`w-9 h-9 rounded-xl bg-[#9CE700]/10 dark:bg-[#9CE700]/15 border border-[#9CE700]/30 dark:border-[#9CE700]/30 flex items-center justify-center text-[#7dbb00] dark:text-[#9CE700] overflow-hidden shrink-0 ${styled ? 'neu-icon !bg-[#9CE700]/10 !border-none' : ''}`}
           >
             {shopLogo && !logoError ? (
               <img
@@ -636,7 +636,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
             </span>
             <span
               className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${user?.tenantId
-                  ? 'bg-blue-500/10 text-[#2563EB] dark:text-blue-400 border border-blue-300/40 dark:border-blue-500/30'
+                  ? 'bg-[#9CE700]/10 text-[#7dbb00] dark:text-[#9CE700] border border-[#9CE700]/30'
                   : 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-300/40 dark:border-violet-500/30'
                 }`}
             >
@@ -662,23 +662,23 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
               setShowUserMenu(false);
               setShowNotifs(false);
             }}
-            className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${styled ? 'neu-btn !p-2' : ''}`}
+            className={`p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors ${styled ? 'neu-btn !p-2' : ''}`}
           >
             <Palette className="w-5 h-5 text-slate-700 dark:text-slate-200 stroke-[2]" />
           </button>
           {showMobileSettings && (
-            <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-[9999] overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-              <div className="px-3.5 py-2 border-b border-slate-200 dark:border-slate-800 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 dark:bg-slate-900/60">
+            <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-[#0c0c0c] border border-slate-200 dark:border-neutral-800 rounded-2xl shadow-2xl z-[9999] overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+              <div className="px-3.5 py-2 border-b border-slate-200 dark:border-neutral-800 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 dark:bg-neutral-900/60">
                 Theme & Design
               </div>
               <button
                 onClick={() => {
                   toggleTheme();
                 }}
-                className="w-full flex items-center gap-3 px-3.5 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-xs font-semibold text-slate-800 dark:text-slate-200"
+                className="w-full flex items-center gap-3 px-3.5 py-2.5 hover:bg-slate-50 dark:hover:bg-neutral-900/60 text-xs font-semibold text-slate-800 dark:text-slate-200"
               >
                 {theme === 'dark' ? (
-                  <Moon className="w-4 h-4 text-blue-400" />
+                  <Moon className="w-4 h-4 text-[#9CE700]" />
                 ) : (
                   <Sun className="w-4 h-4 text-amber-500" />
                 )}
@@ -691,10 +691,10 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
                 onClick={() => {
                   toggleDesignMode();
                 }}
-                className="w-full flex items-center gap-3 px-3.5 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-xs font-semibold text-slate-800 dark:text-slate-200"
+                className="w-full flex items-center gap-3 px-3.5 py-2.5 hover:bg-slate-50 dark:hover:bg-neutral-900/60 text-xs font-semibold text-slate-800 dark:text-slate-200"
               >
                 {designMode === 'glass' ? (
-                  <Sparkles className="w-4 h-4 text-blue-400" />
+                  <Sparkles className="w-4 h-4 text-[#9CE700]" />
                 ) : (
                   <Diamond className="w-4 h-4 text-slate-400" />
                 )}
@@ -716,25 +716,25 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
               setShowMobileSettings(false);
               if (nextState) qc.invalidateQueries({ queryKey: ['notifications'] });
             }}
-            className={`relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${styled ? 'neu-btn !p-2' : ''}`}
+            className={`relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors ${styled ? 'neu-btn !p-2' : ''}`}
           >
             <Bell className="w-5 h-5 text-slate-700 dark:text-slate-200 stroke-[2]" />
             {notifData?.unreadCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#2563EB] text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-[#9CE700] text-black text-[10px] font-black rounded-full flex items-center justify-center animate-pulse">
                 {notifData.unreadCount > 9 ? '9+' : notifData.unreadCount}
               </span>
             )}
           </button>
           {showNotifs && (
-            <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-[9999] max-h-96 overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60">
+            <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-[#0c0c0c] border border-slate-200 dark:border-neutral-800 rounded-2xl shadow-2xl z-[9999] max-h-96 overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-neutral-800 bg-slate-50 dark:bg-neutral-900/60">
                 <h3 className="font-bold text-xs text-slate-900 dark:text-slate-100">
                   Notifications
                 </h3>
                 {notifData?.unreadCount > 0 && (
                   <button
                     onClick={() => markAllReadMutation.mutate()}
-                    className="text-xs text-[#2563EB] hover:underline font-semibold"
+                    className="text-xs text-[#7dbb00] dark:text-[#9CE700] hover:underline font-semibold"
                   >
                     Mark all read
                   </button>
@@ -751,7 +751,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
                       if (n.link) navigate(n.link);
                       setShowNotifs(false);
                     }}
-                    className={`w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800/80 transition-colors ${!n.isRead ? 'bg-blue-50/40 dark:bg-blue-950/20' : ''}`}
+                    className={`w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-neutral-900/60 border-b border-slate-100 dark:border-neutral-800/80 transition-colors ${!n.isRead ? 'bg-[#9CE700]/10 dark:bg-[#9CE700]/10' : ''}`}
                   >
                     <div className="flex items-start gap-3">
                       {getNotificationIcon(n.type)}
@@ -761,7 +761,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
                             {n.title}
                           </div>
                           {!n.isRead && (
-                            <span className="w-2 h-2 rounded-full bg-blue-600 flex-shrink-0" />
+                            <span className="w-2 h-2 rounded-full bg-[#9CE700] flex-shrink-0" />
                           )}
                         </div>
                         <div className="text-xs text-slate-600 dark:text-slate-300 truncate mt-0.5">
@@ -798,9 +798,9 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
                 setShowNotifs(false);
                 setShowMobileSettings(false);
               }}
-              className={`hidden md:flex items-center gap-2.5 px-3 py-1.5 rounded-xl transition-all ${styled
-                  ? 'neu-flat !border-none !shadow-none hover:bg-white/10 dark:hover:bg-gray-800/40'
-                  : 'bg-gradient-to-br from-white/60 to-white/30 dark:from-white/[0.08] dark:to-white/[0.02] backdrop-blur-[24px] saturate-[1.7] border border-white/40 dark:border-white/[0.08] hover:from-white/70 hover:to-white/40 dark:hover:from-white/[0.12] dark:hover:to-white/[0.04] shadow-[0_2px_16px_rgba(15,23,42,0.04)] dark:shadow-[0_2px_16px_rgba(0,0,0,0.2)]'
+              className={`hidden md:flex items-center gap-2.5 px-3 py-1.5 rounded-full transition-all ${styled
+                  ? 'neu-flat !border-none !shadow-none hover:bg-white/10 dark:hover:bg-neutral-800/40'
+                  : 'bg-white/60 dark:bg-neutral-900/80 border border-slate-200 dark:border-neutral-800 hover:border-slate-300 dark:hover:border-neutral-700 shadow-sm'
                 }`}
             >
               <UserAvatar user={user} size="sm" online={online} />
@@ -808,7 +808,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
                 <div className="text-xs font-bold text-gray-900 dark:text-gray-100 truncate max-w-[120px]">
                   {user.fullName || user.username}
                 </div>
-                <div className="text-[10px] text-[#2563EB] dark:text-blue-400 font-bold uppercase tracking-wider truncate max-w-[120px]">
+                <div className="text-[10px] text-[#7dbb00] dark:text-[#9CE700] font-bold uppercase tracking-wider truncate max-w-[120px]">
                   {user.roleDisplayName || user.roleName || user.role}
                 </div>
               </div>
@@ -816,8 +816,8 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
             </button>
 
             {showUserMenu && (
-              <div className="absolute right-0 top-full mt-2 w-60 bg-white dark:bg-[#0f172a] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-[9999] overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-                <div className="md:hidden px-3 py-3 border-b border-gray-100 dark:border-gray-800">
+              <div className="absolute right-0 top-full mt-2 w-60 bg-white dark:bg-[#0c0c0c] border border-slate-200 dark:border-neutral-800 rounded-2xl shadow-2xl z-[9999] overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                <div className="md:hidden px-3 py-3 border-b border-gray-100 dark:border-neutral-800">
                   <div className="flex items-center gap-2.5">
                     <UserAvatar user={user} size="lg" online={online} />
                     <div>
@@ -842,9 +842,9 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
                       navigate('/super-admin/dashboard');
                       setShowUserMenu(false);
                     }}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-sm text-[#2563EB] dark:text-blue-400 font-bold transition-colors border-b border-gray-100 dark:border-gray-800/60"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-[#9CE700]/10 text-sm text-[#9CE700] font-bold transition-colors border-b border-gray-100 dark:border-neutral-800"
                   >
-                    <ShieldCheck className="w-4 h-4 text-[#2563EB] dark:text-blue-400" />
+                    <ShieldCheck className="w-4 h-4 text-[#9CE700]" />
                     Super Admin Console
                   </button>
                 )}
@@ -853,7 +853,7 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
                     navigate('/profile');
                     setShowUserMenu(false);
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800/60 text-sm text-gray-700 dark:text-gray-300 transition-colors border-b border-gray-100 dark:border-gray-800/60"
+                  className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-neutral-900/60 text-sm text-gray-700 dark:text-gray-300 transition-colors border-b border-gray-100 dark:border-neutral-800"
                 >
                   <User className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                   My Profile

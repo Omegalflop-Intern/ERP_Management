@@ -16,31 +16,24 @@ import {
 } from 'recharts';
 import {
   TrendingUp,
-  TrendingDown,
   DollarSign,
   ShoppingBag,
-  AlertCircle,
   PieChart as PieIcon,
-  Calendar,
-  Zap,
   BarChart3,
-  Layers,
   Sparkles,
-  ArrowUpRight,
   PackageCheck,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 
 const BRAND_COLORS = [
-  '#6366F1', // Indigo
+  '#9CE700', // Lime Green
   '#8B5CF6', // Violet
   '#0EA5E9', // Sky Blue
   '#10B981', // Emerald
   '#F59E0B', // Amber
   '#EC4899', // Pink
   '#06B6D4', // Cyan
-  '#84CC16', // Lime
   '#F97316', // Orange
   '#14B8A6', // Teal
 ];
@@ -82,7 +75,7 @@ export default function DashboardCharts({
   }
 
   const textColor = isDark ? '#94A3B8' : '#64748B';
-  const gridColor = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)';
+  const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.06)';
 
   // Calculate Aggregated Metrics for KPI Highlights
   const summaryMetrics = useMemo(() => {
@@ -115,10 +108,10 @@ export default function DashboardCharts({
     if (!active || !payload || !payload.length) return null;
 
     return (
-      <div className="rounded-2xl p-3.5 shadow-2xl backdrop-blur-2xl bg-slate-900/90 dark:bg-slate-950/95 border border-slate-700/60 text-white min-w-[180px] space-y-2">
-        <div className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-1.5 flex items-center justify-between">
+      <div className="rounded-2xl p-3.5 shadow-2xl backdrop-blur-2xl bg-white/95 dark:bg-[#0c0c0c] border border-slate-200 dark:border-neutral-800 text-slate-900 dark:text-white min-w-[180px] space-y-2">
+        <div className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 border-b border-slate-100 dark:border-neutral-800/80 pb-1.5 flex items-center justify-between">
           <span>{label}</span>
-          <Sparkles className="w-3 h-3 text-indigo-400" />
+          <Sparkles className="w-3 h-3 text-[#9CE700]" />
         </div>
         <div className="space-y-1.5 pt-0.5">
           {payload.map((entry, index) => (
@@ -128,9 +121,9 @@ export default function DashboardCharts({
                   className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm"
                   style={{ backgroundColor: entry.color }}
                 />
-                <span className="font-semibold text-slate-300">{entry.name}</span>
+                <span className="font-semibold text-slate-600 dark:text-slate-300">{entry.name}</span>
               </div>
-              <span className="font-extrabold text-white font-mono">
+              <span className="font-extrabold text-slate-900 dark:text-white font-mono">
                 {typeof entry.value === 'number' &&
                 entry.name !== 'Sales Count' &&
                 entry.name !== 'Units' &&
@@ -147,8 +140,8 @@ export default function DashboardCharts({
   };
 
   const EmptyChart = ({ title, icon: Icon = BarChart3 }) => (
-    <div className="flex flex-col items-center justify-center h-[280px] gap-3 bg-slate-50/50 dark:bg-slate-900/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
-      <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center shadow-inner">
+    <div className="flex flex-col items-center justify-center h-[280px] gap-3 bg-slate-50/50 dark:bg-[#080808] rounded-2xl border border-dashed border-slate-200 dark:border-neutral-800">
+      <div className="w-12 h-12 rounded-2xl bg-[#9CE700]/10 text-[#9CE700] flex items-center justify-center shadow-inner">
         <Icon className="w-6 h-6 stroke-[2]" />
       </div>
       <div className="text-center">
@@ -169,11 +162,11 @@ export default function DashboardCharts({
   return (
     <div className="space-y-6">
       {/* ─── TIMEFRAME HEADER & KPI METRICS STRIP ───────────────────────── */}
-      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm space-y-4">
+      <div className="bg-white/90 dark:bg-[#0c0c0c] backdrop-blur-xl border border-slate-200/80 dark:border-neutral-800 rounded-[20px] p-4 sm:p-5 shadow-sm space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-indigo-600/20">
-              <TrendingUp className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-[#9CE700]/15 text-[#9CE700] border border-[#9CE700]/30 flex items-center justify-center shadow-md shadow-[#9CE700]/10">
+              <TrendingUp className="w-5 h-5 text-[#9CE700] stroke-[2.5]" />
             </div>
             <div>
               <h2 className="text-base font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
@@ -187,7 +180,7 @@ export default function DashboardCharts({
 
           {/* Timeframe Selector Pills */}
           {onPeriodChange && (
-            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700/60">
+            <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#141414] p-1.5 rounded-xl border border-slate-200 dark:border-neutral-800">
               {PERIOD_OPTIONS.map((opt) => (
                 <button
                   key={opt.value}
@@ -195,8 +188,8 @@ export default function DashboardCharts({
                   onClick={() => onPeriodChange(opt.value)}
                   className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all ${
                     period === opt.value
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-700/40'
+                      ? 'bg-[#9CE700] text-black shadow-md shadow-[#9CE700]/25'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-neutral-800/80'
                   }`}
                 >
                   {opt.label}
@@ -208,18 +201,18 @@ export default function DashboardCharts({
 
         {/* Aggregate KPI Badges */}
         {hasAnyKpi && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-slate-200/60 dark:border-slate-800">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-slate-200/60 dark:border-neutral-800">
             {canViewRevenue && (
-              <div className="p-3 rounded-xl bg-indigo-500/5 dark:bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-between">
+              <div className="p-3 rounded-xl bg-[#9CE700]/5 dark:bg-[#9CE700]/10 border border-[#9CE700]/20 flex items-center justify-between">
                 <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-indigo-500 dark:text-indigo-400">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-[#7dbb00] dark:text-[#9CE700]">
                     Period Revenue
                   </div>
                   <div className="text-lg font-black text-slate-900 dark:text-white font-mono mt-0.5">
                     ৳{summaryMetrics.totalRev.toLocaleString()}
                   </div>
                 </div>
-                <div className="h-8 w-8 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                <div className="h-8 w-8 rounded-lg bg-[#9CE700]/15 text-[#7dbb00] dark:text-[#9CE700] flex items-center justify-center shrink-0">
                   <DollarSign className="w-4 h-4 stroke-[2.5]" />
                 </div>
               </div>
@@ -282,10 +275,10 @@ export default function DashboardCharts({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* 1. Smooth Gradient Area Chart: Revenue & Sales Trend */}
         {(canViewRevenue || canViewSales) && (
-          <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+          <div className="bg-white/90 dark:bg-[#0c0c0c] backdrop-blur-xl border border-slate-200/80 dark:border-neutral-800 rounded-[20px] p-5 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-indigo-500" />
+                <TrendingUp className="w-4 h-4 text-[#9CE700]" />
                 {canViewRevenue && canViewSales
                   ? 'Revenue & Order Trend'
                   : canViewRevenue
@@ -305,8 +298,8 @@ export default function DashboardCharts({
                 >
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366F1" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#6366F1" stopOpacity={0.0} />
+                      <stop offset="5%" stopColor="#9CE700" stopOpacity={0.45} />
+                      <stop offset="95%" stopColor="#9CE700" stopOpacity={0.0} />
                     </linearGradient>
                     <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#10B981" stopOpacity={0.35} />
@@ -332,7 +325,7 @@ export default function DashboardCharts({
                     <Area
                       type="monotone"
                       dataKey="revenue"
-                      stroke="#6366F1"
+                      stroke="#9CE700"
                       strokeWidth={3}
                       fillOpacity={1}
                       fill="url(#colorRevenue)"
@@ -360,10 +353,10 @@ export default function DashboardCharts({
 
         {/* 2. Rounded Bar Chart: Paid Collection vs Due Balance */}
         {canViewDue && (
-          <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+          <div className="bg-white/90 dark:bg-[#0c0c0c] backdrop-blur-xl border border-slate-200/80 dark:border-neutral-800 rounded-[20px] p-5 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
-                <BarChart3 className="w-4 h-4 text-emerald-500" />
+                <BarChart3 className="w-4 h-4 text-emerald-400" />
                 Paid vs Due Collection
               </h3>
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
@@ -417,10 +410,10 @@ export default function DashboardCharts({
 
         {/* 3. Donut Pie Chart: Stock by Brand with Center Indicator */}
         {canViewStock && (
-          <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
+          <div className="bg-white/90 dark:bg-[#0c0c0c] backdrop-blur-xl border border-slate-200/80 dark:border-neutral-800 rounded-[20px] p-5 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
-                <PieIcon className="w-4 h-4 text-violet-500" />
+                <PieIcon className="w-4 h-4 text-[#9CE700]" />
                 Stock Brand Distribution
               </h3>
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
@@ -445,7 +438,7 @@ export default function DashboardCharts({
                         <Cell
                           key={i}
                           fill={BRAND_COLORS[i % BRAND_COLORS.length]}
-                          stroke={isDark ? '#0F172A' : '#FFFFFF'}
+                          stroke={isDark ? '#0c0c0c' : '#FFFFFF'}
                           strokeWidth={2}
                         />
                       ))}
@@ -453,12 +446,12 @@ export default function DashboardCharts({
                     <Tooltip
                       formatter={(val, name) => [`${val} pcs (units)`, name]}
                       contentStyle={{
-                        borderRadius: 12,
-                        background: isDark ? '#0F172A' : '#FFFFFF',
-                        borderColor: isDark ? '#334155' : '#E2E8F0',
+                        borderRadius: 14,
+                        background: isDark ? '#0c0c0c' : '#FFFFFF',
+                        borderColor: isDark ? '#1f1f1f' : '#E2E8F0',
                         color: isDark ? '#F8FAFC' : '#0F172A',
                         fontSize: 12,
-                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2)',
+                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.4)',
                       }}
                       itemStyle={{
                         color: isDark ? '#F8FAFC' : '#0F172A',
