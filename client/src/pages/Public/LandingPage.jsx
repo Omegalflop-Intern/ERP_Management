@@ -267,8 +267,8 @@ export default function LandingPage() {
                     'Unified Stock Sync',
                     'Audit-Ready Accounting',
                   ]}
-                  className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 dark:from-blue-400 dark:via-indigo-300 dark:to-violet-400 bg-clip-text text-transparent font-extrabold"
-                  cursorClassName="bg-blue-600 dark:bg-blue-400"
+                  className="text-[#5ea300] dark:text-[#9CE700] font-extrabold drop-shadow-xs dark:drop-shadow-[0_0_20px_rgba(156,231,0,0.25)]"
+                  cursorClassName="bg-[#5ea300] dark:bg-[#9CE700]"
                   typingSpeed={80}
                   deletingSpeed={45}
                   pauseTime={1900}
