@@ -34,50 +34,116 @@ export const downloadBackendInvoicePdf = async (saleIdOrToken, invoiceNumber) =>
   }
 };
 
-// 100% Bulletproof Native Client-Side Print Engine with Dynamic Page Size
-export const executeClientPrint = (element, title = 'Invoice', printSize = 'a4full') => {
+// 100% Bulletproof Native Client-Side Print Engine with Dynamic Page Size & Isolated Iframe
+export const executeClientPrint = (element, title = 'Invoice', printSize = 'a4') => {
+  if (!element) {
+    window.print();
+    return;
+  }
+
+  const normalizedSize = String(printSize || 'a4').toLowerCase();
   let pageSize = 'A4 portrait';
   let pageMargin = '4mm';
 
-  if (printSize === 'a4half' || printSize === 'a5') {
+  if (normalizedSize === 'a4half' || normalizedSize === 'a5') {
     pageSize = 'A5 portrait';
     pageMargin = '3mm';
-  } else if (printSize === 'receipt' || printSize === '80mm') {
+  } else if (normalizedSize === 'receipt' || normalizedSize === '80mm') {
     pageSize = '80mm auto';
     pageMargin = '2mm';
-  } else if (printSize === 'thermal' || printSize === '58mm') {
+  } else if (normalizedSize === 'thermal' || normalizedSize === '58mm') {
     pageSize = '58mm auto';
     pageMargin = '1mm';
   }
 
-  const existingStyle = document.getElementById('omni-dynamic-print-style');
-  if (existingStyle) existingStyle.remove();
+  // Create an invisible iframe for completely isolated printing
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  iframe.style.visibility = 'hidden';
+  document.body.appendChild(iframe);
 
-  const style = document.createElement('style');
-  style.id = 'omni-dynamic-print-style';
-  style.textContent = `
-    @page {
-      size: ${pageSize};
-      margin: ${pageMargin};
+  const doc = iframe.contentWindow?.document;
+  if (!doc) {
+    window.print();
+    return;
+  }
+
+  // Copy all stylesheets and style tags from current page
+  const headNodes = Array.from(document.head.querySelectorAll('style, link[rel="stylesheet"]'));
+  const headHtml = headNodes.map((node) => node.outerHTML).join('\n');
+
+  doc.open();
+  doc.write(`
+    <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8" />
+        <title>${title || 'Print'}</title>
+        <base href="${window.location.origin}/" />
+        ${headHtml}
+        <style>
+          @page {
+            size: ${pageSize};
+            margin: ${pageMargin};
+          }
+          *, *::before, *::after {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            box-shadow: none !important;
+            text-shadow: none !important;
+          }
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+            color: #0f172a !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: 0 !important;
+            overflow: visible !important;
+          }
+          body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+          }
+          .omni-print-wrapper {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 auto !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="omni-print-wrapper">${element.innerHTML}</div>
+      </body>
+    </html>
+  `);
+  doc.close();
+
+  const triggerPrint = () => {
+    try {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+    } catch (e) {
+      console.error('Print iframe error:', e);
+      window.print();
+    } finally {
+      setTimeout(() => {
+        if (iframe && iframe.parentNode) {
+          iframe.parentNode.removeChild(iframe);
+        }
+      }, 2000);
     }
-    @media print {
-      html, body {
-        margin: 0 !important;
-        padding: 0 !important;
-        background: #ffffff !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-      }
-    }
-  `;
-  document.head.appendChild(style);
+  };
 
-  window.print();
-
-  setTimeout(() => {
-    const s = document.getElementById('omni-dynamic-print-style');
-    if (s) s.remove();
-  }, 1500);
+  // Give a small delay to ensure all CSS styles & SVGs/fonts are painted
+  setTimeout(triggerPrint, 350);
 };
 
 // Generate standard Code128 barcode image as data URL using JsBarcode

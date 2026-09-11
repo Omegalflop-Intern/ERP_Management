@@ -19,6 +19,8 @@ import {
 } from '../../components/sales/Invoice';
 import { Button } from '../../components/ui/button';
 
+import { executeClientPrint } from '../../utils/invoiceGenerator';
+
 const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
 
 const INVOICE_SIZES = [
@@ -78,28 +80,8 @@ export default function PublicInvoice() {
     }
   };
 
-  const getPageStyle = () => {
-    switch (printSize) {
-      case 'a4half':
-        return `@page { size: A5 portrait; margin: 3mm; } @media print { html, body { margin: 0 !important; padding: 0 !important; background: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }`;
-      case 'receipt':
-        return `@page { size: 80mm auto; margin: 2mm; } @media print { html, body { margin: 0 !important; padding: 0 !important; background: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }`;
-      case 'thermal':
-        return `@page { size: 58mm auto; margin: 1mm; } @media print { html, body { margin: 0 !important; padding: 0 !important; background: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }`;
-      default:
-        return `@page { size: A4 portrait; margin: 4mm; } @media print { html, body { margin: 0 !important; padding: 0 !important; background: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }`;
-    }
-  };
-
   const handlePrint = () => {
-    const style = document.createElement('style');
-    style.id = 'print-style';
-    style.textContent = getPageStyle();
-    document.head.appendChild(style);
-    window.print();
-    setTimeout(() => {
-      if (style.parentNode) document.head.removeChild(style);
-    }, 1500);
+    executeClientPrint(printRef.current, `Invoice-${sale?.invoiceNumber || ''}`, printSize);
   };
 
   const renderInvoice = () => {

@@ -31,7 +31,7 @@ export default function ReturnCreditNote({ sale, returnLog, returnLogsGroup }) {
   return (
     <div
       data-printable="true"
-      className="printable-invoice-container printable-slip bg-white text-slate-900 p-4 sm:p-6 md:p-8 w-full max-w-[210mm] min-h-[276mm] mx-auto flex flex-col justify-between shadow-lg border border-slate-200 print:shadow-none print:border-none print:p-2 sm:print:p-4 print:max-w-none print:w-full print:min-h-[276mm] print:flex print:flex-col print:justify-between"
+      className="printable-invoice-container printable-slip bg-white text-slate-900 p-4 sm:p-6 md:p-8 w-full max-w-[210mm] min-h-[276mm] mx-auto flex flex-col justify-between shadow-lg border border-slate-200 print:shadow-none print:border-none print:p-2 sm:print:p-4 print:max-w-none print:w-full print:min-h-0 print:h-auto"
       style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
     >
       <div>
