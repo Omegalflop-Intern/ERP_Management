@@ -1392,9 +1392,30 @@ input.global-search-input,
     width: 100% !important;
   }
 
-  #root,
-  main,
-  .app-layout {
+  /* ── Dedicated Portal Print Mode (Isolated zero-margin print) ── */
+  body.omni-printing-active > *:not(#omni-print-portal) {
+    display: none !important;
+  }
+
+  body.omni-printing-active #omni-print-portal {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    visibility: visible !important;
+  }
+
+  body.omni-printing-active #omni-print-portal * {
+    visibility: visible !important;
+  }
+
+  /* ── Standard / Native Fallback Print Mode ── */
+  body:not(.omni-printing-active) #root,
+  body:not(.omni-printing-active) main,
+  body:not(.omni-printing-active) .app-layout {
     overflow: visible !important;
     height: auto !important;
     min-height: 0 !important;
@@ -1404,7 +1425,7 @@ input.global-search-input,
     margin: 0 !important;
   }
 
-  body * {
+  body:not(.omni-printing-active) * {
     visibility: hidden;
   }
 
@@ -1502,6 +1523,10 @@ input.global-search-input,
     font-size: 11px !important;
     padding: 6px !important;
   }
+}
+
+#omni-print-portal {
+  display: none;
 }
 
 /* ═══════════════════════════════════════════════════════════════

@@ -34,7 +34,7 @@ export const downloadBackendInvoicePdf = async (saleIdOrToken, invoiceNumber) =>
   }
 };
 
-// 100% Bulletproof Native Client-Side Print Engine with Dynamic Page Size & Isolated Iframe
+// 100% Bulletproof Native Client-Side Print Engine with Dynamic Page Size & Isolated Portal
 export const executeClientPrint = (element, title = 'Invoice', printSize = 'a4') => {
   if (!element) {
     window.print();
@@ -56,94 +56,47 @@ export const executeClientPrint = (element, title = 'Invoice', printSize = 'a4')
     pageMargin = '1mm';
   }
 
-  // Create an invisible iframe for completely isolated printing
-  const iframe = document.createElement('iframe');
-  iframe.style.position = 'fixed';
-  iframe.style.right = '0';
-  iframe.style.bottom = '0';
-  iframe.style.width = '0';
-  iframe.style.height = '0';
-  iframe.style.border = '0';
-  iframe.style.visibility = 'hidden';
-  document.body.appendChild(iframe);
+  // Remove any existing print portal & dynamic print styles
+  const existingPortal = document.getElementById('omni-print-portal');
+  if (existingPortal) existingPortal.remove();
 
-  const doc = iframe.contentWindow?.document;
-  if (!doc) {
-    window.print();
-    return;
-  }
+  const existingStyle = document.getElementById('omni-dynamic-print-style');
+  if (existingStyle) existingStyle.remove();
 
-  // Copy all stylesheets and style tags from current page
-  const headNodes = Array.from(document.head.querySelectorAll('style, link[rel="stylesheet"]'));
-  const headHtml = headNodes.map((node) => node.outerHTML).join('\n');
+  // Create isolated portal container directly in document.body
+  const portal = document.createElement('div');
+  portal.id = 'omni-print-portal';
+  portal.innerHTML = element.outerHTML || element.innerHTML;
+  document.body.appendChild(portal);
 
-  doc.open();
-  doc.write(`
-    <!DOCTYPE html>
-    <html lang="en">
-      <head>
-        <meta charset="utf-8" />
-        <title>${title || 'Print'}</title>
-        <base href="${window.location.origin}/" />
-        ${headHtml}
-        <style>
-          @page {
-            size: ${pageSize};
-            margin: ${pageMargin};
-          }
-          *, *::before, *::after {
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-            box-shadow: none !important;
-            text-shadow: none !important;
-          }
-          html, body {
-            margin: 0 !important;
-            padding: 0 !important;
-            background: #ffffff !important;
-            color: #0f172a !important;
-            width: 100% !important;
-            height: auto !important;
-            min-height: 0 !important;
-            overflow: visible !important;
-          }
-          body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
-          }
-          .omni-print-wrapper {
-            width: 100% !important;
-            max-width: 100% !important;
-            margin: 0 auto !important;
-            padding: 0 !important;
-            background: #ffffff !important;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="omni-print-wrapper">${element.innerHTML}</div>
-      </body>
-    </html>
-  `);
-  doc.close();
-
-  const triggerPrint = () => {
-    try {
-      iframe.contentWindow.focus();
-      iframe.contentWindow.print();
-    } catch (e) {
-      console.error('Print iframe error:', e);
-      window.print();
-    } finally {
-      setTimeout(() => {
-        if (iframe && iframe.parentNode) {
-          iframe.parentNode.removeChild(iframe);
-        }
-      }, 2000);
+  const style = document.createElement('style');
+  style.id = 'omni-dynamic-print-style';
+  style.textContent = `
+    @page {
+      size: ${pageSize};
+      margin: ${pageMargin};
     }
+  `;
+  document.head.appendChild(style);
+
+  // Activate dedicated portal print mode
+  document.body.classList.add('omni-printing-active');
+
+  // Trigger print
+  window.print();
+
+  // Cleanup after print dialog closes
+  const cleanup = () => {
+    document.body.classList.remove('omni-printing-active');
+    const p = document.getElementById('omni-print-portal');
+    if (p) p.remove();
+    const s = document.getElementById('omni-dynamic-print-style');
+    if (s) s.remove();
+    window.removeEventListener('afterprint', cleanup);
   };
 
-  // Give a small delay to ensure all CSS styles & SVGs/fonts are painted
-  setTimeout(triggerPrint, 350);
+  window.addEventListener('afterprint', cleanup);
+  setTimeout(cleanup, 2000);
 };
 
 // Generate standard Code128 barcode image as data URL using JsBarcode
