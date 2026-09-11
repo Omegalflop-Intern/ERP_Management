@@ -42,27 +42,28 @@ function SamuraiCanvas({ isDark }) {
     let w = (canvas.width = window.innerWidth);
     let h = (canvas.height = window.innerHeight);
 
-    // Sakura Petals
-    const petals = Array.from({ length: 42 }, () => ({
+    // Sakura & Lime Petals
+    const petals = Array.from({ length: 48 }, () => ({
       x: Math.random() * w,
       y: Math.random() * h - h * 0.2,
-      size: 7 + Math.random() * 8,
-      speedX: 0.8 + Math.random() * 1.5,
-      speedY: 1.2 + Math.random() * 1.8,
+      size: 8 + Math.random() * 9,
+      speedX: 0.9 + Math.random() * 1.6,
+      speedY: 1.2 + Math.random() * 1.9,
       angle: Math.random() * Math.PI * 2,
       angularSpeed: (Math.random() - 0.5) * 0.04,
       flip: Math.random() * Math.PI,
       flipSpeed: 0.02 + Math.random() * 0.03,
+      isLime: Math.random() > 0.45,
     }));
 
     // Fiery Floating Embers
-    const embers = Array.from({ length: 30 }, () => ({
+    const embers = Array.from({ length: 36 }, () => ({
       x: Math.random() * w,
       y: Math.random() * h,
-      r: 1 + Math.random() * 2.2,
-      speedY: -(0.4 + Math.random() * 0.8),
-      speedX: (Math.random() - 0.5) * 0.5,
-      alpha: 0.2 + Math.random() * 0.6,
+      r: 1.5 + Math.random() * 2.5,
+      speedY: -(0.5 + Math.random() * 0.9),
+      speedX: (Math.random() - 0.5) * 0.6,
+      alpha: 0.4 + Math.random() * 0.6,
       pulse: Math.random() * 0.05,
     }));
 
@@ -78,19 +79,25 @@ function SamuraiCanvas({ isDark }) {
       ctx.bezierCurveTo(-p.size * 0.8, p.size * 0.5, -p.size * 0.8, -p.size * 0.7, 0, -p.size);
 
       const grad = ctx.createLinearGradient(0, -p.size, 0, p.size);
-      if (isDark) {
-        grad.addColorStop(0, 'rgba(251, 113, 133, 0.85)'); // rose-400
-        grad.addColorStop(0.6, 'rgba(244, 63, 94, 0.75)'); // rose-500
-        grad.addColorStop(1, 'rgba(225, 29, 72, 0.6)');
+      if (p.isLime) {
+        grad.addColorStop(0, 'rgba(156, 231, 0, 0.95)');
+        grad.addColorStop(0.6, 'rgba(132, 204, 22, 0.85)');
+        grad.addColorStop(1, 'rgba(101, 163, 13, 0.7)');
+        ctx.shadowColor = 'rgba(156, 231, 0, 0.5)';
+      } else if (isDark) {
+        grad.addColorStop(0, 'rgba(251, 113, 133, 0.9)');
+        grad.addColorStop(0.6, 'rgba(244, 63, 94, 0.8)');
+        grad.addColorStop(1, 'rgba(225, 29, 72, 0.65)');
+        ctx.shadowColor = 'rgba(225, 29, 72, 0.4)';
       } else {
-        grad.addColorStop(0, 'rgba(253, 164, 175, 0.9)');
-        grad.addColorStop(0.6, 'rgba(251, 113, 133, 0.8)');
-        grad.addColorStop(1, 'rgba(244, 63, 94, 0.65)');
+        grad.addColorStop(0, 'rgba(253, 164, 175, 0.95)');
+        grad.addColorStop(0.6, 'rgba(251, 113, 133, 0.85)');
+        grad.addColorStop(1, 'rgba(244, 63, 94, 0.7)');
+        ctx.shadowColor = 'rgba(251, 113, 133, 0.35)';
       }
 
       ctx.fillStyle = grad;
-      ctx.shadowColor = isDark ? 'rgba(225, 29, 72, 0.4)' : 'rgba(251, 113, 133, 0.3)';
-      ctx.shadowBlur = 6;
+      ctx.shadowBlur = 8;
       ctx.fill();
       ctx.restore();
     };
@@ -98,32 +105,10 @@ function SamuraiCanvas({ isDark }) {
     const draw = () => {
       ctx.clearRect(0, 0, w, h);
 
-      // Subtle atmospheric samurai sun / moon glow
-      const sunGrad = ctx.createRadialGradient(
-        w * 0.5,
-        h * 0.35,
-        10,
-        w * 0.5,
-        h * 0.35,
-        Math.min(w, h) * 0.45
-      );
-      if (isDark) {
-        sunGrad.addColorStop(0, 'rgba(225, 29, 72, 0.12)');
-        sunGrad.addColorStop(0.5, 'rgba(180, 83, 9, 0.05)');
-        sunGrad.addColorStop(1, 'transparent');
-      } else {
-        sunGrad.addColorStop(0, 'rgba(254, 205, 211, 0.3)');
-        sunGrad.addColorStop(0.6, 'rgba(253, 230, 138, 0.1)');
-        sunGrad.addColorStop(1, 'transparent');
-      }
-      ctx.fillStyle = sunGrad;
-      ctx.fillRect(0, 0, w, h);
-
-      // Draw embers
+      // Draw embers with smooth constant opacity (no pulsing / flickering)
       for (const eb of embers) {
         eb.y += eb.speedY;
-        eb.x += eb.speedX + Math.sin(eb.y * 0.01) * 0.3;
-        eb.alpha += Math.sin(Date.now() * eb.pulse) * 0.01;
+        eb.x += eb.speedX + Math.sin(eb.y * 0.01) * 0.2;
 
         if (eb.y < -10) {
           eb.y = h + 10;
@@ -132,17 +117,13 @@ function SamuraiCanvas({ isDark }) {
 
         ctx.beginPath();
         ctx.arc(eb.x, eb.y, eb.r, 0, Math.PI * 2);
-        ctx.fillStyle = isDark
-          ? `rgba(245, 158, 11, ${Math.max(0.1, Math.min(1, eb.alpha))})`
-          : `rgba(217, 119, 6, ${Math.max(0.1, Math.min(0.8, eb.alpha))})`;
-        ctx.shadowColor = '#f59e0b';
-        ctx.shadowBlur = 8;
+        ctx.fillStyle = isDark ? 'rgba(156, 231, 0, 0.65)' : 'rgba(132, 204, 22, 0.55)';
         ctx.fill();
       }
 
       // Draw sakura petals
       for (const p of petals) {
-        p.x += p.speedX + Math.sin(p.y * 0.008) * 0.8;
+        p.x += p.speedX + Math.sin(p.y * 0.008) * 0.6;
         p.y += p.speedY;
         p.angle += p.angularSpeed;
         p.flip += p.flipSpeed;
@@ -186,16 +167,16 @@ function MatrixCanvas({ isDark }) {
     let w = (canvas.width = window.innerWidth);
     let h = (canvas.height = window.innerHeight);
 
-    const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンOMNIMANAGE';
+    const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンOMNIMANAGE9CE700';
     const fontSize = 14;
     const columns = Math.floor(w / fontSize);
     const drops = Array.from({ length: columns }, () => Math.floor(Math.random() * -50));
 
     const draw = () => {
-      ctx.fillStyle = isDark ? 'rgba(5, 8, 16, 0.15)' : 'rgba(241, 245, 249, 0.2)';
+      ctx.fillStyle = isDark ? 'rgba(0, 0, 0, 0.15)' : 'rgba(241, 245, 249, 0.2)';
       ctx.fillRect(0, 0, w, h);
 
-      ctx.font = `${fontSize}px monospace`;
+      ctx.font = `bold ${fontSize}px monospace`;
 
       for (let i = 0; i < drops.length; i++) {
         const char = chars[Math.floor(Math.random() * chars.length)];
@@ -203,13 +184,13 @@ function MatrixCanvas({ isDark }) {
         const y = drops[i] * fontSize;
 
         if (isDark) {
-          ctx.fillStyle = '#4ade80'; // Bright green head
-          ctx.shadowColor = '#22c55e';
-          ctx.shadowBlur = 8;
+          ctx.fillStyle = '#9CE700'; // Lime green head
+          ctx.shadowColor = '#9CE700';
+          ctx.shadowBlur = 10;
         } else {
-          ctx.fillStyle = '#059669';
-          ctx.shadowColor = '#10b981';
-          ctx.shadowBlur = 4;
+          ctx.fillStyle = '#65a30d';
+          ctx.shadowColor = '#84cc16';
+          ctx.shadowBlur = 6;
         }
         ctx.fillText(char, x, y);
 
@@ -249,12 +230,12 @@ function GalaxyCanvas({ isDark }) {
     let w = (canvas.width = window.innerWidth);
     let h = (canvas.height = window.innerHeight);
 
-    const stars = Array.from({ length: 90 }, () => ({
+    const stars = Array.from({ length: 110 }, () => ({
       angle: Math.random() * Math.PI * 2,
       dist: 40 + Math.random() * Math.min(w, h) * 0.48,
       speed: 0.002 + Math.random() * 0.005,
-      r: 0.8 + Math.random() * 2,
-      color: ['#60a5fa', '#a78bfa', '#f472b6', '#38bdf8'][Math.floor(Math.random() * 4)],
+      r: 1 + Math.random() * 2.2,
+      color: ['#9CE700', '#34d399', '#38bdf8', '#a78bfa'][Math.floor(Math.random() * 4)],
     }));
 
     let rotation = 0;
@@ -267,12 +248,12 @@ function GalaxyCanvas({ isDark }) {
       // Galaxy core nebula
       const coreGrad = ctx.createRadialGradient(cx, cy, 10, cx, cy, Math.min(w, h) * 0.4);
       if (isDark) {
-        coreGrad.addColorStop(0, 'rgba(139, 92, 246, 0.22)');
-        coreGrad.addColorStop(0.4, 'rgba(59, 130, 246, 0.12)');
+        coreGrad.addColorStop(0, 'rgba(156, 231, 0, 0.16)');
+        coreGrad.addColorStop(0.4, 'rgba(16, 185, 129, 0.08)');
         coreGrad.addColorStop(1, 'transparent');
       } else {
-        coreGrad.addColorStop(0, 'rgba(192, 132, 252, 0.25)');
-        coreGrad.addColorStop(0.5, 'rgba(147, 197, 253, 0.15)');
+        coreGrad.addColorStop(0, 'rgba(190, 242, 100, 0.25)');
+        coreGrad.addColorStop(0.5, 'rgba(167, 243, 208, 0.15)');
         coreGrad.addColorStop(1, 'transparent');
       }
       ctx.fillStyle = coreGrad;
@@ -289,7 +270,7 @@ function GalaxyCanvas({ isDark }) {
         ctx.arc(x, y, s.r, 0, Math.PI * 2);
         ctx.fillStyle = s.color;
         ctx.shadowColor = s.color;
-        ctx.shadowBlur = 6;
+        ctx.shadowBlur = 8;
         ctx.fill();
       }
 
@@ -316,18 +297,18 @@ function AuroraCanvas({ isDark }) {
   return (
     <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
       <div
-        className={`absolute -top-[30%] -left-[20%] w-[140%] h-[90%] rounded-[100%] blur-[100px] transition-all duration-1000 ${
+        className={`absolute -top-[30%] -left-[20%] w-[140%] h-[90%] rounded-[100%] blur-[120px] transition-all duration-1000 ${
           isDark
-            ? 'bg-gradient-to-r from-emerald-500/20 via-teal-400/25 to-indigo-600/30'
-            : 'bg-gradient-to-r from-emerald-400/25 via-cyan-300/30 to-blue-400/25'
-        } animate-pulse`}
+            ? 'bg-gradient-to-r from-[#9CE700]/20 via-emerald-400/22 to-teal-500/20'
+            : 'bg-gradient-to-r from-[#9CE700]/25 via-cyan-300/30 to-emerald-400/25'
+        }`}
       />
       <div
-        className={`absolute top-[20%] -right-[20%] w-[120%] h-[70%] rounded-[100%] blur-[120px] transition-all duration-1000 ${
+        className={`absolute top-[20%] -right-[20%] w-[120%] h-[70%] rounded-[100%] blur-[140px] transition-all duration-1000 ${
           isDark
-            ? 'bg-gradient-to-l from-violet-600/25 via-cyan-500/20 to-teal-400/15'
-            : 'bg-gradient-to-l from-purple-400/20 via-sky-300/25 to-teal-300/20'
-        } animate-pulse delay-700`}
+            ? 'bg-gradient-to-l from-emerald-600/20 via-[#9CE700]/18 to-teal-400/15'
+            : 'bg-gradient-to-l from-emerald-400/20 via-sky-300/25 to-[#9CE700]/20'
+        }`}
       />
     </div>
   );
@@ -354,28 +335,28 @@ function SynthwaveCanvas({ isDark }) {
       // Synthwave Neon Sun
       const sunR = Math.min(w, h) * 0.18;
       const sunGrad = ctx.createLinearGradient(0, horizon - sunR * 2, 0, horizon);
-      sunGrad.addColorStop(0, '#facc15');
-      sunGrad.addColorStop(0.5, '#f43f5e');
-      sunGrad.addColorStop(1, '#a855f7');
+      sunGrad.addColorStop(0, '#9CE700');
+      sunGrad.addColorStop(0.5, '#10b981');
+      sunGrad.addColorStop(1, '#06b6d4');
 
       ctx.beginPath();
       ctx.arc(w * 0.5, horizon, sunR, Math.PI, 0);
       ctx.fillStyle = sunGrad;
-      ctx.shadowColor = '#f43f5e';
-      ctx.shadowBlur = 25;
+      ctx.shadowColor = '#9CE700';
+      ctx.shadowBlur = 30;
       ctx.fill();
 
       // Horizon line
       ctx.beginPath();
       ctx.moveTo(0, horizon);
       ctx.lineTo(w, horizon);
-      ctx.strokeStyle = '#f43f5e';
+      ctx.strokeStyle = '#9CE700';
       ctx.lineWidth = 2;
       ctx.stroke();
 
       // Perspective Grid Lines
       offset = (offset + 0.8) % 30;
-      const gridColor = isDark ? 'rgba(236, 72, 153, 0.4)' : 'rgba(219, 39, 119, 0.3)';
+      const gridColor = isDark ? 'rgba(156, 231, 0, 0.4)' : 'rgba(101, 163, 13, 0.35)';
 
       // Vertical rays from horizon
       for (let x = -w; x < w * 2; x += 55) {
@@ -437,10 +418,10 @@ function LiquidLavaCanvas({ isDark }) {
       dx: (Math.random() - 0.5) * 1.2,
       dy: (Math.random() - 0.5) * 1.2,
       color: [
-        'rgba(37, 99, 235, 0.25)',
-        'rgba(147, 51, 234, 0.22)',
-        'rgba(236, 72, 153, 0.2)',
-        'rgba(6, 182, 212, 0.22)',
+        'rgba(156, 231, 0, 0.25)',
+        'rgba(16, 185, 129, 0.22)',
+        'rgba(6, 182, 212, 0.2)',
+        'rgba(132, 204, 22, 0.22)',
       ][i % 4],
     }));
 
@@ -494,15 +475,15 @@ function ParticleCanvas({ isDark }) {
     let w = (canvas.width = window.innerWidth);
     let h = (canvas.height = window.innerHeight);
 
-    const particleColor = isDark ? 'rgba(59, 130, 246, 0.65)' : 'rgba(37, 99, 235, 0.45)';
-    const lineColor = isDark ? '59, 130, 246' : '37, 99, 235';
+    const particleColor = isDark ? 'rgba(156, 231, 0, 0.85)' : 'rgba(101, 163, 13, 0.75)';
+    const lineColor = isDark ? '156, 231, 0' : '101, 163, 13';
 
-    const particles = Array.from({ length: 45 }, () => ({
+    const particles = Array.from({ length: 55 }, () => ({
       x: Math.random() * w,
       y: Math.random() * h,
-      r: 1.5 + Math.random() * 2,
-      dx: (Math.random() - 0.5) * 0.4,
-      dy: (Math.random() - 0.5) * 0.4,
+      r: 1.8 + Math.random() * 2.5,
+      dx: (Math.random() - 0.5) * 0.5,
+      dy: (Math.random() - 0.5) * 0.5,
     }));
 
     const draw = () => {
@@ -518,6 +499,8 @@ function ParticleCanvas({ isDark }) {
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
         ctx.fillStyle = particleColor;
+        ctx.shadowColor = '#9CE700';
+        ctx.shadowBlur = 8;
         ctx.fill();
       }
 
@@ -526,12 +509,12 @@ function ParticleCanvas({ isDark }) {
           const dx = particles[i].x - particles[j].x;
           const dy = particles[i].y - particles[j].y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 120) {
+          if (dist < 130) {
             ctx.beginPath();
             ctx.moveTo(particles[i].x, particles[i].y);
             ctx.lineTo(particles[j].x, particles[j].y);
-            ctx.strokeStyle = `rgba(${lineColor}, ${0.15 * (1 - dist / 120)})`;
-            ctx.lineWidth = 0.7;
+            ctx.strokeStyle = `rgba(${lineColor}, ${0.25 * (1 - dist / 130)})`;
+            ctx.lineWidth = 0.9;
             ctx.stroke();
           }
         }
@@ -588,9 +571,9 @@ function MultiImageSlideshow({ opacity = 'opacity-35 dark:opacity-45' }) {
 
 // --- 9. Flowing Sea Waves Component ---
 function FlowingSeaWaves({ isDark, isHybrid = false }) {
-  const deepColor = isDark ? 'rgba(30, 58, 138, 0.35)' : 'rgba(37, 99, 235, 0.22)';
-  const midColor = isDark ? 'rgba(37, 99, 235, 0.25)' : 'rgba(96, 165, 250, 0.16)';
-  const lightColor = isDark ? 'rgba(96, 165, 250, 0.15)' : 'rgba(191, 219, 254, 0.12)';
+  const deepColor = isDark ? 'rgba(156, 231, 0, 0.22)' : 'rgba(132, 204, 22, 0.18)';
+  const midColor = isDark ? 'rgba(16, 185, 129, 0.18)' : 'rgba(52, 211, 153, 0.15)';
+  const lightColor = isDark ? 'rgba(6, 182, 212, 0.14)' : 'rgba(103, 232, 249, 0.12)';
   const heightClass = isHybrid ? 'h-[24%]' : 'h-[36%]';
 
   return (
@@ -992,9 +975,7 @@ export default function Login() {
       )}
       {(bgMode === 'slideshow' || bgMode === 'hybrid') && <MultiImageSlideshow />}
 
-      {/* Glowing Ambient Mesh Orbs */}
-      <div className="absolute top-1/4 left-1/4 w-[450px] h-[450px] bg-[#9CE700]/10 dark:bg-[#9CE700]/10 rounded-full blur-[140px] pointer-events-none animate-pulse" />
-      <div className="absolute bottom-1/4 right-1/4 w-[450px] h-[450px] bg-[#9CE700]/5 dark:bg-[#9CE700]/8 rounded-full blur-[140px] pointer-events-none animate-pulse delay-1000" />
+
 
       {/* Top Bar Controls */}
       <div className="absolute top-5 right-5 z-50 flex items-center gap-3">
@@ -1087,7 +1068,7 @@ export default function Login() {
         {/* Apple macOS / iOS Liquid Glass Form Card */}
         <form
           onSubmit={handleSubmit}
-          className="bg-white/90 dark:bg-[#0c0c0c]/90 backdrop-blur-3xl border border-slate-200 dark:border-neutral-800 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.07)] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-[28px] p-8 md:p-10 relative overflow-hidden"
+          className="bg-white/85 dark:bg-[#0c0c0c]/85 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.07)] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] rounded-[28px] p-8 md:p-10 relative overflow-hidden"
         >
           {/* Internal Liquid Shine Highlight */}
           <div className="absolute -top-24 -left-24 w-48 h-48 bg-[#9CE700]/10 rounded-full blur-2xl pointer-events-none" />

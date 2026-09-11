@@ -26,7 +26,7 @@ export default function AnimatedBackground() {
 
       {designMode === 'glassmorphismpro' && (
         <>
-          <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[850px] h-[400px] bg-[#9CE700]/12 dark:bg-[#9CE700]/16 rounded-full blur-[120px] pointer-events-none animate-pulse-slow" />
+          <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[850px] h-[400px] bg-[#9CE700]/12 dark:bg-[#9CE700]/16 rounded-full blur-[120px] pointer-events-none animate-ambient-glow-1" />
           <div className="absolute top-1/2 -left-32 w-[550px] h-[550px] bg-slate-300/30 dark:bg-neutral-800/40 rounded-full blur-[140px] pointer-events-none" />
           <div className="absolute -bottom-20 -right-20 w-[650px] h-[650px] bg-[#9CE700]/10 dark:bg-[#9CE700]/12 rounded-full blur-[140px] pointer-events-none" />
         </>
@@ -34,9 +34,9 @@ export default function AnimatedBackground() {
 
       {designMode === 'liquidglass' && (
         <>
-          <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[900px] h-[450px] bg-[#9CE700]/10 dark:bg-[#9CE700]/14 rounded-full blur-[140px] pointer-events-none animate-pulse" />
-          <div className="absolute top-1/3 -left-40 w-[500px] h-[500px] bg-[#9CE700]/6 dark:bg-[#9CE700]/8 rounded-full blur-[150px] pointer-events-none animate-ambient-glow-1" />
-          <div className="absolute -bottom-40 -right-40 w-[700px] h-[700px] bg-[#9CE700]/6 dark:bg-neutral-900/50 rounded-full blur-[160px] pointer-events-none animate-ambient-glow-2" />
+          <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[900px] h-[450px] bg-[#9CE700]/10 dark:bg-[#9CE700]/14 rounded-full blur-[140px] pointer-events-none animate-ambient-glow-1" />
+          <div className="absolute top-1/3 -left-40 w-[500px] h-[500px] bg-[#9CE700]/6 dark:bg-[#9CE700]/8 rounded-full blur-[150px] pointer-events-none animate-ambient-glow-2" />
+          <div className="absolute -bottom-40 -right-40 w-[700px] h-[700px] bg-[#9CE700]/6 dark:bg-neutral-900/50 rounded-full blur-[160px] pointer-events-none animate-ambient-glow-3" />
         </>
       )}
 
