@@ -166,7 +166,8 @@ export const seedDefaultRoles = async () => {
   const defaults = [
     { name: 'ADMIN', displayName: 'Administrator', description: 'Full system access', isSystem: true, permissions: ALL_PERMISSIONS },
     { name: 'MANAGER', displayName: 'Manager', description: 'Store manager with most access', isSystem: true, permissions: [
-      'dashboard:view', 'sales:view', 'sales:create', 'sales:delete',
+      'dashboard:view', 'dashboard:view_revenue', 'dashboard:view_profit', 'dashboard:view_stock', 'dashboard:view_purchase',
+      'sales:view', 'sales:create', 'sales:delete',
       'products:view', 'products:create', 'products:edit', 'products:delete',
       'categories:view', 'categories:manage', 'inventory:view', 'inventory:manage',
       'stock:view', 'stock:transfer', 'customers:view', 'customers:manage',
