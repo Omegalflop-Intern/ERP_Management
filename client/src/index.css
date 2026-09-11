@@ -1739,108 +1739,29 @@ input.global-search-input,
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
-/* Universal Primary & Action Buttons (Lime Green with Black Bold Text & Glow) */
-button.bg-primary,
-a.bg-primary,
-button.bg-blue-600,
-a.bg-blue-600,
-button.bg-blue-500,
-a.bg-blue-500,
-button.bg-\[\#2563EB\],
-a.bg-\[\#2563EB\],
-button.bg-indigo-600,
-a.bg-indigo-600,
-button.bg-indigo-500,
-a.bg-indigo-500,
-.btn-primary,
-.bg-primary {
+/* Ensure Text Transparent & Gradient Clipping Always Works Across All Pages */
+.text-transparent,
+[class*="text-transparent"],
+.bg-clip-text,
+[class*="bg-clip-text"] {
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+  background-clip: text !important;
+  -webkit-background-clip: text !important;
+}
+
+/* Specific Lime Button Enhancements for App/Dashboard when requested */
+.btn-lime-accent {
   background-color: #9CE700 !important;
   color: #000000 !important;
   font-weight: 700 !important;
   border-color: transparent !important;
-  transition: all 0.15s ease-in-out !important;
 }
 
-button.bg-primary:hover,
-a.bg-primary:hover,
-button.bg-blue-600:hover,
-a.bg-blue-600:hover,
-button.bg-blue-500:hover,
-a.bg-blue-500:hover,
-button.bg-\[\#2563EB\]:hover,
-a.bg-\[\#2563EB\]:hover,
-button.bg-indigo-600:hover,
-a.bg-indigo-600:hover,
-button.bg-indigo-500:hover,
-a.bg-indigo-500:hover,
-.btn-primary:hover,
-.bg-primary:hover {
+.btn-lime-accent:hover {
   background-color: #8fd500 !important;
-  color: #000000 !important;
   box-shadow: 0 10px 25px -4px rgba(156, 231, 0, 0.35) !important;
   transform: translateY(-1.5px) !important;
-}
-
-button.bg-primary:active,
-a.bg-primary:active,
-button.bg-blue-600:active,
-a.bg-blue-600:active,
-button.bg-\[\#2563EB\]:active,
-button.bg-indigo-600:active {
-  transform: translateY(0) scale(0.98) !important;
-}
-
-/* Ensure icons inside primary buttons are black */
-button.bg-primary svg,
-a.bg-primary svg,
-button.bg-blue-600 svg,
-a.bg-blue-600 svg,
-button.bg-blue-500 svg,
-a.bg-blue-500 svg,
-button.bg-\[\#2563EB\] svg,
-a.bg-\[\#2563EB\] svg,
-button.bg-indigo-600 svg,
-a.bg-indigo-600 svg,
-.btn-primary svg {
-  color: #000000 !important;
-  stroke: #000000 !important;
-}
-
-/* Universal Text & Highlights in Lime Green */
-.text-\[\#2563EB\],
-.text-blue-600,
-.text-blue-500,
-.text-primary,
-.dark .text-blue-400,
-.dark .text-blue-500,
-.dark .text-blue-600,
-.dark .text-\[\#2563EB\],
-.dark .text-primary {
-  color: #9CE700 !important;
-}
-
-/* Light / Subtle Badge Highlights */
-.bg-blue-50,
-.bg-blue-500\/10,
-.bg-blue-600\/10,
-.bg-blue-600\/15,
-.bg-blue-600\/20,
-.dark .bg-blue-950\/40,
-.dark .bg-blue-950\/50,
-.dark .bg-blue-950\/60,
-.dark .bg-blue-900\/30,
-.dark .bg-blue-900\/20 {
-  background-color: rgba(156, 231, 0, 0.12) !important;
-  color: #9CE700 !important;
-  border-color: rgba(156, 231, 0, 0.25) !important;
-}
-
-.bg-blue-50 *,
-.dark .bg-blue-950\/40 *,
-.dark .bg-blue-950\/50 *,
-.dark .bg-blue-950\/60 *,
-.dark .bg-blue-900\/30 * {
-  color: #9CE700 !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════

@@ -80,17 +80,15 @@ export default function PublicFooter() {
           {/* Col 1: Brand Info & Company Contacts */}
           <div className="lg:col-span-2 space-y-4">
             <Link to="/" className="flex items-center gap-3 group inline-block">
-              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 p-0.5 shadow-lg shadow-blue-500/20">
-                <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-                  <Smartphone className="w-5 h-5 text-blue-400" />
-                </div>
+              <div className="relative flex items-center justify-center w-10 h-10 rounded-2xl bg-[#9CE700] text-black shadow-lg shadow-[#9CE700]/25">
+                <Smartphone className="w-5 h-5 text-black stroke-[2.5]" />
               </div>
               <div className="flex flex-col">
                 <div className="flex items-center gap-1.5">
                   <span className="text-xl font-black text-white tracking-tight">
-                    {platformSettings.platformName || 'OmniManage'}
+                    Omni<span className="text-[#9CE700]">Manage</span>
                   </span>
-                  <span className="px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded">
+                  <span className="px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider bg-[#9CE700]/15 text-[#9CE700] border border-[#9CE700]/30 rounded">
                     ERP
                   </span>
                 </div>
@@ -298,16 +296,20 @@ export default function PublicFooter() {
           <p>© {new Date().getFullYear()} OmniManage ERP Solutions. All rights reserved.</p>
 
           <div className="flex items-center gap-6">
-            <span className="flex items-center gap-1.5">
-              Engineered with <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500 inline" /> by{' '}
+            <span className="flex items-center gap-1.5 flex-wrap justify-center">
+              Engineered with <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500 inline animate-bounce" /> by{' '}
               <a
                 href="https://salahuddin.codes"
                 target="_blank"
                 rel="noreferrer"
-                className="font-bold text-slate-200 hover:text-blue-400 underline decoration-blue-500/60 transition-colors"
+                className="font-bold text-slate-200 hover:text-[#9CE700] underline decoration-[#9CE700]/60 transition-colors"
               >
                 Salah Uddin Kader
               </a>{' '}
+              &{' '}
+              <span className="font-bold text-[#9CE700] flex items-center gap-1 bg-[#9CE700]/10 px-2 py-0.5 rounded-md border border-[#9CE700]/30">
+                <Code2 className="w-3.5 h-3.5 text-[#9CE700]" /> OmegaFlop
+              </span>{' '}
               for gadget & electronics businesses
             </span>
           </div>

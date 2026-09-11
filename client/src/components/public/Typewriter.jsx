@@ -47,10 +47,10 @@ export default function Typewriter({
   }, [currentText, isDeleting, currentWordIndex, words, typingSpeed, deletingSpeed, pauseTime]);
 
   return (
-    <span className={`inline-flex items-center ${className}`}>
-      <span>{currentText}</span>
+    <span className="inline-flex items-center align-baseline">
+      <span className={className}>{currentText || '\u00A0'}</span>
       <span
-        className={`inline-block w-0.5 sm:w-1 h-7 sm:h-9 ml-1 bg-blue-500 animate-pulse rounded-full ${cursorClassName}`}
+        className={`inline-block w-[3px] h-[0.9em] ml-1.5 bg-blue-500 animate-pulse rounded-full ${cursorClassName}`}
         aria-hidden="true"
       />
     </span>

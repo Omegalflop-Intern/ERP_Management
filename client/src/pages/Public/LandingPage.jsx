@@ -259,20 +259,20 @@ export default function LandingPage() {
             <ScrollReveal animation="fade-up" delay={150} duration={600}>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15]">
                 Run Your Gadget Store with <br className="hidden sm:inline" />
-                <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 bg-clip-text text-transparent">
-                  <Typewriter
-                    words={[
-                      'Flawless IMEI Tracking',
-                      'Sub-Second POS Billing',
-                      'Smart Repair Lab Hub',
-                      'Unified Stock Sync',
-                      'Audit-Ready Accounting',
-                    ]}
-                    typingSpeed={80}
-                    deletingSpeed={45}
-                    pauseTime={1900}
-                  />
-                </span>
+                <Typewriter
+                  words={[
+                    'Flawless IMEI Tracking',
+                    'Sub-Second POS Billing',
+                    'Smart Repair Lab Hub',
+                    'Unified Stock Sync',
+                    'Audit-Ready Accounting',
+                  ]}
+                  className="bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 dark:from-blue-400 dark:via-indigo-300 dark:to-violet-400 bg-clip-text text-transparent font-extrabold"
+                  cursorClassName="bg-blue-600 dark:bg-blue-400"
+                  typingSpeed={80}
+                  deletingSpeed={45}
+                  pauseTime={1900}
+                />
               </h1>
             </ScrollReveal>
 
@@ -290,18 +290,18 @@ export default function LandingPage() {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
                 <Link
                   to="/register-shop"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 hover:from-blue-500 hover:to-indigo-500 shadow-xl shadow-blue-500/25 active:scale-95 transition-all"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-xl font-black text-sm text-black bg-[#9CE700] hover:bg-[#8fd500] shadow-xl shadow-[#9CE700]/25 hover:-translate-y-0.5 active:scale-95 transition-all"
                 >
-                  <Sparkles className="w-4 h-4 text-blue-200" />
+                  <Sparkles className="w-4 h-4 text-black stroke-[2.5]" />
                   <span>Start 14-Day Free Trial</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="w-4 h-4 text-black stroke-[2.5]" />
                 </Link>
                 <a
                   href="#modules"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 shadow-xs transition-all"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm text-slate-800 dark:text-white bg-white dark:bg-[#121524] hover:bg-slate-100 dark:hover:bg-[#171a2d] border border-slate-200 dark:border-white/10 shadow-xs hover:-translate-y-0.5 transition-all"
                 >
                   <span>Explore Live Demo</span>
-                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                  <ChevronRight className="w-4 h-4 text-slate-400 dark:text-[#9CE700]" />
                 </a>
               </div>
             </ScrollReveal>
@@ -923,10 +923,10 @@ export default function LandingPage() {
                         to={isCustom ? '/contact' : `/register-shop?plan=${(plan._id || plan.name || '').toLowerCase()}`}
                         className={`w-full py-3 rounded-xl text-xs font-bold text-center block transition-all ${
                           plan.isPopular
-                            ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/25 active:scale-95'
+                            ? 'bg-[#9CE700] hover:bg-[#8fd500] text-black font-extrabold shadow-lg shadow-[#9CE700]/25 active:scale-95'
                             : isCustom
-                            ? 'bg-gradient-to-r from-slate-900 to-indigo-950 dark:from-slate-800 dark:to-indigo-950 text-white hover:opacity-90 shadow-sm active:scale-95'
-                            : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white active:scale-95'
+                            ? 'bg-gradient-to-r from-slate-900 to-indigo-950 dark:from-[#171a2d] dark:to-[#1e2238] text-white hover:opacity-90 shadow-sm active:scale-95 border border-white/10'
+                            : 'bg-slate-100 dark:bg-[#171a2d] hover:bg-slate-200 dark:hover:bg-[#1e2238] text-slate-900 dark:text-white active:scale-95 border border-slate-200 dark:border-white/10'
                         }`}
                       >
                         {isCustom ? 'Contact Enterprise Sales' : 'Start 14-Day Free Trial'}
@@ -941,35 +941,59 @@ export default function LandingPage() {
       </section>
 
       {/* ─── FAQ SECTION ──────────────────────────────────────────────────────── */}
-      <section className="py-12 sm:py-16 border-t border-slate-200/80 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/30">
+      <section className="py-12 sm:py-16 border-t border-slate-200/80 dark:border-white/10 bg-slate-50/50 dark:bg-[#0c0e1a]/60">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <ScrollReveal animation="fade-up" className="text-center space-y-3 mb-12">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-[#7dbb00] dark:text-[#9CE700]">
               Got Questions?
             </h2>
             <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
               Frequently Asked Questions
             </h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              Everything you need to know about starting your shop trial, hardware compatibility, and data security.
+            </p>
           </ScrollReveal>
 
           <div className="space-y-3">
-            {faqs.map((faq, idx) => (
-              <ScrollReveal key={faq.q} animation="fade-up" delay={idx * 60}>
-                <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden">
+            {[
+              {
+                q: 'Can I track individual device IMEIs with battery health and warranty status?',
+                a: 'Yes! OmniManage includes purpose-built serial and IMEI tracking that records condition, battery %, warranty duration, supplier invoice, and current status from purchase to final sale.',
+              },
+              {
+                q: 'Does it support thermal receipt printers, barcode scanners, and cash drawers?',
+                a: 'OmniManage connects directly with standard ESC/POS 80mm & 58mm USB/LAN/Bluetooth thermal receipt printers, barcode/QR scanners, and electronic cash drawers with zero driver installation needed.',
+              },
+              {
+                q: 'Can technicians update repair job progress via mobile phones?',
+                a: 'Yes! Technicians can view assigned jobs, update diagnosis, log parts used, and notify customers via automated SMS on mobile browsers or tablets.',
+              },
+              {
+                q: 'How does the 14-day free trial work?',
+                a: 'You get full unrestricted access to all features for 14 days without entering a credit card. If you choose to continue, pick a subscription plan that fits your business.',
+              },
+              {
+                q: 'Can I import my existing customer and product database from Excel?',
+                a: 'Yes, our built-in CSV/Excel import wizard allows you to migrate inventory, customer dues, supplier balances, and previous sales history in minutes.',
+              },
+            ].map((faq, idx) => (
+              <ScrollReveal key={idx} animation="fade-up" delay={idx * 100}>
+                <div className="rounded-2xl bg-white dark:bg-[#121524] border border-slate-200 dark:border-white/10 overflow-hidden shadow-xs">
                   <button
                     type="button"
                     onClick={() => setOpenFaq(openFaq === idx ? -1 : idx)}
-                    className="w-full px-6 py-4 text-left flex items-center justify-between gap-4 font-bold text-sm text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                    className="w-full px-6 py-4 text-left flex items-center justify-between gap-4 font-bold text-sm text-slate-900 dark:text-white"
                   >
                     <span>{faq.q}</span>
                     <ChevronDown
-                      className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
-                        openFaq === idx ? 'rotate-180 text-blue-500' : ''
+                      className={`w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 ${
+                        openFaq === idx ? 'rotate-180 text-[#9CE700]' : ''
                       }`}
                     />
                   </button>
                   {openFaq === idx && (
-                    <div className="px-6 pb-4 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed border-t border-slate-100 dark:border-slate-800 pt-3">
+                    <div className="px-6 pb-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-white/10 pt-3">
                       {faq.a}
                     </div>
                   )}
@@ -981,18 +1005,19 @@ export default function LandingPage() {
       </section>
 
       {/* ─── BOTTOM CTA BANNER ────────────────────────────────────────────────── */}
-      <section className="py-12 sm:py-16 relative overflow-hidden bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-700 text-white">
+      <section className="py-14 sm:py-20 relative overflow-hidden bg-gradient-to-br from-[#0c0e1a] via-[#121524] to-[#080911] border-y border-slate-200/80 dark:border-white/10 text-white">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-[#9CE700]/10 rounded-full blur-3xl pointer-events-none" />
         <ScrollReveal animation="zoom-in" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6 relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-bold border border-white/20">
-            <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#9CE700]/10 border border-[#9CE700]/30 text-xs font-bold text-[#9CE700]">
+            <Sparkles className="w-3.5 h-3.5 text-[#9CE700]" />
             <span>Ready to transform your gadget shop?</span>
           </div>
 
-          <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight">
+          <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-white">
             Stop Losing Profits to Stock Confusion.
           </h2>
 
-          <p className="text-sm sm:text-base text-blue-100 max-w-2xl mx-auto">
+          <p className="text-sm sm:text-base text-slate-300 max-w-2xl mx-auto leading-relaxed">
             Join hundreds of mobile store owners and repair labs who run on OmniManage everyday. Set up in 2
             minutes.
           </p>
@@ -1000,7 +1025,7 @@ export default function LandingPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <Link
               to="/register-shop"
-              className="w-full sm:w-auto px-8 py-3.5 rounded-xl font-black text-sm bg-white text-blue-700 hover:bg-blue-50 shadow-xl shadow-black/20 active:scale-95 transition-all"
+              className="w-full sm:w-auto px-8 py-3.5 rounded-xl font-black text-sm text-black bg-[#9CE700] hover:bg-[#8fd500] shadow-xl shadow-[#9CE700]/30 hover:-translate-y-0.5 active:scale-95 transition-all"
             >
               Get Started Now — It's Free
             </Link>
