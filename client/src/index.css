@@ -595,15 +595,25 @@ input[type="checkbox"]:focus {
    SECTION 6: DESIGN SYSTEM MODES (NEUMORPHISM, GLASS, LIQUIDGLASS, AURORA, FLAT)
    ═══════════════════════════════════════════════════════════════ */
 
+/* Card and Container Selector Definition for All Design Modes */
+
 /* ─── 1. NEUMORPHISM MODE (Soft 3D Emboss / Dual Bevel) ─── */
 [data-mode="neumorphism"] .neu-card,
 [data-mode="neumorphism"] .glass-primary,
 [data-mode="neumorphism"] .glass-secondary,
 [data-mode="neumorphism"] .glass-light,
 [data-mode="neumorphism"] .liquid-card,
-[data-mode="neumorphism"] .rounded-\[20px\],
-[data-mode="neumorphism"] main section .rounded-2xl,
-[data-mode="neumorphism"] main section .rounded-3xl {
+[data-mode="neumorphism"] .card,
+[data-mode="neumorphism"] [data-slot="card"],
+[data-mode="neumorphism"] .bg-card,
+[data-mode="neumorphism"] .stat-card,
+[data-mode="neumorphism"] header.glass-primary,
+[data-mode="neumorphism"] header[class*="glass"],
+[data-mode="neumorphism"] main div[class*="rounded-2xl"],
+[data-mode="neumorphism"] main div[class*="rounded-3xl"],
+[data-mode="neumorphism"] main div[class*="rounded-xl"],
+[data-mode="neumorphism"] main div[class*="rounded-[20px]"],
+[data-mode="neumorphism"] main section [class*="rounded-"] {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
@@ -613,14 +623,22 @@ input[type="checkbox"]:focus {
 [data-mode="neumorphism"]:not(.dark) .glass-secondary,
 [data-mode="neumorphism"]:not(.dark) .glass-light,
 [data-mode="neumorphism"]:not(.dark) .liquid-card,
-[data-mode="neumorphism"]:not(.dark) .rounded-\[20px\],
-[data-mode="neumorphism"]:not(.dark) main section .rounded-2xl,
-[data-mode="neumorphism"]:not(.dark) main section .rounded-3xl {
+[data-mode="neumorphism"]:not(.dark) .card,
+[data-mode="neumorphism"]:not(.dark) [data-slot="card"],
+[data-mode="neumorphism"]:not(.dark) .bg-card,
+[data-mode="neumorphism"]:not(.dark) .stat-card,
+[data-mode="neumorphism"]:not(.dark) header.glass-primary,
+[data-mode="neumorphism"]:not(.dark) header[class*="glass"],
+[data-mode="neumorphism"]:not(.dark) main div[class*="rounded-2xl"],
+[data-mode="neumorphism"]:not(.dark) main div[class*="rounded-3xl"],
+[data-mode="neumorphism"]:not(.dark) main div[class*="rounded-xl"],
+[data-mode="neumorphism"]:not(.dark) main div[class*="rounded-[20px]"],
+[data-mode="neumorphism"]:not(.dark) main section [class*="rounded-"] {
   background: #eef2f8 !important;
-  border: 1px solid rgba(255, 255, 255, 0.7) !important;
+  border: 1px solid rgba(255, 255, 255, 0.75) !important;
   box-shadow:
-    6px 6px 16px rgba(163, 177, 198, 0.55),
-    -6px -6px 16px rgba(255, 255, 255, 0.9) !important;
+    7px 7px 18px rgba(163, 177, 198, 0.6),
+    -7px -7px 18px rgba(255, 255, 255, 0.95) !important;
 }
 
 [data-mode="neumorphism"].dark .neu-card,
@@ -628,22 +646,38 @@ input[type="checkbox"]:focus {
 [data-mode="neumorphism"].dark .glass-secondary,
 [data-mode="neumorphism"].dark .glass-light,
 [data-mode="neumorphism"].dark .liquid-card,
-[data-mode="neumorphism"].dark .rounded-\[20px\],
-[data-mode="neumorphism"].dark main section .rounded-2xl,
-[data-mode="neumorphism"].dark main section .rounded-3xl,
+[data-mode="neumorphism"].dark .card,
+[data-mode="neumorphism"].dark [data-slot="card"],
+[data-mode="neumorphism"].dark .bg-card,
+[data-mode="neumorphism"].dark .stat-card,
+[data-mode="neumorphism"].dark header.glass-primary,
+[data-mode="neumorphism"].dark header[class*="glass"],
+[data-mode="neumorphism"].dark main div[class*="rounded-2xl"],
+[data-mode="neumorphism"].dark main div[class*="rounded-3xl"],
+[data-mode="neumorphism"].dark main div[class*="rounded-xl"],
+[data-mode="neumorphism"].dark main div[class*="rounded-[20px]"],
+[data-mode="neumorphism"].dark main section [class*="rounded-"],
 .dark[data-mode="neumorphism"] .neu-card,
 .dark[data-mode="neumorphism"] .glass-primary,
 .dark[data-mode="neumorphism"] .glass-secondary,
 .dark[data-mode="neumorphism"] .glass-light,
 .dark[data-mode="neumorphism"] .liquid-card,
-.dark[data-mode="neumorphism"] .rounded-\[20px\],
-.dark[data-mode="neumorphism"] main section .rounded-2xl,
-.dark[data-mode="neumorphism"] main section .rounded-3xl {
+.dark[data-mode="neumorphism"] .card,
+.dark[data-mode="neumorphism"] [data-slot="card"],
+.dark[data-mode="neumorphism"] .bg-card,
+.dark[data-mode="neumorphism"] .stat-card,
+.dark[data-mode="neumorphism"] header.glass-primary,
+.dark[data-mode="neumorphism"] header[class*="glass"],
+.dark[data-mode="neumorphism"] main div[class*="rounded-2xl"],
+.dark[data-mode="neumorphism"] main div[class*="rounded-3xl"],
+.dark[data-mode="neumorphism"] main div[class*="rounded-xl"],
+.dark[data-mode="neumorphism"] main div[class*="rounded-[20px]"],
+.dark[data-mode="neumorphism"] main section [class*="rounded-"] {
   background: #111111 !important;
   border: 1px solid rgba(255, 255, 255, 0.05) !important;
   box-shadow:
-    8px 8px 20px rgba(0, 0, 0, 0.95),
-    -4px -4px 14px rgba(255, 255, 255, 0.035) !important;
+    8px 8px 22px rgba(0, 0, 0, 0.98),
+    -5px -5px 15px rgba(255, 255, 255, 0.04) !important;
 }
 
 [data-mode="neumorphism"] .neu-pressed {
@@ -707,11 +741,19 @@ input[type="checkbox"]:focus {
 [data-mode="glassmorphismpro"] .glass-secondary,
 [data-mode="glassmorphismpro"] .glass-light,
 [data-mode="glassmorphismpro"] .liquid-card,
-[data-mode="glassmorphismpro"] .rounded-\[20px\],
-[data-mode="glassmorphismpro"] main section .rounded-2xl,
-[data-mode="glassmorphismpro"] main section .rounded-3xl {
-  backdrop-filter: blur(28px) saturate(200%) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(200%) !important;
+[data-mode="glassmorphismpro"] .card,
+[data-mode="glassmorphismpro"] [data-slot="card"],
+[data-mode="glassmorphismpro"] .bg-card,
+[data-mode="glassmorphismpro"] .stat-card,
+[data-mode="glassmorphismpro"] header.glass-primary,
+[data-mode="glassmorphismpro"] header[class*="glass"],
+[data-mode="glassmorphismpro"] main div[class*="rounded-2xl"],
+[data-mode="glassmorphismpro"] main div[class*="rounded-3xl"],
+[data-mode="glassmorphismpro"] main div[class*="rounded-xl"],
+[data-mode="glassmorphismpro"] main div[class*="rounded-[20px]"],
+[data-mode="glassmorphismpro"] main section [class*="rounded-"] {
+  backdrop-filter: blur(32px) saturate(210%) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(210%) !important;
 }
 
 [data-mode="glassmorphismpro"]:not(.dark) .neu-card,
@@ -719,13 +761,21 @@ input[type="checkbox"]:focus {
 [data-mode="glassmorphismpro"]:not(.dark) .glass-secondary,
 [data-mode="glassmorphismpro"]:not(.dark) .glass-light,
 [data-mode="glassmorphismpro"]:not(.dark) .liquid-card,
-[data-mode="glassmorphismpro"]:not(.dark) .rounded-\[20px\],
-[data-mode="glassmorphismpro"]:not(.dark) main section .rounded-2xl,
-[data-mode="glassmorphismpro"]:not(.dark) main section .rounded-3xl {
-  background: rgba(255, 255, 255, 0.65) !important;
-  border: 1px solid rgba(255, 255, 255, 0.85) !important;
+[data-mode="glassmorphismpro"]:not(.dark) .card,
+[data-mode="glassmorphismpro"]:not(.dark) [data-slot="card"],
+[data-mode="glassmorphismpro"]:not(.dark) .bg-card,
+[data-mode="glassmorphismpro"]:not(.dark) .stat-card,
+[data-mode="glassmorphismpro"]:not(.dark) header.glass-primary,
+[data-mode="glassmorphismpro"]:not(.dark) header[class*="glass"],
+[data-mode="glassmorphismpro"]:not(.dark) main div[class*="rounded-2xl"],
+[data-mode="glassmorphismpro"]:not(.dark) main div[class*="rounded-3xl"],
+[data-mode="glassmorphismpro"]:not(.dark) main div[class*="rounded-xl"],
+[data-mode="glassmorphismpro"]:not(.dark) main div[class*="rounded-[20px]"],
+[data-mode="glassmorphismpro"]:not(.dark) main section [class*="rounded-"] {
+  background: rgba(255, 255, 255, 0.68) !important;
+  border: 1px solid rgba(255, 255, 255, 0.88) !important;
   box-shadow:
-    0 16px 36px -10px rgba(15, 23, 42, 0.08),
+    0 18px 38px -10px rgba(15, 23, 42, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
 }
 
@@ -734,22 +784,38 @@ input[type="checkbox"]:focus {
 [data-mode="glassmorphismpro"].dark .glass-secondary,
 [data-mode="glassmorphismpro"].dark .glass-light,
 [data-mode="glassmorphismpro"].dark .liquid-card,
-[data-mode="glassmorphismpro"].dark .rounded-\[20px\],
-[data-mode="glassmorphismpro"].dark main section .rounded-2xl,
-[data-mode="glassmorphismpro"].dark main section .rounded-3xl,
+[data-mode="glassmorphismpro"].dark .card,
+[data-mode="glassmorphismpro"].dark [data-slot="card"],
+[data-mode="glassmorphismpro"].dark .bg-card,
+[data-mode="glassmorphismpro"].dark .stat-card,
+[data-mode="glassmorphismpro"].dark header.glass-primary,
+[data-mode="glassmorphismpro"].dark header[class*="glass"],
+[data-mode="glassmorphismpro"].dark main div[class*="rounded-2xl"],
+[data-mode="glassmorphismpro"].dark main div[class*="rounded-3xl"],
+[data-mode="glassmorphismpro"].dark main div[class*="rounded-xl"],
+[data-mode="glassmorphismpro"].dark main div[class*="rounded-[20px]"],
+[data-mode="glassmorphismpro"].dark main section [class*="rounded-"],
 .dark[data-mode="glassmorphismpro"] .neu-card,
 .dark[data-mode="glassmorphismpro"] .glass-primary,
 .dark[data-mode="glassmorphismpro"] .glass-secondary,
 .dark[data-mode="glassmorphismpro"] .glass-light,
 .dark[data-mode="glassmorphismpro"] .liquid-card,
-.dark[data-mode="glassmorphismpro"] .rounded-\[20px\],
-.dark[data-mode="glassmorphismpro"] main section .rounded-2xl,
-.dark[data-mode="glassmorphismpro"] main section .rounded-3xl {
-  background: rgba(18, 18, 18, 0.6) !important;
-  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+.dark[data-mode="glassmorphismpro"] .card,
+.dark[data-mode="glassmorphismpro"] [data-slot="card"],
+.dark[data-mode="glassmorphismpro"] .bg-card,
+.dark[data-mode="glassmorphismpro"] .stat-card,
+.dark[data-mode="glassmorphismpro"] header.glass-primary,
+.dark[data-mode="glassmorphismpro"] header[class*="glass"],
+.dark[data-mode="glassmorphismpro"] main div[class*="rounded-2xl"],
+.dark[data-mode="glassmorphismpro"] main div[class*="rounded-3xl"],
+.dark[data-mode="glassmorphismpro"] main div[class*="rounded-xl"],
+.dark[data-mode="glassmorphismpro"] main div[class*="rounded-[20px]"],
+.dark[data-mode="glassmorphismpro"] main section [class*="rounded-"] {
+  background: rgba(18, 18, 18, 0.55) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
   box-shadow:
-    0 24px 48px -12px rgba(0, 0, 0, 0.9),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+    0 24px 48px -12px rgba(0, 0, 0, 0.95),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
 }
 
 /* ─── 3. AURORA MESH GLOW MODE (Vibrant Colored Halo) ─── */
@@ -758,9 +824,17 @@ input[type="checkbox"]:focus {
 [data-mode="aurora"] .glass-secondary,
 [data-mode="aurora"] .glass-light,
 [data-mode="aurora"] .liquid-card,
-[data-mode="aurora"] .rounded-\[20px\],
-[data-mode="aurora"] main section .rounded-2xl,
-[data-mode="aurora"] main section .rounded-3xl {
+[data-mode="aurora"] .card,
+[data-mode="aurora"] [data-slot="card"],
+[data-mode="aurora"] .bg-card,
+[data-mode="aurora"] .stat-card,
+[data-mode="aurora"] header.glass-primary,
+[data-mode="aurora"] header[class*="glass"],
+[data-mode="aurora"] main div[class*="rounded-2xl"],
+[data-mode="aurora"] main div[class*="rounded-3xl"],
+[data-mode="aurora"] main div[class*="rounded-xl"],
+[data-mode="aurora"] main div[class*="rounded-[20px]"],
+[data-mode="aurora"] main section [class*="rounded-"] {
   backdrop-filter: blur(20px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
 }
@@ -770,14 +844,22 @@ input[type="checkbox"]:focus {
 [data-mode="aurora"]:not(.dark) .glass-secondary,
 [data-mode="aurora"]:not(.dark) .glass-light,
 [data-mode="aurora"]:not(.dark) .liquid-card,
-[data-mode="aurora"]:not(.dark) .rounded-\[20px\],
-[data-mode="aurora"]:not(.dark) main section .rounded-2xl,
-[data-mode="aurora"]:not(.dark) main section .rounded-3xl {
+[data-mode="aurora"]:not(.dark) .card,
+[data-mode="aurora"]:not(.dark) [data-slot="card"],
+[data-mode="aurora"]:not(.dark) .bg-card,
+[data-mode="aurora"]:not(.dark) .stat-card,
+[data-mode="aurora"]:not(.dark) header.glass-primary,
+[data-mode="aurora"]:not(.dark) header[class*="glass"],
+[data-mode="aurora"]:not(.dark) main div[class*="rounded-2xl"],
+[data-mode="aurora"]:not(.dark) main div[class*="rounded-3xl"],
+[data-mode="aurora"]:not(.dark) main div[class*="rounded-xl"],
+[data-mode="aurora"]:not(.dark) main div[class*="rounded-[20px]"],
+[data-mode="aurora"]:not(.dark) main section [class*="rounded-"] {
   background: linear-gradient(135deg, rgba(245, 255, 235, 0.95), rgba(235, 250, 240, 0.88)) !important;
-  border: 1px solid rgba(156, 231, 0, 0.45) !important;
+  border: 1px solid rgba(156, 231, 0, 0.5) !important;
   box-shadow:
-    0 0 30px -5px rgba(156, 231, 0, 0.22),
-    0 12px 28px -8px rgba(16, 185, 129, 0.12) !important;
+    0 0 32px -4px rgba(156, 231, 0, 0.28),
+    0 12px 28px -8px rgba(16, 185, 129, 0.14) !important;
 }
 
 [data-mode="aurora"].dark .neu-card,
@@ -785,23 +867,39 @@ input[type="checkbox"]:focus {
 [data-mode="aurora"].dark .glass-secondary,
 [data-mode="aurora"].dark .glass-light,
 [data-mode="aurora"].dark .liquid-card,
-[data-mode="aurora"].dark .rounded-\[20px\],
-[data-mode="aurora"].dark main section .rounded-2xl,
-[data-mode="aurora"].dark main section .rounded-3xl,
+[data-mode="aurora"].dark .card,
+[data-mode="aurora"].dark [data-slot="card"],
+[data-mode="aurora"].dark .bg-card,
+[data-mode="aurora"].dark .stat-card,
+[data-mode="aurora"].dark header.glass-primary,
+[data-mode="aurora"].dark header[class*="glass"],
+[data-mode="aurora"].dark main div[class*="rounded-2xl"],
+[data-mode="aurora"].dark main div[class*="rounded-3xl"],
+[data-mode="aurora"].dark main div[class*="rounded-xl"],
+[data-mode="aurora"].dark main div[class*="rounded-[20px]"],
+[data-mode="aurora"].dark main section [class*="rounded-"],
 .dark[data-mode="aurora"] .neu-card,
 .dark[data-mode="aurora"] .glass-primary,
 .dark[data-mode="aurora"] .glass-secondary,
 .dark[data-mode="aurora"] .glass-light,
 .dark[data-mode="aurora"] .liquid-card,
-.dark[data-mode="aurora"] .rounded-\[20px\],
-.dark[data-mode="aurora"] main section .rounded-2xl,
-.dark[data-mode="aurora"] main section .rounded-3xl {
-  background: linear-gradient(145deg, rgba(16, 26, 12, 0.92), rgba(8, 14, 8, 0.85)) !important;
-  border: 1px solid rgba(156, 231, 0, 0.45) !important;
+.dark[data-mode="aurora"] .card,
+.dark[data-mode="aurora"] [data-slot="card"],
+.dark[data-mode="aurora"] .bg-card,
+.dark[data-mode="aurora"] .stat-card,
+.dark[data-mode="aurora"] header.glass-primary,
+.dark[data-mode="aurora"] header[class*="glass"],
+.dark[data-mode="aurora"] main div[class*="rounded-2xl"],
+.dark[data-mode="aurora"] main div[class*="rounded-3xl"],
+.dark[data-mode="aurora"] main div[class*="rounded-xl"],
+.dark[data-mode="aurora"] main div[class*="rounded-[20px]"],
+.dark[data-mode="aurora"] main section [class*="rounded-"] {
+  background: linear-gradient(145deg, rgba(14, 22, 10, 0.94), rgba(6, 10, 6, 0.88)) !important;
+  border: 1px solid rgba(156, 231, 0, 0.55) !important;
   box-shadow:
-    0 0 35px -6px rgba(156, 231, 0, 0.28),
-    0 16px 36px -10px rgba(0, 0, 0, 0.9),
-    inset 0 1px 1px rgba(156, 231, 0, 0.25) !important;
+    0 0 40px -6px rgba(156, 231, 0, 0.35),
+    0 16px 36px -10px rgba(0, 0, 0, 0.95),
+    inset 0 1px 1px rgba(156, 231, 0, 0.3) !important;
 }
 
 /* ─── 4. LIQUID GLASS MODE (3D Ultra Depth - Default) ─── */
@@ -810,9 +908,17 @@ input[type="checkbox"]:focus {
 [data-mode="liquidglass"] .glass-secondary,
 [data-mode="liquidglass"] .glass-light,
 [data-mode="liquidglass"] .liquid-card,
-[data-mode="liquidglass"] .rounded-\[20px\],
-[data-mode="liquidglass"] main section .rounded-2xl,
-[data-mode="liquidglass"] main section .rounded-3xl {
+[data-mode="liquidglass"] .card,
+[data-mode="liquidglass"] [data-slot="card"],
+[data-mode="liquidglass"] .bg-card,
+[data-mode="liquidglass"] .stat-card,
+[data-mode="liquidglass"] header.glass-primary,
+[data-mode="liquidglass"] header[class*="glass"],
+[data-mode="liquidglass"] main div[class*="rounded-2xl"],
+[data-mode="liquidglass"] main div[class*="rounded-3xl"],
+[data-mode="liquidglass"] main div[class*="rounded-xl"],
+[data-mode="liquidglass"] main div[class*="rounded-[20px]"],
+[data-mode="liquidglass"] main section [class*="rounded-"] {
   backdrop-filter: blur(24px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
 }
@@ -822,9 +928,17 @@ input[type="checkbox"]:focus {
 [data-mode="liquidglass"]:not(.dark) .glass-secondary,
 [data-mode="liquidglass"]:not(.dark) .glass-light,
 [data-mode="liquidglass"]:not(.dark) .liquid-card,
-[data-mode="liquidglass"]:not(.dark) .rounded-\[20px\],
-[data-mode="liquidglass"]:not(.dark) main section .rounded-2xl,
-[data-mode="liquidglass"]:not(.dark) main section .rounded-3xl {
+[data-mode="liquidglass"]:not(.dark) .card,
+[data-mode="liquidglass"]:not(.dark) [data-slot="card"],
+[data-mode="liquidglass"]:not(.dark) .bg-card,
+[data-mode="liquidglass"]:not(.dark) .stat-card,
+[data-mode="liquidglass"]:not(.dark) header.glass-primary,
+[data-mode="liquidglass"]:not(.dark) header[class*="glass"],
+[data-mode="liquidglass"]:not(.dark) main div[class*="rounded-2xl"],
+[data-mode="liquidglass"]:not(.dark) main div[class*="rounded-3xl"],
+[data-mode="liquidglass"]:not(.dark) main div[class*="rounded-xl"],
+[data-mode="liquidglass"]:not(.dark) main div[class*="rounded-[20px]"],
+[data-mode="liquidglass"]:not(.dark) main section [class*="rounded-"] {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(241, 245, 249, 0.8)) !important;
   border: 1px solid rgba(255, 255, 255, 0.9) !important;
   box-shadow:
@@ -837,21 +951,37 @@ input[type="checkbox"]:focus {
 [data-mode="liquidglass"].dark .glass-secondary,
 [data-mode="liquidglass"].dark .glass-light,
 [data-mode="liquidglass"].dark .liquid-card,
-[data-mode="liquidglass"].dark .rounded-\[20px\],
-[data-mode="liquidglass"].dark main section .rounded-2xl,
-[data-mode="liquidglass"].dark main section .rounded-3xl,
+[data-mode="liquidglass"].dark .card,
+[data-mode="liquidglass"].dark [data-slot="card"],
+[data-mode="liquidglass"].dark .bg-card,
+[data-mode="liquidglass"].dark .stat-card,
+[data-mode="liquidglass"].dark header.glass-primary,
+[data-mode="liquidglass"].dark header[class*="glass"],
+[data-mode="liquidglass"].dark main div[class*="rounded-2xl"],
+[data-mode="liquidglass"].dark main div[class*="rounded-3xl"],
+[data-mode="liquidglass"].dark main div[class*="rounded-xl"],
+[data-mode="liquidglass"].dark main div[class*="rounded-[20px]"],
+[data-mode="liquidglass"].dark main section [class*="rounded-"],
 .dark[data-mode="liquidglass"] .neu-card,
 .dark[data-mode="liquidglass"] .glass-primary,
 .dark[data-mode="liquidglass"] .glass-secondary,
 .dark[data-mode="liquidglass"] .glass-light,
 .dark[data-mode="liquidglass"] .liquid-card,
-.dark[data-mode="liquidglass"] .rounded-\[20px\],
-.dark[data-mode="liquidglass"] main section .rounded-2xl,
-.dark[data-mode="liquidglass"] main section .rounded-3xl {
+.dark[data-mode="liquidglass"] .card,
+.dark[data-mode="liquidglass"] [data-slot="card"],
+.dark[data-mode="liquidglass"] .bg-card,
+.dark[data-mode="liquidglass"] .stat-card,
+.dark[data-mode="liquidglass"] header.glass-primary,
+.dark[data-mode="liquidglass"] header[class*="glass"],
+.dark[data-mode="liquidglass"] main div[class*="rounded-2xl"],
+.dark[data-mode="liquidglass"] main div[class*="rounded-3xl"],
+.dark[data-mode="liquidglass"] main div[class*="rounded-xl"],
+.dark[data-mode="liquidglass"] main div[class*="rounded-[20px]"],
+.dark[data-mode="liquidglass"] main section [class*="rounded-"] {
   background: linear-gradient(135deg, rgba(20, 20, 20, 0.85), rgba(8, 8, 8, 0.72)) !important;
-  border: 1px solid rgba(255, 255, 255, 0.11) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
   box-shadow:
-    0 20px 40px -15px rgba(0, 0, 0, 0.8),
+    0 20px 40px -15px rgba(0, 0, 0, 0.85),
     inset 0 1.5px 0.5px rgba(255, 255, 255, 0.14) !important;
 }
 
@@ -861,9 +991,17 @@ input[type="checkbox"]:focus {
 [data-mode="flat"] .glass-secondary,
 [data-mode="flat"] .glass-light,
 [data-mode="flat"] .liquid-card,
-[data-mode="flat"] .rounded-\[20px\],
-[data-mode="flat"] main section .rounded-2xl,
-[data-mode="flat"] main section .rounded-3xl {
+[data-mode="flat"] .card,
+[data-mode="flat"] [data-slot="card"],
+[data-mode="flat"] .bg-card,
+[data-mode="flat"] .stat-card,
+[data-mode="flat"] header.glass-primary,
+[data-mode="flat"] header[class*="glass"],
+[data-mode="flat"] main div[class*="rounded-2xl"],
+[data-mode="flat"] main div[class*="rounded-3xl"],
+[data-mode="flat"] main div[class*="rounded-xl"],
+[data-mode="flat"] main div[class*="rounded-[20px]"],
+[data-mode="flat"] main section [class*="rounded-"] {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   box-shadow: none !important;
@@ -874,9 +1012,17 @@ input[type="checkbox"]:focus {
 [data-mode="flat"]:not(.dark) .glass-secondary,
 [data-mode="flat"]:not(.dark) .glass-light,
 [data-mode="flat"]:not(.dark) .liquid-card,
-[data-mode="flat"]:not(.dark) .rounded-\[20px\],
-[data-mode="flat"]:not(.dark) main section .rounded-2xl,
-[data-mode="flat"]:not(.dark) main section .rounded-3xl {
+[data-mode="flat"]:not(.dark) .card,
+[data-mode="flat"]:not(.dark) [data-slot="card"],
+[data-mode="flat"]:not(.dark) .bg-card,
+[data-mode="flat"]:not(.dark) .stat-card,
+[data-mode="flat"]:not(.dark) header.glass-primary,
+[data-mode="flat"]:not(.dark) header[class*="glass"],
+[data-mode="flat"]:not(.dark) main div[class*="rounded-2xl"],
+[data-mode="flat"]:not(.dark) main div[class*="rounded-3xl"],
+[data-mode="flat"]:not(.dark) main div[class*="rounded-xl"],
+[data-mode="flat"]:not(.dark) main div[class*="rounded-[20px]"],
+[data-mode="flat"]:not(.dark) main section [class*="rounded-"] {
   background: #ffffff !important;
   border: 1px solid #e2e8f0 !important;
 }
@@ -886,17 +1032,33 @@ input[type="checkbox"]:focus {
 [data-mode="flat"].dark .glass-secondary,
 [data-mode="flat"].dark .glass-light,
 [data-mode="flat"].dark .liquid-card,
-[data-mode="flat"].dark .rounded-\[20px\],
-[data-mode="flat"].dark main section .rounded-2xl,
-[data-mode="flat"].dark main section .rounded-3xl,
+[data-mode="flat"].dark .card,
+[data-mode="flat"].dark [data-slot="card"],
+[data-mode="flat"].dark .bg-card,
+[data-mode="flat"].dark .stat-card,
+[data-mode="flat"].dark header.glass-primary,
+[data-mode="flat"].dark header[class*="glass"],
+[data-mode="flat"].dark main div[class*="rounded-2xl"],
+[data-mode="flat"].dark main div[class*="rounded-3xl"],
+[data-mode="flat"].dark main div[class*="rounded-xl"],
+[data-mode="flat"].dark main div[class*="rounded-[20px]"],
+[data-mode="flat"].dark main section [class*="rounded-"],
 .dark[data-mode="flat"] .neu-card,
 .dark[data-mode="flat"] .glass-primary,
 .dark[data-mode="flat"] .glass-secondary,
 .dark[data-mode="flat"] .glass-light,
 .dark[data-mode="flat"] .liquid-card,
-.dark[data-mode="flat"] .rounded-\[20px\],
-.dark[data-mode="flat"] main section .rounded-2xl,
-.dark[data-mode="flat"] main section .rounded-3xl {
+.dark[data-mode="flat"] .card,
+.dark[data-mode="flat"] [data-slot="card"],
+.dark[data-mode="flat"] .bg-card,
+.dark[data-mode="flat"] .stat-card,
+.dark[data-mode="flat"] header.glass-primary,
+.dark[data-mode="flat"] header[class*="glass"],
+.dark[data-mode="flat"] main div[class*="rounded-2xl"],
+.dark[data-mode="flat"] main div[class*="rounded-3xl"],
+.dark[data-mode="flat"] main div[class*="rounded-xl"],
+.dark[data-mode="flat"] main div[class*="rounded-[20px]"],
+.dark[data-mode="flat"] main section [class*="rounded-"] {
   background: #0d0d0d !important;
   border: 1px solid #222222 !important;
 }
@@ -1470,38 +1632,6 @@ input.global-search-input,
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SECTION 8: PUBLIC PAGES DYNAMIC DESIGN MODES
-   (Liquid Glass, Aurora, Glassmorphism Pro, Neumorphism, Flat)
-   ═══════════════════════════════════════════════════════════════ */
-
-/* ─── 1. LIQUID GLASS MODE (3D Ultra Depth) ─── */
-[data-mode="liquidglass"] main section .rounded-2xl,
-[data-mode="liquidglass"] main section .rounded-3xl {
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-}
-
-[data-mode="liquidglass"]:not(.dark) main section .rounded-2xl,
-[data-mode="liquidglass"]:not(.dark) main section .rounded-3xl {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(241, 245, 249, 0.75)) !important;
-  border: 1px solid rgba(255, 255, 255, 0.85) !important;
-  box-shadow:
-    0 20px 40px -15px rgba(156, 231, 0, 0.08),
-    0 8px 16px -8px rgba(30, 41, 59, 0.04),
-    inset 0 1.5px 1px rgba(255, 255, 255, 0.95) !important;
-}
-
-[data-mode="liquidglass"].dark main section .rounded-2xl,
-[data-mode="liquidglass"].dark main section .rounded-3xl {
-  background: linear-gradient(135deg, rgba(14, 14, 14, 0.9), rgba(8, 8, 8, 0.8)) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  box-shadow:
-    0 20px 40px -15px rgba(0, 0, 0, 0.8),
-    0 0 25px -5px rgba(156, 231, 0, 0.08),
-    inset 0 1px 1px rgba(255, 255, 255, 0.08) !important;
-}
-
-/* ═══════════════════════════════════════════════════════════════
    SECTION 9: GLOBAL THEME UNIFICATION & LIME GREEN PILL BUTTONS
    ═══════════════════════════════════════════════════════════════ */
 
@@ -1545,8 +1675,8 @@ input.global-search-input,
 .dark .bg-\[\#1c2237\],
 .dark .bg-\[\#0f172a\]\/80,
 .dark .bg-\[\#0f172a\]\/90 {
-  background-color: #0c0c0c !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  background-color: #0c0c0c;
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 .dark .border-slate-800,
@@ -1559,20 +1689,6 @@ input.global-search-input,
 .dark .border-gray-800\/80,
 .dark .border-gray-700 {
   border-color: rgba(255, 255, 255, 0.08) !important;
-}
-
-/* Universal Cards & Glass in Dark Mode */
-.dark .glass-primary,
-.dark .glass-secondary,
-.dark .glass-light,
-.dark .liquid-card,
-.dark .neu-card,
-.dark [data-slot="card"],
-.dark .card,
-.dark .bg-card {
-  background: #0c0c0c !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  box-shadow: 0 16px 36px -12px rgba(0, 0, 0, 0.9) !important;
 }
 
 /* Table styling in Dark mode */

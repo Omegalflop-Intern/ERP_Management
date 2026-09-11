@@ -690,17 +690,23 @@ export default function Topbar({ onToggleSidebar, onToggleCollapse, collapsed })
               <button
                 onClick={() => {
                   toggleDesignMode();
+                  const modes = ['liquidglass', 'aurora', 'glassmorphismpro', 'neumorphism', 'flat'];
+                  const nextMode = modes[(modes.indexOf(designMode) + 1) % modes.length];
+                  const labels = {
+                    liquidglass: 'Liquid Glass',
+                    aurora: 'Aurora Mesh',
+                    glassmorphismpro: 'Glassmorphism Pro',
+                    neumorphism: 'Neumorphism 3D',
+                    flat: 'Minimal Flat',
+                  };
+                  toast.info(`✨ Mode: ${labels[nextMode] || nextMode}`, { duration: 1000 });
                 }}
                 className="w-full flex items-center gap-3 px-3.5 py-2.5 hover:bg-slate-50 dark:hover:bg-neutral-900/60 text-xs font-semibold text-slate-800 dark:text-slate-200"
               >
-                {designMode === 'glass' ? (
-                  <Sparkles className="w-4 h-4 text-[#9CE700]" />
-                ) : (
-                  <Diamond className="w-4 h-4 text-slate-400" />
-                )}
-                {designMode === 'glass' ? 'Glass Mode' : 'Flat Mode'}
-                <span className="ml-auto text-[10px] text-slate-400">
-                  {designMode === 'glass' ? 'ON' : 'OFF'}
+                <Sparkles className="w-4 h-4 text-[#9CE700]" />
+                <span className="capitalize">{designMode || 'liquidglass'}</span>
+                <span className="ml-auto text-[10px] text-[#7dbb00] dark:text-[#9CE700] font-bold">
+                  Switch
                 </span>
               </button>
             </div>
