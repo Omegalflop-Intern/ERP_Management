@@ -4,6 +4,7 @@ import { getPagination } from '../../utils/http/pagination.js';
 
 export const ALL_PERMISSIONS = [
   'dashboard:view',
+  'dashboard:view_revenue', 'dashboard:view_profit', 'dashboard:view_stock', 'dashboard:view_purchase',
   'sales:view', 'sales:create', 'sales:delete',
   'products:view', 'products:create', 'products:edit', 'products:delete',
   'categories:view', 'categories:manage',
