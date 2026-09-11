@@ -8,7 +8,7 @@ export default function AnimatedBackground() {
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-0 select-none transition-all duration-500">
       {/* Base Canvas */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#F8FAFC] via-[#F1F5F9] to-[#EFF6FF] dark:from-[#000000] dark:via-[#050505] dark:to-[#000000] transition-colors duration-300" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#F8FAFC] via-[#F1F5F9] to-[#EFF6FF] dark:from-[#0b0f19] dark:via-[#0e1424] dark:to-[#090d16] transition-colors duration-300" />
 
       {/* Subtle Dot Grid Texture */}
       {designMode !== 'flat' && (

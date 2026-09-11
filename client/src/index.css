@@ -39,27 +39,31 @@
   }
 
   .dark {
-    --background: 0 0% 0%;
-    /* Pure Black #000000 */
-    --foreground: 0 0% 98%;
-    --card: 0 0% 6%;
-    /* #0f0f0f */
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 6%;
-    --popover-foreground: 0 0% 98%;
+    --background: 222 47% 8%;
+    /* #0B0F19 Deep Modern Slate */
+    --foreground: 210 40% 98%;
+    /* #F8FAFC */
+    --card: 222 47% 11%;
+    /* #0F172A */
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
     --primary: 82 100% 45%;
     /* Lime Green #9CE700 */
     --primary-foreground: 0 0% 0%;
-    --secondary: 0 0% 12%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 65%;
-    --accent: 0 0% 12%;
-    --accent-foreground: 0 0% 98%;
+    --secondary: 217 33% 17%;
+    /* #1E293B */
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 33% 15%;
+    --muted-foreground: 215 20% 65%;
+    /* #94A3B8 */
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 98%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 16%;
-    --input: 0 0% 14%;
+    --border: 217 33% 18%;
+    /* #1E293B */
+    --input: 217 33% 16%;
     --ring: 82 100% 45%;
   }
 }
@@ -79,13 +83,13 @@
 }
 
 .dark .glass-primary {
-  background: rgba(12, 12, 12, 0.85);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.82);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow:
-    0 20px 30px -10px rgba(0, 0, 0, 0.8),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    0 20px 30px -10px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .glass-secondary {
@@ -99,16 +103,16 @@
 }
 
 .dark .glass-secondary {
-  background: rgba(14, 14, 14, 0.88);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: rgba(17, 24, 39, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.7);
+  box-shadow:
+    0 12px 25px -8px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .glass-light {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.88));
-  backdrop-filter: blur(12px) saturate(160%);
   -webkit-backdrop-filter: blur(12px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.9);
   box-shadow:
@@ -117,7 +121,7 @@
 }
 
 .dark .glass-light {
-  background: rgba(14, 14, 14, 0.95);
+  background: rgba(30, 41, 59, 0.75);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -136,12 +140,12 @@
 }
 
 .dark .liquid-card {
-  background: linear-gradient(135deg, rgba(14, 14, 14, 0.85), rgba(8, 8, 8, 0.7));
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.8));
   backdrop-filter: blur(24px) saturate(180%) brightness(0.95);
   -webkit-backdrop-filter: blur(24px) saturate(180%) brightness(0.95);
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow:
-    0 20px 40px -15px rgba(0, 0, 0, 0.8),
+    0 20px 40px -15px rgba(0, 0, 0, 0.5),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
   border-radius: 20px;
 }
@@ -671,11 +675,11 @@ input[type="checkbox"]:focus {
 .dark[data-mode="neumorphism"] main div[class*="rounded-xl"],
 .dark[data-mode="neumorphism"] main div[class*="rounded-[20px]"],
 .dark[data-mode="neumorphism"] main section [class*="rounded-"] {
-  background: #111111 !important;
-  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  background: #0f172a !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
   box-shadow:
-    8px 8px 22px rgba(0, 0, 0, 0.98),
-    -5px -5px 15px rgba(255, 255, 255, 0.04) !important;
+    6px 6px 18px rgba(0, 0, 0, 0.45),
+    -3px -3px 10px rgba(255, 255, 255, 0.03) !important;
 }
 
 [data-mode="neumorphism"] .neu-pressed {
@@ -690,9 +694,9 @@ input[type="checkbox"]:focus {
 }
 [data-mode="neumorphism"].dark .neu-pressed,
 .dark[data-mode="neumorphism"] .neu-pressed {
-  background: #0d0d0d !important;
+  background: #0b0f19 !important;
   box-shadow:
-    inset 3px 3px 6px rgba(0, 0, 0, 0.8),
+    inset 3px 3px 6px rgba(0, 0, 0, 0.5),
     inset -2px -2px 5px rgba(255, 255, 255, 0.03) !important;
 }
 
@@ -708,10 +712,10 @@ input[type="checkbox"]:focus {
 }
 [data-mode="neumorphism"].dark .neu-btn,
 .dark[data-mode="neumorphism"] .neu-btn {
-  background: #151515 !important;
-  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  background: #1e293b !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
   box-shadow:
-    4px 4px 10px rgba(0, 0, 0, 0.6),
+    4px 4px 10px rgba(0, 0, 0, 0.4),
     -2px -2px 6px rgba(255, 255, 255, 0.03) !important;
   border-radius: 10px !important;
   color: #f1f5f9 !important;
@@ -729,7 +733,7 @@ input[type="checkbox"]:focus {
 [data-mode="neumorphism"].dark .neu-btn-active,
 .dark[data-mode="neumorphism"] .neu-btn-active {
   box-shadow:
-    inset 2px 2px 5px rgba(0, 0, 0, 0.7),
+    inset 2px 2px 5px rgba(0, 0, 0, 0.6),
     inset -1px -1px 3px rgba(255, 255, 255, 0.03) !important;
 }
 
@@ -809,11 +813,11 @@ input[type="checkbox"]:focus {
 .dark[data-mode="glassmorphismpro"] main div[class*="rounded-xl"],
 .dark[data-mode="glassmorphismpro"] main div[class*="rounded-[20px]"],
 .dark[data-mode="glassmorphismpro"] main section [class*="rounded-"] {
-  background: rgba(18, 18, 18, 0.55) !important;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  background: rgba(15, 23, 42, 0.68) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
   box-shadow:
-    0 24px 48px -12px rgba(0, 0, 0, 0.95),
-    inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+    0 24px 48px -12px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
 }
 
 /* ─── 3. AURORA MESH GLOW MODE (Vibrant Colored Halo) ─── */
@@ -892,12 +896,12 @@ input[type="checkbox"]:focus {
 .dark[data-mode="aurora"] main div[class*="rounded-xl"],
 .dark[data-mode="aurora"] main div[class*="rounded-[20px]"],
 .dark[data-mode="aurora"] main section [class*="rounded-"] {
-  background: linear-gradient(145deg, rgba(14, 22, 10, 0.94), rgba(6, 10, 6, 0.88)) !important;
-  border: 1px solid rgba(156, 231, 0, 0.55) !important;
+  background: linear-gradient(145deg, rgba(13, 27, 20, 0.92), rgba(15, 23, 42, 0.88)) !important;
+  border: 1px solid rgba(156, 231, 0, 0.45) !important;
   box-shadow:
-    0 0 40px -6px rgba(156, 231, 0, 0.35),
-    0 16px 36px -10px rgba(0, 0, 0, 0.95),
-    inset 0 1px 1px rgba(156, 231, 0, 0.3) !important;
+    0 0 36px -6px rgba(156, 231, 0, 0.28),
+    0 16px 36px -10px rgba(0, 0, 0, 0.5),
+    inset 0 1px 1px rgba(156, 231, 0, 0.2) !important;
 }
 
 /* ─── 4. LIQUID GLASS MODE (3D Ultra Depth - Default) ─── */
@@ -976,11 +980,11 @@ input[type="checkbox"]:focus {
 .dark[data-mode="liquidglass"] main div[class*="rounded-xl"],
 .dark[data-mode="liquidglass"] main div[class*="rounded-[20px]"],
 .dark[data-mode="liquidglass"] main section [class*="rounded-"] {
-  background: linear-gradient(135deg, rgba(20, 20, 20, 0.85), rgba(8, 8, 8, 0.72)) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.8)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
   box-shadow:
-    0 20px 40px -15px rgba(0, 0, 0, 0.85),
-    inset 0 1.5px 0.5px rgba(255, 255, 255, 0.14) !important;
+    0 20px 40px -15px rgba(0, 0, 0, 0.5),
+    inset 0 1.5px 0.5px rgba(255, 255, 255, 0.1) !important;
 }
 
 /* ─── 5. MINIMAL FLAT MODE (Solid High-Contrast) ─── */
@@ -1057,8 +1061,8 @@ input[type="checkbox"]:focus {
 .dark[data-mode="flat"] main div[class*="rounded-xl"],
 .dark[data-mode="flat"] main div[class*="rounded-[20px]"],
 .dark[data-mode="flat"] main section [class*="rounded-"] {
-  background: #0d0d0d !important;
-  border: 1px solid #222222 !important;
+  background: #0f172a !important;
+  border: 1px solid #1e293b !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1102,7 +1106,7 @@ input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="
 [data-mode] .dark textarea,
 .dark[data-mode] .neu-input,
 [data-mode][data-theme="dark"] .neu-input {
-  background: #0c0c0c !important;
+  background: #0f172a !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4) !important;
   border-radius: 10px !important;
@@ -1640,7 +1644,7 @@ input.global-search-input,
 .dark .app-layout,
 .dark main,
 .dark [data-app-root] {
-  background-color: #000000 !important;
+  background-color: #0b0f19 !important;
   color: #f8fafc !important;
 }
 
@@ -1656,7 +1660,7 @@ input.global-search-input,
 .dark .bg-\[\#0f172a\],
 .dark .bg-\[\#070b14\],
 .dark .bg-\[\#050810\] {
-  background-color: #000000 !important;
+  background-color: #0b0f19 !important;
 }
 
 .dark .bg-slate-800,
@@ -1673,7 +1677,7 @@ input.global-search-input,
 .dark .bg-\[\#1c2237\],
 .dark .bg-\[\#0f172a\]\/80,
 .dark .bg-\[\#0f172a\]\/90 {
-  background-color: #0c0c0c;
+  background-color: #0f172a;
   border-color: rgba(255, 255, 255, 0.08);
 }
 
@@ -1691,12 +1695,12 @@ input.global-search-input,
 
 /* Table styling in Dark mode */
 .dark table {
-  background-color: #0c0c0c !important;
+  background-color: #0f172a !important;
 }
 
 .dark thead tr,
 .dark th {
-  background-color: #111111 !important;
+  background-color: #1e293b !important;
   color: #cbd5e1 !important;
   border-color: rgba(255, 255, 255, 0.08) !important;
 }
@@ -1706,14 +1710,14 @@ input.global-search-input,
 }
 
 .dark tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.03) !important;
+  background-color: rgba(255, 255, 255, 0.04) !important;
 }
 
 /* Dialog / Modal in Dark mode */
 .dark [role="dialog"],
 .dark [data-radix-portal] > div,
 .dark .dialog-content {
-  background-color: #0c0c0c !important;
+  background-color: #0f172a !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
@@ -1932,25 +1936,25 @@ textarea {
 
 /* Super Admin Scope Global Overrides */
 .super-admin-scope aside {
-  background-color: #000000 !important;
-  border-color: #1f1f1f !important;
+  background-color: #0d121f !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 .super-admin-scope header {
-  background-color: rgba(0, 0, 0, 0.85) !important;
-  border-color: #1f1f1f !important;
+  background-color: rgba(13, 18, 31, 0.85) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 .super-admin-scope main {
-  background-color: #050505 !important;
+  background-color: #0b0f19 !important;
 }
 
 .super-admin-scope .bg-slate-900,
 .super-admin-scope .dark\:bg-slate-900,
 .super-admin-scope .bg-slate-950,
 .super-admin-scope .dark\:bg-slate-950 {
-  background-color: #0c0c0c !important;
-  border-color: #1f1f1f !important;
+  background-color: #0f172a !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 /* Selection highlight */

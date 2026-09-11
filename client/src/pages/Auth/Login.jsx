@@ -857,13 +857,13 @@ export default function Login() {
   // 2. If visiting an unregistered / non-existent subdomain or unmapped custom domain
   if (isInvalidSubdomain) {
     return (
-      <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-slate-100 dark:bg-[#000000] text-slate-900 dark:text-slate-100 font-sans p-4">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-rose-50/20 to-indigo-50/20 dark:from-[#000000] dark:via-[#080808] dark:to-[#000000] z-0" />
+      <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-slate-100 dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 font-sans p-4">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-rose-50/20 to-indigo-50/20 dark:from-[#0b0f19] dark:via-[#0e1424] dark:to-[#090d16] z-0" />
         <div className="absolute top-5 right-5 z-50">
           <ThemeToggle />
         </div>
 
-        <div className="relative z-20 w-full max-w-lg bg-white/95 dark:bg-[#0c0c0c] backdrop-blur-3xl border border-slate-200/80 dark:border-neutral-800 shadow-2xl rounded-[28px] p-8 md:p-10 text-center">
+        <div className="relative z-20 w-full max-w-lg bg-white/95 dark:bg-[#0f172a] backdrop-blur-3xl border border-slate-200/80 dark:border-slate-800 shadow-2xl rounded-[28px] p-8 md:p-10 text-center">
           <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 shadow-lg text-rose-600 dark:text-rose-400">
             <Store className="w-8 h-8 stroke-[2.2]" />
           </div>
@@ -882,16 +882,16 @@ export default function Login() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6 text-left">
             <a
               href={`tel:${cleanPhoneForTel}`}
-              className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-neutral-900 hover:bg-slate-100 dark:hover:bg-neutral-800 border border-slate-200 dark:border-neutral-800 transition-all group"
+              className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-[#1e293b] hover:bg-slate-100 dark:hover:bg-[#1e293b]/80 border border-slate-200 dark:border-slate-700 transition-all group"
             >
               <div className="w-10 h-10 rounded-xl bg-[#9CE700]/15 flex items-center justify-center text-[#9CE700] shrink-0 group-hover:scale-110 transition-transform">
                 <PhoneCall className="w-5 h-5" />
               </div>
               <div className="min-w-0">
-                <div className="text-[11px] font-semibold text-slate-500 dark:text-neutral-400">
+                <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
                   Support Hotline
                 </div>
-                <div className="text-xs font-bold text-slate-800 dark:text-neutral-200 truncate font-mono">
+                <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate font-mono">
                   {supportPhone}
                 </div>
               </div>
@@ -899,16 +899,16 @@ export default function Login() {
 
             <a
               href={`mailto:${supportEmail}`}
-              className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-neutral-900 hover:bg-slate-100 dark:hover:bg-neutral-800 border border-slate-200 dark:border-neutral-800 transition-all group"
+              className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-[#1e293b] hover:bg-slate-100 dark:hover:bg-[#1e293b]/80 border border-slate-200 dark:border-slate-700 transition-all group"
             >
               <div className="w-10 h-10 rounded-xl bg-[#9CE700]/15 flex items-center justify-center text-[#9CE700] shrink-0 group-hover:scale-110 transition-transform">
                 <Mail className="w-5 h-5" />
               </div>
               <div className="min-w-0">
-                <div className="text-[11px] font-semibold text-slate-500 dark:text-neutral-400">
+                <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
                   Support Email
                 </div>
-                <div className="text-xs font-bold text-slate-800 dark:text-neutral-200 truncate">
+                <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
                   {supportEmail}
                 </div>
               </div>
@@ -924,16 +924,16 @@ export default function Login() {
             </a>
 
             <a
-              href={getMainPortalUrl('/register-shop')}
-              className="w-full py-3 px-4 rounded-full text-xs font-bold bg-slate-100 dark:bg-neutral-900 hover:bg-slate-200 dark:hover:bg-neutral-800 text-slate-700 dark:text-neutral-200 flex items-center justify-center gap-2 transition-all border border-slate-200 dark:border-neutral-800"
+              href={getMainPortalUrl('/register')}
+              className="w-full py-3 px-4 rounded-full text-xs font-bold bg-slate-100 dark:bg-[#1e293b] hover:bg-slate-200 dark:hover:bg-[#1e293b]/80 text-slate-700 dark:text-slate-200 flex items-center justify-center gap-2 transition-all border border-slate-200 dark:border-slate-700"
             >
               Register a New Shop
             </a>
 
-            <p className="pt-2 text-[11px] text-slate-400 dark:text-neutral-500">
+            <p className="pt-2 text-[11px] text-slate-400 dark:text-slate-500">
               <a
                 href={getMainPortalUrl('/')}
-                className="font-semibold text-slate-500 dark:text-neutral-400 hover:text-[#9CE700]"
+                className="font-semibold text-slate-500 dark:text-slate-400 hover:text-[#9CE700]"
               >
                 Return to OmniManage Home
               </a>
@@ -958,9 +958,9 @@ export default function Login() {
   ];
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-slate-100 dark:bg-[#000000] text-slate-900 dark:text-slate-100 font-sans selection:bg-[#9CE700] selection:text-black">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-slate-100 dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 font-sans selection:bg-[#9CE700] selection:text-black">
       {/* Dynamic Background Base */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-slate-50 to-slate-200/50 dark:from-[#000000] dark:via-[#080808] dark:to-[#000000] z-0" />
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-slate-50 to-slate-200/50 dark:from-[#0b0f19] dark:via-[#0e1424] dark:to-[#090d16] z-0" />
 
       {/* 10 Active Canvas Background Animation Layers */}
       {bgMode === 'samurai' && <SamuraiCanvas isDark={isDark} />}
@@ -983,7 +983,7 @@ export default function Login() {
         <div className="relative">
           <button
             onClick={() => setShowAnimDropdown(!showAnimDropdown)}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-white/90 dark:bg-[#0c0c0c]/90 backdrop-blur-md border border-slate-200/80 dark:border-neutral-800 shadow-lg text-xs font-bold text-slate-800 dark:text-white hover:bg-white dark:hover:bg-neutral-900 transition-all cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-white/90 dark:bg-[#0f172a]/90 backdrop-blur-md border border-slate-200/80 dark:border-slate-800 shadow-lg text-xs font-bold text-slate-800 dark:text-white hover:bg-white dark:hover:bg-[#1e293b] transition-all cursor-pointer"
           >
             <Sparkles className="w-3.5 h-3.5 text-[#9CE700]" />
             <span className="capitalize">
@@ -992,8 +992,8 @@ export default function Login() {
           </button>
 
           {showAnimDropdown && (
-            <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white/95 dark:bg-[#0c0c0c] backdrop-blur-2xl border border-slate-200 dark:border-neutral-800 shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-              <div className="px-2.5 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-neutral-500">
+            <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white/95 dark:bg-[#0f172a] backdrop-blur-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+              <div className="px-2.5 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">
                 Visual Themes
               </div>
               <div className="max-h-64 overflow-y-auto space-y-0.5 custom-scrollbar">
@@ -1007,13 +1007,13 @@ export default function Login() {
                     className={`w-full text-left px-3 py-2 rounded-xl text-xs flex flex-col transition-all ${
                       bgMode === anim.id
                         ? 'bg-[#9CE700] text-black font-extrabold shadow-sm'
-                        : 'text-slate-700 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-neutral-900'
+                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1e293b]'
                     }`}
                   >
                     <span className="font-semibold">{anim.name}</span>
                     <span
                       className={`text-[10px] ${
-                        bgMode === anim.id ? 'text-black/80' : 'text-slate-400 dark:text-neutral-500'
+                        bgMode === anim.id ? 'text-black/80' : 'text-slate-400 dark:text-slate-500'
                       }`}
                     >
                       {anim.desc}
@@ -1033,7 +1033,7 @@ export default function Login() {
         {/* Brand Header */}
         <div className="flex justify-center mb-4">
           {publicShop?.logo ? (
-            <div className="w-20 h-20 rounded-2xl flex items-center justify-center bg-white/95 dark:bg-[#0c0c0c] backdrop-blur-2xl border border-slate-200/80 dark:border-neutral-800 shadow-2xl p-2 overflow-hidden">
+            <div className="w-20 h-20 rounded-2xl flex items-center justify-center bg-white/95 dark:bg-[#0f172a] backdrop-blur-2xl border border-slate-200/80 dark:border-slate-800 shadow-2xl p-2 overflow-hidden">
               <img
                 src={getAssetUrl(publicShop.logo)}
                 alt={displayShopName}
@@ -1048,7 +1048,7 @@ export default function Login() {
               </div>
             </div>
           ) : (
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-white/90 dark:bg-[#0c0c0c] backdrop-blur-2xl border border-slate-200/80 dark:border-neutral-800 shadow-xl">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-white/90 dark:bg-[#0f172a] backdrop-blur-2xl border border-slate-200/80 dark:border-slate-800 shadow-xl">
               {subdomain ? (
                 <Store className="w-8 h-8 text-[#9CE700] stroke-[2.2]" />
               ) : (
@@ -1068,7 +1068,7 @@ export default function Login() {
         {/* Apple macOS / iOS Liquid Glass Form Card */}
         <form
           onSubmit={handleSubmit}
-          className="bg-white/85 dark:bg-[#0c0c0c]/85 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.07)] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] rounded-[28px] p-8 md:p-10 relative overflow-hidden"
+          className="bg-white/85 dark:bg-[#0f172a]/90 backdrop-blur-2xl border border-slate-200/80 dark:border-white/10 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.07)] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] rounded-[28px] p-8 md:p-10 relative overflow-hidden"
         >
           {/* Internal Liquid Shine Highlight */}
           <div className="absolute -top-24 -left-24 w-48 h-48 bg-[#9CE700]/10 rounded-full blur-2xl pointer-events-none" />
@@ -1087,7 +1087,7 @@ export default function Login() {
                   value={loginField}
                   onChange={(e) => setLoginField(e.target.value)}
                   placeholder="Enter username, email or phone"
-                  className="w-full pl-11 pr-4 py-3.5 rounded-full text-sm font-semibold transition-all duration-200 bg-slate-50 dark:bg-[#141414] border border-slate-200 dark:border-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-neutral-500 focus:bg-white dark:focus:bg-[#141414] focus:border-[#9CE700] focus:ring-4 focus:ring-[#9CE700]/20 shadow-xs outline-none"
+                  className="w-full pl-11 pr-4 py-3.5 rounded-full text-sm font-semibold transition-all duration-200 bg-slate-50 dark:bg-[#1e293b] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-400 focus:bg-white dark:focus:bg-[#1e293b] focus:border-[#9CE700] focus:ring-4 focus:ring-[#9CE700]/20 shadow-xs outline-none"
                   autoComplete="username"
                 />
               </div>
@@ -1114,7 +1114,7 @@ export default function Login() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className="w-full pl-11 pr-11 py-3.5 rounded-full text-sm font-semibold transition-all duration-200 bg-slate-50 dark:bg-[#141414] border border-slate-200 dark:border-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-neutral-500 focus:bg-white dark:focus:bg-[#141414] focus:border-[#9CE700] focus:ring-4 focus:ring-[#9CE700]/20 shadow-xs outline-none"
+                  className="w-full pl-11 pr-11 py-3.5 rounded-full text-sm font-semibold transition-all duration-200 bg-slate-50 dark:bg-[#1e293b] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-400 focus:bg-white dark:focus:bg-[#1e293b] focus:border-[#9CE700] focus:ring-4 focus:ring-[#9CE700]/20 shadow-xs outline-none"
                   autoComplete="current-password"
                 />
                 <button

@@ -53,7 +53,7 @@ const PIE_COLORS = ['#9CE700', '#8B5CF6', '#F59E0B', '#10B981'];
 
 function ExecutiveStatCard({ icon: Icon, label, value, sub, colorClass, iconBg, trend }) {
   return (
-    <div className="relative overflow-hidden bg-white dark:bg-[#0c0c0c] rounded-3xl border border-slate-200/80 dark:border-neutral-800 p-5 flex flex-col justify-between shadow-sm hover:shadow-md hover:border-[#9CE700]/30 dark:hover:border-[#9CE700]/30 transition-all duration-200 group">
+    <div className="relative overflow-hidden bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200/80 dark:border-slate-800 p-5 flex flex-col justify-between shadow-sm hover:shadow-md hover:border-[#9CE700]/30 dark:hover:border-[#9CE700]/30 transition-all duration-200 group">
       <div className="flex items-center justify-between mb-4">
         <div className={`w-11 h-11 rounded-2xl flex items-center justify-center ${iconBg} shadow-sm transition-transform duration-200 group-hover:scale-105`}>
           <Icon className={`w-5 h-5 ${colorClass}`} />
@@ -68,11 +68,11 @@ function ExecutiveStatCard({ icon: Icon, label, value, sub, colorClass, iconBg, 
         <div className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-none mb-1.5">
           {value}
         </div>
-        <div className="text-xs text-slate-500 dark:text-neutral-400 font-bold uppercase tracking-wider">
+        <div className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
           {label}
         </div>
         {sub && (
-          <div className="text-[11px] text-slate-400 dark:text-neutral-500 mt-1 font-medium">
+          <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 font-medium">
             {sub}
           </div>
         )}
@@ -84,9 +84,9 @@ function ExecutiveStatCard({ icon: Icon, label, value, sub, colorClass, iconBg, 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-[#0c0c0c] text-white p-3.5 rounded-2xl shadow-2xl text-xs border border-neutral-800 space-y-2 min-w-[160px] z-50 backdrop-blur-md">
+      <div className="bg-[#0f172a] text-white p-3.5 rounded-2xl shadow-2xl text-xs border border-slate-700 space-y-2 min-w-[160px] z-50 backdrop-blur-md">
         {label && (
-          <p className="font-extrabold text-neutral-300 pb-1.5 border-b border-neutral-800 text-[11px] uppercase tracking-wider">
+          <p className="font-extrabold text-slate-300 pb-1.5 border-b border-slate-700 text-[11px] uppercase tracking-wider">
             {label}
           </p>
         )}
@@ -94,7 +94,7 @@ const CustomTooltip = ({ active, payload, label }) => {
           const name = entry.name || entry.payload?.name || 'Item';
           return (
             <div key={index} className="flex items-center justify-between gap-4 font-semibold">
-              <span className="flex items-center gap-2 text-neutral-300">
+              <span className="flex items-center gap-2 text-slate-300">
                 <span
                   className="w-2.5 h-2.5 rounded-full ring-2 ring-white/10"
                   style={{ backgroundColor: entry.color || entry.payload?.fill }}
@@ -125,32 +125,32 @@ export default function SADashboard() {
     return (
       <div className="space-y-6 max-w-7xl mx-auto animate-pulse">
         {/* Executive Hero Banner Skeleton */}
-        <div className="h-44 bg-white dark:bg-[#0c0c0c] rounded-3xl border border-slate-200/80 dark:border-neutral-800 p-6 md:p-8" />
+        <div className="h-44 bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 md:p-8" />
 
         {/* 4 KPI Cards Skeleton */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="h-28 bg-white dark:bg-[#0c0c0c] rounded-3xl border border-slate-200/80 dark:border-neutral-800 p-5 space-y-3"
+              className="h-28 bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200/80 dark:border-slate-800 p-5 space-y-3"
             >
               <div className="flex items-center justify-between">
-                <div className="h-3 w-20 bg-slate-100 dark:bg-neutral-800 rounded" />
-                <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-neutral-800" />
+                <div className="h-3 w-20 bg-slate-100 dark:bg-slate-800 rounded" />
+                <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800" />
               </div>
-              <div className="h-7 w-16 bg-slate-100 dark:bg-neutral-800 rounded-lg" />
+              <div className="h-7 w-16 bg-slate-100 dark:bg-slate-800 rounded-lg" />
             </div>
           ))}
         </div>
 
         {/* 2 Charts Grid Skeleton */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 h-80 bg-white dark:bg-[#0c0c0c] rounded-3xl border border-slate-200/80 dark:border-neutral-800 p-6" />
-          <div className="h-80 bg-white dark:bg-[#0c0c0c] rounded-3xl border border-slate-200/80 dark:border-neutral-800 p-6" />
+          <div className="lg:col-span-2 h-80 bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6" />
+          <div className="h-80 bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6" />
         </div>
 
         {/* Recent Shops Table Skeleton */}
-        <div className="h-64 bg-white dark:bg-[#0c0c0c] rounded-3xl border border-slate-200/80 dark:border-neutral-800 p-6" />
+        <div className="h-64 bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6" />
       </div>
     );
   }
@@ -197,7 +197,7 @@ export default function SADashboard() {
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* Executive Hero Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-slate-900 dark:bg-[#0c0c0c] p-6 md:p-8 text-white shadow-2xl border border-slate-800 dark:border-neutral-800">
+      <div className="relative overflow-hidden rounded-3xl bg-slate-900 dark:bg-[#0f172a] p-6 md:p-8 text-white shadow-2xl border border-slate-800 dark:border-slate-700">
         <div className="absolute top-0 right-0 -mt-8 -mr-8 w-80 h-80 bg-[#9CE700]/10 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="max-w-2xl">
@@ -208,7 +208,7 @@ export default function SADashboard() {
             <h1 className="text-2xl md:text-3xl font-black tracking-tight text-white leading-tight">
               Platform Command Center
             </h1>
-            <p className="text-xs md:text-sm text-slate-400 dark:text-neutral-400 mt-1.5 font-medium leading-relaxed">
+            <p className="text-xs md:text-sm text-slate-400 dark:text-slate-400 mt-1.5 font-medium leading-relaxed">
               Real-time multi-tenant monitoring, subscription life-cycles, tenant verification, and system health status.
             </p>
           </div>
@@ -279,7 +279,7 @@ export default function SADashboard() {
       {/* Analytics Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Active vs Inactive Trend Chart */}
-        <div className="lg:col-span-2 bg-white dark:bg-[#0c0c0c] rounded-3xl border border-slate-200/80 dark:border-neutral-800 p-6 shadow-sm flex flex-col justify-between">
+        <div className="lg:col-span-2 bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between mb-6">
             <div>
               <div className="flex items-center gap-2">
@@ -288,7 +288,7 @@ export default function SADashboard() {
                   Operational Tenant Trends
                 </h2>
               </div>
-              <p className="text-xs text-slate-500 dark:text-neutral-400 mt-1 font-medium">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
                 Monthly comparison of active operational shops vs suspended tenants
               </p>
             </div>
@@ -337,7 +337,7 @@ export default function SADashboard() {
         </div>
 
         {/* Subscription Plan Distribution Pie */}
-        <div className="bg-white dark:bg-[#0c0c0c] rounded-3xl border border-slate-200/80 dark:border-neutral-800 p-6 shadow-sm flex flex-col justify-between">
+        <div className="bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <CreditCard className="w-4 h-4 text-[#9CE700]" />
@@ -345,7 +345,7 @@ export default function SADashboard() {
                 Plan Distribution
               </h2>
             </div>
-            <p className="text-xs text-slate-500 dark:text-neutral-400 font-medium">
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
               Tenants categorized by subscription tiers
             </p>
           </div>
@@ -371,14 +371,14 @@ export default function SADashboard() {
             </ResponsiveContainer>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 text-xs pt-3 border-t border-slate-100 dark:border-neutral-800">
+          <div className="grid grid-cols-2 gap-2 text-xs pt-3 border-t border-slate-100 dark:border-slate-800">
             {planDistribution.map((item, idx) => (
               <div key={item.name} className="flex items-center gap-2">
                 <span
                   className="w-2.5 h-2.5 rounded-full shrink-0"
                   style={{ backgroundColor: PIE_COLORS[idx % PIE_COLORS.length] }}
                 />
-                <span className="text-slate-600 dark:text-neutral-400 font-bold truncate">
+                <span className="text-slate-600 dark:text-slate-400 font-bold truncate">
                   {item.name}
                 </span>
               </div>
@@ -390,7 +390,7 @@ export default function SADashboard() {
       {/* Expiring Soon & Recent Registered Shops Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Expiring Soon Card */}
-        <div className="bg-white dark:bg-[#0c0c0c] rounded-3xl border border-slate-200/80 dark:border-neutral-800 p-6 shadow-sm flex flex-col justify-between">
+        <div className="bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-amber-500" />
@@ -407,12 +407,12 @@ export default function SADashboard() {
           </div>
 
           {expiringSoonList.length === 0 ? (
-            <div className="py-10 text-center border border-dashed border-slate-200 dark:border-neutral-800 rounded-2xl my-auto">
+            <div className="py-10 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl my-auto">
               <ShieldCheck className="w-9 h-9 text-[#9CE700] mx-auto mb-2 opacity-80" />
-              <p className="text-xs font-bold text-slate-700 dark:text-neutral-300">
+              <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
                 All Subscriptions Healthy
               </p>
-              <p className="text-[11px] text-slate-400 dark:text-neutral-500 mt-0.5">
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
                 No accounts expiring within 30 days
               </p>
             </div>
@@ -421,11 +421,11 @@ export default function SADashboard() {
               {expiringSoonList.map((t) => (
                 <div
                   key={t._id}
-                  className="flex items-center justify-between text-xs p-3 rounded-2xl bg-slate-50 dark:bg-neutral-900/60 border border-slate-200/60 dark:border-neutral-800/80 hover:bg-slate-100 dark:hover:bg-neutral-900 transition-colors"
+                  className="flex items-center justify-between text-xs p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 >
                   <div className="min-w-0 flex-1 pr-2">
                     <div className="font-extrabold text-slate-800 dark:text-slate-200 truncate">{t.shopName}</div>
-                    <div className="text-[11px] text-slate-500 dark:text-neutral-400 truncate">{t.email}</div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{t.email}</div>
                   </div>
                   <div className="text-right shrink-0">
                     <span
@@ -446,7 +446,7 @@ export default function SADashboard() {
         </div>
 
         {/* Recent Registered Shops Table */}
-        <div className="lg:col-span-2 bg-white dark:bg-[#0c0c0c] rounded-3xl border border-slate-200/80 dark:border-neutral-800 p-6 shadow-sm">
+        <div className="lg:col-span-2 bg-white dark:bg-[#0f172a] rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-[#9CE700]" />

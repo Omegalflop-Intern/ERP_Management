@@ -187,9 +187,9 @@ export default function SuperAdminLayout() {
       </nav>
 
       {/* Admin Profile & Action Footer */}
-      <div className="p-3 border-t border-slate-200/80 dark:border-neutral-800 bg-slate-50/50 dark:bg-[#0c0c0c]/80">
+      <div className="p-3 border-t border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-[#0f172a]/80">
         {!collapsed && (
-          <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-white dark:bg-[#141414] border border-slate-200/80 dark:border-neutral-800 shadow-sm mb-2.5">
+          <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-white dark:bg-[#1e293b] border border-slate-200/80 dark:border-slate-700 shadow-sm mb-2.5">
             {photoUrl ? (
               <img
                 src={photoUrl}
@@ -215,7 +215,7 @@ export default function SuperAdminLayout() {
         <div className={`flex items-center ${collapsed ? 'flex-col gap-2' : 'gap-2'}`}>
           <button
             onClick={toggleTheme}
-            className={`p-2.5 rounded-full text-slate-700 dark:text-neutral-200 bg-white dark:bg-[#141414] hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors border border-slate-200/80 dark:border-neutral-800 shadow-sm ${
+            className={`p-2.5 rounded-full text-slate-700 dark:text-slate-200 bg-white dark:bg-[#1e293b] hover:bg-slate-100 dark:hover:bg-[#1e293b]/80 transition-colors border border-slate-200/80 dark:border-slate-700 shadow-sm ${
               collapsed ? 'w-10 h-10 flex items-center justify-center' : 'w-10 h-10 flex items-center justify-center shrink-0'
             }`}
             title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
@@ -242,17 +242,17 @@ export default function SuperAdminLayout() {
   );
 
   return (
-    <div className="super-admin-scope flex h-screen bg-slate-50 dark:bg-[#050505] text-slate-900 dark:text-slate-100 font-sans overflow-hidden">
+    <div className="super-admin-scope flex h-screen bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 font-sans overflow-hidden">
       {/* Desktop Sidebar */}
       <aside
-        className={`hidden lg:flex flex-col flex-shrink-0 relative bg-white dark:bg-[#000000] border-r border-slate-200/80 dark:border-neutral-800 transition-all duration-300 z-20 ${
+        className={`hidden lg:flex flex-col flex-shrink-0 relative bg-white dark:bg-[#0d121f] border-r border-slate-200/80 dark:border-slate-800 transition-all duration-300 z-20 ${
           collapsed ? 'w-16' : 'w-64'
         }`}
       >
         <SidebarContent />
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="absolute -right-3 top-16 z-30 w-6 h-6 bg-white dark:bg-neutral-900 hover:bg-slate-100 dark:hover:bg-neutral-800 text-slate-600 dark:text-white border border-slate-200 dark:border-neutral-700 rounded-full flex items-center justify-center transition-all shadow-md hover:scale-110"
+          className="absolute -right-3 top-16 z-30 w-6 h-6 bg-white dark:bg-[#1e293b] hover:bg-slate-100 dark:hover:bg-[#1e293b]/80 text-slate-600 dark:text-white border border-slate-200 dark:border-slate-700 rounded-full flex items-center justify-center transition-all shadow-md hover:scale-110"
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
@@ -266,10 +266,10 @@ export default function SuperAdminLayout() {
             className="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
             onClick={() => setMobileOpen(false)}
           />
-          <aside className="relative z-10 w-72 flex flex-col bg-white dark:bg-[#000000] border-r border-slate-200 dark:border-neutral-800 h-full shadow-2xl">
+          <aside className="relative z-10 w-72 flex flex-col bg-white dark:bg-[#0d121f] border-r border-slate-200 dark:border-slate-800 h-full shadow-2xl">
             <button
               onClick={() => setMobileOpen(false)}
-              className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-neutral-900 z-20"
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 z-20"
             >
               <X className="w-5 h-5" />
             </button>
@@ -281,10 +281,10 @@ export default function SuperAdminLayout() {
       {/* Main Content Area */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         {/* Top Header */}
-        <header className="flex-shrink-0 h-16 flex items-center justify-between px-4 md:px-8 bg-white/80 dark:bg-[#000000]/80 backdrop-blur-md border-b border-slate-200/80 dark:border-neutral-800 z-10">
+        <header className="flex-shrink-0 h-16 flex items-center justify-between px-4 md:px-8 bg-white/80 dark:bg-[#0d121f]/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 z-10">
           <div className="flex items-center gap-3">
             <button
-              className="lg:hidden p-2 rounded-xl text-slate-600 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-neutral-900 transition-colors border border-slate-200 dark:border-neutral-800"
+              className="lg:hidden p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-slate-200 dark:border-slate-800"
               onClick={() => setMobileOpen(true)}
             >
               <Menu className="w-5 h-5" />
