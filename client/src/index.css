@@ -612,12 +612,7 @@ input[type="checkbox"]:focus {
 [data-mode="neumorphism"] .bg-card,
 [data-mode="neumorphism"] .stat-card,
 [data-mode="neumorphism"] header.glass-primary,
-[data-mode="neumorphism"] header[class*="glass"],
-[data-mode="neumorphism"] main div[class*="rounded-2xl"],
-[data-mode="neumorphism"] main div[class*="rounded-3xl"],
-[data-mode="neumorphism"] main div[class*="rounded-xl"],
-[data-mode="neumorphism"] main div[class*="rounded-[20px]"],
-[data-mode="neumorphism"] main section [class*="rounded-"] {
+[data-mode="neumorphism"] header[class*="glass"] {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
@@ -632,12 +627,7 @@ input[type="checkbox"]:focus {
 [data-mode="neumorphism"]:not(.dark) .bg-card,
 [data-mode="neumorphism"]:not(.dark) .stat-card,
 [data-mode="neumorphism"]:not(.dark) header.glass-primary,
-[data-mode="neumorphism"]:not(.dark) header[class*="glass"],
-[data-mode="neumorphism"]:not(.dark) main div[class*="rounded-2xl"],
-[data-mode="neumorphism"]:not(.dark) main div[class*="rounded-3xl"],
-[data-mode="neumorphism"]:not(.dark) main div[class*="rounded-xl"],
-[data-mode="neumorphism"]:not(.dark) main div[class*="rounded-[20px]"],
-[data-mode="neumorphism"]:not(.dark) main section [class*="rounded-"] {
+[data-mode="neumorphism"]:not(.dark) header[class*="glass"] {
   background: #eef2f8 !important;
   border: 1px solid rgba(255, 255, 255, 0.75) !important;
   box-shadow:
@@ -656,11 +646,6 @@ input[type="checkbox"]:focus {
 [data-mode="neumorphism"].dark .stat-card,
 [data-mode="neumorphism"].dark header.glass-primary,
 [data-mode="neumorphism"].dark header[class*="glass"],
-[data-mode="neumorphism"].dark main div[class*="rounded-2xl"],
-[data-mode="neumorphism"].dark main div[class*="rounded-3xl"],
-[data-mode="neumorphism"].dark main div[class*="rounded-xl"],
-[data-mode="neumorphism"].dark main div[class*="rounded-[20px]"],
-[data-mode="neumorphism"].dark main section [class*="rounded-"],
 .dark[data-mode="neumorphism"] .neu-card,
 .dark[data-mode="neumorphism"] .glass-primary,
 .dark[data-mode="neumorphism"] .glass-secondary,
@@ -671,12 +656,7 @@ input[type="checkbox"]:focus {
 .dark[data-mode="neumorphism"] .bg-card,
 .dark[data-mode="neumorphism"] .stat-card,
 .dark[data-mode="neumorphism"] header.glass-primary,
-.dark[data-mode="neumorphism"] header[class*="glass"],
-.dark[data-mode="neumorphism"] main div[class*="rounded-2xl"],
-.dark[data-mode="neumorphism"] main div[class*="rounded-3xl"],
-.dark[data-mode="neumorphism"] main div[class*="rounded-xl"],
-.dark[data-mode="neumorphism"] main div[class*="rounded-[20px]"],
-.dark[data-mode="neumorphism"] main section [class*="rounded-"] {
+.dark[data-mode="neumorphism"] header[class*="glass"] {
   background: #121524 !important;
   border: 1px solid rgba(255, 255, 255, 0.06) !important;
   box-shadow:
@@ -750,12 +730,7 @@ input[type="checkbox"]:focus {
 [data-mode="glassmorphismpro"] .bg-card,
 [data-mode="glassmorphismpro"] .stat-card,
 [data-mode="glassmorphismpro"] header.glass-primary,
-[data-mode="glassmorphismpro"] header[class*="glass"],
-[data-mode="glassmorphismpro"] main div[class*="rounded-2xl"],
-[data-mode="glassmorphismpro"] main div[class*="rounded-3xl"],
-[data-mode="glassmorphismpro"] main div[class*="rounded-xl"],
-[data-mode="glassmorphismpro"] main div[class*="rounded-[20px]"],
-[data-mode="glassmorphismpro"] main section [class*="rounded-"] {
+[data-mode="glassmorphismpro"] header[class*="glass"] {
   backdrop-filter: blur(32px) saturate(210%) !important;
   -webkit-backdrop-filter: blur(32px) saturate(210%) !important;
 }
@@ -770,12 +745,7 @@ input[type="checkbox"]:focus {
 [data-mode="glassmorphismpro"]:not(.dark) .bg-card,
 [data-mode="glassmorphismpro"]:not(.dark) .stat-card,
 [data-mode="glassmorphismpro"]:not(.dark) header.glass-primary,
-[data-mode="glassmorphismpro"]:not(.dark) header[class*="glass"],
-[data-mode="glassmorphismpro"]:not(.dark) main div[class*="rounded-2xl"],
-[data-mode="glassmorphismpro"]:not(.dark) main div[class*="rounded-3xl"],
-[data-mode="glassmorphismpro"]:not(.dark) main div[class*="rounded-xl"],
-[data-mode="glassmorphismpro"]:not(.dark) main div[class*="rounded-[20px]"],
-[data-mode="glassmorphismpro"]:not(.dark) main section [class*="rounded-"] {
+[data-mode="glassmorphismpro"]:not(.dark) header[class*="glass"] {
   background: rgba(255, 255, 255, 0.68) !important;
   border: 1px solid rgba(255, 255, 255, 0.88) !important;
   box-shadow:
@@ -794,11 +764,6 @@ input[type="checkbox"]:focus {
 [data-mode="glassmorphismpro"].dark .stat-card,
 [data-mode="glassmorphismpro"].dark header.glass-primary,
 [data-mode="glassmorphismpro"].dark header[class*="glass"],
-[data-mode="glassmorphismpro"].dark main div[class*="rounded-2xl"],
-[data-mode="glassmorphismpro"].dark main div[class*="rounded-3xl"],
-[data-mode="glassmorphismpro"].dark main div[class*="rounded-xl"],
-[data-mode="glassmorphismpro"].dark main div[class*="rounded-[20px]"],
-[data-mode="glassmorphismpro"].dark main section [class*="rounded-"],
 .dark[data-mode="glassmorphismpro"] .neu-card,
 .dark[data-mode="glassmorphismpro"] .glass-primary,
 .dark[data-mode="glassmorphismpro"] .glass-secondary,
@@ -809,12 +774,7 @@ input[type="checkbox"]:focus {
 .dark[data-mode="glassmorphismpro"] .bg-card,
 .dark[data-mode="glassmorphismpro"] .stat-card,
 .dark[data-mode="glassmorphismpro"] header.glass-primary,
-.dark[data-mode="glassmorphismpro"] header[class*="glass"],
-.dark[data-mode="glassmorphismpro"] main div[class*="rounded-2xl"],
-.dark[data-mode="glassmorphismpro"] main div[class*="rounded-3xl"],
-.dark[data-mode="glassmorphismpro"] main div[class*="rounded-xl"],
-.dark[data-mode="glassmorphismpro"] main div[class*="rounded-[20px]"],
-.dark[data-mode="glassmorphismpro"] main section [class*="rounded-"] {
+.dark[data-mode="glassmorphismpro"] header[class*="glass"] {
   background: rgba(18, 21, 36, 0.75) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   box-shadow:
@@ -833,12 +793,7 @@ input[type="checkbox"]:focus {
 [data-mode="aurora"] .bg-card,
 [data-mode="aurora"] .stat-card,
 [data-mode="aurora"] header.glass-primary,
-[data-mode="aurora"] header[class*="glass"],
-[data-mode="aurora"] main div[class*="rounded-2xl"],
-[data-mode="aurora"] main div[class*="rounded-3xl"],
-[data-mode="aurora"] main div[class*="rounded-xl"],
-[data-mode="aurora"] main div[class*="rounded-[20px]"],
-[data-mode="aurora"] main section [class*="rounded-"] {
+[data-mode="aurora"] header[class*="glass"] {
   backdrop-filter: blur(20px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
 }
@@ -853,12 +808,7 @@ input[type="checkbox"]:focus {
 [data-mode="aurora"]:not(.dark) .bg-card,
 [data-mode="aurora"]:not(.dark) .stat-card,
 [data-mode="aurora"]:not(.dark) header.glass-primary,
-[data-mode="aurora"]:not(.dark) header[class*="glass"],
-[data-mode="aurora"]:not(.dark) main div[class*="rounded-2xl"],
-[data-mode="aurora"]:not(.dark) main div[class*="rounded-3xl"],
-[data-mode="aurora"]:not(.dark) main div[class*="rounded-xl"],
-[data-mode="aurora"]:not(.dark) main div[class*="rounded-[20px]"],
-[data-mode="aurora"]:not(.dark) main section [class*="rounded-"] {
+[data-mode="aurora"]:not(.dark) header[class*="glass"] {
   background: linear-gradient(135deg, rgba(245, 255, 235, 0.95), rgba(235, 250, 240, 0.88)) !important;
   border: 1px solid rgba(156, 231, 0, 0.5) !important;
   box-shadow:
@@ -877,11 +827,6 @@ input[type="checkbox"]:focus {
 [data-mode="aurora"].dark .stat-card,
 [data-mode="aurora"].dark header.glass-primary,
 [data-mode="aurora"].dark header[class*="glass"],
-[data-mode="aurora"].dark main div[class*="rounded-2xl"],
-[data-mode="aurora"].dark main div[class*="rounded-3xl"],
-[data-mode="aurora"].dark main div[class*="rounded-xl"],
-[data-mode="aurora"].dark main div[class*="rounded-[20px]"],
-[data-mode="aurora"].dark main section [class*="rounded-"],
 .dark[data-mode="aurora"] .neu-card,
 .dark[data-mode="aurora"] .glass-primary,
 .dark[data-mode="aurora"] .glass-secondary,
@@ -892,12 +837,7 @@ input[type="checkbox"]:focus {
 .dark[data-mode="aurora"] .bg-card,
 .dark[data-mode="aurora"] .stat-card,
 .dark[data-mode="aurora"] header.glass-primary,
-.dark[data-mode="aurora"] header[class*="glass"],
-.dark[data-mode="aurora"] main div[class*="rounded-2xl"],
-.dark[data-mode="aurora"] main div[class*="rounded-3xl"],
-.dark[data-mode="aurora"] main div[class*="rounded-xl"],
-.dark[data-mode="aurora"] main div[class*="rounded-[20px]"],
-.dark[data-mode="aurora"] main section [class*="rounded-"] {
+.dark[data-mode="aurora"] header[class*="glass"] {
   background: linear-gradient(145deg, rgba(13, 27, 20, 0.92), rgba(18, 21, 36, 0.88)) !important;
   border: 1px solid rgba(156, 231, 0, 0.45) !important;
   box-shadow:
@@ -917,12 +857,7 @@ input[type="checkbox"]:focus {
 [data-mode="liquidglass"] .bg-card,
 [data-mode="liquidglass"] .stat-card,
 [data-mode="liquidglass"] header.glass-primary,
-[data-mode="liquidglass"] header[class*="glass"],
-[data-mode="liquidglass"] main div[class*="rounded-2xl"],
-[data-mode="liquidglass"] main div[class*="rounded-3xl"],
-[data-mode="liquidglass"] main div[class*="rounded-xl"],
-[data-mode="liquidglass"] main div[class*="rounded-[20px]"],
-[data-mode="liquidglass"] main section [class*="rounded-"] {
+[data-mode="liquidglass"] header[class*="glass"] {
   backdrop-filter: blur(24px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
 }
@@ -937,12 +872,7 @@ input[type="checkbox"]:focus {
 [data-mode="liquidglass"]:not(.dark) .bg-card,
 [data-mode="liquidglass"]:not(.dark) .stat-card,
 [data-mode="liquidglass"]:not(.dark) header.glass-primary,
-[data-mode="liquidglass"]:not(.dark) header[class*="glass"],
-[data-mode="liquidglass"]:not(.dark) main div[class*="rounded-2xl"],
-[data-mode="liquidglass"]:not(.dark) main div[class*="rounded-3xl"],
-[data-mode="liquidglass"]:not(.dark) main div[class*="rounded-xl"],
-[data-mode="liquidglass"]:not(.dark) main div[class*="rounded-[20px]"],
-[data-mode="liquidglass"]:not(.dark) main section [class*="rounded-"] {
+[data-mode="liquidglass"]:not(.dark) header[class*="glass"] {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(241, 245, 249, 0.8)) !important;
   border: 1px solid rgba(255, 255, 255, 0.9) !important;
   box-shadow:
@@ -961,11 +891,6 @@ input[type="checkbox"]:focus {
 [data-mode="liquidglass"].dark .stat-card,
 [data-mode="liquidglass"].dark header.glass-primary,
 [data-mode="liquidglass"].dark header[class*="glass"],
-[data-mode="liquidglass"].dark main div[class*="rounded-2xl"],
-[data-mode="liquidglass"].dark main div[class*="rounded-3xl"],
-[data-mode="liquidglass"].dark main div[class*="rounded-xl"],
-[data-mode="liquidglass"].dark main div[class*="rounded-[20px]"],
-[data-mode="liquidglass"].dark main section [class*="rounded-"],
 .dark[data-mode="liquidglass"] .neu-card,
 .dark[data-mode="liquidglass"] .glass-primary,
 .dark[data-mode="liquidglass"] .glass-secondary,
@@ -976,12 +901,7 @@ input[type="checkbox"]:focus {
 .dark[data-mode="liquidglass"] .bg-card,
 .dark[data-mode="liquidglass"] .stat-card,
 .dark[data-mode="liquidglass"] header.glass-primary,
-.dark[data-mode="liquidglass"] header[class*="glass"],
-.dark[data-mode="liquidglass"] main div[class*="rounded-2xl"],
-.dark[data-mode="liquidglass"] main div[class*="rounded-3xl"],
-.dark[data-mode="liquidglass"] main div[class*="rounded-xl"],
-.dark[data-mode="liquidglass"] main div[class*="rounded-[20px]"],
-.dark[data-mode="liquidglass"] main section [class*="rounded-"] {
+.dark[data-mode="liquidglass"] header[class*="glass"] {
   background: linear-gradient(135deg, rgba(23, 26, 45, 0.9), rgba(18, 21, 36, 0.85)) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   box-shadow:
@@ -1000,12 +920,7 @@ input[type="checkbox"]:focus {
 [data-mode="flat"] .bg-card,
 [data-mode="flat"] .stat-card,
 [data-mode="flat"] header.glass-primary,
-[data-mode="flat"] header[class*="glass"],
-[data-mode="flat"] main div[class*="rounded-2xl"],
-[data-mode="flat"] main div[class*="rounded-3xl"],
-[data-mode="flat"] main div[class*="rounded-xl"],
-[data-mode="flat"] main div[class*="rounded-[20px]"],
-[data-mode="flat"] main section [class*="rounded-"] {
+[data-mode="flat"] header[class*="glass"] {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   box-shadow: none !important;
@@ -1021,12 +936,7 @@ input[type="checkbox"]:focus {
 [data-mode="flat"]:not(.dark) .bg-card,
 [data-mode="flat"]:not(.dark) .stat-card,
 [data-mode="flat"]:not(.dark) header.glass-primary,
-[data-mode="flat"]:not(.dark) header[class*="glass"],
-[data-mode="flat"]:not(.dark) main div[class*="rounded-2xl"],
-[data-mode="flat"]:not(.dark) main div[class*="rounded-3xl"],
-[data-mode="flat"]:not(.dark) main div[class*="rounded-xl"],
-[data-mode="flat"]:not(.dark) main div[class*="rounded-[20px]"],
-[data-mode="flat"]:not(.dark) main section [class*="rounded-"] {
+[data-mode="flat"]:not(.dark) header[class*="glass"] {
   background: #ffffff !important;
   border: 1px solid #e2e8f0 !important;
 }
@@ -1042,11 +952,6 @@ input[type="checkbox"]:focus {
 [data-mode="flat"].dark .stat-card,
 [data-mode="flat"].dark header.glass-primary,
 [data-mode="flat"].dark header[class*="glass"],
-[data-mode="flat"].dark main div[class*="rounded-2xl"],
-[data-mode="flat"].dark main div[class*="rounded-3xl"],
-[data-mode="flat"].dark main div[class*="rounded-xl"],
-[data-mode="flat"].dark main div[class*="rounded-[20px]"],
-[data-mode="flat"].dark main section [class*="rounded-"],
 .dark[data-mode="flat"] .neu-card,
 .dark[data-mode="flat"] .glass-primary,
 .dark[data-mode="flat"] .glass-secondary,
@@ -1057,12 +962,7 @@ input[type="checkbox"]:focus {
 .dark[data-mode="flat"] .bg-card,
 .dark[data-mode="flat"] .stat-card,
 .dark[data-mode="flat"] header.glass-primary,
-.dark[data-mode="flat"] header[class*="glass"],
-.dark[data-mode="flat"] main div[class*="rounded-2xl"],
-.dark[data-mode="flat"] main div[class*="rounded-3xl"],
-.dark[data-mode="flat"] main div[class*="rounded-xl"],
-.dark[data-mode="flat"] main div[class*="rounded-[20px]"],
-.dark[data-mode="flat"] main section [class*="rounded-"] {
+.dark[data-mode="flat"] header[class*="glass"] {
   background: #121524 !important;
   border: 1px solid #1e2238 !important;
 }
@@ -1828,49 +1728,6 @@ input:not([type="checkbox"]):not([type="radio"]),
 select,
 textarea {
   border-radius: 12px !important;
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   UNIVERSAL BORDER COLOR NORMALIZATION (FIXES RED / BLUE BORDERS)
-   ═══════════════════════════════════════════════════════════════ */
-/* Map all legacy blue, indigo, and violet borders to subtle lime green or dark neutral */
-.dark [class*="border-blue-"],
-.dark [class*="border-indigo-"],
-.dark [class*="border-violet-"],
-.dark [class*="border-purple-"],
-.dark .border-\[\#2563EB\] {
-  border-color: rgba(156, 231, 0, 0.25) !important;
-}
-
-[class*="border-blue-"]:not(.dark *),
-[class*="border-indigo-"]:not(.dark *),
-[class*="border-violet-"]:not(.dark *),
-.border-\[\#2563EB\]:not(.dark *) {
-  border-color: rgba(156, 231, 0, 0.35) !important;
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   UNIVERSAL GRADIENT & ACCENT NORMALIZATION (BLUE -> LIME GREEN)
-   ═══════════════════════════════════════════════════════════════ */
-[class*="from-blue-600"][class*="to-indigo-600"]:not(.preserve-color),
-[class*="from-blue-700"][class*="to-indigo-700"]:not(.preserve-color),
-[class*="from-blue-600"][class*="to-purple-600"]:not(.preserve-color),
-[class*="from-blue-500"][class*="to-indigo-500"]:not(.preserve-color),
-[class*="from-blue-600"][class*="via-indigo-600"]:not(.preserve-color) {
-  background-image: none !important;
-  background-color: #9CE700 !important;
-  color: #000000 !important;
-}
-
-[class*="from-blue-600"][class*="to-indigo-600"]:not(.preserve-color) *,
-[class*="from-blue-700"][class*="to-indigo-700"]:not(.preserve-color) *,
-[class*="from-blue-600"][class*="via-indigo-600"]:not(.preserve-color) * {
-  color: #000000 !important;
-}
-
-[class*="shadow-blue-"],
-[class*="shadow-indigo-"] {
-  --tw-shadow-color: rgba(156, 231, 0, 0.25) !important;
 }
 
 /* Super Admin Scope Global Overrides */

@@ -22,15 +22,6 @@ export default function Bottombar() {
         <span className="hidden sm:inline">Developed & Maintained with</span>
         <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500 animate-bounce" />
         <span className="hidden sm:inline">by</span>
-        <a
-          href="https://salahuddin.codes"
-          target="_blank"
-          rel="noreferrer"
-          className="font-bold text-slate-800 dark:text-slate-200 hover:text-[#9CE700] transition-colors"
-        >
-          Salah Uddin Kader
-        </a>
-        <span className="hidden sm:inline">&</span>
         <span className="font-bold text-[#7dbb00] dark:text-[#9CE700] flex items-center gap-1 bg-[#9CE700]/10 px-2.5 py-0.5 rounded-lg border border-[#9CE700]/30 shadow-2xs">
           <Code className="w-3.5 h-3.5 text-[#7dbb00] dark:text-[#9CE700]" /> OmegaFlop
         </span>

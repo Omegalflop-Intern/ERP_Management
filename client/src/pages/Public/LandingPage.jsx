@@ -290,15 +290,15 @@ export default function LandingPage() {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
                 <Link
                   to="/register-shop"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-xl font-black text-sm text-black bg-[#9CE700] hover:bg-[#8fd500] shadow-xl shadow-[#9CE700]/25 hover:-translate-y-0.5 active:scale-95 transition-all"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-xl font-black text-sm !text-black !bg-[#9CE700] hover:!bg-[#8fd500] shadow-xl shadow-[#9CE700]/30 hover:-translate-y-0.5 active:scale-95 transition-all"
                 >
                   <Sparkles className="w-4 h-4 text-black stroke-[2.5]" />
-                  <span>Start 14-Day Free Trial</span>
+                  <span className="text-black font-black">Start 14-Day Free Trial</span>
                   <ArrowRight className="w-4 h-4 text-black stroke-[2.5]" />
                 </Link>
                 <a
                   href="#modules"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm text-slate-800 dark:text-white bg-white dark:bg-[#121524] hover:bg-slate-100 dark:hover:bg-[#171a2d] border border-slate-200 dark:border-white/10 shadow-xs hover:-translate-y-0.5 transition-all"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm text-slate-800 dark:text-white bg-white dark:bg-[#171a2d] hover:bg-slate-100 dark:hover:bg-[#1e2238] border border-slate-300 dark:border-white/15 shadow-xs hover:-translate-y-0.5 transition-all"
                 >
                   <span>Explore Live Demo</span>
                   <ChevronRight className="w-4 h-4 text-slate-400 dark:text-[#9CE700]" />
@@ -584,18 +584,18 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── INTERACTIVE MODULES EXPLORER ────────────────────────────────────── */}
-      <section id="modules" className="py-12 sm:py-16 bg-slate-100/70 dark:bg-slate-900/50 border-t border-slate-200/80 dark:border-slate-800/80">
+      {/* ─── INTERACTIVE MODULES TOUR WITH STAGGER REVEAL ──────────────────────── */}
+      <section id="modules" className="py-12 sm:py-16">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <ScrollReveal animation="fade-up" className="text-center max-w-2xl mx-auto space-y-3 mb-12">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
-              Interactive Explorer
+          <ScrollReveal animation="fade-up" className="text-center max-w-2xl mx-auto space-y-3 mb-10">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-[#7dbb00] dark:text-[#9CE700]">
+              End-to-End Retail Control
             </h2>
             <h3 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
-              Test Drive the Core Workflows
+              Four Engines. Zero Bottlenecks.
             </h3>
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              Click through the modules below to see how effortless everyday gadget shop tasks become.
+              Click through the modules below to see real-world gadget retail operations in action.
             </p>
           </ScrollReveal>
 
@@ -615,8 +615,8 @@ export default function LandingPage() {
                   onClick={() => setActiveModuleTab(tab.id)}
                   className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all ${
                     activeModuleTab === tab.id
-                      ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25'
-                      : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                      ? 'bg-[#9CE700] text-black font-extrabold shadow-md shadow-[#9CE700]/25'
+                      : 'bg-white dark:bg-[#121524] text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#171a2d] border border-slate-200 dark:border-white/10 font-bold'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -628,7 +628,7 @@ export default function LandingPage() {
 
           {/* Active Tab Preview Display with Zoom-in */}
           <ScrollReveal animation="zoom-in" delay={200}>
-            <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-xl">
+            <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-[#121524] border border-slate-200 dark:border-white/10 shadow-xl">
               {activeModuleTab === 'pos' && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
                   <div className="space-y-4">
@@ -656,7 +656,7 @@ export default function LandingPage() {
                     </ul>
                     <Link
                       to="/register-shop"
-                      className="inline-flex items-center gap-2 text-xs font-bold text-blue-600 hover:underline pt-2"
+                      className="inline-flex items-center gap-2 text-xs font-bold text-[#7dbb00] dark:text-[#9CE700] hover:underline pt-2"
                     >
                       <span>Launch POS Demo</span> <ArrowRight className="w-3.5 h-3.5" />
                     </Link>
@@ -1025,15 +1025,17 @@ export default function LandingPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <Link
               to="/register-shop"
-              className="w-full sm:w-auto px-8 py-3.5 rounded-xl font-black text-sm text-black bg-[#9CE700] hover:bg-[#8fd500] shadow-xl shadow-[#9CE700]/30 hover:-translate-y-0.5 active:scale-95 transition-all"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl font-black text-sm !text-black !bg-[#9CE700] hover:!bg-[#8fd500] shadow-xl shadow-[#9CE700]/30 hover:-translate-y-0.5 active:scale-95 transition-all"
             >
-              Get Started Now — It's Free
+              <Sparkles className="w-4 h-4 text-black stroke-[2.5]" />
+              <span className="text-black font-black">Get Started Now — It's Free</span>
+              <ArrowRight className="w-4 h-4 text-black stroke-[2.5]" />
             </Link>
             <Link
               to="/contact"
-              className="w-full sm:w-auto px-6 py-3.5 rounded-xl font-bold text-sm bg-blue-700/60 hover:bg-blue-700 text-white border border-white/20 transition-all"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm text-white bg-slate-800/80 hover:bg-slate-800 dark:bg-white/10 dark:hover:bg-white/20 border border-white/20 hover:-translate-y-0.5 transition-all"
             >
-              Talk to ERP Specialist
+              <span>Talk to ERP Specialist</span>
             </Link>
           </div>
         </ScrollReveal>

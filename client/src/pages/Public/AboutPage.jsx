@@ -260,14 +260,14 @@ export default function AboutPage() {
           <div className="flex flex-wrap items-center justify-center gap-3">
             <Link
               to="/register-shop"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-white bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-500/25 transition-all active:scale-95"
+              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-black text-sm text-black bg-[#9CE700] hover:bg-[#8fd500] shadow-xl shadow-[#9CE700]/25 transition-all active:scale-95"
             >
               <span>Register Your Shop</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 text-black stroke-[2.5]" />
             </Link>
             <Link
               to="/contact"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 transition-all active:scale-95"
+              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl font-bold text-sm text-slate-800 dark:text-white bg-white dark:bg-[#121524] hover:bg-slate-50 dark:hover:bg-[#171a2d] border border-slate-200 dark:border-white/10 transition-all active:scale-95"
             >
               <span>Contact Sales</span>
             </Link>
