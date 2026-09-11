@@ -1792,13 +1792,51 @@ textarea {
   border-color: rgba(156, 231, 0, 0.35) !important;
 }
 
-.dark .hover\:border-blue-500\/40:hover,
-.dark .hover\:border-blue-500:hover,
-.dark .hover\:border-blue-400:hover,
-.dark .hover\:border-indigo-500:hover,
-.dark .hover\:border-\[\#2563EB\]:hover {
-  border-color: #9CE700 !important;
-  box-shadow: 0 0 16px -3px rgba(156, 231, 0, 0.25) !important;
+/* ═══════════════════════════════════════════════════════════════
+   UNIVERSAL GRADIENT & ACCENT NORMALIZATION (BLUE -> LIME GREEN)
+   ═══════════════════════════════════════════════════════════════ */
+[class*="from-blue-600"][class*="to-indigo-600"]:not(.preserve-color),
+[class*="from-blue-700"][class*="to-indigo-700"]:not(.preserve-color),
+[class*="from-blue-600"][class*="to-purple-600"]:not(.preserve-color),
+[class*="from-blue-500"][class*="to-indigo-500"]:not(.preserve-color),
+[class*="from-blue-600"][class*="via-indigo-600"]:not(.preserve-color) {
+  background-image: none !important;
+  background-color: #9CE700 !important;
+  color: #000000 !important;
+}
+
+[class*="from-blue-600"][class*="to-indigo-600"]:not(.preserve-color) *,
+[class*="from-blue-700"][class*="to-indigo-700"]:not(.preserve-color) *,
+[class*="from-blue-600"][class*="via-indigo-600"]:not(.preserve-color) * {
+  color: #000000 !important;
+}
+
+[class*="shadow-blue-"],
+[class*="shadow-indigo-"] {
+  --tw-shadow-color: rgba(156, 231, 0, 0.25) !important;
+}
+
+/* Super Admin Scope Global Overrides */
+.super-admin-scope aside {
+  background-color: #000000 !important;
+  border-color: #1f1f1f !important;
+}
+
+.super-admin-scope header {
+  background-color: rgba(0, 0, 0, 0.85) !important;
+  border-color: #1f1f1f !important;
+}
+
+.super-admin-scope main {
+  background-color: #050505 !important;
+}
+
+.super-admin-scope .bg-slate-900,
+.super-admin-scope .dark\:bg-slate-900,
+.super-admin-scope .bg-slate-950,
+.super-admin-scope .dark\:bg-slate-950 {
+  background-color: #0c0c0c !important;
+  border-color: #1f1f1f !important;
 }
 
 /* Selection highlight */

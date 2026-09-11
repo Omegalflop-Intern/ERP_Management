@@ -131,11 +131,11 @@ export default function ForgotPassword() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3.5 px-6 rounded-xl font-bold text-sm text-white bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1E40AF] shadow-lg shadow-[#2563EB]/30 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75 disabled:cursor-wait"
+                  className="w-full py-3.5 px-6 rounded-full font-extrabold text-sm text-black bg-[#9CE700] hover:bg-[#8bd000] shadow-lg shadow-[#9CE700]/25 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75 disabled:cursor-wait"
                 >
                   {loading ? (
                     <>
-                      <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                      <RefreshCw className="w-4 h-4 animate-spin text-black" />
                       <span>Sending link...</span>
                     </>
                   ) : (
@@ -150,13 +150,13 @@ export default function ForgotPassword() {
         <div className="text-center mt-6">
           <Link
             to="/login"
-            className="inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-[#2563EB] dark:text-slate-400 dark:hover:text-white transition-colors"
+            className="inline-flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-[#9CE700] dark:text-neutral-400 dark:hover:text-[#9CE700] transition-colors"
           >
             <ArrowLeft size={16} /> Back to Login
           </Link>
         </div>
 
-        <p className="text-center text-xs font-medium text-slate-500 dark:text-slate-400 mt-6">
+        <p className="text-center text-xs font-medium text-slate-500 dark:text-neutral-500 mt-6">
           &copy; {new Date().getFullYear()} OmniManage. All rights reserved.
         </p>
       </div>

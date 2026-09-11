@@ -854,14 +854,14 @@ export default function Login() {
           <div className="space-y-3">
             <a
               href={getMainPortalUrl('/contact')}
-              className="w-full py-3.5 px-4 rounded-2xl text-sm font-bold bg-[#2563EB] hover:bg-[#1D4ED8] text-white flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 transition-all"
+              className="w-full py-3.5 px-4 rounded-full text-sm font-extrabold bg-[#9CE700] hover:bg-[#8bd000] text-black flex items-center justify-center gap-2 shadow-lg shadow-[#9CE700]/25 transition-all"
             >
               Open Support Ticket & Help Desk
             </a>
 
             <a
               href={getMainPortalUrl('/')}
-              className="w-full py-3 px-4 rounded-2xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center gap-2 transition-all"
+              className="w-full py-3 px-4 rounded-full text-xs font-bold bg-slate-100 dark:bg-neutral-900 hover:bg-slate-200 dark:hover:bg-neutral-800 text-slate-700 dark:text-neutral-200 flex items-center justify-center gap-2 transition-all border border-slate-200 dark:border-neutral-800"
             >
               Return to OmniManage Home
             </a>
@@ -874,13 +874,13 @@ export default function Login() {
   // 2. If visiting an unregistered / non-existent subdomain or unmapped custom domain
   if (isInvalidSubdomain) {
     return (
-      <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-slate-100 dark:bg-[#050810] text-slate-900 dark:text-slate-100 font-sans p-4">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-rose-50/20 to-indigo-50/20 dark:from-[#050810] dark:via-[#0b0f19] dark:to-[#050810] z-0" />
+      <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-slate-100 dark:bg-[#000000] text-slate-900 dark:text-slate-100 font-sans p-4">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-rose-50/20 to-indigo-50/20 dark:from-[#000000] dark:via-[#080808] dark:to-[#000000] z-0" />
         <div className="absolute top-5 right-5 z-50">
           <ThemeToggle />
         </div>
 
-        <div className="relative z-20 w-full max-w-lg bg-white/95 dark:bg-slate-900/85 backdrop-blur-3xl border border-slate-200/80 dark:border-white/10 shadow-2xl rounded-[32px] p-8 md:p-10 text-center">
+        <div className="relative z-20 w-full max-w-lg bg-white/95 dark:bg-[#0c0c0c] backdrop-blur-3xl border border-slate-200/80 dark:border-neutral-800 shadow-2xl rounded-[28px] p-8 md:p-10 text-center">
           <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 shadow-lg text-rose-600 dark:text-rose-400">
             <Store className="w-8 h-8 stroke-[2.2]" />
           </div>
@@ -899,16 +899,16 @@ export default function Login() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6 text-left">
             <a
               href={`tel:${cleanPhoneForTel}`}
-              className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 hover:bg-blue-50 dark:hover:bg-blue-950/30 border border-slate-200 dark:border-slate-700/70 hover:border-blue-300 dark:hover:border-blue-700/60 transition-all group"
+              className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-neutral-900 hover:bg-slate-100 dark:hover:bg-neutral-800 border border-slate-200 dark:border-neutral-800 transition-all group"
             >
-              <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0 group-hover:scale-110 transition-transform">
+              <div className="w-10 h-10 rounded-xl bg-[#9CE700]/15 flex items-center justify-center text-[#9CE700] shrink-0 group-hover:scale-110 transition-transform">
                 <PhoneCall className="w-5 h-5" />
               </div>
               <div className="min-w-0">
-                <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                <div className="text-[11px] font-semibold text-slate-500 dark:text-neutral-400">
                   Support Hotline
                 </div>
-                <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate font-mono">
+                <div className="text-xs font-bold text-slate-800 dark:text-neutral-200 truncate font-mono">
                   {supportPhone}
                 </div>
               </div>
@@ -916,16 +916,16 @@ export default function Login() {
 
             <a
               href={`mailto:${supportEmail}`}
-              className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 border border-slate-200 dark:border-slate-700/70 hover:border-indigo-300 dark:hover:border-indigo-700/60 transition-all group"
+              className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-neutral-900 hover:bg-slate-100 dark:hover:bg-neutral-800 border border-slate-200 dark:border-neutral-800 transition-all group"
             >
-              <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0 group-hover:scale-110 transition-transform">
+              <div className="w-10 h-10 rounded-xl bg-[#9CE700]/15 flex items-center justify-center text-[#9CE700] shrink-0 group-hover:scale-110 transition-transform">
                 <Mail className="w-5 h-5" />
               </div>
               <div className="min-w-0">
-                <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                <div className="text-[11px] font-semibold text-slate-500 dark:text-neutral-400">
                   Support Email
                 </div>
-                <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                <div className="text-xs font-bold text-slate-800 dark:text-neutral-200 truncate">
                   {supportEmail}
                 </div>
               </div>
@@ -935,22 +935,22 @@ export default function Login() {
           <div className="space-y-3">
             <a
               href={getMainPortalUrl('/contact')}
-              className="w-full py-3.5 px-4 rounded-2xl text-sm font-bold bg-[#2563EB] hover:bg-[#1D4ED8] text-white flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 transition-all"
+              className="w-full py-3.5 px-4 rounded-full text-sm font-extrabold bg-[#9CE700] hover:bg-[#8bd000] text-black flex items-center justify-center gap-2 shadow-lg shadow-[#9CE700]/25 transition-all"
             >
               Contact Support & Help Desk
             </a>
 
             <a
               href={getMainPortalUrl('/register-shop')}
-              className="w-full py-3 px-4 rounded-2xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center gap-2 transition-all"
+              className="w-full py-3 px-4 rounded-full text-xs font-bold bg-slate-100 dark:bg-neutral-900 hover:bg-slate-200 dark:hover:bg-neutral-800 text-slate-700 dark:text-neutral-200 flex items-center justify-center gap-2 transition-all border border-slate-200 dark:border-neutral-800"
             >
               Register a New Shop
             </a>
 
-            <p className="pt-2 text-[11px] text-slate-400 dark:text-slate-500">
+            <p className="pt-2 text-[11px] text-slate-400 dark:text-neutral-500">
               <a
                 href={getMainPortalUrl('/')}
-                className="font-semibold text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400"
+                className="font-semibold text-slate-500 dark:text-neutral-400 hover:text-[#9CE700]"
               >
                 Return to OmniManage Home
               </a>
@@ -975,9 +975,9 @@ export default function Login() {
   ];
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-slate-100 dark:bg-[#050810] text-slate-900 dark:text-slate-100 font-sans selection:bg-[#2563EB] selection:text-white">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-slate-100 dark:bg-[#000000] text-slate-900 dark:text-slate-100 font-sans selection:bg-[#9CE700] selection:text-black">
       {/* Dynamic Background Base */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-indigo-50/50 to-blue-50/40 dark:from-[#050810] dark:via-[#0b0f19] dark:to-[#050810] z-0" />
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-slate-50 to-slate-200/50 dark:from-[#000000] dark:via-[#080808] dark:to-[#000000] z-0" />
 
       {/* 10 Active Canvas Background Animation Layers */}
       {bgMode === 'samurai' && <SamuraiCanvas isDark={isDark} />}
@@ -993,8 +993,8 @@ export default function Login() {
       {(bgMode === 'slideshow' || bgMode === 'hybrid') && <MultiImageSlideshow />}
 
       {/* Glowing Ambient Mesh Orbs */}
-      <div className="absolute top-1/4 left-1/4 w-[450px] h-[450px] bg-blue-500/10 dark:bg-blue-600/15 rounded-full blur-[120px] pointer-events-none animate-pulse" />
-      <div className="absolute bottom-1/4 right-1/4 w-[450px] h-[450px] bg-indigo-500/10 dark:bg-indigo-600/15 rounded-full blur-[120px] pointer-events-none animate-pulse delay-1000" />
+      <div className="absolute top-1/4 left-1/4 w-[450px] h-[450px] bg-[#9CE700]/10 dark:bg-[#9CE700]/10 rounded-full blur-[140px] pointer-events-none animate-pulse" />
+      <div className="absolute bottom-1/4 right-1/4 w-[450px] h-[450px] bg-[#9CE700]/5 dark:bg-[#9CE700]/8 rounded-full blur-[140px] pointer-events-none animate-pulse delay-1000" />
 
       {/* Top Bar Controls */}
       <div className="absolute top-5 right-5 z-50 flex items-center gap-3">
@@ -1002,17 +1002,17 @@ export default function Login() {
         <div className="relative">
           <button
             onClick={() => setShowAnimDropdown(!showAnimDropdown)}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white/85 dark:bg-slate-800/85 backdrop-blur-md border border-slate-200/80 dark:border-slate-700/60 shadow-lg text-xs font-bold text-slate-800 dark:text-white hover:bg-white dark:hover:bg-slate-700 transition-all cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-white/90 dark:bg-[#0c0c0c]/90 backdrop-blur-md border border-slate-200/80 dark:border-neutral-800 shadow-lg text-xs font-bold text-slate-800 dark:text-white hover:bg-white dark:hover:bg-neutral-900 transition-all cursor-pointer"
           >
-            <Sparkles className="w-3.5 h-3.5 text-[#2563EB] dark:text-blue-400" />
+            <Sparkles className="w-3.5 h-3.5 text-[#9CE700]" />
             <span className="capitalize">
               {ANIMATIONS.find((a) => a.id === bgMode)?.name || 'Animation'}
             </span>
           </button>
 
           {showAnimDropdown && (
-            <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-              <div className="px-2.5 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <div className="absolute right-0 mt-2 w-56 rounded-2xl bg-white/95 dark:bg-[#0c0c0c] backdrop-blur-2xl border border-slate-200 dark:border-neutral-800 shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+              <div className="px-2.5 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-neutral-500">
                 Visual Themes
               </div>
               <div className="max-h-64 overflow-y-auto space-y-0.5 custom-scrollbar">
@@ -1023,16 +1023,16 @@ export default function Login() {
                       setBgMode(anim.id);
                       setShowAnimDropdown(false);
                     }}
-                    className={`w-full text-left px-2.5 py-2 rounded-xl text-xs flex flex-col transition-all ${
+                    className={`w-full text-left px-3 py-2 rounded-xl text-xs flex flex-col transition-all ${
                       bgMode === anim.id
-                        ? 'bg-[#2563EB] text-white font-bold shadow-sm'
-                        : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/80'
+                        ? 'bg-[#9CE700] text-black font-extrabold shadow-sm'
+                        : 'text-slate-700 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-neutral-900'
                     }`}
                   >
                     <span className="font-semibold">{anim.name}</span>
                     <span
                       className={`text-[10px] ${
-                        bgMode === anim.id ? 'text-blue-100' : 'text-slate-400 dark:text-slate-500'
+                        bgMode === anim.id ? 'text-black/80' : 'text-slate-400 dark:text-neutral-500'
                       }`}
                     >
                       {anim.desc}
@@ -1052,7 +1052,7 @@ export default function Login() {
         {/* Brand Header */}
         <div className="flex justify-center mb-4">
           {publicShop?.logo ? (
-            <div className="w-20 h-20 rounded-2xl flex items-center justify-center bg-white/95 dark:bg-slate-900/90 backdrop-blur-2xl border border-slate-200/80 dark:border-white/20 shadow-2xl p-2 overflow-hidden">
+            <div className="w-20 h-20 rounded-2xl flex items-center justify-center bg-white/95 dark:bg-[#0c0c0c] backdrop-blur-2xl border border-slate-200/80 dark:border-neutral-800 shadow-2xl p-2 overflow-hidden">
               <img
                 src={getAssetUrl(publicShop.logo)}
                 alt={displayShopName}
@@ -1063,15 +1063,15 @@ export default function Login() {
                 }}
               />
               <div className="hidden w-full h-full flex items-center justify-center">
-                <Store className="w-8 h-8 text-[#2563EB] dark:text-blue-400 stroke-[2.2]" />
+                <Store className="w-8 h-8 text-[#9CE700] stroke-[2.2]" />
               </div>
             </div>
           ) : (
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-white/90 dark:bg-white/10 backdrop-blur-2xl border border-slate-200/80 dark:border-white/20 shadow-xl shadow-blue-500/10">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-white/90 dark:bg-[#0c0c0c] backdrop-blur-2xl border border-slate-200/80 dark:border-neutral-800 shadow-xl">
               {subdomain ? (
-                <Store className="w-8 h-8 text-[#2563EB] dark:text-blue-400 stroke-[2.2]" />
+                <Store className="w-8 h-8 text-[#9CE700] stroke-[2.2]" />
               ) : (
-                <Smartphone className="w-8 h-8 text-[#2563EB] dark:text-blue-400 stroke-[2.2]" />
+                <Smartphone className="w-8 h-8 text-[#9CE700] stroke-[2.2]" />
               )}
             </div>
           )}
@@ -1080,17 +1080,17 @@ export default function Login() {
         <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight text-center mb-1">
           {displayShopName}
         </h1>
-        <p className="text-xs font-semibold uppercase tracking-widest text-[#2563EB] dark:text-blue-400/90 text-center mb-8">
+        <p className="text-xs font-semibold uppercase tracking-widest text-[#9CE700] text-center mb-8">
           {subdomain ? 'Point of Sale & Store Portal' : 'Enterprise ERP & Retail Solutions'}
         </p>
 
         {/* Apple macOS / iOS Liquid Glass Form Card */}
         <form
           onSubmit={handleSubmit}
-          className="bg-white/90 dark:bg-slate-900/60 backdrop-blur-3xl border border-white/80 dark:border-white/15 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.07)] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.5)] rounded-[32px] p-8 md:p-10 relative overflow-hidden"
+          className="bg-white/90 dark:bg-[#0c0c0c]/90 backdrop-blur-3xl border border-slate-200 dark:border-neutral-800 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.07)] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8)] rounded-[28px] p-8 md:p-10 relative overflow-hidden"
         >
           {/* Internal Liquid Shine Highlight */}
-          <div className="absolute -top-24 -left-24 w-48 h-48 bg-blue-500/10 dark:bg-blue-400/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute -top-24 -left-24 w-48 h-48 bg-[#9CE700]/10 rounded-full blur-2xl pointer-events-none" />
 
           <div className="space-y-5 relative z-10">
             {/* Login Field */}
@@ -1099,14 +1099,14 @@ export default function Login() {
                 Username / Email / Phone
               </label>
               <div className="relative">
-                <User className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-[#2563EB] dark:text-blue-400 stroke-[2.5] z-10 pointer-events-none" />
+                <User className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-[#9CE700] stroke-[2.5] z-10 pointer-events-none" />
                 <input
                   type="text"
                   required
                   value={loginField}
                   onChange={(e) => setLoginField(e.target.value)}
                   placeholder="Enter username, email or phone"
-                  className="w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm font-semibold transition-all duration-200 bg-slate-50/90 dark:bg-slate-800/80 border border-slate-200/90 dark:border-slate-700/80 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-400 focus:bg-white dark:focus:bg-slate-800 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 shadow-xs outline-none"
+                  className="w-full pl-11 pr-4 py-3.5 rounded-full text-sm font-semibold transition-all duration-200 bg-slate-50 dark:bg-[#141414] border border-slate-200 dark:border-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-neutral-500 focus:bg-white dark:focus:bg-[#141414] focus:border-[#9CE700] focus:ring-4 focus:ring-[#9CE700]/20 shadow-xs outline-none"
                   autoComplete="username"
                 />
               </div>
@@ -1120,20 +1120,20 @@ export default function Login() {
                 </label>
                 <Link
                   to="/forgot-password"
-                  className="text-xs font-bold text-[#2563EB] dark:text-blue-400 hover:underline transition-colors"
+                  className="text-xs font-bold text-[#9CE700] hover:underline transition-colors"
                 >
                   Forgot Password?
                 </Link>
               </div>
               <div className="relative">
-                <Lock className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-[#2563EB] dark:text-blue-400 stroke-[2.5] z-10 pointer-events-none" />
+                <Lock className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-[#9CE700] stroke-[2.5] z-10 pointer-events-none" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className="w-full pl-11 pr-11 py-3.5 rounded-2xl text-sm font-semibold transition-all duration-200 bg-slate-50/90 dark:bg-slate-800/80 border border-slate-200/90 dark:border-slate-700/80 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-400 focus:bg-white dark:focus:bg-slate-800 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 shadow-xs outline-none"
+                  className="w-full pl-11 pr-11 py-3.5 rounded-full text-sm font-semibold transition-all duration-200 bg-slate-50 dark:bg-[#141414] border border-slate-200 dark:border-neutral-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-neutral-500 focus:bg-white dark:focus:bg-[#141414] focus:border-[#9CE700] focus:ring-4 focus:ring-[#9CE700]/20 shadow-xs outline-none"
                   autoComplete="current-password"
                 />
                 <button
@@ -1143,9 +1143,9 @@ export default function Login() {
                   tabIndex={-1}
                 >
                   {showPassword ? (
-                    <EyeOff className="w-4 h-4 text-[#2563EB] dark:text-blue-400" />
+                    <EyeOff className="w-4 h-4 text-[#9CE700]" />
                   ) : (
-                    <Eye className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                    <Eye className="w-4 h-4 text-slate-500 dark:text-neutral-400" />
                   )}
                 </button>
               </div>
@@ -1158,7 +1158,7 @@ export default function Login() {
                 id="rememberMe"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 rounded-md cursor-pointer accent-[#2563EB]"
+                className="w-4 h-4 rounded-md cursor-pointer accent-[#9CE700]"
               />
               <label
                 htmlFor="rememberMe"
@@ -1173,17 +1173,17 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 px-6 rounded-2xl font-bold text-sm text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-[0.98] shadow-xl shadow-blue-600/25 border border-white/20 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75 disabled:cursor-wait"
+                className="w-full py-3.5 px-6 rounded-full font-extrabold text-sm text-black bg-[#9CE700] hover:bg-[#8bd000] active:scale-[0.98] shadow-xl shadow-[#9CE700]/25 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75 disabled:cursor-wait"
               >
                 {loading ? (
                   <>
-                    <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                    <RefreshCw className="w-4 h-4 animate-spin text-black" />
                     <span>Signing in...</span>
                   </>
                 ) : (
                   <>
                     <span>Sign In</span>
-                    <ArrowRight className="w-4 h-4 text-white stroke-[2.5]" />
+                    <ArrowRight className="w-4 h-4 text-black stroke-[3]" />
                   </>
                 )}
               </button>
@@ -1191,7 +1191,7 @@ export default function Login() {
           </div>
         </form>
 
-        <p className="text-center text-xs font-bold text-slate-500 dark:text-slate-400 mt-6">
+        <p className="text-center text-xs font-bold text-slate-500 dark:text-neutral-500 mt-6">
           &copy; {new Date().getFullYear()} OmniManage. All rights reserved.
         </p>
       </div>
